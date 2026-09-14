@@ -1,0 +1,6 @@
+---
+description: 페이지·위젯·기능 구현 전에 docs/guidelines를 읽고 그 규칙으로 코드를 작성한다
+alwaysApply: true
+---
+
+페이지, 화면, 위젯, 기능, Flutter/Dart 코드를 만들거나 고치기 전에 `.cursor/skills/apply-guidelines/SKILL.md`를 따른다. `docs/guidelines`를 백그라운드에서 먼저 읽고, 그 규칙에 맞게 파일을 배치하고 이름을 붙인다. 가이드라인 확인을 사용자에게 묻지 않는다.
