@@ -1,14 +1,16 @@
 ---
 name: apply-guidelines
 description: >-
-  weld-dashboard의 docs/guidelines를 먼저 읽은 뒤, 그 규칙에 맞게 Flutter 페이지·화면·위젯·
-  ViewModel·Coordinator·도메인/데이터 코드를 생성한다. 앱 기능, UI, 페이지, 화면, 위젯,
-  네이밍, 폴더 구조, Dart/Flutter 코드를 구현하거나 수정할 때 사용한다.
+  https://github.com/geosoft-co-kr/guidelines.git 를 워킹 트리 밖에서 먼저 읽은 뒤,
+  그 규칙에 맞게 Flutter 페이지·화면·위젯·ViewModel·Coordinator·도메인/데이터 코드를 생성한다.
+  앱 기능, UI, 페이지, 화면, 위젯, 네이밍, 폴더 구조, Dart/Flutter 코드를 구현하거나 수정할 때 사용한다.
 ---
 
 # 코딩 가이드라인 적용
 
-`docs/guidelines`가 기준이다. Dart를 쓰거나 고치기 **전에** 해당 문서를 읽는다. 백그라운드에서 한다. 확인할지 사용자에게 묻지 않고, 사용자가 요청하지 않으면 가이드라인 본문을 답변에 붙여 넣지 않는다. 가이드라인 저장소는 **읽기 전용**이다. 파일을 수정·편집하지 않는다.
+기준 레포는 https://github.com/geosoft-co-kr/guidelines.git 이다. Dart를 쓰거나 고치기 **전에** 해당 문서를 읽는다. 백그라운드에서 한다. 확인할지 사용자에게 묻지 않고, 사용자가 요청하지 않으면 가이드라인 본문을 답변에 붙여 넣지 않는다.
+
+가이드라인 저장소는 **읽기 전용**이다. 파일을 수정·편집하지 않는다. weld-dashboard 워킹 트리(`docs/guidelines` 포함)에 클론하거나 복사하지 않는다.
 
 ## 필수
 
@@ -18,12 +20,21 @@ description: >-
 
 ## 절차
 
-1. 탐색: `docs/guidelines/**/*.md`를 glob한다. 문서 트리는 늘어날 수 있으므로 아래 표만 믿지 않는다.
-2. 라우팅: 표에서 파일을 고른다. 새 페이지·위젯·기능이면 두 Intro와 폴더 구조 문서는 항상 포함한다.
-3. 해당 파일을 읽은 뒤 구현한다. 이름, 경로, 계층 경계를 읽은 내용에 맞춘다.
-4. 패턴이 필요하면 `3. Example.md`는 구조만 참고한다. 로그인 데모를 제품에 복사하지 않는다.
+1. 워킹 트리 밖 임시 디렉터리에 `--depth 1`로 클론한다. 프로젝트 폴더 안은 금지.
+2. 임시 트리에서 `**/*.md`를 glob한다. 문서 트리는 늘어날 수 있으므로 아래 표만 믿지 않는다.
+3. 표에서 파일을 고른다. 새 페이지·위젯·기능이면 두 Intro와 폴더 구조 문서는 항상 포함한다.
+4. 해당 파일을 읽은 뒤 구현한다. 이름, 경로, 계층 경계를 읽은 내용에 맞춘다.
+5. 패턴이 필요하면 `3. Example.md`는 구조만 참고한다. 로그인 데모를 제품에 복사하지 않는다.
+6. 구현이 끝나면 임시 클론을 삭제한다.
 
-## 파일 맵 (`docs/guidelines/`)
+```bash
+tmp=$(mktemp -d /tmp/weld-guidelines.XXXXXX)
+git clone --depth 1 https://github.com/geosoft-co-kr/guidelines.git "$tmp"
+# "$tmp"에서 문서를 읽는다
+rm -rf "$tmp"
+```
+
+## 파일 맵 (가이드라인 레포 루트)
 
 | 언제 | 읽을 파일 |
 |------|-----------|
