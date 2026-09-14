@@ -1,4 +1,0 @@
-[submodule "docs/guidelines"]
-	path = docs/guidelines
-	url = https://github.com/geosoft-co-kr/guidelines.git
-	ignore = dirty
