@@ -3,4 +3,4 @@ description: 사용자가 커밋·푸시를 요청하면 변경 요약 커밋 �
 alwaysApply: true
 ---
 
-사용자가 커밋, 푸시, 커밋푸시, git commit, git push를 요청하면 `.cursor/skills/git-commit-push/SKILL.md`를 따른다. 요청 없이 커밋하거나 푸시하지 않는다.
+사용자가 커밋, 푸시, 커밋푸시, git commit, git push를 요청하면 `.cursor/skills/git-commit-push/SKILL.md`를 따른다. 요청 없이 커밋하거나 푸시하지 않는다. `docs/guidelines`(코딩 가이드라인 저장소)는 수정·편집·커밋·푸시하지 않는다. 올리지 않을 파일은 워킹 트리에서 되돌려 변경사항에 남기지 않는다.

@@ -23,6 +23,23 @@ description: >-
 - 커밋할 내용이 없으면 빈 커밋을 만들지 않는다
 - 푸시는 `git push` (업스트림이 없으면 `git push -u origin HEAD`). `--force`는 쓰지 않는다
 
+## 코딩 가이드라인 저장소 (수정·편집 금지)
+
+`docs/guidelines`는 회사 가이드라인 레포(`geosoft-co-kr/guidelines`) 서브모듈이다. **읽기만** 한다.
+
+- 그 안의 파일을 만들거나, 고치거나, 지우지 않는다
+- 그 레포에서 `git add` / `git commit` / `git push` 하지 않는다
+- weld-dashboard 커밋에 `docs/guidelines` 서브모듈 **포인터(커밋 해시)** 를 넣지 않는다. 부모에서 더티를 숨기려면 `.gitmodules`의 `ignore = dirty`만 허용한다
+- `git add -A`를 쓸 때도 서브모듈 워킹 트리는 제외한다
+
+## 올리지 않을 파일
+
+커밋·푸시에서 빼는 경로는 **변경사항에 남기지 않는다.** 부모 레포 기준으로 되돌리거나 지운다. 가이드라인 레포에 커밋하지 않는다.
+
+- `docs/guidelines` dirty → 그 레포에 커밋·푸시하지 않는다. 부모 `git status`에 남지 않게 `.gitmodules`에 `ignore = dirty`를 둔다. 로컬 `.DS_Store`만 지운다. `git clean -fd`로 한글 폴더를 지우지 않는다(NFC/NFD 오인)
+- 비밀 파일·빌드 산출물·실수로 생긴 미추적 파일 → 커밋하지 않고 삭제하거나 `git restore`
+- 되돌린 뒤 `git status`에 해당 경로가 없어야 한다
+
 ## 1. 확인 (병렬)
 
 레포 루트에서 함께 실행한다.
@@ -43,7 +60,7 @@ diff 전체를 읽는다. 확인하지 않은 파일은 커밋하지 않는다.
 
 - 목적이 하나(기능 하나·수정 하나)면 커밋 하나
 - 목적이 서로 다르면(예: 스킬 문서 vs 앱 기능) **커밋을 나누고** 메시지도 각각 쓴다
-- 빌드 산출물, `.gitignore`에 있는 로컬 IDE 잡파일, 비밀 파일은 빼둔다
+- 빌드 산출물, `.gitignore`에 있는 로컬 IDE 잡파일, 비밀 파일, `docs/guidelines`는 빼둔다
 
 각 묶음은 경로를 명시해 `git add`한다. 트리 전체가 한 묶음일 때만 `git add -A`를 쓴다.
 
