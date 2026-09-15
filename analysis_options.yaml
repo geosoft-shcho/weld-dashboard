@@ -1,1 +1,14 @@
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**
+    - web/**
+    - macos/**
 include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # 기본 가이드라인 상수 네이밍(UPPERCASE_WITH_UNDERSCORES)과 충돌하므로 끈다.
+    constant_identifier_names: false
+    non_constant_identifier_names: false

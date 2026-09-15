@@ -1,0 +1,9 @@
+worker_id,worker_name,team,is_master
+WK-M1,김명장,명장팀,true
+WK-M2,이명장,명장팀,true
+WK-01,박대조,A조,false
+WK-02,최실측,A조,false
+WK-03,정용접,B조,false
+WK-04,한기능,C조,false
+WK-05,오현장,D조,false
+WK-06,윤조공,A조,false

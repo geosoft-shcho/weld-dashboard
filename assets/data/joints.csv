@@ -1,0 +1,9 @@
+joint_id,joint_no,name,work_order_id,location
+JT-A14,J-A-14,쉘 종용접 하부,WO1,A베이-14
+JT-A15,J-A-15,쉘 종용접 상부,WO1,A베이-15
+JT-B03,J-B-03,티 조인트 본관,WO2,B베이-03
+JT-B07,J-B-07,티 조인트 지관,WO2,B베이-07
+JT-C01,J-C-01,노즐 N1,WO3,C베이-01
+JT-C02,J-C-02,노즐 N2,WO3,C베이-02
+JT-D09,J-D-09,보강판 우측,WO4,D베이-09
+JT-E11,J-E-11,플랜지 원주,WO5,E베이-11

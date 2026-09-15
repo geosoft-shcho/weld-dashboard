@@ -1,0 +1,77 @@
+import 'package:flutter/services.dart';
+import 'package:get_it/get_it.dart';
+
+import '../../../data/datasources/local/csv_asset_data_source.dart';
+import '../../../data/repositories/catalog_repository_impl.dart';
+import '../../../data/repositories/collection_catalog_repository_impl.dart';
+import '../../../data/repositories/work_detail_repository_impl.dart';
+import '../../../data/repositories/work_history_repository_impl.dart';
+import '../../../domain/repositories/catalog_repository.dart';
+import '../../../domain/repositories/collection_catalog_repository.dart';
+import '../../../domain/repositories/work_detail_repository.dart';
+import '../../../domain/repositories/work_history_repository.dart';
+import '../../../domain/use_cases/load_catalog_use_case.dart';
+import '../../../domain/use_cases/load_collection_catalog_use_case.dart';
+import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
+import '../../../domain/use_cases/load_work_history_catalog_use_case.dart';
+import '../../../domain/use_cases/query_collection_board_use_case.dart';
+import '../../../domain/use_cases/query_work_detail_use_case.dart';
+import '../../../domain/use_cases/query_work_history_use_case.dart';
+import '../../features/app_shell/shell_view_model.dart';
+import '../../features/collection_monitoring/collection_monitoring_view_model.dart';
+import '../../features/work_detail/work_detail_view_model.dart';
+import '../../features/work_history/work_history_view_model.dart';
+import '../../navigation/app_coordinator.dart';
+
+final locator = GetIt.instance;
+
+void setupLocator({required bool pdfrxReady}) {
+  locator.registerLazySingleton<CsvAssetDataSource>(
+    () => CsvAssetDataSource(rootBundle),
+  );
+  locator.registerLazySingleton<CatalogRepository>(
+    () => CatalogRepositoryImpl(locator()),
+  );
+  locator.registerLazySingleton(() => LoadCatalogUseCase(locator()));
+  locator.registerLazySingleton<CollectionCatalogRepository>(
+    () => CollectionCatalogRepositoryImpl(locator()),
+  );
+  locator.registerLazySingleton(() => LoadCollectionCatalogUseCase(locator()));
+  locator.registerFactory(() => QueryCollectionBoardUseCase());
+  locator.registerLazySingleton<WorkHistoryRepository>(
+    () => WorkHistoryRepositoryImpl(locator()),
+  );
+  locator.registerLazySingleton(() => LoadWorkHistoryCatalogUseCase(locator()));
+  locator.registerFactory(() => QueryWorkHistoryUseCase());
+  locator.registerLazySingleton<WorkDetailRepository>(
+    () => WorkDetailRepositoryImpl(
+      workHistoryRepository: locator(),
+      csvAssetDataSource: locator(),
+    ),
+  );
+  locator.registerLazySingleton(() => LoadWorkDetailCatalogUseCase(locator()));
+  locator.registerFactory(() => QueryWorkDetailUseCase());
+  locator.registerFactoryParam<WorkDetailViewModel, String, void>(
+    (historyId, _) => WorkDetailViewModel(
+      loadWorkDetailCatalogUseCase: locator(),
+      queryWorkDetailUseCase: locator(),
+      historyId: historyId,
+    ),
+  );
+  locator.registerLazySingleton(() => AppCoordinator());
+  locator.registerFactory(
+    () => ShellViewModel(loadCatalogUseCase: locator(), pdfrxReady: pdfrxReady),
+  );
+  locator.registerFactory(
+    () => CollectionMonitoringViewModel(
+      loadCollectionCatalogUseCase: locator(),
+      queryCollectionBoardUseCase: locator(),
+    ),
+  );
+  locator.registerFactory(
+    () => WorkHistoryViewModel(
+      loadWorkHistoryCatalogUseCase: locator(),
+      queryWorkHistoryUseCase: locator(),
+    ),
+  );
+}

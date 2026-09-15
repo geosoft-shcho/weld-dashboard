@@ -1,0 +1,28 @@
+attachment_id,history_id,file_type,file_name,note,content
+ATT-001,H001,image,비드 외관_캡.jpg,캡 패스 표면,data/attachments/h002_inside_torch.png
+ATT-002,H001,pdf,성적서_H001.pdf,페이퍼 스캔 NDT,data/attachments/connection_beam_ndt.pdf
+ATT-016,H001,pdf,STT_루트_가이드.pdf,STT Pipe Root Guide,data/attachments/te12014_stt_pipe_root_guide.pdf
+ATT-003,H002,video,stream.mp4,현장 용접 스트림,data/attachments/stream.mp4
+ATT-015,H002,image,안쪽면_토칭_용접.png,안쪽 면 토칭 용접 시연,data/attachments/h002_inside_torch.png
+ATT-018,H002,pdf,TFPB_NDT.pdf,TFPB 검사 및 NDT,data/attachments/tfpb_ndt.pdf
+ATT-004,H003,audio,stream.mp4,현장 용접 스트림,data/attachments/stream.mp4
+ATT-017,H003,pdf,명장기술_센싱_계획.pdf,암묵지 명장기술 센싱 마스터플랜,data/attachments/tacit_knowledge_sensing_master_plan.pdf
+ATT-005,H007,image,언더컷_확대.jpg,언더컷 의심,data/attachments/h002_inside_torch.png
+ATT-006,H007,image,토우_각도.jpg,토우 각,data/attachments/h002_inside_torch.png
+ATT-007,H007,video,stream.mp4,현장 용접 스트림,data/attachments/stream.mp4
+ATT-008,H007,pdf,NDE_UT.pdf,UT 성적,data/attachments/leg_diagonal_ndt.pdf
+ATT-009,H007,audio,stream.mp4,현장 용접 스트림,data/attachments/stream.mp4
+ATT-010,H009,image,재작업_비드.jpg,같은 이음 재작업,data/attachments/h002_inside_torch.png
+ATT-011,H005,pdf,노즐_N1_성적.pdf,노즐 N1 페이퍼,data/attachments/tfpb_ndt.pdf
+ATT-012,H001,text,작업일지_H001.txt,캡 패스 작업 메모,"[2026-09-06 14:20] 캡 패스 시작
+장비 EQ-01 / 작업자 박대조
+전류 안정. 비드 폭 허용 내.
+가스 유량 이상 없음. 후열 처리 예정."
+ATT-013,H003,text,루트_조건.txt,루트 패스 조건,"와이어 1.2 mm
+보호가스 15 L/min
+루트 갭 확인 후 시작.
+현장음 파일과 함께 보관."
+ATT-014,H007,text,NCR_초안.txt,부적합 초안,"언더컷 의심 구간 있음.
+UT 재검 요청.
+재용접 전 영상 첨부됨.
+품질 이슈 화면에서 성적서 확인."

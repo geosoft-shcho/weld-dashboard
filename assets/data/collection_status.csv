@@ -1,0 +1,9 @@
+equipment_id,snapshot_at,connection_status,received_count,window_label,loss_rate_pct,time_sync_status,clock_offset_ms,last_received_at
+EQ-01,2026-09-07T09:50:00,connected,1840,최근 5분,1.2,synced,3,2026-09-07T09:49:52
+EQ-02,2026-09-07T09:50:00,connected,1622,최근 5분,12.4,synced,8,2026-09-07T09:49:41
+EQ-03,2026-09-07T09:50:00,disconnected,0,최근 5분,100.0,unsynced,,2026-09-07T08:12:04
+EQ-04,2026-09-07T09:50:00,error,94,최근 5분,41.8,delayed,420,2026-09-07T09:47:18
+EQ-05,2026-09-07T09:50:00,connected,1710,최근 5분,4.6,delayed,180,2026-09-07T09:49:33
+EQ-06,2026-09-07T09:50:00,connected,980,최근 5분,,unsynced,,2026-09-07T09:48:11
+EQ-07,2026-09-07T09:50:00,connected,2014,최근 5분,0.8,synced,2,2026-09-07T09:49:58
+EQ-08,2026-09-07T09:50:00,disconnected,12,최근 5분,88.0,unsynced,,2026-09-06T22:04:40
