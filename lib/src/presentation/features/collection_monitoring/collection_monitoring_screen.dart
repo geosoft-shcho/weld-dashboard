@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
+import '../../../domain/entities/collection_board.dart';
 import '../../../domain/entities/preview_state.dart';
 import '../../core/di/locator.dart';
 import '../app_shell/shell_view_model.dart';
@@ -109,21 +110,56 @@ class _CollectionMonitoringBody extends StatelessWidget {
             const SizedBox(height: 12),
             _Breadcrumb(viewModel: viewModel),
             const SizedBox(height: 16),
-            const Text('핵심 요약 (KPI)', style: TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
             CollectionKpiCards(viewModel: viewModel, kpi: board.kpi),
             const SizedBox(height: 16),
-            const Text('장비별 수집 타임라인', style: TextStyle(fontSize: 16)),
-            const SizedBox(height: 8),
-            SizedBox(
-              height: 440,
-              child: CollectionTimelineHost(viewModel: viewModel, board: board),
-            ),
-            const SizedBox(height: 16),
-            CollectionStatusTable(viewModel: viewModel, board: board),
+            _MonitoringTabView(viewModel: viewModel, board: board),
           ],
         );
     }
+  }
+}
+
+// TabView 상태 관리를 위한 독립적인 StatefulWidget
+class _MonitoringTabView extends StatefulWidget {
+  const _MonitoringTabView({required this.viewModel, required this.board});
+
+  final CollectionMonitoringViewModel viewModel;
+  final CollectionBoard board;
+
+  @override
+  State<_MonitoringTabView> createState() => _MonitoringTabViewState();
+}
+
+class _MonitoringTabViewState extends State<_MonitoringTabView> {
+  int currentIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 660,
+      child: TabView(
+        currentIndex: currentIndex,
+        onChanged: (index) => setState(() => currentIndex = index),
+        tabWidthBehavior: TabWidthBehavior.sizeToContent,
+        closeButtonVisibility: CloseButtonVisibilityMode.never,
+        tabs: [
+          Tab(
+            text: const Text('장비별 수집 타임라인'),
+            body: CollectionTimelineHost(
+              viewModel: widget.viewModel,
+              board: widget.board,
+            ),
+          ),
+          Tab(
+            text: const Text('실시간 수집 상태'),
+            body: CollectionStatusTable(
+              viewModel: widget.viewModel,
+              board: widget.board,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 

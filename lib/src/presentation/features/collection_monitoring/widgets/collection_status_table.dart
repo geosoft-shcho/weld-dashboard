@@ -28,8 +28,6 @@ class CollectionStatusTable extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text('실시간 수집 상태', style: TextStyle(fontSize: 16)),
-            const Spacer(),
             Checkbox(
               checked: query.doesShowDisconnectedOrErrorOnly,
               content: const Text('단절/오류만'),
