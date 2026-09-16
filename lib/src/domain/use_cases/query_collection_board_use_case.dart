@@ -172,16 +172,57 @@ class QueryCollectionBoardUseCase {
         ],
       );
     }
-    final assignmentsForWorkers = query.projectIds.isEmpty
+    // Project → Line → Equipment → Worker 순서로 필터링
+    // 1. Project 필터 적용 - assignments에서 projectId로 필터링
+    var filteredAssignments = query.projectIds.isEmpty
         ? dayAssignments
         : dayAssignments
               .where(
                 (assignment) => query.projectIds.contains(assignment.projectId),
               )
               .toList();
-    final workerIds = {
-      for (final assignment in assignmentsForWorkers) assignment.workerId,
-    };
+
+    // 2. Line 필터 적용 (Project 필터 후) - filteredAssignments에서 equipment를 통해 lineName 확인
+    final availableLineNames = <String>{};
+    for (final assignment in filteredAssignments) {
+      final equipment = catalog.equipmentById(assignment.equipmentId);
+      if (equipment != null) {
+        availableLineNames.add(equipment.lineName);
+      }
+    }
+    final lineNames = availableLineNames.toList();
+
+    if (query.lineNames.isNotEmpty) {
+      filteredAssignments = filteredAssignments.where((assignment) {
+        final equipment = catalog.equipmentById(assignment.equipmentId);
+        return equipment != null &&
+            query.lineNames.contains(equipment.lineName);
+      }).toList();
+    }
+
+    // 3. Equipment 필터 적용 (Project + Line 필터 후)
+    final availableEquipmentIds = <String>{};
+    for (final assignment in filteredAssignments) {
+      availableEquipmentIds.add(assignment.equipmentId);
+    }
+    final scopedEquipment = catalog.equipments
+        .where((item) => availableEquipmentIds.contains(item.equipmentId))
+        .toList();
+
+    final filteredEquipments = query.lineNames.isEmpty
+        ? scopedEquipment
+        : scopedEquipment
+              .where((item) => query.lineNames.contains(item.lineName))
+              .toList();
+
+    // 4. Worker 필터 적용 (Project + Line + Equipment 필터 후)
+    final workerIds = <String>{};
+    for (final assignment in filteredAssignments) {
+      if (query.equipmentIds.isEmpty ||
+          query.equipmentIds.contains(assignment.equipmentId)) {
+        workerIds.add(assignment.workerId);
+      }
+    }
     final workers = [
       for (final workerId in workerIds)
         if (catalog.workerById(workerId) != null)
@@ -190,34 +231,7 @@ class QueryCollectionBoardUseCase {
             workerName: catalog.workerById(workerId)!.workerName,
           ),
     ];
-    final assignmentsForLines = dayAssignments.where((assignment) {
-      if (query.projectIds.isNotEmpty &&
-          !query.projectIds.contains(assignment.projectId)) {
-        return false;
-      }
-      if (query.workerIds.isNotEmpty &&
-          !query.workerIds.contains(assignment.workerId)) {
-        return false;
-      }
-      return true;
-    });
-    final assignedEquipmentIds = {
-      for (final assignment in assignmentsForLines) assignment.equipmentId,
-    };
-    final scopedEquipment =
-        query.projectIds.isNotEmpty || query.workerIds.isNotEmpty
-        ? catalog.equipments
-              .where((item) => assignedEquipmentIds.contains(item.equipmentId))
-              .toList()
-        : catalog.equipments;
-    final lineNames = [
-      ...{for (final item in scopedEquipment) item.lineName},
-    ];
-    final equipment = query.lineNames.isEmpty
-        ? scopedEquipment
-        : scopedEquipment
-              .where((item) => query.lineNames.contains(item.lineName))
-              .toList();
+
     return CollectionFilterOptions(
       projects: [
         for (final project in catalog.projects)
@@ -226,7 +240,7 @@ class QueryCollectionBoardUseCase {
       workers: workers,
       lineNames: lineNames,
       equipments: [
-        for (final item in equipment)
+        for (final item in filteredEquipments)
           (equipmentId: item.equipmentId, equipmentName: item.equipmentName),
       ],
     );

@@ -106,7 +106,7 @@ class _CollectionMonitoringBody extends StatelessWidget {
                 ),
               ),
             const SizedBox(height: 8),
-            CollectionCommandBar(viewModel: viewModel),
+            CollectionCommandBar(viewModel: viewModel, board: board),
             const SizedBox(height: 12),
             _Breadcrumb(viewModel: viewModel),
             const SizedBox(height: 16),
@@ -144,14 +144,14 @@ class _MonitoringTabViewState extends State<_MonitoringTabView> {
         closeButtonVisibility: CloseButtonVisibilityMode.never,
         tabs: [
           Tab(
-            text: const Text('장비별 수집 타임라인'),
+            text: const Text('장비별 수집 타임라인', style: TextStyle(fontSize: 14)),
             body: CollectionTimelineHost(
               viewModel: widget.viewModel,
               board: widget.board,
             ),
           ),
           Tab(
-            text: const Text('실시간 수집 상태'),
+            text: const Text('실시간 수집 상태', style: TextStyle(fontSize: 14)),
             body: CollectionStatusTable(
               viewModel: widget.viewModel,
               board: widget.board,
@@ -175,7 +175,7 @@ class _Breadcrumb extends StatelessWidget {
     final crumbs = <Widget>[
       HyperlinkButton(
         onPressed: viewModel.didTapFactoryCrumb,
-        child: const Text('공장 전체'),
+        child: const Text('공장 전체', style: TextStyle(fontSize: 14)),
       ),
     ];
     if (query.isUnassignedOnly) {
@@ -183,7 +183,7 @@ class _Breadcrumb extends StatelessWidget {
         const Text(' › '),
         HyperlinkButton(
           onPressed: viewModel.didTapProjectCrumb,
-          child: const Text('미배정'),
+          child: const Text('미배정', style: TextStyle(fontSize: 14)),
         ),
       ]);
     } else if (query.projectIds.length == 1) {
@@ -197,7 +197,7 @@ class _Breadcrumb extends StatelessWidget {
         const Text(' › '),
         HyperlinkButton(
           onPressed: viewModel.didTapProjectCrumb,
-          child: Text(projectName),
+          child: Text(projectName, style: const TextStyle(fontSize: 14)),
         ),
       ]);
     } else if (query.projectIds.length > 1) {
@@ -205,7 +205,10 @@ class _Breadcrumb extends StatelessWidget {
         const Text(' › '),
         HyperlinkButton(
           onPressed: viewModel.didTapProjectCrumb,
-          child: Text('프로젝트 ${query.projectIds.length}개'),
+          child: Text(
+            '프로젝트 ${query.projectIds.length}개',
+            style: const TextStyle(fontSize: 14),
+          ),
         ),
       ]);
     }
@@ -214,7 +217,10 @@ class _Breadcrumb extends StatelessWidget {
         const Text(' › '),
         HyperlinkButton(
           onPressed: viewModel.didTapLineCrumb,
-          child: Text(query.lineNames.first),
+          child: Text(
+            query.lineNames.first,
+            style: const TextStyle(fontSize: 14),
+          ),
         ),
       ]);
     } else if (query.lineNames.length > 1) {
@@ -222,26 +228,88 @@ class _Breadcrumb extends StatelessWidget {
         const Text(' › '),
         HyperlinkButton(
           onPressed: viewModel.didTapLineCrumb,
-          child: Text('${query.lineNames.length}개 라인'),
+          child: Text(
+            '${query.lineNames.length}개 라인',
+            style: const TextStyle(fontSize: 14),
+          ),
         ),
       ]);
     }
     if (query.equipmentIds.length == 1) {
-      crumbs.addAll([const Text(' › '), Text(query.equipmentIds.first)]);
+      crumbs.addAll([
+        const Text(' › '),
+        Text(query.equipmentIds.first, style: const TextStyle(fontSize: 14)),
+      ]);
+    } else if (query.equipmentIds.length > 1) {
+      crumbs.addAll([
+        const Text(' › '),
+        Text(
+          '장비 ${query.equipmentIds.length}개',
+          style: const TextStyle(fontSize: 14),
+        ),
+      ]);
     }
-    return Wrap(
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        ...crumbs,
-        for (final workerId in query.workerIds)
+
+    // 작업자 필터 표시
+    if (query.workerIds.isNotEmpty) {
+      for (final workerId in query.workerIds) {
+        crumbs.addAll([
+          const Text(' › '),
           Padding(
             padding: const EdgeInsets.only(left: 8),
             child: Button(
               onPressed: () => viewModel.didClearWorker(workerId),
-              child: Text(_workerName(workerId)),
+              child: Text(
+                _workerName(workerId),
+                style: const TextStyle(fontSize: 14),
+              ),
             ),
           ),
-      ],
+        ]);
+      }
+    }
+
+    // 연결 상태 필터 표시
+    if (query.connectionStatuses.isNotEmpty) {
+      for (final status in query.connectionStatuses) {
+        crumbs.addAll([
+          const Text(' › '),
+          Padding(
+            padding: const EdgeInsets.only(left: 8),
+            child: Button(
+              onPressed: () => viewModel.didToggleConnection(status),
+              child: Text(
+                '연결 ${status.label}',
+                style: const TextStyle(fontSize: 14),
+              ),
+            ),
+          ),
+        ]);
+      }
+    }
+
+    // 새로고침 주기 표시
+    if (query.refreshIntervalSeconds > 0) {
+      final label = query.refreshIntervalSeconds == 5
+          ? '5초'
+          : query.refreshIntervalSeconds == 60
+          ? '1분'
+          : '${query.refreshIntervalSeconds}초';
+      crumbs.addAll([
+        const Text(' › '),
+        Padding(
+          padding: const EdgeInsets.only(left: 8),
+          child: Button(
+            onPressed: () => viewModel.didSelectRefreshInterval(0),
+            child: Text('자동갱신 $label', style: const TextStyle(fontSize: 14)),
+          ),
+        ),
+      ]);
+    }
+
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: crumbs,
     );
   }
 

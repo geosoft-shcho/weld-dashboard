@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 
 import '../../../domain/entities/preview_state.dart';
 import '../../features/collection_monitoring/collection_monitoring_screen.dart';
@@ -47,9 +48,9 @@ class _ShellScreenState extends State<ShellScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const Text(
-                    'CSV 로드 2026. 9. 15. 오후 12:58:45',
-                    style: TextStyle(fontSize: 12),
+                  Text(
+                    'CSV 로드 ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now())}',
+                    style: const TextStyle(fontSize: 12),
                   ),
                   const SizedBox(width: 16),
                   const Text('미리보기 상태', style: TextStyle(fontSize: 12)),

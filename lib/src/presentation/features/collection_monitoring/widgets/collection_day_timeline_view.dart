@@ -47,7 +47,7 @@ class CollectionDayTimelineView extends StatelessWidget {
           showCurrentTimeIndicator: true,
           borderRadius: 4,
           padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
-          density: _densityOf(query.zoomHours),
+          density: NeonPlannerDayDensity.comfortable,
           fit: NeonPlannerDayFit.scroll,
           theme: NeonTimelineMaterialScope.plannerTheme(),
           emptyTitle: '이벤트 없음',
