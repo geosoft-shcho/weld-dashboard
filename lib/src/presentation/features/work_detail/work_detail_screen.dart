@@ -39,44 +39,55 @@ class _WorkDetailBody extends StatelessWidget {
       color: AppTheme.SURFACE,
       child: SizedBox.expand(
         child: ScaffoldPage(
-          header: PageHeader(
-            title: const Text('작업 상세'),
-            commandBar: Align(
-              alignment: Alignment.centerRight,
-              child: CommandBar(
-                primaryItems: [
-                  CommandBarButton(
-                    icon: const Icon(FluentIcons.back),
-                    label: const Text('목록으로'),
-                    onPressed: () =>
-                        coordinator.didTapBackToWorkHistory(context),
+          header: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                const Text(
+                  '작업 상세',
+                  style: TextStyle(fontSize: 30, fontWeight: FontWeight.w600),
+                ),
+                const Spacer(),
+                SizedBox(
+                  width: 40,
+                  child: CommandBar(
+                    primaryItems: [
+                      CommandBarButton(
+                        icon: const Icon(FluentIcons.back),
+                        label: const Text('목록으로'),
+                        onPressed: () =>
+                            coordinator.didTapBackToWorkHistory(context),
+                      ),
+                      CommandBarButton(
+                        icon: const Icon(FluentIcons.line_chart),
+                        label: const Text('프로파일'),
+                        onPressed: job == null
+                            ? null
+                            : () => coordinator
+                                  .didTapLeaveWorkDetailToPassProfile(
+                                    context,
+                                    commonKey: job.commonKey,
+                                    historyId: job.historyId,
+                                  ),
+                      ),
+                      CommandBarButton(
+                        icon: const Icon(FluentIcons.report_document),
+                        label: const Text('품질 이슈'),
+                        onPressed: job == null
+                            ? null
+                            : () => coordinator
+                                  .didTapLeaveWorkDetailToQualityIssue(
+                                    context,
+                                    commonKey: job.commonKey,
+                                    historyId: job.historyId,
+                                  ),
+                      ),
+                    ],
                   ),
-
-                  CommandBarButton(
-                    icon: const Icon(FluentIcons.line_chart),
-                    label: const Text('프로파일'),
-                    onPressed: job == null
-                        ? null
-                        : () => coordinator.didTapLeaveWorkDetailToPassProfile(
-                            context,
-                            commonKey: job.commonKey,
-                            historyId: job.historyId,
-                          ),
-                  ),
-
-                  CommandBarButton(
-                    icon: const Icon(FluentIcons.report_document),
-                    label: const Text('품질 이슈'),
-                    onPressed: job == null
-                        ? null
-                        : () => coordinator.didTapLeaveWorkDetailToQualityIssue(
-                            context,
-                            commonKey: job.commonKey,
-                            historyId: job.historyId,
-                          ),
-                  ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
           content: Padding(
