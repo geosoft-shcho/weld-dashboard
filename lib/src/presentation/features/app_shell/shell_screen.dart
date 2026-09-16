@@ -18,9 +18,12 @@ class ShellScreen extends StatefulWidget {
 }
 
 class _ShellScreenState extends State<ShellScreen> {
+  final bool _isPaneExpanded = false;
+
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ShellViewModel>().loadCatalog();
     });
@@ -30,74 +33,87 @@ class _ShellScreenState extends State<ShellScreen> {
   Widget build(BuildContext context) {
     final coordinator = context.watch<AppCoordinator>();
     final viewModel = context.watch<ShellViewModel>();
-    return NavigationView(
-      titleBar: TitleBar(
-        isBackButtonVisible: false,
-        height: 48,
-        title: const Text('용접 수집 모니터링'),
-        endHeader: Padding(
-          padding: const EdgeInsets.only(right: 12),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('미리보기 상태'),
-              const SizedBox(width: 8),
-              SizedBox(
-                width: 140,
-                child: ComboBox<PreviewState>(
-                  value: viewModel.previewState,
-                  items: PreviewState.values
-                      .map(
-                        (state) => ComboBoxItem(
-                          value: state,
-                          child: Text(_previewLabel(state)),
-                        ),
+
+    return Stack(
+      children: [
+        NavigationView(
+          titleBar: TitleBar(
+            isBackButtonVisible: false,
+            height: 48,
+            title: const Text('용접 수집 모니터링'),
+            endHeader: Padding(
+              padding: const EdgeInsets.only(right: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const Text(
+                    'CSV 로드 2026. 9. 15. 오후 12:58:45',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                  const SizedBox(width: 16),
+                  const Text('미리보기 상태', style: TextStyle(fontSize: 12)),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 100,
+                    child: ComboBox<PreviewState>(
+                      value: viewModel.previewState,
+                      items: PreviewState.values
+                          .map(
+                            (state) => ComboBoxItem(
+                              value: state,
+                              child: Text(_previewLabel(state)),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (state) {
+                        if (state != null) {
+                          viewModel.didSelectPreviewState(state);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          pane: NavigationPane(
+            selected: coordinator.selectedPaneIndex,
+            onChanged: coordinator.didSelectPane,
+            displayMode: _isPaneExpanded
+                ? PaneDisplayMode.expanded
+                : PaneDisplayMode.compact,
+            size: const NavigationPaneSize(openWidth: 240),
+            items: [
+              PaneItem(
+                icon: const Icon(FluentIcons.server_processes),
+                title: const Text('수집 모니터링'),
+                body: const CollectionMonitoringScreen(),
+              ),
+              PaneItem(
+                icon: const Icon(FluentIcons.history),
+                title: const Text('작업 이력 조회'),
+                body: coordinator.isWorkDetailOpen
+                    ? WorkDetailScreen(
+                        key: ValueKey(coordinator.historyId),
+                        historyId: coordinator.historyId,
                       )
-                      .toList(),
-                  onChanged: (state) {
-                    if (state != null) {
-                      viewModel.didSelectPreviewState(state);
-                    }
-                  },
-                ),
+                    : const WorkHistoryScreen(),
+              ),
+              PaneItem(
+                icon: const Icon(FluentIcons.line_chart),
+                title: const Text('패스별 파라미터 프로파일'),
+                body: const PassProfileScreen(),
+              ),
+              PaneItem(
+                icon: const Icon(FluentIcons.report_document),
+                title: const Text('품질 이슈 연계'),
+                body: const QualityIssueScreen(),
               ),
             ],
           ),
         ),
-      ),
-      pane: NavigationPane(
-        selected: coordinator.selectedPaneIndex,
-        onChanged: coordinator.didSelectPane,
-        displayMode: PaneDisplayMode.expanded,
-        size: const NavigationPaneSize(openWidth: 240),
-        items: [
-          PaneItem(
-            icon: const Icon(FluentIcons.server_processes),
-            title: const Text('수집 모니터링'),
-            body: const CollectionMonitoringScreen(),
-          ),
-          PaneItem(
-            icon: const Icon(FluentIcons.history),
-            title: const Text('작업 이력 조회'),
-            body: coordinator.isWorkDetailOpen
-                ? WorkDetailScreen(
-                    key: ValueKey(coordinator.historyId),
-                    historyId: coordinator.historyId,
-                  )
-                : const WorkHistoryScreen(),
-          ),
-          PaneItem(
-            icon: const Icon(FluentIcons.line_chart),
-            title: const Text('패스별 파라미터 프로파일'),
-            body: const PassProfileScreen(),
-          ),
-          PaneItem(
-            icon: const Icon(FluentIcons.report_document),
-            title: const Text('품질 이슈 연계'),
-            body: const QualityIssueScreen(),
-          ),
-        ],
-      ),
+      ],
     );
   }
 

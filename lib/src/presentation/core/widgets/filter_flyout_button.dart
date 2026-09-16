@@ -27,31 +27,40 @@ class _FilterFlyoutButtonState extends State<FilterFlyoutButton> {
 
   @override
   Widget build(BuildContext context) {
-    return FlyoutTarget(
-      controller: _controller,
-      child: Button(
-        onPressed: () {
-          _controller.showFlyout(
-            builder: (flyoutContext) {
-              return FlyoutContent(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 280,
-                    maxHeight: 320,
+    return SizedBox(
+      height: 36,
+      width: double.infinity,
+      child: FlyoutTarget(
+        controller: _controller,
+        child: Button(
+          onPressed: () {
+            _controller.showFlyout(
+              builder: (flyoutContext) {
+                return FlyoutContent(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 280,
+                      maxHeight: 320,
+                    ),
+                    child: widget.panelBuilder(flyoutContext),
                   ),
-                  child: widget.panelBuilder(flyoutContext),
+                );
+              },
+            );
+          },
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.summary,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              );
-            },
-          );
-        },
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(widget.title, style: const TextStyle(fontSize: 11)),
-            Text(widget.summary),
-          ],
+              ),
+              const SizedBox(width: 4),
+              const Icon(FluentIcons.chevron_down, size: 10),
+            ],
+          ),
         ),
       ),
     );
