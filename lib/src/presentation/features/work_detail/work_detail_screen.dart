@@ -41,36 +41,42 @@ class _WorkDetailBody extends StatelessWidget {
         child: ScaffoldPage(
           header: PageHeader(
             title: const Text('작업 상세'),
-            commandBar: CommandBar(
-              primaryItems: [
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.back),
-                  label: const Text('목록으로'),
-                  onPressed: () => coordinator.didTapBackToWorkHistory(context),
-                ),
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.line_chart),
-                  label: const Text('프로파일'),
-                  onPressed: job == null
-                      ? null
-                      : () => coordinator.didTapLeaveWorkDetailToPassProfile(
-                          context,
-                          commonKey: job.commonKey,
-                          historyId: job.historyId,
-                        ),
-                ),
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.report_document),
-                  label: const Text('품질 이슈'),
-                  onPressed: job == null
-                      ? null
-                      : () => coordinator.didTapLeaveWorkDetailToQualityIssue(
-                          context,
-                          commonKey: job.commonKey,
-                          historyId: job.historyId,
-                        ),
-                ),
-              ],
+            commandBar: Align(
+              alignment: Alignment.centerRight,
+              child: CommandBar(
+                primaryItems: [
+                  CommandBarButton(
+                    icon: const Icon(FluentIcons.back),
+                    label: const Text('목록으로'),
+                    onPressed: () =>
+                        coordinator.didTapBackToWorkHistory(context),
+                  ),
+
+                  CommandBarButton(
+                    icon: const Icon(FluentIcons.line_chart),
+                    label: const Text('프로파일'),
+                    onPressed: job == null
+                        ? null
+                        : () => coordinator.didTapLeaveWorkDetailToPassProfile(
+                            context,
+                            commonKey: job.commonKey,
+                            historyId: job.historyId,
+                          ),
+                  ),
+
+                  CommandBarButton(
+                    icon: const Icon(FluentIcons.report_document),
+                    label: const Text('품질 이슈'),
+                    onPressed: job == null
+                        ? null
+                        : () => coordinator.didTapLeaveWorkDetailToQualityIssue(
+                            context,
+                            commonKey: job.commonKey,
+                            historyId: job.historyId,
+                          ),
+                  ),
+                ],
+              ),
             ),
           ),
           content: Padding(
@@ -151,11 +157,6 @@ class _WorkDetailBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                '이 작업의 신원과 첨부. 파형 비교·품질 연계는 해당 화면으로 이동합니다.',
-                style: TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 12),
               WorkDetailIdentity(job: job),
               const SizedBox(height: 12),
               WorkDetailTabs(viewModel: viewModel, detail: detail),

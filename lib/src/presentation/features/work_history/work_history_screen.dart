@@ -98,11 +98,6 @@ class _WorkHistoryBody extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                '공통키 기반 검색. 행 클릭은 선택, 상세는 첨부 뷰어, 프로파일·품질은 기존 화면입니다.',
-                style: TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 8),
               WorkHistoryCommandBar(viewModel: viewModel, board: board),
               const SizedBox(height: 12),
               WorkHistoryFilterChips(viewModel: viewModel, board: board),

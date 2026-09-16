@@ -13,68 +13,121 @@ class WorkDetailOverview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final attachments = viewModel.detail?.attachments ?? const [];
+
     if (attachments.isEmpty) {
       return const InfoBar(
-        title: Text('첨부 파일이 없습니다. 이미지·비디오·PDF·오디오·텍스트 탭은 빈 상태입니다.'),
+        title: Text('첨부 파일이 없습니다.'),
+        content: Text('이 작업에는 등록된 첨부파일이 없습니다.'),
         severity: InfoBarSeverity.warning,
       );
     }
-    return ListView(
+
+    return ListView(children: [_buildAttachmentTable(context, attachments)]);
+  }
+
+  Widget _buildAttachmentTable(
+    BuildContext context,
+    List<WorkAttachment> attachments,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '첨부 ${attachments.length}건. 칩을 누르면 해당 뷰어 탭으로 이동합니다. 각 탭은 Flutter 패키지 1개에 대응합니다.',
-          style: const TextStyle(fontSize: 12),
+        _buildSectionTitle(
+          context,
+          title: '첨부파일 목록',
+          subtitle: '파일을 선택하면 해당 뷰어 탭으로 이동합니다.',
         ),
+
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            for (final attachment in attachments)
-              Button(
-                onPressed: () => viewModel.didTapJumpToAttachment(attachment),
-                child: Text(
-                  '${attachment.fileType.label} · ${attachment.fileName}',
-                ),
-              ),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            for (final attachment in attachments)
-              if (attachment.fileType == WorkAttachmentType.image)
-                _preview(attachment),
-          ],
+
+        Container(
+          decoration: BoxDecoration(
+            border: Border.all(color: Colors.black.withValues(alpha: 0.08)),
+          ),
+          child: Table(
+            columnWidths: const {
+              0: FixedColumnWidth(100),
+              1: FlexColumnWidth(2.5),
+              2: FlexColumnWidth(2),
+              3: FixedColumnWidth(90),
+            },
+            defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+            children: [
+              _buildTableHeader(),
+
+              for (var index = 0; index < attachments.length; index++)
+                _buildTableRow(attachments[index], index),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _preview(WorkAttachment attachment) {
-    return SizedBox(
-      width: 220,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            height: 140,
-            child: GestureDetector(
-              onTap: () => viewModel.didTapJumpToAttachment(attachment),
-              child: WorkDetailImageFrame(attachment: attachment),
-            ),
+  TableRow _buildTableHeader() {
+    return TableRow(
+      decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.02)),
+      children: [
+        _tableCell('유형', isHeader: true),
+        _tableCell('파일명', isHeader: true),
+        _tableCell('설명', isHeader: true),
+        _tableCell('동작', isHeader: true),
+      ],
+    );
+  }
+
+  TableRow _buildTableRow(WorkAttachment attachment, int index) {
+    return TableRow(
+      decoration: index.isEven
+          ? BoxDecoration(color: Colors.white.withValues(alpha: 0.08))
+          : null,
+      children: [
+        _tableCell(attachment.fileType.label),
+        _tableCell(attachment.fileName),
+        _tableCell(attachment.note.isEmpty ? '-' : attachment.note),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+          child: Button(
+            onPressed: () => viewModel.didTapJumpToAttachment(attachment),
+            child: const Text('열기'),
           ),
-          const SizedBox(height: 6),
-          Text(
-            attachment.note.isEmpty
-                ? attachment.fileName
-                : '${attachment.fileName} · ${attachment.note}',
-            style: const TextStyle(fontSize: 12),
-          ),
-        ],
+        ),
+      ],
+    );
+  }
+
+  Widget _tableCell(String text, {bool isHeader = false}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      child: Text(
+        text,
+        maxLines: 2,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+          fontSize: isHeader ? 12 : 13,
+          fontWeight: isHeader ? FontWeight.w600 : FontWeight.normal,
+        ),
       ),
+    );
+  }
+
+  Widget _buildSectionTitle(
+    BuildContext context, {
+    required String title,
+    required String subtitle,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+        ),
+
+        const SizedBox(height: 4),
+
+        Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[100])),
+      ],
     );
   }
 }
