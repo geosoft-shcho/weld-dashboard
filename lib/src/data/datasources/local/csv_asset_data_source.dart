@@ -38,6 +38,10 @@ class CsvAssetDataSource {
   static const String PASSES_PATH = 'assets/data/passes.csv';
   static const String WORK_ATTACHMENTS_PATH =
       'assets/data/work_attachments.csv';
+  static const String WAVEFORM_PATH = 'assets/data/waveform_normalized.csv';
+  static const String QUALITY_RESULTS_PATH =
+      'assets/data/quality_results.csv';
+  static const String QUALITY_LINKS_PATH = 'assets/data/quality_links.csv';
 
   Future<Map<String, int>> loadRowCounts() async {
     final countsByAsset = <String, int>{};
@@ -90,6 +94,18 @@ class CsvAssetDataSource {
 
   Future<List<Map<String, String>>> loadWorkAttachmentRows() {
     return _loadRows(WORK_ATTACHMENTS_PATH);
+  }
+
+  Future<List<Map<String, String>>> loadWaveformRows() {
+    return _loadRows(WAVEFORM_PATH);
+  }
+
+  Future<List<Map<String, String>>> loadQualityResultRows() {
+    return _loadRows(QUALITY_RESULTS_PATH);
+  }
+
+  Future<List<Map<String, String>>> loadQualityLinkRows() {
+    return _loadRows(QUALITY_LINKS_PATH);
   }
 
   Future<List<Map<String, String>>> _loadRows(String assetPath) async {
