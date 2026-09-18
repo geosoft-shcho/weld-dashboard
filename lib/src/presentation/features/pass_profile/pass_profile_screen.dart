@@ -76,7 +76,8 @@ class _PassProfileBody extends StatelessWidget {
                   label: const Text('이 패스 품질 이슈'),
                   onPressed: !canOpenQuality
                       ? null
-                      : () => coordinator.didTapOpenQualityIssue(
+                      : () => _didTapOpenQualityIssue(
+                          coordinator,
                           commonKey: board.commonKey,
                           historyId: board.historyId,
                           passId: board.selectedPass?.passId,
@@ -106,6 +107,30 @@ class _PassProfileBody extends StatelessWidget {
       case null:
         return '뒤로';
     }
+  }
+
+  void _didTapOpenQualityIssue(
+    AppCoordinator coordinator, {
+    required String commonKey,
+    required String historyId,
+    String? passId,
+    String? linkId,
+  }) {
+    if (coordinator.isPassProfilePaneSelected) {
+      coordinator.didTapOpenQualityIssueFromPane(
+        commonKey: commonKey,
+        historyId: historyId,
+        passId: passId,
+        linkId: linkId,
+      );
+      return;
+    }
+    coordinator.didTapOpenQualityIssue(
+      commonKey: commonKey,
+      historyId: historyId,
+      passId: passId,
+      linkId: linkId,
+    );
   }
 
   Widget _content(
@@ -139,6 +164,8 @@ class _PassProfileBody extends StatelessWidget {
         ),
       );
     }
+    final isLegendEmpty =
+        !board.doesHavePasses || !board.doesHaveSeries;
     return ListView(
       children: [
         const Text(
@@ -164,55 +191,51 @@ class _PassProfileBody extends StatelessWidget {
           onToggleBeginner: viewModel.didTapToggleBeginner,
           onToggleRobot: viewModel.didTapToggleRobot,
           onSelectMasterProfile: viewModel.didSelectMasterProfile,
+          isEmpty: isLegendEmpty,
         ),
         const SizedBox(height: 8),
         for (final banner in board.banners) ...[
           InfoBar(title: Text(banner), severity: InfoBarSeverity.info),
           const SizedBox(height: 8),
         ],
-        if (!board.doesHaveSeries)
-          const InfoBar(
-            title: Text('패스는 있으나 시리즈 0건'),
-            severity: InfoBarSeverity.warning,
-          )
-        else
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final charts = Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  WaveformChannelCharts(
-                    series: board.series,
-                    links: board.links,
-                    showMaster: viewModel.showMaster,
-                    showBeginner: viewModel.showBeginner,
-                    showRobot: viewModel.showRobot,
-                    onBandTap: (linkId) => coordinator.didTapOpenQualityIssue(
-                      commonKey: board.commonKey,
-                      historyId: board.historyId,
-                      passId: board.selectedPass?.passId,
-                      linkId: linkId,
-                    ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final charts = Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                WaveformChannelCharts(
+                  series: board.series,
+                  links: board.links,
+                  showMaster: viewModel.showMaster,
+                  showBeginner: viewModel.showBeginner,
+                  showRobot: viewModel.showRobot,
+                  onBandTap: (linkId) => _didTapOpenQualityIssue(
+                    coordinator,
+                    commonKey: board.commonKey,
+                    historyId: board.historyId,
+                    passId: board.selectedPass?.passId,
+                    linkId: linkId,
                   ),
+                ),
+              ],
+            );
+            final summary = PassCompareSummary(stats: board.compareStats);
+            if (constraints.maxWidth >= 960) {
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(flex: 8, child: charts),
+                  const SizedBox(width: 16),
+                  Expanded(flex: 2, child: summary),
                 ],
               );
-              final summary = PassCompareSummary(stats: board.compareStats);
-              if (constraints.maxWidth >= 960) {
-                return Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(flex: 8, child: charts),
-                    const SizedBox(width: 16),
-                    Expanded(flex: 2, child: summary),
-                  ],
-                );
-              }
-              return Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [charts, const SizedBox(height: 12), summary],
-              );
-            },
-          ),
+            }
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [charts, const SizedBox(height: 12), summary],
+            );
+          },
+        ),
       ],
     );
   }

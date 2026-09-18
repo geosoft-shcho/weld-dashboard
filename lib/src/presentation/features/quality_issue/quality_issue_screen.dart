@@ -82,12 +82,23 @@ class _QualityIssueBody extends StatelessWidget {
                   label: const Text('패스 프로파일'),
                   onPressed: !canOpenPassProfile
                       ? null
-                      : () => coordinator.didTapOpenPassProfile(
-                          commonKey: board.commonKey,
-                          historyId: board.historyId,
-                          passId: board.selectedPass?.passId ??
-                              board.selectedGroup?.passId,
-                        ),
+                      : () {
+                          final passId = board.selectedPass?.passId ??
+                              board.selectedGroup?.passId;
+                          if (coordinator.isQualityIssuePaneSelected) {
+                            coordinator.didTapOpenPassProfileFromPane(
+                              commonKey: board.commonKey,
+                              historyId: board.historyId,
+                              passId: passId,
+                            );
+                            return;
+                          }
+                          coordinator.didTapOpenPassProfile(
+                            commonKey: board.commonKey,
+                            historyId: board.historyId,
+                            passId: passId,
+                          );
+                        },
                 ),
               ],
             ),
@@ -147,6 +158,8 @@ class _QualityIssueBody extends StatelessWidget {
       );
     }
     final group = board.selectedGroup;
+    final isLegendEmpty =
+        !board.doesHavePasses || !board.series.doesHaveAnySeries;
     return ListView(
       children: [
         const Text(
@@ -174,6 +187,7 @@ class _QualityIssueBody extends StatelessWidget {
           onToggleBeginner: viewModel.didTapToggleBeginner,
           onToggleRobot: viewModel.didTapToggleRobot,
           onSelectMasterProfile: (_) {},
+          isEmpty: isLegendEmpty,
         ),
         const SizedBox(height: 12),
         LayoutBuilder(

@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../../domain/entities/weld_pass.dart';
 import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/section_empty_placeholder.dart';
 
 /// Windows-style pass tabs: full-width bottom rule + selected underline.
 class PassTabsBar extends StatelessWidget {
@@ -21,7 +22,10 @@ class PassTabsBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (passes.isEmpty) {
-      return const SizedBox.shrink();
+      return const SectionEmptyPlaceholder(
+        title: '표시할 패스가 없습니다',
+        message: '이 공통키에 연결된 패스(루트·채움·캡)가 없습니다.',
+      );
     }
     return SizedBox(
       width: double.infinity,

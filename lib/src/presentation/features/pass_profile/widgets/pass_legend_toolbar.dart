@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/section_empty_placeholder.dart';
 
 class PassLegendToolbar extends StatelessWidget {
   const PassLegendToolbar({
@@ -14,6 +15,7 @@ class PassLegendToolbar extends StatelessWidget {
     required this.onToggleBeginner,
     required this.onToggleRobot,
     required this.onSelectMasterProfile,
+    this.isEmpty = false,
   });
 
   final bool showMaster;
@@ -26,8 +28,17 @@ class PassLegendToolbar extends StatelessWidget {
   final ValueChanged<bool> onToggleRobot;
   final ValueChanged<String> onSelectMasterProfile;
 
+  /// True when there is no pass or no series to legend-toggle (s3 · s4 shared).
+  final bool isEmpty;
+
   @override
   Widget build(BuildContext context) {
+    if (isEmpty) {
+      return const SectionEmptyPlaceholder(
+        title: '범례를 표시할 데이터가 없습니다',
+        message: '패스 또는 파형 시리즈가 없어 명장·초보자·로봇 범례를 켤 수 없습니다.',
+      );
+    }
     return Wrap(
       spacing: 16,
       runSpacing: 8,

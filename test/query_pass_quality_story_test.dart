@@ -69,11 +69,23 @@ void main() {
       historyId: 'H007',
     );
     expect(board.doesHaveCommonKey, isTrue);
+    expect(board.doesHaveLinks, isFalse);
     expect(board.allLinks, isEmpty);
     expect(board.links, isEmpty);
     expect(board.selectedGroup?.paperDocNo, 'PAP-260903-009');
     expect(board.selectedGroup?.scanFile.trim(), isEmpty);
     expect(board.series.doesHaveAnySeries, isFalse);
+  });
+
+  test('unknown key keeps commonKey but has no passes', () async {
+    final catalog = await repository.loadCatalog();
+    final board = QueryPassProfileUseCase().execute(
+      catalog: catalog,
+      commonKey: 'WO-NONE|J-NONE',
+      historyId: 'H-NONE',
+    );
+    expect(board.doesHaveCommonKey, isTrue);
+    expect(board.doesHavePasses, isFalse);
   });
 
   test('empty key stays empty without snapshot auto-pick', () async {

@@ -27,8 +27,21 @@ class _ShellScreenState extends State<ShellScreen> {
     super.initState();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ShellViewModel>().loadCatalog();
+      _loadCatalogAndLatestPaneTargets();
     });
+  }
+
+  Future<void> _loadCatalogAndLatestPaneTargets() async {
+    final viewModel = context.read<ShellViewModel>();
+    final coordinator = context.read<AppCoordinator>();
+    await viewModel.loadCatalog();
+    if (!mounted) {
+      return;
+    }
+    coordinator.didApplyLatestPaneCandidates(
+      passProfile: viewModel.latestPassProfile,
+      qualityIssue: viewModel.latestQualityIssue,
+    );
   }
 
   void _didTapTogglePane() {
@@ -78,10 +91,62 @@ class _ShellScreenState extends State<ShellScreen> {
                 title: const Text('작업 이력 조회'),
                 body: _workHistoryBody(coordinator),
               ),
+              PaneItem(
+                icon: const Icon(FluentIcons.line_chart),
+                title: Tooltip(
+                  message: coordinator.canOpenLatestPassProfile
+                      ? '스냅샷 기준 최신 패스 프로파일'
+                      : '표시할 패스 프로파일이 없습니다',
+                  child: const Text('패스별 파라미터 프로파일'),
+                ),
+                enabled: coordinator.canOpenLatestPassProfile,
+                body: _panePassProfileBody(coordinator),
+              ),
+              PaneItem(
+                icon: const Icon(FluentIcons.report_document),
+                title: Tooltip(
+                  message: coordinator.canOpenLatestQualityIssue
+                      ? '스냅샷 기준 최신 품질 이슈'
+                      : '표시할 품질 이슈가 없습니다',
+                  child: const Text('품질 이슈 연계'),
+                ),
+                enabled: coordinator.canOpenLatestQualityIssue,
+                body: _paneQualityIssueBody(coordinator),
+              ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _panePassProfileBody(AppCoordinator coordinator) {
+    if (!coordinator.canOpenLatestPassProfile ||
+        coordinator.panePassCommonKey.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return PassProfileScreen(
+      key: ValueKey(
+        'pane-pass|${coordinator.panePassCommonKey}|${coordinator.panePassHistoryId}|${coordinator.panePassPassId}',
+      ),
+      commonKey: coordinator.panePassCommonKey,
+      historyId: coordinator.panePassHistoryId,
+      passId: coordinator.panePassPassId,
+    );
+  }
+
+  Widget _paneQualityIssueBody(AppCoordinator coordinator) {
+    if (coordinator.paneQualityCommonKey.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return QualityIssueScreen(
+      key: ValueKey(
+        'pane-quality|${coordinator.paneQualityCommonKey}|${coordinator.paneQualityHistoryId}|${coordinator.paneQualityPassId}|${coordinator.paneQualityLinkId}',
+      ),
+      commonKey: coordinator.paneQualityCommonKey,
+      historyId: coordinator.paneQualityHistoryId,
+      passId: coordinator.paneQualityPassId,
+      linkId: coordinator.paneQualityLinkId,
     );
   }
 

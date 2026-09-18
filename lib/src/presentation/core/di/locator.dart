@@ -22,6 +22,8 @@ import '../../../domain/use_cases/query_pass_profile_use_case.dart';
 import '../../../domain/use_cases/query_quality_issue_use_case.dart';
 import '../../../domain/use_cases/query_work_detail_use_case.dart';
 import '../../../domain/use_cases/query_work_history_use_case.dart';
+import '../../../domain/use_cases/resolve_latest_pass_profile_use_case.dart';
+import '../../../domain/use_cases/resolve_latest_quality_issue_use_case.dart';
 import '../../features/app_shell/shell_view_model.dart';
 import '../../features/collection_monitoring/collection_monitoring_view_model.dart';
 import '../../features/pass_profile/pass_profile_args.dart';
@@ -71,6 +73,8 @@ void setupLocator({required bool pdfrxReady}) {
   );
   locator.registerFactory(() => QueryPassProfileUseCase());
   locator.registerFactory(() => QueryQualityIssueUseCase());
+  locator.registerFactory(() => ResolveLatestPassProfileUseCase());
+  locator.registerFactory(() => ResolveLatestQualityIssueUseCase());
   locator.registerFactoryParam<WorkDetailViewModel, String, void>(
     (historyId, _) => WorkDetailViewModel(
       loadWorkDetailCatalogUseCase: locator(),
@@ -99,7 +103,13 @@ void setupLocator({required bool pdfrxReady}) {
   );
   locator.registerLazySingleton(() => AppCoordinator());
   locator.registerFactory(
-    () => ShellViewModel(loadCatalogUseCase: locator(), pdfrxReady: pdfrxReady),
+    () => ShellViewModel(
+      loadCatalogUseCase: locator(),
+      loadPassWaveformCatalogUseCase: locator(),
+      resolveLatestPassProfileUseCase: locator(),
+      resolveLatestQualityIssueUseCase: locator(),
+      pdfrxReady: pdfrxReady,
+    ),
   );
   locator.registerFactory(
     () => CollectionMonitoringViewModel(

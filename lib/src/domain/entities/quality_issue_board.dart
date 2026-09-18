@@ -34,6 +34,7 @@ class QualityIssueBoard {
   final WaveformSeriesBundle series;
 
   bool get doesHaveCommonKey => commonKey.isNotEmpty;
+  bool get doesHavePasses => passes.isNotEmpty;
   bool get doesHaveLinks => allLinks.isNotEmpty;
   bool get doesHaveGroup => selectedGroup != null;
 }
