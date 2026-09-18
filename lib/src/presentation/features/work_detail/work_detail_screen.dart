@@ -1,11 +1,9 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
-import '../../../domain/entities/preview_state.dart';
 import '../../core/di/locator.dart';
 import '../../core/themes/app_theme.dart';
 import '../../navigation/app_coordinator.dart';
-import '../app_shell/shell_view_model.dart';
 import 'work_detail_view_model.dart';
 import 'widgets/work_detail_identity.dart';
 import 'widgets/work_detail_stage.dart';
@@ -31,7 +29,6 @@ class _WorkDetailBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final previewState = context.watch<ShellViewModel>().previewState;
     final viewModel = context.watch<WorkDetailViewModel>();
     final coordinator = context.read<AppCoordinator>();
     final job = viewModel.detail?.job;
@@ -77,7 +74,7 @@ class _WorkDetailBody extends StatelessWidget {
           ),
           content: Padding(
             padding: const EdgeInsets.all(16),
-            child: _content(context, previewState, viewModel, coordinator),
+            child: _content(context, viewModel, coordinator),
           ),
         ),
       ),
@@ -86,82 +83,52 @@ class _WorkDetailBody extends StatelessWidget {
 
   Widget _content(
     BuildContext context,
-    PreviewState previewState,
     WorkDetailViewModel viewModel,
     AppCoordinator coordinator,
   ) {
-    switch (previewState) {
-      case PreviewState.loading:
-        return const Center(child: ProgressRing());
-      case PreviewState.empty:
-        return _banner(
-          InfoBar(
-            title: const Text('작업 상세'),
-            content: const Text('작업 이력에서 행을 고른 뒤 상세를 여세요.'),
-            action: Button(
-              onPressed: () => coordinator.didTapBackToWorkHistory(context),
-              child: const Text('작업 이력 조회'),
-            ),
-            severity: InfoBarSeverity.warning,
-          ),
-        );
-      case PreviewState.error:
-        return _banner(
-          InfoBar(
-            title: const Text('CSV 로드 실패'),
-            content: const Text('work_attachments.csv와 이력 CSV를 확인하세요.'),
-            action: Button(
-              onPressed: viewModel.didTapReload,
-              child: const Text('재시도'),
-            ),
-            severity: InfoBarSeverity.error,
-          ),
-        );
-      case PreviewState.live:
-        if (viewModel.isLoading && viewModel.detail == null) {
-          return const Center(child: ProgressRing());
-        }
-        if (viewModel.hasError) {
-          return _banner(
-            InfoBar(
-              title: const Text('CSV 로드 실패'),
-              content: Text(viewModel.errorMessage),
-              action: Button(
-                onPressed: viewModel.didTapReload,
-                child: const Text('재시도'),
-              ),
-              severity: InfoBarSeverity.error,
-            ),
-          );
-        }
-        final detail = viewModel.detail;
-        final job = detail?.job;
-        if (detail == null || job == null) {
-          return _banner(
-            InfoBar(
-              title: const Text('작업 상세'),
-              content: const Text('작업 이력에서 행을 고른 뒤 상세를 여세요.'),
-              action: Button(
-                onPressed: () => coordinator.didTapBackToWorkHistory(context),
-                child: const Text('작업 이력 조회'),
-              ),
-              severity: InfoBarSeverity.warning,
-            ),
-          );
-        }
-        return SizedBox.expand(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              WorkDetailIdentity(job: job),
-              const SizedBox(height: 12),
-              WorkDetailTabs(viewModel: viewModel, detail: detail),
-              const SizedBox(height: 12),
-              Expanded(child: WorkDetailStage(viewModel: viewModel)),
-            ],
-          ),
-        );
+    if (viewModel.isLoading && viewModel.detail == null) {
+      return const Center(child: ProgressRing());
     }
+    if (viewModel.hasError) {
+      return _banner(
+        InfoBar(
+          title: const Text('CSV 로드 실패'),
+          content: Text(viewModel.errorMessage),
+          action: Button(
+            onPressed: viewModel.didTapReload,
+            child: const Text('재시도'),
+          ),
+          severity: InfoBarSeverity.error,
+        ),
+      );
+    }
+    final detail = viewModel.detail;
+    final job = detail?.job;
+    if (detail == null || job == null) {
+      return _banner(
+        InfoBar(
+          title: const Text('작업 상세'),
+          content: const Text('작업 이력에서 행을 고른 뒤 상세를 여세요.'),
+          action: Button(
+            onPressed: () => coordinator.didTapBackToWorkHistory(context),
+            child: const Text('작업 이력 조회'),
+          ),
+          severity: InfoBarSeverity.warning,
+        ),
+      );
+    }
+    return SizedBox.expand(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          WorkDetailIdentity(job: job),
+          const SizedBox(height: 12),
+          WorkDetailTabs(viewModel: viewModel, detail: detail),
+          const SizedBox(height: 12),
+          Expanded(child: WorkDetailStage(viewModel: viewModel)),
+        ],
+      ),
+    );
   }
 
   Widget _banner(Widget child) {

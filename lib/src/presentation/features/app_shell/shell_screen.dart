@@ -2,7 +2,6 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
-import '../../../domain/entities/preview_state.dart';
 import '../../features/collection_monitoring/collection_monitoring_screen.dart';
 import '../../features/pass_profile/pass_profile_screen.dart';
 import '../../features/quality_issue/quality_issue_screen.dart';
@@ -41,7 +40,6 @@ class _ShellScreenState extends State<ShellScreen> {
   @override
   Widget build(BuildContext context) {
     final coordinator = context.watch<AppCoordinator>();
-    final viewModel = context.watch<ShellViewModel>();
 
     return Stack(
       children: [
@@ -54,37 +52,9 @@ class _ShellScreenState extends State<ShellScreen> {
             ),
             endHeader: Padding(
               padding: const EdgeInsets.only(right: 12),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'CSV 로드 ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now())}',
-                    style: const TextStyle(fontSize: 12),
-                  ),
-                  const SizedBox(width: 16),
-                  const Text('미리보기 상태', style: TextStyle(fontSize: 12)),
-                  const SizedBox(width: 8),
-                  SizedBox(
-                    width: 100,
-                    child: ComboBox<PreviewState>(
-                      value: viewModel.previewState,
-                      items: PreviewState.values
-                          .map(
-                            (state) => ComboBoxItem(
-                              value: state,
-                              child: Text(_previewLabel(state)),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (state) {
-                        if (state != null) {
-                          viewModel.didSelectPreviewState(state);
-                        }
-                      },
-                    ),
-                  ),
-                ],
+              child: Text(
+                'CSV 로드 ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now())}',
+                style: const TextStyle(fontSize: 12),
               ),
             ),
           ),
@@ -143,19 +113,6 @@ class _ShellScreenState extends State<ShellScreen> {
           passId: coordinator.passId,
           linkId: coordinator.linkId,
         );
-    }
-  }
-
-  String _previewLabel(PreviewState state) {
-    switch (state) {
-      case PreviewState.live:
-        return '정상';
-      case PreviewState.loading:
-        return '로딩';
-      case PreviewState.empty:
-        return '빈 상태';
-      case PreviewState.error:
-        return '오류';
     }
   }
 }

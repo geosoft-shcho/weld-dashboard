@@ -2,9 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../../../domain/entities/collection_board.dart';
-import '../../../domain/entities/preview_state.dart';
 import '../../core/di/locator.dart';
-import '../app_shell/shell_view_model.dart';
 import 'collection_monitoring_view_model.dart';
 import 'widgets/collection_command_bar.dart';
 import 'widgets/collection_kpi_cards.dart';
@@ -28,94 +26,67 @@ class _CollectionMonitoringBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final previewState = context.watch<ShellViewModel>().previewState;
     final viewModel = context.watch<CollectionMonitoringViewModel>();
     return ScaffoldPage(
       header: const PageHeader(title: Text('수집 모니터링')),
       content: Padding(
         padding: const EdgeInsets.all(16),
-        child: _content(previewState, viewModel),
+        child: _content(viewModel),
       ),
     );
   }
 
-  Widget _content(
-    PreviewState previewState,
-    CollectionMonitoringViewModel viewModel,
-  ) {
-    switch (previewState) {
-      case PreviewState.loading:
-        return const Center(child: ProgressRing());
-      case PreviewState.empty:
-        return const InfoBar(
-          title: Text('빈 상태'),
-          content: Text('미리보기: 표시할 수집 데이터가 없습니다.'),
-          severity: InfoBarSeverity.warning,
-        );
-      case PreviewState.error:
-        return InfoBar(
-          title: const Text('CSV 로드 실패'),
-          content: const Text(
-            'collection_status.csv / collection_assignments.csv를 확인하세요.',
-          ),
-          action: Button(
-            onPressed: viewModel.didTapReload,
-            child: const Text('재시도'),
-          ),
-          severity: InfoBarSeverity.error,
-        );
-      case PreviewState.live:
-        if (viewModel.isLoading && viewModel.board == null) {
-          return const Center(child: ProgressRing());
-        }
-        if (viewModel.hasError) {
-          return InfoBar(
-            title: const Text('CSV 로드 실패'),
-            content: Text(viewModel.errorMessage),
-            action: Button(
-              onPressed: viewModel.didTapReload,
-              child: const Text('재시도'),
-            ),
-            severity: InfoBarSeverity.error,
-          );
-        }
-        final board = viewModel.board;
-        if (board == null) {
-          return const InfoBar(
-            title: Text('카탈로그 없음'),
-            content: Text('아직 CSV를 불러오지 않았습니다.'),
-          );
-        }
-        return ListView(
-          children: [
-            if (viewModel.isAutoRefreshOn)
-              InfoBar(
-                title: const Text('자동 갱신 중'),
-                content: Text(
-                  '${viewModel.query.refreshIntervalSeconds == 5 ? '5초' : '1분'} · CSV 재로드 목업',
-                ),
-                severity: InfoBarSeverity.info,
-              ),
-            if (viewModel.doesHaveInvalidTimeRange)
-              const Padding(
-                padding: EdgeInsets.only(top: 8),
-                child: InfoBar(
-                  title: Text('시간 범위 오류'),
-                  content: Text('시작 시각이 종료 시각보다 늦습니다. 일자·시간 범위는 타임라인에만 반영됩니다.'),
-                  severity: InfoBarSeverity.error,
-                ),
-              ),
-            const SizedBox(height: 8),
-            CollectionCommandBar(viewModel: viewModel, board: board),
-            const SizedBox(height: 12),
-            _Breadcrumb(viewModel: viewModel),
-            const SizedBox(height: 16),
-            CollectionKpiCards(viewModel: viewModel, kpi: board.kpi),
-            const SizedBox(height: 16),
-            _MonitoringTabView(viewModel: viewModel, board: board),
-          ],
-        );
+  Widget _content(CollectionMonitoringViewModel viewModel) {
+    if (viewModel.isLoading && viewModel.board == null) {
+      return const Center(child: ProgressRing());
     }
+    if (viewModel.hasError) {
+      return InfoBar(
+        title: const Text('CSV 로드 실패'),
+        content: Text(viewModel.errorMessage),
+        action: Button(
+          onPressed: viewModel.didTapReload,
+          child: const Text('재시도'),
+        ),
+        severity: InfoBarSeverity.error,
+      );
+    }
+    final board = viewModel.board;
+    if (board == null) {
+      return const InfoBar(
+        title: Text('카탈로그 없음'),
+        content: Text('아직 CSV를 불러오지 않았습니다.'),
+      );
+    }
+    return ListView(
+      children: [
+        if (viewModel.isAutoRefreshOn)
+          InfoBar(
+            title: const Text('자동 갱신 중'),
+            content: Text(
+              '${viewModel.query.refreshIntervalSeconds == 5 ? '5초' : '1분'} · CSV 재로드 목업',
+            ),
+            severity: InfoBarSeverity.info,
+          ),
+        if (viewModel.doesHaveInvalidTimeRange)
+          const Padding(
+            padding: EdgeInsets.only(top: 8),
+            child: InfoBar(
+              title: Text('시간 범위 오류'),
+              content: Text('시작 시각이 종료 시각보다 늦습니다. 일자·시간 범위는 타임라인에만 반영됩니다.'),
+              severity: InfoBarSeverity.error,
+            ),
+          ),
+        const SizedBox(height: 8),
+        CollectionCommandBar(viewModel: viewModel, board: board),
+        const SizedBox(height: 12),
+        _Breadcrumb(viewModel: viewModel),
+        const SizedBox(height: 16),
+        CollectionKpiCards(viewModel: viewModel, kpi: board.kpi),
+        const SizedBox(height: 16),
+        _MonitoringTabView(viewModel: viewModel, board: board),
+      ],
+    );
   }
 }
 

@@ -1,12 +1,10 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
-import '../../../domain/entities/preview_state.dart';
 import '../../core/di/locator.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/waveform_channel_charts.dart';
 import '../../navigation/app_coordinator.dart';
-import '../app_shell/shell_view_model.dart';
 import '../pass_profile/widgets/pass_context_bar.dart';
 import '../pass_profile/widgets/pass_legend_toolbar.dart';
 import '../pass_profile/widgets/pass_tabs_bar.dart';
@@ -51,7 +49,6 @@ class _QualityIssueBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final previewState = context.watch<ShellViewModel>().previewState;
     final viewModel = context.watch<QualityIssueViewModel>();
     final coordinator = context.watch<AppCoordinator>();
     final board = viewModel.board;
@@ -97,7 +94,7 @@ class _QualityIssueBody extends StatelessWidget {
           ),
           content: Padding(
             padding: const EdgeInsets.all(16),
-            child: _content(context, previewState, viewModel, coordinator),
+            child: _content(context, viewModel, coordinator),
           ),
         ),
       ),
@@ -120,40 +117,9 @@ class _QualityIssueBody extends StatelessWidget {
 
   Widget _content(
     BuildContext context,
-    PreviewState previewState,
     QualityIssueViewModel viewModel,
     AppCoordinator coordinator,
   ) {
-    switch (previewState) {
-      case PreviewState.loading:
-        return const Center(child: ProgressRing());
-      case PreviewState.empty:
-        return InfoBar(
-          title: const Text('품질 이슈 연계'),
-          content: const Text('연결된 품질 결과·파형이 없습니다. 공통키를 고르세요.'),
-          severity: InfoBarSeverity.warning,
-          action: Button(
-            onPressed: () => coordinator.didTapBackToWorkHistory(context),
-            child: const Text('작업 이력'),
-          ),
-        );
-      case PreviewState.error:
-        return InfoBar(
-          title: const Text('로드 실패'),
-          content: Text(
-            viewModel.errorMessage.isEmpty
-                ? 'CSV 로드 실패'
-                : viewModel.errorMessage,
-          ),
-          severity: InfoBarSeverity.error,
-          action: Button(
-            onPressed: viewModel.didTapReload,
-            child: const Text('재시도'),
-          ),
-        );
-      case PreviewState.live:
-        break;
-    }
     if (viewModel.isLoading) {
       return const Center(child: ProgressRing());
     }
