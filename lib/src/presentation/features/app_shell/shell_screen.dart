@@ -10,6 +10,7 @@ import '../../features/work_detail/work_detail_screen.dart';
 import '../../features/work_history/work_history_screen.dart';
 import '../../navigation/app_coordinator.dart';
 import 'shell_view_model.dart';
+import 'widgets/shell_title_leading.dart';
 
 class ShellScreen extends StatefulWidget {
   const ShellScreen({super.key});
@@ -19,7 +20,8 @@ class ShellScreen extends StatefulWidget {
 }
 
 class _ShellScreenState extends State<ShellScreen> {
-  final bool _isPaneExpanded = false;
+  /// Compact rail when false; open pane with labels when true.
+  bool _isPaneOpen = false;
 
   @override
   void initState() {
@@ -27,6 +29,12 @@ class _ShellScreenState extends State<ShellScreen> {
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ShellViewModel>().loadCatalog();
+    });
+  }
+
+  void _didTapTogglePane() {
+    setState(() {
+      _isPaneOpen = !_isPaneOpen;
     });
   }
 
@@ -41,7 +49,9 @@ class _ShellScreenState extends State<ShellScreen> {
           titleBar: TitleBar(
             isBackButtonVisible: false,
             height: 48,
-            title: const Text('용접 수집 모니터링'),
+            leftHeader: ShellTitleLeading(
+              onTogglePane: _didTapTogglePane,
+            ),
             endHeader: Padding(
               padding: const EdgeInsets.only(right: 12),
               child: Row(
@@ -81,9 +91,11 @@ class _ShellScreenState extends State<ShellScreen> {
           pane: NavigationPane(
             selected: coordinator.selectedPaneIndex,
             onChanged: coordinator.didSelectPane,
-            displayMode: _isPaneExpanded
+            displayMode: _isPaneOpen
                 ? PaneDisplayMode.expanded
                 : PaneDisplayMode.compact,
+            // Single toggle lives in the title bar leading row.
+            toggleButton: null,
             size: const NavigationPaneSize(openWidth: 240),
             items: [
               PaneItem(
@@ -94,28 +106,44 @@ class _ShellScreenState extends State<ShellScreen> {
               PaneItem(
                 icon: const Icon(FluentIcons.history),
                 title: const Text('작업 이력 조회'),
-                body: coordinator.isWorkDetailOpen
-                    ? WorkDetailScreen(
-                        key: ValueKey(coordinator.historyId),
-                        historyId: coordinator.historyId,
-                      )
-                    : const WorkHistoryScreen(),
-              ),
-              PaneItem(
-                icon: const Icon(FluentIcons.line_chart),
-                title: const Text('패스별 파라미터 프로파일'),
-                body: const PassProfileScreen(),
-              ),
-              PaneItem(
-                icon: const Icon(FluentIcons.report_document),
-                title: const Text('품질 이슈 연계'),
-                body: const QualityIssueScreen(),
+                body: _workHistoryBody(coordinator),
               ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  Widget _workHistoryBody(AppCoordinator coordinator) {
+    switch (coordinator.workHistoryStack) {
+      case WorkHistoryStack.list:
+        return const WorkHistoryScreen();
+      case WorkHistoryStack.detail:
+        return WorkDetailScreen(
+          key: ValueKey('detail|${coordinator.historyId}'),
+          historyId: coordinator.historyId,
+        );
+      case WorkHistoryStack.passProfile:
+        return PassProfileScreen(
+          key: ValueKey(
+            'pass|${coordinator.historyCommonKey}|${coordinator.historyId}|${coordinator.passId}',
+          ),
+          commonKey: coordinator.historyCommonKey,
+          historyId: coordinator.historyId,
+          passId: coordinator.passId,
+        );
+      case WorkHistoryStack.qualityIssue:
+        return QualityIssueScreen(
+          key: ValueKey(
+            'quality|${coordinator.historyCommonKey}|${coordinator.historyId}|${coordinator.passId}|${coordinator.linkId}',
+          ),
+          commonKey: coordinator.historyCommonKey,
+          historyId: coordinator.historyId,
+          passId: coordinator.passId,
+          linkId: coordinator.linkId,
+        );
+    }
   }
 
   String _previewLabel(PreviewState state) {

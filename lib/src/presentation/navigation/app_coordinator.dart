@@ -1,36 +1,51 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+enum WorkHistoryStack {
+  list,
+  detail,
+  passProfile,
+  qualityIssue,
+}
+
 class AppCoordinator extends ChangeNotifier {
   static const int COLLECTION_PANE_INDEX = 0;
   static const int WORK_HISTORY_PANE_INDEX = 1;
-  static const int PASS_PROFILE_PANE_INDEX = 2;
-  static const int QUALITY_ISSUE_PANE_INDEX = 3;
 
   int _selectedPaneIndex = 0;
+  WorkHistoryStack _workHistoryStack = WorkHistoryStack.list;
+  final List<WorkHistoryStack> _stackHistory = [];
   String _historyCommonKey = '';
   String _historyId = '';
+  String _passId = '';
+  String _linkId = '';
   String _pendingHistoryEquipmentId = '';
   String _pendingHistoryWorkerId = '';
-  bool _isWorkDetailOpen = false;
 
   int get selectedPaneIndex => _selectedPaneIndex;
+  WorkHistoryStack get workHistoryStack => _workHistoryStack;
   String get historyCommonKey => _historyCommonKey;
   String get historyId => _historyId;
+  String get passId => _passId;
+  String get linkId => _linkId;
   String get pendingHistoryEquipmentId => _pendingHistoryEquipmentId;
   String get pendingHistoryWorkerId => _pendingHistoryWorkerId;
-  bool get isWorkDetailOpen => _isWorkDetailOpen;
+  bool get canPopWorkHistoryStack => _stackHistory.isNotEmpty;
+  WorkHistoryStack? get previousWorkHistoryStack =>
+      _stackHistory.isEmpty ? null : _stackHistory.last;
 
   void didSelectPane(int index) {
     if (index == _selectedPaneIndex) {
-      if (!_isWorkDetailOpen) {
-        return;
+      if (_selectedPaneIndex == WORK_HISTORY_PANE_INDEX &&
+          _workHistoryStack != WorkHistoryStack.list) {
+        _resetWorkHistoryToList();
+        notifyListeners();
       }
-      _isWorkDetailOpen = false;
-      notifyListeners();
       return;
     }
-    _isWorkDetailOpen = false;
     _selectedPaneIndex = index;
+    if (index != WORK_HISTORY_PANE_INDEX) {
+      _resetWorkHistoryToList();
+    }
     notifyListeners();
   }
 
@@ -40,12 +55,13 @@ class AppCoordinator extends ChangeNotifier {
   }) {
     _pendingHistoryEquipmentId = equipmentId;
     _pendingHistoryWorkerId = workerId;
-    _isWorkDetailOpen = false;
+    _resetWorkHistoryToList();
     if (_selectedPaneIndex == WORK_HISTORY_PANE_INDEX) {
       notifyListeners();
       return;
     }
-    didSelectPane(WORK_HISTORY_PANE_INDEX);
+    _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
+    notifyListeners();
   }
 
   void didConsumePendingHistoryFilter() {
@@ -58,8 +74,18 @@ class AppCoordinator extends ChangeNotifier {
   }
 
   void didTapBackToWorkHistory(BuildContext context) {
-    _isWorkDetailOpen = false;
     _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
+    _resetWorkHistoryToList();
+    notifyListeners();
+  }
+
+  void didTapBackFromPassProfile(BuildContext context) {
+    _popWorkHistoryStack();
+    notifyListeners();
+  }
+
+  void didTapBackFromQualityIssue(BuildContext context) {
+    _popWorkHistoryStack();
     notifyListeners();
   }
 
@@ -68,7 +94,6 @@ class AppCoordinator extends ChangeNotifier {
     required String commonKey,
     required String historyId,
   }) {
-    _isWorkDetailOpen = false;
     didTapOpenPassProfile(commonKey: commonKey, historyId: historyId);
   }
 
@@ -77,32 +102,98 @@ class AppCoordinator extends ChangeNotifier {
     required String commonKey,
     required String historyId,
   }) {
-    _isWorkDetailOpen = false;
     didTapOpenQualityIssue(commonKey: commonKey, historyId: historyId);
   }
 
   void didTapOpenWorkDetail(BuildContext context, {required String historyId}) {
     _historyId = historyId;
-    _isWorkDetailOpen = true;
     _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
+    _pushWorkHistoryStack(WorkHistoryStack.detail);
     notifyListeners();
   }
 
   void didTapOpenPassProfile({
     required String commonKey,
-    required String historyId,
+    String historyId = '',
+    String? passId,
+    String? linkId,
   }) {
+    if (commonKey.isEmpty) {
+      return;
+    }
     _historyCommonKey = commonKey;
-    _historyId = historyId;
-    didSelectPane(PASS_PROFILE_PANE_INDEX);
+    if (historyId.isNotEmpty) {
+      _historyId = historyId;
+    }
+    _passId = passId ?? '';
+    _linkId = linkId ?? '';
+    _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
+    if (_workHistoryStack == WorkHistoryStack.passProfile) {
+      notifyListeners();
+      return;
+    }
+    if (_workHistoryStack == WorkHistoryStack.qualityIssue &&
+        previousWorkHistoryStack == WorkHistoryStack.passProfile) {
+      _popWorkHistoryStack();
+      notifyListeners();
+      return;
+    }
+    _pushWorkHistoryStack(WorkHistoryStack.passProfile);
+    notifyListeners();
   }
 
   void didTapOpenQualityIssue({
     required String commonKey,
-    required String historyId,
+    String historyId = '',
+    String? passId,
+    String? linkId,
   }) {
+    if (commonKey.isEmpty) {
+      return;
+    }
     _historyCommonKey = commonKey;
-    _historyId = historyId;
-    didSelectPane(QUALITY_ISSUE_PANE_INDEX);
+    if (historyId.isNotEmpty) {
+      _historyId = historyId;
+    }
+    _passId = passId ?? '';
+    _linkId = linkId ?? '';
+    _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
+    if (_workHistoryStack == WorkHistoryStack.qualityIssue) {
+      notifyListeners();
+      return;
+    }
+    _pushWorkHistoryStack(WorkHistoryStack.qualityIssue);
+    notifyListeners();
+  }
+
+  void _pushWorkHistoryStack(WorkHistoryStack next) {
+    if (_workHistoryStack == next) {
+      return;
+    }
+    _stackHistory.add(_workHistoryStack);
+    _workHistoryStack = next;
+  }
+
+  void _popWorkHistoryStack() {
+    if (_stackHistory.isEmpty) {
+      _resetWorkHistoryToList();
+      return;
+    }
+    _workHistoryStack = _stackHistory.removeLast();
+    if (_workHistoryStack == WorkHistoryStack.list) {
+      _clearDrilldownKeys();
+    }
+  }
+
+  void _resetWorkHistoryToList() {
+    _workHistoryStack = WorkHistoryStack.list;
+    _stackHistory.clear();
+    _clearDrilldownKeys();
+  }
+
+  void _clearDrilldownKeys() {
+    _historyCommonKey = '';
+    _passId = '';
+    _linkId = '';
   }
 }
