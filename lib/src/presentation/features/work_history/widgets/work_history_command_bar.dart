@@ -193,7 +193,6 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                         child: InfoLabel(
                           label: '시작일',
                           child: SizedBox(
-                            height: 36,
                             child: DatePicker(
                               selected: query.fromDate,
                               startDate: DateTime(2025, 1, 1),
@@ -211,7 +210,6 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                       child: Padding(
                         padding: const EdgeInsets.only(top: 24),
                         child: SizedBox(
-                          height: 36,
                           child: Button(
                             onPressed: query.fromDate == null
                                 ? null
@@ -230,7 +228,6 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                         child: InfoLabel(
                           label: '종료일',
                           child: SizedBox(
-                            height: 36,
                             child: DatePicker(
                               selected: query.toDate,
                               startDate: DateTime(2025, 1, 1),
@@ -248,7 +245,6 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                       child: Padding(
                         padding: const EdgeInsets.only(top: 24),
                         child: SizedBox(
-                          height: 36,
                           child: Button(
                             onPressed: query.toDate == null
                                 ? null
