@@ -10,9 +10,8 @@ import '../pass_profile/widgets/pass_legend_toolbar.dart';
 import '../pass_profile/widgets/pass_tabs_bar.dart';
 import 'quality_issue_args.dart';
 import 'quality_issue_view_model.dart';
-import 'widgets/paper_scan_host.dart';
 import 'widgets/quality_links_table.dart';
-import 'widgets/quality_paper_meta.dart';
+import 'widgets/quality_media_host.dart';
 
 class QualityIssueScreen extends StatelessWidget {
   const QualityIssueScreen({
@@ -193,17 +192,10 @@ class _QualityIssueBody extends StatelessWidget {
         LayoutBuilder(
           builder: (context, constraints) {
             final isWide = constraints.maxWidth >= 960;
-            final left = Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                PaperScanHost(
-                  key: ValueKey(group?.qualityResultId ?? 'empty'),
-                  scanFile: group?.scanFile ?? '',
-                  scanPages: group?.scanPages ?? 0,
-                ),
-                const SizedBox(height: 12),
-                QualityPaperMeta(group: group),
-              ],
+            final left = QualityMediaHost(
+              group: group,
+              selectedTab: viewModel.selectedMediaTab,
+              onSelectTab: viewModel.didSelectMediaTab,
             );
             final right = WaveformChannelCharts(
               series: board.series,

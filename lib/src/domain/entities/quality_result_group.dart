@@ -13,6 +13,7 @@ class QualityResultGroup {
     required this.issueSummary,
     required this.scanFile,
     required this.scanPages,
+    required this.videoFile,
     required this.items,
   });
 
@@ -27,7 +28,9 @@ class QualityResultGroup {
   final String issueSummary;
   final String scanFile;
   final int scanPages;
+  final String videoFile;
   final List<QualityResultItem> items;
 
   bool get doesHaveScanFile => scanFile.trim().isNotEmpty;
+  bool get doesHaveVideoFile => videoFile.trim().isNotEmpty;
 }

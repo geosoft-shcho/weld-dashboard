@@ -46,7 +46,7 @@ void main() {
     expect(fill.compareStats.currentBeginner.isComparable, isTrue);
   });
 
-  test('J-A-14 quality issue has scan PDF and allLinks', () async {
+  test('J-A-14 quality issue has scan PDF, video and allLinks', () async {
     final catalog = await repository.loadCatalog();
     final board = QueryQualityIssueUseCase().execute(
       catalog: catalog,
@@ -57,8 +57,35 @@ void main() {
     expect(board.allLinks.length, 3);
     expect(board.selectedGroup?.scanFile, contains('connection_beam_ndt'));
     expect(board.selectedGroup?.scanPages, 8);
+    expect(board.selectedGroup?.doesHaveScanFile, isTrue);
+    expect(board.selectedGroup?.doesHaveVideoFile, isTrue);
+    expect(board.selectedGroup?.videoFile, contains('stream.mp4'));
     expect(board.series.doesHaveAnySeries, isTrue);
     expect(board.selectedLink?.linkId, 'L001');
+  });
+
+  test('J-A-14 cap pass has PDF only', () async {
+    final catalog = await repository.loadCatalog();
+    final board = QueryQualityIssueUseCase().execute(
+      catalog: catalog,
+      commonKey: 'WO-2026-0312|J-A-14',
+      historyId: 'H001',
+      passId: 'P-A14-3',
+    );
+    expect(board.selectedGroup?.doesHaveScanFile, isTrue);
+    expect(board.selectedGroup?.doesHaveVideoFile, isFalse);
+  });
+
+  test('J-A-15 quality issue has video only', () async {
+    final catalog = await repository.loadCatalog();
+    final board = QueryQualityIssueUseCase().execute(
+      catalog: catalog,
+      commonKey: 'WO-2026-0312|J-A-15',
+      historyId: 'H002',
+    );
+    expect(board.selectedGroup?.doesHaveScanFile, isFalse);
+    expect(board.selectedGroup?.doesHaveVideoFile, isTrue);
+    expect(board.selectedGroup?.videoFile, contains('stream.mp4'));
   });
 
   test('J-D-09 quality issue has meta only and empty scan', () async {
@@ -74,6 +101,9 @@ void main() {
     expect(board.links, isEmpty);
     expect(board.selectedGroup?.paperDocNo, 'PAP-260903-009');
     expect(board.selectedGroup?.scanFile.trim(), isEmpty);
+    expect(board.selectedGroup?.videoFile.trim(), isEmpty);
+    expect(board.selectedGroup?.doesHaveScanFile, isFalse);
+    expect(board.selectedGroup?.doesHaveVideoFile, isFalse);
     expect(board.series.doesHaveAnySeries, isFalse);
   });
 

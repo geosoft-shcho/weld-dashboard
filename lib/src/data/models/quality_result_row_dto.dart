@@ -17,6 +17,7 @@ class QualityResultRowDto {
     required this.itemNote,
     required this.scanFile,
     required this.scanPages,
+    required this.videoFile,
   });
 
   factory QualityResultRowDto.fromRow(Map<String, String> row) {
@@ -35,6 +36,7 @@ class QualityResultRowDto {
       itemNote: row['item_note'] ?? '',
       scanFile: row['scan_file'] ?? '',
       scanPages: int.tryParse(row['scan_pages'] ?? '') ?? 0,
+      videoFile: row['video_file'] ?? '',
     );
   }
 
@@ -52,6 +54,7 @@ class QualityResultRowDto {
   final String itemNote;
   final String scanFile;
   final int scanPages;
+  final String videoFile;
 
   QualityResultItem toItem() {
     return QualityResultItem(
@@ -74,6 +77,7 @@ class QualityResultRowDto {
       issueSummary: issueSummary,
       scanFile: scanFile,
       scanPages: scanPages,
+      videoFile: videoFile,
       items: items,
     );
   }

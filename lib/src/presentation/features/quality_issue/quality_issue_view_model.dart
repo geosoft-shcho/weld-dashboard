@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 
 import '../../../domain/entities/pass_waveform_catalog.dart';
 import '../../../domain/entities/quality_issue_board.dart';
+import '../../../domain/entities/quality_media_tab.dart';
+import '../../../domain/entities/quality_result_group.dart';
 import '../../../domain/use_cases/load_pass_waveform_catalog_use_case.dart';
 import '../../../domain/use_cases/query_quality_issue_use_case.dart';
 
@@ -27,6 +29,7 @@ class QualityIssueViewModel extends ChangeNotifier {
   QualityIssueBoard? _board;
   String _passId;
   String _linkId;
+  QualityMediaTab _selectedMediaTab = QualityMediaTab.pdf;
   bool _showMaster = false;
   bool _showBeginner = true;
   bool _showRobot = false;
@@ -35,6 +38,7 @@ class QualityIssueViewModel extends ChangeNotifier {
   String _errorMessage = '';
 
   QualityIssueBoard? get board => _board;
+  QualityMediaTab get selectedMediaTab => _selectedMediaTab;
   bool get showMaster => _showMaster;
   bool get showBeginner => _showBeginner;
   bool get showRobot => _showRobot;
@@ -98,6 +102,18 @@ class QualityIssueViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void didSelectMediaTab(QualityMediaTab tab) {
+    if (_selectedMediaTab == tab) {
+      return;
+    }
+    final group = _board?.selectedGroup;
+    if (!_isMediaTabAvailable(tab, group)) {
+      return;
+    }
+    _selectedMediaTab = tab;
+    notifyListeners();
+  }
+
   void didTapToggleMaster(bool isOn) {
     _showMaster = isOn;
     notifyListeners();
@@ -135,6 +151,35 @@ class QualityIssueViewModel extends ChangeNotifier {
           board.selectedGroup?.passId ??
           _passId;
       _linkId = board.selectedLink?.linkId ?? _linkId;
+      _selectedMediaTab = _resolveMediaTab(
+        preferred: _selectedMediaTab,
+        group: board.selectedGroup,
+      );
+    }
+  }
+
+  QualityMediaTab _resolveMediaTab({
+    required QualityMediaTab preferred,
+    required QualityResultGroup? group,
+  }) {
+    if (_isMediaTabAvailable(preferred, group)) {
+      return preferred;
+    }
+    if (group?.doesHaveScanFile == true) {
+      return QualityMediaTab.pdf;
+    }
+    if (group?.doesHaveVideoFile == true) {
+      return QualityMediaTab.video;
+    }
+    return QualityMediaTab.pdf;
+  }
+
+  bool _isMediaTabAvailable(QualityMediaTab tab, QualityResultGroup? group) {
+    switch (tab) {
+      case QualityMediaTab.pdf:
+        return group?.doesHaveScanFile == true;
+      case QualityMediaTab.video:
+        return group?.doesHaveVideoFile == true;
     }
   }
 }

@@ -1,22 +1,22 @@
-quality_result_id,paper_doc_no,common_key,pass_id,segment_id,inspected_at,inspector_name,judgement,issue_summary,item_name,item_result,item_note,scan_file,scan_pages
-QR-001,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-1,SEG-A14-1A,2026-09-06,강검사,불합격,루트 언더컷 의심,외관,불합격,좌측 비드 언더컷,data/attachments/connection_beam_ndt.pdf,8
-QR-001,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-1,SEG-A14-1A,2026-09-06,강검사,불합격,루트 언더컷 의심,치수,보류,각장 하한 근접,data/attachments/connection_beam_ndt.pdf,8
-QR-001,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-1,SEG-A14-1A,2026-09-06,강검사,불합격,루트 언더컷 의심,NDT,불합격,UT 지시 2건,data/attachments/connection_beam_ndt.pdf,8
-QR-002,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-2,SEG-A14-2A,2026-09-06,강검사,보류,채움 패스 전류 편차,외관,합격,,data/attachments/connection_beam_ndt.pdf,8
-QR-002,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-2,SEG-A14-2A,2026-09-06,강검사,보류,채움 패스 전류 편차,치수,합격,,data/attachments/connection_beam_ndt.pdf,8
-QR-002,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-2,SEG-A14-2A,2026-09-06,강검사,보류,채움 패스 전류 편차,NDT,보류,재검사 권고,data/attachments/connection_beam_ndt.pdf,8
-QR-003,PAP-260906-015,WO-2026-0312|J-A-14,P-A14-3,SEG-A14-3A,2026-09-06,강검사,합격,캡 패스 양호,외관,합격,,data/attachments/connection_beam_ndt.pdf,8
-QR-003,PAP-260906-015,WO-2026-0312|J-A-14,P-A14-3,SEG-A14-3A,2026-09-06,강검사,합격,캡 패스 양호,치수,합격,,data/attachments/connection_beam_ndt.pdf,8
-QR-003,PAP-260906-015,WO-2026-0312|J-A-14,P-A14-3,SEG-A14-3A,2026-09-06,강검사,합격,캡 패스 양호,NDT,합격,,data/attachments/connection_beam_ndt.pdf,8
-QR-004,PAP-260906-018,WO-2026-0312|J-A-15,P-A15-1,SEG-A15-1A,2026-09-06,오검사,보류,루트 기공 의심,외관,보류,표면 기공 1,,
-QR-004,PAP-260906-018,WO-2026-0312|J-A-15,P-A15-1,SEG-A15-1A,2026-09-06,오검사,보류,루트 기공 의심,치수,합격,,,
-QR-004,PAP-260906-018,WO-2026-0312|J-A-15,P-A15-1,SEG-A15-1A,2026-09-06,오검사,보류,루트 기공 의심,NDT,보류,RT 대기,,
-QR-005,PAP-260905-003,WO-2026-0318|J-B-03,P-B03-1,SEG-B03-1A,2026-09-05,강검사,불합격,오버랩,외관,불합격,오버랩 구간,,
-QR-005,PAP-260905-003,WO-2026-0318|J-B-03,P-B03-1,SEG-B03-1A,2026-09-05,강검사,불합격,오버랩,치수,합격,,,
-QR-005,PAP-260905-003,WO-2026-0318|J-B-03,P-B03-1,SEG-B03-1A,2026-09-05,강검사,불합격,오버랩,NDT,합격,,,
-QR-006,PAP-260904-001,WO-2026-0401|J-C-01,P-C01-2,SEG-C01-2A,2026-09-04,오검사,합격,채움 양호,외관,합격,,,
-QR-006,PAP-260904-001,WO-2026-0401|J-C-01,P-C01-2,SEG-C01-2A,2026-09-04,오검사,합격,채움 양호,치수,합격,,,
-QR-006,PAP-260904-001,WO-2026-0401|J-C-01,P-C01-2,SEG-C01-2A,2026-09-04,오검사,합격,채움 양호,NDT,합격,,,
-QR-007,PAP-260903-009,WO-2026-0412|J-D-09,P-D09-1,SEG-D09-1A,2026-09-03,강검사,보류,파형 미연계 성적서,외관,보류,페이퍼만 존재,,
-QR-007,PAP-260903-009,WO-2026-0412|J-D-09,P-D09-1,SEG-D09-1A,2026-09-03,강검사,보류,파형 미연계 성적서,치수,합격,,,
-QR-007,PAP-260903-009,WO-2026-0412|J-D-09,P-D09-1,SEG-D09-1A,2026-09-03,강검사,보류,파형 미연계 성적서,NDT,보류,재촬영,,
+quality_result_id,paper_doc_no,common_key,pass_id,segment_id,inspected_at,inspector_name,judgement,issue_summary,item_name,item_result,item_note,scan_file,scan_pages,video_file
+QR-001,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-1,SEG-A14-1A,2026-09-06,강검사,불합격,루트 언더컷 의심,외관,불합격,좌측 비드 언더컷,data/attachments/connection_beam_ndt.pdf,8,data/attachments/stream.mp4
+QR-001,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-1,SEG-A14-1A,2026-09-06,강검사,불합격,루트 언더컷 의심,치수,보류,각장 하한 근접,data/attachments/connection_beam_ndt.pdf,8,data/attachments/stream.mp4
+QR-001,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-1,SEG-A14-1A,2026-09-06,강검사,불합격,루트 언더컷 의심,NDT,불합격,UT 지시 2건,data/attachments/connection_beam_ndt.pdf,8,data/attachments/stream.mp4
+QR-002,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-2,SEG-A14-2A,2026-09-06,강검사,보류,채움 패스 전류 편차,외관,합격,,data/attachments/connection_beam_ndt.pdf,8,data/attachments/stream.mp4
+QR-002,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-2,SEG-A14-2A,2026-09-06,강검사,보류,채움 패스 전류 편차,치수,합격,,data/attachments/connection_beam_ndt.pdf,8,data/attachments/stream.mp4
+QR-002,PAP-260906-014,WO-2026-0312|J-A-14,P-A14-2,SEG-A14-2A,2026-09-06,강검사,보류,채움 패스 전류 편차,NDT,보류,재검사 권고,data/attachments/connection_beam_ndt.pdf,8,data/attachments/stream.mp4
+QR-003,PAP-260906-015,WO-2026-0312|J-A-14,P-A14-3,SEG-A14-3A,2026-09-06,강검사,합격,캡 패스 양호,외관,합격,,data/attachments/connection_beam_ndt.pdf,8,
+QR-003,PAP-260906-015,WO-2026-0312|J-A-14,P-A14-3,SEG-A14-3A,2026-09-06,강검사,합격,캡 패스 양호,치수,합격,,data/attachments/connection_beam_ndt.pdf,8,
+QR-003,PAP-260906-015,WO-2026-0312|J-A-14,P-A14-3,SEG-A14-3A,2026-09-06,강검사,합격,캡 패스 양호,NDT,합격,,data/attachments/connection_beam_ndt.pdf,8,
+QR-004,PAP-260906-018,WO-2026-0312|J-A-15,P-A15-1,SEG-A15-1A,2026-09-06,오검사,보류,루트 기공 의심,외관,보류,표면 기공 1,,,data/attachments/stream.mp4
+QR-004,PAP-260906-018,WO-2026-0312|J-A-15,P-A15-1,SEG-A15-1A,2026-09-06,오검사,보류,루트 기공 의심,치수,합격,,,,data/attachments/stream.mp4
+QR-004,PAP-260906-018,WO-2026-0312|J-A-15,P-A15-1,SEG-A15-1A,2026-09-06,오검사,보류,루트 기공 의심,NDT,보류,RT 대기,,,data/attachments/stream.mp4
+QR-005,PAP-260905-003,WO-2026-0318|J-B-03,P-B03-1,SEG-B03-1A,2026-09-05,강검사,불합격,오버랩,외관,불합격,오버랩 구간,,,
+QR-005,PAP-260905-003,WO-2026-0318|J-B-03,P-B03-1,SEG-B03-1A,2026-09-05,강검사,불합격,오버랩,치수,합격,,,,
+QR-005,PAP-260905-003,WO-2026-0318|J-B-03,P-B03-1,SEG-B03-1A,2026-09-05,강검사,불합격,오버랩,NDT,합격,,,,
+QR-006,PAP-260904-001,WO-2026-0401|J-C-01,P-C01-2,SEG-C01-2A,2026-09-04,오검사,합격,채움 양호,외관,합격,,,,
+QR-006,PAP-260904-001,WO-2026-0401|J-C-01,P-C01-2,SEG-C01-2A,2026-09-04,오검사,합격,채움 양호,치수,합격,,,,
+QR-006,PAP-260904-001,WO-2026-0401|J-C-01,P-C01-2,SEG-C01-2A,2026-09-04,오검사,합격,채움 양호,NDT,합격,,,,
+QR-007,PAP-260903-009,WO-2026-0412|J-D-09,P-D09-1,SEG-D09-1A,2026-09-03,강검사,보류,파형 미연계 성적서,외관,보류,페이퍼만 존재,,,
+QR-007,PAP-260903-009,WO-2026-0412|J-D-09,P-D09-1,SEG-D09-1A,2026-09-03,강검사,보류,파형 미연계 성적서,치수,합격,,,,
+QR-007,PAP-260903-009,WO-2026-0412|J-D-09,P-D09-1,SEG-D09-1A,2026-09-03,강검사,보류,파형 미연계 성적서,NDT,보류,재촬영,,,
