@@ -85,36 +85,55 @@ class _CollectionResourceTimelineViewState
       for (final event in timeline.events)
         CollectionEventTimelineMapper.entryOf(event),
     ];
+    const resourceColumnWidth = 176.0;
+    final startHour = CollectionEventTimelineMapper.startHourOf(query);
+    final endHour = CollectionEventTimelineMapper.endHourOf(query);
     return NeonTimelineMaterialScope(
-      child: ResourceTimelineView<CollectionEvent>(
-        resources: resources,
-        entries: entries,
-        selectedDate: query.selectedDate,
-        now: query.snapshotAt,
-        timelineController: _controller,
-        dataRevision: Object.hash(
-          query.snapshotAt,
-          query.zoomHours,
-          timeline.eventCount,
-          timeline.selectedEventId,
-        ),
-        startHour: CollectionEventTimelineMapper.startHourOf(query),
-        endHour: CollectionEventTimelineMapper.endHourOf(query),
-        pixelsPerMinute: CollectionEventTimelineMapper.pixelsPerMinute(
-          query.zoomHours,
-        ),
-        rowHeight: 64,
-        resourceColumnWidth: 176,
-        showCapacityConflicts: false,
-        interactions: const TimelineInteractionConfig(
-          enableDragging: false,
-          enableResizing: false,
-          enableKeyboard: false,
-        ),
-        resourceHeaderLabel: '장비',
-        resourceHeaderBuilder: _buildResourceHeader,
-        onEntryTap: _handleEntryTap,
-        itemBuilder: _buildEntry,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final canvasBudget = constraints.maxWidth.isFinite
+              ? constraints.maxWidth - resourceColumnWidth
+              : 0.0;
+          final pixelsPerMinute =
+              CollectionEventTimelineMapper.pixelsPerMinuteForViewport(
+                zoomHours: query.zoomHours,
+                canvasBudget: canvasBudget,
+                startHour: startHour,
+                endHour: endHour,
+              );
+          return ResourceTimelineView<CollectionEvent>(
+            resources: resources,
+            entries: entries,
+            selectedDate: query.selectedDate,
+            now: query.snapshotAt,
+            timelineController: _controller,
+            dataRevision: Object.hash(
+              query.snapshotAt,
+              query.zoomHours,
+              timeline.eventCount,
+              timeline.selectedEventId,
+              constraints.maxWidth.isFinite
+                  ? constraints.maxWidth.round()
+                  : 0,
+              pixelsPerMinute,
+            ),
+            startHour: startHour,
+            endHour: endHour,
+            pixelsPerMinute: pixelsPerMinute,
+            rowHeight: 64,
+            resourceColumnWidth: resourceColumnWidth,
+            showCapacityConflicts: false,
+            interactions: const TimelineInteractionConfig(
+              enableDragging: false,
+              enableResizing: false,
+              enableKeyboard: false,
+            ),
+            resourceHeaderLabel: '장비',
+            resourceHeaderBuilder: _buildResourceHeader,
+            onEntryTap: _handleEntryTap,
+            itemBuilder: _buildEntry,
+          );
+        },
       ),
     );
   }

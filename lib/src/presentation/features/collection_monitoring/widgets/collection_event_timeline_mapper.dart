@@ -109,6 +109,34 @@ class CollectionEventTimelineMapper {
     return (HOUR_PX * (24 / hours)) / 60;
   }
 
+  /// Fits the time canvas to [canvasBudget] when wider than zoom density.
+  ///
+  /// `max(zoomPpm, fitPpm)`: stretch to remove empty viewport space; keep
+  /// zoom-in scroll when zoom density already exceeds the budget.
+  static double pixelsPerMinuteForViewport({
+    required double zoomHours,
+    required double canvasBudget,
+    required int startHour,
+    required int endHour,
+  }) {
+    final zoomPpm = pixelsPerMinute(zoomHours);
+    if (!canvasBudget.isFinite || canvasBudget <= 0) {
+      return zoomPpm;
+    }
+    final rangeMinutes = _rangeMinutes(startHour: startHour, endHour: endHour);
+    final fitPpm = canvasBudget / rangeMinutes;
+    return zoomPpm >= fitPpm ? zoomPpm : fitPpm;
+  }
+
+  static int rangeMinutesOf({required int startHour, required int endHour}) {
+    return _rangeMinutes(startHour: startHour, endHour: endHour);
+  }
+
+  static int _rangeMinutes({required int startHour, required int endHour}) {
+    final span = (endHour - startHour) * 60;
+    return span < 1 ? 1 : span;
+  }
+
   static int startHourOf(CollectionBoardQuery query) {
     return (query.startMinutes ~/ 60).clamp(0, 23);
   }
