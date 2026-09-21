@@ -250,38 +250,39 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
   }
 
   Widget _buildDateNavigationField(CollectionBoardQuery query) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 28,
-          height: 36,
-          child: IconButton(
-            icon: const Icon(FluentIcons.chevron_left, size: 12),
-            onPressed: widget.viewModel.didTapPreviousDate,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: InfoLabel(
-            label: '일자',
-            child: DatePicker(
-              selected: query.selectedDate,
-              onChanged: widget.viewModel.didSelectDate,
-              startDate: DateTime(2025, 1, 1),
-              endDate: DateTime(2027, 12, 31),
+    return InfoLabel(
+      label: '일자',
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: 28,
+              child: IconButton(
+                icon: const Icon(FluentIcons.chevron_left, size: 12),
+                onPressed: widget.viewModel.didTapPreviousDate,
+              ),
             ),
-          ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: DatePicker(
+                selected: query.selectedDate,
+                onChanged: widget.viewModel.didSelectDate,
+                startDate: DateTime(2025, 1, 1),
+                endDate: DateTime(2027, 12, 31),
+              ),
+            ),
+            const SizedBox(width: 4),
+            SizedBox(
+              width: 28,
+              child: IconButton(
+                icon: const Icon(FluentIcons.chevron_right, size: 12),
+                onPressed: widget.viewModel.didTapNextDate,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 4),
-        SizedBox(
-          width: 28,
-          height: 36,
-          child: IconButton(
-            icon: const Icon(FluentIcons.chevron_right, size: 12),
-            onPressed: widget.viewModel.didTapNextDate,
-          ),
-        ),
-      ],
+      ),
     );
   }
 
