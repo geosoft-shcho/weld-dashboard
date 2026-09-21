@@ -2,6 +2,8 @@ import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../domain/entities/latest_pass_profile_target.dart';
 import '../../domain/entities/latest_quality_issue_target.dart';
+import 'app_navigation_port.dart';
+import 'app_route_state.dart';
 
 enum WorkHistoryStack {
   list,
@@ -10,11 +12,22 @@ enum WorkHistoryStack {
   qualityIssue,
 }
 
+enum _RouteWriteMode {
+  go,
+  push,
+  replace,
+  pop,
+  none,
+}
+
 class AppCoordinator extends ChangeNotifier {
   static const int COLLECTION_PANE_INDEX = 0;
   static const int WORK_HISTORY_PANE_INDEX = 1;
   static const int PASS_PROFILE_PANE_INDEX = 2;
   static const int QUALITY_ISSUE_PANE_INDEX = 3;
+
+  AppNavigationPort? _navigation;
+  bool _isApplyingRoute = false;
 
   int _selectedPaneIndex = 0;
   WorkHistoryStack _workHistoryStack = WorkHistoryStack.list;
@@ -67,6 +80,21 @@ class AppCoordinator extends ChangeNotifier {
   bool get isQualityIssuePaneSelected =>
       _selectedPaneIndex == QUALITY_ISSUE_PANE_INDEX;
 
+  void attachNavigation(AppNavigationPort navigation) {
+    _navigation = navigation;
+  }
+
+  /// Called by the router on browser back/forward and every location match.
+  void didApplyRoute(AppRouteState state) {
+    if (_matchesRouteState(state)) {
+      return;
+    }
+    _isApplyingRoute = true;
+    _applyRouteState(state);
+    _isApplyingRoute = false;
+    notifyListeners();
+  }
+
   void didApplyLatestPaneCandidates({
     LatestPassProfileTarget? passProfile,
     LatestQualityIssueTarget? qualityIssue,
@@ -85,14 +113,20 @@ class AppCoordinator extends ChangeNotifier {
     if (qualityIssue == null) {
       _clearPaneQualityKeys();
     }
+    var didChangePane = false;
     if (_selectedPaneIndex == PASS_PROFILE_PANE_INDEX && passProfile == null) {
       _selectedPaneIndex = COLLECTION_PANE_INDEX;
+      didChangePane = true;
     }
     if (_selectedPaneIndex == QUALITY_ISSUE_PANE_INDEX &&
         qualityIssue == null) {
       _selectedPaneIndex = COLLECTION_PANE_INDEX;
+      didChangePane = true;
     }
     notifyListeners();
+    if (didChangePane) {
+      _publishLocation(_RouteWriteMode.go);
+    }
   }
 
   void didSelectPane(int index) {
@@ -107,6 +141,7 @@ class AppCoordinator extends ChangeNotifier {
           _workHistoryStack != WorkHistoryStack.list) {
         _resetWorkHistoryToList();
         notifyListeners();
+        _publishLocation(_RouteWriteMode.go);
       }
       return;
     }
@@ -121,6 +156,7 @@ class AppCoordinator extends ChangeNotifier {
       _applyLatestQualityIssueKeys();
     }
     notifyListeners();
+    _publishLocation(_RouteWriteMode.go);
   }
 
   void didTapOpenWorkHistory({
@@ -132,10 +168,12 @@ class AppCoordinator extends ChangeNotifier {
     _resetWorkHistoryToList();
     if (_selectedPaneIndex == WORK_HISTORY_PANE_INDEX) {
       notifyListeners();
+      _publishLocation(_RouteWriteMode.go);
       return;
     }
     _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
     notifyListeners();
+    _publishLocation(_RouteWriteMode.go);
   }
 
   void didConsumePendingHistoryFilter() {
@@ -151,6 +189,7 @@ class AppCoordinator extends ChangeNotifier {
     _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
     _resetWorkHistoryToList();
     notifyListeners();
+    _publishLocation(_RouteWriteMode.go);
   }
 
   void didTapBackFromPassProfile(BuildContext context) {
@@ -158,8 +197,7 @@ class AppCoordinator extends ChangeNotifier {
       didTapBackToWorkHistory(context);
       return;
     }
-    _popWorkHistoryStack();
-    notifyListeners();
+    _popOrGoToPrevious();
   }
 
   void didTapBackFromQualityIssue(BuildContext context) {
@@ -167,8 +205,7 @@ class AppCoordinator extends ChangeNotifier {
       didTapBackToWorkHistory(context);
       return;
     }
-    _popWorkHistoryStack();
-    notifyListeners();
+    _popOrGoToPrevious();
   }
 
   void didTapLeaveWorkDetailToPassProfile(
@@ -184,7 +221,11 @@ class AppCoordinator extends ChangeNotifier {
     required String commonKey,
     required String historyId,
   }) {
-    didTapOpenQualityIssue(commonKey: commonKey, historyId: historyId);
+    didTapOpenQualityIssue(
+      commonKey: commonKey,
+      historyId: historyId,
+      viaDetail: true,
+    );
   }
 
   void didTapOpenWorkDetail(BuildContext context, {required String historyId}) {
@@ -192,6 +233,7 @@ class AppCoordinator extends ChangeNotifier {
     _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
     _pushWorkHistoryStack(WorkHistoryStack.detail);
     notifyListeners();
+    _publishLocation(_RouteWriteMode.push);
   }
 
   void didTapOpenPassProfile({
@@ -212,16 +254,19 @@ class AppCoordinator extends ChangeNotifier {
     _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
     if (_workHistoryStack == WorkHistoryStack.passProfile) {
       notifyListeners();
+      _publishLocation(_RouteWriteMode.replace);
       return;
     }
     if (_workHistoryStack == WorkHistoryStack.qualityIssue &&
         previousWorkHistoryStack == WorkHistoryStack.passProfile) {
       _popWorkHistoryStack();
       notifyListeners();
+      _publishLocation(_RouteWriteMode.replace);
       return;
     }
     _pushWorkHistoryStack(WorkHistoryStack.passProfile);
     notifyListeners();
+    _publishLocation(_RouteWriteMode.push);
   }
 
   void didTapOpenQualityIssue({
@@ -229,6 +274,7 @@ class AppCoordinator extends ChangeNotifier {
     String historyId = '',
     String? passId,
     String? linkId,
+    bool viaDetail = false,
   }) {
     if (commonKey.isEmpty) {
       return;
@@ -242,10 +288,12 @@ class AppCoordinator extends ChangeNotifier {
     _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
     if (_workHistoryStack == WorkHistoryStack.qualityIssue) {
       notifyListeners();
+      _publishLocation(_RouteWriteMode.replace);
       return;
     }
     _pushWorkHistoryStack(WorkHistoryStack.qualityIssue);
     notifyListeners();
+    _publishLocation(_RouteWriteMode.push, qualityViaDetail: viaDetail);
   }
 
   void didTapOpenLatestPassProfile() {
@@ -256,6 +304,7 @@ class AppCoordinator extends ChangeNotifier {
     _selectedPaneIndex = PASS_PROFILE_PANE_INDEX;
     _resetWorkHistoryToList();
     notifyListeners();
+    _publishLocation(_RouteWriteMode.go);
   }
 
   void didTapOpenLatestQualityIssue() {
@@ -266,6 +315,7 @@ class AppCoordinator extends ChangeNotifier {
     _selectedPaneIndex = QUALITY_ISSUE_PANE_INDEX;
     _resetWorkHistoryToList();
     notifyListeners();
+    _publishLocation(_RouteWriteMode.go);
   }
 
   void didTapOpenQualityIssueFromPane({
@@ -286,6 +336,7 @@ class AppCoordinator extends ChangeNotifier {
     _selectedPaneIndex = QUALITY_ISSUE_PANE_INDEX;
     _resetWorkHistoryToList();
     notifyListeners();
+    _publishLocation(_RouteWriteMode.push);
   }
 
   void didTapOpenPassProfileFromPane({
@@ -304,6 +355,18 @@ class AppCoordinator extends ChangeNotifier {
     _selectedPaneIndex = PASS_PROFILE_PANE_INDEX;
     _resetWorkHistoryToList();
     notifyListeners();
+    _publishLocation(_RouteWriteMode.go);
+  }
+
+  void _popOrGoToPrevious() {
+    final navigation = _navigation;
+    if (navigation != null && navigation.canPop) {
+      _publishLocation(_RouteWriteMode.pop);
+      return;
+    }
+    _popWorkHistoryStack();
+    notifyListeners();
+    _publishLocation(_RouteWriteMode.go);
   }
 
   void _applyLatestPassProfileKeys() {
@@ -371,5 +434,212 @@ class AppCoordinator extends ChangeNotifier {
     _historyCommonKey = '';
     _passId = '';
     _linkId = '';
+  }
+
+  AppRouteState _currentRouteState({bool qualityViaDetail = false}) {
+    switch (_selectedPaneIndex) {
+      case PASS_PROFILE_PANE_INDEX:
+        return AppRouteState(
+          pane: AppPane.pass,
+          commonKey: _panePassCommonKey,
+          historyId: _panePassHistoryId,
+          passId: _panePassPassId,
+        );
+      case QUALITY_ISSUE_PANE_INDEX:
+        return AppRouteState(
+          pane: AppPane.quality,
+          commonKey: _paneQualityCommonKey,
+          historyId: _paneQualityHistoryId,
+          passId: _paneQualityPassId,
+          linkId: _paneQualityLinkId,
+        );
+      case WORK_HISTORY_PANE_INDEX:
+        final viaDetail = qualityViaDetail ||
+            (_workHistoryStack == WorkHistoryStack.qualityIssue &&
+                previousWorkHistoryStack == WorkHistoryStack.detail);
+        return AppRouteState(
+          pane: AppPane.history,
+          stack: _workHistoryStack,
+          historyId: _historyId,
+          commonKey: _historyCommonKey,
+          passId: _passId,
+          linkId: _linkId,
+          qualityViaDetail: viaDetail,
+        );
+      case COLLECTION_PANE_INDEX:
+      default:
+        return const AppRouteState(pane: AppPane.collection);
+    }
+  }
+
+  bool _matchesRouteState(AppRouteState state) {
+    switch (state.pane) {
+      case AppPane.collection:
+        return _selectedPaneIndex == COLLECTION_PANE_INDEX &&
+            _workHistoryStack == WorkHistoryStack.list;
+      case AppPane.pass:
+        if (_selectedPaneIndex != PASS_PROFILE_PANE_INDEX) {
+          return false;
+        }
+        if (state.commonKey.isEmpty) {
+          return true;
+        }
+        return state.commonKey == _panePassCommonKey &&
+            state.historyId == _panePassHistoryId &&
+            state.passId == _panePassPassId;
+      case AppPane.quality:
+        if (_selectedPaneIndex != QUALITY_ISSUE_PANE_INDEX) {
+          return false;
+        }
+        if (state.commonKey.isEmpty) {
+          return true;
+        }
+        return state.commonKey == _paneQualityCommonKey &&
+            state.historyId == _paneQualityHistoryId &&
+            state.passId == _paneQualityPassId &&
+            state.linkId == _paneQualityLinkId;
+      case AppPane.history:
+        if (_selectedPaneIndex != WORK_HISTORY_PANE_INDEX) {
+          return false;
+        }
+        if (state.stack != _workHistoryStack) {
+          return false;
+        }
+        switch (state.stack) {
+          case WorkHistoryStack.list:
+            return true;
+          case WorkHistoryStack.detail:
+            return state.historyId == _historyId;
+          case WorkHistoryStack.passProfile:
+            return state.commonKey == _historyCommonKey &&
+                state.historyId == _historyId &&
+                state.passId == _passId;
+          case WorkHistoryStack.qualityIssue:
+            final viaDetail = previousWorkHistoryStack == WorkHistoryStack.detail;
+            return state.commonKey == _historyCommonKey &&
+                state.historyId == _historyId &&
+                state.passId == _passId &&
+                state.linkId == _linkId &&
+                state.qualityViaDetail == viaDetail;
+        }
+    }
+  }
+
+  void _applyRouteState(AppRouteState state) {
+    switch (state.pane) {
+      case AppPane.collection:
+        _selectedPaneIndex = COLLECTION_PANE_INDEX;
+        _resetWorkHistoryToList();
+      case AppPane.pass:
+        _selectedPaneIndex = PASS_PROFILE_PANE_INDEX;
+        _resetWorkHistoryToList();
+        if (state.commonKey.isNotEmpty) {
+          _panePassCommonKey = state.commonKey;
+          _panePassHistoryId = state.historyId;
+          _panePassPassId = state.passId;
+        } else {
+          _applyLatestPassProfileKeys();
+        }
+      case AppPane.quality:
+        _selectedPaneIndex = QUALITY_ISSUE_PANE_INDEX;
+        _resetWorkHistoryToList();
+        if (state.commonKey.isNotEmpty) {
+          _paneQualityCommonKey = state.commonKey;
+          _paneQualityHistoryId = state.historyId;
+          _paneQualityPassId = state.passId;
+          _paneQualityLinkId = state.linkId;
+        } else {
+          _applyLatestQualityIssueKeys();
+        }
+      case AppPane.history:
+        _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
+        _historyId = state.historyId;
+        _historyCommonKey = state.commonKey;
+        _passId = state.passId;
+        _linkId = state.linkId;
+        _rebuildStackHistory(
+          state.stack,
+          qualityViaDetail: state.qualityViaDetail,
+        );
+    }
+  }
+
+  void _rebuildStackHistory(
+    WorkHistoryStack stack, {
+    required bool qualityViaDetail,
+  }) {
+    _stackHistory.clear();
+    _workHistoryStack = stack;
+    switch (stack) {
+      case WorkHistoryStack.list:
+        _clearDrilldownKeys();
+      case WorkHistoryStack.detail:
+        _stackHistory.add(WorkHistoryStack.list);
+      case WorkHistoryStack.passProfile:
+        _stackHistory.add(WorkHistoryStack.list);
+        if (_historyId.isNotEmpty) {
+          _stackHistory.add(WorkHistoryStack.detail);
+        }
+      case WorkHistoryStack.qualityIssue:
+        _stackHistory.add(WorkHistoryStack.list);
+        if (_historyId.isNotEmpty) {
+          _stackHistory.add(WorkHistoryStack.detail);
+        }
+        if (!qualityViaDetail) {
+          _stackHistory.add(WorkHistoryStack.passProfile);
+        }
+    }
+  }
+
+  void _publishLocation(
+    _RouteWriteMode mode, {
+    bool qualityViaDetail = false,
+  }) {
+    if (_isApplyingRoute || mode == _RouteWriteMode.none) {
+      return;
+    }
+    final navigation = _navigation;
+    if (navigation == null) {
+      return;
+    }
+    if (mode == _RouteWriteMode.pop) {
+      if (navigation.canPop) {
+        navigation.pop();
+      }
+      return;
+    }
+    final location = _currentRouteState(
+      qualityViaDetail: qualityViaDetail,
+    ).toLocation();
+    if (_normalizeLocation(navigation.currentLocation) ==
+        _normalizeLocation(location)) {
+      return;
+    }
+    switch (mode) {
+      case _RouteWriteMode.go:
+        navigation.go(location);
+      case _RouteWriteMode.push:
+        navigation.push(location);
+      case _RouteWriteMode.replace:
+        navigation.replace(location);
+      case _RouteWriteMode.pop:
+      case _RouteWriteMode.none:
+        break;
+    }
+  }
+
+  String _normalizeLocation(String location) {
+    if (location.isEmpty) {
+      return '/';
+    }
+    final uri = Uri.parse(location);
+    final path = uri.path.isEmpty ? '/' : uri.path;
+    if (!uri.hasQuery) {
+      return path;
+    }
+    final sorted = Map<String, String>.from(uri.queryParameters);
+    final keys = sorted.keys.toList()..sort();
+    final query = keys.map((key) => '$key=${sorted[key]}').join('&');
+    return '$path?$query';
   }
 }
