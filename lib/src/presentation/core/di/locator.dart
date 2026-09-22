@@ -106,6 +106,7 @@ void setupLocator({required bool pdfrxReady}) {
     () => CollectionMonitoringViewModel(
       loadCollectionCatalogUseCase: locator(),
       queryCollectionBoardUseCase: locator(),
+      onAfterBoardLoaded: locator<AppCoordinator>().didRefreshDashboardData,
     ),
   );
   locator.registerFactory(

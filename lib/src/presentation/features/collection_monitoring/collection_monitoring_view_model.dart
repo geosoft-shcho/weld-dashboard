@@ -16,11 +16,13 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   CollectionMonitoringViewModel({
     required LoadCollectionCatalogUseCase loadCollectionCatalogUseCase,
     required QueryCollectionBoardUseCase queryCollectionBoardUseCase,
+    this.onAfterBoardLoaded,
   }) : _loadCollectionCatalogUseCase = loadCollectionCatalogUseCase,
        _queryCollectionBoardUseCase = queryCollectionBoardUseCase;
 
   final LoadCollectionCatalogUseCase _loadCollectionCatalogUseCase;
   final QueryCollectionBoardUseCase _queryCollectionBoardUseCase;
+  final ValueChanged<DateTime>? onAfterBoardLoaded;
 
   CollectionBoardQuery _query = CollectionBoardQuery.initial();
   CollectionCatalog? _catalog;
@@ -54,6 +56,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       _catalog = catalog;
       _query = _query.copyWith(snapshotAt: catalog.snapshotAt);
       _applyQuery();
+      onAfterBoardLoaded?.call(DateTime.now());
     } catch (error) {
       if (version != _loadVersion) return;
       _hasError = true;

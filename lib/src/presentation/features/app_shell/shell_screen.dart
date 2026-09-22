@@ -64,7 +64,7 @@ class _ShellScreenState extends State<ShellScreen> {
             endHeader: Padding(
               padding: const EdgeInsets.only(right: 12),
               child: Text(
-                '최신 업데이트 ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now())}',
+                '최신 업데이트 ${DateFormat('yyyy-MM-dd HH:mm:ss').format(coordinator.lastDataUpdatedAt)}',
                 style: const TextStyle(fontSize: 12),
               ),
             ),

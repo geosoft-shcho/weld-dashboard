@@ -49,6 +49,7 @@ class AppCoordinator extends ChangeNotifier {
   String _paneQualityHistoryId = '';
   String _paneQualityPassId = '';
   String _paneQualityLinkId = '';
+  DateTime _lastDataUpdatedAt = DateTime.now();
 
   int get selectedPaneIndex => _selectedPaneIndex;
   WorkHistoryStack get workHistoryStack => _workHistoryStack;
@@ -74,6 +75,13 @@ class AppCoordinator extends ChangeNotifier {
   String get paneQualityHistoryId => _paneQualityHistoryId;
   String get paneQualityPassId => _paneQualityPassId;
   String get paneQualityLinkId => _paneQualityLinkId;
+  DateTime get lastDataUpdatedAt => _lastDataUpdatedAt;
+
+  /// 수집 모니터링 등 화면 데이터 재조회가 끝난 시각을 타이틀바에 반영한다.
+  void didRefreshDashboardData([DateTime? updatedAt]) {
+    _lastDataUpdatedAt = updatedAt ?? DateTime.now();
+    notifyListeners();
+  }
 
   bool get isPassProfilePaneSelected =>
       _selectedPaneIndex == PASS_PROFILE_PANE_INDEX;
