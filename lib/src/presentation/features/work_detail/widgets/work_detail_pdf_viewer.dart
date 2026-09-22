@@ -20,7 +20,7 @@ class WorkDetailPdfViewer extends StatelessWidget {
     if (attachment == null) {
       return const WorkDetailEmptyBar(message: '이 작업에 PDF 파일이 없습니다');
     }
-    final assetPath = attachment.assetPath;
+    final assetPath = attachment.networkUrl ?? attachment.assetPath;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -53,7 +53,9 @@ class WorkDetailPdfrxStage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return PdfrxDocumentViewer(
-      source: PdfrxDocumentSource.asset(assetPath),
+      source:
+          resolvePdfrxDocumentSource(assetPath) ??
+          PdfrxDocumentSource.asset(assetPath),
       backgroundColor: AppTheme.SURFACE,
       expandViewport: true,
     );

@@ -77,7 +77,11 @@ class _WorkDetailJustAudioStageState extends State<WorkDetailJustAudioStage> {
       _waveform = null;
     });
     try {
-      final duration = await _player.setAsset(widget.assetPath);
+      final source = widget.assetPath;
+      final duration =
+          source.startsWith('http://') || source.startsWith('https://')
+          ? await _player.setUrl(source)
+          : await _player.setAsset(source);
       _positionSubscription = _player.positionStream.listen(_didChangePosition);
       _playerStateSubscription = _player.playerStateStream.listen(
         _didChangePlayerState,
@@ -127,6 +131,13 @@ class _WorkDetailJustAudioStageState extends State<WorkDetailJustAudioStage> {
 
   Future<void> _loadWaveform() async {
     final audioAssetPath = widget.assetPath;
+    if (audioAssetPath.startsWith('http://') ||
+        audioAssetPath.startsWith('https://')) {
+      if (mounted) {
+        setState(() => _hasWaveform = true);
+      }
+      return;
+    }
     try {
       final waveform = await loadWorkDetailWaveform(
         audioAssetPath: audioAssetPath,

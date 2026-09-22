@@ -44,7 +44,11 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
     setState(() {
       _errorMessage = '';
     });
-    final videoController = VideoPlayerController.asset(widget.assetPath);
+    final source = widget.assetPath;
+    final videoController =
+        source.startsWith('http://') || source.startsWith('https://')
+        ? VideoPlayerController.networkUrl(Uri.parse(source))
+        : VideoPlayerController.asset(source);
     try {
       await videoController.initialize();
       if (!mounted) {
