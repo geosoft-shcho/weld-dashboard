@@ -87,7 +87,9 @@ class WorkDetailViewModel extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
     try {
-      _catalog = await _loadWorkDetailCatalogUseCase.execute();
+      _catalog = await _loadWorkDetailCatalogUseCase.execute(
+        historyId: historyId,
+      );
       _applyQuery();
     } catch (error) {
       _hasError = true;

@@ -1,4 +1,5 @@
 import 'quality_link.dart';
+import 'pass_joint_context.dart';
 import 'quality_result_group.dart';
 import 'weld_pass.dart';
 import 'waveform_row.dart';
@@ -13,6 +14,7 @@ class PassWaveformCatalog {
     required this.qualityGroups,
     required this.historyItems,
     required this.workers,
+    this.context,
   });
 
   final List<WeldPass> passes;
@@ -21,4 +23,5 @@ class PassWaveformCatalog {
   final List<QualityResultGroup> qualityGroups;
   final List<WorkHistoryItem> historyItems;
   final List<Worker> workers;
+  final PassJointContext? context;
 }

@@ -60,13 +60,11 @@ class _ShellScreenState extends State<ShellScreen> {
           titleBar: TitleBar(
             isBackButtonVisible: false,
             height: 48,
-            leftHeader: ShellTitleLeading(
-              onTogglePane: _didTapTogglePane,
-            ),
+            leftHeader: ShellTitleLeading(onTogglePane: _didTapTogglePane),
             endHeader: Padding(
               padding: const EdgeInsets.only(right: 12),
               child: Text(
-                'CSV 로드 ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now())}',
+                '최신 업데이트 ${DateFormat('yyyy-MM-dd HH:mm:ss').format(DateTime.now())}',
                 style: const TextStyle(fontSize: 12),
               ),
             ),

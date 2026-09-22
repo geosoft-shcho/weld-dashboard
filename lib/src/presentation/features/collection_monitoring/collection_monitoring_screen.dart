@@ -42,7 +42,7 @@ class _CollectionMonitoringBody extends StatelessWidget {
     }
     if (viewModel.hasError) {
       return InfoBar(
-        title: const Text('CSV 로드 실패'),
+        title: const Text('조회 실패'),
         content: Text(viewModel.errorMessage),
         action: Button(
           onPressed: viewModel.didTapReload,

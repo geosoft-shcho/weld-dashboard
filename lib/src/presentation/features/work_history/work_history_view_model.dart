@@ -22,6 +22,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
+  int _loadVersion = 0;
 
   WorkHistoryQuery get query => _query;
   WorkHistoryBoard? get board => _board;
@@ -31,20 +32,28 @@ class WorkHistoryViewModel extends ChangeNotifier {
   bool get doesHaveInvalidDateRange => _query.doesHaveInvalidDateRange;
 
   Future<void> loadBoard() async {
+    final version = ++_loadVersion;
     _isLoading = true;
     _hasError = false;
     _errorMessage = '';
     notifyListeners();
     try {
-      _catalog = await _loadWorkHistoryCatalogUseCase.execute();
+      final catalog = await _loadWorkHistoryCatalogUseCase.execute(
+        query: _query,
+      );
+      if (version != _loadVersion) return;
+      _catalog = catalog;
       _applyQuery();
     } catch (error) {
+      if (version != _loadVersion) return;
       _hasError = true;
       _errorMessage = error.toString();
       _board = null;
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (version == _loadVersion) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -58,7 +67,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
       jointId: '',
       visibleCount: WorkHistoryQuery.BATCH_SIZE,
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didSelectJoint(String jointId) {
@@ -66,7 +75,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
       jointId: jointId,
       visibleCount: WorkHistoryQuery.BATCH_SIZE,
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didSelectWorker(String workerId) {
@@ -74,7 +83,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
       workerId: workerId,
       visibleCount: WorkHistoryQuery.BATCH_SIZE,
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didSelectEquipment(String equipmentId) {
@@ -82,7 +91,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
       equipmentId: equipmentId,
       visibleCount: WorkHistoryQuery.BATCH_SIZE,
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didSelectFromDate(DateTime? date) {
@@ -91,7 +100,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
       clearFromDate: date == null,
       visibleCount: WorkHistoryQuery.BATCH_SIZE,
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didSelectToDate(DateTime? date) {
@@ -100,7 +109,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
       clearToDate: date == null,
       visibleCount: WorkHistoryQuery.BATCH_SIZE,
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didClearEquipment() {
@@ -109,16 +118,12 @@ class WorkHistoryViewModel extends ChangeNotifier {
 
   void didTapQuery() {
     _query = _query.copyWith(visibleCount: WorkHistoryQuery.BATCH_SIZE);
-    if (_catalog == null) {
-      loadBoard();
-      return;
-    }
-    _applyQuery();
+    loadBoard();
   }
 
   void didTapReset() {
     _query = WorkHistoryQuery.initial();
-    _applyQuery();
+    loadBoard();
   }
 
   void didApplyIncomingFilter({
@@ -129,7 +134,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
       equipmentId: equipmentId,
       workerId: workerId,
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didSelectRow(String historyId) {
@@ -159,5 +164,11 @@ class WorkHistoryViewModel extends ChangeNotifier {
     }
     _board = _queryWorkHistoryUseCase.execute(catalog: catalog, query: _query);
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _loadVersion++;
+    super.dispose();
   }
 }

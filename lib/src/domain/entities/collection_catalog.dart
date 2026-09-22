@@ -14,6 +14,7 @@ class CollectionCatalog {
     required this.statuses,
     required this.events,
     required this.snapshotAt,
+    this.isServerFiltered = false,
   });
 
   final List<Equipment> equipments;
@@ -23,6 +24,7 @@ class CollectionCatalog {
   final List<CollectionStatus> statuses;
   final List<CollectionEvent> events;
   final DateTime snapshotAt;
+  final bool isServerFiltered;
 
   Equipment? equipmentById(String equipmentId) {
     for (final equipment in equipments) {

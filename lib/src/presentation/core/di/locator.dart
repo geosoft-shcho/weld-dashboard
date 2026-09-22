@@ -1,12 +1,11 @@
-import 'package:flutter/services.dart';
 import 'package:get_it/get_it.dart';
 
-import '../../../data/datasources/local/csv_asset_data_source.dart';
-import '../../../data/repositories/catalog_repository_impl.dart';
-import '../../../data/repositories/collection_catalog_repository_impl.dart';
-import '../../../data/repositories/pass_waveform_repository_impl.dart';
-import '../../../data/repositories/work_detail_repository_impl.dart';
-import '../../../data/repositories/work_history_repository_impl.dart';
+import '../../../data/datasources/remote/dashboard_service_data_source.dart';
+import '../../../data/repositories/remote_catalog_repository.dart';
+import '../../../data/repositories/remote_collection_catalog_repository.dart';
+import '../../../data/repositories/remote_pass_waveform_repository.dart';
+import '../../../data/repositories/remote_work_detail_repository.dart';
+import '../../../data/repositories/remote_work_history_repository.dart';
 import '../../../domain/repositories/catalog_repository.dart';
 import '../../../domain/repositories/collection_catalog_repository.dart';
 import '../../../domain/repositories/pass_waveform_repository.dart';
@@ -37,36 +36,28 @@ import '../../navigation/app_coordinator.dart';
 final locator = GetIt.instance;
 
 void setupLocator({required bool pdfrxReady}) {
-  locator.registerLazySingleton<CsvAssetDataSource>(
-    () => CsvAssetDataSource(rootBundle),
-  );
+  locator.registerLazySingleton(() => DashboardServiceDataSource());
   locator.registerLazySingleton<CatalogRepository>(
-    () => CatalogRepositoryImpl(locator()),
+    () => RemoteCatalogRepository(locator()),
   );
   locator.registerLazySingleton(() => LoadCatalogUseCase(locator()));
   locator.registerLazySingleton<CollectionCatalogRepository>(
-    () => CollectionCatalogRepositoryImpl(locator()),
+    () => RemoteCollectionCatalogRepository(locator()),
   );
   locator.registerLazySingleton(() => LoadCollectionCatalogUseCase(locator()));
   locator.registerFactory(() => QueryCollectionBoardUseCase());
   locator.registerLazySingleton<WorkHistoryRepository>(
-    () => WorkHistoryRepositoryImpl(locator()),
+    () => RemoteWorkHistoryRepository(locator()),
   );
   locator.registerLazySingleton(() => LoadWorkHistoryCatalogUseCase(locator()));
   locator.registerFactory(() => QueryWorkHistoryUseCase());
   locator.registerLazySingleton<WorkDetailRepository>(
-    () => WorkDetailRepositoryImpl(
-      workHistoryRepository: locator(),
-      csvAssetDataSource: locator(),
-    ),
+    () => RemoteWorkDetailRepository(locator()),
   );
   locator.registerLazySingleton(() => LoadWorkDetailCatalogUseCase(locator()));
   locator.registerFactory(() => QueryWorkDetailUseCase());
   locator.registerLazySingleton<PassWaveformRepository>(
-    () => PassWaveformRepositoryImpl(
-      workHistoryRepository: locator(),
-      csvAssetDataSource: locator(),
-    ),
+    () => RemotePassWaveformRepository(locator()),
   );
   locator.registerLazySingleton(
     () => LoadPassWaveformCatalogUseCase(locator()),

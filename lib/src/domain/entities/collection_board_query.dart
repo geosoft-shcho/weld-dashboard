@@ -23,11 +23,12 @@ class CollectionBoardQuery {
     required this.selectedEventId,
   });
 
-  static final DateTime DEFAULT_SNAPSHOT_AT = DateTime(2026, 9, 7, 9, 50);
+  static final DateTime DEFAULT_SNAPSHOT_AT = DateTime.now();
 
   factory CollectionBoardQuery.initial() {
+    final today = DateTime.now();
     return CollectionBoardQuery(
-      selectedDate: DateTime(2026, 9, 7),
+      selectedDate: DateTime(today.year, today.month, today.day),
       startMinutes: 0,
       endMinutes: 1440,
       snapshotAt: DEFAULT_SNAPSHOT_AT,

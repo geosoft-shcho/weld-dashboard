@@ -119,7 +119,7 @@ class QueryQualityIssueUseCase {
     return QualityIssueBoard(
       commonKey: key,
       historyId: resolved.historyId,
-      context: _contextFor(catalog.historyItems, key),
+      context: catalog.context ?? _contextFor(catalog.historyItems, key),
       passes: passes,
       selectedPass: selectedPass,
       groups: groups,

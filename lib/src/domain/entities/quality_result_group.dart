@@ -1,4 +1,6 @@
 import 'quality_result_item.dart';
+import 'quality_media.dart';
+import 'quality_media_tab.dart';
 
 class QualityResultGroup {
   const QualityResultGroup({
@@ -15,6 +17,7 @@ class QualityResultGroup {
     required this.scanPages,
     required this.videoFile,
     required this.items,
+    this.media = const [],
   });
 
   final String qualityResultId;
@@ -30,7 +33,16 @@ class QualityResultGroup {
   final int scanPages;
   final String videoFile;
   final List<QualityResultItem> items;
+  final List<QualityMedia> media;
 
-  bool get doesHaveScanFile => scanFile.trim().isNotEmpty;
-  bool get doesHaveVideoFile => videoFile.trim().isNotEmpty;
+  bool get doesHaveScanFile =>
+      scanFile.trim().isNotEmpty ||
+      media.any(
+        (item) => item.type == QualityMediaTab.pdf && item.url.isNotEmpty,
+      );
+  bool get doesHaveVideoFile =>
+      videoFile.trim().isNotEmpty ||
+      media.any(
+        (item) => item.type == QualityMediaTab.video && item.url.isNotEmpty,
+      );
 }

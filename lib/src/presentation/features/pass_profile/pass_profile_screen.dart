@@ -164,8 +164,7 @@ class _PassProfileBody extends StatelessWidget {
         ),
       );
     }
-    final isLegendEmpty =
-        !board.doesHavePasses || !board.doesHaveSeries;
+    final isLegendEmpty = !board.doesHavePasses || !board.doesHaveSeries;
     return ListView(
       children: [
         const Text(
@@ -179,6 +178,26 @@ class _PassProfileBody extends StatelessWidget {
           passes: board.passes,
           selectedPassId: board.selectedPass?.passId ?? '',
           onSelectPass: viewModel.didSelectPass,
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            const Text('파형 기준'),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 160,
+              child: ComboBox<String>(
+                value: viewModel.normalize,
+                items: const [
+                  ComboBoxItem(value: 'raw', child: Text('원본')),
+                  ComboBoxItem(value: 'dtw', child: Text('DTW 정규화')),
+                ],
+                onChanged: (value) {
+                  if (value != null) viewModel.didSelectNormalize(value);
+                },
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         PassLegendToolbar(

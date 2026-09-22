@@ -3,8 +3,6 @@ import '../entities/work_detail_catalog.dart';
 import '../entities/work_history_item.dart';
 
 class QueryWorkDetailUseCase {
-  static final DateTime SNAPSHOT_AT = DateTime(2026, 9, 7, 9, 50);
-
   WorkDetail execute({
     required WorkDetailCatalog catalog,
     required String historyId,
@@ -33,9 +31,6 @@ class QueryWorkDetailUseCase {
     }
     WorkHistoryItem? latest;
     for (final item in items) {
-      if (item.workedAt.isAfter(SNAPSHOT_AT)) {
-        continue;
-      }
       if (latest == null) {
         latest = item;
         continue;

@@ -1,6 +1,7 @@
 import '../../domain/entities/equipment.dart';
 import '../../domain/entities/joint.dart';
 import '../../domain/entities/work_history_catalog.dart';
+import '../../domain/entities/work_history_query.dart';
 import '../../domain/entities/work_history_item.dart';
 import '../../domain/entities/work_order.dart';
 import '../../domain/entities/worker.dart';
@@ -18,7 +19,7 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
   final CsvAssetDataSource _csvAssetDataSource;
 
   @override
-  Future<WorkHistoryCatalog> loadCatalog() async {
+  Future<WorkHistoryCatalog> loadCatalog({WorkHistoryQuery? query}) async {
     final workOrderRows = await _csvAssetDataSource.loadWorkOrderRows();
     final jointRows = await _csvAssetDataSource.loadJointRows();
     final workerRows = await _csvAssetDataSource.loadWorkerRows();

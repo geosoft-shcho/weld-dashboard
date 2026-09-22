@@ -23,7 +23,7 @@ class PassWaveformRepositoryImpl implements PassWaveformRepository {
   final CsvAssetDataSource _csvAssetDataSource;
 
   @override
-  Future<PassWaveformCatalog> loadCatalog() async {
+  Future<PassWaveformCatalog> loadCatalog({String commonKey = '', String historyId = '', String passId = '', String normalize = 'raw'}) async {
     final history = await _workHistoryRepository.loadCatalog();
     final passRows = await _csvAssetDataSource.loadPassRows();
     final waveformRows = await _csvAssetDataSource.loadWaveformRows();

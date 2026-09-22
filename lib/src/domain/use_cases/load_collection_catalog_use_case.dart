@@ -1,4 +1,5 @@
 import '../entities/collection_catalog.dart';
+import '../entities/collection_board_query.dart';
 import '../repositories/collection_catalog_repository.dart';
 
 class LoadCollectionCatalogUseCase {
@@ -6,7 +7,7 @@ class LoadCollectionCatalogUseCase {
 
   final CollectionCatalogRepository _repository;
 
-  Future<CollectionCatalog> execute() {
-    return _repository.loadCatalog();
+  Future<CollectionCatalog> execute({CollectionBoardQuery? query}) {
+    return _repository.loadCatalog(query: query);
   }
 }

@@ -6,7 +6,17 @@ class LoadPassWaveformCatalogUseCase {
 
   final PassWaveformRepository _repository;
 
-  Future<PassWaveformCatalog> execute() {
-    return _repository.loadCatalog();
+  Future<PassWaveformCatalog> execute({
+    String commonKey = '',
+    String historyId = '',
+    String passId = '',
+    String normalize = 'raw',
+  }) {
+    return _repository.loadCatalog(
+      commonKey: commonKey,
+      historyId: historyId,
+      passId: passId,
+      normalize: normalize,
+    );
   }
 }

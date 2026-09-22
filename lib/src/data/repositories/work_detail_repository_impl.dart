@@ -16,7 +16,7 @@ class WorkDetailRepositoryImpl implements WorkDetailRepository {
   final CsvAssetDataSource _csvAssetDataSource;
 
   @override
-  Future<WorkDetailCatalog> loadCatalog() async {
+  Future<WorkDetailCatalog> loadCatalog({String historyId = ''}) async {
     final history = await _workHistoryRepository.loadCatalog();
     final rows = await _csvAssetDataSource.loadWorkAttachmentRows();
     final attachments = <WorkAttachment>[];

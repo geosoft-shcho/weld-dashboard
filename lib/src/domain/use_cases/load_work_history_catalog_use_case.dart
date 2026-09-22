@@ -1,4 +1,5 @@
 import '../entities/work_history_catalog.dart';
+import '../entities/work_history_query.dart';
 import '../repositories/work_history_repository.dart';
 
 class LoadWorkHistoryCatalogUseCase {
@@ -6,7 +7,7 @@ class LoadWorkHistoryCatalogUseCase {
 
   final WorkHistoryRepository _repository;
 
-  Future<WorkHistoryCatalog> execute() {
-    return _repository.loadCatalog();
+  Future<WorkHistoryCatalog> execute({WorkHistoryQuery? query}) {
+    return _repository.loadCatalog(query: query);
   }
 }

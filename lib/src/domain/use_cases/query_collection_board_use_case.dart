@@ -277,9 +277,10 @@ class QueryCollectionBoardUseCase {
           )
           .toList();
     }
-    if (query.isUnassignedOnly ||
-        query.projectIds.isNotEmpty ||
-        query.workerIds.isNotEmpty) {
+    if (!catalog.isServerFiltered &&
+        (query.isUnassignedOnly ||
+            query.projectIds.isNotEmpty ||
+            query.workerIds.isNotEmpty)) {
       rows = rows
           .where(
             (row) => _matchesAssignmentFilter(catalog, row.equipmentId, query),
@@ -589,9 +590,10 @@ class QueryCollectionBoardUseCase {
           )
           .toList();
     }
-    if (query.isUnassignedOnly ||
-        query.projectIds.isNotEmpty ||
-        query.workerIds.isNotEmpty) {
+    if (!catalog.isServerFiltered &&
+        (query.isUnassignedOnly ||
+            query.projectIds.isNotEmpty ||
+            query.workerIds.isNotEmpty)) {
       events = events
           .where(
             (event) => _eventMatchesAssignmentFilter(catalog, event, query),

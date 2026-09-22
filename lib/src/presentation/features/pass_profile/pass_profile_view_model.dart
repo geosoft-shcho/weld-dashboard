@@ -25,15 +25,18 @@ class PassProfileViewModel extends ChangeNotifier {
   PassProfileBoard? _board;
   String _passId;
   String _masterProfileId = '';
+  String _normalize = 'raw';
   bool _showMaster = true;
   bool _showBeginner = true;
   bool _showRobot = true;
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
+  int _loadVersion = 0;
 
   PassProfileBoard? get board => _board;
   bool get showMaster => _showMaster;
+  String get normalize => _normalize;
   bool get showBeginner => _showBeginner;
   bool get showRobot => _showRobot;
   bool get isLoading => _isLoading;
@@ -41,20 +44,31 @@ class PassProfileViewModel extends ChangeNotifier {
   String get errorMessage => _errorMessage;
 
   Future<void> loadBoard() async {
+    final version = ++_loadVersion;
     _isLoading = true;
     _hasError = false;
     _errorMessage = '';
     notifyListeners();
     try {
-      _catalog = await _loadPassWaveformCatalogUseCase.execute();
+      final catalog = await _loadPassWaveformCatalogUseCase.execute(
+        commonKey: commonKey,
+        historyId: historyId,
+        passId: _passId,
+        normalize: _normalize,
+      );
+      if (version != _loadVersion) return;
+      _catalog = catalog;
       _applyQuery();
     } catch (error) {
+      if (version != _loadVersion) return;
       _hasError = true;
       _errorMessage = error.toString();
       _board = null;
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (version == _loadVersion) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -64,8 +78,7 @@ class PassProfileViewModel extends ChangeNotifier {
     }
     _passId = passId;
     _masterProfileId = '';
-    _applyQuery();
-    notifyListeners();
+    loadBoard();
   }
 
   void didSelectMasterProfile(String masterProfileId) {
@@ -75,6 +88,12 @@ class PassProfileViewModel extends ChangeNotifier {
     _masterProfileId = masterProfileId;
     _applyQuery();
     notifyListeners();
+  }
+
+  void didSelectNormalize(String normalize) {
+    if (_normalize == normalize) return;
+    _normalize = normalize;
+    loadBoard();
   }
 
   void didTapToggleMaster(bool isOn) {
@@ -113,5 +132,11 @@ class PassProfileViewModel extends ChangeNotifier {
       _passId = board.selectedPass?.passId ?? _passId;
       _masterProfileId = board.selectedMasterProfileId;
     }
+  }
+
+  @override
+  void dispose() {
+    _loadVersion++;
+    super.dispose();
   }
 }

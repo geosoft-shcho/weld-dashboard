@@ -28,6 +28,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
+  int _loadVersion = 0;
   Timer? _refreshTimer;
 
   CollectionBoardQuery get query => _query;
@@ -40,20 +41,29 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       _query.refreshIntervalSeconds == 5 || _query.refreshIntervalSeconds == 60;
 
   Future<void> loadBoard() async {
+    final version = ++_loadVersion;
     _isLoading = true;
     _hasError = false;
     _errorMessage = '';
     notifyListeners();
     try {
-      _catalog = await _loadCollectionCatalogUseCase.execute();
+      final catalog = await _loadCollectionCatalogUseCase.execute(
+        query: _query,
+      );
+      if (version != _loadVersion) return;
+      _catalog = catalog;
+      _query = _query.copyWith(snapshotAt: catalog.snapshotAt);
       _applyQuery();
     } catch (error) {
+      if (version != _loadVersion) return;
       _hasError = true;
       _errorMessage = error.toString();
       _board = null;
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      if (version == _loadVersion) {
+        _isLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -61,32 +71,32 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     _query = _query.copyWith(
       selectedDate: _query.selectedDate.subtract(const Duration(days: 1)),
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didTapNextDate() {
     _query = _query.copyWith(
       selectedDate: _query.selectedDate.add(const Duration(days: 1)),
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didSelectDate(DateTime date) {
     _query = _query.copyWith(
       selectedDate: DateTime(date.year, date.month, date.day),
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didSelectStartTime(DateTime time) {
     _query = _query.copyWith(startMinutes: time.hour * 60 + time.minute);
-    _applyQuery();
+    loadBoard();
   }
 
   void didSelectEndTime(DateTime time) {
     final minutes = time.hour * 60 + time.minute;
     _query = _query.copyWith(endMinutes: minutes == 0 ? 1440 : minutes);
-    _applyQuery();
+    loadBoard();
   }
 
   void didToggleProject(String projectId) {
@@ -101,7 +111,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
         isUnassignedOnly: false,
       );
     }
-    _applyQuery();
+    loadBoard();
   }
 
   void didToggleUnassigned() {
@@ -109,24 +119,24 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       isUnassignedOnly: !_query.isUnassignedOnly,
       projectIds: const [],
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didToggleLine(String lineName) {
     _query = _query.copyWith(lineNames: _toggled(_query.lineNames, lineName));
-    _applyQuery();
+    loadBoard();
   }
 
   void didToggleWorker(String workerId) {
     _query = _query.copyWith(workerIds: _toggled(_query.workerIds, workerId));
-    _applyQuery();
+    loadBoard();
   }
 
   void didToggleEquipment(String equipmentId) {
     _query = _query.copyWith(
       equipmentIds: _toggled(_query.equipmentIds, equipmentId),
     );
-    _applyQuery();
+    loadBoard();
   }
 
   void didToggleConnection(ConnectionStatus status) {
@@ -137,7 +147,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       statuses.add(status);
     }
     _query = _query.copyWith(connectionStatuses: statuses);
-    _applyQuery();
+    loadBoard();
   }
 
   void didSelectRefreshInterval(int seconds) {
@@ -153,7 +163,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   void didTapReset() {
     _query = CollectionBoardQuery.initial();
     _restartTimer();
-    _applyQuery();
+    loadBoard();
   }
 
   void didTapReload() {
@@ -273,6 +283,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
 
   @override
   void dispose() {
+    _loadVersion++;
     _refreshTimer?.cancel();
     super.dispose();
   }

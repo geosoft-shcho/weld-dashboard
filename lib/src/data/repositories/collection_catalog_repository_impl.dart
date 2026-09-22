@@ -1,4 +1,5 @@
 import '../../domain/entities/collection_catalog.dart';
+import '../../domain/entities/collection_board_query.dart';
 import '../../domain/entities/collection_event.dart';
 import '../../domain/entities/equipment.dart';
 import '../../domain/repositories/collection_catalog_repository.dart';
@@ -18,7 +19,7 @@ class CollectionCatalogRepositoryImpl implements CollectionCatalogRepository {
   final CsvAssetDataSource _csvAssetDataSource;
 
   @override
-  Future<CollectionCatalog> loadCatalog() async {
+  Future<CollectionCatalog> loadCatalog({CollectionBoardQuery? query}) async {
     final equipmentRows = await _csvAssetDataSource.loadEquipmentRows();
     final projectRows = await _csvAssetDataSource.loadProjectRows();
     final workerRows = await _csvAssetDataSource.loadWorkerRows();

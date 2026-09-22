@@ -27,7 +27,7 @@ class PlaceholderPage extends StatelessWidget {
     }
     if (viewModel.hasError) {
       return InfoBar(
-        title: const Text('CSV 로드 실패'),
+        title: const Text('조회 실패'),
         content: Text(viewModel.errorMessage),
         severity: InfoBarSeverity.error,
       );
@@ -45,7 +45,7 @@ class PlaceholderPage extends StatelessWidget {
         Text(body),
         const SizedBox(height: 12),
         InfoBar(
-          title: const Text('CSV 로드됨'),
+          title: const Text('조회됨'),
           content: Text(
             '${catalog.tableCount}개 테이블 · ${catalog.totalRowCount}행 · 스냅샷 ${catalog.snapshotAt.toIso8601String()} · pdfrx ${catalog.pdfrxReady ? "준비됨" : "미기동"}',
           ),

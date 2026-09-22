@@ -84,7 +84,7 @@ class QueryPassProfileUseCase {
     return PassProfileBoard(
       commonKey: key,
       historyId: resolved.historyId,
-      context: _contextFor(catalog.historyItems, key),
+      context: catalog.context ?? _contextFor(catalog.historyItems, key),
       passes: passes,
       selectedPass: selectedPass,
       mastersForPass: masters,

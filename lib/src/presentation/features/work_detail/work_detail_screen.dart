@@ -92,7 +92,7 @@ class _WorkDetailBody extends StatelessWidget {
     if (viewModel.hasError) {
       return _banner(
         InfoBar(
-          title: const Text('CSV 로드 실패'),
+          title: const Text('조회 실패'),
           content: Text(viewModel.errorMessage),
           action: Button(
             onPressed: viewModel.didTapReload,
