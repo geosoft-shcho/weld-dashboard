@@ -55,7 +55,7 @@ class _CollectionMonitoringBody extends StatelessWidget {
     if (board == null) {
       return const InfoBar(
         title: Text('카탈로그 없음'),
-        content: Text('아직 CSV를 불러오지 않았습니다.'),
+        content: Text('아직 조회되지 않았습니다.'),
       );
     }
     return ListView(
@@ -64,7 +64,7 @@ class _CollectionMonitoringBody extends StatelessWidget {
           InfoBar(
             title: const Text('자동 갱신 중'),
             content: Text(
-              '${viewModel.query.refreshIntervalSeconds == 5 ? '5초' : '1분'} · CSV 재로드 목업',
+              '${viewModel.query.refreshIntervalSeconds == 5 ? '5초' : '1분'} · 재조회',
             ),
             severity: InfoBarSeverity.info,
           ),
