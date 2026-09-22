@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../domain/entities/collection_board.dart';
 import '../../core/di/locator.dart';
+import '../../core/themes/app_theme.dart';
 import 'collection_monitoring_view_model.dart';
 import 'widgets/collection_command_bar.dart';
 import 'widgets/collection_kpi_cards.dart';
@@ -104,32 +105,96 @@ class _MonitoringTabView extends StatefulWidget {
 class _MonitoringTabViewState extends State<_MonitoringTabView> {
   int currentIndex = 0;
 
+  static final Color _LINE = AppTheme.STATUS_OFF.withValues(alpha: 0.45);
+
   @override
   Widget build(BuildContext context) {
     return SizedBox(
       height: 660,
-      child: TabView(
-        currentIndex: currentIndex,
-        onChanged: (index) => setState(() => currentIndex = index),
-        tabWidthBehavior: TabWidthBehavior.sizeToContent,
-        closeButtonVisibility: CloseButtonVisibilityMode.never,
-        tabs: [
-          Tab(
-            text: const Text('장비별 수집 타임라인', style: TextStyle(fontSize: 14)),
-            body: CollectionTimelineHost(
-              viewModel: widget.viewModel,
-              board: widget.board,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border(bottom: BorderSide(color: _LINE, width: 1)),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _MonitoringTab(
+                  label: '장비별 수집 타임라인',
+                  isSelected: currentIndex == 0,
+                  onPressed: () => setState(() => currentIndex = 0),
+                ),
+                _MonitoringTab(
+                  label: '실시간 수집 상태',
+                  isSelected: currentIndex == 1,
+                  onPressed: () => setState(() => currentIndex = 1),
+                ),
+              ],
             ),
           ),
-          Tab(
-            text: const Text('실시간 수집 상태', style: TextStyle(fontSize: 14)),
-            body: CollectionStatusTable(
-              viewModel: widget.viewModel,
-              board: widget.board,
-            ),
+          Expanded(
+            child: currentIndex == 0
+                ? CollectionTimelineHost(
+                    viewModel: widget.viewModel,
+                    board: widget.board,
+                  )
+                : CollectionStatusTable(
+                    viewModel: widget.viewModel,
+                    board: widget.board,
+                  ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _MonitoringTab extends StatelessWidget {
+  const _MonitoringTab({
+    required this.label,
+    required this.isSelected,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool isSelected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return HoverButton(
+      onPressed: onPressed,
+      builder: (context, states) {
+        final isHovered = states.isHovered;
+        final color = isSelected || isHovered
+            ? AppTheme.INK
+            : AppTheme.STATUS_OFF;
+        return Transform.translate(
+          offset: const Offset(0, 1),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: isSelected
+                  ? const Border(
+                      bottom: BorderSide(color: AppTheme.INK, width: 2),
+                    )
+                  : null,
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
