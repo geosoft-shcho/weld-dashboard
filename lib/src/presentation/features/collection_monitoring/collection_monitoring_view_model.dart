@@ -93,13 +93,13 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
 
   void didSelectStartTime(DateTime time) {
     _query = _query.copyWith(startMinutes: time.hour * 60 + time.minute);
-    loadBoard();
+    notifyListeners();
   }
 
   void didSelectEndTime(DateTime time) {
     final minutes = time.hour * 60 + time.minute;
     _query = _query.copyWith(endMinutes: minutes == 0 ? 1440 : minutes);
-    loadBoard();
+    notifyListeners();
   }
 
   void didToggleProject(String projectId) {
@@ -114,7 +114,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
         isUnassignedOnly: false,
       );
     }
-    loadBoard();
+    notifyListeners();
   }
 
   void didToggleUnassigned() {
@@ -122,24 +122,24 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       isUnassignedOnly: !_query.isUnassignedOnly,
       projectIds: const [],
     );
-    loadBoard();
+    notifyListeners();
   }
 
   void didToggleLine(String lineName) {
     _query = _query.copyWith(lineNames: _toggled(_query.lineNames, lineName));
-    loadBoard();
+    notifyListeners();
   }
 
   void didToggleWorker(String workerId) {
     _query = _query.copyWith(workerIds: _toggled(_query.workerIds, workerId));
-    loadBoard();
+    notifyListeners();
   }
 
   void didToggleEquipment(String equipmentId) {
     _query = _query.copyWith(
       equipmentIds: _toggled(_query.equipmentIds, equipmentId),
     );
-    loadBoard();
+    notifyListeners();
   }
 
   void didToggleConnection(ConnectionStatus status) {
@@ -150,7 +150,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       statuses.add(status);
     }
     _query = _query.copyWith(connectionStatuses: statuses);
-    loadBoard();
+    notifyListeners();
   }
 
   void didSelectRefreshInterval(int seconds) {
@@ -233,7 +233,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
         equipmentIds: const [],
       );
     }
-    _applyQuery();
+    notifyListeners();
   }
 
   void didTapLineSection(String lineName) {
@@ -241,7 +241,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       return;
     }
     _query = _query.copyWith(lineNames: [lineName], equipmentIds: const []);
-    _applyQuery();
+    notifyListeners();
   }
 
   void didTapOpenDayView() {
@@ -265,23 +265,23 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       lineNames: const [],
       equipmentIds: const [],
     );
-    _applyQuery();
+    notifyListeners();
   }
 
   void didTapProjectCrumb() {
     _query = _query.copyWith(lineNames: const [], equipmentIds: const []);
-    _applyQuery();
+    notifyListeners();
   }
 
   void didTapLineCrumb() {
     _query = _query.copyWith(equipmentIds: const []);
-    _applyQuery();
+    notifyListeners();
   }
 
   void didClearWorker(String workerId) {
     final workerIds = [..._query.workerIds]..remove(workerId);
     _query = _query.copyWith(workerIds: workerIds);
-    _applyQuery();
+    notifyListeners();
   }
 
   @override
