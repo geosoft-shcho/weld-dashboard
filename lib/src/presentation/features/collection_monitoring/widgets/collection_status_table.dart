@@ -2,7 +2,6 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../domain/entities/collection_board.dart';
-import '../../../../domain/entities/collection_board_query.dart';
 import '../../../../domain/entities/connection_status.dart';
 import '../../../../domain/entities/time_sync_status.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
@@ -10,7 +9,7 @@ import '../../../core/themes/app_theme.dart';
 import '../../../navigation/app_coordinator.dart';
 import '../collection_monitoring_view_model.dart';
 
-class CollectionStatusTable extends StatelessWidget {
+class CollectionStatusTable extends StatefulWidget {
   const CollectionStatusTable({
     super.key,
     required this.viewModel,
@@ -21,26 +20,62 @@ class CollectionStatusTable extends StatelessWidget {
   final CollectionBoard board;
 
   @override
+  State<CollectionStatusTable> createState() => _CollectionStatusTableState();
+}
+
+class _CollectionStatusTableState extends State<CollectionStatusTable> {
+  static const Duration _doubleTapWindow = Duration(milliseconds: 400);
+
+  String? _lastTapEquipmentId;
+  DateTime? _lastTapAt;
+
+  CollectionMonitoringViewModel get viewModel => widget.viewModel;
+  CollectionBoard get board => widget.board;
+
+  /// 첫 탭이 선택+rebuild를 일으켜 GestureDetector onDoubleTap이 끊기므로
+  /// State에 시각을 두고 직접 더블클릭을 판정한다.
+  void _didTapRow(String equipmentId) {
+    final now = DateTime.now();
+    final isDoubleTap =
+        _lastTapEquipmentId == equipmentId &&
+        _lastTapAt != null &&
+        now.difference(_lastTapAt!) < _doubleTapWindow;
+    if (isDoubleTap) {
+      _lastTapEquipmentId = null;
+      _lastTapAt = null;
+      context.read<AppCoordinator>().didTapOpenWorkHistory(
+        equipmentId: equipmentId,
+      );
+      return;
+    }
+    _lastTapEquipmentId = equipmentId;
+    _lastTapAt = now;
+    viewModel.didSelectRow(equipmentId);
+  }
+
+  @override
   Widget build(BuildContext context) {
     final query = viewModel.query;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        const SizedBox(height: 8),
         Row(
           children: [
+            Expanded(
+              child: Text(
+                '실시간 수집 상태 · 스냅샷 ${DashboardFormatters.snapshot(query.snapshotAt)} · 창 ${board.kpi.windowLabel}',
+                style: const TextStyle(fontSize: 12),
+              ),
+            ),
             Checkbox(
               checked: query.doesShowDisconnectedOrErrorOnly,
-              content: const Text('단절/오류만'),
+              content: const Text('단절/오류만', style: TextStyle(fontSize: 12)),
               onChanged: (value) {
                 viewModel.didToggleDisconnectedOrErrorOnly(value == true);
               },
             ),
           ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          '실시간 수집 상태 · 스냅샷 ${DashboardFormatters.snapshot(query.snapshotAt)} · 창 ${board.kpi.windowLabel}',
-          style: const TextStyle(fontSize: 12),
         ),
         const SizedBox(height: 8),
         if (board.rows.isEmpty)
@@ -70,31 +105,31 @@ class CollectionStatusTable extends StatelessWidget {
                   _HeaderCell('마지막 수신'),
                 ],
               ),
-              for (final row in board.rows) _dataRow(row, query),
+              for (final row in board.rows) _dataRow(row),
             ],
           ),
         const SizedBox(height: 8),
         Text(
           '전체 장비 ${DashboardFormatters.count(board.kpi.equipmentCount)} · 연결 ${DashboardFormatters.count(board.kpi.connectedCount)} · 단절/오류 ${DashboardFormatters.count(board.kpi.disconnectedCount + board.kpi.errorCount)}',
         ),
-        const SizedBox(height: 12),
-        _detail(context, board.selectedRow),
       ],
     );
   }
 
-  TableRow _dataRow(CollectionBoardRow row, CollectionBoardQuery query) {
+  TableRow _dataRow(CollectionBoardRow row) {
     final isSelected = row.equipmentId == board.selectedEquipmentId;
     final background = isSelected
         ? AppTheme.ACCENT_STEEL.withValues(alpha: 0.18)
         : row.isDisconnectedOrError
         ? const Color(0xFF0C0D10)
         : const Color(0x00000000);
+    void onPressed() => _didTapRow(row.equipmentId);
+
     return TableRow(
       decoration: BoxDecoration(color: background),
       children: [
         _TapCell(
-          onPressed: () => viewModel.didSelectRow(row.equipmentId),
+          onPressed: onPressed,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -107,20 +142,20 @@ class CollectionStatusTable extends StatelessWidget {
           ),
         ),
         _TapCell(
-          onPressed: () => viewModel.didSelectRow(row.equipmentId),
+          onPressed: onPressed,
           child: Text(
             row.connectionStatus.label,
             style: TextStyle(color: _connectionColor(row.connectionStatus)),
           ),
         ),
         _TapCell(
-          onPressed: () => viewModel.didSelectRow(row.equipmentId),
+          onPressed: onPressed,
           child: Text(
             '${DashboardFormatters.count(row.receivedCount)}  ${row.windowLabel}',
           ),
         ),
         _TapCell(
-          onPressed: () => viewModel.didSelectRow(row.equipmentId),
+          onPressed: onPressed,
           child: Text(
             row.lossRatePercent == null
                 ? '— 산출 불가'
@@ -132,7 +167,7 @@ class CollectionStatusTable extends StatelessWidget {
           ),
         ),
         _TapCell(
-          onPressed: () => viewModel.didSelectRow(row.equipmentId),
+          onPressed: onPressed,
           child: Text(
             '${row.timeSyncStatus.label}${row.clockOffsetMs == null ? '' : ' (${row.clockOffsetMs}ms)'}',
             style: TextStyle(
@@ -143,42 +178,10 @@ class CollectionStatusTable extends StatelessWidget {
           ),
         ),
         _TapCell(
-          onPressed: () => viewModel.didSelectRow(row.equipmentId),
+          onPressed: onPressed,
           child: Text(DashboardFormatters.dateTime(row.lastReceivedAt)),
         ),
       ],
-    );
-  }
-
-  Widget _detail(BuildContext context, CollectionBoardRow? row) {
-    if (row == null) {
-      return const InfoBar(
-        title: Text('장비를 선택하세요'),
-        content: Text('표 행을 누르면 연결·수신·유실·동기를 이 자리에서 봅니다. s1로 나가지 않습니다.'),
-      );
-    }
-    return InfoBar(
-      title: Text('${row.equipmentName} (${row.equipmentId})'),
-      content: Text(
-        [
-          '연결 ${row.connectionStatus.label}',
-          '수신 ${DashboardFormatters.count(row.receivedCount)} · ${row.windowLabel}',
-          '유실 ${row.lossRatePercent == null ? '—' : DashboardFormatters.percent(row.lossRatePercent)}',
-          '동기 ${row.timeSyncStatus.label}${row.clockOffsetMs == null ? '' : ' (${row.clockOffsetMs}ms)'}',
-          if (row.projectName.isNotEmpty) '프로젝트 ${row.projectName}',
-          if (row.workerName.isNotEmpty) '작업자 ${row.workerName}',
-          if (row.projectName.isEmpty && row.workerName.isEmpty) '배정 없음',
-        ].join(' · '),
-      ),
-      action: Button(
-        onPressed: () => context.read<AppCoordinator>().didTapOpenWorkHistory(
-          equipmentId: row.equipmentId,
-        ),
-        child: const Text('이 장비로 이력 보기'),
-      ),
-      severity: row.isDisconnectedOrError
-          ? InfoBarSeverity.warning
-          : InfoBarSeverity.info,
     );
   }
 
@@ -217,6 +220,7 @@ class _TapCell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
+      behavior: HitTestBehavior.opaque,
       onTap: onPressed,
       child: Padding(padding: const EdgeInsets.all(8), child: child),
     );
