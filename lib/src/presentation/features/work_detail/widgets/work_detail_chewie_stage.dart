@@ -6,9 +6,17 @@ import '../../../core/themes/app_theme.dart';
 import 'work_detail_material_scope.dart';
 
 class WorkDetailChewieStage extends StatefulWidget {
-  const WorkDetailChewieStage({super.key, required this.assetPath});
+  const WorkDetailChewieStage({
+    super.key,
+    required this.assetPath,
+    this.seekToMs,
+    this.seekToken = 0,
+  });
 
   final String assetPath;
+  final int? seekToMs;
+  /// 같은 ms를 연속 탭해도 seek가 다시 적용되도록 증가.
+  final int seekToken;
 
   @override
   State<WorkDetailChewieStage> createState() => _WorkDetailChewieStageState();
@@ -18,10 +26,12 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
   VideoPlayerController? _videoController;
   ChewieController? _chewieController;
   String _errorMessage = '';
+  int? _pendingSeekToMs;
 
   @override
   void initState() {
     super.initState();
+    _pendingSeekToMs = widget.seekToMs;
     _load();
   }
 
@@ -29,7 +39,13 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
   void didUpdateWidget(covariant WorkDetailChewieStage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.assetPath != widget.assetPath) {
+      _pendingSeekToMs = widget.seekToMs;
       _load();
+      return;
+    }
+    if (oldWidget.seekToken != widget.seekToken ||
+        oldWidget.seekToMs != widget.seekToMs) {
+      _applySeek(widget.seekToMs);
     }
   }
 
@@ -72,6 +88,7 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
         _videoController = videoController;
         _chewieController = chewieController;
       });
+      await _applySeek(_pendingSeekToMs ?? widget.seekToMs);
     } catch (error) {
       await videoController.dispose();
       if (!mounted) {
@@ -81,6 +98,23 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
         _errorMessage = error.toString();
       });
     }
+  }
+
+  Future<void> _applySeek(int? seekToMs) async {
+    if (seekToMs == null) {
+      return;
+    }
+    final videoController = _videoController;
+    if (videoController == null || !videoController.value.isInitialized) {
+      _pendingSeekToMs = seekToMs;
+      return;
+    }
+    _pendingSeekToMs = null;
+    final durationMs = videoController.value.duration.inMilliseconds;
+    final clamped = durationMs <= 0
+        ? 0
+        : seekToMs.clamp(0, durationMs);
+    await videoController.seekTo(Duration(milliseconds: clamped));
   }
 
   void _disposePlayers() {

@@ -32,6 +32,8 @@ class QualityIssueViewModel extends ChangeNotifier {
   String _linkId;
   QualityMediaTab _selectedMediaTab = QualityMediaTab.pdf;
   int _selectedMediaIndex = 0;
+  int? _pendingSeekToMs;
+  int _seekToken = 0;
   bool _showMaster = false;
   bool _showBeginner = true;
   bool _showRobot = false;
@@ -43,6 +45,8 @@ class QualityIssueViewModel extends ChangeNotifier {
   QualityIssueBoard? get board => _board;
   QualityMediaTab get selectedMediaTab => _selectedMediaTab;
   int get selectedMediaIndex => _selectedMediaIndex;
+  int? get pendingSeekToMs => _pendingSeekToMs;
+  int get seekToken => _seekToken;
   bool get showMaster => _showMaster;
   bool get showBeginner => _showBeginner;
   bool get showRobot => _showRobot;
@@ -125,6 +129,17 @@ class QualityIssueViewModel extends ChangeNotifier {
     }
     _linkId = linkId;
     _applyQuery();
+    notifyListeners();
+  }
+
+  void didTapWaveformTime(int timeMs) {
+    final clamped = timeMs < 0 ? 0 : timeMs;
+    _pendingSeekToMs = clamped;
+    final group = _board?.selectedGroup;
+    if (_isMediaTabAvailable(QualityMediaTab.video, group)) {
+      _selectedMediaTab = QualityMediaTab.video;
+      _seekToken++;
+    }
     notifyListeners();
   }
 

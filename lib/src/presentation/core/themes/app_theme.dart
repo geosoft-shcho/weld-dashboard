@@ -17,6 +17,7 @@ class AppTheme {
   static const Color CHART_ROBOT = Color(0xFFC4B5FD);
   static const Color CHART_BAND = Color(0xFF3A3E46);
   static const Color CHART_BAND_ACTIVE = Color(0xFF4D5F7A);
+  static const Color CHART_CURSOR = Color(0xFF8FA4C4);
   static const Color CHART_PLOT = Color(0xFF1C1F24);
 
   static AccentColor get steelAccent {

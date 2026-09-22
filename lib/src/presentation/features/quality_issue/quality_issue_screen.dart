@@ -198,6 +198,8 @@ class _QualityIssueBody extends StatelessWidget {
               selectedMediaIndex: viewModel.selectedMediaIndex,
               onSelectTab: viewModel.didSelectMediaTab,
               onSelectMediaIndex: viewModel.didSelectMediaIndex,
+              seekToMs: viewModel.pendingSeekToMs,
+              seekToken: viewModel.seekToken,
             );
             final right = WaveformChannelCharts(
               series: board.series,
@@ -206,7 +208,9 @@ class _QualityIssueBody extends StatelessWidget {
               showBeginner: viewModel.showBeginner,
               showRobot: viewModel.showRobot,
               selectedLinkId: viewModel.selectedLinkId,
+              selectedTimeMs: viewModel.pendingSeekToMs,
               onBandTap: viewModel.didTapBand,
+              onTimeTapMs: viewModel.didTapWaveformTime,
             );
             if (isWide) {
               return Row(

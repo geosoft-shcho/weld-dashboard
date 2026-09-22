@@ -16,6 +16,8 @@ class QualityMediaHost extends StatelessWidget {
     required this.selectedMediaIndex,
     required this.onSelectTab,
     required this.onSelectMediaIndex,
+    this.seekToMs,
+    this.seekToken = 0,
   });
 
   final QualityResultGroup? group;
@@ -23,6 +25,8 @@ class QualityMediaHost extends StatelessWidget {
   final int selectedMediaIndex;
   final ValueChanged<QualityMediaTab> onSelectTab;
   final ValueChanged<int> onSelectMediaIndex;
+  final int? seekToMs;
+  final int seekToken;
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +95,8 @@ class QualityMediaHost extends StatelessWidget {
           QualityVideoHost(
             key: ValueKey('${data.qualityResultId}-video-$activeIndex'),
             videoFile: selectedFile.url,
+            seekToMs: seekToMs,
+            seekToken: seekToken,
           ),
       ],
     );

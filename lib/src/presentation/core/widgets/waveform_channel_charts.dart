@@ -8,6 +8,7 @@ import '../themes/app_theme.dart';
 import 'waveform_material_scope.dart';
 
 typedef BandTapHandler = void Function(String linkId);
+typedef WaveformTimeTapHandler = void Function(int timeMs);
 
 class WaveformChannelCharts extends StatelessWidget {
   const WaveformChannelCharts({
@@ -18,7 +19,9 @@ class WaveformChannelCharts extends StatelessWidget {
     required this.showBeginner,
     required this.showRobot,
     this.selectedLinkId = '',
+    this.selectedTimeMs,
     this.onBandTap,
+    this.onTimeTapMs,
   });
 
   final WaveformSeriesBundle series;
@@ -27,7 +30,9 @@ class WaveformChannelCharts extends StatelessWidget {
   final bool showBeginner;
   final bool showRobot;
   final String selectedLinkId;
+  final int? selectedTimeMs;
   final BandTapHandler? onBandTap;
+  final WaveformTimeTapHandler? onTimeTapMs;
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +48,9 @@ class WaveformChannelCharts extends StatelessWidget {
             showBeginner: showBeginner,
             showRobot: showRobot,
             selectedLinkId: selectedLinkId,
+            selectedTimeMs: selectedTimeMs,
             onBandTap: onBandTap,
+            onTimeTapMs: onTimeTapMs,
             valueOf: (point) => point.currentA,
           ),
           const SizedBox(height: 12),
@@ -55,7 +62,9 @@ class WaveformChannelCharts extends StatelessWidget {
             showBeginner: showBeginner,
             showRobot: showRobot,
             selectedLinkId: selectedLinkId,
+            selectedTimeMs: selectedTimeMs,
             onBandTap: onBandTap,
+            onTimeTapMs: onTimeTapMs,
             valueOf: (point) => point.voltageV,
           ),
           const SizedBox(height: 12),
@@ -67,7 +76,9 @@ class WaveformChannelCharts extends StatelessWidget {
             showBeginner: showBeginner,
             showRobot: showRobot,
             selectedLinkId: selectedLinkId,
+            selectedTimeMs: selectedTimeMs,
             onBandTap: onBandTap,
+            onTimeTapMs: onTimeTapMs,
             valueOf: (point) => point.speedValue,
           ),
         ],
@@ -86,7 +97,9 @@ class _WaveformChannelChart extends StatelessWidget {
     required this.showRobot,
     required this.selectedLinkId,
     required this.valueOf,
+    this.selectedTimeMs,
     this.onBandTap,
+    this.onTimeTapMs,
   });
 
   final String title;
@@ -96,8 +109,10 @@ class _WaveformChannelChart extends StatelessWidget {
   final bool showBeginner;
   final bool showRobot;
   final String selectedLinkId;
+  final int? selectedTimeMs;
   final double? Function(WaveformPoint point) valueOf;
   final BandTapHandler? onBandTap;
+  final WaveformTimeTapHandler? onTimeTapMs;
 
   @override
   Widget build(BuildContext context) {
@@ -185,11 +200,36 @@ class _WaveformChannelChart extends StatelessWidget {
                               ),
                           ],
                         ),
+                        extraLinesData: ExtraLinesData(
+                          verticalLines: [
+                            if (selectedTimeMs != null)
+                              VerticalLine(
+                                x: selectedTimeMs!.toDouble(),
+                                color: AppTheme.CHART_CURSOR,
+                                strokeWidth: 1.5,
+                                dashArray: const [5, 4],
+                                label: VerticalLineLabel(
+                                  show: true,
+                                  alignment: Alignment.topRight,
+                                  padding: const EdgeInsets.only(
+                                    left: 4,
+                                    bottom: 2,
+                                  ),
+                                  style: const TextStyle(
+                                    color: AppTheme.CHART_CURSOR,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                  labelResolver: (_) => '$selectedTimeMs ms',
+                                ),
+                              ),
+                          ],
+                        ),
                         lineBarsData: bars,
                         lineTouchData: LineTouchData(
                           handleBuiltInTouches: false,
                           touchCallback: (event, response) {
-                            if (onBandTap == null) {
+                            if (onTimeTapMs == null && onBandTap == null) {
                               return;
                             }
                             if (event is! FlTapUpEvent) {
@@ -200,13 +240,18 @@ class _WaveformChannelChart extends StatelessWidget {
                             if (x == null) {
                               return;
                             }
+                            onTimeTapMs?.call(x.round());
+                            final bandTap = onBandTap;
+                            if (bandTap == null) {
+                              return;
+                            }
                             for (final link in links) {
                               final start = link.startMs.toDouble();
                               final end = link.endMs.toDouble();
                               final low = start < end ? start : end;
                               final high = start < end ? end : start;
                               if (x >= low && x <= high) {
-                                onBandTap!(link.linkId);
+                                bandTap(link.linkId);
                                 return;
                               }
                             }

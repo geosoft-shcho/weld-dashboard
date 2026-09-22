@@ -4,9 +4,16 @@ import '../../../core/themes/app_theme.dart';
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 
 class QualityVideoHost extends StatelessWidget {
-  const QualityVideoHost({super.key, required this.videoFile});
+  const QualityVideoHost({
+    super.key,
+    required this.videoFile,
+    this.seekToMs,
+    this.seekToken = 0,
+  });
 
   final String videoFile;
+  final int? seekToMs;
+  final int seekToken;
 
   static const double VIEWPORT_MIN_HEIGHT = 320;
 
@@ -69,6 +76,8 @@ class QualityVideoHost extends StatelessWidget {
               : WorkDetailChewieStage(
                   key: ValueKey(assetPath),
                   assetPath: assetPath,
+                  seekToMs: seekToMs,
+                  seekToken: seekToken,
                 ),
         ),
       ],
