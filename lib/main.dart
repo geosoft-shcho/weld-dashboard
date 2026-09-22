@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter/rendering.dart';
 import 'package:go_router/go_router.dart';
 import 'package:pdfrx/pdfrx.dart';
@@ -16,6 +17,7 @@ Future<void> main() async {
   configureAppUrlStrategy();
   SemanticsBinding.instance.ensureSemantics();
   WaveformVisualizer.initialize();
+  await dotenv.load(fileName: '.env');
   final pdfrxReady = await _initializePdfrx();
   setupLocator(pdfrxReady: pdfrxReady);
   runApp(const WeldDashboardApp());
@@ -45,9 +47,7 @@ class _WeldDashboardAppState extends State<WeldDashboardApp> {
   void initState() {
     super.initState();
     _coordinator = locator<AppCoordinator>();
-    _router = createAppRouter(
-      onLocationChanged: _coordinator.didApplyRoute,
-    );
+    _router = createAppRouter(onLocationChanged: _coordinator.didApplyRoute);
     _coordinator.attachNavigation(GoRouterAppNavigation(_router));
   }
 
@@ -55,9 +55,7 @@ class _WeldDashboardAppState extends State<WeldDashboardApp> {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider<AppCoordinator>.value(
-          value: _coordinator,
-        ),
+        ChangeNotifierProvider<AppCoordinator>.value(value: _coordinator),
         ChangeNotifierProvider<ShellViewModel>(
           create: (_) => locator<ShellViewModel>(),
         ),

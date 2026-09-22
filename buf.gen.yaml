@@ -1,0 +1,15 @@
+version: v2
+clean: true
+plugins:
+  - local:
+      - dart
+      - run
+      - connectrpc:protoc-gen-connect-dart
+    out: lib/src/data/datasources/generated
+  - local:
+      - dart
+      - run
+      - protoc_plugin:protoc_plugin
+    out: lib/src/data/datasources/generated
+inputs:
+  - directory: protos

@@ -1,0 +1,374 @@
+syntax = "proto3";
+
+package tacit.dashboard.v1;
+
+option go_package = "github.com/geo-leeJongho/sub-services/dashboard/gen/protobuf/tacit/dashboard/v1;dashboardv1";
+
+// 와이어프레임 프로토타입(serviceops/wireframe-prototype)의 data/*.csv를 postgres-db/dashboard로
+// 옮긴 것을 내려준다. 원본 CSV 테이블 그대로인 List* RPC와, wireframe-prototype/web/js/store.js의
+// 조회 로직(배정 겹침 필터, 이력 조인, 컨텍스트)을 SQL로 옮긴 조인/필터 RPC 두 종류가 있다.
+// 화면에 없는 조합은 안 만든다 — 필요해지면 그때 추가.
+service DashboardService {
+  // s0 장비 필터(체크박스)·라인 옵션, 필터 칩 라벨(id→이름) 용도가 대부분 — 콘텐츠 조회는
+  // equipment_name/line_name을 이미 조인해서 내려주는 ListCollectionEvents/
+  // ListEquipmentStatus/ListWorkHistory 쪽에서 처리한다.
+  rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse);
+  // 필터 드롭다운/칩 라벨 + 배정 정보 표시(인스펙터 패널)에 같이 쓰인다 — 드롭다운 전용 아님.
+  rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+  // s0 드릴다운(프로젝트→작업자 옵션) 생성 + 인스펙터 패널의 "현재 배정" 판정(assignmentAt류)에
+  // 같이 쓰인다 — 드롭다운 전용 아님.
+  rpc ListCollectionAssignments(ListCollectionAssignmentsRequest) returns (ListCollectionAssignmentsResponse);
+  // s0 타임라인/이벤트 로그. date/equipment/connection/line/project/worker/unassigned 필터.
+  // project_ids·worker_ids는 collection_assignments와 이벤트 구간이 겹치는지로 매칭한다
+  // (store.js eventMatchesAssignmentFilter). equipment 조인이라 equipment_name/line_name도
+  // 같이 옴. from/to("HH:MM")는 date로 고른 하루 안의 시:분 구간(s0 타임라인 확대 t0/t1).
+  rpc ListCollectionEvents(ListCollectionEventsRequest) returns (ListCollectionEventsResponse);
+  // s0 KPI 카드 + 실시간 수집 상태 표(s1도 필터 없이 그대로 재사용). equipment + collection_
+  // status(스냅샷) LEFT JOIN이라 상태 없는 장비도 포함. 필터는 ListCollectionEvents와 동일한
+  // 배정 겹침 규칙이지만 "그 날 하루" 단위로 겹치는지를 본다(store.js snapshotFiltered).
+  rpc ListEquipmentStatus(ListEquipmentStatusRequest) returns (ListEquipmentStatusResponse);
+  // 필터 드롭다운 전용(s2 작업지시 선택) — work_order_no/title은 ListWorkHistory가 이미
+  // 조인해서 내려주므로 다른 곳에서 따로 안 부른다.
+  rpc ListWorkOrders(ListWorkOrdersRequest) returns (ListWorkOrdersResponse);
+  // 필터 드롭다운 전용(s2d 조인트 선택) — joint_no/name도 ListWorkHistory가 이미 조인해서
+  // 내려주므로 다른 곳에서 따로 안 부른다.
+  rpc ListJoints(ListJointsRequest) returns (ListJointsResponse);
+  // 필터 드롭다운/칩 라벨 + 파형 범례 실명 표시(masterName/beginnerName)에 같이 쓰인다 —
+  // 드롭다운 전용 아님.
+  rpc ListWorkers(ListWorkersRequest) returns (ListWorkersResponse);
+  // s2 검색/목록 표 + s2d 상세 헤더. work_orders/joints/workers/equipment 조인, passes/
+  // work_attachments 카운트(pass_count/attachment_count)까지 붙여서 내려주므로 행마다 별도
+  // 조회가 필요 없다. common_key는 부분 일치(substring), history_id는 정확히 일치(s2d 딥링크
+  // 단건 조회용).
+  rpc ListWorkHistory(ListWorkHistoryRequest) returns (ListWorkHistoryResponse);
+  // s2 목록의 첨부 아이콘, s2d 첨부 탭(이미지/PDF/영상/오디오/텍스트) 목록·뷰어. 필터 없이
+  // 전체를 내려주면 FE가 history_id/file_type으로 골라 쓴다(store.js attachments()와 동일).
+  // 실 파일은 file_url(정적 /files/... 경로)로 받고, 이 응답 바디엔 바이트를 안 싣는다.
+  rpc ListWorkAttachments(ListWorkAttachmentsRequest) returns (ListWorkAttachmentsResponse);
+  // s3/s4 패스 선택 탭. common_key 필터(비우면 전체), pass_no 순으로 정렬해서 씀.
+  rpc ListPasses(ListPassesRequest) returns (ListPassesResponse);
+  // waveform_series 테이블 그대로(플랫 목록, 포인트당 한 행). pass_id 필터(비우면 전체 —
+  // 테이블이 12,000행대라 화면은 항상 pass_id를 넣어 씀). 화면 자체는 role별로 묶인
+  // GetPassWaveform을 쓰고 이 RPC는 안 부른다 — 원본 테이블 참조/디버그용으로 남겨둠.
+  rpc ListWaveformSeries(ListWaveformSeriesRequest) returns (ListWaveformSeriesResponse);
+  // s3 파형 비교 그래프(명장/초보자/로봇 겹쳐보기) + s4 파형 배경 그래프. mockup-data/
+  // API-컬럼매핑-연동명세.md의 GET /api/v1/passes/{pass_id}/waveform 계약을 그대로 gRPC로
+  // 옮긴 것 — normalize="raw"면 이 서비스 자신의 DB(passes/waveform_series)에서,
+  // "dtw"(normalized)면 aiops를 gRPC로 호출해 합쳐서 낸다(internal/data/aiops). FE는 이
+  // 하나만 보고 raw/dtw 차이는 모른다. roles 비우면 그 pass의 전체 role.
+  rpc GetPassWaveform(GetPassWaveformRequest) returns (GetPassWaveformResponse);
+  // s4 품질 판정 카드(성적서/불량 항목). quality_results 테이블 그대로(item당 한 행, flat) —
+  // 같은 quality_result_id가 item마다 반복되고 FE가 그룹으로 묶어 쓴다(store.js
+  // qualityGroups()). 성적서 스캔 PDF·현장 영상(media, scan/video)도 quality_result_id당
+  // 0개 이상 같이 옴 — 별도 호출 불필요. common_key/pass_id 필터(둘 다 비우면 전체).
+  rpc ListQualityResults(ListQualityResultsRequest) returns (ListQualityResultsResponse);
+  // s4 파형 구간 ↔ 품질결과 연결선(회색 밴드, 클릭하면 좌측 품질 판정으로 스크롤). segment_id·
+  // segment_start_ms/end_ms로 파형의 어느 구간이 어느 품질결과에 대응하는지 알려준다.
+  // common_key/pass_id 필터(둘 다 비우면 전체).
+  rpc ListQualityLinks(ListQualityLinksRequest) returns (ListQualityLinksResponse);
+  // s3/s4 상단 컨텍스트 바(공통키 → 작업지시/조인트/작업자/장비). work_history 중 worked_at
+  // 최신 1건 + work_order/joint/worker/equipment 조인(store.js context()). 그 common_key로
+  // work_history가 없으면 common_key만 채운 빈 결과(work_order_no|joint_no 파싱 fallback).
+  rpc GetContext(GetContextRequest) returns (GetContextResponse);
+}
+
+message Equipment {
+  string equipment_id = 1;
+  string equipment_name = 2;
+  string line_name = 3;
+}
+message ListEquipmentRequest {}
+message ListEquipmentResponse { repeated Equipment items = 1; }
+
+message Project {
+  string project_id = 1;
+  string project_name = 2;
+  string site_name = 3;
+}
+message ListProjectsRequest {}
+message ListProjectsResponse { repeated Project items = 1; }
+
+message CollectionAssignment {
+  string assignment_id = 1;
+  string equipment_id = 2;
+  string project_id = 3;
+  string work_order_id = 4;
+  string worker_id = 5;
+  string assigned_from = 6;
+  string assigned_to = 7;
+  string note = 8;
+}
+message ListCollectionAssignmentsRequest {}
+message ListCollectionAssignmentsResponse { repeated CollectionAssignment items = 1; }
+
+// 빈 배열 = "필터 없음"(store.js와 동일한 규약).
+message AssignmentFilter {
+  repeated string project_ids = 1;
+  repeated string worker_ids = 2;
+  bool unassigned = 3; // true면 worker_ids는 무시하고 "그 시간대 배정 자체가 없는" 이벤트만.
+}
+
+message CollectionEvent {
+  string event_id = 1;
+  string equipment_id = 2;
+  string event_at = 3;
+  optional int32 duration_sec = 4;
+  string connection_status = 5;
+  optional int32 received_count = 6;
+  string window_label = 7;
+  optional double loss_rate_pct = 8;
+  string time_sync_status = 9;
+  optional int32 clock_offset_ms = 10;
+  string note = 11;
+  // equipment 조인(store.js eventsFiltered) — 화면이 항상 이 두 필드로 표시·검색한다.
+  string equipment_name = 12;
+  string line_name = 13;
+}
+message ListCollectionEventsRequest {
+  string date = 1; // YYYY-MM-DD, 비우면 전체
+  repeated string equipment_ids = 2;
+  repeated string connection_statuses = 3;
+  repeated string lines = 4;
+  AssignmentFilter assignment = 5;
+  // 타임라인 확대(s0 t0/t1) — date로 고른 하루 안에서의 시:분 구간. "HH:MM", 비우면
+  // from=00:00/to=24:00과 동일(전체). event_at의 시:분 부분과 문자열 비교.
+  string from = 6;
+  string to = 7;
+}
+message ListCollectionEventsResponse { repeated CollectionEvent items = 1; }
+
+message EquipmentStatusRow {
+  string equipment_id = 1;
+  string equipment_name = 2;
+  string line_name = 3;
+  string snapshot_at = 4;
+  string connection_status = 5;
+  optional int32 received_count = 6;
+  string window_label = 7;
+  optional double loss_rate_pct = 8;
+  string time_sync_status = 9;
+  optional int32 clock_offset_ms = 10;
+  string last_received_at = 11;
+}
+message ListEquipmentStatusRequest {
+  repeated string equipment_ids = 1;
+  repeated string connection_statuses = 2;
+  repeated string lines = 3;
+  AssignmentFilter assignment = 4;
+  string date = 5; // 배정 겹침을 볼 기준 날짜, 비우면 스냅샷 날짜(서버가 collection_status.snapshot_at으로 판단)
+}
+message ListEquipmentStatusResponse { repeated EquipmentStatusRow items = 1; }
+
+message WorkOrder {
+  string work_order_id = 1;
+  string work_order_no = 2;
+  string project_id = 3;
+  string title = 4;
+  string planned_date = 5;
+  string status = 6;
+}
+message ListWorkOrdersRequest {}
+message ListWorkOrdersResponse { repeated WorkOrder items = 1; }
+
+message Joint {
+  string joint_id = 1;
+  string joint_no = 2;
+  string name = 3;
+  string work_order_id = 4;
+  string location = 5;
+}
+message ListJointsRequest {}
+message ListJointsResponse { repeated Joint items = 1; }
+
+message Worker {
+  string worker_id = 1;
+  string worker_name = 2;
+  string team = 3;
+  bool is_master = 4;
+}
+message ListWorkersRequest {}
+message ListWorkersResponse { repeated Worker items = 1; }
+
+message WorkHistory {
+  string history_id = 1;
+  string common_key = 2;
+  string work_order_id = 3;
+  string joint_id = 4;
+  string worker_id = 5;
+  string equipment_id = 6;
+  string worked_at = 7;
+  // 아래는 work_orders/joints/workers/equipment 조인 + passes 카운트 (store.js historyFiltered).
+  string work_order_no = 8;
+  string title = 9;
+  string joint_no = 10;
+  string joint_name = 11;
+  string worker_name = 12;
+  string equipment_name = 13;
+  int32 pass_count = 14;
+  int32 attachment_count = 15;
+}
+message ListWorkHistoryRequest {
+  string common_key = 1; // 부분 일치
+  string work_order_id = 2;
+  string joint_id = 3;
+  string worker_id = 4;
+  string equipment_id = 5;
+  string from = 6; // YYYY-MM-DD
+  string to = 7;   // YYYY-MM-DD
+  // 단건 조회(s2d 딥링크)용 — 정확히 일치. 비우면 무시.
+  string history_id = 8;
+}
+message ListWorkHistoryResponse { repeated WorkHistory items = 1; }
+
+message WorkAttachment {
+  string attachment_id = 1;
+  string history_id = 2;
+  string file_type = 3; // image | pdf | video | audio | text
+  string file_name = 4;
+  string note = 5;
+  // text 타입은 본문 텍스트 그대로(기존 와이어프레임 CSV 규약). 그 외 타입은 실제 파일이
+  // dashboard/files/에 있을 때만 채워지고(없으면 빈 문자열), 그때 file_url도 같이 채워진다.
+  string content = 6;
+  // Range 요청 지원되는 정적 파일 URL(cmd/server가 서빙, 서버 origin 기준 상대경로). 영상
+  // 시킹·PDF 뷰어처럼 바이트를 그대로 읽어야 하는 뷰어는 gRPC 응답이 아니라 이 URL로 받는다.
+  string file_url = 7;
+}
+message ListWorkAttachmentsRequest {}
+message ListWorkAttachmentsResponse { repeated WorkAttachment items = 1; }
+
+message Pass {
+  string pass_id = 1;
+  string common_key = 2;
+  optional int32 pass_no = 3;
+  string pass_name = 4;
+  string master_profile_id = 5;
+  string control_worker_id = 6;
+}
+message ListPassesRequest {
+  string common_key = 1; // 비우면 전체
+}
+message ListPassesResponse { repeated Pass items = 1; }
+
+message WaveformPoint {
+  int64 id = 1;
+  string series_id = 2;
+  string pass_id = 3;
+  string common_key = 4;
+  string series_role = 5;
+  string master_profile_id = 6;
+  string worker_id = 7;
+  string robot_id = 8;
+  int32 time_ms = 9;
+  optional double current_a = 10;
+  optional double voltage_v = 11;
+  // "속도"가 아니라 와이어 송급 속도(m/min) — 예전 필드명 speed_value에서 고쳤다.
+  optional double wire_feed_speed_mpm = 12;
+  // 회전 속도(rpm) — time_ms 시점에 맞는 값. 아직 원본 CSV에 이 채널이 없어서 대부분 비어
+  // 있다(향후 데이터 추가 예정, 채워지면 자동으로 값이 옴 — postgres-db/dashboard/init.sql 참고).
+  optional double rotation_speed_rpm = 13;
+}
+// pass_id가 있으면 그 패스로만 좁혀 내려준다(파형은 전체가 12,000행대라 화면은 항상 패스
+// 단위로만 씀 — wireframe-prototype/web/js/store.js seriesForPass 참고). 비우면 전체.
+message ListWaveformSeriesRequest {
+  string pass_id = 1;
+}
+message ListWaveformSeriesResponse { repeated WaveformPoint items = 1; }
+
+// role별로 묶은 포인트 하나 — GetPassWaveform 전용(위 WaveformPoint 플랫 목록과 달리
+// series[].points[] 구조, mockup-data 명세의 응답 계약 그대로).
+message PassWaveformPoint {
+  int32 t = 1; // time_ms
+  optional double current_a = 2;
+  optional double voltage_v = 3;
+  optional double wire_feed_speed_mpm = 4; // 와이어 송급 속도, m/min (예전 speed_value)
+  optional double rotation_speed_rpm = 5;  // 회전 속도, rpm — 대부분 아직 비어 있음(위 참고)
+}
+message PassWaveformSeries {
+  string role = 1;       // master | beginner | robot
+  string display_name = 2; // 명세서의 role_label
+  string master_profile_id = 3;
+  string worker_id = 4;
+  string robot_id = 5;
+  repeated PassWaveformPoint points = 6;
+}
+message GetPassWaveformRequest {
+  string pass_id = 1;
+  string normalize = 2; // "raw" | "dtw"(=normalized). 비우면 "raw".
+  repeated string roles = 3; // 비우면 그 pass의 전체 role
+}
+message GetPassWaveformResponse {
+  string pass_id = 1;
+  string common_key = 2;
+  string pass_name = 3;
+  string normalize = 4;
+  repeated PassWaveformSeries series = 5;
+}
+
+message QualityResult {
+  string quality_result_id = 1;
+  string paper_doc_no = 2;
+  string common_key = 3;
+  string pass_id = 4;
+  string segment_id = 5;
+  string inspected_at = 6;
+  string inspector_name = 7;
+  string judgement = 8;
+  string issue_summary = 9;
+  string item_name = 10;
+  string item_result = 11;
+  string item_note = 12;
+  // 성적서 스캔 PDF·현장 영상 — quality_result_id 그룹 하나에 0개 이상(같은 타입이 여러 개일
+  // 수 있음, 특히 영상). ListQualityResults가 같이 채워준다(GetQualityMedia 별도 호출 불필요).
+  repeated QualityMedia media = 13;
+}
+// media_type: "scan" | "video". url은 실제로 dashboard/files/에 있을 때만 채워진다
+// (WorkAttachment.file_url과 같은 규칙) — 아직 실물 없이 경로만 있는 값은 file_path만 오고
+// url은 빈다(data/README.md "scan_file은 스캔 PDF 경로(비면 PDF 미연동)..." 그대로).
+message QualityMedia {
+  string media_type = 1;
+  string file_path = 2;
+  optional int32 page_count = 3; // scan 전용
+  string url = 4;
+}
+message ListQualityResultsRequest {
+  string common_key = 1;
+  string pass_id = 2;
+}
+message ListQualityResultsResponse { repeated QualityResult items = 1; }
+
+message QualityLink {
+  string link_id = 1;
+  string common_key = 2;
+  string quality_result_id = 3;
+  string pass_id = 4;
+  string segment_id = 5;
+  optional int32 segment_start_ms = 6;
+  optional int32 segment_end_ms = 7;
+  string note = 8;
+}
+message ListQualityLinksRequest {
+  string common_key = 1;
+  string pass_id = 2;
+}
+message ListQualityLinksResponse { repeated QualityLink items = 1; }
+
+message Context {
+  string common_key = 1;
+  string work_order_id = 2;
+  string work_order_no = 3;
+  string title = 4;
+  string joint_id = 5;
+  string joint_no = 6;
+  string joint_name = 7;
+  string worker_id = 8;
+  string worker_name = 9;
+  string equipment_id = 10;
+  string equipment_name = 11;
+  string worked_at = 12;
+}
+message GetContextRequest {
+  string common_key = 1;
+}
+message GetContextResponse {
+  Context context = 1;
+}
