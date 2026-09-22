@@ -4,10 +4,7 @@ import '../../../core/themes/app_theme.dart';
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 
 class QualityVideoHost extends StatelessWidget {
-  const QualityVideoHost({
-    super.key,
-    required this.videoFile,
-  });
+  const QualityVideoHost({super.key, required this.videoFile});
 
   final String videoFile;
 
@@ -21,15 +18,14 @@ class QualityVideoHost extends StatelessWidget {
         child: const Center(
           child: Padding(
             padding: EdgeInsets.all(16),
-            child: Text(
-              '현장 영상이 연동되지 않았습니다.',
-              textAlign: TextAlign.center,
-            ),
+            child: Text('현장 영상이 연동되지 않았습니다.', textAlign: TextAlign.center),
           ),
         ),
       );
     }
-    final assetPath = resolveQualityVideoAssetPath(path);
+    final assetPath = path.startsWith('http://') || path.startsWith('https://')
+        ? path
+        : resolveQualityVideoAssetPath(path);
     final displayName = qualityVideoDisplayName(path);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

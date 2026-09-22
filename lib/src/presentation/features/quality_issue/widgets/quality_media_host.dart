@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../../domain/entities/quality_media_tab.dart';
+import '../../../../domain/entities/quality_media.dart';
 import '../../../../domain/entities/quality_result_group.dart';
 import '../../../core/themes/app_theme.dart';
 import 'paper_scan_host.dart';
@@ -12,12 +13,16 @@ class QualityMediaHost extends StatelessWidget {
     super.key,
     required this.group,
     required this.selectedTab,
+    required this.selectedMediaIndex,
     required this.onSelectTab,
+    required this.onSelectMediaIndex,
   });
 
   final QualityResultGroup? group;
   final QualityMediaTab selectedTab;
+  final int selectedMediaIndex;
   final ValueChanged<QualityMediaTab> onSelectTab;
+  final ValueChanged<int> onSelectMediaIndex;
 
   @override
   Widget build(BuildContext context) {
@@ -28,9 +33,12 @@ class QualityMediaHost extends StatelessWidget {
         severity: InfoBarSeverity.warning,
       );
     }
-    final hasPdf = data.doesHaveScanFile;
-    final hasVideo = data.doesHaveVideoFile;
-    if (!hasPdf && !hasVideo) {
+    final availableTabs = QualityMediaTab.values
+        .where(
+          (tab) => data.media.any((item) => item.type == tab),
+        )
+        .toList();
+    if (availableTabs.isEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -45,55 +53,96 @@ class QualityMediaHost extends StatelessWidget {
       );
     }
 
-    final showTabs = hasPdf && hasVideo;
-    final tab = _effectiveTab(hasPdf: hasPdf, hasVideo: hasVideo);
+    final tab = availableTabs.contains(selectedTab)
+        ? selectedTab
+        : availableTabs.first;
+    final files = data.media.where((item) => item.type == tab).toList();
+    final activeIndex =
+        selectedMediaIndex >= 0 && selectedMediaIndex < files.length
+        ? selectedMediaIndex
+        : 0;
+    final selectedFile = files[activeIndex];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (showTabs) ...[
-          _MediaTabs(
-            selectedTab: tab,
-            onSelectTab: onSelectTab,
+        _MediaTabs(
+          tabs: availableTabs,
+          selectedTab: tab,
+          onSelectTab: onSelectTab,
+        ),
+        const SizedBox(height: 12),
+        if (files.length > 1) ...[
+          _MediaFiles(
+            files: files,
+            selectedIndex: activeIndex,
+            onSelectIndex: onSelectMediaIndex,
           ),
           const SizedBox(height: 12),
         ],
         if (tab == QualityMediaTab.pdf) ...[
           PaperScanHost(
-            key: ValueKey('${data.qualityResultId}-pdf'),
-            scanFile: data.scanFile,
-            scanPages: data.scanPages,
+            key: ValueKey('${data.qualityResultId}-pdf-$activeIndex'),
+            scanFile: selectedFile.url,
+            scanPages: selectedFile.pageCount,
           ),
           const SizedBox(height: 12),
           QualityPaperMeta(group: data),
         ] else
           QualityVideoHost(
-            key: ValueKey('${data.qualityResultId}-video'),
-            videoFile: data.videoFile,
+            key: ValueKey('${data.qualityResultId}-video-$activeIndex'),
+            videoFile: selectedFile.url,
           ),
       ],
     );
   }
+}
 
-  QualityMediaTab _effectiveTab({
-    required bool hasPdf,
-    required bool hasVideo,
-  }) {
-    if (hasPdf && !hasVideo) {
-      return QualityMediaTab.pdf;
-    }
-    if (!hasPdf && hasVideo) {
-      return QualityMediaTab.video;
-    }
-    return selectedTab;
+class _MediaFiles extends StatelessWidget {
+  const _MediaFiles({
+    required this.files,
+    required this.selectedIndex,
+    required this.onSelectIndex,
+  });
+
+  final List<QualityMedia> files;
+  final int selectedIndex;
+  final ValueChanged<int> onSelectIndex;
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (var index = 0; index < files.length; index++)
+          Button(
+            onPressed: () => onSelectIndex(index),
+            style: ButtonStyle(
+              backgroundColor: WidgetStatePropertyAll(
+                selectedIndex == index
+                    ? AppTheme.ACCENT_STEEL.withValues(alpha: 0.45)
+                    : AppTheme.SURFACE_RAISED,
+              ),
+            ),
+            child: Text(
+              files[index].displayName.isEmpty
+                  ? '파일 ${index + 1}'
+                  : files[index].displayName,
+            ),
+          ),
+      ],
+    );
   }
 }
 
 class _MediaTabs extends StatelessWidget {
   const _MediaTabs({
+    required this.tabs,
     required this.selectedTab,
     required this.onSelectTab,
   });
 
+  final List<QualityMediaTab> tabs;
   final QualityMediaTab selectedTab;
   final ValueChanged<QualityMediaTab> onSelectTab;
 
@@ -103,7 +152,7 @@ class _MediaTabs extends StatelessWidget {
       spacing: 8,
       runSpacing: 8,
       children: [
-        for (final tab in QualityMediaTab.values)
+        for (final tab in tabs)
           Button(
             onPressed: () => onSelectTab(tab),
             style: ButtonStyle(

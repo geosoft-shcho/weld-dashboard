@@ -195,7 +195,9 @@ class _QualityIssueBody extends StatelessWidget {
             final left = QualityMediaHost(
               group: group,
               selectedTab: viewModel.selectedMediaTab,
+              selectedMediaIndex: viewModel.selectedMediaIndex,
               onSelectTab: viewModel.didSelectMediaTab,
+              onSelectMediaIndex: viewModel.didSelectMediaIndex,
             );
             final right = WaveformChannelCharts(
               series: board.series,
