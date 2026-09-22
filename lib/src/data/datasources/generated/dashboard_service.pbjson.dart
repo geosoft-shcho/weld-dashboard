@@ -616,6 +616,8 @@ const ListWorkHistoryRequest$json = {
     {'1': 'from', '3': 6, '4': 1, '5': 9, '10': 'from'},
     {'1': 'to', '3': 7, '4': 1, '5': 9, '10': 'to'},
     {'1': 'history_id', '3': 8, '4': 1, '5': 9, '10': 'historyId'},
+    {'1': 'limit', '3': 9, '4': 1, '5': 5, '10': 'limit'},
+    {'1': 'offset', '3': 10, '4': 1, '5': 5, '10': 'offset'},
   ],
 };
 
@@ -625,7 +627,8 @@ final $typed_data.Uint8List listWorkHistoryRequestDescriptor = $convert.base64De
     'IiCg13b3JrX29yZGVyX2lkGAIgASgJUgt3b3JrT3JkZXJJZBIZCghqb2ludF9pZBgDIAEoCVIH'
     'am9pbnRJZBIbCgl3b3JrZXJfaWQYBCABKAlSCHdvcmtlcklkEiEKDGVxdWlwbWVudF9pZBgFIA'
     'EoCVILZXF1aXBtZW50SWQSEgoEZnJvbRgGIAEoCVIEZnJvbRIOCgJ0bxgHIAEoCVICdG8SHQoK'
-    'aGlzdG9yeV9pZBgIIAEoCVIJaGlzdG9yeUlk');
+    'aGlzdG9yeV9pZBgIIAEoCVIJaGlzdG9yeUlkEhQKBWxpbWl0GAkgASgFUgVsaW1pdBIWCgZvZm'
+    'ZzZXQYCiABKAVSBm9mZnNldA==');
 
 @$core.Deprecated('Use listWorkHistoryResponseDescriptor instead')
 const ListWorkHistoryResponse$json = {
@@ -639,14 +642,15 @@ const ListWorkHistoryResponse$json = {
       '6': '.tacit.dashboard.v1.WorkHistory',
       '10': 'items'
     },
+    {'1': 'total_count', '3': 2, '4': 1, '5': 5, '10': 'totalCount'},
   ],
 };
 
 /// Descriptor for `ListWorkHistoryResponse`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List listWorkHistoryResponseDescriptor =
-    $convert.base64Decode(
-        'ChdMaXN0V29ya0hpc3RvcnlSZXNwb25zZRI1CgVpdGVtcxgBIAMoCzIfLnRhY2l0LmRhc2hib2'
-        'FyZC52MS5Xb3JrSGlzdG9yeVIFaXRlbXM=');
+final $typed_data.Uint8List listWorkHistoryResponseDescriptor = $convert.base64Decode(
+    'ChdMaXN0V29ya0hpc3RvcnlSZXNwb25zZRI1CgVpdGVtcxgBIAMoCzIfLnRhY2l0LmRhc2hib2'
+    'FyZC52MS5Xb3JrSGlzdG9yeVIFaXRlbXMSHwoLdG90YWxfY291bnQYAiABKAVSCnRvdGFsQ291'
+    'bnQ=');
 
 @$core.Deprecated('Use workAttachmentDescriptor instead')
 const WorkAttachment$json = {

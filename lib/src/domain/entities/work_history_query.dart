@@ -35,6 +35,7 @@ class WorkHistoryQuery {
   final DateTime? fromDate;
   final DateTime? toDate;
   final String selectedHistoryId;
+  /// 클라이언트 슬라이스용(로컬 유스케이스·테스트). 서버 페이지는 limit/offset 사용.
   final int visibleCount;
 
   bool get doesHaveInvalidDateRange {

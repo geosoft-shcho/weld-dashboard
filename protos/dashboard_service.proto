@@ -217,8 +217,19 @@ message ListWorkHistoryRequest {
   string to = 7;   // YYYY-MM-DD
   // 단건 조회(s2d 딥링크)용 — 정확히 일치. 비우면 무시.
   string history_id = 8;
+  // s2 목록 인피니트 스크롤용. limit<=0이면 기존과 동일하게 전체를 반환(하위 호환) —
+  // limit>0일 때만 offset과 함께 페이지 단위로 자른다. 정렬은 worked_at DESC, history_id
+  // DESC(동점 시 결정적 순서 보장)라 offset이 페이지 사이에서 안정적으로 이어진다.
+  int32 limit = 9;
+  int32 offset = 10;
 }
-message ListWorkHistoryResponse { repeated WorkHistory items = 1; }
+message ListWorkHistoryResponse {
+  repeated WorkHistory items = 1;
+  // 필터 전체 매치 건수(페이지 크기와 무관) — FE가 이 값과 지금까지 받은 개수를 비교해
+  // 인피니트 스크롤을 멈출 시점을 판단한다. limit을 안 쓴 요청(전체 반환)에서도 items와
+  // 같은 값이 채워진다.
+  int32 total_count = 2;
+}
 
 message WorkAttachment {
   string attachment_id = 1;

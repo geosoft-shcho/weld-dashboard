@@ -16,6 +16,8 @@ import '../../../domain/use_cases/load_collection_catalog_use_case.dart';
 import '../../../domain/use_cases/load_pass_waveform_catalog_use_case.dart';
 import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
 import '../../../domain/use_cases/load_work_history_catalog_use_case.dart';
+import '../../../domain/use_cases/list_work_history_page_use_case.dart';
+import '../../../domain/use_cases/load_work_history_masters_use_case.dart';
 import '../../../domain/use_cases/query_collection_board_use_case.dart';
 import '../../../domain/use_cases/query_pass_profile_use_case.dart';
 import '../../../domain/use_cases/query_quality_issue_use_case.dart';
@@ -50,6 +52,8 @@ void setupLocator({required bool pdfrxReady}) {
     () => RemoteWorkHistoryRepository(locator()),
   );
   locator.registerLazySingleton(() => LoadWorkHistoryCatalogUseCase(locator()));
+  locator.registerLazySingleton(() => LoadWorkHistoryMastersUseCase(locator()));
+  locator.registerLazySingleton(() => ListWorkHistoryPageUseCase(locator()));
   locator.registerFactory(() => QueryWorkHistoryUseCase());
   locator.registerLazySingleton<WorkDetailRepository>(
     () => RemoteWorkDetailRepository(locator()),
@@ -111,8 +115,8 @@ void setupLocator({required bool pdfrxReady}) {
   );
   locator.registerFactory(
     () => WorkHistoryViewModel(
-      loadWorkHistoryCatalogUseCase: locator(),
-      queryWorkHistoryUseCase: locator(),
+      loadWorkHistoryMastersUseCase: locator(),
+      listWorkHistoryPageUseCase: locator(),
     ),
   );
 }

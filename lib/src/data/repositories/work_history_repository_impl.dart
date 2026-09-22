@@ -1,11 +1,13 @@
 import '../../domain/entities/equipment.dart';
 import '../../domain/entities/joint.dart';
 import '../../domain/entities/work_history_catalog.dart';
+import '../../domain/entities/work_history_page.dart';
 import '../../domain/entities/work_history_query.dart';
 import '../../domain/entities/work_history_item.dart';
 import '../../domain/entities/work_order.dart';
 import '../../domain/entities/worker.dart';
 import '../../domain/repositories/work_history_repository.dart';
+import '../../domain/use_cases/query_work_history_use_case.dart';
 import '../datasources/local/csv_asset_data_source.dart';
 import '../models/equipment_dto.dart';
 import '../models/joint_dto.dart';
@@ -17,9 +19,54 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
   WorkHistoryRepositoryImpl(this._csvAssetDataSource);
 
   final CsvAssetDataSource _csvAssetDataSource;
+  final QueryWorkHistoryUseCase _queryWorkHistoryUseCase =
+      QueryWorkHistoryUseCase();
+
+  WorkHistoryCatalog? _cachedCatalog;
+
+  @override
+  Future<WorkHistoryCatalog> loadMasters() async {
+    final catalog = await loadCatalog();
+    return WorkHistoryCatalog(
+      items: const [],
+      workOrders: catalog.workOrders,
+      joints: catalog.joints,
+      workers: catalog.workers,
+      equipments: catalog.equipments,
+    );
+  }
+
+  @override
+  Future<WorkHistoryPage> listPage({
+    required WorkHistoryQuery query,
+    required int limit,
+    required int offset,
+  }) async {
+    final catalog = await loadCatalog();
+    final matched = _queryWorkHistoryUseCase.matchedItems(
+      catalog: catalog,
+      query: query,
+    );
+    if (limit <= 0) {
+      return WorkHistoryPage(items: matched, totalCount: matched.length);
+    }
+    final start = offset < 0 ? 0 : offset;
+    if (start >= matched.length) {
+      return WorkHistoryPage(items: const [], totalCount: matched.length);
+    }
+    final end = (start + limit).clamp(0, matched.length);
+    return WorkHistoryPage(
+      items: matched.sublist(start, end),
+      totalCount: matched.length,
+    );
+  }
 
   @override
   Future<WorkHistoryCatalog> loadCatalog({WorkHistoryQuery? query}) async {
+    final cached = _cachedCatalog;
+    if (cached != null) {
+      return cached;
+    }
     final workOrderRows = await _csvAssetDataSource.loadWorkOrderRows();
     final jointRows = await _csvAssetDataSource.loadJointRows();
     final workerRows = await _csvAssetDataSource.loadWorkerRows();
@@ -77,13 +124,15 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
           attachmentCountsByHistoryId: attachmentCountsByHistoryId,
         ),
     ];
-    return WorkHistoryCatalog(
+    final catalog = WorkHistoryCatalog(
       items: items,
       workOrders: workOrders,
       joints: joints,
       workers: workers,
       equipments: equipments,
     );
+    _cachedCatalog = catalog;
+    return catalog;
   }
 
   WorkHistoryItem _itemFrom(

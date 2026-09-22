@@ -2225,6 +2225,8 @@ class ListWorkHistoryRequest extends $pb.GeneratedMessage {
     $core.String? from,
     $core.String? to,
     $core.String? historyId,
+    $core.int? limit,
+    $core.int? offset,
   }) {
     final result = create();
     if (commonKey != null) result.commonKey = commonKey;
@@ -2235,6 +2237,8 @@ class ListWorkHistoryRequest extends $pb.GeneratedMessage {
     if (from != null) result.from = from;
     if (to != null) result.to = to;
     if (historyId != null) result.historyId = historyId;
+    if (limit != null) result.limit = limit;
+    if (offset != null) result.offset = offset;
     return result;
   }
 
@@ -2260,6 +2264,8 @@ class ListWorkHistoryRequest extends $pb.GeneratedMessage {
     ..aOS(6, _omitFieldNames ? '' : 'from')
     ..aOS(7, _omitFieldNames ? '' : 'to')
     ..aOS(8, _omitFieldNames ? '' : 'historyId')
+    ..a<$core.int>(9, _omitFieldNames ? '' : 'limit', $pb.PbFieldType.O3)
+    ..a<$core.int>(10, _omitFieldNames ? '' : 'offset', $pb.PbFieldType.O3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2357,14 +2363,37 @@ class ListWorkHistoryRequest extends $pb.GeneratedMessage {
   $core.bool hasHistoryId() => $_has(7);
   @$pb.TagNumber(8)
   void clearHistoryId() => $_clearField(8);
+
+  /// s2 목록 인피니트 스크롤용. limit<=0이면 기존과 동일하게 전체를 반환(하위 호환) —
+  /// limit>0일 때만 offset과 함께 페이지 단위로 자른다. 정렬은 worked_at DESC, history_id
+  /// DESC(동점 시 결정적 순서 보장)라 offset이 페이지 사이에서 안정적으로 이어진다.
+  @$pb.TagNumber(9)
+  $core.int get limit => $_getIZ(8);
+  @$pb.TagNumber(9)
+  set limit($core.int value) => $_setSignedInt32(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasLimit() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearLimit() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $core.int get offset => $_getIZ(9);
+  @$pb.TagNumber(10)
+  set offset($core.int value) => $_setSignedInt32(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasOffset() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearOffset() => $_clearField(10);
 }
 
 class ListWorkHistoryResponse extends $pb.GeneratedMessage {
   factory ListWorkHistoryResponse({
     $core.Iterable<WorkHistory>? items,
+    $core.int? totalCount,
   }) {
     final result = create();
     if (items != null) result.items.addAll(items);
+    if (totalCount != null) result.totalCount = totalCount;
     return result;
   }
 
@@ -2384,6 +2413,7 @@ class ListWorkHistoryResponse extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..pc<WorkHistory>(1, _omitFieldNames ? '' : 'items', $pb.PbFieldType.PM,
         subBuilder: WorkHistory.create)
+    ..a<$core.int>(2, _omitFieldNames ? '' : 'totalCount', $pb.PbFieldType.O3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2411,6 +2441,18 @@ class ListWorkHistoryResponse extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(1)
   $pb.PbList<WorkHistory> get items => $_getList(0);
+
+  /// 필터 전체 매치 건수(페이지 크기와 무관) — FE가 이 값과 지금까지 받은 개수를 비교해
+  /// 인피니트 스크롤을 멈출 시점을 판단한다. limit을 안 쓴 요청(전체 반환)에서도 items와
+  /// 같은 값이 채워진다.
+  @$pb.TagNumber(2)
+  $core.int get totalCount => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set totalCount($core.int value) => $_setSignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTotalCount() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTotalCount() => $_clearField(2);
 }
 
 class WorkAttachment extends $pb.GeneratedMessage {

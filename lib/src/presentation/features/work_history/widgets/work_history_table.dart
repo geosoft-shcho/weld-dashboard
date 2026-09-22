@@ -99,7 +99,10 @@ class _WorkHistoryTableState extends State<WorkHistoryTable> {
             itemCount: board.visibleRows.length + 1,
             itemBuilder: (context, index) {
               if (index == board.visibleRows.length) {
-                return _Footer(board: board);
+                return _Footer(
+                  board: board,
+                  isLoadingMore: viewModel.isLoadingMore,
+                );
               }
               return _DataRow(
                 item: board.visibleRows[index],
@@ -306,9 +309,10 @@ class _DataRow extends StatelessWidget {
 }
 
 class _Footer extends StatelessWidget {
-  const _Footer({required this.board});
+  const _Footer({required this.board, required this.isLoadingMore});
 
   final WorkHistoryBoard board;
+  final bool isLoadingMore;
 
   @override
   Widget build(BuildContext context) {
@@ -317,12 +321,18 @@ class _Footer extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Center(
-        child: Text(
-          board.doesHaveMore
-              ? '$loaded / $total건 · 스크롤하면 더 불러옵니다'
-              : '$total건 모두 표시',
-          style: const TextStyle(fontSize: 12),
-        ),
+        child: isLoadingMore
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: ProgressRing(),
+              )
+            : Text(
+                board.doesHaveMore
+                    ? '$loaded / $total건 · 스크롤하면 더 불러옵니다'
+                    : '$total건 모두 표시',
+                style: const TextStyle(fontSize: 12),
+              ),
       ),
     );
   }

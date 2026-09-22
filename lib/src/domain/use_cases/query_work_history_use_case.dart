@@ -5,21 +5,13 @@ import '../entities/work_history_item.dart';
 import '../entities/work_history_query.dart';
 
 class QueryWorkHistoryUseCase {
-  WorkHistoryBoard execute({
+  /// 필터·정렬된 전체 매칭 행. 정렬은 서버와 같이 worked_at DESC, history_id DESC.
+  List<WorkHistoryItem> matchedItems({
     required WorkHistoryCatalog catalog,
     required WorkHistoryQuery query,
   }) {
-    final joints = _jointsForOrder(catalog.joints, query.workOrderId);
     if (query.doesHaveInvalidDateRange) {
-      return WorkHistoryBoard(
-        query: query,
-        visibleRows: const [],
-        totalCount: 0,
-        workOrders: catalog.workOrders,
-        joints: joints,
-        workers: catalog.workers,
-        equipments: catalog.equipments,
-      );
+      return const [];
     }
     final filtered = [
       for (final item in catalog.items)
@@ -30,8 +22,17 @@ class QueryWorkHistoryUseCase {
       if (byTime != 0) {
         return byTime;
       }
-      return left.historyId.compareTo(right.historyId);
+      return right.historyId.compareTo(left.historyId);
     });
+    return filtered;
+  }
+
+  WorkHistoryBoard execute({
+    required WorkHistoryCatalog catalog,
+    required WorkHistoryQuery query,
+  }) {
+    final joints = _jointsForOrder(catalog.joints, query.workOrderId);
+    final filtered = matchedItems(catalog: catalog, query: query);
     final visibleCount = query.visibleCount < 0 ? 0 : query.visibleCount;
     final visibleRows = filtered.length <= visibleCount
         ? filtered

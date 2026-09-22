@@ -1,6 +1,7 @@
 import '../../domain/entities/equipment.dart';
 import '../../domain/entities/joint.dart';
 import '../../domain/entities/work_history_catalog.dart';
+import '../../domain/entities/work_history_page.dart';
 import '../../domain/entities/work_history_query.dart';
 import '../../domain/entities/work_history_item.dart';
 import '../../domain/entities/work_order.dart';
@@ -15,18 +16,7 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
   final DashboardServiceDataSource _source;
 
   @override
-  Future<WorkHistoryCatalog> loadCatalog({WorkHistoryQuery? query}) async {
-    final histories = await _source.client.listWorkHistory(
-      pb.ListWorkHistoryRequest(
-        commonKey: query?.commonKey ?? '',
-        workOrderId: query?.workOrderId ?? '',
-        jointId: query?.jointId ?? '',
-        workerId: query?.workerId ?? '',
-        equipmentId: query?.equipmentId ?? '',
-        from: query?.fromDate == null ? '' : _date(query!.fromDate!),
-        to: query?.toDate == null ? '' : _date(query!.toDate!),
-      ),
-    );
+  Future<WorkHistoryCatalog> loadMasters() async {
     final workOrders = await _source.client.listWorkOrders(
       pb.ListWorkOrdersRequest(),
     );
@@ -36,7 +26,7 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       pb.ListEquipmentRequest(),
     );
     return WorkHistoryCatalog(
-      items: [for (final item in histories.items) workHistoryItemFrom(item)],
+      items: const [],
       workOrders: [
         for (final item in workOrders.items)
           WorkOrder(
@@ -66,6 +56,56 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
             lineName: item.lineName,
           ),
       ],
+    );
+  }
+
+  @override
+  Future<WorkHistoryPage> listPage({
+    required WorkHistoryQuery query,
+    required int limit,
+    required int offset,
+  }) async {
+    final response = await _source.client.listWorkHistory(
+      _request(query, limit: limit, offset: offset),
+    );
+    return WorkHistoryPage(
+      items: [for (final item in response.items) workHistoryItemFrom(item)],
+      totalCount: response.totalCount,
+    );
+  }
+
+  @override
+  Future<WorkHistoryCatalog> loadCatalog({WorkHistoryQuery? query}) async {
+    final masters = await loadMasters();
+    final page = await listPage(
+      query: query ?? WorkHistoryQuery.initial(),
+      limit: 0,
+      offset: 0,
+    );
+    return WorkHistoryCatalog(
+      items: page.items,
+      workOrders: masters.workOrders,
+      joints: masters.joints,
+      workers: masters.workers,
+      equipments: masters.equipments,
+    );
+  }
+
+  pb.ListWorkHistoryRequest _request(
+    WorkHistoryQuery query, {
+    required int limit,
+    required int offset,
+  }) {
+    return pb.ListWorkHistoryRequest(
+      commonKey: query.commonKey,
+      workOrderId: query.workOrderId,
+      jointId: query.jointId,
+      workerId: query.workerId,
+      equipmentId: query.equipmentId,
+      from: query.fromDate == null ? '' : _date(query.fromDate!),
+      to: query.toDate == null ? '' : _date(query.toDate!),
+      limit: limit,
+      offset: offset,
     );
   }
 
