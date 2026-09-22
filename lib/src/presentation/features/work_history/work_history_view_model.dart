@@ -89,6 +89,11 @@ class WorkHistoryViewModel extends ChangeNotifier {
   }
 
   void didChangeCommonKey(String commonKey) {
+    if (_query.commonKey == commonKey) {
+      return;
+    }
+    // Material TextField는 부모 rebuild에도 입력이 유지된다.
+    // Fluent TextBox는 Web+NavigationView에서 키보드 연결이 끊겨 조용히 갱신했었다.
     _editFilters((query) => query.copyWith(commonKey: commonKey));
   }
 

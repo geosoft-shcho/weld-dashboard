@@ -52,7 +52,12 @@ class _ShellScreenState extends State<ShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final coordinator = context.watch<AppCoordinator>();
+    // lastDataUpdatedAt는 타이틀 전용 위젯만 구독한다. Shell 전체가
+    // 주기적으로 rebuild되면 작업이력 TextBox 입력이 Web에서 끊긴다.
+    final nav = context.select<AppCoordinator, _ShellNavSnapshot>(
+      _ShellNavSnapshot.from,
+    );
+    final coordinator = context.read<AppCoordinator>();
 
     return Stack(
       children: [
@@ -61,16 +66,13 @@ class _ShellScreenState extends State<ShellScreen> {
             isBackButtonVisible: false,
             height: 48,
             leftHeader: ShellTitleLeading(onTogglePane: _didTapTogglePane),
-            endHeader: Padding(
-              padding: const EdgeInsets.only(right: 12),
-              child: Text(
-                '최신 업데이트 ${DateFormat('yyyy-MM-dd HH:mm:ss').format(coordinator.lastDataUpdatedAt)}',
-                style: const TextStyle(fontSize: 12),
-              ),
+            endHeader: const Padding(
+              padding: EdgeInsets.only(right: 12),
+              child: _LastDataUpdatedLabel(),
             ),
           ),
           pane: NavigationPane(
-            selected: coordinator.selectedPaneIndex,
+            selected: nav.selectedPaneIndex,
             onChanged: coordinator.didSelectPane,
             displayMode: _isPaneOpen
                 ? PaneDisplayMode.expanded
@@ -87,29 +89,29 @@ class _ShellScreenState extends State<ShellScreen> {
               PaneItem(
                 icon: const Icon(FluentIcons.history),
                 title: const Text('작업 이력 조회'),
-                body: _workHistoryBody(coordinator),
+                body: _workHistoryBody(nav),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.line_chart),
                 title: Tooltip(
-                  message: coordinator.canOpenLatestPassProfile
+                  message: nav.canOpenLatestPassProfile
                       ? '스냅샷 기준 최신 패스 프로파일'
                       : '표시할 패스 프로파일이 없습니다',
                   child: const Text('패스별 파라미터 프로파일'),
                 ),
-                enabled: coordinator.canOpenLatestPassProfile,
-                body: _panePassProfileBody(coordinator),
+                enabled: nav.canOpenLatestPassProfile,
+                body: _panePassProfileBody(nav),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.report_document),
                 title: Tooltip(
-                  message: coordinator.canOpenLatestQualityIssue
+                  message: nav.canOpenLatestQualityIssue
                       ? '스냅샷 기준 최신 품질 이슈'
                       : '표시할 품질 이슈가 없습니다',
                   child: const Text('품질 이슈 연계'),
                 ),
-                enabled: coordinator.canOpenLatestQualityIssue,
-                body: _paneQualityIssueBody(coordinator),
+                enabled: nav.canOpenLatestQualityIssue,
+                body: _paneQualityIssueBody(nav),
               ),
             ],
           ),
@@ -118,64 +120,173 @@ class _ShellScreenState extends State<ShellScreen> {
     );
   }
 
-  Widget _panePassProfileBody(AppCoordinator coordinator) {
-    if (!coordinator.canOpenLatestPassProfile ||
-        coordinator.panePassCommonKey.isEmpty) {
+  Widget _panePassProfileBody(_ShellNavSnapshot nav) {
+    if (!nav.canOpenLatestPassProfile || nav.panePassCommonKey.isEmpty) {
       return const SizedBox.shrink();
     }
     return PassProfileScreen(
       key: ValueKey(
-        'pane-pass|${coordinator.panePassCommonKey}|${coordinator.panePassHistoryId}|${coordinator.panePassPassId}',
+        'pane-pass|${nav.panePassCommonKey}|${nav.panePassHistoryId}|${nav.panePassPassId}',
       ),
-      commonKey: coordinator.panePassCommonKey,
-      historyId: coordinator.panePassHistoryId,
-      passId: coordinator.panePassPassId,
+      commonKey: nav.panePassCommonKey,
+      historyId: nav.panePassHistoryId,
+      passId: nav.panePassPassId,
     );
   }
 
-  Widget _paneQualityIssueBody(AppCoordinator coordinator) {
-    if (coordinator.paneQualityCommonKey.isEmpty) {
+  Widget _paneQualityIssueBody(_ShellNavSnapshot nav) {
+    if (nav.paneQualityCommonKey.isEmpty) {
       return const SizedBox.shrink();
     }
     return QualityIssueScreen(
       key: ValueKey(
-        'pane-quality|${coordinator.paneQualityCommonKey}|${coordinator.paneQualityHistoryId}|${coordinator.paneQualityPassId}|${coordinator.paneQualityLinkId}',
+        'pane-quality|${nav.paneQualityCommonKey}|${nav.paneQualityHistoryId}|${nav.paneQualityPassId}|${nav.paneQualityLinkId}',
       ),
-      commonKey: coordinator.paneQualityCommonKey,
-      historyId: coordinator.paneQualityHistoryId,
-      passId: coordinator.paneQualityPassId,
-      linkId: coordinator.paneQualityLinkId,
+      commonKey: nav.paneQualityCommonKey,
+      historyId: nav.paneQualityHistoryId,
+      passId: nav.paneQualityPassId,
+      linkId: nav.paneQualityLinkId,
     );
   }
 
-  Widget _workHistoryBody(AppCoordinator coordinator) {
-    switch (coordinator.workHistoryStack) {
+  Widget _workHistoryBody(_ShellNavSnapshot nav) {
+    switch (nav.workHistoryStack) {
       case WorkHistoryStack.list:
         return const WorkHistoryScreen();
       case WorkHistoryStack.detail:
         return WorkDetailScreen(
-          key: ValueKey('detail|${coordinator.historyId}'),
-          historyId: coordinator.historyId,
+          key: ValueKey('detail|${nav.historyId}'),
+          historyId: nav.historyId,
         );
       case WorkHistoryStack.passProfile:
         return PassProfileScreen(
           key: ValueKey(
-            'pass|${coordinator.historyCommonKey}|${coordinator.historyId}|${coordinator.passId}',
+            'pass|${nav.historyCommonKey}|${nav.historyId}|${nav.passId}',
           ),
-          commonKey: coordinator.historyCommonKey,
-          historyId: coordinator.historyId,
-          passId: coordinator.passId,
+          commonKey: nav.historyCommonKey,
+          historyId: nav.historyId,
+          passId: nav.passId,
         );
       case WorkHistoryStack.qualityIssue:
         return QualityIssueScreen(
           key: ValueKey(
-            'quality|${coordinator.historyCommonKey}|${coordinator.historyId}|${coordinator.passId}|${coordinator.linkId}',
+            'quality|${nav.historyCommonKey}|${nav.historyId}|${nav.passId}|${nav.linkId}',
           ),
-          commonKey: coordinator.historyCommonKey,
-          historyId: coordinator.historyId,
-          passId: coordinator.passId,
-          linkId: coordinator.linkId,
+          commonKey: nav.historyCommonKey,
+          historyId: nav.historyId,
+          passId: nav.passId,
+          linkId: nav.linkId,
         );
     }
+  }
+}
+
+class _ShellNavSnapshot {
+  const _ShellNavSnapshot({
+    required this.selectedPaneIndex,
+    required this.workHistoryStack,
+    required this.historyCommonKey,
+    required this.historyId,
+    required this.passId,
+    required this.linkId,
+    required this.canOpenLatestPassProfile,
+    required this.canOpenLatestQualityIssue,
+    required this.panePassCommonKey,
+    required this.panePassHistoryId,
+    required this.panePassPassId,
+    required this.paneQualityCommonKey,
+    required this.paneQualityHistoryId,
+    required this.paneQualityPassId,
+    required this.paneQualityLinkId,
+  });
+
+  factory _ShellNavSnapshot.from(AppCoordinator coordinator) {
+    return _ShellNavSnapshot(
+      selectedPaneIndex: coordinator.selectedPaneIndex,
+      workHistoryStack: coordinator.workHistoryStack,
+      historyCommonKey: coordinator.historyCommonKey,
+      historyId: coordinator.historyId,
+      passId: coordinator.passId,
+      linkId: coordinator.linkId,
+      canOpenLatestPassProfile: coordinator.canOpenLatestPassProfile,
+      canOpenLatestQualityIssue: coordinator.canOpenLatestQualityIssue,
+      panePassCommonKey: coordinator.panePassCommonKey,
+      panePassHistoryId: coordinator.panePassHistoryId,
+      panePassPassId: coordinator.panePassPassId,
+      paneQualityCommonKey: coordinator.paneQualityCommonKey,
+      paneQualityHistoryId: coordinator.paneQualityHistoryId,
+      paneQualityPassId: coordinator.paneQualityPassId,
+      paneQualityLinkId: coordinator.paneQualityLinkId,
+    );
+  }
+
+  final int selectedPaneIndex;
+  final WorkHistoryStack workHistoryStack;
+  final String historyCommonKey;
+  final String historyId;
+  final String passId;
+  final String linkId;
+  final bool canOpenLatestPassProfile;
+  final bool canOpenLatestQualityIssue;
+  final String panePassCommonKey;
+  final String panePassHistoryId;
+  final String panePassPassId;
+  final String paneQualityCommonKey;
+  final String paneQualityHistoryId;
+  final String paneQualityPassId;
+  final String paneQualityLinkId;
+
+  @override
+  bool operator ==(Object other) {
+    return other is _ShellNavSnapshot &&
+        selectedPaneIndex == other.selectedPaneIndex &&
+        workHistoryStack == other.workHistoryStack &&
+        historyCommonKey == other.historyCommonKey &&
+        historyId == other.historyId &&
+        passId == other.passId &&
+        linkId == other.linkId &&
+        canOpenLatestPassProfile == other.canOpenLatestPassProfile &&
+        canOpenLatestQualityIssue == other.canOpenLatestQualityIssue &&
+        panePassCommonKey == other.panePassCommonKey &&
+        panePassHistoryId == other.panePassHistoryId &&
+        panePassPassId == other.panePassPassId &&
+        paneQualityCommonKey == other.paneQualityCommonKey &&
+        paneQualityHistoryId == other.paneQualityHistoryId &&
+        paneQualityPassId == other.paneQualityPassId &&
+        paneQualityLinkId == other.paneQualityLinkId;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    selectedPaneIndex,
+    workHistoryStack,
+    historyCommonKey,
+    historyId,
+    passId,
+    linkId,
+    canOpenLatestPassProfile,
+    canOpenLatestQualityIssue,
+    panePassCommonKey,
+    panePassHistoryId,
+    panePassPassId,
+    paneQualityCommonKey,
+    paneQualityHistoryId,
+    paneQualityPassId,
+    paneQualityLinkId,
+  );
+}
+
+class _LastDataUpdatedLabel extends StatelessWidget {
+  const _LastDataUpdatedLabel();
+
+  @override
+  Widget build(BuildContext context) {
+    final updatedAt = context.select<AppCoordinator, DateTime>(
+      (coordinator) => coordinator.lastDataUpdatedAt,
+    );
+    return Text(
+      '최신 업데이트 ${DateFormat('yyyy-MM-dd HH:mm:ss').format(updatedAt)}',
+      style: const TextStyle(fontSize: 12),
+    );
   }
 }

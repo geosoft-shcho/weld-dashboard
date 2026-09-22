@@ -1,8 +1,12 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/material.dart'
+    show InputDecoration, OutlineInputBorder, TextField;
 
 import '../../../../domain/entities/work_history_board.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
+import '../../../core/themes/app_theme.dart';
 import '../../../core/widgets/command_bar_widget_item.dart';
+import '../../../core/widgets/waveform_material_scope.dart';
 import '../work_history_view_model.dart';
 
 class WorkHistoryCommandBar extends StatefulWidget {
@@ -35,7 +39,10 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
     super.didUpdateWidget(oldWidget);
     final commonKey = widget.viewModel.query.commonKey;
     if (_commonKeyController.text != commonKey) {
-      _commonKeyController.text = commonKey;
+      _commonKeyController.value = TextEditingValue(
+        text: commonKey,
+        selection: TextSelection.collapsed(offset: commonKey.length),
+      );
     }
   }
 
@@ -45,261 +52,259 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
     super.dispose();
   }
 
+  void _didSubmitCommonKey() {
+    widget.viewModel.didChangeCommonKey(_commonKeyController.text);
+    widget.viewModel.didTapQuery();
+  }
+
   @override
   Widget build(BuildContext context) {
     final query = widget.viewModel.query;
     final board = widget.board;
     return CommandBarCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Expanded(
-                child: CommandBar(
-                  overflowBehavior: CommandBarOverflowBehavior.wrap,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  primaryItems: [
-                    CommandBarWidgetItem(
+          Expanded(
+            child: CommandBar(
+              overflowBehavior: CommandBarOverflowBehavior.wrap,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              primaryItems: [
+                CommandBarWidgetItem(
+                  child: SizedBox(
+                    width: 200,
+                    child: InfoLabel(
+                      label: '공통키',
                       child: SizedBox(
-                        width: 220,
-                        child: InfoLabel(
-                          label: '공통키',
-                          child: TextBox(
+                        child: WaveformMaterialScope(
+                          child: TextField(
                             controller: _commonKeyController,
-                            placeholder: 'WO-…|J-…',
+                            style: const TextStyle(
+                              color: AppTheme.INK,
+                              fontSize: 13,
+                            ),
+                            cursorColor: AppTheme.ACCENT_STEEL,
+                            textInputAction: TextInputAction.search,
                             onChanged: widget.viewModel.didChangeCommonKey,
-                            onSubmitted: (value) {
-                              widget.viewModel.didChangeCommonKey(value);
-                              widget.viewModel.didTapQuery();
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    CommandBarWidgetItem(
-                      child: SizedBox(
-                        width: 220,
-                        child: InfoLabel(
-                          label: '작업지시',
-                          child: ComboBox<String>(
-                            isExpanded: true,
-                            value: query.workOrderId,
-                            items: [
-                              const ComboBoxItem(value: '', child: Text('전체')),
-                              for (final workOrder in board.workOrders)
-                                ComboBoxItem(
-                                  value: workOrder.workOrderId,
-                                  child: Text(
-                                    '${workOrder.workOrderNo} ${workOrder.title}',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                            onSubmitted: (_) => _didSubmitCommonKey(),
+                            decoration: InputDecoration(
+                              isDense: true,
+                              hintText: 'WO-…|J-…',
+                              hintStyle: TextStyle(
+                                color: AppTheme.INK.withValues(alpha: 0.45),
+                                fontSize: 13,
+                              ),
+                              filled: true,
+                              fillColor: AppTheme.SURFACE,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 8,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF3E424A),
                                 ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                widget.viewModel.didSelectWorkOrder(value);
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    CommandBarWidgetItem(
-                      child: SizedBox(
-                        width: 180,
-                        child: InfoLabel(
-                          label: '조인트',
-                          child: ComboBox<String>(
-                            isExpanded: true,
-                            value: query.jointId,
-                            items: [
-                              const ComboBoxItem(value: '', child: Text('전체')),
-                              for (final joint in widget.viewModel.jointOptions)
-                                ComboBoxItem(
-                                  value: joint.jointId,
-                                  child: Text(
-                                    '${joint.jointNo} ${joint.jointName}',
-                                  ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(4),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF3E424A),
                                 ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                widget.viewModel.didSelectJoint(value);
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    CommandBarWidgetItem(
-                      child: SizedBox(
-                        width: 140,
-                        child: InfoLabel(
-                          label: '작업자',
-                          child: ComboBox<String>(
-                            isExpanded: true,
-                            value: query.workerId,
-                            items: [
-                              const ComboBoxItem(value: '', child: Text('전체')),
-                              for (final worker in board.workers)
-                                ComboBoxItem(
-                                  value: worker.workerId,
-                                  child: Text(worker.workerName),
-                                ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                widget.viewModel.didSelectWorker(value);
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    CommandBarWidgetItem(
-                      child: SizedBox(
-                        width: 160,
-                        child: InfoLabel(
-                          label: '장비',
-                          child: ComboBox<String>(
-                            isExpanded: true,
-                            value: query.equipmentId,
-                            items: [
-                              const ComboBoxItem(value: '', child: Text('전체')),
-                              for (final equipment in board.equipments)
-                                ComboBoxItem(
-                                  value: equipment.equipmentId,
-                                  child: Text(equipment.equipmentName),
-                                ),
-                            ],
-                            onChanged: (value) {
-                              if (value != null) {
-                                widget.viewModel.didSelectEquipment(value);
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    CommandBarWidgetItem(
-                      child: SizedBox(
-                        width: 148,
-                        child: InfoLabel(
-                          label: '시작일',
-                          child: SizedBox(
-                            child: DatePicker(
-                              selected: query.fromDate,
-                              startDate: DateTime(2025, 1, 1),
-                              endDate: DateTime(2027, 12, 31),
-                              onChanged: (date) {
-                                widget.viewModel.didSelectFromDate(date);
-                              },
+                              ),
                             ),
                           ),
                         ),
                       ),
                     ),
-
-                    CommandBarWidgetItem(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 24),
-                        child: SizedBox(
-                          child: Button(
-                            onPressed: query.fromDate == null
-                                ? null
-                                : () {
-                                    widget.viewModel.didSelectFromDate(null);
-                                  },
-                            child: const Text('시작 해제'),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    CommandBarWidgetItem(
-                      child: SizedBox(
-                        width: 148,
-                        child: InfoLabel(
-                          label: '종료일',
-                          child: SizedBox(
-                            child: DatePicker(
-                              selected: query.toDate,
-                              startDate: DateTime(2025, 1, 1),
-                              endDate: DateTime(2027, 12, 31),
-                              onChanged: (date) {
-                                widget.viewModel.didSelectToDate(date);
-                              },
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    CommandBarWidgetItem(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 24),
-                        child: SizedBox(
-                          child: Button(
-                            onPressed: query.toDate == null
-                                ? null
-                                : () {
-                                    widget.viewModel.didSelectToDate(null);
-                                  },
-                            child: const Text('종료 해제'),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              // 오른쪽 고정 액션 버튼 영역
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  FilledButton(
-                    onPressed: () {
-                      widget.viewModel.didChangeCommonKey(
-                        _commonKeyController.text,
-                      );
-                      widget.viewModel.didTapQuery();
-                    },
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(FluentIcons.search, size: 14),
-                        const SizedBox(width: 6),
-                        Text(
-                          widget.viewModel.doesHavePendingFilters
-                              ? '조회 · 미적용'
-                              : '조회',
-                        ),
-                      ],
+                CommandBarWidgetItem(
+                  child: SizedBox(
+                    width: 220,
+                    child: InfoLabel(
+                      label: '작업지시',
+                      child: ComboBox<String>(
+                        isExpanded: true,
+                        value: query.workOrderId,
+                        items: [
+                          const ComboBoxItem(value: '', child: Text('전체')),
+                          for (final workOrder in board.workOrders)
+                            ComboBoxItem(
+                              value: workOrder.workOrderId,
+                              child: Text(
+                                '${workOrder.workOrderNo} ${workOrder.title}',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            widget.viewModel.didSelectWorkOrder(value);
+                          }
+                        },
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Button(
-                    onPressed: widget.viewModel.didTapReset,
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(FluentIcons.clear_filter, size: 14),
-                        SizedBox(width: 6),
-                        Text('초기화'),
-                      ],
+                ),
+                CommandBarWidgetItem(
+                  child: SizedBox(
+                    width: 180,
+                    child: InfoLabel(
+                      label: '조인트',
+                      child: ComboBox<String>(
+                        isExpanded: true,
+                        value: query.jointId,
+                        items: [
+                          const ComboBoxItem(value: '', child: Text('전체')),
+                          for (final joint in widget.viewModel.jointOptions)
+                            ComboBoxItem(
+                              value: joint.jointId,
+                              child: Text(
+                                '${joint.jointNo} ${joint.jointName}',
+                              ),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            widget.viewModel.didSelectJoint(value);
+                          }
+                        },
+                      ),
                     ),
                   ),
-                ],
-              ),
-            ],
+                ),
+                CommandBarWidgetItem(
+                  child: SizedBox(
+                    width: 140,
+                    child: InfoLabel(
+                      label: '작업자',
+                      child: ComboBox<String>(
+                        isExpanded: true,
+                        value: query.workerId,
+                        items: [
+                          const ComboBoxItem(value: '', child: Text('전체')),
+                          for (final worker in board.workers)
+                            ComboBoxItem(
+                              value: worker.workerId,
+                              child: Text(worker.workerName),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            widget.viewModel.didSelectWorker(value);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                CommandBarWidgetItem(
+                  child: SizedBox(
+                    width: 160,
+                    child: InfoLabel(
+                      label: '장비',
+                      child: ComboBox<String>(
+                        isExpanded: true,
+                        value: query.equipmentId,
+                        items: [
+                          const ComboBoxItem(value: '', child: Text('전체')),
+                          for (final equipment in board.equipments)
+                            ComboBoxItem(
+                              value: equipment.equipmentId,
+                              child: Text(equipment.equipmentName),
+                            ),
+                        ],
+                        onChanged: (value) {
+                          if (value != null) {
+                            widget.viewModel.didSelectEquipment(value);
+                          }
+                        },
+                      ),
+                    ),
+                  ),
+                ),
+                CommandBarWidgetItem(
+                  child: SizedBox(
+                    width: 148,
+                    child: InfoLabel(
+                      label: '시작일',
+                      child: DatePicker(
+                        selected: query.fromDate,
+                        startDate: DateTime(2025, 1, 1),
+                        endDate: DateTime(2027, 12, 31),
+                        onChanged: widget.viewModel.didSelectFromDate,
+                      ),
+                    ),
+                  ),
+                ),
+                CommandBarWidgetItem(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: Button(
+                      onPressed: query.fromDate == null
+                          ? null
+                          : () => widget.viewModel.didSelectFromDate(null),
+                      child: const Text('시작 해제'),
+                    ),
+                  ),
+                ),
+                CommandBarWidgetItem(
+                  child: SizedBox(
+                    width: 148,
+                    child: InfoLabel(
+                      label: '종료일',
+                      child: DatePicker(
+                        selected: query.toDate,
+                        startDate: DateTime(2025, 1, 1),
+                        endDate: DateTime(2027, 12, 31),
+                        onChanged: widget.viewModel.didSelectToDate,
+                      ),
+                    ),
+                  ),
+                ),
+                CommandBarWidgetItem(
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 24),
+                    child: Button(
+                      onPressed: query.toDate == null
+                          ? null
+                          : () => widget.viewModel.didSelectToDate(null),
+                      child: const Text('종료 해제'),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          FilledButton(
+            onPressed: _didSubmitCommonKey,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(FluentIcons.search, size: 14),
+                const SizedBox(width: 6),
+                Text(
+                  widget.viewModel.doesHavePendingFilters ? '조회 · 미적용' : '조회',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Button(
+            onPressed: () {
+              _commonKeyController.clear();
+              widget.viewModel.didTapReset();
+            },
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(FluentIcons.clear_filter, size: 14),
+                SizedBox(width: 6),
+                Text('초기화'),
+              ],
+            ),
           ),
         ],
       ),
