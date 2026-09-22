@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../domain/entities/joint.dart';
 import '../../../domain/entities/work_history_board.dart';
 import '../../../domain/entities/work_history_catalog.dart';
 import '../../../domain/entities/work_history_query.dart';
@@ -17,6 +18,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
   final QueryWorkHistoryUseCase _queryWorkHistoryUseCase;
 
   WorkHistoryQuery _query = WorkHistoryQuery.initial();
+  WorkHistoryQuery? _loadedQuery;
   WorkHistoryCatalog? _catalog;
   WorkHistoryBoard? _board;
   bool _isLoading = false;
@@ -31,6 +33,30 @@ class WorkHistoryViewModel extends ChangeNotifier {
   String get errorMessage => _errorMessage;
   bool get doesHaveInvalidDateRange => _query.doesHaveInvalidDateRange;
 
+  bool get doesHavePendingFilters {
+    final loaded = _loadedQuery;
+    if (loaded == null) {
+      return false;
+    }
+    return !_query.matchesDeferredFilters(loaded);
+  }
+
+  /// draft 작업지시 기준 조인트 옵션(표는 마지막 조회 결과 유지).
+  List<Joint> get jointOptions {
+    final catalog = _catalog;
+    if (catalog == null) {
+      return const [];
+    }
+    final workOrderId = _query.workOrderId;
+    if (workOrderId.isEmpty) {
+      return catalog.joints;
+    }
+    return [
+      for (final joint in catalog.joints)
+        if (joint.workOrderId == workOrderId) joint,
+    ];
+  }
+
   Future<void> loadBoard() async {
     final version = ++_loadVersion;
     _isLoading = true;
@@ -41,11 +67,16 @@ class WorkHistoryViewModel extends ChangeNotifier {
       final catalog = await _loadWorkHistoryCatalogUseCase.execute(
         query: _query,
       );
-      if (version != _loadVersion) return;
+      if (version != _loadVersion) {
+        return;
+      }
       _catalog = catalog;
+      _loadedQuery = _query;
       _applyQuery();
     } catch (error) {
-      if (version != _loadVersion) return;
+      if (version != _loadVersion) {
+        return;
+      }
       _hasError = true;
       _errorMessage = error.toString();
       _board = null;
@@ -58,58 +89,37 @@ class WorkHistoryViewModel extends ChangeNotifier {
   }
 
   void didChangeCommonKey(String commonKey) {
-    _query = _query.copyWith(commonKey: commonKey);
+    _editFilters((query) => query.copyWith(commonKey: commonKey));
   }
 
   void didSelectWorkOrder(String workOrderId) {
-    _query = _query.copyWith(
-      workOrderId: workOrderId,
-      jointId: '',
-      visibleCount: WorkHistoryQuery.BATCH_SIZE,
+    _editFilters(
+      (query) => query.copyWith(workOrderId: workOrderId, jointId: ''),
     );
-    loadBoard();
   }
 
   void didSelectJoint(String jointId) {
-    _query = _query.copyWith(
-      jointId: jointId,
-      visibleCount: WorkHistoryQuery.BATCH_SIZE,
-    );
-    loadBoard();
+    _editFilters((query) => query.copyWith(jointId: jointId));
   }
 
   void didSelectWorker(String workerId) {
-    _query = _query.copyWith(
-      workerId: workerId,
-      visibleCount: WorkHistoryQuery.BATCH_SIZE,
-    );
-    loadBoard();
+    _editFilters((query) => query.copyWith(workerId: workerId));
   }
 
   void didSelectEquipment(String equipmentId) {
-    _query = _query.copyWith(
-      equipmentId: equipmentId,
-      visibleCount: WorkHistoryQuery.BATCH_SIZE,
-    );
-    loadBoard();
+    _editFilters((query) => query.copyWith(equipmentId: equipmentId));
   }
 
   void didSelectFromDate(DateTime? date) {
-    _query = _query.copyWith(
-      fromDate: date,
-      clearFromDate: date == null,
-      visibleCount: WorkHistoryQuery.BATCH_SIZE,
+    _editFilters(
+      (query) => query.copyWith(fromDate: date, clearFromDate: date == null),
     );
-    loadBoard();
   }
 
   void didSelectToDate(DateTime? date) {
-    _query = _query.copyWith(
-      toDate: date,
-      clearToDate: date == null,
-      visibleCount: WorkHistoryQuery.BATCH_SIZE,
+    _editFilters(
+      (query) => query.copyWith(toDate: date, clearToDate: date == null),
     );
-    loadBoard();
   }
 
   void didClearEquipment() {
@@ -157,12 +167,26 @@ class WorkHistoryViewModel extends ChangeNotifier {
     loadBoard();
   }
 
+  void _editFilters(WorkHistoryQuery Function(WorkHistoryQuery query) edit) {
+    _query = edit(_query);
+    notifyListeners();
+  }
+
   void _applyQuery() {
     final catalog = _catalog;
     if (catalog == null) {
       return;
     }
-    _board = _queryWorkHistoryUseCase.execute(catalog: catalog, query: _query);
+    // 표·페이지는 마지막 조회 필터. draft는 칩·드롭다운만 바꾼다.
+    final filterQuery = _loadedQuery ?? _query;
+    final boardQuery = filterQuery.copyWith(
+      selectedHistoryId: _query.selectedHistoryId,
+      visibleCount: _query.visibleCount,
+    );
+    _board = _queryWorkHistoryUseCase.execute(
+      catalog: catalog,
+      query: boardQuery,
+    );
     notifyListeners();
   }
 

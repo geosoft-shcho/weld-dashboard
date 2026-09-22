@@ -69,6 +69,7 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                           child: TextBox(
                             controller: _commonKeyController,
                             placeholder: 'WO-…|J-…',
+                            onChanged: widget.viewModel.didChangeCommonKey,
                             onSubmitted: (value) {
                               widget.viewModel.didChangeCommonKey(value);
                               widget.viewModel.didTapQuery();
@@ -117,7 +118,7 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                             value: query.jointId,
                             items: [
                               const ComboBoxItem(value: '', child: Text('전체')),
-                              for (final joint in board.joints)
+                              for (final joint in widget.viewModel.jointOptions)
                                 ComboBoxItem(
                                   value: joint.jointId,
                                   child: Text(
@@ -271,12 +272,16 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                       );
                       widget.viewModel.didTapQuery();
                     },
-                    child: const Row(
+                    child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(FluentIcons.search, size: 14),
-                        SizedBox(width: 6),
-                        Text('조회'),
+                        const Icon(FluentIcons.search, size: 14),
+                        const SizedBox(width: 6),
+                        Text(
+                          widget.viewModel.doesHavePendingFilters
+                              ? '조회 · 미적용'
+                              : '조회',
+                        ),
                       ],
                     ),
                   ),
@@ -314,7 +319,7 @@ class WorkHistoryFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final query = board.query;
+    final query = viewModel.query;
     final chips = <Widget>[];
     if (query.commonKey.trim().isNotEmpty) {
       chips.add(_chip('공통키 ${query.commonKey.trim()}'));
@@ -330,7 +335,7 @@ class WorkHistoryFilterChips extends StatelessWidget {
     }
     if (query.jointId.isNotEmpty) {
       var label = query.jointId;
-      for (final joint in board.joints) {
+      for (final joint in viewModel.jointOptions) {
         if (joint.jointId == query.jointId) {
           label = joint.jointNo;
         }

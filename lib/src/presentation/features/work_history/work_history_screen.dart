@@ -68,13 +68,31 @@ class _WorkHistoryBody extends StatelessWidget {
     if (board == null) {
       return const InfoBar(
         title: Text('이력 없음'),
-        content: Text('아직 CSV를 불러오지 않았습니다.'),
+        content: Text('아직 조회되지 않았습니다.'),
       );
     }
     return SizedBox.expand(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (viewModel.doesHavePendingFilters)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: InfoBar(
+                title: Text('필터 미적용'),
+                content: Text('필터가 변경되었습니다. 조회를 눌러 반영하세요.'),
+                severity: InfoBarSeverity.warning,
+              ),
+            ),
+          if (viewModel.doesHaveInvalidDateRange)
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: InfoBar(
+                title: Text('기간 오류'),
+                content: Text('시작일이 종료일보다 늦습니다. 조회 시 결과가 비어 있을 수 있습니다.'),
+                severity: InfoBarSeverity.error,
+              ),
+            ),
           WorkHistoryCommandBar(viewModel: viewModel, board: board),
           const SizedBox(height: 12),
           WorkHistoryFilterChips(viewModel: viewModel, board: board),

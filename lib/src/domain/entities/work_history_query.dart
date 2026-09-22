@@ -56,6 +56,27 @@ class WorkHistoryQuery {
         toDate != null;
   }
 
+  /// 조회 버튼으로만 서버에 넘기는 필터(선택 행·페이지 제외).
+  bool matchesDeferredFilters(WorkHistoryQuery other) {
+    return commonKey.trim() == other.commonKey.trim() &&
+        workOrderId == other.workOrderId &&
+        jointId == other.jointId &&
+        workerId == other.workerId &&
+        equipmentId == other.equipmentId &&
+        _sameDay(fromDate, other.fromDate) &&
+        _sameDay(toDate, other.toDate);
+  }
+
+  static bool _sameDay(DateTime? a, DateTime? b) {
+    if (a == null && b == null) {
+      return true;
+    }
+    if (a == null || b == null) {
+      return false;
+    }
+    return a.year == b.year && a.month == b.month && a.day == b.day;
+  }
+
   WorkHistoryQuery copyWith({
     String? commonKey,
     String? workOrderId,
