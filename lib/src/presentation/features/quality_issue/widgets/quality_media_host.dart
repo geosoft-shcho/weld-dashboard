@@ -146,25 +146,105 @@ class _MediaTabs extends StatelessWidget {
   final QualityMediaTab selectedTab;
   final ValueChanged<QualityMediaTab> onSelectTab;
 
+  static final Color _LINE = AppTheme.STATUS_OFF.withValues(alpha: 0.45);
+
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        for (final tab in tabs)
-          Button(
-            onPressed: () => onSelectTab(tab),
-            style: ButtonStyle(
-              backgroundColor: WidgetStatePropertyAll(
-                selectedTab == tab
-                    ? AppTheme.ACCENT_STEEL.withValues(alpha: 0.45)
-                    : AppTheme.SURFACE_RAISED,
+    return SizedBox(
+      width: double.infinity,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(bottom: BorderSide(color: _LINE, width: 1)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            const Padding(
+              padding: EdgeInsets.only(right: 12, bottom: 6),
+              child: Text(
+                '미디어',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.04 * 11,
+                  color: AppTheme.STATUS_OFF,
+                  height: 1.25,
+                ),
               ),
             ),
-            child: Text(tab.label),
+            for (final tab in tabs)
+              Transform.translate(
+                offset: const Offset(0, 1),
+                child: _MediaTab(
+                  tab: tab,
+                  isSelected: tab == selectedTab,
+                  onPressed: () => onSelectTab(tab),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MediaTab extends StatelessWidget {
+  const _MediaTab({
+    required this.tab,
+    required this.isSelected,
+    required this.onPressed,
+  });
+
+  final QualityMediaTab tab;
+  final bool isSelected;
+  final VoidCallback onPressed;
+
+  IconData get _icon {
+    switch (tab) {
+      case QualityMediaTab.pdf:
+        return FluentIcons.pdf;
+      case QualityMediaTab.video:
+        return FluentIcons.video;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return HoverButton(
+      onPressed: onPressed,
+      builder: (context, states) {
+        final isHovered = states.isHovered;
+        final color = isSelected || isHovered
+            ? AppTheme.INK
+            : AppTheme.STATUS_OFF;
+        return DecoratedBox(
+          decoration: BoxDecoration(
+            border: isSelected
+                ? const Border(
+                    bottom: BorderSide(color: AppTheme.INK, width: 2),
+                  )
+                : null,
           ),
-      ],
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(10, 4, 10, 6),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(_icon, size: 14, color: color),
+                const SizedBox(width: 6),
+                Text(
+                  tab.label,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: color,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }
