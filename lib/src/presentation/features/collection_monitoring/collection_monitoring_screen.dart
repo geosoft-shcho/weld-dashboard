@@ -122,12 +122,12 @@ class _MonitoringTabViewState extends State<_MonitoringTabView> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 _MonitoringTab(
-                  label: '장비별 수집 타임라인',
+                  label: '일자별 수집 타임라인',
                   isSelected: currentIndex == 0,
                   onPressed: () => setState(() => currentIndex = 0),
                 ),
                 _MonitoringTab(
-                  label: '실시간 수집 상태',
+                  label: '현재 수집 상태',
                   isSelected: currentIndex == 1,
                   onPressed: () => setState(() => currentIndex = 1),
                 ),
