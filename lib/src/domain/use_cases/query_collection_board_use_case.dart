@@ -479,7 +479,7 @@ class QueryCollectionBoardUseCase {
       selectedEventId: query.selectedEventId,
       focusedEquipmentId: focusedEquipmentId,
     );
-    final assignmentInstant = selectedEvent?.eventAt ?? query.snapshotAt;
+    final assignmentInstant = selectedEvent?.eventAt ?? DateTime.now();
     final assignment = focusedEquipmentId.isEmpty
         ? null
         : _assignmentAt(catalog, focusedEquipmentId, assignmentInstant);

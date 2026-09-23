@@ -43,7 +43,7 @@ class CollectionTimelineInspector extends StatelessWidget {
         ? '—'
         : DashboardFormatters.clockTime(event.eventAt);
     final end = event == null
-        ? '스냅샷'
+        ? '지금'
         : DashboardFormatters.clockTime(event.endedAt);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),

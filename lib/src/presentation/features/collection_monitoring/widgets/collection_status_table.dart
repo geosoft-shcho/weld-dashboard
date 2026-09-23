@@ -64,7 +64,7 @@ class _CollectionStatusTableState extends State<CollectionStatusTable> {
           children: [
             Expanded(
               child: Text(
-                '실시간 수집 상태 · 스냅샷 ${DashboardFormatters.snapshot(query.snapshotAt)} · 창 ${board.kpi.windowLabel}',
+                '실시간 수집 상태 · 현재 상태 · 갱신 ${DashboardFormatters.snapshot(query.snapshotAt)} · 창 ${board.kpi.windowLabel}',
                 style: const TextStyle(fontSize: 12),
               ),
             ),

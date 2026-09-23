@@ -21,6 +21,7 @@ class CollectionDayTimelineView extends StatelessWidget {
   Widget build(BuildContext context) {
     final timeline = board.timeline;
     final query = board.query;
+    final wallClock = DateTime.now();
     final events = <CollectionEvent>[
       for (final event in timeline.events)
         if (event.equipmentId == timeline.focusedEquipmentId) event,
@@ -31,8 +32,15 @@ class CollectionDayTimelineView extends StatelessWidget {
           entries: events,
           adapter: CollectionEventTimelineMapper.PLANNER_ADAPTER,
           selectedDate: query.selectedDate,
-          currentTime: query.snapshotAt,
-          currentTimeLabel: '스냅샷',
+          currentTime: DateTime(
+            query.selectedDate.year,
+            query.selectedDate.month,
+            query.selectedDate.day,
+            wallClock.hour,
+            wallClock.minute,
+            wallClock.second,
+          ),
+          currentTimeLabel: '지금',
           dragActivation: NeonPlannerDragActivation.disabled,
           enableResize: false,
           enableKeyboardMovement: false,

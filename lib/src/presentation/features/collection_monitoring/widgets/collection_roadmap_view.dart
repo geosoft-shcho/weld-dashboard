@@ -93,9 +93,9 @@ class _RoadmapCanvas extends StatelessWidget {
     final trackHeight =
         spineTop + 10 + belowCount * (ROADMAP_CARD_HEIGHT + ROADMAP_LANE_GAP) + 16;
 
-    final snapMin = roadmapMinutesFromDayStart(query.snapshotAt);
-    final nowX = snapMin >= t0 && snapMin <= t1
-        ? (snapMin - t0) * pixelsPerMinute
+    final nowMinutes = roadmapMinutesFromDayStart(DateTime.now());
+    final nowX = nowMinutes >= t0 && nowMinutes <= t1
+        ? (nowMinutes - t0) * pixelsPerMinute
         : null;
 
     return ClipRRect(

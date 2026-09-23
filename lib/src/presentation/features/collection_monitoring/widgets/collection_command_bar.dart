@@ -81,30 +81,6 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
                         ),
                       ),
                     ),
-                    // 스냅샷
-                    CommandBarWidgetItem(
-                      child: SizedBox(
-                        width: 180,
-                        child: InfoLabel(
-                          label: '스냅샷',
-                          child: ComboBox<DateTime>(
-                            isExpanded: true,
-                            value: query.snapshotAt,
-                            items: [
-                              ComboBoxItem(
-                                value: query.snapshotAt,
-                                child: Text(
-                                  DashboardFormatters.snapshot(
-                                    query.snapshotAt,
-                                  ),
-                                ),
-                              ),
-                            ],
-                            onChanged: (_) {},
-                          ),
-                        ),
-                      ),
-                    ),
                     // 프로젝트
                     CommandBarWidgetItem(
                       child: SizedBox(
