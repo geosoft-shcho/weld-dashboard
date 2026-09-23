@@ -70,6 +70,12 @@ class PassCompareSummary extends StatelessWidget {
                 stats.speedRobot,
                 2,
               ),
+              _dataRow(
+                '회전 속도',
+                stats.rotationBeginner,
+                stats.rotationRobot,
+                3,
+              ),
             ],
           ),
         ],

@@ -13,6 +13,7 @@ class WaveformRow {
     this.currentA,
     this.voltageV,
     this.speedValue,
+    this.rotationSpeedRpm,
   });
 
   final String seriesId;
@@ -26,4 +27,5 @@ class WaveformRow {
   final double? currentA;
   final double? voltageV;
   final double? speedValue;
+  final double? rotationSpeedRpm;
 }

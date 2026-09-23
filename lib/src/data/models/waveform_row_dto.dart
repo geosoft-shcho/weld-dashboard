@@ -14,6 +14,7 @@ class WaveformRowDto {
     required this.currentA,
     required this.voltageV,
     required this.speedValue,
+    required this.rotationSpeedRpm,
   });
 
   factory WaveformRowDto.fromRow(Map<String, String> row) {
@@ -29,6 +30,7 @@ class WaveformRowDto {
       currentA: row['current_a'] ?? '',
       voltageV: row['voltage_v'] ?? '',
       speedValue: row['speed_value'] ?? '',
+      rotationSpeedRpm: row['rotation_speed_rpm'] ?? '',
     );
   }
 
@@ -43,6 +45,7 @@ class WaveformRowDto {
   final String currentA;
   final String voltageV;
   final String speedValue;
+  final String rotationSpeedRpm;
 
   WaveformRow? toDomain() {
     final role = SeriesRole.fromCsv(seriesRole);
@@ -61,6 +64,7 @@ class WaveformRowDto {
       currentA: _nullableDouble(currentA),
       voltageV: _nullableDouble(voltageV),
       speedValue: _nullableDouble(speedValue),
+      rotationSpeedRpm: _nullableDouble(rotationSpeedRpm),
     );
   }
 

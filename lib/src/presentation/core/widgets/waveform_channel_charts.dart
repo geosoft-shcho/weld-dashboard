@@ -69,7 +69,7 @@ class WaveformChannelCharts extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _WaveformChannelChart(
-            title: '속도',
+            title: '속도 (m/min)',
             series: series,
             links: links,
             showMaster: showMaster,
@@ -80,6 +80,20 @@ class WaveformChannelCharts extends StatelessWidget {
             onBandTap: onBandTap,
             onTimeTapMs: onTimeTapMs,
             valueOf: (point) => point.speedValue,
+          ),
+          const SizedBox(height: 12),
+          _WaveformChannelChart(
+            title: '회전 속도 (rpm)',
+            series: series,
+            links: links,
+            showMaster: showMaster,
+            showBeginner: showBeginner,
+            showRobot: showRobot,
+            selectedLinkId: selectedLinkId,
+            selectedTimeMs: selectedTimeMs,
+            onBandTap: onBandTap,
+            onTimeTapMs: onTimeTapMs,
+            valueOf: (point) => point.rotationSpeedRpm,
           ),
         ],
       ),
@@ -126,9 +140,7 @@ class _WaveformChannelChart extends StatelessWidget {
     if (showRobot) {
       bars.add(_bar(series.robot, AppTheme.CHART_ROBOT));
     }
-    final spots = [
-      for (final bar in bars) ...bar.spots,
-    ];
+    final spots = [for (final bar in bars) ...bar.spots];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

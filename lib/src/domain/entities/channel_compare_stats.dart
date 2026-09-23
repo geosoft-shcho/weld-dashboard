@@ -18,6 +18,8 @@ class ChannelCompareStats {
     required this.voltageRobot,
     required this.speedBeginner,
     required this.speedRobot,
+    required this.rotationBeginner,
+    required this.rotationRobot,
   });
 
   final DiffStat currentBeginner;
@@ -26,6 +28,8 @@ class ChannelCompareStats {
   final DiffStat voltageRobot;
   final DiffStat speedBeginner;
   final DiffStat speedRobot;
+  final DiffStat rotationBeginner;
+  final DiffStat rotationRobot;
 
   static ChannelCompareStats fromSeries(WaveformSeriesBundle series) {
     return ChannelCompareStats(
@@ -58,6 +62,16 @@ class ChannelCompareStats {
         series.master,
         series.robot,
         (point) => point.speedValue,
+      ),
+      rotationBeginner: _pairDiff(
+        series.master,
+        series.beginner,
+        (point) => point.rotationSpeedRpm,
+      ),
+      rotationRobot: _pairDiff(
+        series.master,
+        series.robot,
+        (point) => point.rotationSpeedRpm,
       ),
     );
   }

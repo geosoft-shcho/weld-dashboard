@@ -77,6 +77,9 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
               speedValue: point.hasWireFeedSpeedMpm()
                   ? point.wireFeedSpeedMpm
                   : null,
+              rotationSpeedRpm: point.hasRotationSpeedRpm()
+                  ? point.rotationSpeedRpm
+                  : null,
             ),
           );
         }

@@ -4,10 +4,12 @@ class WaveformPoint {
     this.currentA,
     this.voltageV,
     this.speedValue,
+    this.rotationSpeedRpm,
   });
 
   final int timeMs;
   final double? currentA;
   final double? voltageV;
   final double? speedValue;
+  final double? rotationSpeedRpm;
 }

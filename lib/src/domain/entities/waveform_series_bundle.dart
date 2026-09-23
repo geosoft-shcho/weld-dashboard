@@ -78,6 +78,7 @@ class WaveformSeriesBundle {
           currentA: row.currentA,
           voltageV: row.voltageV,
           speedValue: row.speedValue,
+          rotationSpeedRpm: row.rotationSpeedRpm,
         ),
     ];
   }
