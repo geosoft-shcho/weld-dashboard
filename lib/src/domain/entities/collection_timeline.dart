@@ -1,40 +1,22 @@
 import 'collection_board_row.dart';
 import 'collection_event.dart';
+import 'collection_resource_depth.dart';
+import 'collection_timeline_resource.dart';
 import 'timeline_view_kind.dart';
-
-class TimelineSection {
-  const TimelineSection({
-    required this.kind,
-    required this.sectionKey,
-    required this.label,
-    required this.rows,
-  });
-
-  static const String PROJECT_KIND = 'project';
-  static const String LINE_KIND = 'line';
-  static const String UNASSIGNED_PROJECT_ID = 'none';
-
-  final String kind;
-  final String sectionKey;
-  final String label;
-  final List<CollectionBoardRow> rows;
-
-  bool get isProject => kind == PROJECT_KIND;
-  bool get isUnassigned => sectionKey == UNASSIGNED_PROJECT_ID;
-}
 
 class CollectionTimeline {
   const CollectionTimeline({
     required this.viewKind,
     required this.events,
     required this.eventCount,
+    required this.depth,
+    required this.resourceHeaderLabel,
     required this.resources,
-    required this.sections,
+    required this.resourceIdsByEventId,
+    required this.equipmentRows,
     required this.selectedEventId,
     required this.focusedEquipmentId,
     required this.canShowDayView,
-    required this.isLineSectionLocked,
-    required this.isFactoryOverview,
     required this.selectedProjectName,
     required this.selectedWorkerName,
   });
@@ -42,13 +24,14 @@ class CollectionTimeline {
   final TimelineViewKind viewKind;
   final List<CollectionEvent> events;
   final int eventCount;
-  final List<CollectionBoardRow> resources;
-  final List<TimelineSection> sections;
+  final CollectionResourceDepth depth;
+  final String resourceHeaderLabel;
+  final List<CollectionTimelineResource> resources;
+  final Map<String, String> resourceIdsByEventId;
+  final List<CollectionBoardRow> equipmentRows;
   final String selectedEventId;
   final String focusedEquipmentId;
   final bool canShowDayView;
-  final bool isLineSectionLocked;
-  final bool isFactoryOverview;
   final String selectedProjectName;
   final String selectedWorkerName;
 
@@ -62,7 +45,7 @@ class CollectionTimeline {
   }
 
   CollectionBoardRow? get focusedRow {
-    for (final row in resources) {
+    for (final row in equipmentRows) {
       if (row.equipmentId == focusedEquipmentId) {
         return row;
       }
@@ -70,5 +53,10 @@ class CollectionTimeline {
     return null;
   }
 
-  int get equipmentCount => resources.length;
+  int get equipmentCount => equipmentRows.length;
+
+  String resourceIdOf(CollectionEvent event) {
+    return resourceIdsByEventId[event.eventId] ??
+        CollectionTimelineResource.equipmentResourceId(event.equipmentId);
+  }
 }

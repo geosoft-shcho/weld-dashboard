@@ -3,8 +3,10 @@ import '../entities/collection_board.dart';
 import '../entities/collection_board_query.dart';
 import '../entities/collection_catalog.dart';
 import '../entities/collection_event.dart';
+import '../entities/collection_resource_depth.dart';
 import '../entities/collection_status.dart';
 import '../entities/collection_timeline.dart';
+import '../entities/collection_timeline_resource.dart';
 import '../entities/connection_status.dart';
 import '../entities/equipment.dart';
 import '../entities/kpi_card_kind.dart';
@@ -248,8 +250,9 @@ class QueryCollectionBoardUseCase {
 
   List<CollectionBoardRow> _snapshotRows(
     CollectionCatalog catalog,
-    CollectionBoardQuery query,
-  ) {
+    CollectionBoardQuery query, {
+    bool doesApplyConnectionFilter = true,
+  }) {
     var rows = [
       for (final equipment in catalog.equipments)
         if (catalog.statusByEquipmentId(equipment.equipmentId) != null)
@@ -270,7 +273,7 @@ class QueryCollectionBoardUseCase {
           .where((row) => query.equipmentIds.contains(row.equipmentId))
           .toList();
     }
-    if (query.connectionStatuses.isNotEmpty) {
+    if (doesApplyConnectionFilter && query.connectionStatuses.isNotEmpty) {
       rows = rows
           .where(
             (row) => query.connectionStatuses.contains(row.connectionStatus),
@@ -483,17 +486,40 @@ class QueryCollectionBoardUseCase {
     final assignment = focusedEquipmentId.isEmpty
         ? null
         : _assignmentAt(catalog, focusedEquipmentId, assignmentInstant);
+    final depth = CollectionResourceDepth.of(query);
+    final scopeRows = _applyCard(
+      _snapshotRows(
+        catalog,
+        query,
+        doesApplyConnectionFilter: false,
+      ),
+      query.selectedKpiCard,
+    );
+    final resources = _resources(
+      catalog: catalog,
+      query: query,
+      scopeRows: scopeRows,
+      depth: depth,
+    );
     return CollectionTimeline(
       viewKind: viewKind,
       events: canvasEvents,
       eventCount: canvasEvents.length,
-      resources: tableRows,
-      sections: _groupEquipment(catalog, tableRows, query),
+      depth: depth,
+      resourceHeaderLabel: depth.headerLabel,
+      resources: resources,
+      resourceIdsByEventId: {
+        for (final event in canvasEvents)
+          event.eventId: _resourceIdOfEvent(
+            catalog: catalog,
+            depth: depth,
+            event: event,
+          ),
+      },
+      equipmentRows: scopeRows,
       selectedEventId: selectedEvent?.eventId ?? '',
       focusedEquipmentId: focusedEquipmentId,
       canShowDayView: query.equipmentIds.length == 1 || tableRows.length == 1,
-      isLineSectionLocked: query.lineNames.isNotEmpty,
-      isFactoryOverview: !query.isUnassignedOnly && query.projectIds.isEmpty,
       selectedProjectName: assignment == null
           ? ''
           : catalog.projectById(assignment.projectId)?.projectName ?? '',
@@ -501,6 +527,140 @@ class QueryCollectionBoardUseCase {
           ? ''
           : catalog.workerById(assignment.workerId)?.workerName ?? '',
     );
+  }
+
+  List<CollectionTimelineResource> _resources({
+    required CollectionCatalog catalog,
+    required CollectionBoardQuery query,
+    required List<CollectionBoardRow> scopeRows,
+    required CollectionResourceDepth depth,
+  }) {
+    switch (depth) {
+      case CollectionResourceDepth.project:
+        return _projectResources(catalog, query, scopeRows);
+      case CollectionResourceDepth.line:
+        return _lineResources(query, scopeRows);
+      case CollectionResourceDepth.equipment:
+        return _equipmentResources(scopeRows);
+    }
+  }
+
+  List<CollectionTimelineResource> _projectResources(
+    CollectionCatalog catalog,
+    CollectionBoardQuery query,
+    List<CollectionBoardRow> scopeRows,
+  ) {
+    final rowsByProject = <String, List<CollectionBoardRow>>{};
+    for (final row in scopeRows) {
+      final assignment = _assignmentAt(
+        catalog,
+        row.equipmentId,
+        query.snapshotAt,
+      );
+      final key =
+          assignment?.projectId ??
+          CollectionTimelineResource.UNASSIGNED_PROJECT_ID;
+      if (query.projectIds.isNotEmpty && !query.projectIds.contains(key)) {
+        continue;
+      }
+      rowsByProject.putIfAbsent(key, () => []).add(row);
+    }
+    final keys = query.projectIds.isEmpty
+        ? [
+            for (final project in catalog.projects)
+              if (rowsByProject.containsKey(project.projectId))
+                project.projectId,
+            if (rowsByProject.containsKey(
+              CollectionTimelineResource.UNASSIGNED_PROJECT_ID,
+            ))
+              CollectionTimelineResource.UNASSIGNED_PROJECT_ID,
+          ]
+        : [
+            for (final project in catalog.projects)
+              if (query.projectIds.contains(project.projectId))
+                project.projectId,
+          ];
+    return [
+      for (final key in keys)
+        CollectionTimelineResource(
+          resourceId: CollectionTimelineResource.projectResourceId(key),
+          label: key == CollectionTimelineResource.UNASSIGNED_PROJECT_ID
+              ? '미배정'
+              : catalog.projectById(key)?.projectName ?? key,
+          subtitle: '${rowsByProject[key]?.length ?? 0}대',
+          selectionKey: key,
+        ),
+    ];
+  }
+
+  List<CollectionTimelineResource> _lineResources(
+    CollectionBoardQuery query,
+    List<CollectionBoardRow> scopeRows,
+  ) {
+    final rowsByLine = <String, List<CollectionBoardRow>>{};
+    for (final row in scopeRows) {
+      final lineName = row.lineName.isEmpty ? '—' : row.lineName;
+      if (query.lineNames.isNotEmpty && !query.lineNames.contains(lineName)) {
+        continue;
+      }
+      rowsByLine.putIfAbsent(lineName, () => []).add(row);
+    }
+    final lineNames = query.lineNames.isEmpty
+        ? (rowsByLine.keys.toList()..sort())
+        : ([...query.lineNames]..sort());
+    return [
+      for (final lineName in lineNames)
+        CollectionTimelineResource(
+          resourceId: CollectionTimelineResource.lineResourceId(lineName),
+          label: lineName,
+          subtitle: '${rowsByLine[lineName]?.length ?? 0}대',
+          selectionKey: lineName,
+        ),
+    ];
+  }
+
+  List<CollectionTimelineResource> _equipmentResources(
+    List<CollectionBoardRow> scopeRows,
+  ) {
+    final rows = [...scopeRows]..sort(
+      (left, right) => left.equipmentName.compareTo(right.equipmentName),
+    );
+    return [
+      for (final row in rows)
+        CollectionTimelineResource(
+          resourceId: CollectionTimelineResource.equipmentResourceId(
+            row.equipmentId,
+          ),
+          label: row.equipmentName,
+          subtitle: '${row.equipmentId} · ${row.lineName}',
+          selectionKey: row.equipmentId,
+        ),
+    ];
+  }
+
+  String _resourceIdOfEvent({
+    required CollectionCatalog catalog,
+    required CollectionResourceDepth depth,
+    required CollectionEvent event,
+  }) {
+    switch (depth) {
+      case CollectionResourceDepth.equipment:
+        return CollectionTimelineResource.equipmentResourceId(
+          event.equipmentId,
+        );
+      case CollectionResourceDepth.line:
+        return CollectionTimelineResource.lineResourceId(event.lineName);
+      case CollectionResourceDepth.project:
+        final assignment = _assignmentAt(
+          catalog,
+          event.equipmentId,
+          event.eventAt,
+        );
+        final projectId =
+            assignment?.projectId ??
+            CollectionTimelineResource.UNASSIGNED_PROJECT_ID;
+        return CollectionTimelineResource.projectResourceId(projectId);
+    }
   }
 
   TimelineViewKind _resolveViewKind(CollectionBoardQuery query) {
@@ -679,58 +839,6 @@ class QueryCollectionBoardUseCase {
       }
       return true;
     });
-  }
-
-  List<TimelineSection> _groupEquipment(
-    CollectionCatalog catalog,
-    List<CollectionBoardRow> resources,
-    CollectionBoardQuery query,
-  ) {
-    if (!query.isUnassignedOnly && query.projectIds.isEmpty) {
-      final rowsByProject = <String, List<CollectionBoardRow>>{};
-      for (final row in resources) {
-        final assignment = _assignmentAt(
-          catalog,
-          row.equipmentId,
-          query.snapshotAt,
-        );
-        final key =
-            assignment?.projectId ?? TimelineSection.UNASSIGNED_PROJECT_ID;
-        rowsByProject.putIfAbsent(key, () => []).add(row);
-      }
-      final order = [
-        for (final project in catalog.projects) project.projectId,
-        TimelineSection.UNASSIGNED_PROJECT_ID,
-      ];
-      return [
-        for (final key in order)
-          if (rowsByProject.containsKey(key))
-            TimelineSection(
-              kind: TimelineSection.PROJECT_KIND,
-              sectionKey: key,
-              label: key == TimelineSection.UNASSIGNED_PROJECT_ID
-                  ? '미배정'
-                  : catalog.projectById(key)?.projectName ?? key,
-              rows: rowsByProject[key]!,
-            ),
-      ];
-    }
-    final sections = <TimelineSection>[];
-    for (final row in resources) {
-      final line = row.lineName.isEmpty ? '—' : row.lineName;
-      if (sections.isEmpty || sections.last.sectionKey != line) {
-        sections.add(
-          TimelineSection(
-            kind: TimelineSection.LINE_KIND,
-            sectionKey: line,
-            label: line,
-            rows: [],
-          ),
-        );
-      }
-      sections.last.rows.add(row);
-    }
-    return sections;
   }
 
   double _sanitizeZoom(double zoomHours) {

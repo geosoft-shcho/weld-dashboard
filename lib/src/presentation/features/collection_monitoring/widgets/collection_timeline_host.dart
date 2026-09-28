@@ -1,7 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../../domain/entities/collection_board.dart';
-import '../../../../domain/entities/collection_timeline.dart';
 import '../../../../domain/entities/timeline_view_kind.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
@@ -47,9 +46,9 @@ class CollectionTimelineHost extends StatelessWidget {
               ),
             ),
             // Text(_badge(board), style: const TextStyle(fontSize: 12)),
-            if (_doesShowSectionButtons) ...[
+            if (_doesShowDrillCrumbs) ...[
               const SizedBox(height: 8),
-              _SectionButtons(viewModel: viewModel, board: board),
+              _DrillCrumbs(viewModel: viewModel, board: board),
             ],
             const SizedBox(height: 8),
             Expanded(
@@ -95,12 +94,12 @@ class CollectionTimelineHost extends StatelessWidget {
     );
   }
 
-  bool get _doesShowSectionButtons {
+  bool get _doesShowDrillCrumbs {
     switch (board.timeline.viewKind) {
       case TimelineViewKind.resource:
       case TimelineViewKind.auto:
-        return board.timeline.sections.isNotEmpty;
       case TimelineViewKind.day:
+        return true;
       case TimelineViewKind.roadmap:
         return false;
     }
@@ -144,35 +143,58 @@ class _BoardView extends StatelessWidget {
   }
 }
 
-class _SectionButtons extends StatelessWidget {
-  const _SectionButtons({required this.viewModel, required this.board});
+class _DrillCrumbs extends StatelessWidget {
+  const _DrillCrumbs({required this.viewModel, required this.board});
 
   final CollectionMonitoringViewModel viewModel;
   final CollectionBoard board;
 
   @override
   Widget build(BuildContext context) {
+    final query = board.query;
+    final crumbs = <Widget>[
+      Button(
+        onPressed: viewModel.didTapFactoryCrumb,
+        child: const Text('공장 전체'),
+      ),
+    ];
+    if (query.isUnassignedOnly || query.projectIds.length == 1) {
+      crumbs.add(const Text('›'));
+      crumbs.add(
+        Button(
+          onPressed: viewModel.didTapProjectCrumb,
+          child: Text(_projectLabel(board)),
+        ),
+      );
+    }
+    if (query.lineNames.length == 1) {
+      crumbs.add(const Text('›'));
+      crumbs.add(
+        Button(
+          onPressed: viewModel.didTapLineCrumb,
+          child: Text(query.lineNames.first),
+        ),
+      );
+    }
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: [
-        for (final section in board.timeline.sections)
-          Button(
-            onPressed: _onPressed(section),
-            child: Text('${section.label} · ${section.rows.length}대'),
-          ),
-      ],
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: crumbs,
     );
   }
 
-  VoidCallback? _onPressed(TimelineSection section) {
-    if (section.isProject) {
-      return () => viewModel.didTapProjectSection(section.sectionKey);
+  String _projectLabel(CollectionBoard board) {
+    if (board.query.isUnassignedOnly) {
+      return '미배정';
     }
-    if (board.timeline.isLineSectionLocked) {
-      return null;
+    final projectId = board.query.projectIds.first;
+    for (final project in board.options.projects) {
+      if (project.projectId == projectId) {
+        return project.projectName;
+      }
     }
-    return () => viewModel.didTapLineSection(section.sectionKey);
+    return projectId;
   }
 }
 

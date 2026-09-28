@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:neon_timeline_flutter/timeline_v16.dart' hide TimelineViewKind;
 
 import '../../../../domain/entities/collection_board_query.dart';
-import '../../../../domain/entities/collection_board_row.dart';
 import '../../../../domain/entities/collection_event.dart';
+import '../../../../domain/entities/collection_resource_depth.dart';
+import '../../../../domain/entities/collection_timeline_resource.dart';
 import '../../../../domain/entities/connection_status.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart' show AppTheme;
@@ -80,7 +81,10 @@ class CollectionEventTimelineMapper {
     return TimelineStatus.active;
   }
 
-  static TimelineEntry<CollectionEvent> entryOf(CollectionEvent event) {
+  static TimelineEntry<CollectionEvent> entryOf(
+    CollectionEvent event, {
+    required String resourceId,
+  }) {
     final durationSec = event.durationSec < 1 ? 1 : event.durationSec;
     return TimelineEntry<CollectionEvent>(
       id: event.eventId,
@@ -92,16 +96,20 @@ class CollectionEventTimelineMapper {
       semanticLabel:
           '${event.equipmentName} ${event.connectionStatus.label} ${event.windowLabel}',
       draggable: false,
-      resourceIds: {event.equipmentId},
+      resourceIds: {resourceId},
     );
   }
 
-  static TimelineResource resourceOf(CollectionBoardRow row) {
+  static TimelineResource resourceOf(CollectionTimelineResource resource) {
     return TimelineResource(
-      id: row.equipmentId,
-      label: row.equipmentName,
-      subtitle: '${row.equipmentId} · ${row.lineName}',
+      id: resource.resourceId,
+      label: resource.label,
+      subtitle: resource.subtitle,
     );
+  }
+
+  static double columnWidthOf(CollectionResourceDepth depth) {
+    return depth == CollectionResourceDepth.equipment ? 176 : 220;
   }
 
   static double pixelsPerMinute(double zoomHours) {

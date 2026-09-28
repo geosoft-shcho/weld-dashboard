@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import '../../../domain/entities/collection_board.dart';
 import '../../../domain/entities/collection_board_query.dart';
 import '../../../domain/entities/collection_catalog.dart';
-import '../../../domain/entities/collection_timeline.dart';
+import '../../../domain/entities/collection_timeline_resource.dart';
 import '../../../domain/entities/connection_status.dart';
 import '../../../domain/entities/kpi_card_kind.dart';
 import '../../../domain/entities/timeline_view_kind.dart';
@@ -218,12 +218,13 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   }
 
   void didTapProjectSection(String projectId) {
-    if (projectId == TimelineSection.UNASSIGNED_PROJECT_ID) {
+    if (projectId == CollectionTimelineResource.UNASSIGNED_PROJECT_ID) {
       _query = _query.copyWith(
         isUnassignedOnly: true,
         projectIds: const [],
         lineNames: const [],
         equipmentIds: const [],
+        viewKind: TimelineViewKind.resource,
       );
     } else {
       _query = _query.copyWith(
@@ -231,17 +232,47 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
         projectIds: [projectId],
         lineNames: const [],
         equipmentIds: const [],
+        viewKind: TimelineViewKind.resource,
       );
     }
-    notifyListeners();
+    _applyQuery();
   }
 
   void didTapLineSection(String lineName) {
-    if (_query.lineNames.isNotEmpty) {
-      return;
-    }
-    _query = _query.copyWith(lineNames: [lineName], equipmentIds: const []);
-    notifyListeners();
+    _query = _query.copyWith(
+      lineNames: [lineName],
+      equipmentIds: const [],
+      viewKind: TimelineViewKind.resource,
+    );
+    _applyQuery();
+  }
+
+  void didTapFactoryCrumb() {
+    _query = _query.copyWith(
+      isUnassignedOnly: false,
+      projectIds: const [],
+      lineNames: const [],
+      equipmentIds: const [],
+      viewKind: TimelineViewKind.resource,
+    );
+    _applyQuery();
+  }
+
+  void didTapProjectCrumb() {
+    _query = _query.copyWith(
+      lineNames: const [],
+      equipmentIds: const [],
+      viewKind: TimelineViewKind.resource,
+    );
+    _applyQuery();
+  }
+
+  void didTapLineCrumb() {
+    _query = _query.copyWith(
+      equipmentIds: const [],
+      viewKind: TimelineViewKind.resource,
+    );
+    _applyQuery();
   }
 
   void didTapOpenDayView() {
@@ -255,27 +286,6 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       viewKind: TimelineViewKind.day,
     );
     _applyQuery();
-  }
-
-  void didTapFactoryCrumb() {
-    _query = _query.copyWith(
-      projectIds: const [],
-      isUnassignedOnly: false,
-      workerIds: const [],
-      lineNames: const [],
-      equipmentIds: const [],
-    );
-    notifyListeners();
-  }
-
-  void didTapProjectCrumb() {
-    _query = _query.copyWith(lineNames: const [], equipmentIds: const []);
-    notifyListeners();
-  }
-
-  void didTapLineCrumb() {
-    _query = _query.copyWith(equipmentIds: const []);
-    notifyListeners();
   }
 
   void didClearWorker(String workerId) {

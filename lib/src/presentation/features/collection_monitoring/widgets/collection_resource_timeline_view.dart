@@ -3,6 +3,8 @@ import 'package:neon_timeline_flutter/timeline_v16.dart' hide TimelineViewKind;
 
 import '../../../../domain/entities/collection_board.dart';
 import '../../../../domain/entities/collection_event.dart';
+import '../../../../domain/entities/collection_resource_depth.dart';
+import '../../../../domain/entities/collection_timeline_resource.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart' show AppTheme;
 import '../collection_monitoring_view_model.dart';
@@ -118,9 +120,7 @@ class _CollectionResourceTimelineViewState
     if (timeline.resources.isEmpty) {
       return Padding(
         padding: const EdgeInsets.all(16),
-        child: Text(
-          timeline.eventCount == 0 ? '이 날짜의 수집 이벤트가 없습니다' : '조건에 맞는 장비가 없습니다',
-        ),
+        child: Text(_emptyLabel(timeline.depth, timeline.eventCount)),
       );
     }
     final resources = [
@@ -129,9 +129,14 @@ class _CollectionResourceTimelineViewState
     ];
     final entries = [
       for (final event in timeline.events)
-        CollectionEventTimelineMapper.entryOf(event),
+        CollectionEventTimelineMapper.entryOf(
+          event,
+          resourceId: timeline.resourceIdOf(event),
+        ),
     ];
-    const resourceColumnWidth = 176.0;
+    final resourceColumnWidth = CollectionEventTimelineMapper.columnWidthOf(
+      timeline.depth,
+    );
     final startHour = CollectionEventTimelineMapper.startHourOf(query);
     final endHour = CollectionEventTimelineMapper.endHourOf(query);
     final nowOnDate = _nowOnSelectedDate(query.selectedDate);
@@ -169,8 +174,10 @@ class _CollectionResourceTimelineViewState
                 dataRevision: Object.hash(
                   query.snapshotAt,
                   query.zoomHours,
+                  timeline.depth,
                   timeline.eventCount,
                   timeline.selectedEventId,
+                  timeline.resources.length,
                   constraints.maxWidth.isFinite
                       ? constraints.maxWidth.round()
                       : 0,
@@ -187,7 +194,7 @@ class _CollectionResourceTimelineViewState
                   enableResizing: false,
                   enableKeyboard: false,
                 ),
-                resourceHeaderLabel: '장비',
+                resourceHeaderLabel: timeline.resourceHeaderLabel,
                 resourceHeaderBuilder: _buildResourceHeader,
                 onEntryTap: _handleEntryTap,
                 itemBuilder: _buildEntry,
@@ -210,11 +217,20 @@ class _CollectionResourceTimelineViewState
   }
 
   Widget _buildResourceHeader(BuildContext context, TimelineResource resource) {
-    final equipmentId = resource.id.toString();
-    final isFocused = equipmentId == widget.board.timeline.focusedEquipmentId;
+    final row = _resourceById(resource.id.toString());
+    if (row == null) {
+      return const SizedBox.shrink();
+    }
+    final isEquipment =
+        widget.board.timeline.depth == CollectionResourceDepth.equipment;
+    final isFocused =
+        isEquipment &&
+        row.selectionKey == widget.board.timeline.focusedEquipmentId;
     return GestureDetector(
-      onTap: () => widget.viewModel.didSelectRow(equipmentId),
-      onDoubleTap: () => widget.viewModel.didDoubleTapEquipment(equipmentId),
+      onTap: () => _didTapResource(row),
+      onDoubleTap: isEquipment
+          ? () => widget.viewModel.didDoubleTapEquipment(row.selectionKey)
+          : null,
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: isFocused
@@ -251,6 +267,39 @@ class _CollectionResourceTimelineViewState
         ),
       ),
     );
+  }
+
+  CollectionTimelineResource? _resourceById(String resourceId) {
+    for (final resource in widget.board.timeline.resources) {
+      if (resource.resourceId == resourceId) {
+        return resource;
+      }
+    }
+    return null;
+  }
+
+  void _didTapResource(CollectionTimelineResource resource) {
+    switch (widget.board.timeline.depth) {
+      case CollectionResourceDepth.project:
+        widget.viewModel.didTapProjectSection(resource.selectionKey);
+      case CollectionResourceDepth.line:
+        widget.viewModel.didTapLineSection(resource.selectionKey);
+      case CollectionResourceDepth.equipment:
+        widget.viewModel.didSelectRow(resource.selectionKey);
+    }
+  }
+
+  String _emptyLabel(CollectionResourceDepth depth, int eventCount) {
+    switch (depth) {
+      case CollectionResourceDepth.project:
+        return '조건에 맞는 프로젝트가 없습니다';
+      case CollectionResourceDepth.line:
+        return '조건에 맞는 라인이 없습니다';
+      case CollectionResourceDepth.equipment:
+        return eventCount == 0
+            ? '이 날짜의 수집 이벤트가 없습니다'
+            : '조건에 맞는 장비가 없습니다';
+    }
   }
 
   void _handleEntryTap(

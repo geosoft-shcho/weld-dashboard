@@ -8,6 +8,8 @@ import 'package:weld_dashboard/src/domain/entities/connection_status.dart';
 import 'package:weld_dashboard/src/domain/entities/equipment.dart';
 import 'package:weld_dashboard/src/domain/entities/project.dart';
 import 'package:weld_dashboard/src/domain/entities/time_sync_status.dart';
+import 'package:weld_dashboard/src/domain/entities/collection_resource_depth.dart';
+import 'package:weld_dashboard/src/domain/entities/collection_timeline_resource.dart';
 import 'package:weld_dashboard/src/domain/entities/timeline_view_kind.dart';
 import 'package:weld_dashboard/src/domain/entities/worker.dart';
 import 'package:weld_dashboard/src/domain/use_cases/query_collection_board_use_case.dart';
@@ -16,7 +18,7 @@ void main() {
   test('default snapshot KPI matches 2026-09-07 collection_status', () {
     final board = QueryCollectionBoardUseCase().execute(
       catalog: _catalog(),
-      query: CollectionBoardQuery.initial(),
+      query: _onCollectionDay(),
     );
     expect(board.kpi.equipmentCount, 8);
     expect(board.kpi.connectedCount, 5);
@@ -31,19 +33,31 @@ void main() {
     expect(board.kpi.lossRateAverage, closeTo(35.542857, 0.001));
     expect(board.rows.length, 8);
     expect(board.timeline.viewKind, TimelineViewKind.resource);
-    expect(board.timeline.resources.length, 8);
-    expect(board.timeline.sections.map((section) => section.label).toList(), [
+    expect(board.timeline.depth, CollectionResourceDepth.project);
+    expect(board.timeline.resourceHeaderLabel, '프로젝트');
+    expect(board.timeline.resources.map((row) => row.label).toList(), [
       '압력용기 공사',
       '배관·탱크 공사',
       '철의장 공사',
       '미배정',
     ]);
+    expect(
+      board.timeline.resources.map((row) => row.resourceId).toList(),
+      [
+        CollectionTimelineResource.projectResourceId('PJ-01'),
+        CollectionTimelineResource.projectResourceId('PJ-02'),
+        CollectionTimelineResource.projectResourceId('PJ-03'),
+        CollectionTimelineResource.projectResourceId(
+          CollectionTimelineResource.UNASSIGNED_PROJECT_ID,
+        ),
+      ],
+    );
   });
 
   test('PJ-01 assignment filter keeps EQ-01 and EQ-02', () {
     final board = QueryCollectionBoardUseCase().execute(
       catalog: _catalog(),
-      query: CollectionBoardQuery.initial().copyWith(projectIds: ['PJ-01']),
+      query: _onCollectionDay().copyWith(projectIds: ['PJ-01']),
     );
     expect(board.rows.map((row) => row.equipmentId).toList(), [
       'EQ-01',
@@ -56,7 +70,7 @@ void main() {
     () {
       final dayBoard = QueryCollectionBoardUseCase().execute(
         catalog: _catalogWithEvents(),
-        query: CollectionBoardQuery.initial().copyWith(equipmentIds: ['EQ-01']),
+        query: _onCollectionDay().copyWith(equipmentIds: ['EQ-01']),
       );
       expect(dayBoard.timeline.viewKind, TimelineViewKind.day);
       expect(
@@ -66,17 +80,23 @@ void main() {
 
       final resourceBoard = QueryCollectionBoardUseCase().execute(
         catalog: _catalogWithEvents(),
-        query: CollectionBoardQuery.initial().copyWith(
+        query: _onCollectionDay().copyWith(
           equipmentIds: ['EQ-01'],
           viewKind: TimelineViewKind.resource,
         ),
       );
       expect(resourceBoard.timeline.viewKind, TimelineViewKind.resource);
+      expect(resourceBoard.timeline.depth, CollectionResourceDepth.equipment);
+      expect(resourceBoard.timeline.resourceHeaderLabel, '장비');
       expect(resourceBoard.timeline.resources.length, 1);
+      expect(
+        resourceBoard.timeline.resources.single.resourceId,
+        CollectionTimelineResource.equipmentResourceId('EQ-01'),
+      );
 
       final roadmapBoard = QueryCollectionBoardUseCase().execute(
         catalog: _catalogWithEvents(),
-        query: CollectionBoardQuery.initial().copyWith(
+        query: _onCollectionDay().copyWith(
           viewKind: TimelineViewKind.roadmap,
         ),
       );
@@ -90,14 +110,96 @@ void main() {
     () {
       final board = QueryCollectionBoardUseCase().execute(
         catalog: _catalogWithEvents(),
-        query: CollectionBoardQuery.initial(),
+        query: _onCollectionDay(),
       );
       expect(
         board.timeline.events.every((event) => event.eventAt.day == 7),
         isTrue,
       );
-      expect(board.timeline.resources.length, 8);
+      expect(board.timeline.events.map((event) => event.eventId), [
+        'EV-007',
+        'EV-010',
+      ]);
+      expect(board.timeline.depth, CollectionResourceDepth.project);
+      expect(board.timeline.resources.length, 4);
+      expect(
+        board.timeline.resourceIdsByEventId['EV-010'],
+        CollectionTimelineResource.projectResourceId('PJ-01'),
+      );
+      expect(
+        board.timeline.resourceIdsByEventId['EV-010'],
+        isNot(contains('EQ-')),
+      );
     },
+  );
+
+  test('two projects stay on the project axis', () {
+    final board = QueryCollectionBoardUseCase().execute(
+      catalog: _catalogWithEvents(),
+      query: _onCollectionDay().copyWith(projectIds: ['PJ-01', 'PJ-03']),
+    );
+    expect(board.timeline.resourceHeaderLabel, '프로젝트');
+    expect(board.timeline.resources.map((row) => row.selectionKey).toList(), [
+      'PJ-01',
+      'PJ-03',
+    ]);
+  });
+
+  test('one project drills to lines', () {
+    final board = QueryCollectionBoardUseCase().execute(
+      catalog: _catalog(),
+      query: _onCollectionDay().copyWith(projectIds: ['PJ-01']),
+    );
+    expect(board.timeline.depth, CollectionResourceDepth.line);
+    expect(board.timeline.resourceHeaderLabel, '라인');
+    expect(board.timeline.resources.map((row) => row.label).toList(), ['A라인']);
+    expect(board.timeline.resources.single.subtitle, '2대');
+  });
+
+  test('one line drills to equipment rows', () {
+    final board = QueryCollectionBoardUseCase().execute(
+      catalog: _catalog(),
+      query: _onCollectionDay().copyWith(
+        projectIds: ['PJ-01'],
+        lineNames: ['A라인'],
+      ),
+    );
+    expect(board.timeline.depth, CollectionResourceDepth.equipment);
+    expect(board.timeline.resourceHeaderLabel, '장비');
+    expect(
+      board.timeline.resources.map((row) => row.selectionKey).toList(),
+      ['EQ-01', 'EQ-02'],
+    );
+  });
+
+  test('worker filter narrows project rows without changing the header', () {
+    final board = QueryCollectionBoardUseCase().execute(
+      catalog: _catalogWithEvents(),
+      query: _onCollectionDay().copyWith(workerIds: ['WK-02']),
+    );
+    expect(board.timeline.resourceHeaderLabel, '프로젝트');
+    expect(board.timeline.resources.map((row) => row.selectionKey).toList(), [
+      'PJ-01',
+    ]);
+    expect(
+      board.timeline.resourceIdsByEventId['EV-010'],
+      CollectionTimelineResource.projectResourceId('PJ-01'),
+    );
+  });
+
+  test('one equipment opens the day view', () {
+    final board = QueryCollectionBoardUseCase().execute(
+      catalog: _catalogWithEvents(),
+      query: _onCollectionDay().copyWith(equipmentIds: ['EQ-01']),
+    );
+    expect(board.timeline.viewKind, TimelineViewKind.day);
+  });
+}
+
+CollectionBoardQuery _onCollectionDay() {
+  return CollectionBoardQuery.initial().copyWith(
+    selectedDate: DateTime(2026, 9, 7),
+    snapshotAt: DateTime(2026, 9, 7, 9, 50),
   );
 }
 
