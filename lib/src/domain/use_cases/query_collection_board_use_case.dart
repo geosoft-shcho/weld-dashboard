@@ -260,7 +260,7 @@ class QueryCollectionBoardUseCase {
             catalog,
             equipment,
             catalog.statusByEquipmentId(equipment.equipmentId)!,
-            query.snapshotAt,
+            query,
           ),
     ];
     if (query.lineNames.isNotEmpty) {
@@ -297,12 +297,13 @@ class QueryCollectionBoardUseCase {
     CollectionCatalog catalog,
     Equipment equipment,
     CollectionStatus status,
-    DateTime snapshotAt,
+    CollectionBoardQuery query,
   ) {
-    final assignment = _assignmentAt(
+    final assignment = _assignmentOnDay(
       catalog,
       equipment.equipmentId,
-      snapshotAt,
+      query.selectedDate,
+      query.snapshotAt,
     );
     return CollectionBoardRow(
       equipmentId: equipment.equipmentId,
@@ -335,16 +336,8 @@ class QueryCollectionBoardUseCase {
       }
       return !_hasDayAssignment(catalog, equipmentId, query.selectedDate);
     }
-    final dayStart = DateTime(
-      query.selectedDate.year,
-      query.selectedDate.month,
-      query.selectedDate.day,
-    );
-    final dayEnd = dayStart.add(const Duration(days: 1));
-    return catalog.assignmentsForEquipment(equipmentId).any((assignment) {
-      if (!assignment.overlaps(dayStart, dayEnd)) {
-        return false;
-      }
+    return _assignmentsOnDate(catalog, query.selectedDate).any((assignment) {
+      if (assignment.equipmentId != equipmentId) return false;
       if (query.projectIds.isNotEmpty &&
           !query.projectIds.contains(assignment.projectId)) {
         return false;
@@ -357,29 +350,37 @@ class QueryCollectionBoardUseCase {
     });
   }
 
-  CollectionAssignment? _assignmentAt(
+  CollectionAssignment? _assignmentOnDay(
     CollectionCatalog catalog,
     String equipmentId,
-    DateTime instant,
+    DateTime day,
+    DateTime at,
   ) {
-    for (final assignment in catalog.assignmentsForEquipment(equipmentId)) {
-      if (assignment.contains(instant)) {
-        return assignment;
-      }
+    final onDay = [
+      for (final assignment in _assignmentsOnDate(catalog, day))
+        if (assignment.equipmentId == equipmentId) assignment,
+    ];
+    if (onDay.isEmpty) return null;
+    for (final assignment in onDay) {
+      if (assignment.contains(at)) return assignment;
     }
-    return null;
+    return onDay.reduce(
+      (latest, assignment) =>
+          assignment.assignedFrom.isAfter(latest.assignedFrom)
+          ? assignment
+          : latest,
+    );
   }
 
   bool _hasDayAssignment(
     CollectionCatalog catalog,
     String equipmentId,
-    DateTime date,
+    DateTime day,
   ) {
-    final dayStart = DateTime(date.year, date.month, date.day);
-    final dayEnd = dayStart.add(const Duration(days: 1));
-    return catalog
-        .assignmentsForEquipment(equipmentId)
-        .any((assignment) => assignment.overlaps(dayStart, dayEnd));
+    return _assignmentsOnDate(
+      catalog,
+      day,
+    ).any((assignment) => assignment.equipmentId == equipmentId);
   }
 
   List<CollectionAssignment> _assignmentsOnDate(
@@ -482,17 +483,18 @@ class QueryCollectionBoardUseCase {
       selectedEventId: query.selectedEventId,
       focusedEquipmentId: focusedEquipmentId,
     );
-    final assignmentInstant = selectedEvent?.eventAt ?? DateTime.now();
+    final assignmentInstant = selectedEvent?.eventAt ?? query.snapshotAt;
     final assignment = focusedEquipmentId.isEmpty
         ? null
-        : _assignmentAt(catalog, focusedEquipmentId, assignmentInstant);
+        : _assignmentOnDay(
+            catalog,
+            focusedEquipmentId,
+            query.selectedDate,
+            assignmentInstant,
+          );
     final depth = CollectionResourceDepth.of(query);
     final scopeRows = _applyCard(
-      _snapshotRows(
-        catalog,
-        query,
-        doesApplyConnectionFilter: false,
-      ),
+      _snapshotRows(catalog, query, doesApplyConnectionFilter: false),
       query.selectedKpiCard,
     );
     final resources = _resources(
@@ -552,9 +554,10 @@ class QueryCollectionBoardUseCase {
   ) {
     final rowsByProject = <String, List<CollectionBoardRow>>{};
     for (final row in scopeRows) {
-      final assignment = _assignmentAt(
+      final assignment = _assignmentOnDay(
         catalog,
         row.equipmentId,
+        query.selectedDate,
         query.snapshotAt,
       );
       final key =
@@ -622,9 +625,9 @@ class QueryCollectionBoardUseCase {
   List<CollectionTimelineResource> _equipmentResources(
     List<CollectionBoardRow> scopeRows,
   ) {
-    final rows = [...scopeRows]..sort(
-      (left, right) => left.equipmentName.compareTo(right.equipmentName),
-    );
+    final rows = [
+      ...scopeRows,
+    ]..sort((left, right) => left.equipmentName.compareTo(right.equipmentName));
     return [
       for (final row in rows)
         CollectionTimelineResource(
@@ -651,9 +654,10 @@ class QueryCollectionBoardUseCase {
       case CollectionResourceDepth.line:
         return CollectionTimelineResource.lineResourceId(event.lineName);
       case CollectionResourceDepth.project:
-        final assignment = _assignmentAt(
+        final assignment = _assignmentOnDay(
           catalog,
           event.equipmentId,
+          event.eventAt,
           event.eventAt,
         );
         final projectId =

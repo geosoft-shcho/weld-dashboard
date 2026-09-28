@@ -194,6 +194,42 @@ void main() {
     );
     expect(board.timeline.viewKind, TimelineViewKind.day);
   });
+
+  test('selected day keeps projects after the assignment window closes', () {
+    final board = QueryCollectionBoardUseCase().execute(
+      catalog: _catalog(
+        events: [
+          CollectionEvent(
+            eventId: 'EV-LATE',
+            equipmentId: 'EQ-01',
+            equipmentName: '용접기 A라인-1',
+            lineName: 'A라인',
+            eventAt: DateTime(2026, 9, 7, 19),
+            durationSec: 600,
+            connectionStatus: ConnectionStatus.connected,
+            receivedCount: 100,
+            windowLabel: '최근 5분',
+            lossRatePercent: 0,
+            timeSyncStatus: TimeSyncStatus.synced,
+            clockOffsetMs: 4,
+          ),
+        ],
+      ),
+      query: _onCollectionDay().copyWith(
+        snapshotAt: DateTime(2026, 9, 7, 19),
+      ),
+    );
+    expect(board.timeline.resources.map((row) => row.label).toList(), [
+      '압력용기 공사',
+      '배관·탱크 공사',
+      '철의장 공사',
+      '미배정',
+    ]);
+    expect(
+      board.timeline.resourceIdsByEventId['EV-LATE'],
+      CollectionTimelineResource.projectResourceId('PJ-01'),
+    );
+  });
 }
 
 CollectionBoardQuery _onCollectionDay() {
