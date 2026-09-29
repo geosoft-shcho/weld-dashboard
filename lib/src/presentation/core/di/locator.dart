@@ -16,6 +16,7 @@ import '../../../domain/use_cases/load_collection_catalog_use_case.dart';
 import '../../../domain/use_cases/load_pass_waveform_catalog_use_case.dart';
 import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
 import '../../../domain/use_cases/load_work_history_catalog_use_case.dart';
+import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
 import '../../../domain/use_cases/load_work_history_masters_use_case.dart';
 import '../../../domain/use_cases/query_collection_board_use_case.dart';
@@ -27,6 +28,7 @@ import '../../../domain/use_cases/resolve_latest_pass_profile_use_case.dart';
 import '../../../domain/use_cases/resolve_latest_quality_issue_use_case.dart';
 import '../../features/app_shell/shell_view_model.dart';
 import '../../features/collection_monitoring/collection_monitoring_view_model.dart';
+import '../../features/video_multimodal/video_multimodal_view_model.dart';
 import '../../features/pass_profile/pass_profile_args.dart';
 import '../../features/pass_profile/pass_profile_view_model.dart';
 import '../../features/quality_issue/quality_issue_args.dart';
@@ -60,6 +62,13 @@ void setupLocator({required bool pdfrxReady}) {
   );
   locator.registerLazySingleton(() => LoadWorkDetailCatalogUseCase(locator()));
   locator.registerFactory(() => QueryWorkDetailUseCase());
+  locator.registerFactory(() => ListHistoryWorkAttachmentsUseCase(locator()));
+  locator.registerFactoryParam<VideoMultimodalViewModel, String, void>(
+    (historyId, _) => VideoMultimodalViewModel(
+      listHistoryWorkAttachmentsUseCase: locator(),
+      historyId: historyId,
+    ),
+  );
   locator.registerLazySingleton<PassWaveformRepository>(
     () => RemotePassWaveformRepository(locator()),
   );

@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../features/collection_monitoring/collection_monitoring_screen.dart';
 import '../../features/pass_profile/pass_profile_screen.dart';
 import '../../features/quality_issue/quality_issue_screen.dart';
+import '../../features/video_multimodal/video_multimodal_screen.dart';
 import '../../features/work_detail/work_detail_screen.dart';
 import '../../features/work_history/work_history_screen.dart';
 import '../../navigation/app_coordinator.dart';
@@ -156,6 +157,11 @@ class _ShellScreenState extends State<ShellScreen> {
       case WorkHistoryStack.detail:
         return WorkDetailScreen(
           key: ValueKey('detail|${nav.historyId}'),
+          historyId: nav.historyId,
+        );
+      case WorkHistoryStack.videoMultimodal:
+        return VideoMultimodalScreen(
+          key: ValueKey('multimodal|${nav.historyId}'),
           historyId: nav.historyId,
         );
       case WorkHistoryStack.passProfile:

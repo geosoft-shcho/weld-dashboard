@@ -1,5 +1,7 @@
 # weld-dashboard
 
+여러 공정의 멀티모달 수집 데이터를 같은 작업 시각 기준으로 사용자가 볼 수 있게 가시화하는 대시보드입니다. 시계열, 영상, 음성, 품질처럼 형태가 다른 수집값을 한 흐름으로 대조하고, 공정이 바뀌어도 같은 방식으로 확장하는 것이 목적입니다. 이 앱이 맡는 일은 수집값의 가시화입니다.
+
 ## DashboardService 연결
 
 앱은 `protos/dashboard_service.proto`의 `DashboardService`를 Connect 프로토콜로 호출합니다.

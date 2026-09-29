@@ -49,6 +49,15 @@ GoRouter createAppRouter({
                 pageBuilder: (context, state) => const NoTransitionPage<void>(
                   child: SizedBox.shrink(),
                 ),
+                routes: [
+                  GoRoute(
+                    path: 'multimodal',
+                    pageBuilder: (context, state) =>
+                        const NoTransitionPage<void>(
+                      child: SizedBox.shrink(),
+                    ),
+                  ),
+                ],
               ),
               GoRoute(
                 path: 'pass',

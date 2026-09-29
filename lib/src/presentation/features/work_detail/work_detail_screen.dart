@@ -48,6 +48,13 @@ class _WorkDetailBody extends StatelessWidget {
                       coordinator.didTapBackToWorkHistory(context),
                 ),
                 CommandBarButton(
+                  icon: const Icon(FluentIcons.video),
+                  label: const Text('비디오 멀티모달'),
+                  onPressed: job == null
+                      ? null
+                      : () => coordinator.didTapOpenVideoMultimodal(context),
+                ),
+                CommandBarButton(
                   icon: const Icon(FluentIcons.line_chart),
                   label: const Text('프로파일'),
                   onPressed: job == null

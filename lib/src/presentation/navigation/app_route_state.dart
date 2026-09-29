@@ -60,6 +60,10 @@ class AppRouteState {
           case WorkHistoryStack.detail:
             final id = historyId.isEmpty ? '_' : Uri.encodeComponent(historyId);
             return '$historyPath/detail/$id';
+          case WorkHistoryStack.videoMultimodal:
+            final multimodalId =
+                historyId.isEmpty ? '_' : Uri.encodeComponent(historyId);
+            return '$historyPath/detail/$multimodalId/multimodal';
           case WorkHistoryStack.passProfile:
             return _locationWithQuery('$historyPath/pass', {
               if (commonKey.isNotEmpty) 'commonKey': commonKey,
@@ -107,6 +111,18 @@ class AppRouteState {
     }
     if (path == historyPath) {
       return const AppRouteState(pane: AppPane.history);
+    }
+
+    final multimodalMatch =
+        RegExp(r'^/history/detail/([^/]+)/multimodal$').firstMatch(path);
+    if (multimodalMatch != null) {
+      final raw = multimodalMatch.group(1)!;
+      final historyId = raw == '_' ? '' : Uri.decodeComponent(raw);
+      return AppRouteState(
+        pane: AppPane.history,
+        stack: WorkHistoryStack.videoMultimodal,
+        historyId: historyId,
+      );
     }
 
     final detailMatch = RegExp(r'^/history/detail/([^/]+)$').firstMatch(path);

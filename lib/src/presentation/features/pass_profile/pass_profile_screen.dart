@@ -99,6 +99,8 @@ class _PassProfileBody extends StatelessWidget {
     switch (previous) {
       case WorkHistoryStack.detail:
         return '작업 상세';
+      case WorkHistoryStack.videoMultimodal:
+        return '비디오 멀티모달';
       case WorkHistoryStack.qualityIssue:
         return '품질 이슈';
       case WorkHistoryStack.passProfile:

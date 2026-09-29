@@ -8,6 +8,7 @@ import 'app_route_state.dart';
 enum WorkHistoryStack {
   list,
   detail,
+  videoMultimodal,
   passProfile,
   qualityIssue,
 }
@@ -234,6 +235,25 @@ class AppCoordinator extends ChangeNotifier {
       historyId: historyId,
       viaDetail: true,
     );
+  }
+
+  void didTapOpenVideoMultimodal(BuildContext context) {
+    if (_historyId.isEmpty) {
+      return;
+    }
+    _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
+    if (_workHistoryStack == WorkHistoryStack.videoMultimodal) {
+      notifyListeners();
+      _publishLocation(_RouteWriteMode.replace);
+      return;
+    }
+    _pushWorkHistoryStack(WorkHistoryStack.videoMultimodal);
+    notifyListeners();
+    _publishLocation(_RouteWriteMode.push);
+  }
+
+  void didTapBackFromVideoMultimodal(BuildContext context) {
+    _popOrGoToPrevious();
   }
 
   void didTapOpenWorkDetail(BuildContext context, {required String historyId}) {
@@ -517,6 +537,7 @@ class AppCoordinator extends ChangeNotifier {
           case WorkHistoryStack.list:
             return true;
           case WorkHistoryStack.detail:
+          case WorkHistoryStack.videoMultimodal:
             return state.historyId == _historyId;
           case WorkHistoryStack.passProfile:
             return state.commonKey == _historyCommonKey &&
@@ -583,6 +604,9 @@ class AppCoordinator extends ChangeNotifier {
         _clearDrilldownKeys();
       case WorkHistoryStack.detail:
         _stackHistory.add(WorkHistoryStack.list);
+      case WorkHistoryStack.videoMultimodal:
+        _stackHistory.add(WorkHistoryStack.list);
+        _stackHistory.add(WorkHistoryStack.detail);
       case WorkHistoryStack.passProfile:
         _stackHistory.add(WorkHistoryStack.list);
         if (_historyId.isNotEmpty) {

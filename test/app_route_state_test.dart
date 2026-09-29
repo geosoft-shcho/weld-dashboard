@@ -42,6 +42,19 @@ void main() {
       expect(parsed?.linkId, 'L1');
     });
 
+    test('encodes and parses video multimodal without a media url', () {
+      const state = AppRouteState(
+        pane: AppPane.history,
+        stack: WorkHistoryStack.videoMultimodal,
+        historyId: 'H001',
+      );
+      expect(state.toLocation(), '/history/detail/H001/multimodal');
+      final parsed = AppRouteState.tryParse(Uri.parse(state.toLocation()));
+      expect(parsed?.stack, WorkHistoryStack.videoMultimodal);
+      expect(parsed?.historyId, 'H001');
+      expect(parsed?.toLocation().contains('file'), isFalse);
+    });
+
     test('unknown path returns null', () {
       expect(AppRouteState.tryParse(Uri.parse('/unknown')), isNull);
     });

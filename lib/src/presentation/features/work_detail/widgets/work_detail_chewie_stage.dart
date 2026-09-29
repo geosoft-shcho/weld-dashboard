@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
@@ -5,18 +7,39 @@ import 'package:video_player/video_player.dart';
 import '../../../core/themes/app_theme.dart';
 import 'work_detail_material_scope.dart';
 
+class VideoPlaybackClock {
+  const VideoPlaybackClock({
+    required this.position,
+    required this.duration,
+    required this.isPlaying,
+  });
+
+  final Duration position;
+  final Duration duration;
+  final bool isPlaying;
+}
+
 class WorkDetailChewieStage extends StatefulWidget {
   const WorkDetailChewieStage({
     super.key,
     required this.assetPath,
     this.seekToMs,
     this.seekToken = 0,
+    this.applySeekOnTokenOnly = false,
+    this.playbackToken = 0,
+    this.wantsPlayback = false,
+    this.onClock,
   });
 
   final String assetPath;
   final int? seekToMs;
   /// 같은 ms를 연속 탭해도 seek가 다시 적용되도록 증가.
   final int seekToken;
+  /// 재생 위치 콜백이 seekToMs를 다시 바꿀 때 탐색이 반복되지 않게 한다.
+  final bool applySeekOnTokenOnly;
+  final int playbackToken;
+  final bool wantsPlayback;
+  final ValueChanged<VideoPlaybackClock>? onClock;
 
   @override
   State<WorkDetailChewieStage> createState() => _WorkDetailChewieStageState();
@@ -27,6 +50,8 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
   ChewieController? _chewieController;
   String _errorMessage = '';
   int? _pendingSeekToMs;
+  Timer? _clockTimer;
+  VoidCallback? _clockListener;
 
   @override
   void initState() {
@@ -43,14 +68,30 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
       _load();
       return;
     }
-    if (oldWidget.seekToken != widget.seekToken ||
-        oldWidget.seekToMs != widget.seekToMs) {
+    final tokenChanged = oldWidget.seekToken != widget.seekToken;
+    final positionChanged = oldWidget.seekToMs != widget.seekToMs;
+    if (widget.applySeekOnTokenOnly) {
+      if (tokenChanged) {
+        _applySeek(widget.seekToMs);
+      }
+    } else if (tokenChanged || positionChanged) {
       _applySeek(widget.seekToMs);
+    }
+    if (oldWidget.playbackToken != widget.playbackToken) {
+      final controller = _videoController;
+      if (controller != null && controller.value.isInitialized) {
+        if (widget.wantsPlayback) {
+          controller.play();
+        } else {
+          controller.pause();
+        }
+      }
     }
   }
 
   @override
   void dispose() {
+    _unbindClock();
     _disposePlayers();
     super.dispose();
   }
@@ -88,6 +129,7 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
         _videoController = videoController;
         _chewieController = chewieController;
       });
+      _bindClock();
       await _applySeek(_pendingSeekToMs ?? widget.seekToMs);
     } catch (error) {
       await videoController.dispose();
@@ -117,7 +159,49 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
     await videoController.seekTo(Duration(milliseconds: clamped));
   }
 
+  void _bindClock() {
+    _unbindClock();
+    final controller = _videoController;
+    if (controller == null || widget.onClock == null) {
+      return;
+    }
+    void emit() {
+      if (!mounted || !controller.value.isInitialized) {
+        return;
+      }
+      widget.onClock!(
+        VideoPlaybackClock(
+          position: controller.value.position,
+          duration: controller.value.duration,
+          isPlaying: controller.value.isPlaying,
+        ),
+      );
+    }
+
+    _clockListener = emit;
+    controller.addListener(emit);
+    _clockTimer = Timer.periodic(const Duration(milliseconds: 16), (_) {
+      if (!controller.value.isInitialized || !controller.value.isPlaying) {
+        return;
+      }
+      emit();
+    });
+    emit();
+  }
+
+  void _unbindClock() {
+    _clockTimer?.cancel();
+    _clockTimer = null;
+    final controller = _videoController;
+    final listener = _clockListener;
+    if (controller != null && listener != null) {
+      controller.removeListener(listener);
+    }
+    _clockListener = null;
+  }
+
   void _disposePlayers() {
+    _unbindClock();
     _chewieController?.dispose();
     _chewieController = null;
     _videoController?.dispose();

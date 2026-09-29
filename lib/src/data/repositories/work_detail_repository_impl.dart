@@ -18,6 +18,12 @@ class WorkDetailRepositoryImpl implements WorkDetailRepository {
   @override
   Future<WorkDetailCatalog> loadCatalog({String historyId = ''}) async {
     final history = await _workHistoryRepository.loadCatalog();
+    final attachments = await listAttachments();
+    return WorkDetailCatalog(items: history.items, attachments: attachments);
+  }
+
+  @override
+  Future<List<WorkAttachment>> listAttachments() async {
     final rows = await _csvAssetDataSource.loadWorkAttachmentRows();
     final attachments = <WorkAttachment>[];
     for (final row in rows) {
@@ -26,6 +32,6 @@ class WorkDetailRepositoryImpl implements WorkDetailRepository {
         attachments.add(attachment);
       }
     }
-    return WorkDetailCatalog(items: history.items, attachments: attachments);
+    return attachments;
   }
 }

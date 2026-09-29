@@ -16,13 +16,24 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
     final histories = await _source.client.listWorkHistory(
       pb.ListWorkHistoryRequest(historyId: historyId),
     );
+    final attachments = await listAttachments();
+    return WorkDetailCatalog(
+      items: [for (final item in histories.items) workHistoryItemFrom(item)],
+      attachments: attachments,
+    );
+  }
+
+  @override
+  Future<List<WorkAttachment>> listAttachments() async {
     final response = await _source.client.listWorkAttachments(
       pb.ListWorkAttachmentsRequest(),
     );
     final attachments = <WorkAttachment>[];
     for (final item in response.items) {
       final type = WorkAttachmentType.fromCsv(item.fileType);
-      if (type == null) continue;
+      if (type == null) {
+        continue;
+      }
       attachments.add(
         WorkAttachment(
           attachmentId: item.attachmentId,
@@ -36,9 +47,6 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
         ),
       );
     }
-    return WorkDetailCatalog(
-      items: [for (final item in histories.items) workHistoryItemFrom(item)],
-      attachments: attachments,
-    );
+    return attachments;
   }
 }
