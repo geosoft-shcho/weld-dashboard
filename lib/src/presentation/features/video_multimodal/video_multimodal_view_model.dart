@@ -5,6 +5,8 @@ import '../../../domain/entities/work_attachment_type.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'timeline_clip_debug.dart';
 import 'video_caption.dart';
+import 'video_frame_mark.dart';
+import 'video_frame_mark_json.dart';
 
 enum VideoMultimodalSide { none, assets, properties, ask, labels }
 
@@ -184,6 +186,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     PaletteSection(sectionKey: 'vector', title: '키포인트 (tip/grip)', names: []),
   ];
   final List<TimelineSampleClip> _sampleClips = [];
+  final List<VideoFrameMark> _frameMarks = [];
   final List<SampleLayerSummary> _sampleLayers = const [];
 
   double get pixelsPerSecond => DEFAULT_PIXELS_PER_SECOND;
@@ -221,6 +224,58 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   List<VideoCaption> get activeVideoCaptions =>
       _captionsForVideo(activeVideoBar);
+
+  /// 재생 중인 영상 파일의 박스·스켈레톤. 실제 좌표가 오면 이 목록을 바꾼다.
+  List<VideoFrameMark> get activeVideoFrameMarks => activeVideoBar == null
+      ? const <VideoFrameMark>[]
+      : List<VideoFrameMark>.unmodifiable(_frameMarks);
+
+  void didUpdateVideoBox({
+    required int markIndex,
+    required double left,
+    required double top,
+    required double width,
+    required double height,
+  }) {
+    if (markIndex < 0 || markIndex >= _frameMarks.length) {
+      return;
+    }
+    final mark = _frameMarks[markIndex];
+    if (mark is! VideoBoxMark) {
+      return;
+    }
+    _frameMarks[markIndex] = VideoBoxMark(
+      name: mark.name,
+      left: left,
+      top: top,
+      width: width,
+      height: height,
+      start: mark.start,
+      end: mark.end,
+    );
+    notifyListeners();
+  }
+
+  void didUpdateVideoSkeleton({
+    required int markIndex,
+    required List<VideoFramePoint> points,
+  }) {
+    if (markIndex < 0 || markIndex >= _frameMarks.length) {
+      return;
+    }
+    final mark = _frameMarks[markIndex];
+    if (mark is! VideoSkeletonMark) {
+      return;
+    }
+    _frameMarks[markIndex] = VideoSkeletonMark(
+      name: mark.name,
+      points: List<VideoFramePoint>.of(points),
+      bones: mark.bones,
+      start: mark.start,
+      end: mark.end,
+    );
+    notifyListeners();
+  }
 
   /// 텍스트 레이어를 이 구간들로 바꾼다. 실제 API가 자막을 주면 이 메서드로 넣는다.
   void didReplaceTextLayerSegments(List<TextLayerSegment> segments) {
@@ -391,6 +446,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
     try {
+      final marks = loadMockVideoFrameMarks();
       _attachments = await _listHistoryWorkAttachmentsUseCase.execute(
         historyId: historyId,
       );
@@ -398,12 +454,16 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         ..._chain(_attachments, WorkAttachmentType.video),
         ..._chain(_attachments, WorkAttachmentType.audio),
       ];
+      _frameMarks
+        ..clear()
+        ..addAll(await marks);
       _side = VideoMultimodalSide.assets;
     } catch (error) {
       _hasError = true;
       _errorMessage = error.toString();
       _attachments = const [];
       _bars = const [];
+      _frameMarks.clear();
     } finally {
       _isLoading = false;
       notifyListeners();
