@@ -179,7 +179,7 @@ class _WaveformChannelChart extends StatelessWidget {
                               getTitlesWidget: (value, meta) {
                                 return Text(
                                   value.toStringAsFixed(1),
-                                  style: const TextStyle(fontSize: 10),
+                                  style: const TextStyle(fontSize: 11),
                                 );
                               },
                             ),
@@ -194,7 +194,7 @@ class _WaveformChannelChart extends StatelessWidget {
                                 }
                                 return Text(
                                   '${value.toInt()}ms',
-                                  style: const TextStyle(fontSize: 10),
+                                  style: const TextStyle(fontSize: 11),
                                 );
                               },
                             ),
@@ -229,7 +229,7 @@ class _WaveformChannelChart extends StatelessWidget {
                                   ),
                                   style: const TextStyle(
                                     color: AppTheme.CHART_CURSOR,
-                                    fontSize: 10,
+                                    fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
                                   labelResolver: (_) => '$selectedTimeMs ms',
