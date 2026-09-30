@@ -38,24 +38,16 @@ class _VideoMultimodalBody extends StatelessWidget {
       color: AppTheme.SURFACE,
       child: SizedBox.expand(
         child: ScaffoldPage(
-          header: PageHeader(
-            title: Text(viewModel.pageTitle),
-            commandBar: CommandBar(
-              mainAxisAlignment: MainAxisAlignment.end,
-              primaryItems: [
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.back),
-                  label: const Text('작업 상세'),
-                  onPressed: () =>
-                      coordinator.didTapBackFromVideoMultimodal(context),
-                ),
-              ],
-            ),
-          ),
+          padding: EdgeInsets.zero,
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              MultimodalPageToolbar(viewModel: viewModel),
+              MultimodalPageToolbar(
+                viewModel: viewModel,
+                title: viewModel.pageTitle,
+                onBack: () =>
+                    coordinator.didTapBackFromVideoMultimodal(context),
+              ),
               if (viewModel.hasError)
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),

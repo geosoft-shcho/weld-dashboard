@@ -6,11 +6,18 @@ import 'multimodal_dialogs.dart';
 
 /// S01 상단 툴바 배치. 버튼 묶음만 맞추고, 라벨링 페이지의 저장·추론은 호출하지 않는다.
 class MultimodalPageToolbar extends StatelessWidget {
-  const MultimodalPageToolbar({super.key, required this.viewModel});
+  const MultimodalPageToolbar({
+    super.key,
+    required this.viewModel,
+    required this.title,
+    required this.onBack,
+  });
 
   static const double BAR_HEIGHT = 48;
 
   final VideoMultimodalViewModel viewModel;
+  final String title;
+  final VoidCallback onBack;
 
   @override
   Widget build(BuildContext context) {
@@ -32,8 +39,39 @@ class MultimodalPageToolbar extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Row(
                 children: [
-                  if (locked) Text('불러오는 중…', style: theme.typography.caption),
-                  const Spacer(),
+                  _ToolbarButton(
+                    icon: FluentIcons.back,
+                    label: '',
+                    enabled: true,
+                    onPressed: onBack,
+                  ),
+                  Expanded(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        border: Border(
+                          right: BorderSide(
+                            color: theme.resources.cardStrokeColorDefault,
+                          ),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        child: Align(
+                          alignment: AlignmentDirectional.centerStart,
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.typography.body?.copyWith(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
                   _group(
                     theme,
                     children: [
@@ -198,9 +236,9 @@ class _ToolbarButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, size: 18, color: foreground),
+            Icon(icon, size: 12, color: foreground),
             const SizedBox(width: 4),
-            Text(label, style: TextStyle(fontSize: 11, color: foreground)),
+            Text(label, style: TextStyle(fontSize: 12, color: foreground)),
           ],
         ),
       ),
