@@ -6,6 +6,7 @@ import 'package:video_player/video_player.dart';
 
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
+import '../video_caption.dart';
 import 'multimodal_studio_palette.dart';
 
 class MultimodalVideoPlayer extends StatefulWidget {
@@ -16,6 +17,7 @@ class MultimodalVideoPlayer extends StatefulWidget {
     required this.seekToken,
     required this.playbackToken,
     required this.wantsPlayback,
+    required this.captions,
     required this.onClock,
   });
 
@@ -24,6 +26,7 @@ class MultimodalVideoPlayer extends StatefulWidget {
   final int seekToken;
   final int playbackToken;
   final bool wantsPlayback;
+  final List<VideoCaption> captions;
   final ValueChanged<VideoPlaybackClock> onClock;
 
   @override
@@ -33,6 +36,7 @@ class MultimodalVideoPlayer extends StatefulWidget {
 class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   VideoPlayerController? _videoController;
   ChewieController? _chewieController;
+  int _captionGeneration = 0;
   Timer? _clockTimer;
   VoidCallback? _clockListener;
   String _errorText = '';
@@ -56,6 +60,9 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     if (oldWidget.playbackToken != widget.playbackToken) {
       _applyPlayback();
     }
+    if (!_sameCaptions(oldWidget.captions, widget.captions)) {
+      _syncCaptions();
+    }
   }
 
   @override
@@ -78,25 +85,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
         await videoController.dispose();
         return;
       }
-      final ratio = videoController.value.aspectRatio == 0
-          ? 16 / 9
-          : videoController.value.aspectRatio;
-      final chewieController = ChewieController(
-        videoPlayerController: videoController,
-        aspectRatio: ratio,
-        autoPlay: false,
-        looping: false,
-        allowFullScreen: true,
-        draggableProgressBar: true,
-        customControls: const MaterialDesktopControls(),
-        overlay: const _AnnotationOverlay(),
-        materialProgressColors: ChewieProgressColors(
-          playedColor: MultimodalStudioPalette.GRAPE_500,
-          handleColor: MultimodalStudioPalette.GRAPE_500,
-          bufferedColor: MultimodalStudioPalette.SAND_600,
-          backgroundColor: MultimodalStudioPalette.SAND_300,
-        ),
-      );
+      final chewieController = _createChewie(videoController, widget.captions);
       setState(() {
         _videoController = videoController;
         _chewieController = chewieController;
@@ -113,6 +102,74 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       }
       setState(() => _errorText = error.toString());
     }
+  }
+
+  ChewieController _createChewie(
+    VideoPlayerController videoController,
+    List<VideoCaption> captions,
+  ) {
+    final ratio = videoController.value.aspectRatio == 0
+        ? 16 / 9
+        : videoController.value.aspectRatio;
+    final cues = _chewieCues(captions);
+    return ChewieController(
+      videoPlayerController: videoController,
+      aspectRatio: ratio,
+      autoPlay: false,
+      looping: false,
+      allowFullScreen: true,
+      draggableProgressBar: true,
+      showSubtitles: cues.isNotEmpty,
+      subtitle: cues.isEmpty ? null : Subtitles(cues),
+      customControls: const MaterialDesktopControls(),
+      overlay: const _AnnotationOverlay(),
+      materialProgressColors: ChewieProgressColors(
+        playedColor: MultimodalStudioPalette.GRAPE_500,
+        handleColor: MultimodalStudioPalette.GRAPE_500,
+        bufferedColor: MultimodalStudioPalette.SAND_600,
+        backgroundColor: MultimodalStudioPalette.SAND_300,
+      ),
+    );
+  }
+
+  List<Subtitle> _chewieCues(List<VideoCaption> captions) {
+    return [
+      for (var index = 0; index < captions.length; index++)
+        Subtitle(
+          index: index,
+          start: captions[index].start,
+          end: captions[index].end,
+          text: captions[index].text,
+        ),
+    ];
+  }
+
+  bool _sameCaptions(List<VideoCaption> left, List<VideoCaption> right) {
+    if (left.length != right.length) {
+      return false;
+    }
+    for (var index = 0; index < left.length; index++) {
+      if (left[index] != right[index]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void _syncCaptions() {
+    final videoController = _videoController;
+    if (videoController == null || !videoController.value.isInitialized) {
+      return;
+    }
+    final previous = _chewieController;
+    final next = _createChewie(videoController, widget.captions);
+    setState(() {
+      _chewieController = next;
+      _captionGeneration += 1;
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      previous?.dispose();
+    });
   }
 
   void _watch(VideoPlayerController controller) {
@@ -194,7 +251,10 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
             : Center(
                 child: AspectRatio(
                   aspectRatio: chewieController.aspectRatio ?? 16 / 9,
-                  child: Chewie(controller: chewieController),
+                  child: Chewie(
+                    key: ValueKey(_captionGeneration),
+                    controller: chewieController,
+                  ),
                 ),
               ),
       ),

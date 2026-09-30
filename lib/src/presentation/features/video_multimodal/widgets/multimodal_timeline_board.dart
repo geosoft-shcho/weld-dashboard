@@ -1,8 +1,8 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../video_multimodal_view_model.dart';
 import 'multimodal_studio_palette.dart';
+import 'timeline_board_helpers.dart';
 
 class MultimodalTimelineBoard extends StatefulWidget {
   const MultimodalTimelineBoard({super.key, required this.viewModel});
@@ -16,12 +16,12 @@ class MultimodalTimelineBoard extends StatefulWidget {
 
 class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   final ScrollController _scrollController = ScrollController();
+  final GlobalKey _attachmentTrackKey = GlobalKey();
   DateTime _lastAutoScrollAt = DateTime.fromMillisecondsSinceEpoch(0);
   double _trackedPlayhead = -1;
-  double _trackedPixels = -1;
   double _draftStart = -1;
   double _draftEnd = -1;
-  _ClipEdit? _edit;
+  TimelineClipEdit? _edit;
 
   VideoMultimodalViewModel get viewModel => widget.viewModel;
 
@@ -29,25 +29,17 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   void initState() {
     super.initState();
     _trackedPlayhead = widget.viewModel.playheadSeconds;
-    _trackedPixels = widget.viewModel.pixelsPerSecond;
   }
 
   @override
   void didUpdateWidget(covariant MultimodalTimelineBoard oldWidget) {
     super.didUpdateWidget(oldWidget);
     final headMoved = _trackedPlayhead != viewModel.playheadSeconds;
-    final zoomChanged = _trackedPixels != viewModel.pixelsPerSecond;
     _trackedPlayhead = viewModel.playheadSeconds;
-    _trackedPixels = viewModel.pixelsPerSecond;
-    if (!headMoved && !zoomChanged) {
+    if (!headMoved || !viewModel.isVideoPlaying) {
       return;
     }
-    if (!viewModel.isVideoPlaying && !zoomChanged) {
-      return;
-    }
-    WidgetsBinding.instance.addPostFrameCallback(
-      (_) => _followPlayhead(pinHead: zoomChanged),
-    );
+    WidgetsBinding.instance.addPostFrameCallback((_) => _followPlayhead());
   }
 
   @override
@@ -56,12 +48,12 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     super.dispose();
   }
 
-  void _followPlayhead({bool pinHead = false}) {
+  void _followPlayhead() {
     if (!_scrollController.hasClients) {
       return;
     }
     final now = DateTime.now();
-    if (!pinHead && now.difference(_lastAutoScrollAt).inMilliseconds < 80) {
+    if (now.difference(_lastAutoScrollAt).inMilliseconds < 80) {
       return;
     }
     final position = _scrollController.position;
@@ -69,7 +61,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     const margin = 48.0;
     final viewLeft = position.pixels;
     final viewRight = viewLeft + position.viewportDimension;
-    if (!pinHead && head >= viewLeft + margin && head <= viewRight - margin) {
+    if (head >= viewLeft + margin && head <= viewRight - margin) {
       return;
     }
     _lastAutoScrollAt = now;
@@ -78,6 +70,17 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       position.maxScrollExtent,
     );
     _scrollController.jumpTo(target);
+  }
+
+  double _secondsOnTrack(Offset global) {
+    final box = _attachmentTrackKey.currentContext?.findRenderObject();
+    if (box is! RenderBox) {
+      return viewModel.playheadSeconds;
+    }
+    final local = box.globalToLocal(global);
+    return (local.dx / viewModel.pixelsPerSecond)
+        .clamp(0.0, viewModel.spanSeconds)
+        .toDouble();
   }
 
   double _secondsAt(double localDx) {
@@ -90,7 +93,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   @override
   Widget build(BuildContext context) {
-    final rows = _rows();
+    final rows = buildTimelineBoardRows(viewModel);
     final hasMedia = rows.isNotEmpty && viewModel.spanSeconds > 0;
     return Container(
       margin: const EdgeInsets.fromLTRB(0, 8, 0, 12),
@@ -128,14 +131,14 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _filled(List<_TimelineRow> rows) {
+  Widget _filled(List<TimelineBoardRow> rows) {
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _toolbar(),
-          if (viewModel.isLinkMode) _linkBanner(),
+          if (viewModel.isRelationMode) _relationBanner(),
           _header(),
           if (viewModel.hasTimelineHint) _hint(),
           SizedBox(
@@ -167,26 +170,21 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         children: [
           _toolGroup([
             _tool(
-              '선택',
-              selected: !viewModel.isLinkMode,
+              'Select',
+              selected: !viewModel.isRelationMode,
               onPressed: viewModel.didTapSelectTool,
             ),
             _tool(
-              'Link',
-              selected: viewModel.isLinkMode,
-              onPressed: viewModel.didTapToggleLinkMode,
+              'Relation',
+              selected: viewModel.isRelationMode,
+              onPressed: viewModel.didTapToggleRelationMode,
             ),
             _tool(
-              'Del',
+              'Delete',
               onPressed: viewModel.canDeleteSelection
                   ? viewModel.didTapDeleteSelection
                   : null,
             ),
-          ]),
-          const SizedBox(width: 8),
-          _toolGroup([
-            _tool('−', onPressed: viewModel.didTapZoomOut),
-            _tool('+', onPressed: viewModel.didTapZoomIn),
           ]),
           const Spacer(),
           _toolGroup([
@@ -263,7 +261,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _linkBanner() {
+  Widget _relationBanner() {
     return Container(
       color: MultimodalStudioPalette.GRAPE_0,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -271,7 +269,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         children: [
           Expanded(
             child: Text(
-              viewModel.linkPrompt,
+              viewModel.relationPrompt,
               style: const TextStyle(
                 color: MultimodalStudioPalette.GRAPE_400,
                 fontSize: 11,
@@ -279,8 +277,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             ),
           ),
           TextButton(
-            onPressed: viewModel.didTapCancelLinkMode,
-            child: const Text('취소'),
+            onPressed: viewModel.didTapCancelRelationMode,
+            child: const Text('취소', style: TextStyle(fontSize: 11)),
           ),
         ],
       ),
@@ -289,7 +287,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   Widget _laneMenu() {
     const lanes = [
-      'stt',
+      VideoMultimodalViewModel.TEXT_LANE_KEY,
       'audio_manual',
       'object',
       'pose_object',
@@ -342,7 +340,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _objects(List<_TimelineRow> rows) {
+  Widget _objects(List<TimelineBoardRow> rows) {
     return Container(
       width: 200,
       decoration: const BoxDecoration(
@@ -376,76 +374,97 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _objectRow(_TimelineRow row) {
+  Widget _objectRow(TimelineBoardRow row) {
+    if (row.clips.isEmpty) {
+      return _objectLabel(
+        row,
+        swatch: timelineLaneBackground(row.laneKey),
+        border: timelineLaneForeground(row.laneKey),
+      );
+    }
     final clip = _rowSelection(row);
     final isSelected = row.clips.any(_isClipSelected);
     final identity = row.clips.length == 1 ? row.clips.first.clipId : '';
     return GestureDetector(
       onTap: () => _selectClip(clip),
-      child: Container(
-        height: 28,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        color: isSelected ? MultimodalStudioPalette.GRAPE_100 : null,
-        child: Row(
-          children: [
-            Container(
-              width: 12,
-              height: 12,
-              margin: const EdgeInsets.only(right: 6),
-              decoration: BoxDecoration(
-                color: clip.background,
-                borderRadius: BorderRadius.circular(2),
-                border: Border.all(
-                  color: clip.border == Colors.transparent
-                      ? clip.foreground
-                      : clip.border,
-                ),
-              ),
-            ),
-            if (row.showsAiBadge)
-              Container(
-                margin: const EdgeInsets.only(right: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: MultimodalStudioPalette.GRAPE_0,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: const Text(
-                  'AI',
-                  style: TextStyle(
-                    color: MultimodalStudioPalette.GRAPE_700,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            Expanded(
-              child: Text(
-                row.label,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: row.labelColor,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
-            if (identity.isNotEmpty)
-              Text(
-                identity,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: MultimodalStudioPalette.SAND_600,
-                  fontSize: 9,
-                ),
-              ),
-          ],
-        ),
+      child: _objectLabel(
+        row,
+        swatch: clip.background,
+        border: clip.border == Colors.transparent
+            ? clip.foreground
+            : clip.border,
+        isSelected: isSelected,
+        identity: identity,
       ),
     );
   }
 
-  _TimelineClip _rowSelection(_TimelineRow row) {
+  Widget _objectLabel(
+    TimelineBoardRow row, {
+    required Color swatch,
+    required Color border,
+    bool isSelected = false,
+    String identity = '',
+  }) {
+    return Container(
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      color: isSelected ? MultimodalStudioPalette.GRAPE_100 : null,
+      child: Row(
+        children: [
+          Container(
+            width: 12,
+            height: 12,
+            margin: const EdgeInsets.only(right: 6),
+            decoration: BoxDecoration(
+              color: swatch,
+              borderRadius: BorderRadius.circular(2),
+              border: Border.all(color: border),
+            ),
+          ),
+          if (row.showsAiBadge)
+            Container(
+              margin: const EdgeInsets.only(right: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              decoration: BoxDecoration(
+                color: MultimodalStudioPalette.GRAPE_0,
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: const Text(
+                'AI',
+                style: TextStyle(
+                  color: MultimodalStudioPalette.GRAPE_700,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          Expanded(
+            child: Text(
+              row.label,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                color: row.labelColor,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          if (identity.isNotEmpty)
+            Text(
+              identity,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: MultimodalStudioPalette.SAND_600,
+                fontSize: 9,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  TimelineBoardClip _rowSelection(TimelineBoardRow row) {
     for (final clip in row.clips) {
       if (_isClipSelected(clip)) {
         return clip;
@@ -479,14 +498,14 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             ),
           ),
           const Spacer(),
-          const Text(
-            '속성 · ',
-            style: TextStyle(
-              color: MultimodalStudioPalette.SAND_600,
-              fontSize: 11,
-            ),
-          ),
-          _tool('툴바에서 열기', onPressed: viewModel.didTapToggleProperties),
+          // const Text(
+          //   '속성 · ',
+          //   style: TextStyle(
+          //     color: MultimodalStudioPalette.SAND_600,
+          //     fontSize: 11,
+          //   ),
+          // ),
+          // _tool('툴바에서 열기', onPressed: viewModel.didTapToggleProperties),
         ],
       ),
     );
@@ -507,68 +526,46 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _tracks(List<_TimelineRow> rows) {
+  Widget _tracks(List<TimelineBoardRow> rows) {
     final width = viewModel.trackWidth;
-    return Listener(
-      onPointerSignal: (event) {
-        if (event is! PointerScrollEvent) {
-          return;
-        }
-        if (event.scrollDelta.dy.abs() <= event.scrollDelta.dx.abs()) {
-          return;
-        }
-        GestureBinding.instance.pointerSignalResolver.register(event, (
-          resolved,
-        ) {
-          if (resolved is! PointerScrollEvent) {
-            return;
-          }
-          if (resolved.scrollDelta.dy > 0) {
-            viewModel.didTapZoomOut();
-          } else if (resolved.scrollDelta.dy < 0) {
-            viewModel.didTapZoomIn();
-          }
-        });
-      },
-      child: SingleChildScrollView(
-        controller: _scrollController,
-        scrollDirection: Axis.horizontal,
-        child: SizedBox(
-          width: width,
-          child: Stack(
-            children: [
-              Column(
-                children: [
-                  _ruler(width),
-                  for (final row in rows) _track(row, width),
-                ],
+    return SingleChildScrollView(
+      controller: _scrollController,
+      scrollDirection: Axis.horizontal,
+      child: SizedBox(
+        width: width,
+        child: Stack(
+          children: [
+            Column(
+              children: [
+                _ruler(width),
+                for (final row in rows) _track(row, width),
+              ],
+            ),
+            Positioned(
+              left: viewModel.playheadSeconds * viewModel.pixelsPerSecond,
+              top: 0,
+              bottom: 0,
+              child: const IgnorePointer(
+                child: SizedBox(
+                  width: 2,
+                  child: ColoredBox(color: MultimodalStudioPalette.DANGER),
+                ),
               ),
+            ),
+            for (final marker in viewModel.markerSeconds)
               Positioned(
-                left: viewModel.playheadSeconds * viewModel.pixelsPerSecond,
+                left: marker * viewModel.pixelsPerSecond,
                 top: 0,
-                bottom: 0,
-                child: const IgnorePointer(
-                  child: SizedBox(
-                    width: 2,
-                    child: ColoredBox(color: MultimodalStudioPalette.DANGER),
+                child: GestureDetector(
+                  onTap: () => viewModel.didTapMarker(marker),
+                  child: const Icon(
+                    Icons.bookmark,
+                    size: 16,
+                    color: MultimodalStudioPalette.CANTELOUPE_400,
                   ),
                 ),
               ),
-              for (final marker in viewModel.markerSeconds)
-                Positioned(
-                  left: marker * viewModel.pixelsPerSecond,
-                  top: 0,
-                  child: GestureDetector(
-                    onTap: () => viewModel.didTapMarker(marker),
-                    child: const Icon(
-                      Icons.bookmark,
-                      size: 16,
-                      color: MultimodalStudioPalette.CANTELOUPE_400,
-                    ),
-                  ),
-                ),
-            ],
-          ),
+          ],
         ),
       ),
     );
@@ -587,7 +584,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           viewModel.didSeekToSeconds(_secondsAt(details.localPosition.dx)),
       child: CustomPaint(
         size: Size(width, 22),
-        painter: _RulerPainter(
+        painter: TimelineRulerPainter(
           spanSeconds: span,
           pixelsPerSecond: viewModel.pixelsPerSecond,
           stepSeconds: step,
@@ -596,7 +593,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _track(_TimelineRow row, double width) {
+  Widget _track(TimelineBoardRow row, double width) {
     final interactive = row.laneKey == 'audio_manual';
     final track = GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -652,10 +649,11 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           return;
         }
         final name = data.startsWith('file:') ? data.substring(5) : data;
-        viewModel.didDropSavedAttachment(name, viewModel.playheadSeconds);
+        viewModel.didDropSavedAttachment(name, _secondsOnTrack(details.offset));
       },
       builder: (context, candidate, rejected) {
         return ColoredBox(
+          key: _attachmentTrackKey,
           color: candidate.isEmpty
               ? Colors.transparent
               : MultimodalStudioPalette.GRAPE_100,
@@ -665,7 +663,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _clip(_TimelineClip clip, _TimelineRow row) {
+  Widget _clip(TimelineBoardClip clip, TimelineBoardRow row) {
     final range = _shownRange(clip);
     final left = range.startSeconds * viewModel.pixelsPerSecond;
     var width =
@@ -677,9 +675,10 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       width = minimum;
     }
     final selected = _isClipSelected(clip);
-    final canEdit =
-        clip.clipId.isNotEmpty &&
-        (row.laneKey == 'stt' || row.laneKey == 'audio_manual');
+    final canEdit = rangeIdOf(clip).isNotEmpty;
+    if (canEdit && selected && width < 12) {
+      width = 12;
+    }
     return Positioned(
       left: left,
       top: 4,
@@ -690,7 +689,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         onHorizontalDragStart: canEdit ? (_) => _beginEdit(clip) : null,
         onHorizontalDragUpdate: canEdit
             ? (details) => _moveEdit(
-                clip.clipId,
+                rangeIdOf(clip),
                 details.delta.dx / viewModel.pixelsPerSecond,
               )
             : null,
@@ -702,16 +701,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             borderRadius: BorderRadius.circular(4),
             border: Border.all(
               color: selected ? MultimodalStudioPalette.GRAPE_500 : clip.border,
-              width: row.laneKey == 'relation' ? 2 : 1,
+              width: 1,
             ),
-            boxShadow: selected
-                ? const [
-                    BoxShadow(
-                      color: MultimodalStudioPalette.GRAPE_500,
-                      spreadRadius: 1,
-                    ),
-                  ]
-                : null,
           ),
           child: Stack(
             children: [
@@ -750,11 +741,11 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _resizeHandle(_TimelineClip clip, {required bool isLeading}) {
+  Widget _resizeHandle(TimelineBoardClip clip, {required bool isLeading}) {
     return GestureDetector(
       onHorizontalDragStart: (_) => _beginEdit(clip),
       onHorizontalDragUpdate: (details) => _resizeEdit(
-        clip.clipId,
+        rangeIdOf(clip),
         details.delta.dx / viewModel.pixelsPerSecond,
         isLeading: isLeading,
       ),
@@ -767,22 +758,25 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  _ClipEdit _shownRange(_TimelineClip clip) {
+  TimelineClipEdit _shownRange(TimelineBoardClip clip) {
     final edit = _edit;
-    if (edit != null && edit.clipId == clip.clipId) {
+    final rangeId = rangeIdOf(clip);
+    if (edit != null && edit.clipId == rangeId) {
       return edit;
     }
-    return _ClipEdit(
-      clipId: clip.clipId,
+    return TimelineClipEdit(
+      clipId: rangeId,
+      isBar: clip.clipId.isEmpty,
       startSeconds: clip.startSeconds,
       endSeconds: clip.endSeconds,
     );
   }
 
-  void _beginEdit(_TimelineClip clip) {
+  void _beginEdit(TimelineBoardClip clip) {
     setState(() {
-      _edit = _ClipEdit(
-        clipId: clip.clipId,
+      _edit = TimelineClipEdit(
+        clipId: rangeIdOf(clip),
+        isBar: clip.clipId.isEmpty,
         startSeconds: clip.startSeconds,
         endSeconds: clip.endSeconds,
       );
@@ -794,7 +788,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     if (edit == null || edit.clipId != clipId) {
       return;
     }
-    setState(() => _edit = edit.move(deltaSeconds, viewModel.spanSeconds));
+    final limit = edit.isBar ? double.infinity : viewModel.spanSeconds;
+    setState(() => _edit = edit.move(deltaSeconds, limit));
   }
 
   void _resizeEdit(
@@ -806,10 +801,11 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     if (edit == null || edit.clipId != clipId) {
       return;
     }
+    final limit = edit.isBar ? double.infinity : viewModel.spanSeconds;
     setState(
       () => _edit = isLeading
           ? edit.resizeLeading(deltaSeconds)
-          : edit.resizeTrailing(deltaSeconds, viewModel.spanSeconds),
+          : edit.resizeTrailing(deltaSeconds, limit),
     );
   }
 
@@ -818,11 +814,19 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     if (edit == null) {
       return;
     }
-    viewModel.didCommitClipRange(
-      edit.clipId,
-      edit.startSeconds,
-      edit.endSeconds,
-    );
+    if (edit.isBar) {
+      viewModel.didCommitBarRange(
+        edit.clipId,
+        edit.startSeconds,
+        edit.endSeconds,
+      );
+    } else {
+      viewModel.didCommitClipRange(
+        edit.clipId,
+        edit.startSeconds,
+        edit.endSeconds,
+      );
+    }
     setState(() => _edit = null);
   }
 
@@ -830,7 +834,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     setState(() => _edit = null);
   }
 
-  List<Widget> _poseDots(_TimelineClip clip) {
+  List<Widget> _poseDots(TimelineBoardClip clip) {
     const fractions = [0.1, 0.35, 0.6, 0.85];
     final left = clip.startSeconds * viewModel.pixelsPerSecond;
     final width =
@@ -859,8 +863,9 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     ];
   }
 
-  void _selectClip(_TimelineClip clip) {
-    if (clip.clipId.isNotEmpty && viewModel.didTapClipForLink(clip.clipId)) {
+  void _selectClip(TimelineBoardClip clip) {
+    if (clip.clipId.isNotEmpty &&
+        viewModel.didTapClipForRelation(clip.clipId)) {
       viewModel.didSeekToSeconds(clip.startSeconds);
       return;
     }
@@ -871,7 +876,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     viewModel.didSelectSampleClip(clip.clipId);
   }
 
-  bool _isClipSelected(_TimelineClip clip) {
+  bool _isClipSelected(TimelineBoardClip clip) {
     if (clip.clipId.isNotEmpty) {
       return clip.clipId == viewModel.selectedClipId;
     }
@@ -894,297 +899,5 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         decoration: BoxDecoration(color: MultimodalStudioPalette.GRAPE_100),
       ),
     );
-  }
-
-  List<_TimelineRow> _rows() {
-    final rows = <_TimelineRow>[];
-    final videos = [
-      for (final bar in viewModel.visibleBars)
-        if (bar.isVideo) bar,
-    ];
-    final audios = [
-      for (final bar in viewModel.visibleBars)
-        if (!bar.isVideo) bar,
-    ];
-    if (videos.isNotEmpty && viewModel.isLaneVisible('video')) {
-      rows.add(
-        _TimelineRow(
-          laneKey: 'video',
-          label: '영상',
-          labelColor: MultimodalStudioPalette.SAND_700,
-          showsAiBadge: false,
-          clips: [
-            for (final bar in videos)
-              _TimelineClip(
-                clipId: '',
-                attachmentId: bar.attachmentId,
-                text: bar.fileName,
-                startSeconds: bar.startSeconds,
-                endSeconds: bar.endSeconds,
-                background: MultimodalStudioPalette.GRAPE_100,
-                foreground: MultimodalStudioPalette.GRAPE_400,
-                border: Colors.transparent,
-              ),
-          ],
-        ),
-      );
-    }
-    if (audios.isNotEmpty && viewModel.isLaneVisible('audio')) {
-      rows.add(
-        _TimelineRow(
-          laneKey: 'audio',
-          label: '오디오',
-          labelColor: MultimodalStudioPalette.PLUM_500,
-          showsAiBadge: false,
-          clips: [
-            for (final bar in audios)
-              _TimelineClip(
-                clipId: '',
-                attachmentId: bar.attachmentId,
-                text: bar.fileName,
-                startSeconds: bar.startSeconds,
-                endSeconds: bar.endSeconds,
-                background: MultimodalStudioPalette.KALE_0,
-                foreground: MultimodalStudioPalette.KALE_300,
-                border: Colors.transparent,
-              ),
-          ],
-        ),
-      );
-    }
-    const order = [
-      'stt',
-      'audio_manual',
-      'object',
-      'pose_object',
-      'saved_attachment',
-      'relation',
-    ];
-    for (final laneKey in order) {
-      final clips = [
-        for (final clip in viewModel.sampleClips)
-          if (clip.laneKey == laneKey) clip,
-      ];
-      if (clips.isEmpty || !viewModel.isLaneVisible(laneKey)) {
-        continue;
-      }
-      final first = clips.first;
-      rows.add(
-        _TimelineRow(
-          laneKey: laneKey,
-          label: first.laneLabel,
-          labelColor: _labelColor(laneKey),
-          showsAiBadge: first.showsAiBadge,
-          clips: [
-            for (final clip in clips)
-              _TimelineClip(
-                clipId: clip.clipId,
-                attachmentId: '',
-                text: clip.text,
-                startSeconds: clip.startSeconds,
-                endSeconds: clip.endSeconds,
-                background: _background(laneKey),
-                foreground: _foreground(laneKey),
-                border: clip.isDashed
-                    ? _foreground(laneKey)
-                    : Colors.transparent,
-              ),
-          ],
-        ),
-      );
-    }
-    return rows;
-  }
-
-  Color _labelColor(String laneKey) {
-    switch (laneKey) {
-      case 'object':
-      case 'audio_manual':
-        return MultimodalStudioPalette.PLUM_500;
-      case 'pose_object':
-      case 'stt':
-        return MultimodalStudioPalette.GRAPE_700;
-      default:
-        return MultimodalStudioPalette.SAND_700;
-    }
-  }
-
-  Color _background(String laneKey) {
-    switch (laneKey) {
-      case 'stt':
-        return MultimodalStudioPalette.KALE_0;
-      case 'audio_manual':
-        return MultimodalStudioPalette.GRAPE_0;
-      case 'object':
-        return MultimodalStudioPalette.PLUM_100;
-      case 'pose_object':
-        return MultimodalStudioPalette.GRAPE_0;
-      case 'saved_attachment':
-        return MultimodalStudioPalette.PERSIMMON_0;
-      case 'relation':
-        return const Color(0xFF3A2438);
-      default:
-        return MultimodalStudioPalette.SAND_200;
-    }
-  }
-
-  Color _foreground(String laneKey) {
-    switch (laneKey) {
-      case 'stt':
-        return MultimodalStudioPalette.KALE_300;
-      case 'audio_manual':
-      case 'pose_object':
-        return MultimodalStudioPalette.GRAPE_700;
-      case 'object':
-        return MultimodalStudioPalette.PLUM_400;
-      case 'saved_attachment':
-        return MultimodalStudioPalette.PERSIMMON_300;
-      case 'relation':
-        return MultimodalStudioPalette.PLUM_400;
-      default:
-        return MultimodalStudioPalette.SAND_900;
-    }
-  }
-}
-
-class _TimelineRow {
-  const _TimelineRow({
-    required this.laneKey,
-    required this.label,
-    required this.labelColor,
-    required this.showsAiBadge,
-    required this.clips,
-  });
-
-  final String laneKey;
-  final String label;
-  final Color labelColor;
-  final bool showsAiBadge;
-  final List<_TimelineClip> clips;
-}
-
-class _TimelineClip {
-  const _TimelineClip({
-    required this.clipId,
-    required this.attachmentId,
-    required this.text,
-    required this.startSeconds,
-    required this.endSeconds,
-    required this.background,
-    required this.foreground,
-    required this.border,
-  });
-
-  final String clipId;
-  final String attachmentId;
-  final String text;
-  final double startSeconds;
-  final double endSeconds;
-  final Color background;
-  final Color foreground;
-  final Color border;
-}
-
-class _ClipEdit {
-  const _ClipEdit({
-    required this.clipId,
-    required this.startSeconds,
-    required this.endSeconds,
-  });
-
-  final String clipId;
-  final double startSeconds;
-  final double endSeconds;
-
-  double get length => endSeconds - startSeconds;
-
-  _ClipEdit move(double deltaSeconds, double span) {
-    final duration = length;
-    var start = startSeconds + deltaSeconds;
-    if (start < 0) {
-      start = 0;
-    }
-    if (start + duration > span) {
-      start = (span - duration).clamp(0.0, span).toDouble();
-    }
-    return _ClipEdit(
-      clipId: clipId,
-      startSeconds: start,
-      endSeconds: start + duration,
-    );
-  }
-
-  _ClipEdit resizeLeading(double deltaSeconds) {
-    final next = (startSeconds + deltaSeconds).clamp(
-      0.0,
-      endSeconds - VideoMultimodalViewModel.MIN_REGION_SECONDS,
-    );
-    return _ClipEdit(
-      clipId: clipId,
-      startSeconds: next.toDouble(),
-      endSeconds: endSeconds,
-    );
-  }
-
-  _ClipEdit resizeTrailing(double deltaSeconds, double span) {
-    final next = (endSeconds + deltaSeconds).clamp(
-      startSeconds + VideoMultimodalViewModel.MIN_REGION_SECONDS,
-      span,
-    );
-    return _ClipEdit(
-      clipId: clipId,
-      startSeconds: startSeconds,
-      endSeconds: next.toDouble(),
-    );
-  }
-}
-
-class _RulerPainter extends CustomPainter {
-  const _RulerPainter({
-    required this.spanSeconds,
-    required this.pixelsPerSecond,
-    required this.stepSeconds,
-  });
-
-  final double spanSeconds;
-  final double pixelsPerSecond;
-  final double stepSeconds;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = MultimodalStudioPalette.SAND_0,
-    );
-    final line = Paint()
-      ..color = MultimodalStudioPalette.SAND_200
-      ..strokeWidth = 1;
-    final steps = stepSeconds <= 0 ? 0 : (spanSeconds / stepSeconds).floor();
-    for (var index = 0; index <= steps; index++) {
-      final second = index * stepSeconds;
-      final x = second * pixelsPerSecond;
-      canvas.drawLine(Offset(x, 12), Offset(x, size.height), line);
-      final total = second.round();
-      final label = '${total ~/ 60}:${(total % 60).toString().padLeft(2, '0')}';
-      final painter = TextPainter(
-        text: TextSpan(
-          text: label,
-          style: const TextStyle(
-            color: MultimodalStudioPalette.SAND_600,
-            fontSize: 10,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      painter.paint(canvas, Offset(x + 3, 0));
-      painter.dispose();
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _RulerPainter oldDelegate) {
-    return oldDelegate.spanSeconds != spanSeconds ||
-        oldDelegate.pixelsPerSecond != pixelsPerSecond ||
-        oldDelegate.stepSeconds != stepSeconds;
   }
 }

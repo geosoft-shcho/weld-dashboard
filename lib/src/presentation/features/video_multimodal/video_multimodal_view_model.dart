@@ -3,6 +3,8 @@ import 'package:flutter/foundation.dart';
 import '../../../domain/entities/work_attachment.dart';
 import '../../../domain/entities/work_attachment_type.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
+import 'timeline_clip_debug.dart';
+import 'video_caption.dart';
 
 enum VideoMultimodalSide { none, assets, properties, ask, labels }
 
@@ -129,8 +131,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const double MIN_TIMELINE_HEIGHT = 280;
   static const double SIDE_WIDTH = 320;
   static const double DEFAULT_PIXELS_PER_SECOND = 80;
-  static const double MIN_PIXELS_PER_SECOND = 20;
-  static const double MAX_PIXELS_PER_SECOND = 160;
   static const double EMPTY_SPAN_SECONDS = 60;
   static const double PROVISIONAL_BAR_SECONDS = 10;
   static const double MIN_TRACK_WIDTH = 640;
@@ -138,14 +138,16 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const double MIN_RELATION_CLIP_WIDTH = 32;
   static const double MIN_REGION_SECONDS = 0.1;
 
+  /// 텍스트 레이어. 이 레인의 구간이 재생 중인 영상의 자막이 된다.
+  static const String TEXT_LANE_KEY = 'stt';
+
   final ListHistoryWorkAttachmentsUseCase _listHistoryWorkAttachmentsUseCase;
   final String historyId;
 
-  double _pixelsPerSecond = DEFAULT_PIXELS_PER_SECOND;
   double _playheadSeconds = 0;
   int _seekToken = 0;
   VideoMultimodalSide _side = VideoMultimodalSide.none;
-  bool _isLinkMode = false;
+  bool _isRelationMode = false;
   bool _isLaneMenuOpen = false;
   bool _areAuxiliaryRowsHidden = false;
   bool _isLoading = false;
@@ -157,7 +159,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   List<TemporaryAttachmentBar> _bars = const [];
   final Set<String> _hiddenAttachmentIds = {};
   final Set<String> _hiddenLaneKeys = {};
-  String _linkAnchorClipId = '';
+  String _relationAnchorClipId = '';
   String _selectedAttachmentId = '';
   String _selectedClipId = '';
   String _workName = '';
@@ -184,7 +186,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final List<TimelineSampleClip> _sampleClips = [];
   final List<SampleLayerSummary> _sampleLayers = const [];
 
-  double get pixelsPerSecond => _pixelsPerSecond;
+  double get pixelsPerSecond => DEFAULT_PIXELS_PER_SECOND;
   double get playheadSeconds => _playheadSeconds;
   int get seekToken => _seekToken;
   VideoMultimodalSide get side => _side;
@@ -192,7 +194,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get isPropertiesOpen => _side == VideoMultimodalSide.properties;
   bool get isAskOpen => _side == VideoMultimodalSide.ask;
   bool get isLabelsOpen => _side == VideoMultimodalSide.labels;
-  bool get isLinkMode => _isLinkMode;
+  bool get isRelationMode => _isRelationMode;
   bool get isLaneMenuOpen => _isLaneMenuOpen;
   bool get areAuxiliaryRowsHidden => _areAuxiliaryRowsHidden;
   bool get isLoading => _isLoading;
@@ -215,6 +217,82 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       }
     }
     return null;
+  }
+
+  List<VideoCaption> get activeVideoCaptions =>
+      _captionsForVideo(activeVideoBar);
+
+  /// 텍스트 레이어를 이 구간들로 바꾼다. 실제 API가 자막을 주면 이 메서드로 넣는다.
+  void didReplaceTextLayerSegments(List<TextLayerSegment> segments) {
+    _sampleClips.removeWhere((clip) => clip.laneKey == TEXT_LANE_KEY);
+    var index = 0;
+    for (final segment in segments) {
+      final text = segment.text.trim();
+      final start = segment.startSeconds < segment.endSeconds
+          ? segment.startSeconds
+          : segment.endSeconds;
+      final end = segment.startSeconds < segment.endSeconds
+          ? segment.endSeconds
+          : segment.startSeconds;
+      if (text.isEmpty || end - start < MIN_REGION_SECONDS) {
+        continue;
+      }
+      index += 1;
+      _addClip(
+        TimelineSampleClip(
+          clipId: 'text-$index',
+          laneKey: TEXT_LANE_KEY,
+          laneLabel: '자막',
+          text: text,
+          startSeconds: start,
+          endSeconds: end,
+          showsAiBadge: false,
+          isDashed: false,
+        ),
+      );
+    }
+    notifyListeners();
+  }
+
+  List<VideoCaption> _captionsForVideo(TemporaryAttachmentBar? video) {
+    if (video == null) {
+      return const [];
+    }
+    final span = video.endSeconds - video.startSeconds;
+    if (span <= 0) {
+      return const [];
+    }
+    final captions = <VideoCaption>[];
+    for (final clip in _sampleClips) {
+      if (clip.laneKey != TEXT_LANE_KEY) {
+        continue;
+      }
+      final text = clip.text.trim();
+      if (text.isEmpty) {
+        continue;
+      }
+      if (clip.endSeconds <= video.startSeconds ||
+          clip.startSeconds >= video.endSeconds) {
+        continue;
+      }
+      final localStart = (clip.startSeconds - video.startSeconds)
+          .clamp(0.0, span)
+          .toDouble();
+      final localEnd = (clip.endSeconds - video.startSeconds)
+          .clamp(0.0, span)
+          .toDouble();
+      if (localEnd - localStart < MIN_REGION_SECONDS) {
+        continue;
+      }
+      captions.add(
+        VideoCaption(
+          text: text,
+          start: Duration(milliseconds: (localStart * 1000).round()),
+          end: Duration(milliseconds: (localEnd * 1000).round()),
+        ),
+      );
+    }
+    return captions;
   }
 
   TemporaryAttachmentBar? get activeVideoBar {
@@ -261,14 +339,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get isVideoPlaying => _isVideoPlaying;
   bool get wantsPlayback => _wantsPlayback;
   int get playbackToken => _playbackToken;
-  String get linkPrompt {
-    if (!_isLinkMode) {
+  String get relationPrompt {
+    if (!_isRelationMode) {
       return '';
     }
-    if (_linkAnchorClipId.isEmpty) {
-      return 'Link 모드 — 첫 번째 region을 클릭하세요';
+    if (_relationAnchorClipId.isEmpty) {
+      return 'Relation 모드 — 첫 번째 클립을 클릭하세요';
     }
-    return 'Link 모드 — 두 번째 region을 클릭하세요';
+    return 'Relation 모드 — 두 번째 클립을 클릭하세요';
   }
 
   bool isLaneVisible(String laneKey) => !_hiddenLaneKeys.contains(laneKey);
@@ -300,7 +378,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   double get trackWidth {
-    final width = spanSeconds * _pixelsPerSecond;
+    final width = spanSeconds * pixelsPerSecond;
     if (width < MIN_TRACK_WIDTH) {
       return MIN_TRACK_WIDTH;
     }
@@ -403,7 +481,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _selectedClipId = clipId;
     _selectedAttachmentId = '';
     _side = VideoMultimodalSide.properties;
-    if (clip.laneKey == 'audio_manual' || clip.laneKey == 'stt') {
+    if (clip.laneKey == 'audio_manual' || clip.laneKey == TEXT_LANE_KEY) {
       _selectedAudioLabel = clip.text;
     }
     didSeekToSeconds(clip.startSeconds);
@@ -432,7 +510,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       showsAiBadge: false,
       isDashed: false,
     );
-    _sampleClips.add(clip);
+    _addClip(clip);
     _selectedClipId = clip.clipId;
     _timelineHint = '';
     notifyListeners();
@@ -637,51 +715,43 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void didTapZoomIn() {
-    _setPixelsPerSecond(_pixelsPerSecond * 1.25);
-  }
-
-  void didTapZoomOut() {
-    _setPixelsPerSecond(_pixelsPerSecond / 1.25);
-  }
-
   void didTapSelectTool() {
-    _isLinkMode = false;
-    _linkAnchorClipId = '';
+    _isRelationMode = false;
+    _relationAnchorClipId = '';
     _clearNotice();
     notifyListeners();
   }
 
-  void didTapToggleLinkMode() {
-    _isLinkMode = !_isLinkMode;
-    _linkAnchorClipId = '';
+  void didTapToggleRelationMode() {
+    _isRelationMode = !_isRelationMode;
+    _relationAnchorClipId = '';
     _noticeText = '';
     notifyListeners();
   }
 
-  void didTapCancelLinkMode() {
-    if (!_isLinkMode) {
+  void didTapCancelRelationMode() {
+    if (!_isRelationMode) {
       return;
     }
-    _isLinkMode = false;
-    _linkAnchorClipId = '';
+    _isRelationMode = false;
+    _relationAnchorClipId = '';
     notifyListeners();
   }
 
-  bool didTapClipForLink(String clipId) {
-    if (!_isLinkMode || clipId.isEmpty) {
+  bool didTapClipForRelation(String clipId) {
+    if (!_isRelationMode || clipId.isEmpty) {
       return false;
     }
-    if (_linkAnchorClipId.isEmpty) {
-      _linkAnchorClipId = clipId;
+    if (_relationAnchorClipId.isEmpty) {
+      _relationAnchorClipId = clipId;
       _selectedClipId = clipId;
       notifyListeners();
       return true;
     }
-    if (_linkAnchorClipId == clipId) {
+    if (_relationAnchorClipId == clipId) {
       return true;
     }
-    final anchor = _clipById(_linkAnchorClipId);
+    final anchor = _clipById(_relationAnchorClipId);
     final next = _clipById(clipId);
     if (anchor != null && next != null) {
       final start = anchor.startSeconds < next.startSeconds
@@ -690,21 +760,20 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       final end = anchor.endSeconds > next.endSeconds
           ? anchor.endSeconds
           : next.endSeconds;
-      _sampleClips.add(
-        TimelineSampleClip(
-          clipId: 'rel-${_sampleClips.length + 1}',
-          laneKey: 'relation',
-          laneLabel: '관계 설정',
-          text: '${anchor.text} ↔ ${next.text}',
-          startSeconds: start,
-          endSeconds: end,
-          showsAiBadge: false,
-          isDashed: false,
-        ),
+      final clip = TimelineSampleClip(
+        clipId: 'rel-${_sampleClips.length + 1}',
+        laneKey: 'relation',
+        laneLabel: '관계 설정',
+        text: '${anchor.text} ↔ ${next.text}',
+        startSeconds: start,
+        endSeconds: end,
+        showsAiBadge: false,
+        isDashed: false,
       );
+      _addClip(clip, [anchor, next]);
     }
-    _isLinkMode = false;
-    _linkAnchorClipId = '';
+    _isRelationMode = false;
+    _relationAnchorClipId = '';
     _selectedClipId = clipId;
     notifyListeners();
     return true;
@@ -728,9 +797,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (clip == null) {
       return;
     }
-    if (clip.laneKey != 'stt' && clip.laneKey != 'audio_manual') {
-      return;
-    }
+    final fromStart = clip.startSeconds;
+    final fromEnd = clip.endSeconds;
     final start = startSeconds < endSeconds ? startSeconds : endSeconds;
     final end = startSeconds < endSeconds ? endSeconds : startSeconds;
     if (end - start < MIN_REGION_SECONDS) {
@@ -746,6 +814,44 @@ class VideoMultimodalViewModel extends ChangeNotifier {
           .clamp(0.0, span)
           .toDouble();
     }
+    final lengthChanged =
+        ((clip.endSeconds - clip.startSeconds) - (fromEnd - fromStart)).abs() >=
+        0.001;
+    if (lengthChanged) {
+      debugLaneClipResize(clip, fromStart, fromEnd);
+    }
+    _timelineHint = '';
+    notifyListeners();
+  }
+
+  void didCommitBarRange(
+    String attachmentId,
+    double startSeconds,
+    double endSeconds,
+  ) {
+    final index = _bars.indexWhere((bar) => bar.attachmentId == attachmentId);
+    if (index < 0) {
+      return;
+    }
+    final start = startSeconds < endSeconds ? startSeconds : endSeconds;
+    final end = startSeconds < endSeconds ? endSeconds : startSeconds;
+    if (end - start < MIN_REGION_SECONDS) {
+      _timelineHint = '구간이 너무 짧습니다.';
+      notifyListeners();
+      return;
+    }
+    final next = [..._bars];
+    next[index] = next[index].copyWith(
+      startSeconds: start < 0 ? 0 : start,
+      endSeconds: end,
+    );
+    if (next[index].endSeconds - next[index].startSeconds <
+        MIN_REGION_SECONDS) {
+      next[index] = next[index].copyWith(
+        endSeconds: next[index].startSeconds + MIN_REGION_SECONDS,
+      );
+    }
+    _bars = next;
     _timelineHint = '';
     notifyListeners();
   }
@@ -761,18 +867,17 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   void didDropSavedAttachment(String fileName, double seconds) {
     final start = seconds.clamp(0.0, spanSeconds).toDouble();
-    _sampleClips.add(
-      TimelineSampleClip(
-        clipId: 'att-${_sampleClips.length + 1}',
-        laneKey: 'saved_attachment',
-        laneLabel: '첨부 파일',
-        text: fileName,
-        startSeconds: start,
-        endSeconds: (start + 1.5).clamp(start, spanSeconds + 1.5).toDouble(),
-        showsAiBadge: false,
-        isDashed: false,
-      ),
+    final clip = TimelineSampleClip(
+      clipId: 'att-${_sampleClips.length + 1}',
+      laneKey: 'saved_attachment',
+      laneLabel: '첨부 파일',
+      text: fileName,
+      startSeconds: start,
+      endSeconds: (start + 1.5).clamp(start, spanSeconds + 1.5).toDouble(),
+      showsAiBadge: false,
+      isDashed: false,
     );
+    _addClip(clip);
     _timelineHint = '';
     notifyListeners();
   }
@@ -786,6 +891,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _wantsPlayback = !_isVideoPlaying;
     _playbackToken += 1;
     notifyListeners();
+  }
+
+  void _addClip(
+    TimelineSampleClip clip, [
+    List<TimelineSampleClip> sources = const [],
+  ]) {
+    _sampleClips.add(clip);
+    debugLaneClip(clip, sources);
   }
 
   TimelineSampleClip? _clipById(String clipId) {
@@ -862,11 +975,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return bars;
   }
 
-  void _setPixelsPerSecond(double next) {
-    _pixelsPerSecond = next.clamp(MIN_PIXELS_PER_SECOND, MAX_PIXELS_PER_SECOND);
-    notifyListeners();
-  }
-
   void _clearNotice() {
     _noticeText = '';
   }
@@ -884,7 +992,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return false;
     }
     final currentLength = videos[index].endSeconds - videos[index].startSeconds;
-    if ((currentLength - durationSeconds).abs() < 0.25) {
+    final stillProvisional =
+        (currentLength - PROVISIONAL_BAR_SECONDS).abs() < 0.25;
+    if (!stillProvisional || (currentLength - durationSeconds).abs() < 0.25) {
       return false;
     }
     var cursor = videos.first.startSeconds;
