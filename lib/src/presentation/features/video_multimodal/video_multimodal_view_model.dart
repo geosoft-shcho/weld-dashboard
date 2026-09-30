@@ -4,13 +4,7 @@ import '../../../domain/entities/work_attachment.dart';
 import '../../../domain/entities/work_attachment_type.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 
-enum VideoMultimodalSide {
-  none,
-  assets,
-  properties,
-  ask,
-  labels,
-}
+enum VideoMultimodalSide { none, assets, properties, ask, labels }
 
 /// ListWorkAttachments 를 타임라인에 임시로 올려 둔 막대.
 /// start/end 는 서버 레이어가 아니므로 파일마다 고정 길이로 이어 붙인다.
@@ -35,10 +29,7 @@ class TemporaryAttachmentBar {
   final double startSeconds;
   final double endSeconds;
 
-  TemporaryAttachmentBar copyWith({
-    double? startSeconds,
-    double? endSeconds,
-  }) {
+  TemporaryAttachmentBar copyWith({double? startSeconds, double? endSeconds}) {
     return TemporaryAttachmentBar(
       attachmentId: attachmentId,
       fileName: fileName,
@@ -75,7 +66,11 @@ class TimelineSampleClip {
 }
 
 class PaletteSection {
-  PaletteSection({required this.sectionKey, required this.title, required this.names});
+  PaletteSection({
+    required this.sectionKey,
+    required this.title,
+    required this.names,
+  });
 
   final String sectionKey;
   final String title;
@@ -126,7 +121,8 @@ enum InferencePanelPhase { hidden, running, done, failed }
 
 class VideoMultimodalViewModel extends ChangeNotifier {
   VideoMultimodalViewModel({
-    required ListHistoryWorkAttachmentsUseCase listHistoryWorkAttachmentsUseCase,
+    required ListHistoryWorkAttachmentsUseCase
+    listHistoryWorkAttachmentsUseCase,
     required this.historyId,
   }) : _listHistoryWorkAttachmentsUseCase = listHistoryWorkAttachmentsUseCase;
 
@@ -185,18 +181,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     PaletteSection(sectionKey: 'bbox', title: '객체 bbox', names: []),
     PaletteSection(sectionKey: 'vector', title: '키포인트 (tip/grip)', names: []),
   ];
-  final List<TimelineSampleClip> _sampleClips = [
-    TimelineSampleClip(
-      clipId: 'file-1',
-      laneKey: 'saved_attachment',
-      laneLabel: '첨부 파일',
-      text: '사진',
-      startSeconds: 7,
-      endSeconds: 8.5,
-      showsAiBadge: false,
-      isDashed: false,
-    ),
-  ];
+  final List<TimelineSampleClip> _sampleClips = [];
   final List<SampleLayerSummary> _sampleLayers = const [];
 
   double get pixelsPerSecond => _pixelsPerSecond;
@@ -272,6 +257,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _workName = workName.trim();
     notifyListeners();
   }
+
   bool get isVideoPlaying => _isVideoPlaying;
   bool get wantsPlayback => _wantsPlayback;
   int get playbackToken => _playbackToken;
@@ -299,7 +285,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   double get inferenceOffsetY => _inferenceOffsetY;
   String get inferenceModelName => _inferenceModelName;
   List<AskTurn> get askTurns => List.unmodifiable(_askTurns);
-  List<PaletteSection> get paletteSections => List.unmodifiable(_paletteSections);
+  List<PaletteSection> get paletteSections =>
+      List.unmodifiable(_paletteSections);
   List<TimelineSampleClip> get sampleClips => List.unmodifiable(_sampleClips);
   List<SampleLayerSummary> get sampleLayers => List.unmodifiable(_sampleLayers);
 
@@ -393,7 +380,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return;
     }
     final next = (bar.startSeconds + localSeconds).clamp(0.0, spanSeconds);
-    if ((next - _playheadSeconds).abs() < 0.03 && _isVideoPlaying == isPlaying) {
+    if ((next - _playheadSeconds).abs() < 0.03 &&
+        _isVideoPlaying == isPlaying) {
       return;
     }
     _playheadSeconds = next;
@@ -499,7 +487,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void didRenamePaletteLabel(String sectionKey, String oldName, String newName) {
+  void didRenamePaletteLabel(
+    String sectionKey,
+    String oldName,
+    String newName,
+  ) {
     final trimmed = newName.trim();
     if (trimmed.isEmpty) {
       return;
@@ -727,14 +719,16 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void didResizeClip(String clipId, double startSeconds, double endSeconds) {
+  void didCommitClipRange(
+    String clipId,
+    double startSeconds,
+    double endSeconds,
+  ) {
     final clip = _clipById(clipId);
     if (clip == null) {
       return;
     }
     if (clip.laneKey != 'stt' && clip.laneKey != 'audio_manual') {
-      _timelineHint = '객체·포즈 구간은 이 타임라인에서 길이를 바꾸지 않습니다.';
-      notifyListeners();
       return;
     }
     final start = startSeconds < endSeconds ? startSeconds : endSeconds;
@@ -744,8 +738,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    clip.startSeconds = start.clamp(0.0, spanSeconds).toDouble();
-    clip.endSeconds = end.clamp(0.0, spanSeconds).toDouble();
+    final span = spanSeconds;
+    clip.startSeconds = start.clamp(0.0, span).toDouble();
+    clip.endSeconds = end.clamp(0.0, span).toDouble();
+    if (clip.endSeconds - clip.startSeconds < MIN_REGION_SECONDS) {
+      clip.endSeconds = (clip.startSeconds + MIN_REGION_SECONDS)
+          .clamp(0.0, span)
+          .toDouble();
+    }
     _timelineHint = '';
     notifyListeners();
   }
@@ -849,7 +849,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         TemporaryAttachmentBar(
           attachmentId: attachment.attachmentId,
           fileName: attachment.fileName,
-          fileTypeLabel: attachment.fileType.label,
+          fileTypeLabel: WorkAttachmentType.extensionOf(attachment.fileName),
           mediaUrl: mediaUrl,
           note: attachment.note,
           isVideo: type == WorkAttachmentType.video,
@@ -863,10 +863,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void _setPixelsPerSecond(double next) {
-    _pixelsPerSecond = next.clamp(
-      MIN_PIXELS_PER_SECOND,
-      MAX_PIXELS_PER_SECOND,
-    );
+    _pixelsPerSecond = next.clamp(MIN_PIXELS_PER_SECOND, MAX_PIXELS_PER_SECOND);
     notifyListeners();
   }
 
@@ -878,7 +875,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (durationSeconds <= 0) {
       return false;
     }
-    final videos = [for (final bar in _bars) if (bar.isVideo) bar];
+    final videos = [
+      for (final bar in _bars)
+        if (bar.isVideo) bar,
+    ];
     final index = videos.indexWhere((bar) => bar.mediaUrl == mediaUrl);
     if (index < 0) {
       return false;
@@ -899,7 +899,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       );
       cursor += length;
     }
-    _bars = [...fitted, for (final bar in _bars) if (!bar.isVideo) bar];
+    _bars = [
+      ...fitted,
+      for (final bar in _bars)
+        if (!bar.isVideo) bar,
+    ];
     return true;
   }
 

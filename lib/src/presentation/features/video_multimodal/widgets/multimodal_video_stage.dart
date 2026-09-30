@@ -1,8 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../core/themes/app_theme.dart';
-import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 import '../video_multimodal_view_model.dart';
+import 'multimodal_video_player.dart';
 
 class MultimodalVideoStage extends StatelessWidget {
   const MultimodalVideoStage({super.key, required this.viewModel});
@@ -30,16 +30,15 @@ class MultimodalVideoStage extends StatelessWidget {
         ),
       );
     }
-    final localMs =
-        ((viewModel.playheadSeconds - video.startSeconds) * 1000).round();
+    final localMs = ((viewModel.playheadSeconds - video.startSeconds) * 1000)
+        .round();
     return ColoredBox(
       color: AppTheme.SURFACE,
-      child: WorkDetailChewieStage(
+      child: MultimodalVideoPlayer(
         key: ValueKey(video.mediaUrl),
-        assetPath: video.mediaUrl,
+        mediaUrl: video.mediaUrl,
         seekToMs: localMs,
         seekToken: viewModel.seekToken,
-        applySeekOnTokenOnly: true,
         playbackToken: viewModel.playbackToken,
         wantsPlayback: viewModel.wantsPlayback,
         onClock: (clock) {
@@ -54,4 +53,3 @@ class MultimodalVideoStage extends StatelessWidget {
     );
   }
 }
-

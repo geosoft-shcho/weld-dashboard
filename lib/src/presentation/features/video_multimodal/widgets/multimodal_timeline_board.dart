@@ -1,3 +1,4 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../video_multimodal_view_model.dart';
@@ -16,23 +17,37 @@ class MultimodalTimelineBoard extends StatefulWidget {
 class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   final ScrollController _scrollController = ScrollController();
   DateTime _lastAutoScrollAt = DateTime.fromMillisecondsSinceEpoch(0);
+  double _trackedPlayhead = -1;
+  double _trackedPixels = -1;
   double _draftStart = -1;
   double _draftEnd = -1;
-  double _resizeStart = 0;
-  double _resizeEnd = 0;
+  _ClipEdit? _edit;
 
   VideoMultimodalViewModel get viewModel => widget.viewModel;
 
   @override
+  void initState() {
+    super.initState();
+    _trackedPlayhead = widget.viewModel.playheadSeconds;
+    _trackedPixels = widget.viewModel.pixelsPerSecond;
+  }
+
+  @override
   void didUpdateWidget(covariant MultimodalTimelineBoard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!viewModel.isVideoPlaying) {
+    final headMoved = _trackedPlayhead != viewModel.playheadSeconds;
+    final zoomChanged = _trackedPixels != viewModel.pixelsPerSecond;
+    _trackedPlayhead = viewModel.playheadSeconds;
+    _trackedPixels = viewModel.pixelsPerSecond;
+    if (!headMoved && !zoomChanged) {
       return;
     }
-    if (oldWidget.viewModel.playheadSeconds == viewModel.playheadSeconds) {
+    if (!viewModel.isVideoPlaying && !zoomChanged) {
       return;
     }
-    WidgetsBinding.instance.addPostFrameCallback((_) => _followPlayhead());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _followPlayhead(pinHead: zoomChanged),
+    );
   }
 
   @override
@@ -41,12 +56,12 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     super.dispose();
   }
 
-  void _followPlayhead() {
+  void _followPlayhead({bool pinHead = false}) {
     if (!_scrollController.hasClients) {
       return;
     }
     final now = DateTime.now();
-    if (now.difference(_lastAutoScrollAt).inMilliseconds < 80) {
+    if (!pinHead && now.difference(_lastAutoScrollAt).inMilliseconds < 80) {
       return;
     }
     final position = _scrollController.position;
@@ -54,7 +69,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     const margin = 48.0;
     final viewLeft = position.pixels;
     final viewRight = viewLeft + position.viewportDimension;
-    if (head >= viewLeft + margin && head <= viewRight - margin) {
+    if (!pinHead && head >= viewLeft + margin && head <= viewRight - margin) {
       return;
     }
     _lastAutoScrollAt = now;
@@ -119,9 +134,9 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _header(),
           _toolbar(),
           if (viewModel.isLinkMode) _linkBanner(),
+          _header(),
           if (viewModel.hasTimelineHint) _hint(),
           SizedBox(
             height: 22 + rows.length * 28,
@@ -142,40 +157,77 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     final viewModel = this.viewModel;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      color: MultimodalStudioPalette.SAND_0,
-      child: Wrap(
-        spacing: 6,
-        crossAxisAlignment: WrapCrossAlignment.center,
+      decoration: const BoxDecoration(
+        color: MultimodalStudioPalette.SAND_0,
+        border: Border(
+          bottom: BorderSide(color: MultimodalStudioPalette.SAND_300),
+        ),
+      ),
+      child: Row(
         children: [
-          _tool(
-            '선택',
-            selected: !viewModel.isLinkMode,
-            onPressed: viewModel.didTapSelectTool,
-          ),
-          _tool(
-            'Link',
-            selected: viewModel.isLinkMode,
-            onPressed: viewModel.didTapToggleLinkMode,
-          ),
-          _tool(
-            'Del',
-            onPressed: viewModel.canDeleteSelection
-                ? viewModel.didTapDeleteSelection
-                : null,
-          ),
-          _tool(
-            'Lanes',
-            selected: viewModel.isLaneMenuOpen,
-            onPressed: viewModel.didTapToggleLaneMenu,
-          ),
-          _tool(
-            viewModel.areAuxiliaryRowsHidden ? '보조 숨김' : '표시',
-            selected: viewModel.areAuxiliaryRowsHidden,
-            onPressed: viewModel.didTapToggleAuxiliaryRows,
-          ),
-          _tool('Marker', onPressed: viewModel.didTapAddMarker),
-          _tool('Labels', onPressed: viewModel.didTapToggleLabels),
+          _toolGroup([
+            _tool(
+              '선택',
+              selected: !viewModel.isLinkMode,
+              onPressed: viewModel.didTapSelectTool,
+            ),
+            _tool(
+              'Link',
+              selected: viewModel.isLinkMode,
+              onPressed: viewModel.didTapToggleLinkMode,
+            ),
+            _tool(
+              'Del',
+              onPressed: viewModel.canDeleteSelection
+                  ? viewModel.didTapDeleteSelection
+                  : null,
+            ),
+          ]),
+          const SizedBox(width: 8),
+          _toolGroup([
+            _tool('−', onPressed: viewModel.didTapZoomOut),
+            _tool('+', onPressed: viewModel.didTapZoomIn),
+          ]),
+          const Spacer(),
+          _toolGroup([
+            _tool(
+              'Lanes',
+              selected: viewModel.isLaneMenuOpen,
+              onPressed: viewModel.didTapToggleLaneMenu,
+            ),
+            _tool(
+              '👁',
+              selected: viewModel.areAuxiliaryRowsHidden,
+              onPressed: viewModel.didTapToggleAuxiliaryRows,
+            ),
+            _tool('Marker', onPressed: viewModel.didTapAddMarker),
+            _tool('Labels', onPressed: viewModel.didTapToggleLabels),
+          ], isLast: true),
         ],
+      ),
+    );
+  }
+
+  Widget _toolGroup(List<Widget> children, {bool isLast = false}) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        border: isLast
+            ? null
+            : const Border(
+                right: BorderSide(color: MultimodalStudioPalette.SAND_300),
+              ),
+      ),
+      child: Padding(
+        padding: EdgeInsets.only(right: isLast ? 0 : 8),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var index = 0; index < children.length; index++) ...[
+              if (index > 0) const SizedBox(width: 2),
+              children[index],
+            ],
+          ],
+        ),
       ),
     );
   }
@@ -189,14 +241,23 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       onPressed: onPressed,
       style: TextButton.styleFrom(
         foregroundColor: selected
-            ? Colors.white
+            ? MultimodalStudioPalette.GRAPE_500
             : MultimodalStudioPalette.SAND_900,
         backgroundColor: selected
-            ? MultimodalStudioPalette.GRAPE_500
+            ? MultimodalStudioPalette.GRAPE_100
             : Colors.transparent,
+        disabledForegroundColor: MultimodalStudioPalette.SAND_600,
+        side: BorderSide(
+          color: selected
+              ? MultimodalStudioPalette.GRAPE_500
+              : MultimodalStudioPalette.SAND_300,
+        ),
         visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: const TextStyle(fontSize: 11),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
       ),
       child: Text(label),
     );
@@ -236,8 +297,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       'relation',
     ];
     return Positioned(
-      left: 120,
-      top: 72,
+      right: 12,
+      top: 36,
       child: Material(
         elevation: 6,
         color: MultimodalStudioPalette.SAND_0,
@@ -303,7 +364,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                   'Objects & Tags',
                   style: TextStyle(
                     color: MultimodalStudioPalette.SAND_600,
-                    fontSize: 10,
+                    fontSize: 11,
                   ),
                 ),
               ),
@@ -394,47 +455,38 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   }
 
   Widget _header() {
-    final label = viewModel.selectedAudioLabel;
     return Container(
-      padding: const EdgeInsets.fromLTRB(8, 2, 10, 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: const BoxDecoration(
         color: MultimodalStudioPalette.SAND_0,
         border: Border(
-          bottom: BorderSide(color: MultimodalStudioPalette.SAND_200),
+          bottom: BorderSide(color: MultimodalStudioPalette.SAND_300),
         ),
       ),
       child: Row(
         children: [
-          TextButton(
+          _tool(
+            viewModel.isVideoPlaying ? '❚❚' : '▶',
             onPressed: viewModel.didTapTogglePlayback,
-            child: Text(viewModel.isVideoPlaying ? '일시정지' : '재생'),
           ),
           const SizedBox(width: 8),
           Text(
             '${viewModel.playheadLabel} | ${viewModel.spanLabel}',
             style: const TextStyle(
-              color: MultimodalStudioPalette.SAND_700,
-              fontSize: 12,
+              color: MultimodalStudioPalette.GRAPE_500,
+              fontSize: 11,
+              fontFeatures: [FontFeature.tabularFigures()],
             ),
           ),
           const Spacer(),
-          if (label.isNotEmpty)
-            Container(
-              constraints: const BoxConstraints(maxWidth: 240),
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 1),
-              decoration: BoxDecoration(
-                color: MultimodalStudioPalette.GRAPE_0,
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                label,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: MultimodalStudioPalette.GRAPE_700,
-                  fontSize: 11,
-                ),
-              ),
+          const Text(
+            '속성 · ',
+            style: TextStyle(
+              color: MultimodalStudioPalette.SAND_600,
+              fontSize: 11,
             ),
+          ),
+          _tool('툴바에서 열기', onPressed: viewModel.didTapToggleProperties),
         ],
       ),
     );
@@ -457,44 +509,66 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   Widget _tracks(List<_TimelineRow> rows) {
     final width = viewModel.trackWidth;
-    return SingleChildScrollView(
-      controller: _scrollController,
-      scrollDirection: Axis.horizontal,
-      child: SizedBox(
-        width: width,
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                _ruler(width),
-                for (final row in rows) _track(row, width),
-              ],
-            ),
-            Positioned(
-              left: viewModel.playheadSeconds * viewModel.pixelsPerSecond,
-              top: 0,
-              bottom: 0,
-              child: const IgnorePointer(
-                child: SizedBox(
-                  width: 2,
-                  child: ColoredBox(color: MultimodalStudioPalette.DANGER),
-                ),
+    return Listener(
+      onPointerSignal: (event) {
+        if (event is! PointerScrollEvent) {
+          return;
+        }
+        if (event.scrollDelta.dy.abs() <= event.scrollDelta.dx.abs()) {
+          return;
+        }
+        GestureBinding.instance.pointerSignalResolver.register(event, (
+          resolved,
+        ) {
+          if (resolved is! PointerScrollEvent) {
+            return;
+          }
+          if (resolved.scrollDelta.dy > 0) {
+            viewModel.didTapZoomOut();
+          } else if (resolved.scrollDelta.dy < 0) {
+            viewModel.didTapZoomIn();
+          }
+        });
+      },
+      child: SingleChildScrollView(
+        controller: _scrollController,
+        scrollDirection: Axis.horizontal,
+        child: SizedBox(
+          width: width,
+          child: Stack(
+            children: [
+              Column(
+                children: [
+                  _ruler(width),
+                  for (final row in rows) _track(row, width),
+                ],
               ),
-            ),
-            for (final marker in viewModel.markerSeconds)
               Positioned(
-                left: marker * viewModel.pixelsPerSecond,
+                left: viewModel.playheadSeconds * viewModel.pixelsPerSecond,
                 top: 0,
-                child: GestureDetector(
-                  onTap: () => viewModel.didTapMarker(marker),
-                  child: const Icon(
-                    Icons.bookmark,
-                    size: 16,
-                    color: MultimodalStudioPalette.CANTELOUPE_400,
+                bottom: 0,
+                child: const IgnorePointer(
+                  child: SizedBox(
+                    width: 2,
+                    child: ColoredBox(color: MultimodalStudioPalette.DANGER),
                   ),
                 ),
               ),
-          ],
+              for (final marker in viewModel.markerSeconds)
+                Positioned(
+                  left: marker * viewModel.pixelsPerSecond,
+                  top: 0,
+                  child: GestureDetector(
+                    onTap: () => viewModel.didTapMarker(marker),
+                    child: const Icon(
+                      Icons.bookmark,
+                      size: 16,
+                      color: MultimodalStudioPalette.CANTELOUPE_400,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -503,45 +577,21 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   Widget _ruler(double width) {
     final span = viewModel.spanSeconds;
     final step = span > 60
-        ? 10
+        ? 10.0
         : span > 20
-        ? 5
-        : 2;
-    final ticks = <Widget>[];
-    for (var second = 0; second <= span; second += step) {
-      ticks.add(
-        Positioned(
-          left: second * viewModel.pixelsPerSecond,
-          top: 0,
-          bottom: 0,
-          child: Container(
-            padding: const EdgeInsets.only(left: 4),
-            decoration: const BoxDecoration(
-              border: Border(
-                left: BorderSide(color: MultimodalStudioPalette.SAND_200),
-              ),
-            ),
-            child: Text(
-              _tickLabel(second),
-              style: const TextStyle(
-                color: MultimodalStudioPalette.SAND_600,
-                fontSize: 10,
-                height: 2.2,
-              ),
-            ),
-          ),
-        ),
-      );
-    }
+        ? 5.0
+        : 2.0;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: (details) =>
           viewModel.didSeekToSeconds(_secondsAt(details.localPosition.dx)),
-      child: Container(
-        height: 22,
-        width: width,
-        color: MultimodalStudioPalette.SAND_0,
-        child: Stack(children: ticks),
+      child: CustomPaint(
+        size: Size(width, 22),
+        painter: _RulerPainter(
+          spanSeconds: span,
+          pixelsPerSecond: viewModel.pixelsPerSecond,
+          stepSeconds: step,
+        ),
       ),
     );
   }
@@ -616,9 +666,10 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   }
 
   Widget _clip(_TimelineClip clip, _TimelineRow row) {
-    final left = clip.startSeconds * viewModel.pixelsPerSecond;
+    final range = _shownRange(clip);
+    final left = range.startSeconds * viewModel.pixelsPerSecond;
     var width =
-        (clip.endSeconds - clip.startSeconds) * viewModel.pixelsPerSecond;
+        (range.endSeconds - range.startSeconds) * viewModel.pixelsPerSecond;
     final minimum = row.laneKey == 'relation'
         ? VideoMultimodalViewModel.MIN_RELATION_CLIP_WIDTH
         : VideoMultimodalViewModel.MIN_CLIP_WIDTH;
@@ -626,8 +677,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       width = minimum;
     }
     final selected = _isClipSelected(clip);
-    final canResize =
-        selected &&
+    final canEdit =
         clip.clipId.isNotEmpty &&
         (row.laneKey == 'stt' || row.laneKey == 'audio_manual');
     return Positioned(
@@ -637,6 +687,15 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       height: 20,
       child: GestureDetector(
         onTap: () => _selectClip(clip),
+        onHorizontalDragStart: canEdit ? (_) => _beginEdit(clip) : null,
+        onHorizontalDragUpdate: canEdit
+            ? (details) => _moveEdit(
+                clip.clipId,
+                details.delta.dx / viewModel.pixelsPerSecond,
+              )
+            : null,
+        onHorizontalDragEnd: canEdit ? (_) => _commitEdit() : null,
+        onHorizontalDragCancel: canEdit ? () => _clearEdit() : null,
         child: DecoratedBox(
           decoration: BoxDecoration(
             color: clip.background,
@@ -668,20 +727,20 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                   ),
                 ),
               ),
-              if (canResize) ...[
+              if (canEdit && selected) ...[
                 Positioned(
                   left: 0,
                   top: 0,
                   bottom: 0,
                   width: 6,
-                  child: _resizeHandle(clip, isStart: true),
+                  child: _resizeHandle(clip, isLeading: true),
                 ),
                 Positioned(
                   right: 0,
                   top: 0,
                   bottom: 0,
                   width: 6,
-                  child: _resizeHandle(clip, isStart: false),
+                  child: _resizeHandle(clip, isLeading: false),
                 ),
               ],
             ],
@@ -691,26 +750,84 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _resizeHandle(_TimelineClip clip, {required bool isStart}) {
+  Widget _resizeHandle(_TimelineClip clip, {required bool isLeading}) {
     return GestureDetector(
-      onHorizontalDragStart: (_) {
-        _resizeStart = clip.startSeconds;
-        _resizeEnd = clip.endSeconds;
-      },
-      onHorizontalDragUpdate: (details) {
-        final delta = details.delta.dx / viewModel.pixelsPerSecond;
-        if (isStart) {
-          _resizeStart += delta;
-        } else {
-          _resizeEnd += delta;
-        }
-        viewModel.didResizeClip(clip.clipId, _resizeStart, _resizeEnd);
-      },
+      onHorizontalDragStart: (_) => _beginEdit(clip),
+      onHorizontalDragUpdate: (details) => _resizeEdit(
+        clip.clipId,
+        details.delta.dx / viewModel.pixelsPerSecond,
+        isLeading: isLeading,
+      ),
+      onHorizontalDragEnd: (_) => _commitEdit(),
+      onHorizontalDragCancel: _clearEdit,
       child: const MouseRegion(
         cursor: SystemMouseCursors.resizeColumn,
         child: ColoredBox(color: Color(0x66FFFFFF)),
       ),
     );
+  }
+
+  _ClipEdit _shownRange(_TimelineClip clip) {
+    final edit = _edit;
+    if (edit != null && edit.clipId == clip.clipId) {
+      return edit;
+    }
+    return _ClipEdit(
+      clipId: clip.clipId,
+      startSeconds: clip.startSeconds,
+      endSeconds: clip.endSeconds,
+    );
+  }
+
+  void _beginEdit(_TimelineClip clip) {
+    setState(() {
+      _edit = _ClipEdit(
+        clipId: clip.clipId,
+        startSeconds: clip.startSeconds,
+        endSeconds: clip.endSeconds,
+      );
+    });
+  }
+
+  void _moveEdit(String clipId, double deltaSeconds) {
+    final edit = _edit;
+    if (edit == null || edit.clipId != clipId) {
+      return;
+    }
+    setState(() => _edit = edit.move(deltaSeconds, viewModel.spanSeconds));
+  }
+
+  void _resizeEdit(
+    String clipId,
+    double deltaSeconds, {
+    required bool isLeading,
+  }) {
+    final edit = _edit;
+    if (edit == null || edit.clipId != clipId) {
+      return;
+    }
+    setState(
+      () => _edit = isLeading
+          ? edit.resizeLeading(deltaSeconds)
+          : edit.resizeTrailing(deltaSeconds, viewModel.spanSeconds),
+    );
+  }
+
+  void _commitEdit() {
+    final edit = _edit;
+    if (edit == null) {
+      return;
+    }
+    viewModel.didCommitClipRange(
+      edit.clipId,
+      edit.startSeconds,
+      edit.endSeconds,
+    );
+    setState(() => _edit = null);
+  }
+
+  void _clearEdit() {
+    setState(() => _edit = null);
   }
 
   List<Widget> _poseDots(_TimelineClip clip) {
@@ -777,12 +894,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         decoration: BoxDecoration(color: MultimodalStudioPalette.GRAPE_100),
       ),
     );
-  }
-
-  String _tickLabel(int second) {
-    final minutes = second ~/ 60;
-    final remain = second % 60;
-    return '$minutes:${remain.toString().padLeft(2, '0')}';
   }
 
   List<_TimelineRow> _rows() {
@@ -972,4 +1083,108 @@ class _TimelineClip {
   final Color background;
   final Color foreground;
   final Color border;
+}
+
+class _ClipEdit {
+  const _ClipEdit({
+    required this.clipId,
+    required this.startSeconds,
+    required this.endSeconds,
+  });
+
+  final String clipId;
+  final double startSeconds;
+  final double endSeconds;
+
+  double get length => endSeconds - startSeconds;
+
+  _ClipEdit move(double deltaSeconds, double span) {
+    final duration = length;
+    var start = startSeconds + deltaSeconds;
+    if (start < 0) {
+      start = 0;
+    }
+    if (start + duration > span) {
+      start = (span - duration).clamp(0.0, span).toDouble();
+    }
+    return _ClipEdit(
+      clipId: clipId,
+      startSeconds: start,
+      endSeconds: start + duration,
+    );
+  }
+
+  _ClipEdit resizeLeading(double deltaSeconds) {
+    final next = (startSeconds + deltaSeconds).clamp(
+      0.0,
+      endSeconds - VideoMultimodalViewModel.MIN_REGION_SECONDS,
+    );
+    return _ClipEdit(
+      clipId: clipId,
+      startSeconds: next.toDouble(),
+      endSeconds: endSeconds,
+    );
+  }
+
+  _ClipEdit resizeTrailing(double deltaSeconds, double span) {
+    final next = (endSeconds + deltaSeconds).clamp(
+      startSeconds + VideoMultimodalViewModel.MIN_REGION_SECONDS,
+      span,
+    );
+    return _ClipEdit(
+      clipId: clipId,
+      startSeconds: startSeconds,
+      endSeconds: next.toDouble(),
+    );
+  }
+}
+
+class _RulerPainter extends CustomPainter {
+  const _RulerPainter({
+    required this.spanSeconds,
+    required this.pixelsPerSecond,
+    required this.stepSeconds,
+  });
+
+  final double spanSeconds;
+  final double pixelsPerSecond;
+  final double stepSeconds;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = MultimodalStudioPalette.SAND_0,
+    );
+    final line = Paint()
+      ..color = MultimodalStudioPalette.SAND_200
+      ..strokeWidth = 1;
+    final steps = stepSeconds <= 0 ? 0 : (spanSeconds / stepSeconds).floor();
+    for (var index = 0; index <= steps; index++) {
+      final second = index * stepSeconds;
+      final x = second * pixelsPerSecond;
+      canvas.drawLine(Offset(x, 12), Offset(x, size.height), line);
+      final total = second.round();
+      final label = '${total ~/ 60}:${(total % 60).toString().padLeft(2, '0')}';
+      final painter = TextPainter(
+        text: TextSpan(
+          text: label,
+          style: const TextStyle(
+            color: MultimodalStudioPalette.SAND_600,
+            fontSize: 10,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      painter.paint(canvas, Offset(x + 3, 0));
+      painter.dispose();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _RulerPainter oldDelegate) {
+    return oldDelegate.spanSeconds != spanSeconds ||
+        oldDelegate.pixelsPerSecond != pixelsPerSecond ||
+        oldDelegate.stepSeconds != stepSeconds;
+  }
 }
