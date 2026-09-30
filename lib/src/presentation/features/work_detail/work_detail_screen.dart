@@ -9,6 +9,17 @@ import 'widgets/work_detail_identity.dart';
 import 'widgets/work_detail_stage.dart';
 import 'widgets/work_detail_tabs.dart';
 
+class _CommandBarLabel extends StatelessWidget {
+  const _CommandBarLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(text, textAlign: TextAlign.start, softWrap: false);
+  }
+}
+
 class WorkDetailScreen extends StatelessWidget {
   const WorkDetailScreen({super.key, required this.historyId});
 
@@ -43,20 +54,20 @@ class _WorkDetailBody extends StatelessWidget {
               primaryItems: [
                 CommandBarButton(
                   icon: const Icon(FluentIcons.back),
-                  label: const Text('목록으로'),
+                  label: const _CommandBarLabel('목록으로'),
                   onPressed: () =>
                       coordinator.didTapBackToWorkHistory(context),
                 ),
                 CommandBarButton(
                   icon: const Icon(FluentIcons.video),
-                  label: const Text('비디오 멀티모달'),
+                  label: const _CommandBarLabel('비디오 멀티모달'),
                   onPressed: job == null
                       ? null
                       : () => coordinator.didTapOpenVideoMultimodal(context),
                 ),
                 CommandBarButton(
                   icon: const Icon(FluentIcons.line_chart),
-                  label: const Text('프로파일'),
+                  label: const _CommandBarLabel('프로파일'),
                   onPressed: job == null
                       ? null
                       : () => coordinator.didTapLeaveWorkDetailToPassProfile(
@@ -67,7 +78,7 @@ class _WorkDetailBody extends StatelessWidget {
                 ),
                 CommandBarButton(
                   icon: const Icon(FluentIcons.report_document),
-                  label: const Text('품질 이슈'),
+                  label: const _CommandBarLabel('품질 이슈'),
                   onPressed: job == null
                       ? null
                       : () => coordinator.didTapLeaveWorkDetailToQualityIssue(
