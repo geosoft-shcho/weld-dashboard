@@ -6,6 +6,7 @@ import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'timeline_clip_debug.dart';
 import 'video_caption.dart';
 import 'video_frame_mark.dart';
+import 'video_frame_mark_debug.dart';
 import 'video_frame_mark_json.dart';
 
 enum VideoMultimodalSide { none, assets, properties, ask, labels }
@@ -244,7 +245,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (mark is! VideoBoxMark) {
       return;
     }
-    _frameMarks[markIndex] = VideoBoxMark(
+    final next = VideoBoxMark(
       name: mark.name,
       left: left,
       top: top,
@@ -253,6 +254,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       start: mark.start,
       end: mark.end,
     );
+    _frameMarks[markIndex] = next;
+    debugVideoFrameMark(markIndex, next);
     notifyListeners();
   }
 
@@ -267,13 +270,15 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (mark is! VideoSkeletonMark) {
       return;
     }
-    _frameMarks[markIndex] = VideoSkeletonMark(
+    final next = VideoSkeletonMark(
       name: mark.name,
       points: List<VideoFramePoint>.of(points),
       bones: mark.bones,
       start: mark.start,
       end: mark.end,
     );
+    _frameMarks[markIndex] = next;
+    debugVideoFrameMark(markIndex, next);
     notifyListeners();
   }
 
