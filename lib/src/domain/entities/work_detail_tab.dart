@@ -13,15 +13,15 @@ enum WorkDetailTab {
       case WorkDetailTab.overview:
         return '개요';
       case WorkDetailTab.image:
-        return WorkAttachmentType.image.label;
+        return '이미지';
       case WorkDetailTab.video:
-        return WorkAttachmentType.video.label;
+        return '비디오';
       case WorkDetailTab.pdf:
-        return WorkAttachmentType.pdf.label;
+        return 'PDF';
       case WorkDetailTab.audio:
-        return WorkAttachmentType.audio.label;
+        return '오디오';
       case WorkDetailTab.text:
-        return WorkAttachmentType.text.label;
+        return '텍스트';
     }
   }
 

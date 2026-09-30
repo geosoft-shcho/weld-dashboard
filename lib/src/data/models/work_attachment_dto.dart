@@ -30,7 +30,9 @@ class WorkAttachmentDto {
   final String content;
 
   WorkAttachment? toDomain() {
-    final type = WorkAttachmentType.fromCsv(fileType);
+    final type =
+        WorkAttachmentType.fromFileName(fileName) ??
+        WorkAttachmentType.fromFileName(content);
     if (type == null || attachmentId.isEmpty || historyId.isEmpty) {
       return null;
     }

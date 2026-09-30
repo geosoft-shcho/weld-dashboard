@@ -7,6 +7,14 @@ import '../video_multimodal_view_model.dart';
 import 'multimodal_dialogs.dart';
 import 'multimodal_studio_palette.dart';
 
+const Map<WorkAttachmentType, Color> _DOT_COLOR = {
+  WorkAttachmentType.video: Color(0xFF44AA44),
+  WorkAttachmentType.audio: Color(0xFFAA8844),
+  WorkAttachmentType.image: Color(0xFF4488AA),
+  WorkAttachmentType.pdf: Color(0xFF888888),
+  WorkAttachmentType.text: Color(0xFF888888),
+};
+
 class MultimodalSidePanel extends StatelessWidget {
   const MultimodalSidePanel({
     super.key,
@@ -145,7 +153,7 @@ class _SectionLabel extends StatelessWidget {
         title,
         style: const TextStyle(
           color: MultimodalStudioPalette.PANEL_MUTED,
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.4,
         ),
@@ -174,7 +182,7 @@ class _FootNote extends StatelessWidget {
           text,
           style: const TextStyle(
             color: MultimodalStudioPalette.PANEL_MUTED,
-            fontSize: 10,
+            fontSize: 11,
             height: 1.4,
           ),
         ),
@@ -199,7 +207,7 @@ class _AccentButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w700),
+        textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
       ),
       child: Text(label),
     );
@@ -221,7 +229,7 @@ class _QuietButton extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: const TextStyle(fontSize: 10),
+        textStyle: const TextStyle(fontSize: 11),
       ),
       child: Text(label),
     );
@@ -464,10 +472,10 @@ class _AssetsBody extends StatelessWidget {
         viewModel.selectedBar?.attachmentId == attachment.attachmentId;
     final row = _DataRow(
       [
-        _DataCell.dot(_dotColor(attachment.fileType)),
+        _DataCell.dot(_DOT_COLOR[attachment.fileType]!),
         _DataCell(attachment.fileName, flex: 4),
         _DataCell(
-          _typeLabel(attachment.fileType),
+          WorkAttachmentType.extensionOf(attachment.fileName),
           flex: 4,
           badge: isLocked ? '편집 금지' : '',
         ),
@@ -494,7 +502,7 @@ class _AssetsBody extends StatelessWidget {
   }
 
   Widget _layerTable() {
-    const lockedLayers = [('VIDEO', 'mm_timeline'), ('AUDIO', 'waveform')];
+    final layers = viewModel.sampleLayers;
     return ColoredBox(
       color: MultimodalStudioPalette.PANEL_PAPER,
       child: Column(
@@ -504,50 +512,27 @@ class _AssetsBody extends StatelessWidget {
             _DataCell('유형', isHeader: true, flex: 3),
             _DataCell('', isHeader: true, flex: 3),
           ], isHeader: true),
-          for (final layer in lockedLayers)
-            _DataRow([
-              _DataCell(layer.$1, flex: 4),
-              _DataCell(layer.$2, flex: 3),
-              const _DataCell('', flex: 3, badge: '편집 금지'),
-            ], isMuted: true),
-          for (final layer in viewModel.sampleLayers)
-            _DataRow([
-              _DataCell(layer.displayName, flex: 4),
-              _DataCell(layer.kind, flex: 3),
-              const _DataCell('', flex: 3),
-            ]),
+          if (layers.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(12),
+              child: Text(
+                '레이어가 없습니다.',
+                style: TextStyle(
+                  color: MultimodalStudioPalette.PANEL_MUTED,
+                  fontSize: 11,
+                ),
+              ),
+            )
+          else
+            for (final layer in layers)
+              _DataRow([
+                _DataCell(layer.displayName, flex: 4),
+                _DataCell(layer.kind, flex: 3),
+                const _DataCell('', flex: 3),
+              ]),
         ],
       ),
     );
-  }
-
-  Color _dotColor(WorkAttachmentType type) {
-    switch (type) {
-      case WorkAttachmentType.video:
-        return const Color(0xFF44AA44);
-      case WorkAttachmentType.audio:
-        return const Color(0xFFAA8844);
-      case WorkAttachmentType.image:
-        return const Color(0xFF4488AA);
-      case WorkAttachmentType.pdf:
-      case WorkAttachmentType.text:
-        return const Color(0xFF888888);
-    }
-  }
-
-  String _typeLabel(WorkAttachmentType type) {
-    switch (type) {
-      case WorkAttachmentType.video:
-        return 'video';
-      case WorkAttachmentType.audio:
-        return 'audio';
-      case WorkAttachmentType.image:
-        return 'image';
-      case WorkAttachmentType.pdf:
-        return 'document';
-      case WorkAttachmentType.text:
-        return 'text';
-    }
   }
 
   String _durationLabel(WorkAttachment attachment) {

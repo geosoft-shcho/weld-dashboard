@@ -82,7 +82,7 @@ class WorkDetailOverview extends StatelessWidget {
           ? BoxDecoration(color: Colors.white.withValues(alpha: 0.08))
           : null,
       children: [
-        _tableCell(attachment.fileType.label),
+        _tableCell(WorkAttachmentType.extensionOf(attachment.fileName)),
         _tableCell(attachment.fileName),
         _tableCell(attachment.note.isEmpty ? '-' : attachment.note),
         Padding(

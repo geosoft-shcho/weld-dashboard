@@ -30,7 +30,11 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
     );
     final attachments = <WorkAttachment>[];
     for (final item in response.items) {
-      final type = WorkAttachmentType.fromCsv(item.fileType);
+      final type =
+          WorkAttachmentType.fromFileName(item.fileName) ??
+          WorkAttachmentType.fromFileName(
+            item.fileUrl.isEmpty ? item.content : item.fileUrl,
+          );
       if (type == null) {
         continue;
       }
