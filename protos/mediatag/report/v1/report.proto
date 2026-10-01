@@ -1,0 +1,149 @@
+// ============================================================================
+// ReportService - 검사 성적서(PDF OCR 결과) 조회 (v1)
+// tacit-db `doc` 스키마를 다룬다. 성적서 세트(report_set) 하나 = 한 작업분 문서 묶음이고,
+// 섹션 6종(취부·용접·치수·기밀·NDT·결재)이 세트에 붙는다. 세트의 job_id가 비면 미매칭.
+// 설계: tacit docs/설계/공통키 및 작업 타임라인 통합 설계.md §3.2
+// ============================================================================
+//
+// 작성자: geosoft-Server
+// 최초 작성: 2026-09-29
+//
+// 수정 이력:
+//   2026-09-29  geosoft-Server: 최초 정의 — dashboard v1 ListQualityResults(quality_results 테이블) 대체
+//   2026-09-29  geosoft-Server: 미매칭 세트 목록(unmatched) 삭제 — 매칭은 적재기가 자동으로 하고, 사람이 고치는
+//                검수 화면이 생기면 그때 조회·매칭 RPC를 다시 둔다
+//   2026-09-30  geosoft-Server: split_asset_id(잘라 낸 작업별 PDF), 확인 목록(ReviewItem, review_count) 추가
+//   2026-09-30  geosoft-Server: ResolveReview(확인·보정), MatchReportSet(세트 ↔ 작업 매칭) 추가
+// ============================================================================
+
+syntax = "proto3";
+
+package mediatag.report.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gen/protobuf/mediatag/report/v1;reportv1";
+
+// 사용처: 대시보드(s4 품질 판정 카드).
+service ReportService {
+  // 작업의 성적서 세트 목록. 섹션 본문은 빼고 준다.
+  rpc ListReportSets(ListReportSetsRequest) returns (ListReportSetsResponse);
+  // 세트 하나 + 섹션 본문 전체.
+  rpc GetReportSet(GetReportSetRequest) returns (GetReportSetResponse);
+  // 확인 목록 한 칸을 확인·보정한다. corrected_value가 비면 "원문이 맞음"으로 확인만 한다.
+  // 섹션·세트의 값은 바꾸지 않는다(원문은 근거로 남기고 보정값은 여기) — 매칭은 보정값을 먼저 쓴다.
+  rpc ResolveReview(ResolveReviewRequest) returns (ResolveReviewResponse);
+  // 세트를 작업에 매칭한다. 잘라 낸 PDF(split_asset_id)를 그 작업에 같은 트랜잭션에서 첨부한다.
+  // job_id가 비면 매칭을 푼다(첨부는 그대로 — 필요하면 DetachAsset).
+  rpc MatchReportSet(MatchReportSetRequest) returns (MatchReportSetResponse);
+}
+
+enum SectionKind {
+  SECTION_KIND_UNSPECIFIED = 0;
+  SECTION_KIND_FITUP = 1;        // doc.fitup_inspection
+  SECTION_KIND_WELDING = 2;      // doc.welding_inspection
+  SECTION_KIND_DIMENSIONAL = 3;  // doc.dimensional_inspection
+  SECTION_KIND_PRESSURE = 4;     // doc.pressure_test
+  SECTION_KIND_NDT = 5;          // doc.ndt_inspection
+  SECTION_KIND_APPROVALS = 6;    // doc.approvals
+}
+
+message ReportSet {
+  string report_set_id = 1;      // rpt_<ULID>
+  string job_id = 2;             // 비면 미매칭
+  string source_asset_id = 3;    // 원본 PDF(호기 파일)
+  optional int32 page_start = 4; // 원본 PDF 기준 쪽(양끝 포함)
+  optional int32 page_end = 5;
+  // 원본에서 이 세트 구간만 잘라 낸 작업별 PDF(파생 Asset). 작업 화면·첨부는 이것. 비면 아직 안 잘랐다.
+  // 잘라 낸 PDF 안의 쪽 = 원본 쪽 - page_start + 1
+  string split_asset_id = 12;
+  // OCR로 읽은 원문 값(정규화 전). 매칭 재료이자 근거
+  string item_name = 6;
+  string unit_no = 7;
+  string project_no = 8;
+  string item_abbr = 9;
+  google.protobuf.Timestamp created_at = 10;
+  repeated SectionSummary sections = 11;
+  int32 review_count = 13;       // 확인 목록 중 아직 보정되지 않은 칸 수
+}
+
+message SectionSummary {
+  SectionKind kind = 1;
+  optional int32 page_start = 2; // 원본 PDF 쪽. 뷰어는 #page=N으로 연다
+  optional int32 page_end = 3;
+  string overall_result = 4;     // 'Accept' | 'Reject' | 빈값(결재·판독 실패)
+}
+
+message Section {
+  SectionKind kind = 1;
+  optional int32 page_start = 2;
+  optional int32 page_end = 3;
+  // 섹션 행의 컬럼 전체(id·report_set_id·created_at 제외)와 자식 테이블 배열
+  // (예: dimension_points, gauge_readings, ut_joints). 키는 DB 컬럼·테이블 이름 그대로.
+  // ponytail: 섹션 6종 × 수십 컬럼을 메시지로 옮기지 않고 Struct 하나로 둔다. 화면이 필드별
+  // 타입 검사가 필요해지면 섹션별 메시지로 바꾼다.
+  google.protobuf.Struct fields = 4;
+}
+
+message ListReportSetsRequest {
+  string job_id = 1;
+}
+
+message ListReportSetsResponse {
+  repeated ReportSet report_sets = 1; // source_asset_id, page_start 순
+}
+
+message GetReportSetRequest {
+  string report_set_id = 1;
+}
+
+message GetReportSetResponse {
+  ReportSet report_set = 1;
+  repeated Section sections = 2;
+  repeated ReviewItem reviews = 3; // 확인 목록(쪽 순)
+}
+
+// 확인 목록 한 칸(doc.report_review) — 정확한지 애매해 사람이 볼 칸. 값은 섹션·세트에 그대로 들어 있고
+// 여기는 표시다. 형식에 안 맞아 비운 칸(UNREADABLE)은 원문이 여기에만 있다.
+message ReviewItem {
+  int64 id = 1;
+  optional int32 page = 2;       // 원본 기준 쪽
+  string field = 3;              // 템플릿 칸 이름(pdf-to-text가 표시)
+  string column_name = 4;        // '<테이블>.<컬럼>'(적재 때 표시)
+  optional string value = 5;     // 들어간 값. 없으면 비운 칸
+  string raw = 6;                // OCR 원문
+  optional double ocr_score = 7;
+  repeated double bbox = 8;      // 쪽 안 위치 [x0,y0,x1,y1](PDF 포인트)
+  ReviewReason reason = 9;
+  optional string corrected_value = 10;
+  string corrected_by = 11;      // rule | claude | human
+  google.protobuf.Timestamp corrected_at = 12;
+}
+
+enum ReviewReason {
+  REVIEW_REASON_UNSPECIFIED = 0;
+  REVIEW_REASON_LOW_CONFIDENCE = 1; // OCR 점수 낮음·VLM 재확인 실패·매칭 키 칸
+  REVIEW_REASON_VLM_RECHECKED = 2;  // VLM이 다시 읽어 바꾼 값
+  REVIEW_REASON_SNAPPED = 3;        // 허용 값 목록의 가장 가까운 값으로 바꿈
+  REVIEW_REASON_UNREADABLE = 4;     // 칸 형식에 안 맞아 비움
+}
+
+message ResolveReviewRequest {
+  int64 review_id = 1;
+  optional string corrected_value = 2; // 없으면 원문이 맞음으로 확인
+  string corrected_by = 3;             // human(기본) | claude | rule
+}
+
+message ResolveReviewResponse {
+  ReviewItem review = 1;
+}
+
+message MatchReportSetRequest {
+  string report_set_id = 1;
+  string job_id = 2;                   // 비면 매칭 해제
+}
+
+message MatchReportSetResponse {
+  ReportSet report_set = 1;
+}
