@@ -37,6 +37,8 @@ class PassProfileViewModel extends ChangeNotifier {
   int _loadVersion = 0;
 
   PassProfileBoard? get board => _board;
+  String get selectedPassId => _passId;
+  String get selectedMasterProfileId => _masterProfileId;
   bool get showMaster => _showMaster;
   String get normalize => _normalize;
   bool get showBeginner => _showBeginner;
@@ -84,7 +86,7 @@ class PassProfileViewModel extends ChangeNotifier {
     }
     _passId = passId;
     _masterProfileId = '';
-    loadBoard();
+    _reloadSeries();
   }
 
   void didSelectMasterProfile(String masterProfileId) {
@@ -126,6 +128,7 @@ class PassProfileViewModel extends ChangeNotifier {
         return;
       }
       _seriesError = error.toString();
+      _restoreSelectionFromBoard();
     } finally {
       if (version == _loadVersion) {
         _isSeriesLoading = false;
@@ -151,6 +154,15 @@ class PassProfileViewModel extends ChangeNotifier {
 
   void didTapReload() {
     loadBoard();
+  }
+
+  void _restoreSelectionFromBoard() {
+    final board = _board;
+    if (board == null) {
+      return;
+    }
+    _passId = board.selectedPass?.passId ?? _passId;
+    _masterProfileId = board.selectedMasterProfileId;
   }
 
   void _applyQuery() {

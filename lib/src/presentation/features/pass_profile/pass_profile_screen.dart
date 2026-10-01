@@ -202,11 +202,12 @@ class _PassTabsSection extends StatelessWidget {
     final key = context.select<PassProfileViewModel, String>(
       (viewModel) => _passKey(viewModel),
     );
-    final board = context.read<PassProfileViewModel>().board;
+    final viewModel = context.read<PassProfileViewModel>();
+    final board = viewModel.board;
     return PassTabsBar(
       key: ValueKey(key),
       passes: board?.passes ?? const [],
-      selectedPassId: board?.selectedPass?.passId ?? '',
+      selectedPassId: viewModel.selectedPassId,
       onSelectPass: (passId) =>
           context.read<PassProfileViewModel>().didSelectPass(passId),
     );
@@ -260,7 +261,7 @@ class _PassLegendSection extends StatelessWidget {
       showBeginner: selection.showBeginner,
       showRobot: selection.showRobot,
       mastersForPass: board?.mastersForPass ?? const [],
-      selectedMasterProfileId: board?.selectedMasterProfileId ?? '',
+      selectedMasterProfileId: viewModel.selectedMasterProfileId,
       onToggleMaster: viewModel.didTapToggleMaster,
       onToggleBeginner: viewModel.didTapToggleBeginner,
       onToggleRobot: viewModel.didTapToggleRobot,
@@ -381,7 +382,7 @@ String _passKey(PassProfileViewModel viewModel) {
   if (board == null) {
     return '';
   }
-  return '${board.selectedPass?.passId ?? ''}\u001f'
+  return '${viewModel.selectedPassId}\u001f'
       '${[for (final pass in board.passes) pass.passId].join(',')}';
 }
 
@@ -402,7 +403,7 @@ class _LegendSelection {
       showBeginner: viewModel.showBeginner,
       showRobot: viewModel.showRobot,
       masterKey:
-          '${board?.selectedMasterProfileId ?? ''}\u001f${masters.join(',')}',
+          '${viewModel.selectedMasterProfileId}\u001f${masters.join(',')}',
       isEmpty: board == null || !board.doesHavePasses || !board.doesHaveSeries,
     );
   }

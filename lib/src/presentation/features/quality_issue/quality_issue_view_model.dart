@@ -38,11 +38,14 @@ class QualityIssueViewModel extends ChangeNotifier {
   bool _showBeginner = true;
   bool _showRobot = false;
   bool _isLoading = false;
+  bool _isContentLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
+  String _contentError = '';
   int _loadVersion = 0;
 
   QualityIssueBoard? get board => _board;
+  String get selectedPassId => _passId;
   QualityMediaTab get selectedMediaTab => _selectedMediaTab;
   int get selectedMediaIndex => _selectedMediaIndex;
   int? get pendingSeekToMs => _pendingSeekToMs;
@@ -51,15 +54,32 @@ class QualityIssueViewModel extends ChangeNotifier {
   bool get showBeginner => _showBeginner;
   bool get showRobot => _showRobot;
   bool get isLoading => _isLoading;
+  bool get isContentLoading => _isContentLoading;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
+  String get contentError => _contentError;
   String get selectedLinkId => _linkId;
 
-  Future<void> loadBoard() async {
+  Future<void> loadBoard() {
+    return _loadCatalog(isPageLoad: true);
+  }
+
+  Future<void> _reloadPassContent() {
+    return _loadCatalog(isPageLoad: false);
+  }
+
+  Future<void> _loadCatalog({required bool isPageLoad}) async {
     final version = ++_loadVersion;
-    _isLoading = true;
-    _hasError = false;
-    _errorMessage = '';
+    if (isPageLoad) {
+      _isLoading = true;
+      _isContentLoading = false;
+      _hasError = false;
+      _errorMessage = '';
+      _contentError = '';
+    } else {
+      _isContentLoading = true;
+      _contentError = '';
+    }
     notifyListeners();
     try {
       final catalog = await _loadPassWaveformCatalogUseCase.execute(
@@ -67,25 +87,42 @@ class QualityIssueViewModel extends ChangeNotifier {
         historyId: historyId,
         passId: _passId,
       );
-      if (version != _loadVersion) return;
+      if (version != _loadVersion) {
+        return;
+      }
       _catalog = catalog;
       _applyQuery();
-      final selectedPassId = _board?.selectedPass?.passId ?? '';
+      final boardPassId = _board?.selectedPass?.passId ?? '';
       final loadedPassId =
           catalog.waveformRows.firstOrNull?.passId ??
           catalog.passes.firstOrNull?.passId ??
           '';
-      if (selectedPassId.isNotEmpty && selectedPassId != loadedPassId) {
-        loadBoard();
+      if (boardPassId.isNotEmpty && boardPassId != loadedPassId) {
+        if (isPageLoad) {
+          loadBoard();
+        } else {
+          _reloadPassContent();
+        }
       }
     } catch (error) {
-      if (version != _loadVersion) return;
-      _hasError = true;
-      _errorMessage = error.toString();
-      _board = null;
+      if (version != _loadVersion) {
+        return;
+      }
+      if (isPageLoad) {
+        _hasError = true;
+        _errorMessage = error.toString();
+        _board = null;
+      } else {
+        _contentError = error.toString();
+        _restoreSelectionFromBoard();
+      }
     } finally {
       if (version == _loadVersion) {
-        _isLoading = false;
+        if (isPageLoad) {
+          _isLoading = false;
+        } else {
+          _isContentLoading = false;
+        }
         notifyListeners();
       }
     }
@@ -97,7 +134,7 @@ class QualityIssueViewModel extends ChangeNotifier {
     }
     _passId = passId;
     _linkId = '';
-    loadBoard();
+    _reloadPassContent();
   }
 
   void didSelectLink(String linkId) {
@@ -116,7 +153,7 @@ class QualityIssueViewModel extends ChangeNotifier {
       }
     }
     if (_passId != previousPassId) {
-      loadBoard();
+      _reloadPassContent();
     } else {
       _applyQuery();
       notifyListeners();
@@ -188,6 +225,16 @@ class QualityIssueViewModel extends ChangeNotifier {
 
   void didTapReload() {
     loadBoard();
+  }
+
+  void _restoreSelectionFromBoard() {
+    final board = _board;
+    if (board == null) {
+      return;
+    }
+    _passId =
+        board.selectedPass?.passId ?? board.selectedGroup?.passId ?? _passId;
+    _linkId = board.selectedLink?.linkId ?? _linkId;
   }
 
   void _applyQuery() {
