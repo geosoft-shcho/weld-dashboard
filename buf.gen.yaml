@@ -11,5 +11,7 @@ plugins:
       - run
       - protoc_plugin:protoc_plugin
     out: lib/src/data/datasources/generated
+    include_wkt: true
+    include_imports: true
 inputs:
   - directory: protos

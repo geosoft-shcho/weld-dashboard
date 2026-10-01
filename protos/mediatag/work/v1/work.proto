@@ -24,6 +24,7 @@
 //                — 스키마 지도에서 job_asset은 "파일" 묶음
 //   2026-09-29  geosoft-Server: dashboard.v1(ListCollectionNodes·GetPassWaveform)을 합침 — 둘 다 작업 계층 기준 조회
 //   2026-10-01  geosoft-Server: ListCollectionNodes basis(작업 구간·수집 구간) — 모든 노드에 started_at·ended_at
+//   2026-10-01  geosoft-Server: ListCollectionNodes 작업 노드 label을 읽을 수 있는 이름으로, 도구 결과물은 세지 않음
 // ============================================================================
 
 syntax = "proto3";
@@ -45,9 +46,10 @@ service WorkService {
   // 작업 + 패스 + 작업자 + 쓰인 장비
   rpc GetJob(GetJobRequest) returns (GetJobResponse);
 
-  // 수집 현황 계층을 한 단계씩 조회한다.
+  // 수집 현황 계층을 한 단계씩 조회한다. 장비가 기록한 자료(원본과 원본을 대신하는 표준화본·잘라 낸 PDF)만 센다 —
+  // 도구 결과물(STT·포즈·잘라 낸 이미지·추출 JSON)은 작업 첨부(ListJobAssets)·타임라인에서 본다.
   rpc ListCollectionNodes(ListCollectionNodesRequest) returns (ListCollectionNodesResponse);
-  // 패스 하나의 센서 파형. comparison_job_id를 주면 그 작업의 같은 pass_no 파형도 함께 준다.
+  // 패스 하나의 센서 파형. comparison_pass_id를 주면 그 패스의 파형도 함께 준다.
   // 파형은 표준화 파생 CSV(operation=timeseries_normalize)에서 패스 구간만큼 잘라 낸다.
   rpc GetPassWaveform(GetPassWaveformRequest) returns (GetPassWaveformResponse);
 }
@@ -223,7 +225,7 @@ message ListCollectionNodesResponse {
 
 message CollectionNode {
   CollectionPath path = 1;   // Asset 노드면 부모의 path
-  string label = 2;          // 장비명·작업자명·공사명·job_id·"P01"·"미지정"·"공용"·파일명
+  string label = 2;          // 장비명·작업자명·공사명·작업 이름("5호기 LEG DIAGONAL "F" · 9/16", ID는 path.job_id)·"P01"·"미지정"·"공용"·파일명
   bool has_children = 3;
   CollectionSummary summary = 4;          // Asset 노드면 비어 있음
   mediatag.asset.v1.Asset asset = 5;      // Asset 노드일 때만
@@ -238,22 +240,35 @@ message CollectionSummary {
   google.protobuf.Timestamp first_recorded_at = 3;
   google.protobuf.Timestamp last_recorded_at = 4;
   google.protobuf.Timestamp last_collected_at = 5;
-  int64 job_count = 6;              // Equipment·Worker 노드
-  int64 work_duration_seconds = 7;  // Worker 노드: job.started_at~ended_at 합
+  int64 job_count = 6;              // Equipment·Worker·Project 노드(작업·패스 노드는 0)
+  int64 work_duration_seconds = 7;  // Equipment·Worker·Project 노드: 아래 작업들의 job.started_at~ended_at 합(작업·패스 노드는 0)
 }
 
 message GetPassWaveformRequest {
   string pass_id = 1;
-  // 비교할 작업. 지금은 화면에서 명장 작업을 직접 고르고(WorkService.ListJobs master_only),
-  // 추천 알고리즘이 생기면 그 결과를 넣는다. 비교 작업에 같은 pass_no가 없으면 비교 쪽은 빈 결과.
-  string comparison_job_id = 2;
-  repeated string channels = 3; // 비우면 전체 채널
-  int32 max_points = 4;         // 시리즈당 점 상한(화면용 줄이기). 0이면 서버 기본값
+  // 비우면 전체 채널(DTW면 용접 4채널). "imu"를 적으면 앞·뒤 IMU의 acc_x~gyro_z 여섯 채널씩을 뜻한다.
+  repeated string channels = 2;
+  int32 max_points = 3;         // 시리즈당 점 상한(화면용 줄이기). 0이면 서버 기본값
+  // 비교할 패스. 화면이 비교 작업(지금은 명장 작업을 직접 고름 — ListJobs master_only, 추천 알고리즘이 생기면
+  // 그 결과)의 패스 목록(ListPasses)에서 고른다. 패스 수가 작업마다 다르니 처음↔처음, 끝↔끝, 가운데는 같은
+  // pass_no로 짝짓는 것을 권한다.
+  string comparison_pass_id = 4;
+  WaveformNormalize normalize = 5;
+}
+
+enum WaveformNormalize {
+  WAVEFORM_NORMALIZE_UNSPECIFIED = 0; // = 원본. 파일마다 시리즈 하나, 시각은 패스 시작 기준
+  // 비교 파형을 대상 파형의 시간축에 DTW로 맞춘다(DTW 서버 호출, 저장 안 함 — 채널마다 따로 맞춤). 비교 패스가 있을 때만 쓰인다.
+  // 대상·비교 모두 시리즈 하나로 온다(파일들을 한 격자로 모은 것, asset_id 없음). 대상은 그대로이고 비교가 대상의
+  // 시간축에 맞춰져, 두 시리즈는 시각·길이가 같다. 정렬은 원본 간격(30fps)으로 하고 max_points로 줄이는 것은 맞춘 뒤다.
+  // 용접 채널 current_a·voltage_v·wire_feed_speed_mpm·rotation_speed_rpm은 항상 들어 있고, 그 밖의 채널(IMU
+  // 자이로 등)은 channels에 적은 것만 맞춰 준다(두 패스에 다 있는 채널만 온다) — 이름은 "장비ID/채널"(장비가 있는 파일) 또는 채널 이름 그대로.
+  WAVEFORM_NORMALIZE_DTW = 1;
 }
 
 message GetPassWaveformResponse {
   PassWaveform target = 1;
-  PassWaveform comparison = 2;  // comparison_job_id를 줬을 때만
+  PassWaveform comparison = 2;  // comparison_pass_id를 줬을 때만
 }
 
 message PassWaveform {
