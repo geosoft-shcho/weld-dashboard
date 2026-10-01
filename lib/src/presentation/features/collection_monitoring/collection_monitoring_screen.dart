@@ -124,11 +124,14 @@ class _MonitoringTabViewState extends State<_MonitoringTabView> {
                   isSelected: currentIndex == 0,
                   onPressed: () => setState(() => currentIndex = 0),
                 ),
-                _MonitoringTab(
-                  label: '현재 수집 상태',
-                  isSelected: currentIndex == 1,
-                  onPressed: () => setState(() => currentIndex = 1),
-                ),
+
+                // 탭 현재 수집 상태 임시 주석. 삭제 금지
+
+                // _MonitoringTab(
+                //   label: '현재 수집 상태',
+                //   isSelected: currentIndex == 1,
+                //   onPressed: () => setState(() => currentIndex = 1),
+                // ),
               ],
             ),
           ),
