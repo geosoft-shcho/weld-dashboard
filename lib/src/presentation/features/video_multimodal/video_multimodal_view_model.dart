@@ -126,12 +126,11 @@ enum InferencePanelPhase { hidden, running, done, failed }
 
 class VideoMultimodalViewModel extends ChangeNotifier {
   VideoMultimodalViewModel({
-    required ListHistoryWorkAttachmentsUseCase
-    listHistoryWorkAttachmentsUseCase,
+    required this._listHistoryWorkAttachmentsUseCase,
     required this.historyId,
-  }) : _listHistoryWorkAttachmentsUseCase = listHistoryWorkAttachmentsUseCase;
+  });
 
-  static const double MIN_TIMELINE_HEIGHT = 280;
+  static const double MIN_TIMELINE_HEIGHT = 320;
   static const double SIDE_WIDTH = 320;
   static const double DEFAULT_PIXELS_PER_SECOND = 80;
   static const double EMPTY_SPAN_SECONDS = 60;
