@@ -29,6 +29,8 @@ dependencies:
   connectrpc: ^1.0.0
   fixnum: ^1.1.1
   flutter_dotenv: ^6.0.0
+  camera: ^0.11.0
+  web: ^1.1.0
 
 dev_dependencies:
   protoc_plugin: ^22.5.0

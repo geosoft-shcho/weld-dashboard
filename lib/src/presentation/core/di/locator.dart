@@ -1,6 +1,14 @@
 import 'package:get_it/get_it.dart';
 
 import '../../../data/datasources/remote/dashboard_service_data_source.dart';
+import '../../../data/repositories/browser_camera_recording_repository.dart';
+import '../../../domain/repositories/camera_recording_repository.dart';
+import '../../../domain/use_cases/download_camera_recording_file_use_case.dart';
+import '../../../domain/use_cases/prepare_camera_recording_use_case.dart';
+import '../../../domain/use_cases/read_camera_preview_handle_use_case.dart';
+import '../../../domain/use_cases/release_camera_recording_use_case.dart';
+import '../../../domain/use_cases/start_camera_recording_use_case.dart';
+import '../../../domain/use_cases/stop_camera_recording_use_case.dart';
 import '../../../data/repositories/remote_catalog_repository.dart';
 import '../../../data/repositories/remote_collection_catalog_repository.dart';
 import '../../../data/repositories/remote_pass_waveform_repository.dart';
@@ -28,6 +36,7 @@ import '../../../domain/use_cases/resolve_latest_pass_profile_use_case.dart';
 import '../../../domain/use_cases/resolve_latest_quality_issue_use_case.dart';
 import '../../features/app_shell/shell_view_model.dart';
 import '../../features/collection_monitoring/collection_monitoring_view_model.dart';
+import '../../features/video_multimodal/camera_recording_view_model.dart';
 import '../../features/video_multimodal/video_multimodal_view_model.dart';
 import '../../features/pass_profile/pass_profile_args.dart';
 import '../../features/pass_profile/pass_profile_view_model.dart';
@@ -63,6 +72,22 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => LoadWorkDetailCatalogUseCase(locator()));
   locator.registerFactory(() => QueryWorkDetailUseCase());
   locator.registerFactory(() => ListHistoryWorkAttachmentsUseCase(locator()));
+  locator.registerFactory(() {
+    final CameraRecordingRepository repository =
+        BrowserCameraRecordingRepository();
+    return CameraRecordingViewModel(
+      prepareCameraRecordingUseCase: PrepareCameraRecordingUseCase(repository),
+      startCameraRecordingUseCase: StartCameraRecordingUseCase(repository),
+      stopCameraRecordingUseCase: StopCameraRecordingUseCase(repository),
+      downloadCameraRecordingFileUseCase: DownloadCameraRecordingFileUseCase(
+        repository,
+      ),
+      releaseCameraRecordingUseCase: ReleaseCameraRecordingUseCase(repository),
+      readCameraPreviewHandleUseCase: ReadCameraPreviewHandleUseCase(
+        repository,
+      ),
+    );
+  });
   locator.registerFactoryParam<VideoMultimodalViewModel, String, void>(
     (historyId, _) => VideoMultimodalViewModel(
       listHistoryWorkAttachmentsUseCase: locator(),
