@@ -59,7 +59,8 @@ class _CollectionMonitoringBody extends StatelessWidget {
         content: Text('아직 조회되지 않았습니다.'),
       );
     }
-    return ListView(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (viewModel.isAutoRefreshOn)
           InfoBar(
@@ -83,7 +84,9 @@ class _CollectionMonitoringBody extends StatelessWidget {
         const SizedBox(height: 16),
         CollectionKpiCards(viewModel: viewModel, kpi: board.kpi),
         const SizedBox(height: 16),
-        _MonitoringTabView(viewModel: viewModel, board: board),
+        Expanded(
+          child: _MonitoringTabView(viewModel: viewModel, board: board),
+        ),
       ],
     );
   }
@@ -107,47 +110,44 @@ class _MonitoringTabViewState extends State<_MonitoringTabView> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: 660,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border(bottom: BorderSide(color: _LINE, width: 1)),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                _MonitoringTab(
-                  label: '일자별 수집 타임라인',
-                  isSelected: currentIndex == 0,
-                  onPressed: () => setState(() => currentIndex = 0),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border(bottom: BorderSide(color: _LINE, width: 1)),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              _MonitoringTab(
+                label: '일자별 수집 타임라인',
+                isSelected: currentIndex == 0,
+                onPressed: () => setState(() => currentIndex = 0),
+              ),
+
+              // 탭 현재 수집 상태 임시 주석. 삭제 금지
+
+              // _MonitoringTab(
+              //   label: '현재 수집 상태',
+              //   isSelected: currentIndex == 1,
+              //   onPressed: () => setState(() => currentIndex = 1),
+              // ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: currentIndex == 0
+              ? CollectionTimelineHost(
+                  viewModel: widget.viewModel,
+                  board: widget.board,
+                )
+              : CollectionStatusTable(
+                  viewModel: widget.viewModel,
+                  board: widget.board,
                 ),
-
-                // 탭 현재 수집 상태 임시 주석. 삭제 금지
-
-                // _MonitoringTab(
-                //   label: '현재 수집 상태',
-                //   isSelected: currentIndex == 1,
-                //   onPressed: () => setState(() => currentIndex = 1),
-                // ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: currentIndex == 0
-                ? CollectionTimelineHost(
-                    viewModel: widget.viewModel,
-                    board: widget.board,
-                  )
-                : CollectionStatusTable(
-                    viewModel: widget.viewModel,
-                    board: widget.board,
-                  ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
