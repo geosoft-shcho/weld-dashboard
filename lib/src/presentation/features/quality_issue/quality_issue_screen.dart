@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/di/locator.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/widgets/screen_command_bar.dart';
 import '../../core/widgets/waveform_channel_charts.dart';
 import '../../navigation/app_coordinator.dart';
 import '../pass_profile/widgets/pass_context_bar.dart';
@@ -56,55 +57,61 @@ class _QualityIssueBody extends StatelessWidget {
       color: AppTheme.SURFACE,
       child: SizedBox.expand(
         child: ScaffoldPage(
-          header: PageHeader(
-            title: const Text('품질 이슈 연계'),
-            commandBar: CommandBar(
-              mainAxisAlignment: MainAxisAlignment.end,
-              primaryItems: [
-                if (coordinator.canPopWorkHistoryStack)
-                  CommandBarButton(
-                    icon: const Icon(FluentIcons.back),
-                    label: Text(
-                      _stepBackLabel(coordinator.previousWorkHistoryStack),
-                    ),
-                    onPressed: () =>
-                        coordinator.didTapBackFromQualityIssue(context),
-                  ),
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.history),
-                  label: const Text('작업 이력'),
-                  onPressed: () =>
-                      coordinator.didTapBackToWorkHistory(context),
+          padding: EdgeInsets.zero,
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ScreenCommandBar(
+              //   title: coordinator.pageTitle,
+              //   primaryItems: [
+              //     if (coordinator.canPopWorkHistoryStack)
+              //       CommandBarButton(
+              //         icon: const Icon(FluentIcons.back),
+              //         label: CommandBarLabel(
+              //           _stepBackLabel(coordinator.previousWorkHistoryStack),
+              //         ),
+              //         onPressed: () =>
+              //             coordinator.didTapBackFromQualityIssue(context),
+              //       ),
+              //     CommandBarButton(
+              //       icon: const Icon(FluentIcons.history),
+              //       label: const CommandBarLabel('작업 이력'),
+              //       onPressed: () =>
+              //           coordinator.didTapBackToWorkHistory(context),
+              //     ),
+              //     CommandBarButton(
+              //       icon: const Icon(FluentIcons.line_chart),
+              //       label: const CommandBarLabel('패스 프로파일'),
+              //       onPressed: !canOpenPassProfile
+              //           ? null
+              //           : () {
+              //               final passId =
+              //                   board.selectedPass?.passId ??
+              //                   board.selectedGroup?.passId;
+              //               if (coordinator.isQualityIssuePaneSelected) {
+              //                 coordinator.didTapOpenPassProfileFromPane(
+              //                   commonKey: board.commonKey,
+              //                   historyId: board.historyId,
+              //                   passId: passId,
+              //                 );
+              //                 return;
+              //               }
+              //               coordinator.didTapOpenPassProfile(
+              //                 commonKey: board.commonKey,
+              //                 historyId: board.historyId,
+              //                 passId: passId,
+              //               );
+              //             },
+              //     ),
+              //   ],
+              // ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _content(context, viewModel, coordinator),
                 ),
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.line_chart),
-                  label: const Text('패스 프로파일'),
-                  onPressed: !canOpenPassProfile
-                      ? null
-                      : () {
-                          final passId = board.selectedPass?.passId ??
-                              board.selectedGroup?.passId;
-                          if (coordinator.isQualityIssuePaneSelected) {
-                            coordinator.didTapOpenPassProfileFromPane(
-                              commonKey: board.commonKey,
-                              historyId: board.historyId,
-                              passId: passId,
-                            );
-                            return;
-                          }
-                          coordinator.didTapOpenPassProfile(
-                            commonKey: board.commonKey,
-                            historyId: board.historyId,
-                            passId: passId,
-                          );
-                        },
-                ),
-              ],
-            ),
-          ),
-          content: Padding(
-            padding: const EdgeInsets.all(16),
-            child: _content(context, viewModel, coordinator),
+              ),
+            ],
           ),
         ),
       ),
@@ -163,18 +170,17 @@ class _QualityIssueBody extends StatelessWidget {
         !board.doesHavePasses || !board.series.doesHaveAnySeries;
     return ListView(
       children: [
-        const Text(
-          '페이퍼 기반 품질 결과와 해당 구간 용접 파형 연결 조회',
-          style: TextStyle(color: AppTheme.STATUS_OFF),
-        ),
-        const SizedBox(height: 12),
+        // const Text(
+        //   '페이퍼 기반 품질 결과와 해당 구간 용접 파형 연결 조회',
+        //   style: TextStyle(color: AppTheme.STATUS_OFF),
+        // ),
+        // const SizedBox(height: 12),
         PassContextBar(contextData: board.context),
         const SizedBox(height: 12),
         PassTabsBar(
           passes: board.passes,
-          selectedPassId: board.selectedPass?.passId ??
-              board.selectedGroup?.passId ??
-              '',
+          selectedPassId:
+              board.selectedPass?.passId ?? board.selectedGroup?.passId ?? '',
           onSelectPass: viewModel.didSelectPass,
         ),
         const SizedBox(height: 12),
@@ -226,11 +232,7 @@ class _QualityIssueBody extends StatelessWidget {
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                left,
-                const SizedBox(height: 16),
-                right,
-              ],
+              children: [left, const SizedBox(height: 16), right],
             );
           },
         ),

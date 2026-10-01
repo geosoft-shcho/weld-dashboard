@@ -1,5 +1,5 @@
 name: weld_dashboard
-description: "용접 수집 모니터링 대시보드"
+description: "용접 수집 대시보드"
 publish_to: 'none'
 version: 0.1.0+1
 

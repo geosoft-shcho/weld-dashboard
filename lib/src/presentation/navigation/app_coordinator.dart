@@ -78,6 +78,39 @@ class AppCoordinator extends ChangeNotifier {
   String get paneQualityLinkId => _paneQualityLinkId;
   DateTime get lastDataUpdatedAt => _lastDataUpdatedAt;
 
+  /// 브라우저 탭에 붙는 현재 화면 이름.
+  String get pageTitle {
+    switch (_selectedPaneIndex) {
+      case PASS_PROFILE_PANE_INDEX:
+        return '패스별 파라미터 프로파일';
+      case QUALITY_ISSUE_PANE_INDEX:
+        return '품질 이슈 연계';
+      case WORK_HISTORY_PANE_INDEX:
+        return _workHistoryPageTitle;
+      case COLLECTION_PANE_INDEX:
+      default:
+        return '수집 모니터링';
+    }
+  }
+
+  String get _workHistoryPageTitle {
+    switch (_workHistoryStack) {
+      case WorkHistoryStack.list:
+        return '작업 이력 조회';
+      case WorkHistoryStack.detail:
+        if (_historyId.isEmpty) {
+          return '작업 상세';
+        }
+        return '작업 상세 $_historyId';
+      case WorkHistoryStack.videoMultimodal:
+        return '비디오 멀티모달';
+      case WorkHistoryStack.passProfile:
+        return '패스별 파라미터 프로파일';
+      case WorkHistoryStack.qualityIssue:
+        return '품질 이슈 연계';
+    }
+  }
+
   /// 수집 모니터링 등 화면 데이터 재조회가 끝난 시각을 타이틀바에 반영한다.
   void didRefreshDashboardData([DateTime? updatedAt]) {
     _lastDataUpdatedAt = updatedAt ?? DateTime.now();

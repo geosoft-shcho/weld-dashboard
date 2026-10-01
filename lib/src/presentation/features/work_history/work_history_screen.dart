@@ -44,7 +44,7 @@ class _WorkHistoryBody extends StatelessWidget {
       });
     }
     return ScaffoldPage(
-      header: const PageHeader(title: Text('작업 이력 조회')),
+      padding: EdgeInsets.zero,
       content: Padding(
         padding: const EdgeInsets.all(16),
         child: _content(viewModel),

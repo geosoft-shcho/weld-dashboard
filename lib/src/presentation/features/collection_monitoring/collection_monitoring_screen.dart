@@ -29,7 +29,7 @@ class _CollectionMonitoringBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final viewModel = context.watch<CollectionMonitoringViewModel>();
     return ScaffoldPage(
-      header: const PageHeader(title: Text('수집 모니터링')),
+      padding: EdgeInsets.zero,
       content: Padding(
         padding: const EdgeInsets.all(16),
         child: _content(viewModel),

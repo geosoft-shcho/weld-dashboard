@@ -9,6 +9,7 @@ import 'package:waveform_visualizer/waveform_visualizer.dart';
 import 'src/presentation/core/di/locator.dart';
 import 'src/presentation/core/themes/app_theme.dart';
 import 'src/presentation/features/app_shell/shell_view_model.dart';
+import 'src/presentation/features/app_shell/widgets/shell_title_leading.dart';
 import 'src/presentation/navigation/app_coordinator.dart';
 import 'src/presentation/navigation/app_router.dart';
 
@@ -61,7 +62,7 @@ class _WeldDashboardAppState extends State<WeldDashboardApp> {
         ),
       ],
       child: FluentApp.router(
-        title: '용접 수집 모니터링',
+        title: ShellTitleLeading.APP_TITLE,
         themeMode: ThemeMode.dark,
         darkTheme: AppTheme.dark,
         theme: AppTheme.light,

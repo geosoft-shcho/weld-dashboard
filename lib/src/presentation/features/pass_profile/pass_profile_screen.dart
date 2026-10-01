@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../core/di/locator.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/widgets/screen_command_bar.dart';
 import '../../core/widgets/waveform_channel_charts.dart';
 import '../../navigation/app_coordinator.dart';
 import 'pass_profile_args.dart';
@@ -52,43 +53,49 @@ class _PassProfileBody extends StatelessWidget {
       color: AppTheme.SURFACE,
       child: SizedBox.expand(
         child: ScaffoldPage(
-          header: PageHeader(
-            title: const Text('패스별 파라미터 프로파일'),
-            commandBar: CommandBar(
-              mainAxisAlignment: MainAxisAlignment.end,
-              primaryItems: [
-                if (coordinator.canPopWorkHistoryStack)
-                  CommandBarButton(
-                    icon: const Icon(FluentIcons.back),
-                    label: Text(
-                      _stepBackLabel(coordinator.previousWorkHistoryStack),
-                    ),
-                    onPressed: () =>
-                        coordinator.didTapBackFromPassProfile(context),
-                  ),
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.history),
-                  label: const Text('작업 이력'),
-                  onPressed: () => coordinator.didTapBackToWorkHistory(context),
+          padding: EdgeInsets.zero,
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // ScreenCommandBar(
+              //   title: coordinator.pageTitle,
+              //   primaryItems: [
+              //     if (coordinator.canPopWorkHistoryStack)
+              //       CommandBarButton(
+              //         icon: const Icon(FluentIcons.back),
+              //         label: CommandBarLabel(
+              //           _stepBackLabel(coordinator.previousWorkHistoryStack),
+              //         ),
+              //         onPressed: () =>
+              //             coordinator.didTapBackFromPassProfile(context),
+              //       ),
+              //     CommandBarButton(
+              //       icon: const Icon(FluentIcons.history),
+              //       label: const CommandBarLabel('작업 이력'),
+              //       onPressed: () =>
+              //           coordinator.didTapBackToWorkHistory(context),
+              //     ),
+              //     CommandBarButton(
+              //       icon: const Icon(FluentIcons.report_document),
+              //       label: const CommandBarLabel('이 패스 품질 이슈'),
+              //       onPressed: !canOpenQuality
+              //           ? null
+              //           : () => _didTapOpenQualityIssue(
+              //               coordinator,
+              //               commonKey: board.commonKey,
+              //               historyId: board.historyId,
+              //               passId: board.selectedPass?.passId,
+              //             ),
+              //     ),
+              //   ],
+              // ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _content(context, viewModel, coordinator),
                 ),
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.report_document),
-                  label: const Text('이 패스 품질 이슈'),
-                  onPressed: !canOpenQuality
-                      ? null
-                      : () => _didTapOpenQualityIssue(
-                          coordinator,
-                          commonKey: board.commonKey,
-                          historyId: board.historyId,
-                          passId: board.selectedPass?.passId,
-                        ),
-                ),
-              ],
-            ),
-          ),
-          content: Padding(
-            padding: const EdgeInsets.all(16),
-            child: _content(context, viewModel, coordinator),
+              ),
+            ],
           ),
         ),
       ),
@@ -169,11 +176,11 @@ class _PassProfileBody extends StatelessWidget {
     final isLegendEmpty = !board.doesHavePasses || !board.doesHaveSeries;
     return ListView(
       children: [
-        const Text(
-          '전류·전압·속도 파형 시계열, 명장 · 초보자 · 로봇 중첩 비교',
-          style: TextStyle(color: AppTheme.STATUS_OFF),
-        ),
-        const SizedBox(height: 12),
+        // const Text(
+        //   '전류·전압·속도 파형 시계열, 명장 · 초보자 · 로봇 중첩 비교',
+        //   style: TextStyle(color: AppTheme.STATUS_OFF),
+        // ),
+        // const SizedBox(height: 12),
         PassContextBar(contextData: board.context),
         const SizedBox(height: 12),
         PassTabsBar(

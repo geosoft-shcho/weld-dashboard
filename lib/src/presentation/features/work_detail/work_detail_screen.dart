@@ -3,22 +3,12 @@ import 'package:provider/provider.dart';
 
 import '../../core/di/locator.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/widgets/screen_command_bar.dart';
 import '../../navigation/app_coordinator.dart';
 import 'work_detail_view_model.dart';
 import 'widgets/work_detail_identity.dart';
 import 'widgets/work_detail_stage.dart';
 import 'widgets/work_detail_tabs.dart';
-
-class _CommandBarLabel extends StatelessWidget {
-  const _CommandBarLabel(this.text);
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(text, textAlign: TextAlign.start, softWrap: false);
-  }
-}
 
 class WorkDetailScreen extends StatelessWidget {
   const WorkDetailScreen({super.key, required this.historyId});
@@ -47,52 +37,57 @@ class _WorkDetailBody extends StatelessWidget {
       color: AppTheme.SURFACE,
       child: SizedBox.expand(
         child: ScaffoldPage(
-          header: PageHeader(
-            title: const Text('작업 상세'),
-            commandBar: CommandBar(
-              mainAxisAlignment: MainAxisAlignment.end,
-              primaryItems: [
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.back),
-                  label: const _CommandBarLabel('목록으로'),
-                  onPressed: () =>
-                      coordinator.didTapBackToWorkHistory(context),
+          padding: EdgeInsets.zero,
+          content: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              ScreenCommandBar(
+                title: coordinator.pageTitle,
+                primaryItems: [
+                  CommandBarButton(
+                    icon: const Icon(FluentIcons.back),
+                    label: const CommandBarLabel('목록으로'),
+                    onPressed: () =>
+                        coordinator.didTapBackToWorkHistory(context),
+                  ),
+                  CommandBarButton(
+                    icon: const Icon(FluentIcons.video),
+                    label: const CommandBarLabel('비디오 멀티모달'),
+                    onPressed: job == null
+                        ? null
+                        : () => coordinator.didTapOpenVideoMultimodal(context),
+                  ),
+                  CommandBarButton(
+                    icon: const Icon(FluentIcons.line_chart),
+                    label: const CommandBarLabel('프로파일'),
+                    onPressed: job == null
+                        ? null
+                        : () => coordinator.didTapLeaveWorkDetailToPassProfile(
+                            context,
+                            commonKey: job.commonKey,
+                            historyId: job.historyId,
+                          ),
+                  ),
+                  CommandBarButton(
+                    icon: const Icon(FluentIcons.report_document),
+                    label: const CommandBarLabel('품질 이슈'),
+                    onPressed: job == null
+                        ? null
+                        : () => coordinator.didTapLeaveWorkDetailToQualityIssue(
+                            context,
+                            commonKey: job.commonKey,
+                            historyId: job.historyId,
+                          ),
+                  ),
+                ],
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: _content(context, viewModel, coordinator),
                 ),
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.video),
-                  label: const _CommandBarLabel('비디오 멀티모달'),
-                  onPressed: job == null
-                      ? null
-                      : () => coordinator.didTapOpenVideoMultimodal(context),
-                ),
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.line_chart),
-                  label: const _CommandBarLabel('프로파일'),
-                  onPressed: job == null
-                      ? null
-                      : () => coordinator.didTapLeaveWorkDetailToPassProfile(
-                          context,
-                          commonKey: job.commonKey,
-                          historyId: job.historyId,
-                        ),
-                ),
-                CommandBarButton(
-                  icon: const Icon(FluentIcons.report_document),
-                  label: const _CommandBarLabel('품질 이슈'),
-                  onPressed: job == null
-                      ? null
-                      : () => coordinator.didTapLeaveWorkDetailToQualityIssue(
-                          context,
-                          commonKey: job.commonKey,
-                          historyId: job.historyId,
-                        ),
-                ),
-              ],
-            ),
-          ),
-          content: Padding(
-            padding: const EdgeInsets.all(16),
-            child: _content(context, viewModel, coordinator),
+              ),
+            ],
           ),
         ),
       ),
