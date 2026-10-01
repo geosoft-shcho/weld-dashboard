@@ -30,8 +30,10 @@ class PassProfileViewModel extends ChangeNotifier {
   bool _showBeginner = true;
   bool _showRobot = true;
   bool _isLoading = false;
+  bool _isSeriesLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
+  String _seriesError = '';
   int _loadVersion = 0;
 
   PassProfileBoard? get board => _board;
@@ -40,14 +42,18 @@ class PassProfileViewModel extends ChangeNotifier {
   bool get showBeginner => _showBeginner;
   bool get showRobot => _showRobot;
   bool get isLoading => _isLoading;
+  bool get isSeriesLoading => _isSeriesLoading;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
+  String get seriesError => _seriesError;
 
   Future<void> loadBoard() async {
     final version = ++_loadVersion;
     _isLoading = true;
+    _isSeriesLoading = false;
     _hasError = false;
     _errorMessage = '';
+    _seriesError = '';
     notifyListeners();
     try {
       final catalog = await _loadPassWaveformCatalogUseCase.execute(
@@ -91,9 +97,41 @@ class PassProfileViewModel extends ChangeNotifier {
   }
 
   void didSelectNormalize(String normalize) {
-    if (_normalize == normalize) return;
+    if (_normalize == normalize) {
+      return;
+    }
     _normalize = normalize;
-    loadBoard();
+    _reloadSeries();
+  }
+
+  Future<void> _reloadSeries() async {
+    final version = ++_loadVersion;
+    _isSeriesLoading = true;
+    _seriesError = '';
+    notifyListeners();
+    try {
+      final catalog = await _loadPassWaveformCatalogUseCase.execute(
+        commonKey: commonKey,
+        historyId: historyId,
+        passId: _passId,
+        normalize: _normalize,
+      );
+      if (version != _loadVersion) {
+        return;
+      }
+      _catalog = catalog;
+      _applyQuery();
+    } catch (error) {
+      if (version != _loadVersion) {
+        return;
+      }
+      _seriesError = error.toString();
+    } finally {
+      if (version == _loadVersion) {
+        _isSeriesLoading = false;
+        notifyListeners();
+      }
+    }
   }
 
   void didTapToggleMaster(bool isOn) {
