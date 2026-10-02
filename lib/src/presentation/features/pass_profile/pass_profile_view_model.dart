@@ -66,6 +66,7 @@ class PassProfileViewModel extends ChangeNotifier {
       );
       if (version != _loadVersion) return;
       _catalog = catalog;
+      _applyLoadedNormalize(catalog);
       _applyQuery();
     } catch (error) {
       if (version != _loadVersion) return;
@@ -122,6 +123,7 @@ class PassProfileViewModel extends ChangeNotifier {
         return;
       }
       _catalog = catalog;
+      _applyLoadedNormalize(catalog);
       _applyQuery();
     } catch (error) {
       if (version != _loadVersion) {
@@ -163,6 +165,12 @@ class PassProfileViewModel extends ChangeNotifier {
     }
     _passId = board.selectedPass?.passId ?? _passId;
     _masterProfileId = board.selectedMasterProfileId;
+  }
+
+  void _applyLoadedNormalize(PassWaveformCatalog catalog) {
+    if (catalog.didFallBackToRaw) {
+      _normalize = 'raw';
+    }
   }
 
   void _applyQuery() {

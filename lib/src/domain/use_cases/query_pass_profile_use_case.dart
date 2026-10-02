@@ -72,6 +72,9 @@ class QueryPassProfileUseCase {
         if (link.commonKey == key && link.passId == selectedPassId) link,
     ];
     final banners = <String>[];
+    if (catalog.waveformNotice.isNotEmpty) {
+      banners.add(catalog.waveformNotice);
+    }
     if (series.master.isEmpty) {
       banners.add('명장 파형 없음');
     }

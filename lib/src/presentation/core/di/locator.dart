@@ -76,7 +76,7 @@ void setupLocator({required bool pdfrxReady}) {
     ),
   );
   locator.registerLazySingleton<PassWaveformRepository>(
-    () => RemotePassWaveformRepository(locator(), locator()),
+    () => RemotePassWaveformRepository(locator()),
   );
   locator.registerLazySingleton(
     () => LoadPassWaveformCatalogUseCase(locator()),
