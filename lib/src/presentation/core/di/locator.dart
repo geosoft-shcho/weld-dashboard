@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 
 import '../../../data/datasources/remote/dashboard_service_data_source.dart';
+import '../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../../data/repositories/remote_catalog_repository.dart';
 import '../../../data/repositories/remote_collection_catalog_repository.dart';
 import '../../../data/repositories/remote_pass_waveform_repository.dart';
@@ -41,6 +42,7 @@ final locator = GetIt.instance;
 
 void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => DashboardServiceDataSource());
+  locator.registerLazySingleton(() => MediaTagDataSource());
   locator.registerLazySingleton<CatalogRepository>(
     () => RemoteCatalogRepository(locator()),
   );
@@ -51,7 +53,7 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => LoadCollectionCatalogUseCase(locator()));
   locator.registerFactory(() => QueryCollectionBoardUseCase());
   locator.registerLazySingleton<WorkHistoryRepository>(
-    () => RemoteWorkHistoryRepository(locator()),
+    () => RemoteWorkHistoryRepository(locator(), locator()),
   );
   locator.registerLazySingleton(() => LoadWorkHistoryCatalogUseCase(locator()));
   locator.registerLazySingleton(() => LoadWorkHistoryMastersUseCase(locator()));
@@ -70,7 +72,7 @@ void setupLocator({required bool pdfrxReady}) {
     ),
   );
   locator.registerLazySingleton<PassWaveformRepository>(
-    () => RemotePassWaveformRepository(locator()),
+    () => RemotePassWaveformRepository(locator(), locator()),
   );
   locator.registerLazySingleton(
     () => LoadPassWaveformCatalogUseCase(locator()),

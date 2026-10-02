@@ -11,13 +11,16 @@ import '../../domain/entities/weld_pass.dart';
 import '../../domain/entities/worker.dart';
 import '../../domain/repositories/pass_waveform_repository.dart';
 import '../datasources/generated/dashboard_service.pb.dart' as pb;
+import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/dashboard_service_data_source.dart';
+import '../datasources/remote/media_tag_data_source.dart';
 import 'remote_work_history_repository.dart';
 
 class RemotePassWaveformRepository implements PassWaveformRepository {
-  RemotePassWaveformRepository(this._source);
+  RemotePassWaveformRepository(this._source, this._mediaTag);
 
   final DashboardServiceDataSource _source;
+  final MediaTagDataSource _mediaTag;
 
   @override
   Future<PassWaveformCatalog> loadCatalog({
@@ -35,7 +38,9 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     final key = commonKey.isNotEmpty
         ? commonKey
         : (histories.items.isEmpty ? '' : histories.items.first.commonKey);
-    final workers = await _source.client.listWorkers(pb.ListWorkersRequest());
+    final workers = await _mediaTag.workService.listWorkers(
+      work_pb.ListWorkersRequest(),
+    );
     final passesResponse = await _source.client.listPasses(
       pb.ListPassesRequest(commonKey: key),
     );
@@ -116,7 +121,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
         for (final item in histories.items) workHistoryItemFrom(item),
       ],
       workers: [
-        for (final item in workers.items)
+        for (final item in workers.workers)
           Worker(workerId: item.workerId, workerName: item.workerName),
       ],
       context: context == null

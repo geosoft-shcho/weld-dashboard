@@ -8,12 +8,15 @@ import '../../domain/entities/work_order.dart';
 import '../../domain/entities/worker.dart';
 import '../../domain/repositories/work_history_repository.dart';
 import '../datasources/generated/dashboard_service.pb.dart' as pb;
+import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/dashboard_service_data_source.dart';
+import '../datasources/remote/media_tag_data_source.dart';
 
 class RemoteWorkHistoryRepository implements WorkHistoryRepository {
-  RemoteWorkHistoryRepository(this._source);
+  RemoteWorkHistoryRepository(this._source, this._mediaTag);
 
   final DashboardServiceDataSource _source;
+  final MediaTagDataSource _mediaTag;
 
   @override
   Future<WorkHistoryCatalog> loadMasters() async {
@@ -21,9 +24,11 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       pb.ListWorkOrdersRequest(),
     );
     final joints = await _source.client.listJoints(pb.ListJointsRequest());
-    final workers = await _source.client.listWorkers(pb.ListWorkersRequest());
-    final equipments = await _source.client.listEquipment(
-      pb.ListEquipmentRequest(),
+    final workers = await _mediaTag.workService.listWorkers(
+      work_pb.ListWorkersRequest(),
+    );
+    final equipments = await _mediaTag.workService.listEquipment(
+      work_pb.ListEquipmentRequest(),
     );
     return WorkHistoryCatalog(
       items: const [],
@@ -45,11 +50,11 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
           ),
       ],
       workers: [
-        for (final item in workers.items)
+        for (final item in workers.workers)
           Worker(workerId: item.workerId, workerName: item.workerName),
       ],
       equipments: [
-        for (final item in equipments.items)
+        for (final item in equipments.equipment)
           Equipment(
             equipmentId: item.equipmentId,
             equipmentName: item.equipmentName,
