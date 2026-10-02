@@ -1,6 +1,5 @@
 import 'package:get_it/get_it.dart';
 
-import '../../../data/datasources/remote/dashboard_service_data_source.dart';
 import '../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../../data/repositories/remote_catalog_repository.dart';
 import '../../../data/repositories/remote_collection_catalog_repository.dart';
@@ -43,10 +42,9 @@ import '../../navigation/app_coordinator.dart';
 final locator = GetIt.instance;
 
 void setupLocator({required bool pdfrxReady}) {
-  locator.registerLazySingleton(() => DashboardServiceDataSource());
   locator.registerLazySingleton(() => MediaTagDataSource());
   locator.registerLazySingleton<CatalogRepository>(
-    () => RemoteCatalogRepository(locator()),
+    () => RemoteCatalogRepository(),
   );
   locator.registerLazySingleton(() => LoadCatalogUseCase(locator()));
   locator.registerLazySingleton<CollectionCatalogRepository>(
