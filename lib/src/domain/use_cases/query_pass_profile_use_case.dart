@@ -135,29 +135,41 @@ class QueryPassProfileUseCase {
       if (item.commonKey != commonKey) {
         continue;
       }
-      if (match == null || item.workedAt.isAfter(match.workedAt)) {
+      if (match == null || _isLater(item, match)) {
         match = item;
       }
     }
     if (match == null) {
       return PassJointContext(
         commonKey: commonKey,
-        workOrderNo: '',
-        title: '',
-        jointNo: '',
-        jointName: '',
+        projectNo: '',
+        unitNo: '',
+        itemCode: '',
+        itemName: '',
         workerName: '',
         equipmentName: '',
       );
     }
     return PassJointContext(
       commonKey: match.commonKey,
-      workOrderNo: match.workOrderNo,
-      title: match.title,
-      jointNo: match.jointNo,
-      jointName: match.jointName,
+      projectNo: match.projectNo,
+      unitNo: match.unitNo,
+      itemCode: match.itemCode,
+      itemName: match.itemName,
       workerName: match.workerName,
       equipmentName: match.equipmentName,
     );
+  }
+
+  bool _isLater(WorkHistoryItem item, WorkHistoryItem match) {
+    final workedAt = item.workedAt;
+    if (workedAt == null) {
+      return false;
+    }
+    final matchedAt = match.workedAt;
+    if (matchedAt == null) {
+      return true;
+    }
+    return workedAt.isAfter(matchedAt);
   }
 }

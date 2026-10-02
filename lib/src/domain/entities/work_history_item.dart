@@ -2,12 +2,10 @@ class WorkHistoryItem {
   const WorkHistoryItem({
     required this.historyId,
     required this.commonKey,
-    required this.workOrderId,
-    required this.workOrderNo,
-    required this.title,
-    required this.jointId,
-    required this.jointNo,
-    required this.jointName,
+    required this.projectNo,
+    required this.unitNo,
+    required this.itemCode,
+    required this.itemName,
     required this.workerId,
     required this.workerName,
     required this.equipmentId,
@@ -17,19 +15,18 @@ class WorkHistoryItem {
     required this.attachmentCount,
   });
 
+  /// 화면 진입 식별자. 값은 `job_id`다.
   final String historyId;
   final String commonKey;
-  final String workOrderId;
-  final String workOrderNo;
-  final String title;
-  final String jointId;
-  final String jointNo;
-  final String jointName;
+  final String projectNo;
+  final String unitNo;
+  final String itemCode;
+  final String itemName;
   final String workerId;
   final String workerName;
   final String equipmentId;
   final String equipmentName;
-  final DateTime workedAt;
+  final DateTime? workedAt;
   final int passCount;
   final int attachmentCount;
 

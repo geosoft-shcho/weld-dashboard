@@ -1,8 +1,7 @@
 import 'equipment.dart';
-import 'joint.dart';
 import 'work_history_item.dart';
+import 'work_history_project_filter.dart';
 import 'work_history_query.dart';
-import 'work_order.dart';
 import 'worker.dart';
 
 class WorkHistoryBoard {
@@ -10,8 +9,8 @@ class WorkHistoryBoard {
     required this.query,
     required this.visibleRows,
     required this.totalCount,
-    required this.workOrders,
-    required this.joints,
+    required this.nextPageToken,
+    required this.projects,
     required this.workers,
     required this.equipments,
   });
@@ -19,12 +18,12 @@ class WorkHistoryBoard {
   final WorkHistoryQuery query;
   final List<WorkHistoryItem> visibleRows;
   final int totalCount;
-  final List<WorkOrder> workOrders;
-  final List<Joint> joints;
+  final String nextPageToken;
+  final List<WorkHistoryProjectFilter> projects;
   final List<Worker> workers;
   final List<Equipment> equipments;
 
-  bool get doesHaveMore => visibleRows.length < totalCount;
+  bool get doesHaveMore => nextPageToken.isNotEmpty;
 
   WorkHistoryItem? get selectedItem {
     for (final item in visibleRows) {

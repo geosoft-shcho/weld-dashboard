@@ -1,9 +1,9 @@
 import 'package:flutter/foundation.dart';
 
-import '../../../domain/entities/joint.dart';
 import '../../../domain/entities/work_history_board.dart';
 import '../../../domain/entities/work_history_catalog.dart';
 import '../../../domain/entities/work_history_item.dart';
+import '../../../domain/entities/work_history_project_filter.dart';
 import '../../../domain/entities/work_history_query.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
 import '../../../domain/use_cases/load_work_history_masters_use_case.dart';
@@ -23,6 +23,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
   WorkHistoryCatalog? _masters;
   List<WorkHistoryItem> _loadedItems = const [];
   int _totalCount = 0;
+  String _nextPageToken = '';
   WorkHistoryBoard? _board;
   bool _isLoading = false;
   bool _isLoadingMore = false;
@@ -47,20 +48,31 @@ class WorkHistoryViewModel extends ChangeNotifier {
     return !_query.matchesDeferredFilters(loaded);
   }
 
-  /// draft 작업지시 기준 조인트 옵션(표는 마지막 조회 결과 유지).
-  List<Joint> get jointOptions {
-    final masters = _masters;
-    if (masters == null) {
+  List<WorkHistoryUnitFilter> get unitOptions {
+    final projectNo = _query.projectNo;
+    if (projectNo.isEmpty) {
       return const [];
     }
-    final workOrderId = _query.workOrderId;
-    if (workOrderId.isEmpty) {
-      return masters.joints;
+    for (final project
+        in _masters?.projects ?? const <WorkHistoryProjectFilter>[]) {
+      if (project.projectNo == projectNo) {
+        return project.units;
+      }
     }
-    return [
-      for (final joint in masters.joints)
-        if (joint.workOrderId == workOrderId) joint,
-    ];
+    return const [];
+  }
+
+  List<String> get itemCodes {
+    final unitNo = _query.unitNo;
+    if (unitNo.isEmpty) {
+      return const [];
+    }
+    for (final unit in unitOptions) {
+      if (unit.unitNo == unitNo) {
+        return unit.itemCodes;
+      }
+    }
+    return const [];
   }
 
   Future<void> loadBoard() async {
@@ -80,20 +92,22 @@ class WorkHistoryViewModel extends ChangeNotifier {
       if (_query.doesHaveInvalidDateRange) {
         _loadedItems = const [];
         _totalCount = 0;
+        _nextPageToken = '';
         _loadedQuery = _query;
         _rebuildBoard();
         return;
       }
       final page = await _listWorkHistoryPageUseCase.execute(
         query: _query,
-        limit: WorkHistoryQuery.BATCH_SIZE,
-        offset: 0,
+        pageSize: WorkHistoryQuery.BATCH_SIZE,
+        pageToken: '',
       );
       if (version != _loadVersion) {
         return;
       }
       _loadedItems = page.items;
       _totalCount = page.totalCount;
+      _nextPageToken = page.nextPageToken;
       _loadedQuery = _query;
       _rebuildBoard();
     } catch (error) {
@@ -118,14 +132,18 @@ class WorkHistoryViewModel extends ChangeNotifier {
     _editFilters((query) => query.copyWith(commonKey: commonKey));
   }
 
-  void didSelectWorkOrder(String workOrderId) {
+  void didSelectProject(String projectNo) {
     _editFilters(
-      (query) => query.copyWith(workOrderId: workOrderId, jointId: ''),
+      (query) => query.copyWith(projectNo: projectNo, unitNo: '', itemCode: ''),
     );
   }
 
-  void didSelectJoint(String jointId) {
-    _editFilters((query) => query.copyWith(jointId: jointId));
+  void didSelectUnit(String unitNo) {
+    _editFilters((query) => query.copyWith(unitNo: unitNo, itemCode: ''));
+  }
+
+  void didSelectItem(String itemCode) {
+    _editFilters((query) => query.copyWith(itemCode: itemCode));
   }
 
   void didSelectWorker(String workerId) {
@@ -189,14 +207,14 @@ class WorkHistoryViewModel extends ChangeNotifier {
     }
     final version = ++_moreVersion;
     final loadVersionAtStart = _loadVersion;
-    final offset = _loadedItems.length;
+    final pageToken = _nextPageToken;
     _isLoadingMore = true;
     notifyListeners();
     try {
       final page = await _listWorkHistoryPageUseCase.execute(
         query: loadedQuery,
-        limit: WorkHistoryQuery.BATCH_SIZE,
-        offset: offset,
+        pageSize: WorkHistoryQuery.BATCH_SIZE,
+        pageToken: pageToken,
       );
       if (version != _moreVersion || loadVersionAtStart != _loadVersion) {
         return;
@@ -208,6 +226,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
           if (!existingIds.contains(item.historyId)) item,
       ];
       _totalCount = page.totalCount;
+      _nextPageToken = page.nextPageToken;
       _rebuildBoard();
     } catch (_) {
       // 기존 목록 유지. more 실패는 치명적이지 않음.
@@ -234,20 +253,12 @@ class WorkHistoryViewModel extends ChangeNotifier {
       return;
     }
     final filterQuery = _loadedQuery ?? _query;
-    final joints = filterQuery.workOrderId.isEmpty
-        ? masters.joints
-        : [
-            for (final joint in masters.joints)
-              if (joint.workOrderId == filterQuery.workOrderId) joint,
-          ];
     _board = WorkHistoryBoard(
-      query: filterQuery.copyWith(
-        selectedHistoryId: _query.selectedHistoryId,
-      ),
+      query: filterQuery.copyWith(selectedHistoryId: _query.selectedHistoryId),
       visibleRows: _loadedItems,
       totalCount: _totalCount,
-      workOrders: masters.workOrders,
-      joints: joints,
+      nextPageToken: _nextPageToken,
+      projects: masters.projects,
       workers: masters.workers,
       equipments: masters.equipments,
     );

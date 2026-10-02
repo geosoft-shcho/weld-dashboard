@@ -1,19 +1,19 @@
 class PassJointContext {
   const PassJointContext({
     required this.commonKey,
-    required this.workOrderNo,
-    required this.title,
-    required this.jointNo,
-    required this.jointName,
+    required this.projectNo,
+    required this.unitNo,
+    required this.itemCode,
+    required this.itemName,
     required this.workerName,
     required this.equipmentName,
   });
 
   final String commonKey;
-  final String workOrderNo;
-  final String title;
-  final String jointNo;
-  final String jointName;
+  final String projectNo;
+  final String unitNo;
+  final String itemCode;
+  final String itemName;
   final String workerName;
   final String equipmentName;
 }

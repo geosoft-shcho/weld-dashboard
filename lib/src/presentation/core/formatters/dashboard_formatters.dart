@@ -30,6 +30,17 @@ class DashboardFormatters {
     return '${value.year}-$month-$day';
   }
 
+  static String unitNo(String value) {
+    if (value == '00') {
+      return '0호기';
+    }
+    final number = int.tryParse(value);
+    if (number == null) {
+      return value;
+    }
+    return '$number호기';
+  }
+
   static String dateTime(DateTime? value) {
     if (value == null) {
       return '—';

@@ -452,7 +452,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     try {
       final marks = loadMockVideoFrameMarks();
       _attachments = await _listHistoryWorkAttachmentsUseCase.execute(
-        historyId: historyId,
+        jobId: historyId,
       );
       _bars = [
         ..._chain(_attachments, WorkAttachmentType.video),

@@ -34,16 +34,33 @@ class ResolveLatestQualityIssueUseCase {
   }
 
   bool _isOnOrBeforeSnapshot(WorkHistoryItem item, DateTime snapshotAt) {
-    return !item.workedAt.isAfter(snapshotAt);
+    final workedAt = item.workedAt;
+    if (workedAt == null) {
+      return false;
+    }
+    return !workedAt.isAfter(snapshotAt);
   }
 
   void _sortLatestFirst(List<WorkHistoryItem> items) {
     items.sort((left, right) {
-      final byTime = right.workedAt.compareTo(left.workedAt);
+      final byTime = _compareWorkedAt(right.workedAt, left.workedAt);
       if (byTime != 0) {
         return byTime;
       }
       return left.historyId.compareTo(right.historyId);
     });
+  }
+
+  int _compareWorkedAt(DateTime? left, DateTime? right) {
+    if (left == null && right == null) {
+      return 0;
+    }
+    if (left == null) {
+      return -1;
+    }
+    if (right == null) {
+      return 1;
+    }
+    return left.compareTo(right);
   }
 }

@@ -2,6 +2,7 @@ import '../../domain/entities/equipment.dart';
 import '../../domain/entities/joint.dart';
 import '../../domain/entities/work_history_catalog.dart';
 import '../../domain/entities/work_history_page.dart';
+import '../../domain/entities/work_history_project_filter.dart';
 import '../../domain/entities/work_history_query.dart';
 import '../../domain/entities/work_history_item.dart';
 import '../../domain/entities/work_order.dart';
@@ -29,8 +30,7 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
     final catalog = await loadCatalog();
     return WorkHistoryCatalog(
       items: const [],
-      workOrders: catalog.workOrders,
-      joints: catalog.joints,
+      projects: catalog.projects,
       workers: catalog.workers,
       equipments: catalog.equipments,
     );
@@ -39,25 +39,34 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
   @override
   Future<WorkHistoryPage> listPage({
     required WorkHistoryQuery query,
-    required int limit,
-    required int offset,
+    required int pageSize,
+    required String pageToken,
   }) async {
     final catalog = await loadCatalog();
     final matched = _queryWorkHistoryUseCase.matchedItems(
       catalog: catalog,
       query: query,
     );
-    if (limit <= 0) {
-      return WorkHistoryPage(items: matched, totalCount: matched.length);
+    if (pageSize <= 0) {
+      return WorkHistoryPage(
+        items: matched,
+        totalCount: matched.length,
+        nextPageToken: '',
+      );
     }
-    final start = offset < 0 ? 0 : offset;
+    final start = pageToken.isEmpty ? 0 : int.tryParse(pageToken) ?? 0;
     if (start >= matched.length) {
-      return WorkHistoryPage(items: const [], totalCount: matched.length);
+      return WorkHistoryPage(
+        items: const [],
+        totalCount: matched.length,
+        nextPageToken: '',
+      );
     }
-    final end = (start + limit).clamp(0, matched.length);
+    final end = (start + pageSize).clamp(0, matched.length);
     return WorkHistoryPage(
       items: matched.sublist(start, end),
       totalCount: matched.length,
+      nextPageToken: end < matched.length ? '$end' : '',
     );
   }
 
@@ -126,8 +135,21 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
     ];
     final catalog = WorkHistoryCatalog(
       items: items,
-      workOrders: workOrders,
-      joints: joints,
+      projects: [
+        for (final workOrder in workOrders)
+          WorkHistoryProjectFilter(
+            projectNo: workOrder.workOrderId,
+            projectName: workOrder.title,
+            units: [
+              for (final joint in joints)
+                if (joint.workOrderId == workOrder.workOrderId)
+                  WorkHistoryUnitFilter(
+                    unitNo: joint.jointNo,
+                    itemCodes: const [],
+                  ),
+            ],
+          ),
+      ],
       workers: workers,
       equipments: equipments,
     );
@@ -151,12 +173,10 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
     return WorkHistoryItem(
       historyId: record.historyId,
       commonKey: record.commonKey,
-      workOrderId: record.workOrderId,
-      workOrderNo: workOrder?.workOrderNo ?? record.workOrderId,
-      title: workOrder?.title ?? '',
-      jointId: record.jointId,
-      jointNo: joint?.jointNo ?? record.jointId,
-      jointName: joint?.jointName ?? '',
+      projectNo: record.workOrderId,
+      unitNo: joint?.jointNo ?? '',
+      itemCode: '',
+      itemName: workOrder?.title ?? '',
       workerId: record.workerId,
       workerName: worker?.workerName ?? record.workerId,
       equipmentId: record.equipmentId,

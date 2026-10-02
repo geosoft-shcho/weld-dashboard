@@ -35,12 +35,25 @@ class QueryWorkDetailUseCase {
         latest = item;
         continue;
       }
-      final byTime = item.workedAt.compareTo(latest.workedAt);
+      final byTime = _compareWorkedAt(item.workedAt, latest.workedAt);
       if (byTime > 0 ||
           (byTime == 0 && item.historyId.compareTo(latest.historyId) < 0)) {
         latest = item;
       }
     }
     return latest;
+  }
+
+  int _compareWorkedAt(DateTime? left, DateTime? right) {
+    if (left == null && right == null) {
+      return 0;
+    }
+    if (left == null) {
+      return -1;
+    }
+    if (right == null) {
+      return 1;
+    }
+    return left.compareTo(right);
   }
 }

@@ -389,10 +389,10 @@ String _contextKey(QualityIssueViewModel viewModel) {
   }
   return [
     data.commonKey,
-    data.workOrderNo,
-    data.title,
-    data.jointNo,
-    data.jointName,
+    data.projectNo,
+    data.unitNo,
+    data.itemCode,
+    data.itemName,
     data.workerName,
     data.equipmentName,
   ].join('\u001f');

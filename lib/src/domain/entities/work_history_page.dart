@@ -1,13 +1,14 @@
 import 'work_history_item.dart';
 
-/// ListWorkHistory 한 페이지 결과.
+/// ListJobs 한 페이지. [nextPageToken] 은 서버가 준 그대로다.
 class WorkHistoryPage {
   const WorkHistoryPage({
     required this.items,
     required this.totalCount,
+    required this.nextPageToken,
   });
 
   final List<WorkHistoryItem> items;
-  /// 필터 전체 매치 건수(페이지 크기와 무관).
   final int totalCount;
+  final String nextPageToken;
 }

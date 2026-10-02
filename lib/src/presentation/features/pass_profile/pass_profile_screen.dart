@@ -114,7 +114,6 @@ class _PassProfileBody extends StatelessWidget {
       ),
     );
   }
-
 }
 
 class _PassProfileError extends StatelessWidget {
@@ -368,10 +367,10 @@ String _contextKey(PassJointContext? data) {
   }
   return [
     data.commonKey,
-    data.workOrderNo,
-    data.title,
-    data.jointNo,
-    data.jointName,
+    data.projectNo,
+    data.unitNo,
+    data.itemCode,
+    data.itemName,
     data.workerName,
     data.equipmentName,
   ].join('\u001f');
@@ -425,13 +424,8 @@ class _LegendSelection {
   }
 
   @override
-  int get hashCode => Object.hash(
-    showMaster,
-    showBeginner,
-    showRobot,
-    masterKey,
-    isEmpty,
-  );
+  int get hashCode =>
+      Object.hash(showMaster, showBeginner, showRobot, masterKey, isEmpty);
 }
 
 class _ChartSnapshot {

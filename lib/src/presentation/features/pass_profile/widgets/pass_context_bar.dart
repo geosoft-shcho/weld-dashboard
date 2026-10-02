@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../../domain/entities/pass_joint_context.dart';
+import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../core/widgets/section_empty_placeholder.dart';
 
@@ -17,7 +18,7 @@ class PassContextBar extends StatelessWidget {
     if (data == null) {
       return const SectionEmptyPlaceholder(
         title: '컨텍스트 없음',
-        message: '이 이음에 표시할 작업·조인트·작업자·장비 정보가 없습니다.',
+        message: '이 작업에 표시할 공사·작업자·장비 정보가 없습니다.',
       );
     }
     return Container(
@@ -32,34 +33,14 @@ class PassContextBar extends StatelessWidget {
         runSpacing: 12,
         children: [
           _pair('공통키', data.commonKey),
-          _pair(
-            '작업지시',
-            _joined(data.workOrderNo, data.title, separator: ' · '),
-          ),
-          _pair(
-            '조인트',
-            _joined(data.jointNo, data.jointName, separator: ' '),
-          ),
+          _pair('공사', data.projectNo),
+          _pair('호기', DashboardFormatters.unitNo(data.unitNo)),
+          _pair('품목', data.itemName.isEmpty ? data.itemCode : data.itemName),
           _pair('작업자', data.workerName),
           _pair('장비', data.equipmentName),
         ],
       ),
     );
-  }
-
-  String _joined(String? left, String? right, {required String separator}) {
-    final first = left?.trim() ?? '';
-    final second = right?.trim() ?? '';
-    if (first.isEmpty && second.isEmpty) {
-      return '—';
-    }
-    if (first.isEmpty) {
-      return second;
-    }
-    if (second.isEmpty) {
-      return first;
-    }
-    return '$first$separator$second';
   }
 
   Widget _pair(String label, String value) {

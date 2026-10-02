@@ -7,6 +7,7 @@ import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../navigation/app_coordinator.dart';
 import '../work_history_view_model.dart';
+import 'work_history_command_bar.dart';
 
 class WorkHistoryTable extends StatefulWidget {
   const WorkHistoryTable({
@@ -133,9 +134,9 @@ class _HeaderRow extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Row(
           children: [
-            _Cell('공통키', flex: 18, isHeader: true),
-            _Cell('작업지시', flex: 18, isHeader: true),
-            _Cell('조인트', flex: 14, isHeader: true),
+            _Cell('공통키', flex: 16, isHeader: true),
+            _Cell('공사', flex: 16, isHeader: true),
+            _Cell('품목', flex: 18, isHeader: true),
             _Cell('작업자', flex: 10, isHeader: true),
             _Cell('작업일시', flex: 14, isHeader: true),
             _Cell('장비', flex: 12, isHeader: true),
@@ -187,9 +188,12 @@ class _DataRow extends StatelessWidget {
                           : const Color(0x00000000),
                       child: Row(
                         children: [
-                          _Cell(item.commonKey, flex: 18),
-                          _Cell('${item.workOrderNo}\n${item.title}', flex: 18),
-                          _Cell('${item.jointNo} ${item.jointName}', flex: 14),
+                          _Cell(item.commonKey, flex: 16),
+                          _Cell(item.projectNo, flex: 16),
+                          _Cell(
+                            '${workHistoryUnitLabel(item.unitNo)}\n${item.itemName.isEmpty ? item.itemCode : item.itemName}',
+                            flex: 18,
+                          ),
                           _Cell(item.workerName, flex: 10),
                           _Cell(
                             DashboardFormatters.dateTime(item.workedAt),
@@ -322,11 +326,7 @@ class _Footer extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Center(
         child: isLoadingMore
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: ProgressRing(),
-              )
+            ? const SizedBox(width: 20, height: 20, child: ProgressRing())
             : Text(
                 board.doesHaveMore
                     ? '$loaded / $total건 · 스크롤하면 더 불러옵니다'

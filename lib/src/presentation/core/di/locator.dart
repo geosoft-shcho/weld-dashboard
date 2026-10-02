@@ -57,14 +57,14 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactory(() => QueryCollectionBoardUseCase());
   locator.registerFactory(() => PresentCollectionNodesUseCase());
   locator.registerLazySingleton<WorkHistoryRepository>(
-    () => RemoteWorkHistoryRepository(locator(), locator()),
+    () => RemoteWorkHistoryRepository(locator()),
   );
   locator.registerLazySingleton(() => LoadWorkHistoryCatalogUseCase(locator()));
   locator.registerLazySingleton(() => LoadWorkHistoryMastersUseCase(locator()));
   locator.registerLazySingleton(() => ListWorkHistoryPageUseCase(locator()));
   locator.registerFactory(() => QueryWorkHistoryUseCase());
   locator.registerLazySingleton<WorkDetailRepository>(
-    () => RemoteWorkDetailRepository(locator()),
+    () => RemoteWorkDetailRepository(locator<MediaTagDataSource>()),
   );
   locator.registerLazySingleton(() => LoadWorkDetailCatalogUseCase(locator()));
   locator.registerFactory(() => QueryWorkDetailUseCase());

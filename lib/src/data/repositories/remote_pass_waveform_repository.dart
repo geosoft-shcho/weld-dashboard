@@ -1,20 +1,15 @@
-import '../../domain/entities/pass_waveform_catalog.dart';
 import '../../domain/entities/pass_joint_context.dart';
-import '../../domain/entities/quality_link.dart';
-import '../../domain/entities/quality_media.dart';
-import '../../domain/entities/quality_media_tab.dart';
-import '../../domain/entities/quality_result_group.dart';
-import '../../domain/entities/quality_result_item.dart';
+import '../../domain/entities/pass_waveform_catalog.dart';
 import '../../domain/entities/series_role.dart';
 import '../../domain/entities/waveform_row.dart';
 import '../../domain/entities/weld_pass.dart';
+import '../../domain/entities/work_history_item.dart';
 import '../../domain/entities/worker.dart';
 import '../../domain/repositories/pass_waveform_repository.dart';
 import '../datasources/generated/dashboard_service.pb.dart' as pb;
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/dashboard_service_data_source.dart';
 import '../datasources/remote/media_tag_data_source.dart';
-import 'remote_work_history_repository.dart';
 
 class RemotePassWaveformRepository implements PassWaveformRepository {
   RemotePassWaveformRepository(this._source, this._mediaTag);
@@ -29,178 +24,155 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     String passId = '',
     String normalize = 'raw',
   }) async {
-    final histories = await _source.client.listWorkHistory(
-      pb.ListWorkHistoryRequest(
-        historyId: historyId,
-        commonKey: historyId.isEmpty ? commonKey : '',
-      ),
+    if (historyId.isEmpty) {
+      return const PassWaveformCatalog(
+        passes: [],
+        waveformRows: [],
+        links: [],
+        qualityGroups: [],
+        historyItems: [],
+        workers: [],
+      );
+    }
+    final response = await _mediaTag.workService.getJob(
+      work_pb.GetJobRequest(jobId: historyId),
     );
-    final key = commonKey.isNotEmpty
-        ? commonKey
-        : (histories.items.isEmpty ? '' : histories.items.first.commonKey);
-    final workers = await _mediaTag.workService.listWorkers(
-      work_pb.ListWorkersRequest(),
-    );
-    final passesResponse = await _source.client.listPasses(
-      pb.ListPassesRequest(commonKey: key),
-    );
+    if (!response.hasJob() || response.job.jobId.isEmpty) {
+      return const PassWaveformCatalog(
+        passes: [],
+        waveformRows: [],
+        links: [],
+        qualityGroups: [],
+        historyItems: [],
+        workers: [],
+      );
+    }
+    final job = response.job;
     final passes = [
-      for (final item in passesResponse.items)
+      for (final item in response.passes)
         WeldPass(
           passId: item.passId,
-          commonKey: item.commonKey,
+          commonKey: job.commonKey,
           passNo: item.passNo,
-          passName: item.passName,
-          masterProfileId: item.masterProfileId,
-          controlWorkerId: item.controlWorkerId,
+          passName: '',
+          masterProfileId: '',
+          controlWorkerId: job.workerId,
         ),
-    ];
+    ]..sort((left, right) => left.passNo.compareTo(right.passNo));
     final selectedPassId = passId.isNotEmpty
         ? passId
-        : (key.isNotEmpty && passes.isNotEmpty ? passes.first.passId : '');
-    final waveforms = <WaveformRow>[];
-    if (selectedPassId.isNotEmpty) {
-      final response = await _source.client.getPassWaveform(
-        pb.GetPassWaveformRequest(passId: selectedPassId, normalize: normalize),
-      );
-      for (final series in response.series) {
-        final role = SeriesRole.fromCsv(series.role);
-        if (role == null) continue;
-        for (final point in series.points) {
-          waveforms.add(
-            WaveformRow(
-              seriesId: '${selectedPassId}_${series.role}',
-              passId: selectedPassId,
-              commonKey: response.commonKey,
-              seriesRole: role,
-              masterProfileId: series.masterProfileId,
-              workerId: series.workerId,
-              robotId: series.robotId,
-              timeMs: point.t,
-              currentA: point.hasCurrentA() ? point.currentA : null,
-              voltageV: point.hasVoltageV() ? point.voltageV : null,
-              speedValue: point.hasWireFeedSpeedMpm()
-                  ? point.wireFeedSpeedMpm
-                  : null,
-              rotationSpeedRpm: point.hasRotationSpeedRpm()
-                  ? point.rotationSpeedRpm
-                  : null,
-            ),
-          );
-        }
-      }
-    }
-    final linksResponse = await _source.client.listQualityLinks(
-      pb.ListQualityLinksRequest(commonKey: key),
+        : (passes.isNotEmpty ? passes.first.passId : '');
+    final waveforms = await _waveformRows(
+      passId: selectedPassId,
+      commonKey: job.commonKey,
+      normalize: normalize,
     );
-    final resultsResponse = await _source.client.listQualityResults(
-      pb.ListQualityResultsRequest(commonKey: key),
-    );
-    final contextResponse = key.isEmpty
-        ? null
-        : await _source.client.getContext(pb.GetContextRequest(commonKey: key));
-    final context = contextResponse?.context;
+    final worker = response.hasWorker() ? response.worker : null;
     return PassWaveformCatalog(
       passes: passes,
       waveformRows: waveforms,
-      links: [
-        for (final item in linksResponse.items)
-          QualityLink(
-            linkId: item.linkId,
-            commonKey: item.commonKey,
-            qualityResultId: item.qualityResultId,
-            passId: item.passId,
-            segmentId: item.segmentId,
-            startMs: item.segmentStartMs,
-            endMs: item.segmentEndMs,
-            note: item.note,
-          ),
-      ],
-      qualityGroups: _qualityGroups(resultsResponse.items),
-      historyItems: [
-        for (final item in histories.items) workHistoryItemFrom(item),
-      ],
-      workers: [
-        for (final item in workers.workers)
-          Worker(workerId: item.workerId, workerName: item.workerName),
-      ],
-      context: context == null
-          ? null
-          : PassJointContext(
-              commonKey: context.commonKey,
-              workOrderNo: context.workOrderNo,
-              title: context.title,
-              jointNo: context.jointNo,
-              jointName: context.jointName,
-              workerName: context.workerName,
-              equipmentName: context.equipmentName,
-            ),
+      links: const [],
+      qualityGroups: const [],
+      historyItems: [_itemFrom(response)],
+      workers: worker == null || worker.workerId.isEmpty
+          ? const []
+          : [Worker(workerId: worker.workerId, workerName: worker.workerName)],
+      context: _contextFrom(response),
     );
   }
 
-  List<QualityResultGroup> _qualityGroups(List<pb.QualityResult> results) {
-    final rowsById = <String, List<pb.QualityResult>>{};
-    for (final result in results) {
-      rowsById.putIfAbsent(result.qualityResultId, () => []).add(result);
+  Future<List<WaveformRow>> _waveformRows({
+    required String passId,
+    required String commonKey,
+    required String normalize,
+  }) async {
+    if (passId.isEmpty) {
+      return const [];
     }
-    return [for (final rows in rowsById.values) _qualityGroup(rows)];
-  }
-
-  QualityResultGroup _qualityGroup(List<pb.QualityResult> rows) {
-    final first = rows.first;
-    final media = <QualityMedia>[];
-    final seen = <String>{};
-    for (final row in rows) {
-      for (final item in row.media) {
-        final type = switch (item.mediaType) {
-          'scan' => QualityMediaTab.pdf,
-          'video' => QualityMediaTab.video,
-          _ => null,
-        };
-        if (type == null ||
-            !seen.add('${item.mediaType}:${item.filePath}:${item.url}')) {
-          continue;
-        }
-        media.add(
-          QualityMedia(
-            type: type,
-            url: item.url.trim().isEmpty
-                ? ''
-                : _source.resolveFileUrl(item.url.trim()),
-            filePath: item.filePath,
-            pageCount: item.pageCount,
+    final pb.GetPassWaveformResponse waveform;
+    try {
+      waveform = await _source.client.getPassWaveform(
+        pb.GetPassWaveformRequest(passId: passId, normalize: normalize),
+      );
+    } catch (_) {
+      return const [];
+    }
+    final rows = <WaveformRow>[];
+    final seriesKey = waveform.commonKey.isEmpty
+        ? commonKey
+        : waveform.commonKey;
+    for (final series in waveform.series) {
+      final role = SeriesRole.fromCsv(series.role);
+      if (role == null) {
+        continue;
+      }
+      for (final point in series.points) {
+        rows.add(
+          WaveformRow(
+            seriesId: '${passId}_${series.role}',
+            passId: passId,
+            commonKey: seriesKey,
+            seriesRole: role,
+            masterProfileId: series.masterProfileId,
+            workerId: series.workerId,
+            robotId: series.robotId,
+            timeMs: point.t,
+            currentA: point.hasCurrentA() ? point.currentA : null,
+            voltageV: point.hasVoltageV() ? point.voltageV : null,
+            speedValue: point.hasWireFeedSpeedMpm()
+                ? point.wireFeedSpeedMpm
+                : null,
+            rotationSpeedRpm: point.hasRotationSpeedRpm()
+                ? point.rotationSpeedRpm
+                : null,
           ),
         );
       }
     }
-    final scan = media
-        .where((item) => item.type == QualityMediaTab.pdf)
-        .firstOrNull;
-    final video = media
-        .where((item) => item.type == QualityMediaTab.video)
-        .firstOrNull;
-    return QualityResultGroup(
-      qualityResultId: first.qualityResultId,
-      paperDocNo: first.paperDocNo,
-      commonKey: first.commonKey,
-      passId: first.passId,
-      segmentId: first.segmentId,
-      inspectedAt: first.inspectedAt,
-      inspectorName: first.inspectorName,
-      judgement: first.judgement,
-      issueSummary: first.issueSummary,
-      scanFile: scan?.url ?? '',
-      scanPages: scan?.pageCount ?? 0,
-      videoFile: video?.url ?? '',
-      media: media,
-      items: [
-        for (final row in rows)
-          QualityResultItem(
-            itemName: row.itemName,
-            itemResult: row.itemResult,
-            itemNote: row.itemNote,
-          ),
-      ],
+    return rows;
+  }
+
+  WorkHistoryItem _itemFrom(work_pb.GetJobResponse response) {
+    final job = response.job;
+    final equipmentNames = [
+      for (final item in response.equipment)
+        if (item.equipmentName.isNotEmpty) item.equipmentName,
+    ];
+    return WorkHistoryItem(
+      historyId: job.jobId,
+      commonKey: job.commonKey,
+      projectNo: job.projectNo,
+      unitNo: job.unitNo,
+      itemCode: job.itemCode,
+      itemName: job.itemName,
+      workerId: job.workerId,
+      workerName: response.hasWorker() ? response.worker.workerName : '',
+      equipmentId: response.equipment.length == 1
+          ? response.equipment.first.equipmentId
+          : '',
+      equipmentName: equipmentNames.join(', '),
+      workedAt: job.hasStartedAt()
+          ? job.startedAt.toDateTime().toLocal()
+          : null,
+      passCount: response.passes.length,
+      attachmentCount: 0,
+    );
+  }
+
+  PassJointContext _contextFrom(work_pb.GetJobResponse response) {
+    final job = response.job;
+    final equipmentNames = [
+      for (final item in response.equipment)
+        if (item.equipmentName.isNotEmpty) item.equipmentName,
+    ];
+    return PassJointContext(
+      commonKey: job.commonKey,
+      projectNo: job.projectNo,
+      unitNo: job.unitNo,
+      itemCode: job.itemCode,
+      itemName: job.itemName,
+      workerName: response.hasWorker() ? response.worker.workerName : '',
+      equipmentName: equipmentNames.join(', '),
     );
   }
 }

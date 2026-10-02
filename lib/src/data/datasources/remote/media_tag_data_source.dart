@@ -21,6 +21,17 @@ class MediaTagDataSource {
   late final WorkServiceClient workService;
   late final AssetServiceClient assetService;
 
+  String resolveContentUrl(String path) {
+    if (path.isEmpty) {
+      return '';
+    }
+    final parsed = Uri.tryParse(path);
+    if (parsed != null && parsed.hasScheme) {
+      return path;
+    }
+    return Uri.parse(baseUrl).resolve(path).toString();
+  }
+
   static String _resolveBaseUrl(String? override) {
     final configured = override ?? dotenv.env['MEDIA_TAG_BASE_URL'];
     return configured == null || configured.trim().isEmpty
