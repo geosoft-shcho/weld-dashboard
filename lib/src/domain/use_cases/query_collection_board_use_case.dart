@@ -21,8 +21,27 @@ class QueryCollectionBoardUseCase {
     required CollectionBoardQuery query,
   }) {
     final sanitized = _sanitize(catalog, query);
-    final options = _drilldownOptions(catalog, sanitized);
-    final snapshotRows = _snapshotRows(catalog, sanitized);
+    final rowsBeforeConnection = _snapshotRows(
+      catalog,
+      sanitized,
+      doesApplyConnectionFilter: false,
+    );
+    final connectionStatuses = [
+      for (final status in ConnectionStatus.values)
+        if (rowsBeforeConnection.any((row) => row.connectionStatus == status))
+          status,
+    ];
+    final narrowed = sanitized.copyWith(
+      connectionStatuses: [
+        for (final status in sanitized.connectionStatuses)
+          if (connectionStatuses.contains(status)) status,
+      ],
+    );
+    final options = _withConnectionStatuses(
+      _drilldownOptions(catalog, narrowed),
+      connectionStatuses,
+    );
+    final snapshotRows = _snapshotRows(catalog, narrowed);
     final kpi = _kpiFrom(snapshotRows);
     var tableRows = _applyCard(snapshotRows, sanitized.selectedKpiCard);
     if (sanitized.doesShowDisconnectedOrErrorOnly) {
@@ -37,13 +56,13 @@ class QueryCollectionBoardUseCase {
     }
     final timeline = _timeline(
       catalog: catalog,
-      query: sanitized,
+      query: narrowed,
       tableRows: tableRows,
       snapshotRows: snapshotRows,
       selectedEquipmentId: selectedEquipmentId,
     );
     return CollectionBoard(
-      query: sanitized,
+      query: narrowed,
       kpi: kpi,
       rows: tableRows,
       options: options,
@@ -82,30 +101,46 @@ class QueryCollectionBoardUseCase {
         zoomHours: _sanitizeZoom(query.zoomHours),
       );
     }
-    final projectIds = query.projectIds
-        .where((id) => catalog.projectById(id) != null)
-        .toList();
-    final withProjects = query.copyWith(projectIds: projectIds);
-    final workerIds = _retainWorkerIds(catalog, withProjects);
-    final withWorkers = withProjects.copyWith(workerIds: workerIds);
-    final lineNames = _retainLineNames(catalog, withWorkers);
-    final withLines = withWorkers.copyWith(lineNames: lineNames);
-    final equipmentIds = _retainEquipmentIds(catalog, withLines);
-    return withLines.copyWith(
-      equipmentIds: equipmentIds,
+    final projectIds = _retainProjectIds(catalog, query);
+    final withProjects = query.copyWith(
+      projectIds: projectIds,
       isUnassignedOnly: false,
+    );
+    final lineNames = _retainLineNames(catalog, withProjects);
+    final withLines = withProjects.copyWith(
+      lineNames: lineNames,
+      workerIds: const [],
+    );
+    final equipmentIds = _retainEquipmentIds(catalog, withLines);
+    final withEquipment = withLines.copyWith(equipmentIds: equipmentIds);
+    final workerIds = _retainWorkerIds(
+      catalog,
+      withEquipment.copyWith(workerIds: query.workerIds),
+    );
+    return withEquipment.copyWith(
+      workerIds: workerIds,
       zoomHours: _sanitizeZoom(query.zoomHours),
     );
+  }
+
+  List<String> _retainProjectIds(
+    CollectionCatalog catalog,
+    CollectionBoardQuery query,
+  ) {
+    if (catalog.assignments.isEmpty) {
+      return query.projectIds
+          .where((id) => catalog.projectById(id) != null)
+          .toList();
+    }
+    final projectIds = _projectIdsOnDate(catalog, query.selectedDate);
+    return query.projectIds.where(projectIds.contains).toList();
   }
 
   List<String> _retainWorkerIds(
     CollectionCatalog catalog,
     CollectionBoardQuery query,
   ) {
-    final options = _drilldownOptions(
-      catalog,
-      query.copyWith(lineNames: const []),
-    );
+    final options = _drilldownOptions(catalog, query);
     return query.workerIds
         .where((id) => options.workers.any((worker) => worker.workerId == id))
         .toList();
@@ -142,6 +177,37 @@ class QueryCollectionBoardUseCase {
     CollectionCatalog catalog,
     CollectionBoardQuery query,
   ) {
+    if (catalog.assignments.isEmpty) {
+      final lineNames = [
+        ...{
+          for (final equipment in catalog.equipments)
+            if (equipment.lineName.isNotEmpty) equipment.lineName,
+        },
+      ]..sort();
+      final equipments = query.lineNames.isEmpty
+          ? catalog.equipments
+          : catalog.equipments
+                .where((item) => query.lineNames.contains(item.lineName))
+                .toList();
+      return CollectionFilterOptions(
+        projects: [
+          for (final project in catalog.projects)
+            (projectId: project.projectId, projectName: project.projectName),
+        ],
+        workers: [
+          for (final worker in catalog.workers)
+            (workerId: worker.workerId, workerName: worker.workerName),
+        ],
+        lineNames: lineNames,
+        equipments: [
+          for (final item in equipments)
+            (
+              equipmentId: item.equipmentId,
+              equipmentName: item.equipmentName,
+            ),
+        ],
+      );
+    }
     final dayAssignments = _assignmentsOnDate(catalog, query.selectedDate);
     if (query.isUnassignedOnly) {
       final equipment = catalog.equipments
@@ -159,13 +225,13 @@ class QueryCollectionBoardUseCase {
                 .where((item) => query.lineNames.contains(item.lineName))
                 .toList();
       final lineNames = [
-        ...{for (final item in equipment) item.lineName},
+        ...{
+          for (final item in equipment)
+            if (item.lineName.isNotEmpty) item.lineName,
+        },
       ];
       return CollectionFilterOptions(
-        projects: [
-          for (final project in catalog.projects)
-            (projectId: project.projectId, projectName: project.projectName),
-        ],
+        projects: _projectsOnDate(catalog, query.selectedDate),
         workers: const [],
         lineNames: lineNames,
         equipments: [
@@ -188,11 +254,11 @@ class QueryCollectionBoardUseCase {
     final availableLineNames = <String>{};
     for (final assignment in filteredAssignments) {
       final equipment = catalog.equipmentById(assignment.equipmentId);
-      if (equipment != null) {
+      if (equipment != null && equipment.lineName.isNotEmpty) {
         availableLineNames.add(equipment.lineName);
       }
     }
-    final lineNames = availableLineNames.toList();
+    final lineNames = availableLineNames.toList()..sort();
 
     if (query.lineNames.isNotEmpty) {
       filteredAssignments = filteredAssignments.where((assignment) {
@@ -222,7 +288,9 @@ class QueryCollectionBoardUseCase {
     for (final assignment in filteredAssignments) {
       if (query.equipmentIds.isEmpty ||
           query.equipmentIds.contains(assignment.equipmentId)) {
-        workerIds.add(assignment.workerId);
+        if (assignment.workerId.isNotEmpty) {
+          workerIds.add(assignment.workerId);
+        }
       }
     }
     final workers = [
@@ -235,16 +303,45 @@ class QueryCollectionBoardUseCase {
     ];
 
     return CollectionFilterOptions(
-      projects: [
-        for (final project in catalog.projects)
-          (projectId: project.projectId, projectName: project.projectName),
-      ],
+      projects: _projectsOnDate(catalog, query.selectedDate),
       workers: workers,
       lineNames: lineNames,
       equipments: [
         for (final item in filteredEquipments)
           (equipmentId: item.equipmentId, equipmentName: item.equipmentName),
       ],
+    );
+  }
+
+  Set<String> _projectIdsOnDate(CollectionCatalog catalog, DateTime day) {
+    return {
+      for (final assignment in _assignmentsOnDate(catalog, day))
+        if (assignment.projectId.isNotEmpty) assignment.projectId,
+    };
+  }
+
+  List<({String projectId, String projectName})> _projectsOnDate(
+    CollectionCatalog catalog,
+    DateTime day,
+  ) {
+    final projectIds = _projectIdsOnDate(catalog, day);
+    return [
+      for (final project in catalog.projects)
+        if (projectIds.contains(project.projectId))
+          (projectId: project.projectId, projectName: project.projectName),
+    ];
+  }
+
+  CollectionFilterOptions _withConnectionStatuses(
+    CollectionFilterOptions options,
+    List<ConnectionStatus> connectionStatuses,
+  ) {
+    return CollectionFilterOptions(
+      projects: options.projects,
+      workers: options.workers,
+      lineNames: options.lineNames,
+      equipments: options.equipments,
+      connectionStatuses: connectionStatuses,
     );
   }
 
@@ -492,11 +589,11 @@ class QueryCollectionBoardUseCase {
             query.selectedDate,
             assignmentInstant,
           );
-    final depth = CollectionResourceDepth.of(query);
     final scopeRows = _applyCard(
       _snapshotRows(catalog, query, doesApplyConnectionFilter: false),
       query.selectedKpiCard,
     );
+    final depth = _depthOf(catalog, query, scopeRows);
     final resources = _resources(
       catalog: catalog,
       query: query,
@@ -529,6 +626,30 @@ class QueryCollectionBoardUseCase {
           ? ''
           : catalog.workerById(assignment.workerId)?.workerName ?? '',
     );
+  }
+
+  CollectionResourceDepth _depthOf(
+    CollectionCatalog catalog,
+    CollectionBoardQuery query,
+    List<CollectionBoardRow> scopeRows,
+  ) {
+    final depth = CollectionResourceDepth.of(query);
+    if (depth != CollectionResourceDepth.project) {
+      return depth;
+    }
+    final doesHaveProject = scopeRows.any((row) {
+      final projectId = _assignmentOnDay(
+        catalog,
+        row.equipmentId,
+        query.selectedDate,
+        query.snapshotAt,
+      )?.projectId;
+      return projectId != null && projectId.isNotEmpty;
+    });
+    if (doesHaveProject) {
+      return CollectionResourceDepth.project;
+    }
+    return CollectionResourceDepth.equipment;
   }
 
   List<CollectionTimelineResource> _resources({
