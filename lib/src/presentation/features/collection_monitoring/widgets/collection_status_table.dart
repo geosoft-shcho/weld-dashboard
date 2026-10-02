@@ -98,7 +98,7 @@ class _CollectionStatusTableState extends State<CollectionStatusTable> {
               const TableRow(
                 children: [
                   _HeaderCell('장비'),
-                  _HeaderCell('연결 상태'),
+                  _HeaderCell('수집'),
                   _HeaderCell('데이터 수신 건수'),
                   _HeaderCell('유실률'),
                   _HeaderCell('시각 동기 상태'),
@@ -110,7 +110,7 @@ class _CollectionStatusTableState extends State<CollectionStatusTable> {
           ),
         const SizedBox(height: 8),
         Text(
-          '전체 장비 ${DashboardFormatters.count(board.kpi.equipmentCount)} · 연결 ${DashboardFormatters.count(board.kpi.connectedCount)} · 단절/오류 ${DashboardFormatters.count(board.kpi.disconnectedCount + board.kpi.errorCount)}',
+          '전체 장비 ${DashboardFormatters.count(board.kpi.equipmentCount)} · 수집 ${DashboardFormatters.count(board.kpi.connectedCount)} · 단절/오류 ${DashboardFormatters.count(board.kpi.disconnectedCount + board.kpi.errorCount)}',
         ),
       ],
     );

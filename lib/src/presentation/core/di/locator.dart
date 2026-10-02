@@ -12,6 +12,7 @@ import '../../../domain/repositories/collection_catalog_repository.dart';
 import '../../../domain/repositories/pass_waveform_repository.dart';
 import '../../../domain/repositories/work_detail_repository.dart';
 import '../../../domain/repositories/work_history_repository.dart';
+import '../../../domain/use_cases/list_collected_nodes_use_case.dart';
 import '../../../domain/use_cases/load_catalog_use_case.dart';
 import '../../../domain/use_cases/load_collection_catalog_use_case.dart';
 import '../../../domain/use_cases/load_pass_waveform_catalog_use_case.dart';
@@ -20,6 +21,7 @@ import '../../../domain/use_cases/load_work_history_catalog_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
 import '../../../domain/use_cases/load_work_history_masters_use_case.dart';
+import '../../../domain/use_cases/present_collection_nodes_use_case.dart';
 import '../../../domain/use_cases/query_collection_board_use_case.dart';
 import '../../../domain/use_cases/query_pass_profile_use_case.dart';
 import '../../../domain/use_cases/query_quality_issue_use_case.dart';
@@ -51,7 +53,9 @@ void setupLocator({required bool pdfrxReady}) {
     () => RemoteCollectionCatalogRepository(locator()),
   );
   locator.registerLazySingleton(() => LoadCollectionCatalogUseCase(locator()));
+  locator.registerLazySingleton(() => ListCollectedNodesUseCase(locator()));
   locator.registerFactory(() => QueryCollectionBoardUseCase());
+  locator.registerFactory(() => PresentCollectionNodesUseCase());
   locator.registerLazySingleton<WorkHistoryRepository>(
     () => RemoteWorkHistoryRepository(locator(), locator()),
   );
@@ -119,8 +123,8 @@ void setupLocator({required bool pdfrxReady}) {
   );
   locator.registerFactory(
     () => CollectionMonitoringViewModel(
-      loadCollectionCatalogUseCase: locator(),
-      queryCollectionBoardUseCase: locator(),
+      listCollectedNodesUseCase: locator(),
+      presentCollectionNodesUseCase: locator(),
       onAfterBoardLoaded: locator<AppCoordinator>().didRefreshDashboardData,
     ),
   );

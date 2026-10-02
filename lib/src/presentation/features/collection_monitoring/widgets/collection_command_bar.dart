@@ -1,8 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+import '../../../../domain/entities/collected_node.dart';
 import '../../../../domain/entities/collection_board.dart';
 import '../../../../domain/entities/collection_board_query.dart';
-import '../../../../domain/entities/connection_status.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/widgets/command_bar_widget_item.dart';
 import '../collection_monitoring_view_model.dart';
@@ -25,7 +25,6 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
   @override
   Widget build(BuildContext context) {
     final query = widget.viewModel.query;
-    final board = widget.board;
     return CommandBarCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,53 +80,70 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
                         ),
                       ),
                     ),
-                    // 프로젝트
                     CommandBarWidgetItem(
                       child: SizedBox(
-                        width: 130,
+                        width: 110,
                         child: InfoLabel(
-                          label: '프로젝트',
-                          child: _buildProjectComboBox(query, board),
+                          label: '보기',
+                          child: _buildViewComboBox(),
                         ),
                       ),
                     ),
-                    // 라인
                     CommandBarWidgetItem(
                       child: SizedBox(
-                        width: 130,
+                        width: 120,
                         child: InfoLabel(
-                          label: '라인',
-                          child: _buildLineComboBox(query, board),
+                          label: '기준',
+                          child: _buildBasisComboBox(),
                         ),
                       ),
                     ),
-                    // 장비
                     CommandBarWidgetItem(
                       child: SizedBox(
-                        width: 150,
+                        width: 160,
                         child: InfoLabel(
                           label: '장비',
-                          child: _buildEquipmentComboBox(query, board),
+                          child: _buildLevelComboBox(
+                            CollectedNodeLevel.equipment,
+                          ),
                         ),
                       ),
                     ),
-                    // 작업자
                     CommandBarWidgetItem(
                       child: SizedBox(
-                        width: 130,
+                        width: 140,
                         child: InfoLabel(
                           label: '작업자',
-                          child: _buildWorkerComboBox(query, board),
+                          child: _buildLevelComboBox(CollectedNodeLevel.worker),
                         ),
                       ),
                     ),
-                    // 연결
                     CommandBarWidgetItem(
                       child: SizedBox(
-                        width: 100,
+                        width: 160,
                         child: InfoLabel(
-                          label: '연결',
-                          child: _buildConnectionComboBox(query),
+                          label: '공사',
+                          child: _buildLevelComboBox(
+                            CollectedNodeLevel.project,
+                          ),
+                        ),
+                      ),
+                    ),
+                    CommandBarWidgetItem(
+                      child: SizedBox(
+                        width: 180,
+                        child: InfoLabel(
+                          label: '작업',
+                          child: _buildLevelComboBox(CollectedNodeLevel.job),
+                        ),
+                      ),
+                    ),
+                    CommandBarWidgetItem(
+                      child: SizedBox(
+                        width: 120,
+                        child: InfoLabel(
+                          label: '패스',
+                          child: _buildLevelComboBox(CollectedNodeLevel.pass),
                         ),
                       ),
                     ),
@@ -262,179 +278,65 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
     );
   }
 
-  Widget _buildProjectComboBox(
-    CollectionBoardQuery query,
-    CollectionBoard? board,
-  ) {
-    final displayValue = query.isUnassignedOnly
-        ? 'unassigned'
-        : (query.projectIds.isEmpty
-              ? 'all'
-              : (query.projectIds.length > 1
-                    ? 'multiple'
-                    : query.projectIds.first));
-
-    return ComboBox<String>(
+  Widget _buildViewComboBox() {
+    return ComboBox<CollectedNodeView>(
       isExpanded: true,
-      value: displayValue,
-      items: [
-        const ComboBoxItem(value: 'all', child: Text('전체')),
+      value: widget.viewModel.collectedView,
+      items: const [
+        ComboBoxItem(value: CollectedNodeView.equipment, child: Text('장비')),
+        ComboBoxItem(value: CollectedNodeView.worker, child: Text('작업자')),
+      ],
+      onChanged: (value) {
+        if (value != null) {
+          widget.viewModel.didSelectCollectedView(value);
+        }
+      },
+    );
+  }
+
+  Widget _buildBasisComboBox() {
+    return ComboBox<CollectedTimeBasis>(
+      isExpanded: true,
+      value: widget.viewModel.timeBasis,
+      items: const [
+        ComboBoxItem(value: CollectedTimeBasis.work, child: Text('작업 구간')),
         ComboBoxItem(
-          value: 'unassigned',
-          child: Text(query.isUnassignedOnly ? '☑ 미배정' : '☐ 미배정'),
+          value: CollectedTimeBasis.collection,
+          child: Text('수집 구간'),
         ),
-        for (final project in board?.options.projects ?? const [])
-          ComboBoxItem(
-            value: project.projectId,
-            child: Text(
-              '${query.projectIds.contains(project.projectId) ? '☑' : '☐'} ${project.projectName}',
-            ),
-          ),
       ],
       onChanged: (value) {
         if (value != null) {
-          if (value == 'all') {
-            widget.viewModel.didToggleUnassigned();
-          } else if (value == 'unassigned') {
-            widget.viewModel.didToggleUnassigned();
-          } else {
-            widget.viewModel.didToggleProject(value);
-          }
+          widget.viewModel.didSelectTimeBasis(value);
         }
       },
     );
   }
 
-  Widget _buildLineComboBox(
-    CollectionBoardQuery query,
-    CollectionBoard? board,
-  ) {
-    final lines = board?.options.lineNames ?? const <String>[];
-    final displayValue = query.lineNames.isEmpty
-        ? 'all'
-        : (query.lineNames.length > 1 ? 'multiple' : query.lineNames.first);
-
+  Widget _buildLevelComboBox(CollectedNodeLevel level) {
+    final nodes = widget.viewModel.nodesForLevel(level);
+    final selected = widget.viewModel.ancestorAt(level);
+    final selectedKey = selected == null ? 'all' : selected.nodeKey;
+    final hasSelected = nodes.any((node) => node.nodeKey == selectedKey);
     return ComboBox<String>(
       isExpanded: true,
-      value: displayValue,
+      value: hasSelected ? selectedKey : 'all',
       items: [
         const ComboBoxItem(value: 'all', child: Text('전체')),
-        for (final lineName in lines)
+        for (final node in nodes)
           ComboBoxItem(
-            value: lineName,
-            child: Text(
-              '${query.lineNames.contains(lineName) ? '☑' : '☐'} $lineName',
-            ),
+            value: node.nodeKey,
+            child: Text(node.label.isEmpty ? '미지정' : node.label),
           ),
       ],
       onChanged: (value) {
-        if (value != null && value != 'all' && value != 'multiple') {
-          widget.viewModel.didToggleLine(value);
-        } else if (value == 'all') {
-          for (final lineName in query.lineNames) {
-            widget.viewModel.didToggleLine(lineName);
-          }
+        if (value == null) {
+          return;
         }
-      },
-    );
-  }
-
-  Widget _buildWorkerComboBox(
-    CollectionBoardQuery query,
-    CollectionBoard? board,
-  ) {
-    final workers = board?.options.workers ?? const [];
-    final displayValue = query.workerIds.isEmpty
-        ? 'all'
-        : (query.workerIds.length > 1 ? 'multiple' : query.workerIds.first);
-
-    return ComboBox<String>(
-      isExpanded: true,
-      value: displayValue,
-      items: [
-        const ComboBoxItem(value: 'all', child: Text('전체')),
-        for (final worker in workers)
-          ComboBoxItem(
-            value: worker.workerId,
-            child: Text(
-              '${query.workerIds.contains(worker.workerId) ? '☑' : '☐'} ${worker.workerName}',
-            ),
-          ),
-      ],
-      onChanged: (value) {
-        if (value != null && value != 'all' && value != 'multiple') {
-          widget.viewModel.didToggleWorker(value);
-        } else if (value == 'all') {
-          for (final workerId in query.workerIds) {
-            widget.viewModel.didToggleWorker(workerId);
-          }
-        }
-      },
-    );
-  }
-
-  Widget _buildEquipmentComboBox(
-    CollectionBoardQuery query,
-    CollectionBoard? board,
-  ) {
-    final equipments = board?.options.equipments ?? const [];
-    final displayValue = query.equipmentIds.isEmpty
-        ? 'all'
-        : (query.equipmentIds.length > 1
-              ? 'multiple'
-              : query.equipmentIds.first);
-
-    return ComboBox<String>(
-      isExpanded: true,
-      value: displayValue,
-      items: [
-        const ComboBoxItem(value: 'all', child: Text('전체')),
-        for (final equipment in equipments)
-          ComboBoxItem(
-            value: equipment.equipmentId,
-            child: Text(
-              '${query.equipmentIds.contains(equipment.equipmentId) ? '☑' : '☐'} ${equipment.equipmentId} ${equipment.equipmentName}',
-            ),
-          ),
-      ],
-      onChanged: (value) {
-        if (value != null && value != 'all' && value != 'multiple') {
-          widget.viewModel.didToggleEquipment(value);
-        } else if (value == 'all') {
-          for (final equipmentId in query.equipmentIds) {
-            widget.viewModel.didToggleEquipment(equipmentId);
-          }
-        }
-      },
-    );
-  }
-
-  Widget _buildConnectionComboBox(CollectionBoardQuery query) {
-    final displayValue = query.connectionStatuses.isEmpty
-        ? null
-        : query.connectionStatuses.first;
-
-    return ComboBox<ConnectionStatus>(
-      isExpanded: true,
-      value: displayValue,
-      items: [
-        const ComboBoxItem<ConnectionStatus>(value: null, child: Text('전체')),
-        for (final status in ConnectionStatus.values)
-          ComboBoxItem(
-            value: status,
-            child: Text(
-              '${query.connectionStatuses.contains(status) ? '☑' : '☐'} ${status.label}',
-            ),
-          ),
-      ],
-      onChanged: (value) {
-        if (value != null) {
-          widget.viewModel.didToggleConnection(value);
-        } else {
-          for (final status in query.connectionStatuses) {
-            widget.viewModel.didToggleConnection(status);
-          }
-        }
+        widget.viewModel.didSelectLevelNode(
+          level,
+          value == 'all' ? null : value,
+        );
       },
     );
   }
@@ -467,7 +369,7 @@ class CollectionFilterChips extends StatelessWidget {
       );
     }
 
-    // 프로젝트
+    // 공사
     if (query.isUnassignedOnly) {
       chips.add(_chip('미배정'));
     } else if (query.projectIds.isNotEmpty) {
@@ -479,7 +381,7 @@ class CollectionFilterChips extends StatelessWidget {
             break;
           }
         }
-        chips.add(_chip('프로젝트 $label'));
+        chips.add(_chip('공사 $label'));
       }
     }
 
@@ -511,10 +413,10 @@ class CollectionFilterChips extends StatelessWidget {
       }
     }
 
-    // 연결
+    // 수집
     if (query.connectionStatuses.isNotEmpty) {
       for (final status in query.connectionStatuses) {
-        chips.add(_chip('연결 ${status.label}'));
+        chips.add(_chip(status.label));
       }
     }
 

@@ -19,7 +19,7 @@ enum ConnectionStatus {
   String get label {
     switch (this) {
       case ConnectionStatus.connected:
-        return '연결';
+        return '수집';
       case ConnectionStatus.disconnected:
         return '단절';
       case ConnectionStatus.error:

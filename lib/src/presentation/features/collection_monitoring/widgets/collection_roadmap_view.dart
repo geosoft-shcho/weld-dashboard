@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../domain/entities/collected_node.dart';
 import '../../../../domain/entities/collection_board.dart';
 import '../../../../domain/entities/collection_event.dart';
 import '../../../../domain/entities/connection_status.dart';
@@ -43,7 +44,9 @@ class CollectionRoadmapView extends StatelessWidget {
             builder: (context, constraints) {
               return _RoadmapCanvas(
                 board: board,
+                nodes: viewModel.nodes,
                 viewportWidth: constraints.maxWidth,
+                viewportHeight: constraints.maxHeight,
                 onSelect: viewModel.didSelectEvent,
               );
             },
@@ -57,12 +60,16 @@ class CollectionRoadmapView extends StatelessWidget {
 class _RoadmapCanvas extends StatelessWidget {
   const _RoadmapCanvas({
     required this.board,
+    required this.nodes,
     required this.viewportWidth,
+    required this.viewportHeight,
     required this.onSelect,
   });
 
   final CollectionBoard board;
+  final List<CollectedNode> nodes;
   final double viewportWidth;
+  final double viewportHeight;
   final void Function(String eventId, String equipmentId) onSelect;
 
   static const double _headerHeight = 28;
@@ -77,8 +84,9 @@ class _RoadmapCanvas extends StatelessWidget {
       query.zoomHours,
     );
     final fitPpm = viewportWidth / winMin;
-    final pixelsPerMinute =
-        query.zoomHours >= 24 ? fitPpm : (zoomPpm > fitPpm ? zoomPpm : fitPpm);
+    final pixelsPerMinute = query.zoomHours >= 24
+        ? fitPpm
+        : (zoomPpm > fitPpm ? zoomPpm : fitPpm);
     final canvasWidth = winMin * pixelsPerMinute;
 
     final milestones = layoutRoadmapMilestones(
@@ -91,76 +99,83 @@ class _RoadmapCanvas extends StatelessWidget {
     final spineTop =
         12 + aboveCount * (ROADMAP_CARD_HEIGHT + ROADMAP_LANE_GAP) + 8;
     final trackHeight =
-        spineTop + 10 + belowCount * (ROADMAP_CARD_HEIGHT + ROADMAP_LANE_GAP) + 16;
+        spineTop +
+        10 +
+        belowCount * (ROADMAP_CARD_HEIGHT + ROADMAP_LANE_GAP) +
+        16;
 
     final nowMinutes = roadmapMinutesFromDayStart(DateTime.now());
     final nowX = nowMinutes >= t0 && nowMinutes <= t1
         ? (nowMinutes - t0) * pixelsPerMinute
         : null;
+    final contentHeight = _headerHeight + trackHeight;
+    final bodyHeight = viewportHeight > contentHeight
+        ? viewportHeight
+        : contentHeight;
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
-      child: ColoredBox(
+    return Container(
+      width: viewportWidth,
+      height: viewportHeight,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
         color: AppTheme.SURFACE,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
         child: SingleChildScrollView(
-          child: SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: SizedBox(
-              width: canvasWidth,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height: _headerHeight,
-                    width: canvasWidth,
-                    child: CustomPaint(
-                      painter: _RoadmapAxisPainter(
-                        rangeStartMinutes: t0,
-                        rangeEndMinutes: t1,
-                        pixelsPerMinute: pixelsPerMinute,
-                        nowX: nowX,
-                      ),
+          child: SizedBox(
+            width: canvasWidth,
+            height: bodyHeight,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                SizedBox(
+                  height: _headerHeight,
+                  child: CustomPaint(
+                    painter: _RoadmapAxisPainter(
+                      rangeStartMinutes: t0,
+                      rangeEndMinutes: t1,
+                      pixelsPerMinute: pixelsPerMinute,
+                      nowX: nowX,
                     ),
                   ),
-                  SizedBox(
-                    height: trackHeight,
-                    width: canvasWidth,
-                    child: Stack(
-                      clipBehavior: Clip.hardEdge,
-                      children: [
+                ),
+                Expanded(
+                  child: Stack(
+                    clipBehavior: Clip.hardEdge,
+                    children: [
+                      Positioned(
+                        left: 0,
+                        right: 0,
+                        top: spineTop,
+                        child: Container(
+                          height: 2,
+                          color: const Color(0xFF3E424A),
+                        ),
+                      ),
+                      if (nowX != null)
                         Positioned(
-                          left: 0,
-                          right: 0,
-                          top: spineTop,
+                          left: nowX - 1,
+                          top: 0,
+                          bottom: 0,
                           child: Container(
-                            height: 2,
-                            color: const Color(0xFF3E424A),
+                            width: 2,
+                            color: AppTheme.ACCENT_STEEL,
                           ),
                         ),
-                        if (nowX != null)
-                          Positioned(
-                            left: nowX - 1,
-                            top: 0,
-                            bottom: 0,
-                            child: Container(
-                              width: 2,
-                              color: AppTheme.ACCENT_STEEL,
-                            ),
-                          ),
-                        for (final m in milestones)
-                          ..._milestoneLayers(
-                            m,
-                            t0: t0,
-                            pixelsPerMinute: pixelsPerMinute,
-                            spineTop: spineTop,
-                            selectedId: board.timeline.selectedEventId,
-                          ),
-                      ],
-                    ),
+                      for (final m in milestones)
+                        ..._milestoneLayers(
+                          m,
+                          t0: t0,
+                          pixelsPerMinute: pixelsPerMinute,
+                          spineTop: spineTop,
+                          selectedId: board.timeline.selectedEventId,
+                        ),
+                    ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -177,7 +192,10 @@ class _RoadmapCanvas extends StatelessWidget {
   }) {
     final left = (m.startMinutes - t0) * pixelsPerMinute;
     final top = m.isAbove
-        ? spineTop - 10 - ROADMAP_CARD_HEIGHT - m.rank * (ROADMAP_CARD_HEIGHT + ROADMAP_LANE_GAP)
+        ? spineTop -
+              10 -
+              ROADMAP_CARD_HEIGHT -
+              m.rank * (ROADMAP_CARD_HEIGHT + ROADMAP_LANE_GAP)
         : spineTop + 12 + m.rank * (ROADMAP_CARD_HEIGHT + ROADMAP_LANE_GAP);
     final stemTop = m.isAbove ? top + ROADMAP_CARD_HEIGHT : spineTop + 2;
     final stemHeight = m.isAbove
@@ -190,7 +208,11 @@ class _RoadmapCanvas extends StatelessWidget {
       Positioned(
         left: left + 2,
         top: stemTop,
-        child: Container(width: 1, height: stemHeight, color: color.withValues(alpha: 0.7)),
+        child: Container(
+          width: 1,
+          height: stemHeight,
+          color: color.withValues(alpha: 0.7),
+        ),
       ),
       Positioned(
         left: left - 3,
@@ -208,6 +230,7 @@ class _RoadmapCanvas extends StatelessWidget {
         height: ROADMAP_CARD_HEIGHT,
         child: _RoadmapCard(
           event: m.event,
+          node: _nodeOf(m.event),
           isSelected: selected,
           onTap: () => onSelect(m.event.eventId, m.event.equipmentId),
         ),
@@ -215,7 +238,19 @@ class _RoadmapCanvas extends StatelessWidget {
     ];
   }
 
-  static int _laneCount(List<RoadmapMilestone> milestones, {required bool above}) {
+  CollectedNode? _nodeOf(CollectionEvent event) {
+    for (final node in nodes) {
+      if (node.nodeKey == event.eventId) {
+        return node;
+      }
+    }
+    return null;
+  }
+
+  static int _laneCount(
+    List<RoadmapMilestone> milestones, {
+    required bool above,
+  }) {
     var count = 1;
     for (final m in milestones) {
       if (m.isAbove == above && m.rank + 1 > count) {
@@ -229,78 +264,142 @@ class _RoadmapCanvas extends StatelessWidget {
 class _RoadmapCard extends StatelessWidget {
   const _RoadmapCard({
     required this.event,
+    required this.node,
     required this.isSelected,
     required this.onTap,
   });
 
   final CollectionEvent event;
+  final CollectedNode? node;
   final bool isSelected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     final color = CollectionEventTimelineMapper.colorOf(event);
-    final label = event.isLossWarning
-        ? '${event.connectionStatus.label} · 유실 ${DashboardFormatters.percent(event.lossRatePercent)}'
-        : event.connectionStatus.label;
-    final offset = event.clockOffsetMs == null ? '' : ' · ${event.clockOffsetMs}ms';
-    final meta =
-        '${DashboardFormatters.clockTime(event.eventAt)} · 수신 ${DashboardFormatters.count(event.receivedCount)} · ${event.timeSyncStatus.label}$offset';
-    final bg = switch (event.connectionStatus) {
-      ConnectionStatus.connected => AppTheme.SURFACE_RAISED,
-      ConnectionStatus.disconnected => const Color(0xFF32363C),
-      ConnectionStatus.error => const Color(0xFF3A2A2A),
-    };
+    final hasFiles = _doesHaveFiles(node, event);
+    final bg = hasFiles ? AppTheme.SURFACE_RAISED : const Color(0xFF32363C);
+    final name = node == null
+        ? event.equipmentName
+        : (node!.label.isEmpty ? '미지정' : node!.label);
 
     return GestureDetector(
       onTap: onTap,
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: event.isLossWarning ? color.withValues(alpha: 0.18) : bg,
+          color: bg,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
             color: isSelected ? AppTheme.ACCENT_STEEL : color,
             width: isSelected ? 2 : 1,
-            style: event.isDesynced ? BorderStyle.none : BorderStyle.solid,
           ),
         ),
-        child: CustomPaint(
-          painter: event.isDesynced
-              ? _DashedBorderPainter(color: isSelected ? AppTheme.ACCENT_STEEL : color)
-              : null,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${event.equipmentId} · ${event.lineName}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10, color: Color(0xFFB0B6C0)),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: AppTheme.INK,
                 ),
-                Text(
-                  label,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w700,
-                    color: AppTheme.INK,
-                  ),
-                ),
-                Text(
-                  meta,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 10, color: Color(0xFFB0B6C0)),
-                ),
-              ],
-            ),
+              ),
+              Text(
+                _summaryOf(node),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10, color: Color(0xFFB0B6C0)),
+              ),
+              Text(
+                _spanOf(node, event),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(fontSize: 10, color: Color(0xFFB0B6C0)),
+              ),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  bool _doesHaveFiles(CollectedNode? node, CollectionEvent event) {
+    if (node == null) {
+      return event.connectionStatus == ConnectionStatus.connected;
+    }
+    return (node.assetCount ?? 0) > 0 || node.contentUrl.isNotEmpty;
+  }
+
+  String _summaryOf(CollectedNode? node) {
+    if (node == null) {
+      return '—';
+    }
+    final parts = <String>[
+      if (node.assetCount != null)
+        '파일 ${DashboardFormatters.count(node.assetCount!)}',
+      if (node.totalSizeBytes != null) _sizeLabel(node.totalSizeBytes!),
+      if (node.jobCount != null)
+        '작업 ${DashboardFormatters.count(node.jobCount!)}',
+      if (node.workDurationSeconds != null)
+        _workDurationLabel(node.workDurationSeconds!),
+    ];
+    if (parts.isEmpty && node.contentUrl.isNotEmpty) {
+      return node.contentUrl;
+    }
+    return parts.isEmpty ? '—' : parts.join(' · ');
+  }
+
+  String _spanOf(CollectedNode? node, CollectionEvent event) {
+    final startedAt = node?.startedAt ?? event.eventAt;
+    final endedAt = node?.endedAt;
+    if (endedAt == null) {
+      return _stamp(startedAt);
+    }
+    return '${_stamp(startedAt)}–${_stamp(endedAt)}';
+  }
+
+  String _stamp(DateTime value) {
+    final month = value.month.toString().padLeft(2, '0');
+    final day = value.day.toString().padLeft(2, '0');
+    final hour = value.hour.toString().padLeft(2, '0');
+    final minute = value.minute.toString().padLeft(2, '0');
+    return '$month/$day $hour:$minute';
+  }
+
+  String _sizeLabel(int bytes) {
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    var size = bytes.toDouble();
+    var unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex += 1;
+    }
+    if (unitIndex == 0) {
+      return '${DashboardFormatters.count(bytes)} B';
+    }
+    final digits = size >= 100 ? 0 : 1;
+    return '${size.toStringAsFixed(digits)} ${units[unitIndex]}';
+  }
+
+  String _workDurationLabel(int seconds) {
+    if (seconds < 60) {
+      return '$seconds초';
+    }
+    final days = seconds ~/ 86400;
+    final hours = (seconds % 86400) ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    if (days > 0) {
+      return '$days일 $hours시간';
+    }
+    if (hours > 0) {
+      return '$hours시간 $minutes분';
+    }
+    return '$minutes분';
   }
 }
 
@@ -322,7 +421,11 @@ class _RoadmapAxisPainter extends CustomPainter {
     final line = Paint()
       ..color = const Color(0xFF3E424A)
       ..strokeWidth = 1;
-    canvas.drawLine(Offset(0, size.height - 1), Offset(size.width, size.height - 1), line);
+    canvas.drawLine(
+      Offset(0, size.height - 1),
+      Offset(size.width, size.height - 1),
+      line,
+    );
 
     final textStyle = const TextStyle(color: Color(0xFFB0B6C0), fontSize: 10);
     final step = rangeEndMinutes - rangeStartMinutes > 6 * 60 ? 60 : 30;
@@ -332,7 +435,8 @@ class _RoadmapAxisPainter extends CustomPainter {
       canvas.drawLine(Offset(x, size.height - 6), Offset(x, size.height), line);
       final h = m ~/ 60;
       final min = m % 60;
-      final label = '${h.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')}';
+      final label =
+          '${h.toString().padLeft(2, '0')}:${min.toString().padLeft(2, '0')}';
       final tp = TextPainter(
         text: TextSpan(text: label, style: textStyle),
         textDirection: TextDirection.ltr,
@@ -354,36 +458,5 @@ class _RoadmapAxisPainter extends CustomPainter {
         oldDelegate.rangeEndMinutes != rangeEndMinutes ||
         oldDelegate.pixelsPerMinute != pixelsPerMinute ||
         oldDelegate.nowX != nowX;
-  }
-}
-
-class _DashedBorderPainter extends CustomPainter {
-  const _DashedBorderPainter({required this.color});
-
-  final Color color;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
-    final path = Path()
-      ..addRRect(
-        RRect.fromRectAndRadius(Offset.zero & size, const Radius.circular(4)),
-      );
-    for (final metric in path.computeMetrics()) {
-      var distance = 0.0;
-      while (distance < metric.length) {
-        final next = distance + 4;
-        canvas.drawPath(metric.extractPath(distance, next.clamp(0, metric.length)), paint);
-        distance += 8;
-      }
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _DashedBorderPainter oldDelegate) {
-    return oldDelegate.color != color;
   }
 }
