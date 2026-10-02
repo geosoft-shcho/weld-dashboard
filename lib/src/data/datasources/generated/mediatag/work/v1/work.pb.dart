@@ -848,6 +848,251 @@ class ListProjectsResponse extends $pb.GeneratedMessage {
   $pb.PbList<Project> get projects => $_getList(0);
 }
 
+class ListJobFiltersRequest extends $pb.GeneratedMessage {
+  factory ListJobFiltersRequest() => create();
+
+  ListJobFiltersRequest._();
+
+  factory ListJobFiltersRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListJobFiltersRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListJobFiltersRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListJobFiltersRequest clone() =>
+      ListJobFiltersRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListJobFiltersRequest copyWith(
+          void Function(ListJobFiltersRequest) updates) =>
+      super.copyWith((message) => updates(message as ListJobFiltersRequest))
+          as ListJobFiltersRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListJobFiltersRequest create() => ListJobFiltersRequest._();
+  @$core.override
+  ListJobFiltersRequest createEmptyInstance() => create();
+  static $pb.PbList<ListJobFiltersRequest> createRepeated() =>
+      $pb.PbList<ListJobFiltersRequest>();
+  @$core.pragma('dart2js:noInline')
+  static ListJobFiltersRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListJobFiltersRequest>(create);
+  static ListJobFiltersRequest? _defaultInstance;
+}
+
+/// 드롭다운 값. 고른 값은 ListJobs의 project_no·unit_no·item_code·worker_id·equipment_id에 넣는다.
+class ListJobFiltersResponse extends $pb.GeneratedMessage {
+  factory ListJobFiltersResponse({
+    $core.Iterable<ProjectFilter>? projects,
+    $core.Iterable<Worker>? workers,
+    $core.Iterable<Equipment>? equipment,
+  }) {
+    final result = create();
+    if (projects != null) result.projects.addAll(projects);
+    if (workers != null) result.workers.addAll(workers);
+    if (equipment != null) result.equipment.addAll(equipment);
+    return result;
+  }
+
+  ListJobFiltersResponse._();
+
+  factory ListJobFiltersResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListJobFiltersResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListJobFiltersResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..pc<ProjectFilter>(
+        1, _omitFieldNames ? '' : 'projects', $pb.PbFieldType.PM,
+        subBuilder: ProjectFilter.create)
+    ..pc<Worker>(2, _omitFieldNames ? '' : 'workers', $pb.PbFieldType.PM,
+        subBuilder: Worker.create)
+    ..pc<Equipment>(3, _omitFieldNames ? '' : 'equipment', $pb.PbFieldType.PM,
+        subBuilder: Equipment.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListJobFiltersResponse clone() =>
+      ListJobFiltersResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListJobFiltersResponse copyWith(
+          void Function(ListJobFiltersResponse) updates) =>
+      super.copyWith((message) => updates(message as ListJobFiltersResponse))
+          as ListJobFiltersResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListJobFiltersResponse create() => ListJobFiltersResponse._();
+  @$core.override
+  ListJobFiltersResponse createEmptyInstance() => create();
+  static $pb.PbList<ListJobFiltersResponse> createRepeated() =>
+      $pb.PbList<ListJobFiltersResponse>();
+  @$core.pragma('dart2js:noInline')
+  static ListJobFiltersResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListJobFiltersResponse>(create);
+  static ListJobFiltersResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<ProjectFilter> get projects => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<Worker> get workers => $_getList(1);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<Equipment> get equipment => $_getList(2);
+}
+
+/// 공사 하나와 그 공사 작업(job)에 실제로 쓰인 호기·품목. 호기·품목은 따로 저장하는 표가 없고 조회할 때 작업에서
+/// 모은다 — 작업이 없는 호기·품목은 나오지 않는다.
+class ProjectFilter extends $pb.GeneratedMessage {
+  factory ProjectFilter({
+    Project? project,
+    $core.Iterable<ProjectUnit>? units,
+  }) {
+    final result = create();
+    if (project != null) result.project = project;
+    if (units != null) result.units.addAll(units);
+    return result;
+  }
+
+  ProjectFilter._();
+
+  factory ProjectFilter.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ProjectFilter.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ProjectFilter',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<Project>(1, _omitFieldNames ? '' : 'project',
+        subBuilder: Project.create)
+    ..pc<ProjectUnit>(2, _omitFieldNames ? '' : 'units', $pb.PbFieldType.PM,
+        subBuilder: ProjectUnit.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProjectFilter clone() => ProjectFilter()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProjectFilter copyWith(void Function(ProjectFilter) updates) =>
+      super.copyWith((message) => updates(message as ProjectFilter))
+          as ProjectFilter;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ProjectFilter create() => ProjectFilter._();
+  @$core.override
+  ProjectFilter createEmptyInstance() => create();
+  static $pb.PbList<ProjectFilter> createRepeated() =>
+      $pb.PbList<ProjectFilter>();
+  @$core.pragma('dart2js:noInline')
+  static ProjectFilter getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ProjectFilter>(create);
+  static ProjectFilter? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Project get project => $_getN(0);
+  @$pb.TagNumber(1)
+  set project(Project value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasProject() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearProject() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Project ensureProject() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<ProjectUnit> get units => $_getList(1);
+}
+
+/// 품목은 호기 아래에 묶는다 — 호기마다 품목이 다르다(TP129 1호기엔 LD-D가 없음).
+class ProjectUnit extends $pb.GeneratedMessage {
+  factory ProjectUnit({
+    $core.String? unitNo,
+    $core.Iterable<$core.String>? itemCodes,
+  }) {
+    final result = create();
+    if (unitNo != null) result.unitNo = unitNo;
+    if (itemCodes != null) result.itemCodes.addAll(itemCodes);
+    return result;
+  }
+
+  ProjectUnit._();
+
+  factory ProjectUnit.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ProjectUnit.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ProjectUnit',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'unitNo')
+    ..pPS(2, _omitFieldNames ? '' : 'itemCodes')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProjectUnit clone() => ProjectUnit()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProjectUnit copyWith(void Function(ProjectUnit) updates) =>
+      super.copyWith((message) => updates(message as ProjectUnit))
+          as ProjectUnit;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ProjectUnit create() => ProjectUnit._();
+  @$core.override
+  ProjectUnit createEmptyInstance() => create();
+  static $pb.PbList<ProjectUnit> createRepeated() => $pb.PbList<ProjectUnit>();
+  @$core.pragma('dart2js:noInline')
+  static ProjectUnit getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ProjectUnit>(create);
+  static ProjectUnit? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get unitNo => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set unitNo($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasUnitNo() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearUnitNo() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$core.String> get itemCodes => $_getList(1);
+}
+
 class ListWorkersRequest extends $pb.GeneratedMessage {
   factory ListWorkersRequest() => create();
 
@@ -1050,6 +1295,7 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     $0.Timestamp? startedTo,
     $core.int? pageSize,
     $core.String? pageToken,
+    $core.String? unitNo,
   }) {
     final result = create();
     if (projectNo != null) result.projectNo = projectNo;
@@ -1062,6 +1308,7 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     if (startedTo != null) result.startedTo = startedTo;
     if (pageSize != null) result.pageSize = pageSize;
     if (pageToken != null) result.pageToken = pageToken;
+    if (unitNo != null) result.unitNo = unitNo;
     return result;
   }
 
@@ -1091,6 +1338,7 @@ class ListJobsRequest extends $pb.GeneratedMessage {
         subBuilder: $0.Timestamp.create)
     ..a<$core.int>(9, _omitFieldNames ? '' : 'pageSize', $pb.PbFieldType.O3)
     ..aOS(10, _omitFieldNames ? '' : 'pageToken')
+    ..aOS(11, _omitFieldNames ? '' : 'unitNo')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1207,6 +1455,15 @@ class ListJobsRequest extends $pb.GeneratedMessage {
   $core.bool hasPageToken() => $_has(9);
   @$pb.TagNumber(10)
   void clearPageToken() => $_clearField(10);
+
+  @$pb.TagNumber(11)
+  $core.String get unitNo => $_getSZ(10);
+  @$pb.TagNumber(11)
+  set unitNo($core.String value) => $_setString(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasUnitNo() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearUnitNo() => $_clearField(11);
 }
 
 class ListJobsResponse extends $pb.GeneratedMessage {
@@ -2493,6 +2750,12 @@ class WorkServiceApi {
           $pb.ClientContext? ctx, ListEquipmentRequest request) =>
       _client.invoke<ListEquipmentResponse>(ctx, 'WorkService', 'ListEquipment',
           request, ListEquipmentResponse());
+
+  /// 작업 목록(ListJobs) 필터의 드롭다운 값을 한 번에: 공사(호기·품목 포함)·작업자·장비.
+  $async.Future<ListJobFiltersResponse> listJobFilters(
+          $pb.ClientContext? ctx, ListJobFiltersRequest request) =>
+      _client.invoke<ListJobFiltersResponse>(ctx, 'WorkService',
+          'ListJobFilters', request, ListJobFiltersResponse());
 
   /// 작업 목록. 행마다 표시용 이름·개수를 붙여 준다(행별 추가 조회 불필요).
   $async.Future<ListJobsResponse> listJobs(

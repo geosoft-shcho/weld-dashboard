@@ -15,6 +15,9 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-02  geosoft-Server: ListJobFilters — 작업 목록 필터의 드롭다운 값(공사·호기·품목·작업자·장비)을 한 번에.
+//                Project.units는 여기로 옮김(공사 목록은 원래대로)
+//   2026-10-01  geosoft-Server: ListJobs unit_no 필터 — 작업지시 대신 공사 → 호기 → 품목으로 고른다
 //   2026-09-30  geosoft-Server: CollectionNode의 Job·Pass에 started_at·ended_at 추가
 //   2026-09-29  geosoft-Server: 최초 정의 — tacit-tag Project(편집 공간)에서 공사(Project)를 분리
 //   2026-09-29  geosoft-Server: dashboard v1 대체 — ListWorkers·ListEquipment 추가, ListJobs 필터
@@ -41,6 +44,8 @@ service WorkService {
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
   rpc ListWorkers(ListWorkersRequest) returns (ListWorkersResponse);
   rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse);
+  // 작업 목록(ListJobs) 필터의 드롭다운 값을 한 번에: 공사(호기·품목 포함)·작업자·장비.
+  rpc ListJobFilters(ListJobFiltersRequest) returns (ListJobFiltersResponse);
   // 작업 목록. 행마다 표시용 이름·개수를 붙여 준다(행별 추가 조회 불필요).
   rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
   // 작업 + 패스 + 작업자 + 쓰인 장비
@@ -121,6 +126,28 @@ message ListProjectsResponse {
   repeated Project projects = 1;
 }
 
+message ListJobFiltersRequest {}
+
+// 드롭다운 값. 고른 값은 ListJobs의 project_no·unit_no·item_code·worker_id·equipment_id에 넣는다.
+message ListJobFiltersResponse {
+  repeated ProjectFilter projects = 1; // project_no 오름차순
+  repeated Worker workers = 2;         // ListWorkers와 같은 목록
+  repeated Equipment equipment = 3;    // ListEquipment와 같은 목록
+}
+
+// 공사 하나와 그 공사 작업(job)에 실제로 쓰인 호기·품목. 호기·품목은 따로 저장하는 표가 없고 조회할 때 작업에서
+// 모은다 — 작업이 없는 호기·품목은 나오지 않는다.
+message ProjectFilter {
+  Project project = 1;
+  repeated ProjectUnit units = 2;  // unit_no 오름차순
+}
+
+// 품목은 호기 아래에 묶는다 — 호기마다 품목이 다르다(TP129 1호기엔 LD-D가 없음).
+message ProjectUnit {
+  string unit_no = 1;              // 정규화값 '05'. 호기 구분이 없는 공사는 '00' 하나
+  repeated string item_codes = 2;  // 그 호기 작업의 품목(정규화값), 오름차순
+}
+
 message ListWorkersRequest {}
 
 message ListWorkersResponse {
@@ -138,6 +165,7 @@ message ListJobsRequest {
   string project_no = 1;
   string common_key = 2;     // 부분 일치
   string item_code = 3;      // 정규화값 'TFPB'
+  string unit_no = 11;       // 호기, 정규화값 '05'
   string worker_id = 4;
   bool master_only = 5;      // 명장(worker.is_master) 작업만 — s3 비교 대상 고르기
   string equipment_id = 6;   // 그 장비의 Asset이 첨부된 작업

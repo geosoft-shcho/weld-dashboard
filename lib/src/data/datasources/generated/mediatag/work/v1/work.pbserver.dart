@@ -27,6 +27,8 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $3.ListWorkersRequest request);
   $async.Future<$3.ListEquipmentResponse> listEquipment(
       $pb.ServerContext ctx, $3.ListEquipmentRequest request);
+  $async.Future<$3.ListJobFiltersResponse> listJobFilters(
+      $pb.ServerContext ctx, $3.ListJobFiltersRequest request);
   $async.Future<$3.ListJobsResponse> listJobs(
       $pb.ServerContext ctx, $3.ListJobsRequest request);
   $async.Future<$3.GetJobResponse> getJob(
@@ -44,6 +46,8 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
         return $3.ListWorkersRequest();
       case 'ListEquipment':
         return $3.ListEquipmentRequest();
+      case 'ListJobFilters':
+        return $3.ListJobFiltersRequest();
       case 'ListJobs':
         return $3.ListJobsRequest();
       case 'GetJob':
@@ -66,6 +70,8 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
         return listWorkers(ctx, request as $3.ListWorkersRequest);
       case 'ListEquipment':
         return listEquipment(ctx, request as $3.ListEquipmentRequest);
+      case 'ListJobFilters':
+        return listJobFilters(ctx, request as $3.ListJobFiltersRequest);
       case 'ListJobs':
         return listJobs(ctx, request as $3.ListJobsRequest);
       case 'GetJob':

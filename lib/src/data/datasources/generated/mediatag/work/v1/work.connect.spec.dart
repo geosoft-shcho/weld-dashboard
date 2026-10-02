@@ -32,6 +32,14 @@ abstract final class WorkService {
     mediatagworkv1work.ListEquipmentResponse.new,
   );
 
+  /// 작업 목록(ListJobs) 필터의 드롭다운 값을 한 번에: 공사(호기·품목 포함)·작업자·장비.
+  static const listJobFilters = connect.Spec(
+    '/$name/ListJobFilters',
+    connect.StreamType.unary,
+    mediatagworkv1work.ListJobFiltersRequest.new,
+    mediatagworkv1work.ListJobFiltersResponse.new,
+  );
+
   /// 작업 목록. 행마다 표시용 이름·개수를 붙여 준다(행별 추가 조회 불필요).
   static const listJobs = connect.Spec(
     '/$name/ListJobs',

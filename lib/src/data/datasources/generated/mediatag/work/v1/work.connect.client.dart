@@ -60,6 +60,24 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
+  /// 작업 목록(ListJobs) 필터의 드롭다운 값을 한 번에: 공사(호기·품목 포함)·작업자·장비.
+  Future<mediatagworkv1work.ListJobFiltersResponse> listJobFilters(
+    mediatagworkv1work.ListJobFiltersRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.WorkService.listJobFilters,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
   /// 작업 목록. 행마다 표시용 이름·개수를 붙여 준다(행별 추가 조회 불필요).
   Future<mediatagworkv1work.ListJobsResponse> listJobs(
     mediatagworkv1work.ListJobsRequest input, {
