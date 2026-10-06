@@ -22,6 +22,7 @@ class WaveformChannelCharts extends StatelessWidget {
     this.selectedTimeMs,
     this.onBandTap,
     this.onTimeTapMs,
+    this.doesStartAtZero = false,
   });
 
   final WaveformSeriesBundle series;
@@ -33,6 +34,7 @@ class WaveformChannelCharts extends StatelessWidget {
   final int? selectedTimeMs;
   final BandTapHandler? onBandTap;
   final WaveformTimeTapHandler? onTimeTapMs;
+  final bool doesStartAtZero;
 
   @override
   Widget build(BuildContext context) {
@@ -51,6 +53,7 @@ class WaveformChannelCharts extends StatelessWidget {
             selectedTimeMs: selectedTimeMs,
             onBandTap: onBandTap,
             onTimeTapMs: onTimeTapMs,
+            doesStartAtZero: doesStartAtZero,
             valueOf: (point) => point.currentA,
           ),
           const SizedBox(height: 12),
@@ -65,6 +68,7 @@ class WaveformChannelCharts extends StatelessWidget {
             selectedTimeMs: selectedTimeMs,
             onBandTap: onBandTap,
             onTimeTapMs: onTimeTapMs,
+            doesStartAtZero: doesStartAtZero,
             valueOf: (point) => point.voltageV,
           ),
           const SizedBox(height: 12),
@@ -79,6 +83,7 @@ class WaveformChannelCharts extends StatelessWidget {
             selectedTimeMs: selectedTimeMs,
             onBandTap: onBandTap,
             onTimeTapMs: onTimeTapMs,
+            doesStartAtZero: doesStartAtZero,
             valueOf: (point) => point.speedValue,
           ),
           const SizedBox(height: 12),
@@ -93,6 +98,7 @@ class WaveformChannelCharts extends StatelessWidget {
             selectedTimeMs: selectedTimeMs,
             onBandTap: onBandTap,
             onTimeTapMs: onTimeTapMs,
+            doesStartAtZero: doesStartAtZero,
             valueOf: (point) => point.rotationSpeedRpm,
           ),
         ],
@@ -114,6 +120,7 @@ class _WaveformChannelChart extends StatelessWidget {
     this.selectedTimeMs,
     this.onBandTap,
     this.onTimeTapMs,
+    this.doesStartAtZero = false,
   });
 
   final String title;
@@ -127,6 +134,7 @@ class _WaveformChannelChart extends StatelessWidget {
   final double? Function(WaveformPoint point) valueOf;
   final BandTapHandler? onBandTap;
   final WaveformTimeTapHandler? onTimeTapMs;
+  final bool doesStartAtZero;
 
   @override
   Widget build(BuildContext context) {
@@ -299,6 +307,9 @@ class _WaveformChannelChart extends StatelessWidget {
       if (spot.x < min) {
         min = spot.x;
       }
+    }
+    if (doesStartAtZero && min >= 0) {
+      return 0;
     }
     return min;
   }

@@ -488,6 +488,7 @@ class _QualityChartSection extends StatelessWidget {
       selectedTimeMs: snapshot.selectedTimeMs,
       onBandTap: viewModel.didTapBand,
       onTimeTapMs: viewModel.didTapWaveformTime,
+      doesStartAtZero: true,
     );
   }
 }
