@@ -306,6 +306,7 @@ class Job extends $pb.GeneratedMessage {
     $core.String? workerId,
     $0.Timestamp? startedAt,
     $0.Timestamp? endedAt,
+    $core.String? jointNo,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
@@ -323,6 +324,7 @@ class Job extends $pb.GeneratedMessage {
     if (workerId != null) result.workerId = workerId;
     if (startedAt != null) result.startedAt = startedAt;
     if (endedAt != null) result.endedAt = endedAt;
+    if (jointNo != null) result.jointNo = jointNo;
     return result;
   }
 
@@ -359,6 +361,7 @@ class Job extends $pb.GeneratedMessage {
         subBuilder: $0.Timestamp.create)
     ..aOM<$0.Timestamp>(15, _omitFieldNames ? '' : 'endedAt',
         subBuilder: $0.Timestamp.create)
+    ..aOS(16, _omitFieldNames ? '' : 'jointNo')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -518,6 +521,17 @@ class Job extends $pb.GeneratedMessage {
   void clearEndedAt() => $_clearField(15);
   @$pb.TagNumber(15)
   $0.Timestamp ensureEndedAt() => $_ensure(14);
+
+  /// 이음부 번호('DGT-ELA-01', 성적서 UT 표의 확인번호). 작업을 이음부(원주 이음 한 곳) 단위로 만든 경우에만 있다 —
+  /// 비면 품목 전체 작업. 같은 common_key(품목) 아래에 이음부마다 작업이 하나씩 있다.
+  @$pb.TagNumber(16)
+  $core.String get jointNo => $_getSZ(15);
+  @$pb.TagNumber(16)
+  set jointNo($core.String value) => $_setString(15, value);
+  @$pb.TagNumber(16)
+  $core.bool hasJointNo() => $_has(15);
+  @$pb.TagNumber(16)
+  void clearJointNo() => $_clearField(16);
 }
 
 class Pass extends $pb.GeneratedMessage {
@@ -1035,10 +1049,12 @@ class ProjectUnit extends $pb.GeneratedMessage {
   factory ProjectUnit({
     $core.String? unitNo,
     $core.Iterable<$core.String>? itemCodes,
+    $core.Iterable<ProjectItem>? items,
   }) {
     final result = create();
     if (unitNo != null) result.unitNo = unitNo;
     if (itemCodes != null) result.itemCodes.addAll(itemCodes);
+    if (items != null) result.items.addAll(items);
     return result;
   }
 
@@ -1058,6 +1074,8 @@ class ProjectUnit extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'unitNo')
     ..pPS(2, _omitFieldNames ? '' : 'itemCodes')
+    ..pc<ProjectItem>(3, _omitFieldNames ? '' : 'items', $pb.PbFieldType.PM,
+        subBuilder: ProjectItem.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1091,6 +1109,143 @@ class ProjectUnit extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(2)
   $pb.PbList<$core.String> get itemCodes => $_getList(1);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<ProjectItem> get items => $_getList(2);
+}
+
+/// 품목 하나와 그 품목 작업의 이음부. 이음부 단위 작업이 없는 품목은 joint_nos가 비어 있다.
+class ProjectItem extends $pb.GeneratedMessage {
+  factory ProjectItem({
+    $core.String? itemCode,
+    $core.Iterable<$core.String>? jointNos,
+    $core.Iterable<ProjectJoint>? joints,
+  }) {
+    final result = create();
+    if (itemCode != null) result.itemCode = itemCode;
+    if (jointNos != null) result.jointNos.addAll(jointNos);
+    if (joints != null) result.joints.addAll(joints);
+    return result;
+  }
+
+  ProjectItem._();
+
+  factory ProjectItem.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ProjectItem.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ProjectItem',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'itemCode')
+    ..pPS(2, _omitFieldNames ? '' : 'jointNos')
+    ..pc<ProjectJoint>(3, _omitFieldNames ? '' : 'joints', $pb.PbFieldType.PM,
+        subBuilder: ProjectJoint.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProjectItem clone() => ProjectItem()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProjectItem copyWith(void Function(ProjectItem) updates) =>
+      super.copyWith((message) => updates(message as ProjectItem))
+          as ProjectItem;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ProjectItem create() => ProjectItem._();
+  @$core.override
+  ProjectItem createEmptyInstance() => create();
+  static $pb.PbList<ProjectItem> createRepeated() => $pb.PbList<ProjectItem>();
+  @$core.pragma('dart2js:noInline')
+  static ProjectItem getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ProjectItem>(create);
+  static ProjectItem? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get itemCode => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set itemCode($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasItemCode() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearItemCode() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$core.String> get jointNos => $_getList(1);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<ProjectJoint> get joints => $_getList(2);
+}
+
+/// 이음부 하나와 그 이음부 작업들에 있는 패스 번호. 패스가 없는 작업(성적서에서 만든 TP129 등)은 pass_nos가 비어 있다.
+class ProjectJoint extends $pb.GeneratedMessage {
+  factory ProjectJoint({
+    $core.String? jointNo,
+    $core.Iterable<$core.int>? passNos,
+  }) {
+    final result = create();
+    if (jointNo != null) result.jointNo = jointNo;
+    if (passNos != null) result.passNos.addAll(passNos);
+    return result;
+  }
+
+  ProjectJoint._();
+
+  factory ProjectJoint.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ProjectJoint.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ProjectJoint',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'jointNo')
+    ..p<$core.int>(2, _omitFieldNames ? '' : 'passNos', $pb.PbFieldType.K3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProjectJoint clone() => ProjectJoint()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ProjectJoint copyWith(void Function(ProjectJoint) updates) =>
+      super.copyWith((message) => updates(message as ProjectJoint))
+          as ProjectJoint;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ProjectJoint create() => ProjectJoint._();
+  @$core.override
+  ProjectJoint createEmptyInstance() => create();
+  static $pb.PbList<ProjectJoint> createRepeated() =>
+      $pb.PbList<ProjectJoint>();
+  @$core.pragma('dart2js:noInline')
+  static ProjectJoint getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ProjectJoint>(create);
+  static ProjectJoint? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get jointNo => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set jointNo($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasJointNo() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearJointNo() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$core.int> get passNos => $_getList(1);
 }
 
 class ListWorkersRequest extends $pb.GeneratedMessage {
@@ -1296,6 +1451,8 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     $core.int? pageSize,
     $core.String? pageToken,
     $core.String? unitNo,
+    $core.String? jointNo,
+    $core.int? passNo,
   }) {
     final result = create();
     if (projectNo != null) result.projectNo = projectNo;
@@ -1309,6 +1466,8 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     if (pageSize != null) result.pageSize = pageSize;
     if (pageToken != null) result.pageToken = pageToken;
     if (unitNo != null) result.unitNo = unitNo;
+    if (jointNo != null) result.jointNo = jointNo;
+    if (passNo != null) result.passNo = passNo;
     return result;
   }
 
@@ -1339,6 +1498,8 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     ..a<$core.int>(9, _omitFieldNames ? '' : 'pageSize', $pb.PbFieldType.O3)
     ..aOS(10, _omitFieldNames ? '' : 'pageToken')
     ..aOS(11, _omitFieldNames ? '' : 'unitNo')
+    ..aOS(12, _omitFieldNames ? '' : 'jointNo')
+    ..a<$core.int>(13, _omitFieldNames ? '' : 'passNo', $pb.PbFieldType.O3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1464,6 +1625,24 @@ class ListJobsRequest extends $pb.GeneratedMessage {
   $core.bool hasUnitNo() => $_has(10);
   @$pb.TagNumber(11)
   void clearUnitNo() => $_clearField(11);
+
+  @$pb.TagNumber(12)
+  $core.String get jointNo => $_getSZ(11);
+  @$pb.TagNumber(12)
+  set jointNo($core.String value) => $_setString(11, value);
+  @$pb.TagNumber(12)
+  $core.bool hasJointNo() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearJointNo() => $_clearField(12);
+
+  @$pb.TagNumber(13)
+  $core.int get passNo => $_getIZ(12);
+  @$pb.TagNumber(13)
+  set passNo($core.int value) => $_setSignedInt32(12, value);
+  @$pb.TagNumber(13)
+  $core.bool hasPassNo() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearPassNo() => $_clearField(13);
 }
 
 class ListJobsResponse extends $pb.GeneratedMessage {
@@ -1690,6 +1869,7 @@ class GetJobResponse extends $pb.GeneratedMessage {
 /// level 단계의 ID가 비어 있으면 그 단계가 "미지정" 노드다(Pass 단계면 "작업 공용").
 ///   - 장비 미지정: equipment_id 없는 Asset
 ///   - 공사 미지정: project_no 없는 Job, 또는 (장비별) 작업에 첨부 안 된 Asset
+///   - 품목 미지정: common_key 없는 Job, 또는 (장비별) 작업에 첨부 안 된 Asset
 ///   - 작업 미지정: (장비별) 작업에 첨부 안 된 Asset. 자식은 Pass 없이 바로 Asset
 ///   - 작업 공용:   job_asset.pass_id가 빈 첨부
 /// 작업자별 보기에는 작업에 첨부 안 된 Asset이 나오지 않는다(작업자는 작업을 거쳐 안다).
@@ -1702,6 +1882,7 @@ class CollectionPath extends $pb.GeneratedMessage {
     $core.String? projectNo,
     $core.String? jobId,
     $core.String? passId,
+    $core.String? commonKey,
   }) {
     final result = create();
     if (view != null) result.view = view;
@@ -1711,6 +1892,7 @@ class CollectionPath extends $pb.GeneratedMessage {
     if (projectNo != null) result.projectNo = projectNo;
     if (jobId != null) result.jobId = jobId;
     if (passId != null) result.passId = passId;
+    if (commonKey != null) result.commonKey = commonKey;
     return result;
   }
 
@@ -1741,6 +1923,7 @@ class CollectionPath extends $pb.GeneratedMessage {
     ..aOS(5, _omitFieldNames ? '' : 'projectNo')
     ..aOS(6, _omitFieldNames ? '' : 'jobId')
     ..aOS(7, _omitFieldNames ? '' : 'passId')
+    ..aOS(8, _omitFieldNames ? '' : 'commonKey')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1826,6 +2009,15 @@ class CollectionPath extends $pb.GeneratedMessage {
   $core.bool hasPassId() => $_has(6);
   @$pb.TagNumber(7)
   void clearPassId() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.String get commonKey => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set commonKey($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasCommonKey() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearCommonKey() => $_clearField(8);
 }
 
 class ListCollectionNodesRequest extends $pb.GeneratedMessage {

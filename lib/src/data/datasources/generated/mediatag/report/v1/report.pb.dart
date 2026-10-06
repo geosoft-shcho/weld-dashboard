@@ -39,6 +39,7 @@ class ReportSet extends $pb.GeneratedMessage {
     $core.Iterable<SectionSummary>? sections,
     $core.String? splitAssetId,
     $core.int? reviewCount,
+    $core.String? commonKey,
   }) {
     final result = create();
     if (reportSetId != null) result.reportSetId = reportSetId;
@@ -54,6 +55,7 @@ class ReportSet extends $pb.GeneratedMessage {
     if (sections != null) result.sections.addAll(sections);
     if (splitAssetId != null) result.splitAssetId = splitAssetId;
     if (reviewCount != null) result.reviewCount = reviewCount;
+    if (commonKey != null) result.commonKey = commonKey;
     return result;
   }
 
@@ -87,6 +89,7 @@ class ReportSet extends $pb.GeneratedMessage {
         subBuilder: SectionSummary.create)
     ..aOS(12, _omitFieldNames ? '' : 'splitAssetId')
     ..a<$core.int>(13, _omitFieldNames ? '' : 'reviewCount', $pb.PbFieldType.O3)
+    ..aOS(14, _omitFieldNames ? '' : 'commonKey')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -223,6 +226,15 @@ class ReportSet extends $pb.GeneratedMessage {
   $core.bool hasReviewCount() => $_has(12);
   @$pb.TagNumber(13)
   void clearReviewCount() => $_clearField(13);
+
+  @$pb.TagNumber(14)
+  $core.String get commonKey => $_getSZ(13);
+  @$pb.TagNumber(14)
+  set commonKey($core.String value) => $_setString(13, value);
+  @$pb.TagNumber(14)
+  $core.bool hasCommonKey() => $_has(13);
+  @$pb.TagNumber(14)
+  void clearCommonKey() => $_clearField(14);
 }
 
 class SectionSummary extends $pb.GeneratedMessage {
@@ -425,9 +437,11 @@ class Section extends $pb.GeneratedMessage {
 class ListReportSetsRequest extends $pb.GeneratedMessage {
   factory ListReportSetsRequest({
     $core.String? jobId,
+    $core.String? commonKey,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
+    if (commonKey != null) result.commonKey = commonKey;
     return result;
   }
 
@@ -446,6 +460,7 @@ class ListReportSetsRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'jobId')
+    ..aOS(2, _omitFieldNames ? '' : 'commonKey')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -479,6 +494,15 @@ class ListReportSetsRequest extends $pb.GeneratedMessage {
   $core.bool hasJobId() => $_has(0);
   @$pb.TagNumber(1)
   void clearJobId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get commonKey => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set commonKey($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasCommonKey() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCommonKey() => $_clearField(2);
 }
 
 class ListReportSetsResponse extends $pb.GeneratedMessage {
@@ -1004,10 +1028,12 @@ class MatchReportSetRequest extends $pb.GeneratedMessage {
   factory MatchReportSetRequest({
     $core.String? reportSetId,
     $core.String? jobId,
+    $core.String? commonKey,
   }) {
     final result = create();
     if (reportSetId != null) result.reportSetId = reportSetId;
     if (jobId != null) result.jobId = jobId;
+    if (commonKey != null) result.commonKey = commonKey;
     return result;
   }
 
@@ -1027,6 +1053,7 @@ class MatchReportSetRequest extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'reportSetId')
     ..aOS(2, _omitFieldNames ? '' : 'jobId')
+    ..aOS(3, _omitFieldNames ? '' : 'commonKey')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1069,6 +1096,15 @@ class MatchReportSetRequest extends $pb.GeneratedMessage {
   $core.bool hasJobId() => $_has(1);
   @$pb.TagNumber(2)
   void clearJobId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get commonKey => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set commonKey($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasCommonKey() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearCommonKey() => $_clearField(3);
 }
 
 class MatchReportSetResponse extends $pb.GeneratedMessage {
@@ -1133,13 +1169,808 @@ class MatchReportSetResponse extends $pb.GeneratedMessage {
   ReportSet ensureReportSet() => $_ensure(0);
 }
 
+class ListQualityResultsRequest extends $pb.GeneratedMessage {
+  factory ListQualityResultsRequest({
+    $core.String? jobId,
+    $core.String? commonKey,
+    $core.String? jointNo,
+  }) {
+    final result = create();
+    if (jobId != null) result.jobId = jobId;
+    if (commonKey != null) result.commonKey = commonKey;
+    if (jointNo != null) result.jointNo = jointNo;
+    return result;
+  }
+
+  ListQualityResultsRequest._();
+
+  factory ListQualityResultsRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListQualityResultsRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListQualityResultsRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'jobId')
+    ..aOS(2, _omitFieldNames ? '' : 'commonKey')
+    ..aOS(3, _omitFieldNames ? '' : 'jointNo')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListQualityResultsRequest clone() =>
+      ListQualityResultsRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListQualityResultsRequest copyWith(
+          void Function(ListQualityResultsRequest) updates) =>
+      super.copyWith((message) => updates(message as ListQualityResultsRequest))
+          as ListQualityResultsRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListQualityResultsRequest create() => ListQualityResultsRequest._();
+  @$core.override
+  ListQualityResultsRequest createEmptyInstance() => create();
+  static $pb.PbList<ListQualityResultsRequest> createRepeated() =>
+      $pb.PbList<ListQualityResultsRequest>();
+  @$core.pragma('dart2js:noInline')
+  static ListQualityResultsRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListQualityResultsRequest>(create);
+  static ListQualityResultsRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get jobId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set jobId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasJobId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearJobId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get commonKey => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set commonKey($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasCommonKey() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCommonKey() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get jointNo => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set jointNo($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasJointNo() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearJointNo() => $_clearField(3);
+}
+
+class ListQualityResultsResponse extends $pb.GeneratedMessage {
+  factory ListQualityResultsResponse({
+    $core.Iterable<QualityReport>? reports,
+  }) {
+    final result = create();
+    if (reports != null) result.reports.addAll(reports);
+    return result;
+  }
+
+  ListQualityResultsResponse._();
+
+  factory ListQualityResultsResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListQualityResultsResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListQualityResultsResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
+      createEmptyInstance: create)
+    ..pc<QualityReport>(1, _omitFieldNames ? '' : 'reports', $pb.PbFieldType.PM,
+        subBuilder: QualityReport.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListQualityResultsResponse clone() =>
+      ListQualityResultsResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListQualityResultsResponse copyWith(
+          void Function(ListQualityResultsResponse) updates) =>
+      super.copyWith(
+              (message) => updates(message as ListQualityResultsResponse))
+          as ListQualityResultsResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListQualityResultsResponse create() => ListQualityResultsResponse._();
+  @$core.override
+  ListQualityResultsResponse createEmptyInstance() => create();
+  static $pb.PbList<ListQualityResultsResponse> createRepeated() =>
+      $pb.PbList<ListQualityResultsResponse>();
+  @$core.pragma('dart2js:noInline')
+  static ListQualityResultsResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListQualityResultsResponse>(create);
+  static ListQualityResultsResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<QualityReport> get reports => $_getList(0);
+}
+
+/// 성적서 세트 하나의 품질 결과. 검사는 두 층이다:
+///   inspections — 검사 종류별 머리 정보와 판정. 취부·용접 외관·치수·기밀은 품목 전체에 대한 것이라 이음부를 골라도 같다.
+///   joints      — 이음부 표. 한 행 = 확인번호 하나의 UT·MT 결과. 작업(job.joint_no)과는 확인번호로 잇는다.
+class QualityReport extends $pb.GeneratedMessage {
+  factory QualityReport({
+    $core.String? reportSetId,
+    $core.String? commonKey,
+    $core.String? splitAssetId,
+    $core.Iterable<QualityInspection>? inspections,
+    $core.Iterable<JointQuality>? joints,
+  }) {
+    final result = create();
+    if (reportSetId != null) result.reportSetId = reportSetId;
+    if (commonKey != null) result.commonKey = commonKey;
+    if (splitAssetId != null) result.splitAssetId = splitAssetId;
+    if (inspections != null) result.inspections.addAll(inspections);
+    if (joints != null) result.joints.addAll(joints);
+    return result;
+  }
+
+  QualityReport._();
+
+  factory QualityReport.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory QualityReport.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'QualityReport',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'reportSetId')
+    ..aOS(2, _omitFieldNames ? '' : 'commonKey')
+    ..aOS(3, _omitFieldNames ? '' : 'splitAssetId')
+    ..pc<QualityInspection>(
+        4, _omitFieldNames ? '' : 'inspections', $pb.PbFieldType.PM,
+        subBuilder: QualityInspection.create)
+    ..pc<JointQuality>(5, _omitFieldNames ? '' : 'joints', $pb.PbFieldType.PM,
+        subBuilder: JointQuality.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  QualityReport clone() => QualityReport()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  QualityReport copyWith(void Function(QualityReport) updates) =>
+      super.copyWith((message) => updates(message as QualityReport))
+          as QualityReport;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static QualityReport create() => QualityReport._();
+  @$core.override
+  QualityReport createEmptyInstance() => create();
+  static $pb.PbList<QualityReport> createRepeated() =>
+      $pb.PbList<QualityReport>();
+  @$core.pragma('dart2js:noInline')
+  static QualityReport getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<QualityReport>(create);
+  static QualityReport? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get reportSetId => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set reportSetId($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasReportSetId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearReportSetId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get commonKey => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set commonKey($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasCommonKey() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCommonKey() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get splitAssetId => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set splitAssetId($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasSplitAssetId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearSplitAssetId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $pb.PbList<QualityInspection> get inspections => $_getList(3);
+
+  @$pb.TagNumber(5)
+  $pb.PbList<JointQuality> get joints => $_getList(4);
+}
+
+class QualityInspection extends $pb.GeneratedMessage {
+  factory QualityInspection({
+    SectionKind? kind,
+    $core.String? method,
+    $core.String? reportNo,
+    $core.String? reportDate,
+    $core.String? result,
+    $core.int? pageStart,
+    $core.int? pageEnd,
+    $core.String? agency,
+    $core.Iterable<QualityCheck>? checks,
+  }) {
+    final result$ = create();
+    if (kind != null) result$.kind = kind;
+    if (method != null) result$.method = method;
+    if (reportNo != null) result$.reportNo = reportNo;
+    if (reportDate != null) result$.reportDate = reportDate;
+    if (result != null) result$.result = result;
+    if (pageStart != null) result$.pageStart = pageStart;
+    if (pageEnd != null) result$.pageEnd = pageEnd;
+    if (agency != null) result$.agency = agency;
+    if (checks != null) result$.checks.addAll(checks);
+    return result$;
+  }
+
+  QualityInspection._();
+
+  factory QualityInspection.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory QualityInspection.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'QualityInspection',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
+      createEmptyInstance: create)
+    ..e<SectionKind>(1, _omitFieldNames ? '' : 'kind', $pb.PbFieldType.OE,
+        defaultOrMaker: SectionKind.SECTION_KIND_UNSPECIFIED,
+        valueOf: SectionKind.valueOf,
+        enumValues: SectionKind.values)
+    ..aOS(2, _omitFieldNames ? '' : 'method')
+    ..aOS(3, _omitFieldNames ? '' : 'reportNo')
+    ..aOS(4, _omitFieldNames ? '' : 'reportDate')
+    ..aOS(5, _omitFieldNames ? '' : 'result')
+    ..a<$core.int>(6, _omitFieldNames ? '' : 'pageStart', $pb.PbFieldType.O3)
+    ..a<$core.int>(7, _omitFieldNames ? '' : 'pageEnd', $pb.PbFieldType.O3)
+    ..aOS(8, _omitFieldNames ? '' : 'agency')
+    ..pc<QualityCheck>(9, _omitFieldNames ? '' : 'checks', $pb.PbFieldType.PM,
+        subBuilder: QualityCheck.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  QualityInspection clone() => QualityInspection()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  QualityInspection copyWith(void Function(QualityInspection) updates) =>
+      super.copyWith((message) => updates(message as QualityInspection))
+          as QualityInspection;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static QualityInspection create() => QualityInspection._();
+  @$core.override
+  QualityInspection createEmptyInstance() => create();
+  static $pb.PbList<QualityInspection> createRepeated() =>
+      $pb.PbList<QualityInspection>();
+  @$core.pragma('dart2js:noInline')
+  static QualityInspection getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<QualityInspection>(create);
+  static QualityInspection? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  SectionKind get kind => $_getN(0);
+  @$pb.TagNumber(1)
+  set kind(SectionKind value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasKind() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearKind() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get method => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set method($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMethod() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMethod() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get reportNo => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set reportNo($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasReportNo() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearReportNo() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get reportDate => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set reportDate($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasReportDate() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearReportDate() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get result => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set result($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasResult() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearResult() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.int get pageStart => $_getIZ(5);
+  @$pb.TagNumber(6)
+  set pageStart($core.int value) => $_setSignedInt32(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasPageStart() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearPageStart() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.int get pageEnd => $_getIZ(6);
+  @$pb.TagNumber(7)
+  set pageEnd($core.int value) => $_setSignedInt32(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasPageEnd() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearPageEnd() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.String get agency => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set agency($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasAgency() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearAgency() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $pb.PbList<QualityCheck> get checks => $_getList(8);
+}
+
+class QualityCheck extends $pb.GeneratedMessage {
+  factory QualityCheck({
+    $core.String? name,
+    $core.String? criterion,
+    $core.String? actual,
+    $core.String? result,
+  }) {
+    final result$ = create();
+    if (name != null) result$.name = name;
+    if (criterion != null) result$.criterion = criterion;
+    if (actual != null) result$.actual = actual;
+    if (result != null) result$.result = result;
+    return result$;
+  }
+
+  QualityCheck._();
+
+  factory QualityCheck.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory QualityCheck.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'QualityCheck',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'name')
+    ..aOS(2, _omitFieldNames ? '' : 'criterion')
+    ..aOS(3, _omitFieldNames ? '' : 'actual')
+    ..aOS(4, _omitFieldNames ? '' : 'result')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  QualityCheck clone() => QualityCheck()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  QualityCheck copyWith(void Function(QualityCheck) updates) =>
+      super.copyWith((message) => updates(message as QualityCheck))
+          as QualityCheck;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static QualityCheck create() => QualityCheck._();
+  @$core.override
+  QualityCheck createEmptyInstance() => create();
+  static $pb.PbList<QualityCheck> createRepeated() =>
+      $pb.PbList<QualityCheck>();
+  @$core.pragma('dart2js:noInline')
+  static QualityCheck getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<QualityCheck>(create);
+  static QualityCheck? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get name => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set name($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasName() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearName() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get criterion => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set criterion($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasCriterion() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCriterion() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get actual => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set actual($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasActual() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearActual() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get result => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set result($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasResult() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearResult() => $_clearField(4);
+}
+
+/// 확인번호 하나. UT 표에만·MT 표에만 있는 번호도 온다 — MT에만 있는 것은 원주 이음이 아닌 짧은 용접(UT 대상 아님)이다.
+class JointQuality extends $pb.GeneratedMessage {
+  factory JointQuality({
+    $core.String? jointNo,
+    $core.Iterable<$core.String>? jobIds,
+    UtResult? ut,
+    MtResult? mt,
+  }) {
+    final result = create();
+    if (jointNo != null) result.jointNo = jointNo;
+    if (jobIds != null) result.jobIds.addAll(jobIds);
+    if (ut != null) result.ut = ut;
+    if (mt != null) result.mt = mt;
+    return result;
+  }
+
+  JointQuality._();
+
+  factory JointQuality.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory JointQuality.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'JointQuality',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'jointNo')
+    ..pPS(2, _omitFieldNames ? '' : 'jobIds')
+    ..aOM<UtResult>(3, _omitFieldNames ? '' : 'ut', subBuilder: UtResult.create)
+    ..aOM<MtResult>(4, _omitFieldNames ? '' : 'mt', subBuilder: MtResult.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  JointQuality clone() => JointQuality()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  JointQuality copyWith(void Function(JointQuality) updates) =>
+      super.copyWith((message) => updates(message as JointQuality))
+          as JointQuality;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static JointQuality create() => JointQuality._();
+  @$core.override
+  JointQuality createEmptyInstance() => create();
+  static $pb.PbList<JointQuality> createRepeated() =>
+      $pb.PbList<JointQuality>();
+  @$core.pragma('dart2js:noInline')
+  static JointQuality getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<JointQuality>(create);
+  static JointQuality? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get jointNo => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set jointNo($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasJointNo() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearJointNo() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$core.String> get jobIds => $_getList(1);
+
+  @$pb.TagNumber(3)
+  UtResult get ut => $_getN(2);
+  @$pb.TagNumber(3)
+  set ut(UtResult value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasUt() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearUt() => $_clearField(3);
+  @$pb.TagNumber(3)
+  UtResult ensureUt() => $_ensure(2);
+
+  @$pb.TagNumber(4)
+  MtResult get mt => $_getN(3);
+  @$pb.TagNumber(4)
+  set mt(MtResult value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasMt() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearMt() => $_clearField(4);
+  @$pb.TagNumber(4)
+  MtResult ensureMt() => $_ensure(3);
+}
+
+class UtResult extends $pb.GeneratedMessage {
+  factory UtResult({
+    $core.String? thicknessMm,
+    $core.double? lengthMm,
+    $core.int? probeAngle,
+    $core.String? indication,
+    $core.String? evaluation,
+    $core.String? result,
+    $core.String? inspectionDate,
+  }) {
+    final result$ = create();
+    if (thicknessMm != null) result$.thicknessMm = thicknessMm;
+    if (lengthMm != null) result$.lengthMm = lengthMm;
+    if (probeAngle != null) result$.probeAngle = probeAngle;
+    if (indication != null) result$.indication = indication;
+    if (evaluation != null) result$.evaluation = evaluation;
+    if (result != null) result$.result = result;
+    if (inspectionDate != null) result$.inspectionDate = inspectionDate;
+    return result$;
+  }
+
+  UtResult._();
+
+  factory UtResult.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory UtResult.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'UtResult',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'thicknessMm')
+    ..a<$core.double>(2, _omitFieldNames ? '' : 'lengthMm', $pb.PbFieldType.OD)
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'probeAngle', $pb.PbFieldType.O3)
+    ..aOS(4, _omitFieldNames ? '' : 'indication')
+    ..aOS(5, _omitFieldNames ? '' : 'evaluation')
+    ..aOS(6, _omitFieldNames ? '' : 'result')
+    ..aOS(7, _omitFieldNames ? '' : 'inspectionDate')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UtResult clone() => UtResult()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UtResult copyWith(void Function(UtResult) updates) =>
+      super.copyWith((message) => updates(message as UtResult)) as UtResult;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UtResult create() => UtResult._();
+  @$core.override
+  UtResult createEmptyInstance() => create();
+  static $pb.PbList<UtResult> createRepeated() => $pb.PbList<UtResult>();
+  @$core.pragma('dart2js:noInline')
+  static UtResult getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<UtResult>(create);
+  static UtResult? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get thicknessMm => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set thicknessMm($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasThicknessMm() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearThicknessMm() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.double get lengthMm => $_getN(1);
+  @$pb.TagNumber(2)
+  set lengthMm($core.double value) => $_setDouble(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasLengthMm() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearLengthMm() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get probeAngle => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set probeAngle($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasProbeAngle() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearProbeAngle() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get indication => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set indication($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasIndication() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearIndication() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get evaluation => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set evaluation($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasEvaluation() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearEvaluation() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get result => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set result($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasResult() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearResult() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.String get inspectionDate => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set inspectionDate($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasInspectionDate() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearInspectionDate() => $_clearField(7);
+}
+
+class MtResult extends $pb.GeneratedMessage {
+  factory MtResult({
+    $core.double? checkLengthMm,
+    $core.double? indicationLengthMm,
+    $core.String? indication,
+    $core.String? result,
+  }) {
+    final result$ = create();
+    if (checkLengthMm != null) result$.checkLengthMm = checkLengthMm;
+    if (indicationLengthMm != null)
+      result$.indicationLengthMm = indicationLengthMm;
+    if (indication != null) result$.indication = indication;
+    if (result != null) result$.result = result;
+    return result$;
+  }
+
+  MtResult._();
+
+  factory MtResult.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory MtResult.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'MtResult',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
+      createEmptyInstance: create)
+    ..a<$core.double>(
+        1, _omitFieldNames ? '' : 'checkLengthMm', $pb.PbFieldType.OD)
+    ..a<$core.double>(
+        2, _omitFieldNames ? '' : 'indicationLengthMm', $pb.PbFieldType.OD)
+    ..aOS(3, _omitFieldNames ? '' : 'indication')
+    ..aOS(4, _omitFieldNames ? '' : 'result')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MtResult clone() => MtResult()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MtResult copyWith(void Function(MtResult) updates) =>
+      super.copyWith((message) => updates(message as MtResult)) as MtResult;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static MtResult create() => MtResult._();
+  @$core.override
+  MtResult createEmptyInstance() => create();
+  static $pb.PbList<MtResult> createRepeated() => $pb.PbList<MtResult>();
+  @$core.pragma('dart2js:noInline')
+  static MtResult getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<MtResult>(create);
+  static MtResult? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.double get checkLengthMm => $_getN(0);
+  @$pb.TagNumber(1)
+  set checkLengthMm($core.double value) => $_setDouble(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasCheckLengthMm() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCheckLengthMm() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.double get indicationLengthMm => $_getN(1);
+  @$pb.TagNumber(2)
+  set indicationLengthMm($core.double value) => $_setDouble(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasIndicationLengthMm() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearIndicationLengthMm() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get indication => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set indication($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasIndication() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearIndication() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get result => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set result($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasResult() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearResult() => $_clearField(4);
+}
+
 /// 사용처: 대시보드(s4 품질 판정 카드).
 class ReportServiceApi {
   final $pb.RpcClient _client;
 
   ReportServiceApi(this._client);
 
-  /// 작업의 성적서 세트 목록. 섹션 본문은 빼고 준다.
+  /// 작업(job_id) 또는 품목(common_key)의 성적서 세트 목록. 섹션 본문은 빼고 준다.
+  /// job_id를 주면 그 작업에 매칭된 세트와 그 작업의 품목에 매칭된 세트를 함께 준다.
   $async.Future<ListReportSetsResponse> listReportSets(
           $pb.ClientContext? ctx, ListReportSetsRequest request) =>
       _client.invoke<ListReportSetsResponse>(ctx, 'ReportService',
@@ -1158,12 +1989,21 @@ class ReportServiceApi {
       _client.invoke<ResolveReviewResponse>(ctx, 'ReportService',
           'ResolveReview', request, ResolveReviewResponse());
 
-  /// 세트를 작업에 매칭한다. 잘라 낸 PDF(split_asset_id)를 그 작업에 같은 트랜잭션에서 첨부한다.
-  /// job_id가 비면 매칭을 푼다(첨부는 그대로 — 필요하면 DetachAsset).
+  /// 세트를 작업 또는 품목에 매칭한다. 잘라 낸 PDF(split_asset_id)를 같은 트랜잭션에서 첨부한다.
+  ///   job_id: 그 작업에 매칭하고 세트의 common_key도 그 작업의 품목으로 채운다(PDF는 그 작업에 첨부).
+  ///   common_key만: 품목에 매칭한다(PDF는 그 품목의 작업 모두에 첨부). 이음부 단위 작업은 이쪽을 쓴다.
+  ///   둘 다 비면 매칭을 푼다(첨부는 그대로 — 필요하면 DetachAsset).
   $async.Future<MatchReportSetResponse> matchReportSet(
           $pb.ClientContext? ctx, MatchReportSetRequest request) =>
       _client.invoke<MatchReportSetResponse>(ctx, 'ReportService',
           'MatchReportSet', request, MatchReportSetResponse());
+
+  /// 작업·이음부 기준 품질 결과: 검사 종류별 판정과 이음부별 UT·MT 표. 성적서 원문 전체는 GetReportSet.
+  /// job_id(그 작업의 이음부) 또는 common_key(+joint_no). 이음부를 안 주면 품목의 이음부 전체가 표로 온다.
+  $async.Future<ListQualityResultsResponse> listQualityResults(
+          $pb.ClientContext? ctx, ListQualityResultsRequest request) =>
+      _client.invoke<ListQualityResultsResponse>(ctx, 'ReportService',
+          'ListQualityResults', request, ListQualityResultsResponse());
 }
 
 const $core.bool _omitFieldNames =

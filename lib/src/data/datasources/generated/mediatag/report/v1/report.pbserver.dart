@@ -29,6 +29,8 @@ abstract class ReportServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $2.ResolveReviewRequest request);
   $async.Future<$2.MatchReportSetResponse> matchReportSet(
       $pb.ServerContext ctx, $2.MatchReportSetRequest request);
+  $async.Future<$2.ListQualityResultsResponse> listQualityResults(
+      $pb.ServerContext ctx, $2.ListQualityResultsRequest request);
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
@@ -40,6 +42,8 @@ abstract class ReportServiceBase extends $pb.GeneratedService {
         return $2.ResolveReviewRequest();
       case 'MatchReportSet':
         return $2.MatchReportSetRequest();
+      case 'ListQualityResults':
+        return $2.ListQualityResultsRequest();
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }
@@ -56,6 +60,8 @@ abstract class ReportServiceBase extends $pb.GeneratedService {
         return resolveReview(ctx, request as $2.ResolveReviewRequest);
       case 'MatchReportSet':
         return matchReportSet(ctx, request as $2.MatchReportSetRequest);
+      case 'ListQualityResults':
+        return listQualityResults(ctx, request as $2.ListQualityResultsRequest);
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }

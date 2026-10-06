@@ -15,6 +15,10 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-02  geosoft-Server: 패스 필터·목록(ListJobsRequest.pass_no, ProjectItem.joints[].pass_nos)
+//   2026-10-02  geosoft-Server: 이음부 필터·목록(ListJobsRequest.joint_no, ProjectUnit.items), 수집 현황에 품목 단계
+//                (COLLECTION_LEVEL_ITEM, CollectionPath.common_key) — 공사 → 품목(호기+품목, 성적서 단위) → 작업(이음부) → 패스
+//   2026-10-02  geosoft-Server: Job.joint_no — 작업을 이음부 단위로 나눌 수 있게(품질 결과는 이음부로 잇는다)
 //   2026-10-02  geosoft-Server: ListJobFilters — 작업 목록 필터의 드롭다운 값(공사·호기·품목·작업자·장비)을 한 번에.
 //                Project.units는 여기로 옮김(공사 목록은 원래대로)
 //   2026-10-01  geosoft-Server: ListJobs unit_no 필터 — 작업지시 대신 공사 → 호기 → 품목으로 고른다
@@ -84,7 +88,7 @@ message Equipment {
 
 // 작업 1회 = 이력 1건 = 타임라인 1개.
 message Job {
-  string job_id = 1;       // JOB-{common_key}-{YYYYMMDD}_{hash4}
+  string job_id = 1;       // JOB-{common_key}-{YYYYMMDD}_{hash4}. 이음부 단위 작업이면 JOB-{common_key}-{이음부}-{YYYYMMDD}_{hash4}
   string common_key = 2;   // 재작업 job들을 묶는 키
   string project_no = 3;   // 비면 공사 미지정
   string unit_no = 4;
@@ -99,6 +103,9 @@ message Job {
   string worker_id = 13;
   google.protobuf.Timestamp started_at = 14; // 타임라인 0점
   google.protobuf.Timestamp ended_at = 15;
+  // 이음부 번호('DGT-ELA-01', 성적서 UT 표의 확인번호). 작업을 이음부(원주 이음 한 곳) 단위로 만든 경우에만 있다 —
+  // 비면 품목 전체 작업. 같은 common_key(품목) 아래에 이음부마다 작업이 하나씩 있다.
+  string joint_no = 16;
 }
 
 message Pass {
@@ -146,6 +153,20 @@ message ProjectFilter {
 message ProjectUnit {
   string unit_no = 1;              // 정규화값 '05'. 호기 구분이 없는 공사는 '00' 하나
   repeated string item_codes = 2;  // 그 호기 작업의 품목(정규화값), 오름차순
+  repeated ProjectItem items = 3;  // item_codes와 같은 품목·같은 순서 + 품목마다 이음부
+}
+
+// 품목 하나와 그 품목 작업의 이음부. 이음부 단위 작업이 없는 품목은 joint_nos가 비어 있다.
+message ProjectItem {
+  string item_code = 1;
+  repeated string joint_nos = 2;   // 'DGT-ELA-01', 오름차순. 고른 값은 ListJobs의 joint_no에
+  repeated ProjectJoint joints = 3; // joint_nos와 같은 이음부·같은 순서 + 이음부마다 패스
+}
+
+// 이음부 하나와 그 이음부 작업들에 있는 패스 번호. 패스가 없는 작업(성적서에서 만든 TP129 등)은 pass_nos가 비어 있다.
+message ProjectJoint {
+  string joint_no = 1;
+  repeated int32 pass_nos = 2;     // 오름차순(1 = 초층). 고른 값은 ListJobs의 pass_no에
 }
 
 message ListWorkersRequest {}
@@ -166,6 +187,8 @@ message ListJobsRequest {
   string common_key = 2;     // 부분 일치
   string item_code = 3;      // 정규화값 'TFPB'
   string unit_no = 11;       // 호기, 정규화값 '05'
+  string joint_no = 12;             // 이음부 번호 완전 일치('DGT-ELA-01'). 품목 안에서만 유일하므로 보통 item_code와 함께
+  int32 pass_no = 13;        // 그 패스가 있는 작업만(1 = 초층). 0이면 거르지 않는다. 패스 ID는 {job_id}-P{pass_no:02}
   string worker_id = 4;
   bool master_only = 5;      // 명장(worker.is_master) 작업만 — s3 비교 대상 고르기
   string equipment_id = 6;   // 그 장비의 Asset이 첨부된 작업
@@ -208,12 +231,14 @@ enum CollectionLevel {
   COLLECTION_LEVEL_PROJECT = 3;
   COLLECTION_LEVEL_JOB = 4;
   COLLECTION_LEVEL_PASS = 5;
+  COLLECTION_LEVEL_ITEM = 6;   // 품목(호기+품목 = common_key). 공사와 작업 사이 — 번호는 뒤에 붙였지만 단계 순서는 공사 다음
 }
 
 // 노드의 위치. 클라이언트는 받은 값을 그대로 parent로 돌려보낸다.
 // level 단계의 ID가 비어 있으면 그 단계가 "미지정" 노드다(Pass 단계면 "작업 공용").
 //   - 장비 미지정: equipment_id 없는 Asset
 //   - 공사 미지정: project_no 없는 Job, 또는 (장비별) 작업에 첨부 안 된 Asset
+//   - 품목 미지정: common_key 없는 Job, 또는 (장비별) 작업에 첨부 안 된 Asset
 //   - 작업 미지정: (장비별) 작업에 첨부 안 된 Asset. 자식은 Pass 없이 바로 Asset
 //   - 작업 공용:   job_asset.pass_id가 빈 첨부
 // 작업자별 보기에는 작업에 첨부 안 된 Asset이 나오지 않는다(작업자는 작업을 거쳐 안다).
@@ -225,6 +250,7 @@ message CollectionPath {
   string project_no = 5;
   string job_id = 6;
   string pass_id = 7;
+  string common_key = 8;   // 품목 단계
 }
 
 message ListCollectionNodesRequest {
@@ -253,7 +279,7 @@ message ListCollectionNodesResponse {
 
 message CollectionNode {
   CollectionPath path = 1;   // Asset 노드면 부모의 path
-  string label = 2;          // 장비명·작업자명·공사명·작업 이름("5호기 LEG DIAGONAL "F" · 9/16", ID는 path.job_id)·"P01"·"미지정"·"공용"·파일명
+  string label = 2;          // 장비명·작업자명·공사명·품목 이름("5호기 LEG DIAGONAL "F"")·작업 이름("DGT-ELF-01 · 9/16", 이음부가 없으면 "5호기 LEG DIAGONAL "F" · 9/16". ID는 path.job_id)·"P01"·"미지정"·"공용"·파일명
   bool has_children = 3;
   CollectionSummary summary = 4;          // Asset 노드면 비어 있음
   mediatag.asset.v1.Asset asset = 5;      // Asset 노드일 때만
@@ -268,7 +294,7 @@ message CollectionSummary {
   google.protobuf.Timestamp first_recorded_at = 3;
   google.protobuf.Timestamp last_recorded_at = 4;
   google.protobuf.Timestamp last_collected_at = 5;
-  int64 job_count = 6;              // Equipment·Worker·Project 노드(작업·패스 노드는 0)
+  int64 job_count = 6;              // Equipment·Worker·Project·Item 노드(작업·패스 노드는 0)
   int64 work_duration_seconds = 7;  // Equipment·Worker·Project 노드: 아래 작업들의 job.started_at~ended_at 합(작업·패스 노드는 0)
 }
 

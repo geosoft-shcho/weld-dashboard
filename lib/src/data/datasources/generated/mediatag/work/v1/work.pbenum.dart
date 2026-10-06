@@ -50,6 +50,8 @@ class CollectionLevel extends $pb.ProtobufEnum {
       CollectionLevel._(4, _omitEnumNames ? '' : 'COLLECTION_LEVEL_JOB');
   static const CollectionLevel COLLECTION_LEVEL_PASS =
       CollectionLevel._(5, _omitEnumNames ? '' : 'COLLECTION_LEVEL_PASS');
+  static const CollectionLevel COLLECTION_LEVEL_ITEM =
+      CollectionLevel._(6, _omitEnumNames ? '' : 'COLLECTION_LEVEL_ITEM');
 
   static const $core.List<CollectionLevel> values = <CollectionLevel>[
     COLLECTION_LEVEL_UNSPECIFIED,
@@ -58,10 +60,11 @@ class CollectionLevel extends $pb.ProtobufEnum {
     COLLECTION_LEVEL_PROJECT,
     COLLECTION_LEVEL_JOB,
     COLLECTION_LEVEL_PASS,
+    COLLECTION_LEVEL_ITEM,
   ];
 
   static final $core.List<CollectionLevel?> _byValue =
-      $pb.ProtobufEnum.$_initByValueList(values, 5);
+      $pb.ProtobufEnum.$_initByValueList(values, 6);
   static CollectionLevel? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 

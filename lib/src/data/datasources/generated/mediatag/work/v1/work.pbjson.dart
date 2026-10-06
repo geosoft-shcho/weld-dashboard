@@ -43,6 +43,7 @@ const CollectionLevel$json = {
     {'1': 'COLLECTION_LEVEL_PROJECT', '2': 3},
     {'1': 'COLLECTION_LEVEL_JOB', '2': 4},
     {'1': 'COLLECTION_LEVEL_PASS', '2': 5},
+    {'1': 'COLLECTION_LEVEL_ITEM', '2': 6},
   ],
 };
 
@@ -51,7 +52,7 @@ final $typed_data.Uint8List collectionLevelDescriptor = $convert.base64Decode(
     'Cg9Db2xsZWN0aW9uTGV2ZWwSIAocQ09MTEVDVElPTl9MRVZFTF9VTlNQRUNJRklFRBAAEh4KGk'
     'NPTExFQ1RJT05fTEVWRUxfRVFVSVBNRU5UEAESGwoXQ09MTEVDVElPTl9MRVZFTF9XT1JLRVIQ'
     'AhIcChhDT0xMRUNUSU9OX0xFVkVMX1BST0pFQ1QQAxIYChRDT0xMRUNUSU9OX0xFVkVMX0pPQh'
-    'AEEhkKFUNPTExFQ1RJT05fTEVWRUxfUEFTUxAF');
+    'AEEhkKFUNPTExFQ1RJT05fTEVWRUxfUEFTUxAFEhkKFUNPTExFQ1RJT05fTEVWRUxfSVRFTRAG');
 
 @$core.Deprecated('Use timeBasisDescriptor instead')
 const TimeBasis$json = {
@@ -192,6 +193,7 @@ const Job$json = {
       '6': '.google.protobuf.Timestamp',
       '10': 'endedAt'
     },
+    {'1': 'joint_no', '3': 16, '4': 1, '5': 9, '10': 'jointNo'},
   ],
   '8': [
     {'1': '_outer_diameter_mm'},
@@ -210,8 +212,8 @@ final $typed_data.Uint8List jobDescriptor = $convert.base64Decode(
     'ck1tiAEBEiYKDHRoaWNrbmVzc19tbRgMIAEoAUgBUgt0aGlja25lc3NNbYgBARIbCgl3b3JrZX'
     'JfaWQYDSABKAlSCHdvcmtlcklkEjkKCnN0YXJ0ZWRfYXQYDiABKAsyGi5nb29nbGUucHJvdG9i'
     'dWYuVGltZXN0YW1wUglzdGFydGVkQXQSNQoIZW5kZWRfYXQYDyABKAsyGi5nb29nbGUucHJvdG'
-    '9idWYuVGltZXN0YW1wUgdlbmRlZEF0QhQKEl9vdXRlcl9kaWFtZXRlcl9tbUIPCg1fdGhpY2tu'
-    'ZXNzX21t');
+    '9idWYuVGltZXN0YW1wUgdlbmRlZEF0EhkKCGpvaW50X25vGBAgASgJUgdqb2ludE5vQhQKEl9v'
+    'dXRlcl9kaWFtZXRlcl9tbUIPCg1fdGhpY2tuZXNzX21t');
 
 @$core.Deprecated('Use passDescriptor instead')
 const Pass$json = {
@@ -398,13 +400,59 @@ const ProjectUnit$json = {
   '2': [
     {'1': 'unit_no', '3': 1, '4': 1, '5': 9, '10': 'unitNo'},
     {'1': 'item_codes', '3': 2, '4': 3, '5': 9, '10': 'itemCodes'},
+    {
+      '1': 'items',
+      '3': 3,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.ProjectItem',
+      '10': 'items'
+    },
   ],
 };
 
 /// Descriptor for `ProjectUnit`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List projectUnitDescriptor = $convert.base64Decode(
     'CgtQcm9qZWN0VW5pdBIXCgd1bml0X25vGAEgASgJUgZ1bml0Tm8SHQoKaXRlbV9jb2RlcxgCIA'
-    'MoCVIJaXRlbUNvZGVz');
+    'MoCVIJaXRlbUNvZGVzEjMKBWl0ZW1zGAMgAygLMh0ubWVkaWF0YWcud29yay52MS5Qcm9qZWN0'
+    'SXRlbVIFaXRlbXM=');
+
+@$core.Deprecated('Use projectItemDescriptor instead')
+const ProjectItem$json = {
+  '1': 'ProjectItem',
+  '2': [
+    {'1': 'item_code', '3': 1, '4': 1, '5': 9, '10': 'itemCode'},
+    {'1': 'joint_nos', '3': 2, '4': 3, '5': 9, '10': 'jointNos'},
+    {
+      '1': 'joints',
+      '3': 3,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.ProjectJoint',
+      '10': 'joints'
+    },
+  ],
+};
+
+/// Descriptor for `ProjectItem`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List projectItemDescriptor = $convert.base64Decode(
+    'CgtQcm9qZWN0SXRlbRIbCglpdGVtX2NvZGUYASABKAlSCGl0ZW1Db2RlEhsKCWpvaW50X25vcx'
+    'gCIAMoCVIIam9pbnROb3MSNgoGam9pbnRzGAMgAygLMh4ubWVkaWF0YWcud29yay52MS5Qcm9q'
+    'ZWN0Sm9pbnRSBmpvaW50cw==');
+
+@$core.Deprecated('Use projectJointDescriptor instead')
+const ProjectJoint$json = {
+  '1': 'ProjectJoint',
+  '2': [
+    {'1': 'joint_no', '3': 1, '4': 1, '5': 9, '10': 'jointNo'},
+    {'1': 'pass_nos', '3': 2, '4': 3, '5': 5, '10': 'passNos'},
+  ],
+};
+
+/// Descriptor for `ProjectJoint`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List projectJointDescriptor = $convert.base64Decode(
+    'CgxQcm9qZWN0Sm9pbnQSGQoIam9pbnRfbm8YASABKAlSB2pvaW50Tm8SGQoIcGFzc19ub3MYAi'
+    'ADKAVSB3Bhc3NOb3M=');
 
 @$core.Deprecated('Use listWorkersRequestDescriptor instead')
 const ListWorkersRequest$json = {
@@ -472,6 +520,8 @@ const ListJobsRequest$json = {
     {'1': 'common_key', '3': 2, '4': 1, '5': 9, '10': 'commonKey'},
     {'1': 'item_code', '3': 3, '4': 1, '5': 9, '10': 'itemCode'},
     {'1': 'unit_no', '3': 11, '4': 1, '5': 9, '10': 'unitNo'},
+    {'1': 'joint_no', '3': 12, '4': 1, '5': 9, '10': 'jointNo'},
+    {'1': 'pass_no', '3': 13, '4': 1, '5': 5, '10': 'passNo'},
     {'1': 'worker_id', '3': 4, '4': 1, '5': 9, '10': 'workerId'},
     {'1': 'master_only', '3': 5, '4': 1, '5': 8, '10': 'masterOnly'},
     {'1': 'equipment_id', '3': 6, '4': 1, '5': 9, '10': 'equipmentId'},
@@ -500,12 +550,13 @@ const ListJobsRequest$json = {
 final $typed_data.Uint8List listJobsRequestDescriptor = $convert.base64Decode(
     'Cg9MaXN0Sm9ic1JlcXVlc3QSHQoKcHJvamVjdF9ubxgBIAEoCVIJcHJvamVjdE5vEh0KCmNvbW'
     '1vbl9rZXkYAiABKAlSCWNvbW1vbktleRIbCglpdGVtX2NvZGUYAyABKAlSCGl0ZW1Db2RlEhcK'
-    'B3VuaXRfbm8YCyABKAlSBnVuaXRObxIbCgl3b3JrZXJfaWQYBCABKAlSCHdvcmtlcklkEh8KC2'
-    '1hc3Rlcl9vbmx5GAUgASgIUgptYXN0ZXJPbmx5EiEKDGVxdWlwbWVudF9pZBgGIAEoCVILZXF1'
-    'aXBtZW50SWQSPQoMc3RhcnRlZF9mcm9tGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdG'
-    'FtcFILc3RhcnRlZEZyb20SOQoKc3RhcnRlZF90bxgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5U'
-    'aW1lc3RhbXBSCXN0YXJ0ZWRUbxIbCglwYWdlX3NpemUYCSABKAVSCHBhZ2VTaXplEh0KCnBhZ2'
-    'VfdG9rZW4YCiABKAlSCXBhZ2VUb2tlbg==');
+    'B3VuaXRfbm8YCyABKAlSBnVuaXRObxIZCghqb2ludF9ubxgMIAEoCVIHam9pbnRObxIXCgdwYX'
+    'NzX25vGA0gASgFUgZwYXNzTm8SGwoJd29ya2VyX2lkGAQgASgJUgh3b3JrZXJJZBIfCgttYXN0'
+    'ZXJfb25seRgFIAEoCFIKbWFzdGVyT25seRIhCgxlcXVpcG1lbnRfaWQYBiABKAlSC2VxdWlwbW'
+    'VudElkEj0KDHN0YXJ0ZWRfZnJvbRgHIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBS'
+    'C3N0YXJ0ZWRGcm9tEjkKCnN0YXJ0ZWRfdG8YCCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZX'
+    'N0YW1wUglzdGFydGVkVG8SGwoJcGFnZV9zaXplGAkgASgFUghwYWdlU2l6ZRIdCgpwYWdlX3Rv'
+    'a2VuGAogASgJUglwYWdlVG9rZW4=');
 
 @$core.Deprecated('Use listJobsResponseDescriptor instead')
 const ListJobsResponse$json = {
@@ -613,6 +664,7 @@ const CollectionPath$json = {
     {'1': 'project_no', '3': 5, '4': 1, '5': 9, '10': 'projectNo'},
     {'1': 'job_id', '3': 6, '4': 1, '5': 9, '10': 'jobId'},
     {'1': 'pass_id', '3': 7, '4': 1, '5': 9, '10': 'passId'},
+    {'1': 'common_key', '3': 8, '4': 1, '5': 9, '10': 'commonKey'},
   ],
 };
 
@@ -622,7 +674,8 @@ final $typed_data.Uint8List collectionPathDescriptor = $convert.base64Decode(
     'N0aW9uVmlld1IEdmlldxI3CgVsZXZlbBgCIAEoDjIhLm1lZGlhdGFnLndvcmsudjEuQ29sbGVj'
     'dGlvbkxldmVsUgVsZXZlbBIhCgxlcXVpcG1lbnRfaWQYAyABKAlSC2VxdWlwbWVudElkEhsKCX'
     'dvcmtlcl9pZBgEIAEoCVIId29ya2VySWQSHQoKcHJvamVjdF9ubxgFIAEoCVIJcHJvamVjdE5v'
-    'EhUKBmpvYl9pZBgGIAEoCVIFam9iSWQSFwoHcGFzc19pZBgHIAEoCVIGcGFzc0lk');
+    'EhUKBmpvYl9pZBgGIAEoCVIFam9iSWQSFwoHcGFzc19pZBgHIAEoCVIGcGFzc0lkEh0KCmNvbW'
+    '1vbl9rZXkYCCABKAlSCWNvbW1vbktleQ==');
 
 @$core.Deprecated('Use listCollectionNodesRequestDescriptor instead')
 const ListCollectionNodesRequest$json = {
@@ -1011,6 +1064,8 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.work.v1.ListJobFiltersResponse': ListJobFiltersResponse$json,
   '.mediatag.work.v1.ProjectFilter': ProjectFilter$json,
   '.mediatag.work.v1.ProjectUnit': ProjectUnit$json,
+  '.mediatag.work.v1.ProjectItem': ProjectItem$json,
+  '.mediatag.work.v1.ProjectJoint': ProjectJoint$json,
   '.mediatag.work.v1.ListJobsRequest': ListJobsRequest$json,
   '.google.protobuf.Timestamp': $0.Timestamp$json,
   '.mediatag.work.v1.ListJobsResponse': ListJobsResponse$json,

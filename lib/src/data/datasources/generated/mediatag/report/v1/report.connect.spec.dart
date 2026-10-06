@@ -11,7 +11,8 @@ abstract final class ReportService {
   /// Fully-qualified name of the ReportService service.
   static const name = 'mediatag.report.v1.ReportService';
 
-  /// 작업의 성적서 세트 목록. 섹션 본문은 빼고 준다.
+  /// 작업(job_id) 또는 품목(common_key)의 성적서 세트 목록. 섹션 본문은 빼고 준다.
+  /// job_id를 주면 그 작업에 매칭된 세트와 그 작업의 품목에 매칭된 세트를 함께 준다.
   static const listReportSets = connect.Spec(
     '/$name/ListReportSets',
     connect.StreamType.unary,
@@ -36,12 +37,23 @@ abstract final class ReportService {
     mediatagreportv1report.ResolveReviewResponse.new,
   );
 
-  /// 세트를 작업에 매칭한다. 잘라 낸 PDF(split_asset_id)를 그 작업에 같은 트랜잭션에서 첨부한다.
-  /// job_id가 비면 매칭을 푼다(첨부는 그대로 — 필요하면 DetachAsset).
+  /// 세트를 작업 또는 품목에 매칭한다. 잘라 낸 PDF(split_asset_id)를 같은 트랜잭션에서 첨부한다.
+  ///   job_id: 그 작업에 매칭하고 세트의 common_key도 그 작업의 품목으로 채운다(PDF는 그 작업에 첨부).
+  ///   common_key만: 품목에 매칭한다(PDF는 그 품목의 작업 모두에 첨부). 이음부 단위 작업은 이쪽을 쓴다.
+  ///   둘 다 비면 매칭을 푼다(첨부는 그대로 — 필요하면 DetachAsset).
   static const matchReportSet = connect.Spec(
     '/$name/MatchReportSet',
     connect.StreamType.unary,
     mediatagreportv1report.MatchReportSetRequest.new,
     mediatagreportv1report.MatchReportSetResponse.new,
+  );
+
+  /// 작업·이음부 기준 품질 결과: 검사 종류별 판정과 이음부별 UT·MT 표. 성적서 원문 전체는 GetReportSet.
+  /// job_id(그 작업의 이음부) 또는 common_key(+joint_no). 이음부를 안 주면 품목의 이음부 전체가 표로 온다.
+  static const listQualityResults = connect.Spec(
+    '/$name/ListQualityResults',
+    connect.StreamType.unary,
+    mediatagreportv1report.ListQualityResultsRequest.new,
+    mediatagreportv1report.ListQualityResultsResponse.new,
   );
 }
