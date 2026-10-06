@@ -7,7 +7,7 @@ import 'waveform_series_bundle.dart';
 class PassProfileBoard {
   const PassProfileBoard({
     required this.commonKey,
-    required this.historyId,
+    required this.jobId,
     required this.context,
     required this.passes,
     required this.selectedPass,
@@ -20,7 +20,7 @@ class PassProfileBoard {
   });
 
   final String commonKey;
-  final String historyId;
+  final String jobId;
   final PassJointContext? context;
   final List<WeldPass> passes;
   final WeldPass? selectedPass;

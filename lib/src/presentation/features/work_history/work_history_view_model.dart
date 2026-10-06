@@ -93,6 +93,29 @@ class WorkHistoryViewModel extends ChangeNotifier {
     return const [];
   }
 
+  List<int> get passNos {
+    final jointNo = _query.jointNo;
+    if (jointNo.isEmpty) {
+      return const [];
+    }
+    for (final unit in unitOptions) {
+      if (unit.unitNo != _query.unitNo) {
+        continue;
+      }
+      for (final item in unit.items) {
+        if (item.itemCode != _query.itemCode) {
+          continue;
+        }
+        for (final joint in item.joints) {
+          if (joint.jointNo == jointNo) {
+            return joint.passNos;
+          }
+        }
+      }
+    }
+    return const [];
+  }
+
   Future<void> loadBoard() async {
     final version = ++_loadVersion;
     _moreVersion++;
@@ -157,22 +180,30 @@ class WorkHistoryViewModel extends ChangeNotifier {
         unitNo: '',
         itemCode: '',
         jointNo: '',
+        passNo: 0,
       ),
     );
   }
 
   void didSelectUnit(String unitNo) {
     _editFilters(
-      (query) => query.copyWith(unitNo: unitNo, itemCode: '', jointNo: ''),
+      (query) =>
+          query.copyWith(unitNo: unitNo, itemCode: '', jointNo: '', passNo: 0),
     );
   }
 
   void didSelectItem(String itemCode) {
-    _editFilters((query) => query.copyWith(itemCode: itemCode, jointNo: ''));
+    _editFilters(
+      (query) => query.copyWith(itemCode: itemCode, jointNo: '', passNo: 0),
+    );
   }
 
   void didSelectJoint(String jointNo) {
-    _editFilters((query) => query.copyWith(jointNo: jointNo));
+    _editFilters((query) => query.copyWith(jointNo: jointNo, passNo: 0));
+  }
+
+  void didSelectPass(int passNo) {
+    _editFilters((query) => query.copyWith(passNo: passNo));
   }
 
   void didSelectWorker(String workerId) {
@@ -219,8 +250,8 @@ class WorkHistoryViewModel extends ChangeNotifier {
     loadBoard();
   }
 
-  void didSelectRow(String historyId) {
-    _query = _query.copyWith(selectedHistoryId: historyId);
+  void didSelectRow(String jobId) {
+    _query = _query.copyWith(selectedJobId: jobId);
     _rebuildBoard();
   }
 
@@ -248,11 +279,11 @@ class WorkHistoryViewModel extends ChangeNotifier {
       if (version != _moreVersion || loadVersionAtStart != _loadVersion) {
         return;
       }
-      final existingIds = {for (final item in _loadedItems) item.historyId};
+      final existingIds = {for (final item in _loadedItems) item.jobId};
       _loadedItems = [
         ..._loadedItems,
         for (final item in page.items)
-          if (!existingIds.contains(item.historyId)) item,
+          if (!existingIds.contains(item.jobId)) item,
       ];
       _totalCount = page.totalCount;
       _nextPageToken = page.nextPageToken;
@@ -283,7 +314,7 @@ class WorkHistoryViewModel extends ChangeNotifier {
     }
     final filterQuery = _loadedQuery ?? _query;
     _board = WorkHistoryBoard(
-      query: filterQuery.copyWith(selectedHistoryId: _query.selectedHistoryId),
+      query: filterQuery.copyWith(selectedJobId: _query.selectedJobId),
       visibleRows: _loadedItems,
       totalCount: _totalCount,
       nextPageToken: _nextPageToken,

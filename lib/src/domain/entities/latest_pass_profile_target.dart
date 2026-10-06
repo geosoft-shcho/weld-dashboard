@@ -1,9 +1,6 @@
 class LatestPassProfileTarget {
-  const LatestPassProfileTarget({
-    required this.commonKey,
-    required this.historyId,
-  });
+  const LatestPassProfileTarget({required this.commonKey, required this.jobId});
 
   final String commonKey;
-  final String historyId;
+  final String jobId;
 }

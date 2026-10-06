@@ -1,6 +1,6 @@
 class WorkHistoryRecordDto {
   const WorkHistoryRecordDto({
-    required this.historyId,
+    required this.jobId,
     required this.commonKey,
     required this.workOrderId,
     required this.jointId,
@@ -11,7 +11,7 @@ class WorkHistoryRecordDto {
 
   factory WorkHistoryRecordDto.fromRow(Map<String, String> row) {
     return WorkHistoryRecordDto(
-      historyId: row['history_id'] ?? '',
+      jobId: row['history_id'] ?? '',
       commonKey: row['common_key'] ?? '',
       workOrderId: row['work_order_id'] ?? '',
       jointId: row['joint_id'] ?? '',
@@ -21,7 +21,7 @@ class WorkHistoryRecordDto {
     );
   }
 
-  final String historyId;
+  final String jobId;
   final String commonKey;
   final String workOrderId;
   final String jointId;

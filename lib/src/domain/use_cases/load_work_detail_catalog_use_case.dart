@@ -6,7 +6,7 @@ class LoadWorkDetailCatalogUseCase {
 
   final WorkDetailRepository _repository;
 
-  Future<WorkDetailCatalog> execute({String historyId = ''}) {
-    return _repository.loadCatalog(jobId: historyId);
+  Future<WorkDetailCatalog> execute({String jobId = ''}) {
+    return _repository.loadCatalog(jobId: jobId);
   }
 }

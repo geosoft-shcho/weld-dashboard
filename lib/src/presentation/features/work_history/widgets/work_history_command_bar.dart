@@ -241,6 +241,34 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                       ),
                     ),
                   ),
+                if (widget.viewModel.passNos.isNotEmpty)
+                  CommandBarWidgetItem(
+                    child: SizedBox(
+                      width: 120,
+                      child: InfoLabel(
+                        label: '패스',
+                        child: ComboBox<int>(
+                          isExpanded: true,
+                          value: widget.viewModel.passNos.contains(query.passNo)
+                              ? query.passNo
+                              : 0,
+                          items: [
+                            const ComboBoxItem(value: 0, child: Text('전체')),
+                            for (final passNo in widget.viewModel.passNos)
+                              ComboBoxItem(
+                                value: passNo,
+                                child: Text('$passNo'),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              widget.viewModel.didSelectPass(value);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
                 CommandBarWidgetItem(
                   child: SizedBox(
                     width: 140,
@@ -425,6 +453,9 @@ class WorkHistoryFilterChips extends StatelessWidget {
     }
     if (query.jointNo.isNotEmpty) {
       chips.add(_chip('이음부 ${query.jointNo}'));
+    }
+    if (query.passNo != 0) {
+      chips.add(_chip('패스 ${query.passNo}'));
     }
     if (query.workerId.isNotEmpty) {
       var label = query.workerId;

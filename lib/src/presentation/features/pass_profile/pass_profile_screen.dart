@@ -2,10 +2,12 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../../../domain/entities/channel_compare_stats.dart';
+import '../../../domain/entities/comparison_job_candidate.dart';
 import '../../../domain/entities/pass_joint_context.dart';
 import '../../../domain/entities/quality_link.dart';
 import '../../../domain/entities/waveform_series_bundle.dart';
 import '../../core/di/locator.dart';
+import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/waveform_channel_charts.dart';
 import '../../navigation/app_coordinator.dart';
@@ -20,12 +22,12 @@ class PassProfileScreen extends StatelessWidget {
   const PassProfileScreen({
     super.key,
     required this.commonKey,
-    required this.historyId,
+    required this.jobId,
     this.passId = '',
   });
 
   final String commonKey;
-  final String historyId;
+  final String jobId;
   final String passId;
 
   @override
@@ -34,7 +36,7 @@ class PassProfileScreen extends StatelessWidget {
       create: (_) => locator<PassProfileViewModel>(
         param1: PassProfileArgs(
           commonKey: commonKey,
-          historyId: historyId,
+          jobId: jobId,
           passId: passId,
         ),
       )..loadBoard(),
@@ -90,7 +92,7 @@ class _PassProfileBody extends StatelessWidget {
     //           : () => _didTapOpenQualityIssue(
     //               coordinator,
     //               commonKey: board.commonKey,
-    //               historyId: board.historyId,
+    //               jobId: board.jobId,
     //               passId: board.selectedPass?.passId,
     //             ),
     //     ),
@@ -221,28 +223,88 @@ class _NormalizeCombo extends StatelessWidget {
     final normalize = context.select<PassProfileViewModel, String>(
       (viewModel) => viewModel.normalize,
     );
-    return Row(
+    context.select<PassProfileViewModel, String>(_comparisonKey);
+    final viewModel = context.read<PassProfileViewModel>();
+    final selectedJobId = viewModel.selectedComparisonJobId;
+    final jobs = viewModel.comparisonJobs;
+    final knownIds = {for (final job in jobs) job.jobId};
+    final comparisonValue = knownIds.contains(selectedJobId) ? selectedJobId : '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text('파형 기준'),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 160,
-          child: ComboBox<String>(
-            value: normalize,
-            items: const [
-              ComboBoxItem(value: 'raw', child: Text('원본')),
-              ComboBoxItem(value: 'dtw', child: Text('DTW 정규화')),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                context.read<PassProfileViewModel>().didSelectNormalize(value);
-              }
-            },
-          ),
+        Row(
+          children: [
+            const Text('비교 작업'),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ComboBox<String>(
+                value: comparisonValue,
+                isExpanded: true,
+                items: [
+                  const ComboBoxItem(value: '', child: Text('비교 없음')),
+                  for (final job in jobs)
+                    ComboBoxItem(
+                      value: job.jobId,
+                      child: Text(
+                        _comparisonJobLabel(job),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+                onTap: viewModel.didOpenComparisonJobs,
+                onChanged: (value) {
+                  if (value != null) {
+                    viewModel.didSelectComparisonJob(value);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            const Text('파형 기준'),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 160,
+              child: ComboBox<String>(
+                value: normalize,
+                items: const [
+                  ComboBoxItem(value: 'raw', child: Text('원본')),
+                  ComboBoxItem(value: 'dtw', child: Text('DTW 정규화')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    context.read<PassProfileViewModel>().didSelectNormalize(
+                      value,
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
         ),
+        if (viewModel.comparisonError.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            viewModel.comparisonError,
+            style: const TextStyle(color: AppTheme.STATUS_ERROR),
+          ),
+        ],
       ],
     );
   }
+}
+
+String _comparisonKey(PassProfileViewModel viewModel) {
+  return [
+    viewModel.selectedComparisonJobId,
+    viewModel.comparisonError,
+    for (final job in viewModel.comparisonJobs) job.jobId,
+  ].join('\u001f');
+}
+
+String _comparisonJobLabel(ComparisonJobCandidate job) {
+  final worker = job.workerName.isEmpty ? '작업자 없음' : job.workerName;
+  return '${job.jobId} · $worker · ${DashboardFormatters.dateTime(job.startedAt)} · ${job.passCount}패스';
 }
 
 class _PassLegendSection extends StatelessWidget {
@@ -309,7 +371,7 @@ class _PassChartPane extends StatelessWidget {
               onBandTap: (linkId) => _openQualityIssue(
                 context,
                 commonKey: snapshot.commonKey,
-                historyId: snapshot.historyId,
+                jobId: snapshot.jobId,
                 passId: snapshot.passId,
                 linkId: linkId,
               ),
@@ -339,7 +401,7 @@ class _PassChartPane extends StatelessWidget {
 void _openQualityIssue(
   BuildContext context, {
   required String commonKey,
-  required String historyId,
+  required String jobId,
   required String passId,
   required String linkId,
 }) {
@@ -347,7 +409,7 @@ void _openQualityIssue(
   if (coordinator.isPassProfilePaneSelected) {
     coordinator.didTapOpenQualityIssueFromPane(
       commonKey: commonKey,
-      historyId: historyId,
+      jobId: jobId,
       passId: passId,
       linkId: linkId,
     );
@@ -355,7 +417,7 @@ void _openQualityIssue(
   }
   coordinator.didTapOpenQualityIssue(
     commonKey: commonKey,
-    historyId: historyId,
+    jobId: jobId,
     passId: passId,
     linkId: linkId,
   );
@@ -440,7 +502,7 @@ class _ChartSnapshot {
     required this.seriesError,
     required this.banners,
     required this.commonKey,
-    required this.historyId,
+    required this.jobId,
     required this.passId,
   });
 
@@ -473,7 +535,7 @@ class _ChartSnapshot {
       seriesError: viewModel.seriesError,
       banners: board?.banners ?? const [],
       commonKey: board?.commonKey ?? '',
-      historyId: board?.historyId ?? '',
+      jobId: board?.jobId ?? '',
       passId: board?.selectedPass?.passId ?? '',
     );
   }
@@ -488,7 +550,7 @@ class _ChartSnapshot {
   final String seriesError;
   final List<String> banners;
   final String commonKey;
-  final String historyId;
+  final String jobId;
   final String passId;
 
   @override
@@ -504,7 +566,7 @@ class _ChartSnapshot {
         other.seriesError == seriesError &&
         _sameBanners(other.banners, banners) &&
         other.commonKey == commonKey &&
-        other.historyId == historyId &&
+        other.jobId == jobId &&
         other.passId == passId;
   }
 
@@ -520,7 +582,7 @@ class _ChartSnapshot {
     seriesError,
     Object.hashAll(banners),
     commonKey,
-    historyId,
+    jobId,
     passId,
   );
 }

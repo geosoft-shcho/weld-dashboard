@@ -3,7 +3,7 @@ import 'work_attachment_type.dart';
 class WorkAttachment {
   const WorkAttachment({
     required this.attachmentId,
-    required this.historyId,
+    required this.jobId,
     required this.fileType,
     required this.fileName,
     required this.note,
@@ -11,7 +11,7 @@ class WorkAttachment {
   });
 
   final String attachmentId;
-  final String historyId;
+  final String jobId;
   final WorkAttachmentType fileType;
   final String fileName;
   final String note;

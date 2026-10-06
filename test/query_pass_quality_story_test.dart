@@ -24,7 +24,7 @@ void main() {
     final board = QueryPassProfileUseCase().execute(
       catalog: catalog,
       commonKey: 'WO-2026-0312|J-A-14',
-      historyId: 'H001',
+      jobId: 'H001',
     );
     expect(board.doesHaveCommonKey, isTrue);
     expect(board.passes.map((p) => p.passId), [
@@ -39,7 +39,7 @@ void main() {
     final fill = QueryPassProfileUseCase().execute(
       catalog: catalog,
       commonKey: 'WO-2026-0312|J-A-14',
-      historyId: 'H001',
+      jobId: 'H001',
       passId: 'P-A14-2',
     );
     expect(fill.mastersForPass.length, greaterThanOrEqualTo(1));
@@ -51,7 +51,7 @@ void main() {
     final board = QueryQualityIssueUseCase().execute(
       catalog: catalog,
       commonKey: 'WO-2026-0312|J-A-14',
-      historyId: 'H001',
+      jobId: 'H001',
     );
     expect(board.doesHaveCommonKey, isTrue);
     expect(board.allLinks.length, 3);
@@ -69,7 +69,7 @@ void main() {
     final board = QueryQualityIssueUseCase().execute(
       catalog: catalog,
       commonKey: 'WO-2026-0312|J-A-14',
-      historyId: 'H001',
+      jobId: 'H001',
       passId: 'P-A14-3',
     );
     expect(board.selectedGroup?.doesHaveScanFile, isTrue);
@@ -81,7 +81,7 @@ void main() {
     final board = QueryQualityIssueUseCase().execute(
       catalog: catalog,
       commonKey: 'WO-2026-0312|J-A-15',
-      historyId: 'H002',
+      jobId: 'H002',
     );
     expect(board.selectedGroup?.doesHaveScanFile, isFalse);
     expect(board.selectedGroup?.doesHaveVideoFile, isTrue);
@@ -93,7 +93,7 @@ void main() {
     final board = QueryQualityIssueUseCase().execute(
       catalog: catalog,
       commonKey: 'WO-2026-0412|J-D-09',
-      historyId: 'H007',
+      jobId: 'H007',
     );
     expect(board.doesHaveCommonKey, isTrue);
     expect(board.doesHaveLinks, isFalse);
@@ -112,7 +112,7 @@ void main() {
     final board = QueryPassProfileUseCase().execute(
       catalog: catalog,
       commonKey: 'WO-NONE|J-NONE',
-      historyId: 'H-NONE',
+      jobId: 'H-NONE',
     );
     expect(board.doesHaveCommonKey, isTrue);
     expect(board.doesHavePasses, isFalse);
@@ -123,7 +123,7 @@ void main() {
     final board = QueryPassProfileUseCase().execute(
       catalog: catalog,
       commonKey: '',
-      historyId: '',
+      jobId: '',
     );
     expect(board.commonKey, isEmpty);
     expect(board.doesHaveCommonKey, isFalse);

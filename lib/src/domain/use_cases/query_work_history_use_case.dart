@@ -20,7 +20,7 @@ class QueryWorkHistoryUseCase {
       final leftAt = left.workedAt;
       final rightAt = right.workedAt;
       if (leftAt == null && rightAt == null) {
-        return right.historyId.compareTo(left.historyId);
+        return right.jobId.compareTo(left.jobId);
       }
       if (leftAt == null) {
         return 1;
@@ -32,7 +32,7 @@ class QueryWorkHistoryUseCase {
       if (byTime != 0) {
         return byTime;
       }
-      return right.historyId.compareTo(left.historyId);
+      return right.jobId.compareTo(left.jobId);
     });
     return filtered;
   }

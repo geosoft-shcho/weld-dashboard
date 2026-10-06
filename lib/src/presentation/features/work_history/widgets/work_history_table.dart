@@ -108,8 +108,7 @@ class _WorkHistoryTableState extends State<WorkHistoryTable> {
               return _DataRow(
                 item: board.visibleRows[index],
                 isSelected:
-                    board.visibleRows[index].historyId ==
-                    board.query.selectedHistoryId,
+                    board.visibleRows[index].jobId == board.query.selectedJobId,
                 viewModel: viewModel,
               );
             },
@@ -138,6 +137,7 @@ class _HeaderRow extends StatelessWidget {
             _Cell('공사', flex: 14, isHeader: true),
             _Cell('품목', flex: 16, isHeader: true),
             _Cell('이음부', flex: 14, isHeader: true),
+            _Cell('성적서', flex: 8, isHeader: true),
             _Cell('작업자', flex: 10, isHeader: true),
             _Cell('작업일시', flex: 14, isHeader: true),
             _Cell('장비', flex: 12, isHeader: true),
@@ -178,9 +178,9 @@ class _DataRow extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                flex: 108,
+                flex: 116,
                 child: HoverButton(
-                  onPressed: () => viewModel.didSelectRow(item.historyId),
+                  onPressed: () => viewModel.didSelectRow(item.jobId),
                   builder: (context, states) {
                     final isHovered = states.contains(WidgetState.hovered);
                     return ColoredBox(
@@ -201,6 +201,7 @@ class _DataRow extends StatelessWidget {
                             flex: 16,
                           ),
                           _Cell(item.jointNo, flex: 14),
+                          _Cell(item.hasReport ? '있음' : '없음', flex: 8),
                           _Cell(item.workerName, flex: 10),
                           _Cell(
                             DashboardFormatters.dateTime(item.workedAt),
@@ -249,26 +250,26 @@ class _DataRow extends StatelessWidget {
   }
 
   void _openDetail(BuildContext context) {
-    viewModel.didSelectRow(item.historyId);
+    viewModel.didSelectRow(item.jobId);
     context.read<AppCoordinator>().didTapOpenWorkDetail(
       context,
-      historyId: item.historyId,
+      jobId: item.jobId,
     );
   }
 
   void _openPassProfile(BuildContext context) {
-    viewModel.didSelectRow(item.historyId);
+    viewModel.didSelectRow(item.jobId);
     context.read<AppCoordinator>().didTapOpenPassProfile(
       commonKey: item.commonKey,
-      historyId: item.historyId,
+      jobId: item.jobId,
     );
   }
 
   void _openQuality(BuildContext context) {
-    viewModel.didSelectRow(item.historyId);
+    viewModel.didSelectRow(item.jobId);
     context.read<AppCoordinator>().didTapOpenQualityIssue(
       commonKey: item.commonKey,
-      historyId: item.historyId,
+      jobId: item.jobId,
     );
   }
 

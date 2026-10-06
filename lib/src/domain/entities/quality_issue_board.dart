@@ -7,7 +7,7 @@ import 'waveform_series_bundle.dart';
 class QualityIssueBoard {
   const QualityIssueBoard({
     required this.commonKey,
-    required this.historyId,
+    required this.jobId,
     required this.context,
     required this.passes,
     required this.selectedPass,
@@ -20,14 +20,16 @@ class QualityIssueBoard {
   });
 
   final String commonKey;
-  final String historyId;
+  final String jobId;
   final PassJointContext? context;
   final List<WeldPass> passes;
   final WeldPass? selectedPass;
   final List<QualityResultGroup> groups;
   final QualityResultGroup? selectedGroup;
+
   /// Pass-filtered links for chart bands.
   final List<QualityLink> links;
+
   /// All links for the common key (table).
   final List<QualityLink> allLinks;
   final QualityLink? selectedLink;

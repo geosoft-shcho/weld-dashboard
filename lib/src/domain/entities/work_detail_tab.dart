@@ -2,6 +2,7 @@ import 'work_attachment_type.dart';
 
 enum WorkDetailTab {
   overview,
+  report,
   image,
   video,
   pdf,
@@ -12,6 +13,8 @@ enum WorkDetailTab {
     switch (this) {
       case WorkDetailTab.overview:
         return '개요';
+      case WorkDetailTab.report:
+        return '성적서';
       case WorkDetailTab.image:
         return '이미지';
       case WorkDetailTab.video:
@@ -28,6 +31,7 @@ enum WorkDetailTab {
   WorkAttachmentType? get attachmentType {
     switch (this) {
       case WorkDetailTab.overview:
+      case WorkDetailTab.report:
         return null;
       case WorkDetailTab.image:
         return WorkAttachmentType.image;

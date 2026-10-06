@@ -1,11 +1,6 @@
 import 'app_coordinator.dart';
 
-enum AppPane {
-  collection,
-  history,
-  pass,
-  quality,
-}
+enum AppPane { collection, history, pass, quality }
 
 /// Parsed dashboard location. Shell UI still reads [AppCoordinator]; this only
 /// maps path ↔ coordinator fields for browser history.
@@ -13,7 +8,7 @@ class AppRouteState {
   const AppRouteState({
     required this.pane,
     this.stack = WorkHistoryStack.list,
-    this.historyId = '',
+    this.jobId = '',
     this.commonKey = '',
     this.passId = '',
     this.linkId = '',
@@ -22,7 +17,7 @@ class AppRouteState {
 
   final AppPane pane;
   final WorkHistoryStack stack;
-  final String historyId;
+  final String jobId;
   final String commonKey;
   final String passId;
   final String linkId;
@@ -43,13 +38,13 @@ class AppRouteState {
       case AppPane.pass:
         return _locationWithQuery(passPath, {
           if (commonKey.isNotEmpty) 'commonKey': commonKey,
-          if (historyId.isNotEmpty) 'historyId': historyId,
+          if (jobId.isNotEmpty) 'jobId': jobId,
           if (passId.isNotEmpty) 'passId': passId,
         });
       case AppPane.quality:
         return _locationWithQuery(qualityPath, {
           if (commonKey.isNotEmpty) 'commonKey': commonKey,
-          if (historyId.isNotEmpty) 'historyId': historyId,
+          if (jobId.isNotEmpty) 'jobId': jobId,
           if (passId.isNotEmpty) 'passId': passId,
           if (linkId.isNotEmpty) 'linkId': linkId,
         });
@@ -58,22 +53,23 @@ class AppRouteState {
           case WorkHistoryStack.list:
             return historyPath;
           case WorkHistoryStack.detail:
-            final id = historyId.isEmpty ? '_' : Uri.encodeComponent(historyId);
+            final id = jobId.isEmpty ? '_' : Uri.encodeComponent(jobId);
             return '$historyPath/detail/$id';
           case WorkHistoryStack.videoMultimodal:
-            final multimodalId =
-                historyId.isEmpty ? '_' : Uri.encodeComponent(historyId);
+            final multimodalId = jobId.isEmpty
+                ? '_'
+                : Uri.encodeComponent(jobId);
             return '$historyPath/detail/$multimodalId/multimodal';
           case WorkHistoryStack.passProfile:
             return _locationWithQuery('$historyPath/pass', {
               if (commonKey.isNotEmpty) 'commonKey': commonKey,
-              if (historyId.isNotEmpty) 'historyId': historyId,
+              if (jobId.isNotEmpty) 'jobId': jobId,
               if (passId.isNotEmpty) 'passId': passId,
             });
           case WorkHistoryStack.qualityIssue:
             return _locationWithQuery('$historyPath/quality', {
               if (commonKey.isNotEmpty) 'commonKey': commonKey,
-              if (historyId.isNotEmpty) 'historyId': historyId,
+              if (jobId.isNotEmpty) 'jobId': jobId,
               if (passId.isNotEmpty) 'passId': passId,
               if (linkId.isNotEmpty) 'linkId': linkId,
               if (qualityViaDetail) 'via': 'detail',
@@ -96,7 +92,7 @@ class AppRouteState {
       return AppRouteState(
         pane: AppPane.pass,
         commonKey: query['commonKey'] ?? '',
-        historyId: query['historyId'] ?? '',
+        jobId: query['jobId'] ?? '',
         passId: query['passId'] ?? '',
       );
     }
@@ -104,7 +100,7 @@ class AppRouteState {
       return AppRouteState(
         pane: AppPane.quality,
         commonKey: query['commonKey'] ?? '',
-        historyId: query['historyId'] ?? '',
+        jobId: query['jobId'] ?? '',
         passId: query['passId'] ?? '',
         linkId: query['linkId'] ?? '',
       );
@@ -113,26 +109,27 @@ class AppRouteState {
       return const AppRouteState(pane: AppPane.history);
     }
 
-    final multimodalMatch =
-        RegExp(r'^/history/detail/([^/]+)/multimodal$').firstMatch(path);
+    final multimodalMatch = RegExp(
+      r'^/history/detail/([^/]+)/multimodal$',
+    ).firstMatch(path);
     if (multimodalMatch != null) {
       final raw = multimodalMatch.group(1)!;
-      final historyId = raw == '_' ? '' : Uri.decodeComponent(raw);
+      final jobId = raw == '_' ? '' : Uri.decodeComponent(raw);
       return AppRouteState(
         pane: AppPane.history,
         stack: WorkHistoryStack.videoMultimodal,
-        historyId: historyId,
+        jobId: jobId,
       );
     }
 
     final detailMatch = RegExp(r'^/history/detail/([^/]+)$').firstMatch(path);
     if (detailMatch != null) {
       final raw = detailMatch.group(1)!;
-      final historyId = raw == '_' ? '' : Uri.decodeComponent(raw);
+      final jobId = raw == '_' ? '' : Uri.decodeComponent(raw);
       return AppRouteState(
         pane: AppPane.history,
         stack: WorkHistoryStack.detail,
-        historyId: historyId,
+        jobId: jobId,
       );
     }
     if (path == '$historyPath/pass') {
@@ -140,7 +137,7 @@ class AppRouteState {
         pane: AppPane.history,
         stack: WorkHistoryStack.passProfile,
         commonKey: query['commonKey'] ?? '',
-        historyId: query['historyId'] ?? '',
+        jobId: query['jobId'] ?? '',
         passId: query['passId'] ?? '',
       );
     }
@@ -149,7 +146,7 @@ class AppRouteState {
         pane: AppPane.history,
         stack: WorkHistoryStack.qualityIssue,
         commonKey: query['commonKey'] ?? '',
-        historyId: query['historyId'] ?? '',
+        jobId: query['jobId'] ?? '',
         passId: query['passId'] ?? '',
         linkId: query['linkId'] ?? '',
         qualityViaDetail: query['via'] == 'detail',

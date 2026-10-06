@@ -9,10 +9,12 @@ class PaperScanHost extends StatefulWidget {
     super.key,
     required this.scanFile,
     required this.scanPages,
+    this.initialPage,
   });
 
   final String scanFile;
   final int scanPages;
+  final int? initialPage;
 
   @override
   State<PaperScanHost> createState() => _PaperScanHostState();
@@ -105,6 +107,7 @@ class _PaperScanHostState extends State<PaperScanHost> {
           PdfrxDocumentViewer(
             key: ValueKey(scanFile),
             source: source,
+            initialPage: widget.initialPage,
             backgroundColor: AppTheme.SURFACE_RAISED,
             fallbackPageCount: widget.scanPages,
             expandViewport: false,
@@ -155,4 +158,5 @@ String paperScanDisplayName(String path) {
 }
 
 /// 기존 호출부 호환용. 새 코드는 [resolvePdfrxDocumentSource]를 쓴다.
-String? resolveScanAssetPath(String scanFile) => resolvePdfrxAssetPath(scanFile);
+String? resolveScanAssetPath(String scanFile) =>
+    resolvePdfrxAssetPath(scanFile);

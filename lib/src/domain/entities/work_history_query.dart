@@ -5,11 +5,12 @@ class WorkHistoryQuery {
     required this.unitNo,
     required this.itemCode,
     this.jointNo = '',
+    this.passNo = 0,
     required this.workerId,
     required this.equipmentId,
     required this.fromDate,
     required this.toDate,
-    required this.selectedHistoryId,
+    required this.selectedJobId,
     required this.visibleCount,
   });
 
@@ -25,7 +26,7 @@ class WorkHistoryQuery {
       equipmentId: '',
       fromDate: null,
       toDate: null,
-      selectedHistoryId: '',
+      selectedJobId: '',
       visibleCount: BATCH_SIZE,
     );
   }
@@ -35,13 +36,14 @@ class WorkHistoryQuery {
   final String unitNo;
   final String itemCode;
   final String jointNo;
+  final int passNo;
   final String workerId;
   final String equipmentId;
   final DateTime? fromDate;
   final DateTime? toDate;
 
   /// 선택한 작업. 값은 `job_id`다.
-  final String selectedHistoryId;
+  final String selectedJobId;
 
   /// 로컬 카탈로그 슬라이스용. 서버 페이지는 page_token 을 쓴다.
   final int visibleCount;
@@ -61,6 +63,7 @@ class WorkHistoryQuery {
         unitNo.isNotEmpty ||
         itemCode.isNotEmpty ||
         jointNo.isNotEmpty ||
+        passNo != 0 ||
         workerId.isNotEmpty ||
         equipmentId.isNotEmpty ||
         fromDate != null ||
@@ -73,6 +76,7 @@ class WorkHistoryQuery {
         unitNo == other.unitNo &&
         itemCode == other.itemCode &&
         jointNo == other.jointNo &&
+        passNo == other.passNo &&
         workerId == other.workerId &&
         equipmentId == other.equipmentId &&
         _sameDay(fromDate, other.fromDate) &&
@@ -95,13 +99,14 @@ class WorkHistoryQuery {
     String? unitNo,
     String? itemCode,
     String? jointNo,
+    int? passNo,
     String? workerId,
     String? equipmentId,
     DateTime? fromDate,
     bool clearFromDate = false,
     DateTime? toDate,
     bool clearToDate = false,
-    String? selectedHistoryId,
+    String? selectedJobId,
     int? visibleCount,
   }) {
     return WorkHistoryQuery(
@@ -110,11 +115,12 @@ class WorkHistoryQuery {
       unitNo: unitNo ?? this.unitNo,
       itemCode: itemCode ?? this.itemCode,
       jointNo: jointNo ?? this.jointNo,
+      passNo: passNo ?? this.passNo,
       workerId: workerId ?? this.workerId,
       equipmentId: equipmentId ?? this.equipmentId,
       fromDate: clearFromDate ? null : (fromDate ?? this.fromDate),
       toDate: clearToDate ? null : (toDate ?? this.toDate),
-      selectedHistoryId: selectedHistoryId ?? this.selectedHistoryId,
+      selectedJobId: selectedJobId ?? this.selectedJobId,
       visibleCount: visibleCount ?? this.visibleCount,
     );
   }

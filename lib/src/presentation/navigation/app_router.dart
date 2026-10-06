@@ -34,56 +34,47 @@ GoRouter createAppRouter({
         routes: [
           GoRoute(
             path: AppRouteState.collectionPath,
-            pageBuilder: (context, state) => const NoTransitionPage<void>(
-              child: SizedBox.shrink(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
           ),
           GoRoute(
             path: AppRouteState.historyPath,
-            pageBuilder: (context, state) => const NoTransitionPage<void>(
-              child: SizedBox.shrink(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
             routes: [
               GoRoute(
-                path: 'detail/:historyId',
-                pageBuilder: (context, state) => const NoTransitionPage<void>(
-                  child: SizedBox.shrink(),
-                ),
+                path: 'detail/:jobId',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage<void>(child: SizedBox.shrink()),
                 routes: [
                   GoRoute(
                     path: 'multimodal',
                     pageBuilder: (context, state) =>
-                        const NoTransitionPage<void>(
-                      child: SizedBox.shrink(),
-                    ),
+                        const NoTransitionPage<void>(child: SizedBox.shrink()),
                   ),
                 ],
               ),
               GoRoute(
                 path: 'pass',
-                pageBuilder: (context, state) => const NoTransitionPage<void>(
-                  child: SizedBox.shrink(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage<void>(child: SizedBox.shrink()),
               ),
               GoRoute(
                 path: 'quality',
-                pageBuilder: (context, state) => const NoTransitionPage<void>(
-                  child: SizedBox.shrink(),
-                ),
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage<void>(child: SizedBox.shrink()),
               ),
             ],
           ),
           GoRoute(
             path: AppRouteState.passPath,
-            pageBuilder: (context, state) => const NoTransitionPage<void>(
-              child: SizedBox.shrink(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
           ),
           GoRoute(
             path: AppRouteState.qualityPath,
-            pageBuilder: (context, state) => const NoTransitionPage<void>(
-              child: SizedBox.shrink(),
-            ),
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
           ),
         ],
       ),
@@ -97,7 +88,8 @@ GoRouter createAppRouter({
   );
 
   void notifyLocation() {
-    final parsed = AppRouteState.tryParse(router.state.uri) ??
+    final parsed =
+        AppRouteState.tryParse(router.state.uri) ??
         const AppRouteState(pane: AppPane.collection);
     onLocationChanged(parsed);
   }

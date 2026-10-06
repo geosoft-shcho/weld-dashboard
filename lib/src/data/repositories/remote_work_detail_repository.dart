@@ -48,7 +48,7 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
       attachments.add(
         WorkAttachment(
           attachmentId: asset.assetId,
-          historyId: jobId,
+          jobId: jobId,
           fileType: type,
           fileName: asset.fileName,
           note: '',
@@ -69,7 +69,7 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
         if (item.equipmentName.isNotEmpty) item.equipmentName,
     ];
     return WorkHistoryItem(
-      historyId: job.jobId,
+      jobId: job.jobId,
       commonKey: job.commonKey,
       projectNo: job.projectNo,
       unitNo: job.unitNo,

@@ -21,7 +21,7 @@ class ResolveLatestPassProfileUseCase {
     final item = candidates.first;
     return LatestPassProfileTarget(
       commonKey: item.commonKey,
-      historyId: item.historyId,
+      jobId: item.jobId,
     );
   }
 
@@ -39,7 +39,7 @@ class ResolveLatestPassProfileUseCase {
       if (byTime != 0) {
         return byTime;
       }
-      return left.historyId.compareTo(right.historyId);
+      return left.jobId.compareTo(right.jobId);
     });
   }
 

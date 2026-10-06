@@ -31,7 +31,7 @@ class WorkDetailRepositoryImpl implements WorkDetailRepository {
       if (attachment == null) {
         continue;
       }
-      if (jobId.isNotEmpty && attachment.historyId != jobId) {
+      if (jobId.isNotEmpty && attachment.jobId != jobId) {
         continue;
       }
       attachments.add(attachment);

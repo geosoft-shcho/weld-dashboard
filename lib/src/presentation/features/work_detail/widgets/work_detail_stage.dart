@@ -5,6 +5,7 @@ import '../work_detail_view_model.dart';
 import 'work_detail_image_viewer.dart';
 import 'work_detail_media_viewers.dart';
 import 'work_detail_overview.dart';
+import 'work_detail_report_panel.dart';
 import 'work_detail_pdf_viewer.dart';
 import 'work_detail_text_viewer.dart';
 
@@ -18,6 +19,8 @@ class WorkDetailStage extends StatelessWidget {
     switch (viewModel.selectedTab) {
       case WorkDetailTab.overview:
         return WorkDetailOverview(viewModel: viewModel);
+      case WorkDetailTab.report:
+        return WorkDetailReportPanel(viewModel: viewModel);
       case WorkDetailTab.image:
         return WorkDetailImageViewer(viewModel: viewModel);
       case WorkDetailTab.video:

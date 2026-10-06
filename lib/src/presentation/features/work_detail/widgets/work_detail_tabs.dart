@@ -34,7 +34,13 @@ class WorkDetailTabs extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(tab.label),
-                if (tab != WorkDetailTab.overview) ...[
+                if (tab == WorkDetailTab.report) ...[
+                  const SizedBox(width: 6),
+                  Text(
+                    '${viewModel.reportSets.length}',
+                    style: const TextStyle(fontSize: 11),
+                  ),
+                ] else if (tab != WorkDetailTab.overview) ...[
                   const SizedBox(width: 6),
                   Text(
                     '${detail.countByType(tab.attachmentType!)}',

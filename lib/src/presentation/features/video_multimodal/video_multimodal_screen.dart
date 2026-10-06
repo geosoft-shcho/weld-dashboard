@@ -12,16 +12,15 @@ import 'widgets/multimodal_timeline_board.dart';
 import 'widgets/multimodal_video_stage.dart';
 
 class VideoMultimodalScreen extends StatelessWidget {
-  const VideoMultimodalScreen({super.key, required this.historyId});
+  const VideoMultimodalScreen({super.key, required this.jobId});
 
-  final String historyId;
+  final String jobId;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) =>
-          locator<VideoMultimodalViewModel>(param1: historyId)
-            ..loadAttachments(),
+          locator<VideoMultimodalViewModel>(param1: jobId)..loadAttachments(),
       child: const _VideoMultimodalBody(),
     );
   }

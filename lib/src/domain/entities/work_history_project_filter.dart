@@ -1,8 +1,20 @@
+class WorkHistoryJointFilter {
+  const WorkHistoryJointFilter({required this.jointNo, required this.passNos});
+
+  final String jointNo;
+  final List<int> passNos;
+}
+
 class WorkHistoryItemFilter {
-  const WorkHistoryItemFilter({required this.itemCode, required this.jointNos});
+  const WorkHistoryItemFilter({
+    required this.itemCode,
+    required this.jointNos,
+    this.joints = const [],
+  });
 
   final String itemCode;
   final List<String> jointNos;
+  final List<WorkHistoryJointFilter> joints;
 }
 
 class WorkHistoryUnitFilter {

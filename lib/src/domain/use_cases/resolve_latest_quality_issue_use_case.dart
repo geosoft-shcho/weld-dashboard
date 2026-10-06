@@ -27,7 +27,7 @@ class ResolveLatestQualityIssueUseCase {
     final link = links.first;
     return LatestQualityIssueTarget(
       commonKey: item.commonKey,
-      historyId: item.historyId,
+      jobId: item.jobId,
       passId: link.passId,
       linkId: link.linkId,
     );
@@ -47,7 +47,7 @@ class ResolveLatestQualityIssueUseCase {
       if (byTime != 0) {
         return byTime;
       }
-      return left.historyId.compareTo(right.historyId);
+      return left.jobId.compareTo(right.jobId);
     });
   }
 

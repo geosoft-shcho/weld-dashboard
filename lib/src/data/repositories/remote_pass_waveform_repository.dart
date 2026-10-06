@@ -1,7 +1,9 @@
 import 'package:connectrpc/connect.dart';
 
+import '../../domain/entities/comparison_job_candidate.dart';
 import '../../domain/entities/pass_joint_context.dart';
 import '../../domain/entities/pass_waveform_catalog.dart';
+import '../../domain/entities/pass_waveform_series.dart';
 import '../../domain/entities/series_role.dart';
 import '../../domain/entities/waveform_row.dart';
 import '../../domain/entities/weld_pass.dart';
@@ -14,16 +16,18 @@ import '../datasources/remote/media_tag_data_source.dart';
 class RemotePassWaveformRepository implements PassWaveformRepository {
   RemotePassWaveformRepository(this._mediaTag);
 
+  static const int COMPARISON_PAGE_SIZE = 50;
+
   final MediaTagDataSource _mediaTag;
 
   @override
   Future<PassWaveformCatalog> loadCatalog({
     String commonKey = '',
-    String historyId = '',
+    String jobId = '',
     String passId = '',
     String normalize = 'raw',
   }) async {
-    if (historyId.isEmpty) {
+    if (jobId.isEmpty) {
       return const PassWaveformCatalog(
         passes: [],
         waveformRows: [],
@@ -34,7 +38,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
       );
     }
     final response = await _mediaTag.workService.getJob(
-      work_pb.GetJobRequest(jobId: historyId),
+      work_pb.GetJobRequest(jobId: jobId),
     );
     if (!response.hasJob() || response.job.jobId.isEmpty) {
       return const PassWaveformCatalog(
@@ -62,8 +66,6 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
         ? passId
         : (passes.isNotEmpty ? passes.first.passId : '');
     final waveforms = await _waveformRows(
-      job: job,
-      passes: response.passes,
       passId: selectedPassId,
       commonKey: job.commonKey,
       workerId: job.workerId,
@@ -85,22 +87,109 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     );
   }
 
-  Future<_WaveformLoad> _waveformRows({
-    required work_pb.Job job,
-    required List<work_pb.Pass> passes,
+  @override
+  Future<PassWaveformSeries> loadWaveform({
     required String passId,
     required String commonKey,
     required String workerId,
+    String comparisonPassId = '',
+    String normalize = 'raw',
+  }) async {
+    final waveforms = await _waveformRows(
+      passId: passId,
+      commonKey: commonKey,
+      workerId: workerId,
+      comparisonPassId: comparisonPassId,
+      normalize: normalize,
+    );
+    return PassWaveformSeries(
+      rows: waveforms.rows,
+      notice: waveforms.notice,
+      didFallBackToRaw: waveforms.didFallBackToRaw,
+    );
+  }
+
+  @override
+  Future<ComparisonJobPage> listComparisonJobs({
+    required String projectNo,
+    required String itemCode,
+    required String unitNo,
+    required String excludeJobId,
+    String pageToken = '',
+  }) async {
+    final response = await _mediaTag.workService.listJobs(
+      work_pb.ListJobsRequest(
+        projectNo: projectNo,
+        itemCode: itemCode,
+        unitNo: unitNo,
+        masterOnly: true,
+        pageSize: COMPARISON_PAGE_SIZE,
+        pageToken: pageToken,
+      ),
+    );
+    final jobs = <ComparisonJobCandidate>[];
+    for (final summary in response.jobs) {
+      final candidateId = summary.job.jobId;
+      if (candidateId.isEmpty || candidateId == excludeJobId) {
+        continue;
+      }
+      jobs.add(
+        ComparisonJobCandidate(
+          jobId: candidateId,
+          workerName: summary.workerName,
+          startedAt: summary.job.hasStartedAt()
+              ? summary.job.startedAt.toDateTime().toLocal()
+              : null,
+          passCount: summary.passCount,
+        ),
+      );
+    }
+    return ComparisonJobPage(
+      jobs: jobs,
+      nextPageToken: response.nextPageToken,
+    );
+  }
+
+  @override
+  Future<List<WeldPass>> loadComparisonPasses({required String jobId}) async {
+    if (jobId.isEmpty) {
+      throw const ComparisonJobNotFoundException();
+    }
+    try {
+      final response = await _mediaTag.workService.getJob(
+        work_pb.GetJobRequest(jobId: jobId),
+      );
+      if (!response.hasJob() || response.job.jobId.isEmpty) {
+        throw const ComparisonJobNotFoundException();
+      }
+      final job = response.job;
+      final passes = [
+        for (final item in response.passes)
+          WeldPass(
+            passId: item.passId,
+            commonKey: job.commonKey,
+            passNo: item.passNo,
+            passName: '',
+            masterProfileId: '',
+            controlWorkerId: job.workerId,
+          ),
+      ]..sort((left, right) => left.passNo.compareTo(right.passNo));
+      return passes;
+    } on ConnectException {
+      throw const ComparisonJobNotFoundException();
+    }
+  }
+
+  Future<_WaveformLoad> _waveformRows({
+    required String passId,
+    required String commonKey,
+    required String workerId,
+    String comparisonPassId = '',
     required String normalize,
   }) async {
     if (passId.isEmpty) {
       return const _WaveformLoad(rows: []);
     }
-    final comparisonPassId = await _comparisonPassId(
-      job: job,
-      passes: passes,
-      passId: passId,
-    );
     final askedDtw =
         _waveformNormalize(normalize) ==
         work_pb.WaveformNormalize.WAVEFORM_NORMALIZE_DTW;
@@ -160,84 +249,6 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
           ? work_pb.WaveformNormalize.WAVEFORM_NORMALIZE_DTW
           : work_pb.WaveformNormalize.WAVEFORM_NORMALIZE_UNSPECIFIED,
     );
-  }
-
-  Future<String> _comparisonPassId({
-    required work_pb.Job job,
-    required List<work_pb.Pass> passes,
-    required String passId,
-  }) async {
-    work_pb.Pass? selected;
-    for (final pass in passes) {
-      if (pass.passId == passId) {
-        selected = pass;
-        break;
-      }
-    }
-    if (selected == null) {
-      return '';
-    }
-    final work_pb.ListJobsResponse listed;
-    try {
-      listed = await _mediaTag.workService.listJobs(
-        work_pb.ListJobsRequest(
-          projectNo: job.projectNo,
-          itemCode: job.itemCode,
-          unitNo: job.unitNo,
-          masterOnly: true,
-          pageSize: 50,
-        ),
-      );
-    } on ConnectException {
-      return '';
-    }
-    String masterJobId = '';
-    for (final summary in listed.jobs) {
-      final candidate = summary.job.jobId;
-      if (candidate.isNotEmpty && candidate != job.jobId) {
-        masterJobId = candidate;
-        break;
-      }
-    }
-    if (masterJobId.isEmpty) {
-      return '';
-    }
-    final work_pb.GetJobResponse masterJob;
-    try {
-      masterJob = await _mediaTag.workService.getJob(
-        work_pb.GetJobRequest(jobId: masterJobId),
-      );
-    } on ConnectException {
-      return '';
-    }
-    return _pairedPassId(passes, selected, masterJob.passes);
-  }
-
-  String _pairedPassId(
-    List<work_pb.Pass> targetPasses,
-    work_pb.Pass selected,
-    List<work_pb.Pass> comparisonPasses,
-  ) {
-    if (comparisonPasses.isEmpty) {
-      return '';
-    }
-    final targets = [...targetPasses]
-      ..sort((left, right) => left.passNo.compareTo(right.passNo));
-    final comparisons = [...comparisonPasses]
-      ..sort((left, right) => left.passNo.compareTo(right.passNo));
-    final index = targets.indexWhere((pass) => pass.passId == selected.passId);
-    if (index <= 0) {
-      return comparisons.first.passId;
-    }
-    if (index == targets.length - 1) {
-      return comparisons.last.passId;
-    }
-    for (final pass in comparisons) {
-      if (pass.passNo == selected.passNo) {
-        return pass.passId;
-      }
-    }
-    return '';
   }
 
   List<WaveformRow> _rowsFromResponse(
@@ -375,7 +386,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
         if (item.equipmentName.isNotEmpty) item.equipmentName,
     ];
     return WorkHistoryItem(
-      historyId: job.jobId,
+      jobId: job.jobId,
       commonKey: job.commonKey,
       projectNo: job.projectNo,
       unitNo: job.unitNo,

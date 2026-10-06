@@ -112,14 +112,14 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
       passCountsByCommonKey[commonKey] =
           (passCountsByCommonKey[commonKey] ?? 0) + 1;
     }
-    final attachmentCountsByHistoryId = <String, int>{};
+    final attachmentCountsByJobId = <String, int>{};
     for (final row in attachmentRows) {
-      final historyId = row['history_id'] ?? '';
-      if (historyId.isEmpty) {
+      final jobId = row['history_id'] ?? '';
+      if (jobId.isEmpty) {
         continue;
       }
-      attachmentCountsByHistoryId[historyId] =
-          (attachmentCountsByHistoryId[historyId] ?? 0) + 1;
+      attachmentCountsByJobId[jobId] =
+          (attachmentCountsByJobId[jobId] ?? 0) + 1;
     }
     final items = [
       for (final row in historyRows)
@@ -130,7 +130,7 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
           workersById: workersById,
           equipmentsById: equipmentsById,
           passCountsByCommonKey: passCountsByCommonKey,
-          attachmentCountsByHistoryId: attachmentCountsByHistoryId,
+          attachmentCountsByJobId: attachmentCountsByJobId,
         ),
     ];
     final catalog = WorkHistoryCatalog(
@@ -164,14 +164,14 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
     required Map<String, Worker> workersById,
     required Map<String, Equipment> equipmentsById,
     required Map<String, int> passCountsByCommonKey,
-    required Map<String, int> attachmentCountsByHistoryId,
+    required Map<String, int> attachmentCountsByJobId,
   }) {
     final workOrder = workOrdersById[record.workOrderId];
     final joint = jointsById[record.jointId];
     final worker = workersById[record.workerId];
     final equipment = equipmentsById[record.equipmentId];
     return WorkHistoryItem(
-      historyId: record.historyId,
+      jobId: record.jobId,
       commonKey: record.commonKey,
       projectNo: record.workOrderId,
       unitNo: joint?.jointNo ?? '',
@@ -183,7 +183,7 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
       equipmentName: equipment?.equipmentName ?? record.equipmentId,
       workedAt: record.workedAt,
       passCount: passCountsByCommonKey[record.commonKey] ?? 0,
-      attachmentCount: attachmentCountsByHistoryId[record.historyId] ?? 0,
+      attachmentCount: attachmentCountsByJobId[record.jobId] ?? 0,
     );
   }
 }

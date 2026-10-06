@@ -1,9 +1,12 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
+import '../../../domain/entities/comparison_job_candidate.dart';
 import '../../../domain/entities/quality_link.dart';
+import '../../../domain/entities/quality_result_report.dart';
 import '../../../domain/entities/waveform_series_bundle.dart';
 import '../../core/di/locator.dart';
+import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/waveform_channel_charts.dart';
 import '../../navigation/app_coordinator.dart';
@@ -12,20 +15,20 @@ import '../pass_profile/widgets/pass_legend_toolbar.dart';
 import '../pass_profile/widgets/pass_tabs_bar.dart';
 import 'quality_issue_args.dart';
 import 'quality_issue_view_model.dart';
-import 'widgets/quality_links_table.dart';
+import 'widgets/quality_results_tables.dart';
 import 'widgets/quality_media_host.dart';
 
 class QualityIssueScreen extends StatelessWidget {
   const QualityIssueScreen({
     super.key,
     required this.commonKey,
-    required this.historyId,
+    required this.jobId,
     this.passId = '',
     this.linkId = '',
   });
 
   final String commonKey;
-  final String historyId;
+  final String jobId;
   final String passId;
   final String linkId;
 
@@ -35,7 +38,7 @@ class QualityIssueScreen extends StatelessWidget {
       create: (_) => locator<QualityIssueViewModel>(
         param1: QualityIssueArgs(
           commonKey: commonKey,
-          historyId: historyId,
+          jobId: jobId,
           passId: passId,
           linkId: linkId,
         ),
@@ -51,11 +54,12 @@ _QualityPageMode _pageMode(QualityIssueViewModel viewModel) {
   if (viewModel.isLoading) {
     return _QualityPageMode.loading;
   }
-  if (viewModel.hasError && viewModel.board == null) {
+  if (viewModel.hasError && !viewModel.didLoadQualityResults) {
     return _QualityPageMode.error;
   }
   final board = viewModel.board;
-  if (board == null || !board.doesHaveCommonKey) {
+  final doesHaveWaveform = board != null && board.doesHaveCommonKey;
+  if (!doesHaveWaveform && !viewModel.didLoadQualityResults) {
     return _QualityPageMode.empty;
   }
   return _QualityPageMode.ready;
@@ -99,14 +103,14 @@ class _QualityIssueBody extends StatelessWidget {
     //               if (coordinator.isQualityIssuePaneSelected) {
     //                 coordinator.didTapOpenPassProfileFromPane(
     //                   commonKey: board.commonKey,
-    //                   historyId: board.historyId,
+    //                   jobId: board.jobId,
     //                   passId: passId,
     //                 );
     //                 return;
     //               }
     //               coordinator.didTapOpenPassProfile(
     //                 commonKey: board.commonKey,
-    //                 historyId: board.historyId,
+    //                 jobId: board.jobId,
     //                 passId: passId,
     //               );
     //             },
@@ -187,13 +191,15 @@ class _QualityIssueReady extends StatelessWidget {
         SizedBox(height: 12),
         _QualityTabsSection(),
         SizedBox(height: 12),
+        _QualityComparisonJob(),
+        SizedBox(height: 12),
         _QualityLegendSection(),
         SizedBox(height: 12),
         _QualityContentProgress(),
         _QualityContentError(),
         _QualityMediaAndCharts(),
         SizedBox(height: 16),
-        _QualityLinksSection(),
+        _QualityResultsSection(),
       ],
     );
   }
@@ -229,6 +235,107 @@ class _QualityTabsSection extends StatelessWidget {
           context.read<QualityIssueViewModel>().didSelectPass(passId),
     );
   }
+}
+
+class _QualityComparisonJob extends StatelessWidget {
+  const _QualityComparisonJob();
+
+  @override
+  Widget build(BuildContext context) {
+    final normalize = context.select<QualityIssueViewModel, String>(
+      (viewModel) => viewModel.normalize,
+    );
+    final notice = context.select<QualityIssueViewModel, String>(
+      (viewModel) => viewModel.waveformNotice,
+    );
+    context.select<QualityIssueViewModel, String>(_comparisonKey);
+    final viewModel = context.read<QualityIssueViewModel>();
+    final selectedJobId = viewModel.selectedComparisonJobId;
+    final jobs = viewModel.comparisonJobs;
+    final knownIds = {for (final job in jobs) job.jobId};
+    final comparisonValue = knownIds.contains(selectedJobId)
+        ? selectedJobId
+        : '';
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            const Text('비교 작업'),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ComboBox<String>(
+                value: comparisonValue,
+                isExpanded: true,
+                items: [
+                  const ComboBoxItem(value: '', child: Text('비교 없음')),
+                  for (final job in jobs)
+                    ComboBoxItem(
+                      value: job.jobId,
+                      child: Text(
+                        _comparisonJobLabel(job),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                ],
+                onTap: viewModel.didOpenComparisonJobs,
+                onChanged: (value) {
+                  if (value != null) {
+                    viewModel.didSelectComparisonJob(value);
+                  }
+                },
+              ),
+            ),
+            const SizedBox(width: 16),
+            const Text('파형 기준'),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: 160,
+              child: ComboBox<String>(
+                value: normalize,
+                items: const [
+                  ComboBoxItem(value: 'raw', child: Text('원본')),
+                  ComboBoxItem(value: 'dtw', child: Text('DTW 정규화')),
+                ],
+                onChanged: (value) {
+                  if (value != null) {
+                    context.read<QualityIssueViewModel>().didSelectNormalize(
+                      value,
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+        if (notice.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          InfoBar(title: Text(notice), severity: InfoBarSeverity.info),
+        ],
+        if (viewModel.comparisonError.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          Text(
+            viewModel.comparisonError,
+            style: const TextStyle(color: AppTheme.STATUS_ERROR),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+String _comparisonKey(QualityIssueViewModel viewModel) {
+  return [
+    viewModel.selectedComparisonJobId,
+    viewModel.comparisonError,
+    for (final job in viewModel.comparisonJobs) job.jobId,
+  ].join('\u001f');
+}
+
+String _comparisonJobLabel(ComparisonJobCandidate job) {
+  final worker = job.workerName.isEmpty ? '작업자 없음' : job.workerName;
+  return '${job.jobId} · $worker · ${DashboardFormatters.dateTime(job.startedAt)} · ${job.passCount}패스';
 }
 
 class _QualityLegendSection extends StatelessWidget {
@@ -295,11 +402,21 @@ class _QualityContentError extends StatelessWidget {
   }
 }
 
-class _QualityMediaAndCharts extends StatelessWidget {
+class _QualityMediaAndCharts extends StatefulWidget {
   const _QualityMediaAndCharts();
 
   @override
+  State<_QualityMediaAndCharts> createState() => _QualityMediaAndChartsState();
+}
+
+class _QualityMediaAndChartsState extends State<_QualityMediaAndCharts>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         const media = _QualityMediaSection();
@@ -336,6 +453,13 @@ class _QualityMediaSection extends StatelessWidget {
       selectedMediaIndex: viewModel.selectedMediaIndex,
       onSelectTab: viewModel.didSelectMediaTab,
       onSelectMediaIndex: viewModel.didSelectMediaIndex,
+      reportPdfs: viewModel.reportPdfs,
+      selectedReportSetId: viewModel.selectedReportSetId,
+      reportPdfPage: viewModel.reportPdfPage,
+      jobMedia: viewModel.jobMedia,
+      selectedJobMediaId: viewModel.selectedJobMediaId,
+      focusedMediaId: viewModel.focusedMediaId,
+      onSelectFocusedMedia: viewModel.didSelectFocusedMedia,
       seekToMs: viewModel.pendingSeekToMs,
       seekToken: viewModel.seekToken,
     );
@@ -365,19 +489,23 @@ class _QualityChartSection extends StatelessWidget {
   }
 }
 
-class _QualityLinksSection extends StatelessWidget {
-  const _QualityLinksSection();
+class _QualityResultsSection extends StatelessWidget {
+  const _QualityResultsSection();
 
   @override
   Widget build(BuildContext context) {
-    final snapshot = context.select<QualityIssueViewModel, _LinksSnapshot>(
-      _LinksSnapshot.from,
-    );
-    return QualityLinksTable(
-      links: snapshot.links,
-      selectedLinkId: snapshot.selectedLinkId,
-      onSelectLink: (linkId) =>
-          context.read<QualityIssueViewModel>().didSelectLink(linkId),
+    final reports = context
+        .select<QualityIssueViewModel, List<QualityResultReport>>(
+          (viewModel) => viewModel.qualityReports,
+        );
+    return QualityResultsTables(
+      reports: reports,
+      onSelectInspection: (reportSetId, pageStart) {
+        context.read<QualityIssueViewModel>().didSelectInspection(
+          reportSetId: reportSetId,
+          originalPage: pageStart,
+        );
+      },
     );
   }
 }
@@ -417,6 +545,18 @@ String _mediaKey(QualityIssueViewModel viewModel) {
     group?.qualityResultId ?? '',
     viewModel.selectedMediaTab.label,
     '${viewModel.selectedMediaIndex}',
+    viewModel.selectedReportSetId ?? '',
+    '${viewModel.reportPdfPage}',
+    viewModel.selectedJobMediaId,
+    viewModel.focusedMediaId,
+    [
+      for (final item in viewModel.jobMedia)
+        '${item.assetId}|${item.url}|${item.passId}|${item.isVideo}',
+    ].join(','),
+    [
+      for (final pdf in viewModel.reportPdfs)
+        '${pdf.reportSetId}|${pdf.url}|${pdf.setPageStart ?? ''}',
+    ].join(','),
     '${viewModel.pendingSeekToMs ?? ''}',
     '${viewModel.seekToken}',
     media,
@@ -523,28 +663,4 @@ class _ChartSnapshot {
     selectedLinkId,
     selectedTimeMs,
   );
-}
-
-class _LinksSnapshot {
-  const _LinksSnapshot({required this.links, required this.selectedLinkId});
-
-  factory _LinksSnapshot.from(QualityIssueViewModel viewModel) {
-    return _LinksSnapshot(
-      links: viewModel.board?.allLinks ?? const [],
-      selectedLinkId: viewModel.selectedLinkId,
-    );
-  }
-
-  final List<QualityLink> links;
-  final String selectedLinkId;
-
-  @override
-  bool operator ==(Object other) {
-    return other is _LinksSnapshot &&
-        identical(other.links, links) &&
-        other.selectedLinkId == selectedLinkId;
-  }
-
-  @override
-  int get hashCode => Object.hash(identityHashCode(links), selectedLinkId);
 }

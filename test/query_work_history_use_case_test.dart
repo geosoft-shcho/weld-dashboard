@@ -16,8 +16,8 @@ void main() {
     expect(board.totalCount, 22);
     expect(board.visibleRows.length, 20);
     expect(board.doesHaveMore, isTrue);
-    expect(board.visibleRows.first.historyId, 'H001');
-    expect(board.visibleRows.last.historyId, 'H020');
+    expect(board.visibleRows.first.jobId, 'H001');
+    expect(board.visibleRows.last.jobId, 'H020');
   });
 
   test('second batch shows all rows without a pager', () {
@@ -27,7 +27,7 @@ void main() {
     );
     expect(board.visibleRows.length, 22);
     expect(board.doesHaveMore, isFalse);
-    expect(board.visibleRows.last.historyId, 'H022');
+    expect(board.visibleRows.last.jobId, 'H022');
   });
 
   test('common key partial match and project filter narrow the rows', () {
@@ -39,7 +39,7 @@ void main() {
         visibleCount: 40,
       ),
     );
-    expect(board.visibleRows.map((item) => item.historyId).toList(), [
+    expect(board.visibleRows.map((item) => item.jobId).toList(), [
       'H001',
       'H009',
       'H017',
@@ -94,7 +94,7 @@ WorkHistoryCatalog _catalog() {
   final items = [
     for (var index = 1; index <= 22; index++)
       WorkHistoryItem(
-        historyId: 'H${index.toString().padLeft(3, '0')}',
+        jobId: 'H${index.toString().padLeft(3, '0')}',
         commonKey: index == 1 || index == 9 || index == 17
             ? 'WO-2026-0312|J-A-14'
             : 'WO-2026-0318|J-B-03',

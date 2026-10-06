@@ -27,7 +27,7 @@ class WorkHistoryBoard {
 
   WorkHistoryItem? get selectedItem {
     for (final item in visibleRows) {
-      if (item.historyId == query.selectedHistoryId) {
+      if (item.jobId == query.selectedJobId) {
         return item;
       }
     }

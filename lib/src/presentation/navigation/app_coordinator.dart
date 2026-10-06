@@ -13,13 +13,7 @@ enum WorkHistoryStack {
   qualityIssue,
 }
 
-enum _RouteWriteMode {
-  go,
-  push,
-  replace,
-  pop,
-  none,
-}
+enum _RouteWriteMode { go, push, replace, pop, none }
 
 class AppCoordinator extends ChangeNotifier {
   static const int COLLECTION_PANE_INDEX = 0;
@@ -34,7 +28,7 @@ class AppCoordinator extends ChangeNotifier {
   WorkHistoryStack _workHistoryStack = WorkHistoryStack.list;
   final List<WorkHistoryStack> _stackHistory = [];
   String _historyCommonKey = '';
-  String _historyId = '';
+  String _jobId = '';
   String _passId = '';
   String _linkId = '';
   String _pendingHistoryEquipmentId = '';
@@ -44,10 +38,10 @@ class AppCoordinator extends ChangeNotifier {
   LatestQualityIssueTarget? _latestQualityIssue;
 
   String _panePassCommonKey = '';
-  String _panePassHistoryId = '';
+  String _panePassJobId = '';
   String _panePassPassId = '';
   String _paneQualityCommonKey = '';
-  String _paneQualityHistoryId = '';
+  String _paneQualityJobId = '';
   String _paneQualityPassId = '';
   String _paneQualityLinkId = '';
   DateTime _lastDataUpdatedAt = DateTime.now();
@@ -55,7 +49,7 @@ class AppCoordinator extends ChangeNotifier {
   int get selectedPaneIndex => _selectedPaneIndex;
   WorkHistoryStack get workHistoryStack => _workHistoryStack;
   String get historyCommonKey => _historyCommonKey;
-  String get historyId => _historyId;
+  String get jobId => _jobId;
   String get passId => _passId;
   String get linkId => _linkId;
   String get pendingHistoryEquipmentId => _pendingHistoryEquipmentId;
@@ -70,10 +64,10 @@ class AppCoordinator extends ChangeNotifier {
   bool get canOpenLatestQualityIssue => _latestQualityIssue != null;
 
   String get panePassCommonKey => _panePassCommonKey;
-  String get panePassHistoryId => _panePassHistoryId;
+  String get panePassJobId => _panePassJobId;
   String get panePassPassId => _panePassPassId;
   String get paneQualityCommonKey => _paneQualityCommonKey;
-  String get paneQualityHistoryId => _paneQualityHistoryId;
+  String get paneQualityJobId => _paneQualityJobId;
   String get paneQualityPassId => _paneQualityPassId;
   String get paneQualityLinkId => _paneQualityLinkId;
   DateTime get lastDataUpdatedAt => _lastDataUpdatedAt;
@@ -98,10 +92,10 @@ class AppCoordinator extends ChangeNotifier {
       case WorkHistoryStack.list:
         return '작업 이력 조회';
       case WorkHistoryStack.detail:
-        if (_historyId.isEmpty) {
+        if (_jobId.isEmpty) {
           return '작업 상세';
         }
-        return '작업 상세 $_historyId';
+        return '작업 상세 $_jobId';
       case WorkHistoryStack.videoMultimodal:
         return '비디오 멀티모달';
       case WorkHistoryStack.passProfile:
@@ -253,25 +247,21 @@ class AppCoordinator extends ChangeNotifier {
   void didTapLeaveWorkDetailToPassProfile(
     BuildContext context, {
     required String commonKey,
-    required String historyId,
+    required String jobId,
   }) {
-    didTapOpenPassProfile(commonKey: commonKey, historyId: historyId);
+    didTapOpenPassProfile(commonKey: commonKey, jobId: jobId);
   }
 
   void didTapLeaveWorkDetailToQualityIssue(
     BuildContext context, {
     required String commonKey,
-    required String historyId,
+    required String jobId,
   }) {
-    didTapOpenQualityIssue(
-      commonKey: commonKey,
-      historyId: historyId,
-      viaDetail: true,
-    );
+    didTapOpenQualityIssue(commonKey: commonKey, jobId: jobId, viaDetail: true);
   }
 
   void didTapOpenVideoMultimodal(BuildContext context) {
-    if (_historyId.isEmpty) {
+    if (_jobId.isEmpty) {
       return;
     }
     _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
@@ -289,8 +279,8 @@ class AppCoordinator extends ChangeNotifier {
     _popOrGoToPrevious();
   }
 
-  void didTapOpenWorkDetail(BuildContext context, {required String historyId}) {
-    _historyId = historyId;
+  void didTapOpenWorkDetail(BuildContext context, {required String jobId}) {
+    _jobId = jobId;
     _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
     _pushWorkHistoryStack(WorkHistoryStack.detail);
     notifyListeners();
@@ -299,7 +289,7 @@ class AppCoordinator extends ChangeNotifier {
 
   void didTapOpenPassProfile({
     required String commonKey,
-    String historyId = '',
+    String jobId = '',
     String? passId,
     String? linkId,
   }) {
@@ -307,8 +297,8 @@ class AppCoordinator extends ChangeNotifier {
       return;
     }
     _historyCommonKey = commonKey;
-    if (historyId.isNotEmpty) {
-      _historyId = historyId;
+    if (jobId.isNotEmpty) {
+      _jobId = jobId;
     }
     _passId = passId ?? '';
     _linkId = linkId ?? '';
@@ -332,7 +322,7 @@ class AppCoordinator extends ChangeNotifier {
 
   void didTapOpenQualityIssue({
     required String commonKey,
-    String historyId = '',
+    String jobId = '',
     String? passId,
     String? linkId,
     bool viaDetail = false,
@@ -341,8 +331,8 @@ class AppCoordinator extends ChangeNotifier {
       return;
     }
     _historyCommonKey = commonKey;
-    if (historyId.isNotEmpty) {
-      _historyId = historyId;
+    if (jobId.isNotEmpty) {
+      _jobId = jobId;
     }
     _passId = passId ?? '';
     _linkId = linkId ?? '';
@@ -381,7 +371,7 @@ class AppCoordinator extends ChangeNotifier {
 
   void didTapOpenQualityIssueFromPane({
     required String commonKey,
-    String historyId = '',
+    String jobId = '',
     String? passId,
     String? linkId,
   }) {
@@ -389,8 +379,8 @@ class AppCoordinator extends ChangeNotifier {
       return;
     }
     _paneQualityCommonKey = commonKey;
-    if (historyId.isNotEmpty) {
-      _paneQualityHistoryId = historyId;
+    if (jobId.isNotEmpty) {
+      _paneQualityJobId = jobId;
     }
     _paneQualityPassId = passId ?? '';
     _paneQualityLinkId = linkId ?? '';
@@ -402,15 +392,15 @@ class AppCoordinator extends ChangeNotifier {
 
   void didTapOpenPassProfileFromPane({
     required String commonKey,
-    String historyId = '',
+    String jobId = '',
     String? passId,
   }) {
     if (commonKey.isEmpty) {
       return;
     }
     _panePassCommonKey = commonKey;
-    if (historyId.isNotEmpty) {
-      _panePassHistoryId = historyId;
+    if (jobId.isNotEmpty) {
+      _panePassJobId = jobId;
     }
     _panePassPassId = passId ?? '';
     _selectedPaneIndex = PASS_PROFILE_PANE_INDEX;
@@ -437,7 +427,7 @@ class AppCoordinator extends ChangeNotifier {
       return;
     }
     _panePassCommonKey = target.commonKey;
-    _panePassHistoryId = target.historyId;
+    _panePassJobId = target.jobId;
     _panePassPassId = '';
   }
 
@@ -448,20 +438,20 @@ class AppCoordinator extends ChangeNotifier {
       return;
     }
     _paneQualityCommonKey = target.commonKey;
-    _paneQualityHistoryId = target.historyId;
+    _paneQualityJobId = target.jobId;
     _paneQualityPassId = target.passId;
     _paneQualityLinkId = target.linkId;
   }
 
   void _clearPanePassKeys() {
     _panePassCommonKey = '';
-    _panePassHistoryId = '';
+    _panePassJobId = '';
     _panePassPassId = '';
   }
 
   void _clearPaneQualityKeys() {
     _paneQualityCommonKey = '';
-    _paneQualityHistoryId = '';
+    _paneQualityJobId = '';
     _paneQualityPassId = '';
     _paneQualityLinkId = '';
   }
@@ -503,25 +493,26 @@ class AppCoordinator extends ChangeNotifier {
         return AppRouteState(
           pane: AppPane.pass,
           commonKey: _panePassCommonKey,
-          historyId: _panePassHistoryId,
+          jobId: _panePassJobId,
           passId: _panePassPassId,
         );
       case QUALITY_ISSUE_PANE_INDEX:
         return AppRouteState(
           pane: AppPane.quality,
           commonKey: _paneQualityCommonKey,
-          historyId: _paneQualityHistoryId,
+          jobId: _paneQualityJobId,
           passId: _paneQualityPassId,
           linkId: _paneQualityLinkId,
         );
       case WORK_HISTORY_PANE_INDEX:
-        final viaDetail = qualityViaDetail ||
+        final viaDetail =
+            qualityViaDetail ||
             (_workHistoryStack == WorkHistoryStack.qualityIssue &&
                 previousWorkHistoryStack == WorkHistoryStack.detail);
         return AppRouteState(
           pane: AppPane.history,
           stack: _workHistoryStack,
-          historyId: _historyId,
+          jobId: _jobId,
           commonKey: _historyCommonKey,
           passId: _passId,
           linkId: _linkId,
@@ -546,7 +537,7 @@ class AppCoordinator extends ChangeNotifier {
           return true;
         }
         return state.commonKey == _panePassCommonKey &&
-            state.historyId == _panePassHistoryId &&
+            state.jobId == _panePassJobId &&
             state.passId == _panePassPassId;
       case AppPane.quality:
         if (_selectedPaneIndex != QUALITY_ISSUE_PANE_INDEX) {
@@ -556,7 +547,7 @@ class AppCoordinator extends ChangeNotifier {
           return true;
         }
         return state.commonKey == _paneQualityCommonKey &&
-            state.historyId == _paneQualityHistoryId &&
+            state.jobId == _paneQualityJobId &&
             state.passId == _paneQualityPassId &&
             state.linkId == _paneQualityLinkId;
       case AppPane.history:
@@ -571,15 +562,16 @@ class AppCoordinator extends ChangeNotifier {
             return true;
           case WorkHistoryStack.detail:
           case WorkHistoryStack.videoMultimodal:
-            return state.historyId == _historyId;
+            return state.jobId == _jobId;
           case WorkHistoryStack.passProfile:
             return state.commonKey == _historyCommonKey &&
-                state.historyId == _historyId &&
+                state.jobId == _jobId &&
                 state.passId == _passId;
           case WorkHistoryStack.qualityIssue:
-            final viaDetail = previousWorkHistoryStack == WorkHistoryStack.detail;
+            final viaDetail =
+                previousWorkHistoryStack == WorkHistoryStack.detail;
             return state.commonKey == _historyCommonKey &&
-                state.historyId == _historyId &&
+                state.jobId == _jobId &&
                 state.passId == _passId &&
                 state.linkId == _linkId &&
                 state.qualityViaDetail == viaDetail;
@@ -597,7 +589,7 @@ class AppCoordinator extends ChangeNotifier {
         _resetWorkHistoryToList();
         if (state.commonKey.isNotEmpty) {
           _panePassCommonKey = state.commonKey;
-          _panePassHistoryId = state.historyId;
+          _panePassJobId = state.jobId;
           _panePassPassId = state.passId;
         } else {
           _applyLatestPassProfileKeys();
@@ -607,7 +599,7 @@ class AppCoordinator extends ChangeNotifier {
         _resetWorkHistoryToList();
         if (state.commonKey.isNotEmpty) {
           _paneQualityCommonKey = state.commonKey;
-          _paneQualityHistoryId = state.historyId;
+          _paneQualityJobId = state.jobId;
           _paneQualityPassId = state.passId;
           _paneQualityLinkId = state.linkId;
         } else {
@@ -615,7 +607,7 @@ class AppCoordinator extends ChangeNotifier {
         }
       case AppPane.history:
         _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
-        _historyId = state.historyId;
+        _jobId = state.jobId;
         _historyCommonKey = state.commonKey;
         _passId = state.passId;
         _linkId = state.linkId;
@@ -642,12 +634,12 @@ class AppCoordinator extends ChangeNotifier {
         _stackHistory.add(WorkHistoryStack.detail);
       case WorkHistoryStack.passProfile:
         _stackHistory.add(WorkHistoryStack.list);
-        if (_historyId.isNotEmpty) {
+        if (_jobId.isNotEmpty) {
           _stackHistory.add(WorkHistoryStack.detail);
         }
       case WorkHistoryStack.qualityIssue:
         _stackHistory.add(WorkHistoryStack.list);
-        if (_historyId.isNotEmpty) {
+        if (_jobId.isNotEmpty) {
           _stackHistory.add(WorkHistoryStack.detail);
         }
         if (!qualityViaDetail) {
@@ -656,10 +648,7 @@ class AppCoordinator extends ChangeNotifier {
     }
   }
 
-  void _publishLocation(
-    _RouteWriteMode mode, {
-    bool qualityViaDetail = false,
-  }) {
+  void _publishLocation(_RouteWriteMode mode, {bool qualityViaDetail = false}) {
     if (_isApplyingRoute || mode == _RouteWriteMode.none) {
       return;
     }

@@ -4,17 +4,30 @@ import '../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../../data/repositories/remote_catalog_repository.dart';
 import '../../../data/repositories/remote_collection_catalog_repository.dart';
 import '../../../data/repositories/remote_pass_waveform_repository.dart';
+import '../../../data/repositories/remote_quality_job_media_repository.dart';
+import '../../../data/repositories/remote_quality_result_repository.dart';
+import '../../../data/repositories/remote_report_set_repository.dart';
 import '../../../data/repositories/remote_work_detail_repository.dart';
 import '../../../data/repositories/remote_work_history_repository.dart';
 import '../../../domain/repositories/catalog_repository.dart';
 import '../../../domain/repositories/collection_catalog_repository.dart';
 import '../../../domain/repositories/pass_waveform_repository.dart';
+import '../../../domain/repositories/quality_job_media_repository.dart';
+import '../../../domain/repositories/quality_result_repository.dart';
+import '../../../domain/repositories/report_set_repository.dart';
 import '../../../domain/repositories/work_detail_repository.dart';
 import '../../../domain/repositories/work_history_repository.dart';
 import '../../../domain/use_cases/list_collected_nodes_use_case.dart';
+import '../../../domain/use_cases/get_report_set_use_case.dart';
+import '../../../domain/use_cases/list_quality_job_media_use_case.dart';
+import '../../../domain/use_cases/list_quality_results_use_case.dart';
+import '../../../domain/use_cases/list_report_sets_use_case.dart';
 import '../../../domain/use_cases/load_catalog_use_case.dart';
 import '../../../domain/use_cases/load_collection_catalog_use_case.dart';
+import '../../../domain/use_cases/list_comparison_jobs_use_case.dart';
+import '../../../domain/use_cases/load_comparison_passes_use_case.dart';
 import '../../../domain/use_cases/load_pass_waveform_catalog_use_case.dart';
+import '../../../domain/use_cases/load_pass_waveform_use_case.dart';
 import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
 import '../../../domain/use_cases/load_work_history_catalog_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
@@ -68,9 +81,9 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactory(() => QueryWorkDetailUseCase());
   locator.registerFactory(() => ListHistoryWorkAttachmentsUseCase(locator()));
   locator.registerFactoryParam<VideoMultimodalViewModel, String, void>(
-    (historyId, _) => VideoMultimodalViewModel(
+    (jobId, _) => VideoMultimodalViewModel(
       listHistoryWorkAttachmentsUseCase: locator(),
-      historyId: historyId,
+      jobId: jobId,
     ),
   );
   locator.registerLazySingleton<PassWaveformRepository>(
@@ -79,32 +92,59 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(
     () => LoadPassWaveformCatalogUseCase(locator()),
   );
+  locator.registerLazySingleton(() => LoadPassWaveformUseCase(locator()));
+  locator.registerLazySingleton(() => ListComparisonJobsUseCase(locator()));
+  locator.registerLazySingleton(() => LoadComparisonPassesUseCase(locator()));
   locator.registerFactory(() => QueryPassProfileUseCase());
+  locator.registerLazySingleton<QualityResultRepository>(
+    () => RemoteQualityResultRepository(locator()),
+  );
+  locator.registerLazySingleton(() => ListQualityResultsUseCase(locator()));
+  locator.registerLazySingleton<QualityJobMediaRepository>(
+    () => RemoteQualityJobMediaRepository(locator()),
+  );
+  locator.registerLazySingleton(() => ListQualityJobMediaUseCase(locator()));
+  locator.registerLazySingleton<ReportSetRepository>(
+    () => RemoteReportSetRepository(locator()),
+  );
+  locator.registerLazySingleton(() => ListReportSetsUseCase(locator()));
+  locator.registerLazySingleton(() => GetReportSetUseCase(locator()));
   locator.registerFactory(() => QueryQualityIssueUseCase());
   locator.registerFactory(() => ResolveLatestPassProfileUseCase());
   locator.registerFactory(() => ResolveLatestQualityIssueUseCase());
   locator.registerFactoryParam<WorkDetailViewModel, String, void>(
-    (historyId, _) => WorkDetailViewModel(
+    (jobId, _) => WorkDetailViewModel(
       loadWorkDetailCatalogUseCase: locator(),
       queryWorkDetailUseCase: locator(),
-      historyId: historyId,
+      listReportSetsUseCase: locator(),
+      getReportSetUseCase: locator(),
+      jobId: jobId,
     ),
   );
   locator.registerFactoryParam<PassProfileViewModel, PassProfileArgs, void>(
     (args, _) => PassProfileViewModel(
       loadPassWaveformCatalogUseCase: locator(),
+      loadPassWaveformUseCase: locator(),
+      listComparisonJobsUseCase: locator(),
+      loadComparisonPassesUseCase: locator(),
       queryPassProfileUseCase: locator(),
       commonKey: args.commonKey,
-      historyId: args.historyId,
+      jobId: args.jobId,
       passId: args.passId,
     ),
   );
   locator.registerFactoryParam<QualityIssueViewModel, QualityIssueArgs, void>(
     (args, _) => QualityIssueViewModel(
       loadPassWaveformCatalogUseCase: locator(),
+      loadPassWaveformUseCase: locator(),
+      listComparisonJobsUseCase: locator(),
+      loadComparisonPassesUseCase: locator(),
       queryQualityIssueUseCase: locator(),
+      listQualityResultsUseCase: locator(),
+      listQualityJobMediaUseCase: locator(),
+      getReportSetUseCase: locator(),
       commonKey: args.commonKey,
-      historyId: args.historyId,
+      jobId: args.jobId,
       passId: args.passId,
       linkId: args.linkId,
     ),

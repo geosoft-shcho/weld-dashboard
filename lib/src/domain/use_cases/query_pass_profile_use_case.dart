@@ -10,20 +10,20 @@ class QueryPassProfileUseCase {
   PassProfileBoard execute({
     required PassWaveformCatalog catalog,
     required String commonKey,
-    required String historyId,
+    required String jobId,
     String passId = '',
     String masterProfileId = '',
   }) {
     final resolved = _resolveKey(
       catalog.historyItems,
       commonKey: commonKey,
-      historyId: historyId,
+      jobId: jobId,
     );
     final key = resolved.commonKey;
     if (key.isEmpty) {
       return PassProfileBoard(
         commonKey: '',
-        historyId: resolved.historyId,
+        jobId: resolved.jobId,
         context: null,
         passes: const [],
         selectedPass: null,
@@ -86,7 +86,7 @@ class QueryPassProfileUseCase {
     }
     return PassProfileBoard(
       commonKey: key,
-      historyId: resolved.historyId,
+      jobId: resolved.jobId,
       context: catalog.context ?? _contextFor(catalog.historyItems, key),
       passes: passes,
       selectedPass: selectedPass,
@@ -99,23 +99,23 @@ class QueryPassProfileUseCase {
     );
   }
 
-  ({String commonKey, String historyId}) _resolveKey(
+  ({String commonKey, String jobId}) _resolveKey(
     List<WorkHistoryItem> items, {
     required String commonKey,
-    required String historyId,
+    required String jobId,
   }) {
     if (commonKey.isNotEmpty) {
-      return (commonKey: commonKey, historyId: historyId);
+      return (commonKey: commonKey, jobId: jobId);
     }
-    if (historyId.isNotEmpty) {
+    if (jobId.isNotEmpty) {
       for (final item in items) {
-        if (item.historyId == historyId) {
-          return (commonKey: item.commonKey, historyId: item.historyId);
+        if (item.jobId == jobId) {
+          return (commonKey: item.commonKey, jobId: item.jobId);
         }
       }
     }
     // Drill-down entry requires common_key; do not auto-pick snapshot latest.
-    return (commonKey: '', historyId: '');
+    return (commonKey: '', jobId: '');
   }
 
   WeldPass? _selectedPass(List<WeldPass> passes, String passId) {

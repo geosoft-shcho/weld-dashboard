@@ -2,11 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../domain/entities/report_set.dart';
 import '../../../domain/entities/work_attachment.dart';
 import '../../../domain/entities/work_attachment_type.dart';
 import '../../../domain/entities/work_detail.dart';
 import '../../../domain/entities/work_detail_catalog.dart';
 import '../../../domain/entities/work_detail_tab.dart';
+import '../../../domain/use_cases/get_report_set_use_case.dart';
+import '../../../domain/use_cases/list_report_sets_use_case.dart';
 import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
 import '../../../domain/use_cases/query_work_detail_use_case.dart';
 
@@ -14,9 +17,13 @@ class WorkDetailViewModel extends ChangeNotifier {
   WorkDetailViewModel({
     required LoadWorkDetailCatalogUseCase loadWorkDetailCatalogUseCase,
     required QueryWorkDetailUseCase queryWorkDetailUseCase,
-    required this.historyId,
+    required ListReportSetsUseCase listReportSetsUseCase,
+    required GetReportSetUseCase getReportSetUseCase,
+    required this.jobId,
   }) : _loadWorkDetailCatalogUseCase = loadWorkDetailCatalogUseCase,
-       _queryWorkDetailUseCase = queryWorkDetailUseCase;
+       _queryWorkDetailUseCase = queryWorkDetailUseCase,
+       _listReportSetsUseCase = listReportSetsUseCase,
+       _getReportSetUseCase = getReportSetUseCase;
 
   static const int VIDEO_DURATION_SECONDS = 12;
   static const int AUDIO_DURATION_SECONDS = 41;
@@ -24,7 +31,9 @@ class WorkDetailViewModel extends ChangeNotifier {
 
   final LoadWorkDetailCatalogUseCase _loadWorkDetailCatalogUseCase;
   final QueryWorkDetailUseCase _queryWorkDetailUseCase;
-  final String historyId;
+  final ListReportSetsUseCase _listReportSetsUseCase;
+  final GetReportSetUseCase _getReportSetUseCase;
+  final String jobId;
 
   WorkDetailCatalog? _catalog;
   WorkDetail? _detail;
@@ -33,6 +42,13 @@ class WorkDetailViewModel extends ChangeNotifier {
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
+  List<ReportSetSummary> _reportSets = const [];
+  ReportSetDetail? _reportDetail;
+  String _selectedReportSetId = '';
+  int? _reportPdfPage;
+  String _reportError = '';
+  String _reportDetailError = '';
+  bool _isReportDetailLoading = false;
   bool _isPlaying = false;
   double _positionSeconds = 0;
   int _pdfPageNumber = 1;
@@ -42,6 +58,13 @@ class WorkDetailViewModel extends ChangeNotifier {
   WorkDetail? get detail => _detail;
   WorkDetailTab get selectedTab => _selectedTab;
   int get selectedFileIndex => _selectedFileIndex;
+  List<ReportSetSummary> get reportSets => _reportSets;
+  ReportSetDetail? get reportDetail => _reportDetail;
+  String get selectedReportSetId => _selectedReportSetId;
+  int? get reportPdfPage => _reportPdfPage;
+  String get reportError => _reportError;
+  String get reportDetailError => _reportDetailError;
+  bool get isReportDetailLoading => _isReportDetailLoading;
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
@@ -85,20 +108,72 @@ class WorkDetailViewModel extends ChangeNotifier {
     _isLoading = true;
     _hasError = false;
     _errorMessage = '';
+    _reportSets = const [];
+    _reportDetail = null;
+    _selectedReportSetId = '';
+    _reportPdfPage = null;
+    _reportError = '';
+    _reportDetailError = '';
     notifyListeners();
     try {
-      _catalog = await _loadWorkDetailCatalogUseCase.execute(
-        historyId: historyId,
-      );
+      _catalog = await _loadWorkDetailCatalogUseCase.execute(jobId: jobId);
       _applyQuery();
     } catch (error) {
       _hasError = true;
       _errorMessage = error.toString();
       _detail = null;
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+    try {
+      _reportSets = await _listReportSetsUseCase.execute(jobId: jobId);
+    } catch (error) {
+      _reportError = error.toString();
+      _reportSets = const [];
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> didSelectReportSet(String reportSetId) async {
+    if (reportSetId.isEmpty) {
+      return;
+    }
+    _selectedReportSetId = reportSetId;
+    _reportDetail = null;
+    _reportPdfPage = null;
+    _reportDetailError = '';
+    _isReportDetailLoading = true;
+    notifyListeners();
+    try {
+      final detail = await _getReportSetUseCase.execute(
+        reportSetId: reportSetId,
+      );
+      if (_selectedReportSetId != reportSetId) {
+        return;
+      }
+      _reportDetail = detail;
+      _reportPdfPage = detail.sections.isEmpty
+          ? null
+          : detail.sections.first.splitPageStart;
+    } catch (error) {
+      if (_selectedReportSetId != reportSetId) {
+        return;
+      }
+      _reportDetailError = error.toString();
+    } finally {
+      if (_selectedReportSetId == reportSetId) {
+        _isReportDetailLoading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  void didSelectReportSection(int? splitPageStart) {
+    _reportPdfPage = splitPageStart;
+    notifyListeners();
   }
 
   void didSelectTab(WorkDetailTab tab) {
@@ -225,10 +300,7 @@ class WorkDetailViewModel extends ChangeNotifier {
     if (catalog == null) {
       return;
     }
-    _detail = _queryWorkDetailUseCase.execute(
-      catalog: catalog,
-      historyId: historyId,
-    );
+    _detail = _queryWorkDetailUseCase.execute(catalog: catalog, jobId: jobId);
   }
 
   void _stopPlayback() {

@@ -8,13 +8,13 @@ class LoadPassWaveformCatalogUseCase {
 
   Future<PassWaveformCatalog> execute({
     String commonKey = '',
-    String historyId = '',
+    String jobId = '',
     String passId = '',
     String normalize = 'raw',
   }) {
     return _repository.loadCatalog(
       commonKey: commonKey,
-      historyId: historyId,
+      jobId: jobId,
       passId: passId,
       normalize: normalize,
     );
