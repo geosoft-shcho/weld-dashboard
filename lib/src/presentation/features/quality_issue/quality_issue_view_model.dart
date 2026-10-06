@@ -20,6 +20,7 @@ import '../../../domain/use_cases/load_pass_waveform_catalog_use_case.dart';
 import '../../../domain/use_cases/load_pass_waveform_use_case.dart';
 import '../../../domain/use_cases/pair_comparison_pass.dart';
 import '../../../domain/use_cases/query_quality_issue_use_case.dart';
+import '../../../domain/use_cases/resolve_pass_video_seek.dart';
 
 class QualityIssueViewModel extends ChangeNotifier {
   QualityIssueViewModel({
@@ -78,6 +79,10 @@ class QualityIssueViewModel extends ChangeNotifier {
   QualityMediaTab _selectedMediaTab = QualityMediaTab.pdf;
   int _selectedMediaIndex = 0;
   int? _pendingSeekToMs;
+  int? _chartTimeNs;
+  int? _videoSeekMs;
+  String _videoSeekAssetId = '';
+  String _videoSeekNotice = '';
   int _seekToken = 0;
   String _normalize = 'raw';
   bool _showMaster = false;
@@ -109,6 +114,10 @@ class QualityIssueViewModel extends ChangeNotifier {
   QualityMediaTab get selectedMediaTab => _selectedMediaTab;
   int get selectedMediaIndex => _selectedMediaIndex;
   int? get pendingSeekToMs => _pendingSeekToMs;
+  int? get chartTimeNs => _chartTimeNs;
+  int? get videoSeekMs => _videoSeekMs;
+  String get videoSeekAssetId => _videoSeekAssetId;
+  String get videoSeekNotice => _videoSeekNotice;
   int get seekToken => _seekToken;
   bool get showMaster => _showMaster;
   bool get showBeginner => _showBeginner;
@@ -144,6 +153,7 @@ class QualityIssueViewModel extends ChangeNotifier {
       _jobMedia = const [];
       _selectedJobMediaId = '';
       _focusedMediaId = '';
+      _clearVideoSeek();
       _clearComparison();
     } else {
       _isContentLoading = true;
@@ -326,6 +336,7 @@ class QualityIssueViewModel extends ChangeNotifier {
     if (_selectedReportSetId != reportSetId) {
       _reportPdfPage = 1;
     }
+    _videoSeekNotice = '';
     _focusedMediaId = focusedMediaId;
     _selectedReportSetId = reportSetId;
     _selectedMediaTab = QualityMediaTab.pdf;
@@ -340,6 +351,7 @@ class QualityIssueViewModel extends ChangeNotifier {
       if (item.assetId == assetId) {
         _selectedJobMediaId = assetId;
         _focusedMediaId = 'asset:$assetId';
+        _videoSeekNotice = '';
         notifyListeners();
         return;
       }
@@ -352,6 +364,7 @@ class QualityIssueViewModel extends ChangeNotifier {
     }
     _passId = passId;
     _linkId = '';
+    _chartTimeNs = null;
     _loadJobMediaForPass(passId);
     if (_comparisonPasses.isNotEmpty) {
       _reloadComparisonWaveform();
@@ -436,6 +449,7 @@ class QualityIssueViewModel extends ChangeNotifier {
       }
     }
     if (_passId != previousPassId) {
+      _chartTimeNs = null;
       _loadJobMediaForPass(_passId);
       if (_comparisonPasses.isNotEmpty) {
         _reloadComparisonWaveform();
@@ -459,6 +473,12 @@ class QualityIssueViewModel extends ChangeNotifier {
 
   void didTapWaveformTime(int timeMs) {
     final clamped = timeMs < 0 ? 0 : timeMs;
+    _chartTimeNs = clamped;
+    if (_reportPdfs.isNotEmpty || _jobMedia.isNotEmpty) {
+      _seekPassVideo(clamped);
+      notifyListeners();
+      return;
+    }
     _pendingSeekToMs = clamped;
     final group = _board?.selectedGroup;
     if (_isMediaTabAvailable(QualityMediaTab.video, group)) {
@@ -466,6 +486,75 @@ class QualityIssueViewModel extends ChangeNotifier {
       _seekToken++;
     }
     notifyListeners();
+  }
+
+  void _seekPassVideo(int passOffsetNs) {
+    final passStartedAt = _selectedPassStartedAt();
+    if (passStartedAt == null) {
+      _videoSeekNotice = '이 시각의 영상이 없습니다';
+      return;
+    }
+    final videos = <PassVideoSpan>[];
+    for (final item in _jobMedia) {
+      final recordedAt = item.recordedAt;
+      final durationNs = item.durationNs;
+      if (!item.isVideo || recordedAt == null || durationNs == null) {
+        continue;
+      }
+      videos.add(
+        PassVideoSpan(
+          assetId: item.assetId,
+          recordedAt: recordedAt,
+          durationNs: durationNs,
+        ),
+      );
+    }
+    final seek = resolvePassVideoSeek(
+      passOffsetNs: passOffsetNs,
+      passStartedAt: passStartedAt,
+      focusedAssetId: _focusedVideoAssetId(),
+      videos: videos,
+    );
+    if (seek == null) {
+      _videoSeekNotice = '이 시각의 영상이 없습니다';
+      return;
+    }
+    _videoSeekNotice = '';
+    _selectedJobMediaId = seek.assetId;
+    _focusedMediaId = 'asset:${seek.assetId}';
+    _videoSeekMs = seek.seekMs;
+    _videoSeekAssetId = seek.assetId;
+    _seekToken++;
+  }
+
+  DateTime? _selectedPassStartedAt() {
+    for (final pass in _catalog?.passes ?? const <WeldPass>[]) {
+      if (pass.passId == _passId && pass.startedAt != null) {
+        return pass.startedAt;
+      }
+    }
+    return null;
+  }
+
+  String _focusedVideoAssetId() {
+    if (!_focusedMediaId.startsWith('asset:')) {
+      return '';
+    }
+    final assetId = _focusedMediaId.substring('asset:'.length);
+    for (final item in _jobMedia) {
+      if (item.assetId == assetId && item.isVideo) {
+        return assetId;
+      }
+    }
+    return '';
+  }
+
+  void _clearVideoSeek() {
+    _chartTimeNs = null;
+    _videoSeekMs = null;
+    _videoSeekAssetId = '';
+    _videoSeekNotice = '';
+    _pendingSeekToMs = null;
   }
 
   void didSelectMediaTab(QualityMediaTab tab) {
@@ -642,6 +731,9 @@ class QualityIssueViewModel extends ChangeNotifier {
   Future<void> _loadJobMediaForPass(String passId) async {
     final version = ++_mediaLoadVersion;
     _jobMedia = const [];
+    _videoSeekMs = null;
+    _videoSeekAssetId = '';
+    _videoSeekNotice = '';
     _selectedJobMediaId = '';
     if (_focusedMediaId.startsWith('asset:')) {
       _focusedMediaId = '';

@@ -60,6 +60,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
           passName: '',
           masterProfileId: '',
           controlWorkerId: job.workerId,
+          startedAt: item.hasStartedAt() ? item.startedAt.toDateTime() : null,
         ),
     ]..sort((left, right) => left.passNo.compareTo(right.passNo));
     final selectedPassId = passId.isNotEmpty
@@ -144,10 +145,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
         ),
       );
     }
-    return ComparisonJobPage(
-      jobs: jobs,
-      nextPageToken: response.nextPageToken,
-    );
+    return ComparisonJobPage(jobs: jobs, nextPageToken: response.nextPageToken);
   }
 
   @override
@@ -172,6 +170,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
             passName: '',
             masterProfileId: '',
             controlWorkerId: job.workerId,
+            startedAt: item.hasStartedAt() ? item.startedAt.toDateTime() : null,
           ),
       ]..sort((left, right) => left.passNo.compareTo(right.passNo));
       return passes;

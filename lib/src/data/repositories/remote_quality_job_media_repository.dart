@@ -36,6 +36,10 @@ class RemoteQualityJobMediaRepository implements QualityJobMediaRepository {
         url: _mediaTag.resolveContentUrl(asset.contentUrl),
         passId: item.passId,
         isVideo: isVideo,
+        recordedAt: asset.hasRecordedAt()
+            ? asset.recordedAt.toDateTime()
+            : null,
+        durationNs: asset.hasDurationNs() ? asset.durationNs.toInt() : null,
       );
       if (isVideo) {
         videos.add(media);

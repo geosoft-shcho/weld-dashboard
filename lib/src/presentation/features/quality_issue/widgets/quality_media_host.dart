@@ -27,6 +27,9 @@ class QualityMediaHost extends StatelessWidget {
     this.onSelectFocusedMedia,
     this.seekToMs,
     this.seekToken = 0,
+    this.videoSeekMs,
+    this.videoSeekAssetId = '',
+    this.videoSeekNotice = '',
   });
 
   final QualityResultGroup? group;
@@ -43,6 +46,9 @@ class QualityMediaHost extends StatelessWidget {
   final ValueChanged<String>? onSelectFocusedMedia;
   final int? seekToMs;
   final int seekToken;
+  final int? videoSeekMs;
+  final String videoSeekAssetId;
+  final String videoSeekNotice;
 
   @override
   Widget build(BuildContext context) {
@@ -57,8 +63,10 @@ class QualityMediaHost extends StatelessWidget {
             entries: entries,
             selectedId: _selectedEntryId(entries),
             onSelect: (id) => onSelectFocusedMedia?.call(id),
-            seekToMs: seekToMs,
             seekToken: seekToken,
+            videoSeekMs: videoSeekMs,
+            videoSeekAssetId: videoSeekAssetId,
+            videoSeekNotice: videoSeekNotice,
           ),
           if (data != null) ...[
             const SizedBox(height: 12),
@@ -233,15 +241,19 @@ class _MediaStrip extends StatelessWidget {
     required this.entries,
     required this.selectedId,
     required this.onSelect,
-    required this.seekToMs,
     required this.seekToken,
+    required this.videoSeekMs,
+    required this.videoSeekAssetId,
+    required this.videoSeekNotice,
   });
 
   final List<_MediaEntry> entries;
   final String selectedId;
   final ValueChanged<String> onSelect;
-  final int? seekToMs;
   final int seekToken;
+  final int? videoSeekMs;
+  final String videoSeekAssetId;
+  final String videoSeekNotice;
 
   @override
   Widget build(BuildContext context) {
@@ -292,6 +304,10 @@ class _MediaStrip extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
+        if (videoSeekNotice.isNotEmpty) ...[
+          InfoBar(title: Text(videoSeekNotice), severity: InfoBarSeverity.info),
+          const SizedBox(height: 12),
+        ],
         if (selected == null)
           const SizedBox.shrink()
         else if (selected.url.isEmpty)
@@ -303,8 +319,10 @@ class _MediaStrip extends StatelessWidget {
           QualityVideoHost(
             key: ValueKey(selected.id),
             videoFile: selected.url,
-            seekToMs: seekToMs,
-            seekToken: seekToken,
+            seekToMs: selected.id == 'asset:$videoSeekAssetId'
+                ? videoSeekMs
+                : null,
+            seekToken: selected.id == 'asset:$videoSeekAssetId' ? seekToken : 0,
           )
         else
           PaperScanHost(

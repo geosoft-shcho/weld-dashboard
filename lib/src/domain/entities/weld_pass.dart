@@ -6,6 +6,7 @@ class WeldPass {
     required this.passName,
     required this.masterProfileId,
     required this.controlWorkerId,
+    this.startedAt,
   });
 
   final String passId;
@@ -14,4 +15,5 @@ class WeldPass {
   final String passName;
   final String masterProfileId;
   final String controlWorkerId;
+  final DateTime? startedAt;
 }

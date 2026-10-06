@@ -462,6 +462,9 @@ class _QualityMediaSection extends StatelessWidget {
       onSelectFocusedMedia: viewModel.didSelectFocusedMedia,
       seekToMs: viewModel.pendingSeekToMs,
       seekToken: viewModel.seekToken,
+      videoSeekMs: viewModel.videoSeekMs,
+      videoSeekAssetId: viewModel.videoSeekAssetId,
+      videoSeekNotice: viewModel.videoSeekNotice,
     );
   }
 }
@@ -558,6 +561,10 @@ String _mediaKey(QualityIssueViewModel viewModel) {
         '${pdf.reportSetId}|${pdf.url}|${pdf.setPageStart ?? ''}',
     ].join(','),
     '${viewModel.pendingSeekToMs ?? ''}',
+    '${viewModel.chartTimeNs ?? ''}',
+    '${viewModel.videoSeekMs ?? ''}',
+    viewModel.videoSeekAssetId,
+    viewModel.videoSeekNotice,
     '${viewModel.seekToken}',
     media,
   ].join('\u001f');
@@ -629,7 +636,7 @@ class _ChartSnapshot {
       showBeginner: viewModel.showBeginner,
       showRobot: viewModel.showRobot,
       selectedLinkId: viewModel.selectedLinkId,
-      selectedTimeMs: viewModel.pendingSeekToMs,
+      selectedTimeMs: viewModel.chartTimeNs,
     );
   }
 
