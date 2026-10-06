@@ -135,8 +135,9 @@ class _HeaderRow extends StatelessWidget {
         child: Row(
           children: [
             _Cell('공통키', flex: 16, isHeader: true),
-            _Cell('공사', flex: 16, isHeader: true),
-            _Cell('품목', flex: 18, isHeader: true),
+            _Cell('공사', flex: 14, isHeader: true),
+            _Cell('품목', flex: 16, isHeader: true),
+            _Cell('이음부', flex: 14, isHeader: true),
             _Cell('작업자', flex: 10, isHeader: true),
             _Cell('작업일시', flex: 14, isHeader: true),
             _Cell('장비', flex: 12, isHeader: true),
@@ -177,7 +178,7 @@ class _DataRow extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                flex: 98,
+                flex: 108,
                 child: HoverButton(
                   onPressed: () => viewModel.didSelectRow(item.historyId),
                   builder: (context, states) {
@@ -189,17 +190,17 @@ class _DataRow extends StatelessWidget {
                       child: Row(
                         children: [
                           _Cell(item.commonKey, flex: 16),
-                          _Cell(item.projectNo, flex: 16),
+                          _Cell(item.projectNo, flex: 14),
                           _Cell(
                             [
                               workHistoryUnitLabel(item.unitNo),
                               item.itemName.isEmpty
                                   ? item.itemCode
                                   : item.itemName,
-                              if (item.jointNo.isNotEmpty) item.jointNo,
                             ].join('\n'),
-                            flex: 18,
+                            flex: 16,
                           ),
+                          _Cell(item.jointNo, flex: 14),
                           _Cell(item.workerName, flex: 10),
                           _Cell(
                             DashboardFormatters.dateTime(item.workedAt),
