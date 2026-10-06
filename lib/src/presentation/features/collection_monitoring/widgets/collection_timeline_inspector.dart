@@ -80,6 +80,7 @@ class CollectionTimelineInspector extends StatelessWidget {
       CollectedNodeLevel.equipment => '장비',
       CollectedNodeLevel.worker => '작업자',
       CollectedNodeLevel.project => '공사',
+      CollectedNodeLevel.item => '품목',
       CollectedNodeLevel.job => '작업',
       CollectedNodeLevel.pass => '패스',
       CollectedNodeLevel.unspecified => '미지정',

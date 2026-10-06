@@ -35,7 +35,11 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
       CollectedNodePath.root(CollectedNodeView.equipment),
     );
     final selectedDay = query?.selectedDate ?? DateTime.now();
-    final dayStart = DateTime(selectedDay.year, selectedDay.month, selectedDay.day);
+    final dayStart = DateTime(
+      selectedDay.year,
+      selectedDay.month,
+      selectedDay.day,
+    );
     final dayEnd = dayStart.add(const Duration(days: 1));
     final equipments = [
       for (final item in equipmentResponse.equipment)
@@ -195,7 +199,9 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
   }
 
   String _equipmentIdOf(CollectedNode node) {
-    return node.path.equipmentId.isEmpty ? 'unspecified' : node.path.equipmentId;
+    return node.path.equipmentId.isEmpty
+        ? 'unspecified'
+        : node.path.equipmentId;
   }
 
   String _windowLabel(CollectedNode node) {
@@ -255,7 +261,8 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
   pb.CollectionPath _pathToProto(CollectedNodePath path) {
     return pb.CollectionPath(
       view: switch (path.view) {
-        CollectedNodeView.equipment => pb.CollectionView.COLLECTION_VIEW_EQUIPMENT,
+        CollectedNodeView.equipment =>
+          pb.CollectionView.COLLECTION_VIEW_EQUIPMENT,
         CollectedNodeView.worker => pb.CollectionView.COLLECTION_VIEW_WORKER,
       },
       level: switch (path.level) {
@@ -266,12 +273,14 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
         CollectedNodeLevel.worker => pb.CollectionLevel.COLLECTION_LEVEL_WORKER,
         CollectedNodeLevel.project =>
           pb.CollectionLevel.COLLECTION_LEVEL_PROJECT,
+        CollectedNodeLevel.item => pb.CollectionLevel.COLLECTION_LEVEL_ITEM,
         CollectedNodeLevel.job => pb.CollectionLevel.COLLECTION_LEVEL_JOB,
         CollectedNodeLevel.pass => pb.CollectionLevel.COLLECTION_LEVEL_PASS,
       },
       equipmentId: path.equipmentId,
       workerId: path.workerId,
       projectNo: path.projectNo,
+      commonKey: path.commonKey,
       jobId: path.jobId,
       passId: path.passId,
     );
@@ -292,6 +301,7 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
             CollectedNodeLevel.worker,
           pb.CollectionLevel.COLLECTION_LEVEL_PROJECT =>
             CollectedNodeLevel.project,
+          pb.CollectionLevel.COLLECTION_LEVEL_ITEM => CollectedNodeLevel.item,
           pb.CollectionLevel.COLLECTION_LEVEL_JOB => CollectedNodeLevel.job,
           pb.CollectionLevel.COLLECTION_LEVEL_PASS => CollectedNodeLevel.pass,
           _ => CollectedNodeLevel.unspecified,
@@ -299,6 +309,7 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
         equipmentId: path.equipmentId,
         workerId: path.workerId,
         projectNo: path.projectNo,
+        commonKey: path.commonKey,
         jobId: path.jobId,
         passId: path.passId,
       ),

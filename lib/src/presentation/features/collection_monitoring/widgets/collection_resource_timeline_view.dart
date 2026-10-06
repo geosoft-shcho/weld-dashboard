@@ -219,11 +219,8 @@ class _CollectionResourceTimelineViewState
     if (row == null) {
       return const SizedBox.shrink();
     }
-    final isEquipment =
-        widget.board.timeline.depth == CollectionResourceDepth.equipment;
-    final isFocused =
-        isEquipment &&
-        row.selectionKey == widget.board.timeline.focusedEquipmentId;
+    final focusedId = widget.board.timeline.focusedEquipmentId;
+    final isFocused = focusedId.isNotEmpty && row.selectionKey == focusedId;
     return GestureDetector(
       onTap: () => widget.viewModel.didTapTimelineNode(row.selectionKey),
       onDoubleTap: () => widget.viewModel.didTapTimelineNode(row.selectionKey),

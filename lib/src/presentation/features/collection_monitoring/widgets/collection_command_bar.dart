@@ -133,6 +133,15 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
                       child: SizedBox(
                         width: 180,
                         child: InfoLabel(
+                          label: '품목',
+                          child: _buildLevelComboBox(CollectedNodeLevel.item),
+                        ),
+                      ),
+                    ),
+                    CommandBarWidgetItem(
+                      child: SizedBox(
+                        width: 180,
+                        child: InfoLabel(
                           label: '작업',
                           child: _buildLevelComboBox(CollectedNodeLevel.job),
                         ),

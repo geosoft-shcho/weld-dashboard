@@ -58,6 +58,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     }
     return null;
   }
+
   CollectedNodeView get collectedView => _view;
   CollectedTimeBasis get timeBasis => _basis;
   List<CollectedNode> get ancestors => List.unmodifiable(_ancestors);
@@ -68,9 +69,8 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   bool get isAutoRefreshOn =>
       _query.refreshIntervalSeconds == 5 || _query.refreshIntervalSeconds == 60;
 
-  CollectedNodePath get currentParent => _ancestors.isEmpty
-      ? CollectedNodePath.root(_view)
-      : _ancestors.last.path;
+  CollectedNodePath get currentParent =>
+      _ancestors.isEmpty ? CollectedNodePath.root(_view) : _ancestors.last.path;
 
   Future<void> loadBoard() async {
     final version = ++_loadVersion;
@@ -381,9 +381,11 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       day.day,
     ).add(Duration(minutes: _query.startMinutes));
     final endMinutes = _query.endMinutes >= 1440 ? 1440 : _query.endMinutes;
-    final end = DateTime(day.year, day.month, day.day).add(
-      Duration(minutes: endMinutes),
-    );
+    final end = DateTime(
+      day.year,
+      day.month,
+      day.day,
+    ).add(Duration(minutes: endMinutes));
     return (
       start.difference(startedAt).inMicroseconds * 1000,
       end.difference(startedAt).inMicroseconds * 1000,
@@ -430,6 +432,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       return const [
         CollectedNodeLevel.worker,
         CollectedNodeLevel.project,
+        CollectedNodeLevel.item,
         CollectedNodeLevel.job,
         CollectedNodeLevel.pass,
       ];
@@ -437,6 +440,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     return const [
       CollectedNodeLevel.equipment,
       CollectedNodeLevel.project,
+      CollectedNodeLevel.item,
       CollectedNodeLevel.job,
       CollectedNodeLevel.pass,
     ];

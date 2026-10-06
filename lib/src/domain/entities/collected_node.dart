@@ -2,7 +2,15 @@ enum CollectedNodeView { equipment, worker }
 
 enum CollectedTimeBasis { work, collection }
 
-enum CollectedNodeLevel { unspecified, equipment, worker, project, job, pass }
+enum CollectedNodeLevel {
+  unspecified,
+  equipment,
+  worker,
+  project,
+  item,
+  job,
+  pass,
+}
 
 class CollectedNodePath {
   const CollectedNodePath({
@@ -11,6 +19,7 @@ class CollectedNodePath {
     required this.equipmentId,
     required this.workerId,
     required this.projectNo,
+    this.commonKey = '',
     required this.jobId,
     required this.passId,
   });
@@ -22,6 +31,7 @@ class CollectedNodePath {
       equipmentId: '',
       workerId: '',
       projectNo: '',
+      commonKey: '',
       jobId: '',
       passId: '',
     );
@@ -32,11 +42,12 @@ class CollectedNodePath {
   final String equipmentId;
   final String workerId;
   final String projectNo;
+  final String commonKey;
   final String jobId;
   final String passId;
 
   String get key =>
-      '${view.name}|${level.name}|$equipmentId|$workerId|$projectNo|$jobId|$passId';
+      '${view.name}|${level.name}|$equipmentId|$workerId|$projectNo|$commonKey|$jobId|$passId';
 
   @override
   bool operator ==(Object other) {
@@ -46,6 +57,7 @@ class CollectedNodePath {
         other.equipmentId == equipmentId &&
         other.workerId == workerId &&
         other.projectNo == projectNo &&
+        other.commonKey == commonKey &&
         other.jobId == jobId &&
         other.passId == passId;
   }
@@ -57,6 +69,7 @@ class CollectedNodePath {
     equipmentId,
     workerId,
     projectNo,
+    commonKey,
     jobId,
     passId,
   );

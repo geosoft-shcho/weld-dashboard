@@ -18,10 +18,7 @@ class PresentCollectionNodesUseCase {
     final rows = [for (final node in nodes) _rowFrom(node)];
     final events = query.doesHaveInvalidTimeRange
         ? const <CollectionEvent>[]
-        : [
-            for (final node in nodes)
-              ?_eventFrom(node, query),
-          ];
+        : [for (final node in nodes) ?_eventFrom(node, query)];
     final kpi = _kpiFrom(rows);
     final shownRows = _applyCard(rows, query.selectedKpiCard);
     final shownEvents = _applyCardToEvents(events, shownRows);
@@ -48,15 +45,16 @@ class PresentCollectionNodesUseCase {
         depth: CollectionResourceDepth.equipment,
         resourceHeaderLabel: _header(nodes),
         resources: [
-          for (final row in shownRows)
-            CollectionTimelineResource(
-              resourceId: CollectionTimelineResource.equipmentResourceId(
-                row.equipmentId,
+          for (final node in nodes)
+            if (shownRows.any((row) => row.equipmentId == node.nodeKey))
+              CollectionTimelineResource(
+                resourceId: CollectionTimelineResource.equipmentResourceId(
+                  node.nodeKey,
+                ),
+                label: node.label.isEmpty ? '미지정' : node.label,
+                subtitle: _rowSubtitle(node),
+                selectionKey: node.nodeKey,
               ),
-              label: row.equipmentName,
-              subtitle: row.receivedCount == 0 ? '' : '${row.receivedCount}건',
-              selectionKey: row.equipmentId,
-            ),
         ],
         resourceIdsByEventId: {
           for (final event in canvasEvents)
@@ -113,7 +111,9 @@ class PresentCollectionNodesUseCase {
       query.selectedDate.month,
       query.selectedDate.day,
     ).add(Duration(minutes: endMinutes));
-    final visibleStart = startedAt.isBefore(windowStart) ? windowStart : startedAt;
+    final visibleStart = startedAt.isBefore(windowStart)
+        ? windowStart
+        : startedAt;
     final visibleEnd = endedAt.isAfter(windowEnd) ? windowEnd : endedAt;
     if (!visibleStart.isBefore(visibleEnd)) {
       return null;
@@ -191,10 +191,22 @@ class PresentCollectionNodesUseCase {
     if (nodes.isEmpty) {
       return '수집';
     }
-    return switch (nodes.first.path.level) {
+    return _levelName(nodes.first.path.level);
+  }
+
+  String _rowSubtitle(CollectedNode node) {
+    if (node.contentUrl.isNotEmpty) {
+      return '파일';
+    }
+    return _levelName(node.path.level);
+  }
+
+  String _levelName(CollectedNodeLevel level) {
+    return switch (level) {
       CollectedNodeLevel.equipment => '장비',
       CollectedNodeLevel.worker => '작업자',
       CollectedNodeLevel.project => '공사',
+      CollectedNodeLevel.item => '품목',
       CollectedNodeLevel.job => '작업',
       CollectedNodeLevel.pass => '패스',
       CollectedNodeLevel.unspecified => '수집',
@@ -208,9 +220,7 @@ class PresentCollectionNodesUseCase {
           .where((row) => row.connectionStatus == ConnectionStatus.connected)
           .length,
       disconnectedCount: rows
-          .where(
-            (row) => row.connectionStatus == ConnectionStatus.disconnected,
-          )
+          .where((row) => row.connectionStatus == ConnectionStatus.disconnected)
           .length,
       errorCount: rows
           .where((row) => row.connectionStatus == ConnectionStatus.error)
