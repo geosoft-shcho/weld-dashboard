@@ -212,6 +212,35 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                     ),
                   ),
                 ),
+                if (widget.viewModel.jointNos.isNotEmpty)
+                  CommandBarWidgetItem(
+                    child: SizedBox(
+                      width: 160,
+                      child: InfoLabel(
+                        label: '이음부',
+                        child: ComboBox<String>(
+                          isExpanded: true,
+                          value: _selectedOrAll(
+                            query.jointNo,
+                            widget.viewModel.jointNos,
+                          ),
+                          items: [
+                            const ComboBoxItem(value: '', child: Text('전체')),
+                            for (final jointNo in widget.viewModel.jointNos)
+                              ComboBoxItem(
+                                value: jointNo,
+                                child: Text(jointNo),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              widget.viewModel.didSelectJoint(value);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
                 CommandBarWidgetItem(
                   child: SizedBox(
                     width: 140,
@@ -393,6 +422,9 @@ class WorkHistoryFilterChips extends StatelessWidget {
     }
     if (query.itemCode.isNotEmpty) {
       chips.add(_chip('품목 ${query.itemCode}'));
+    }
+    if (query.jointNo.isNotEmpty) {
+      chips.add(_chip('이음부 ${query.jointNo}'));
     }
     if (query.workerId.isNotEmpty) {
       var label = query.workerId;

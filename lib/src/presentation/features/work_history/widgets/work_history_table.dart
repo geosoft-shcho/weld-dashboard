@@ -191,7 +191,13 @@ class _DataRow extends StatelessWidget {
                           _Cell(item.commonKey, flex: 16),
                           _Cell(item.projectNo, flex: 16),
                           _Cell(
-                            '${workHistoryUnitLabel(item.unitNo)}\n${item.itemName.isEmpty ? item.itemCode : item.itemName}',
+                            [
+                              workHistoryUnitLabel(item.unitNo),
+                              item.itemName.isEmpty
+                                  ? item.itemCode
+                                  : item.itemName,
+                              if (item.jointNo.isNotEmpty) item.jointNo,
+                            ].join('\n'),
                             flex: 18,
                           ),
                           _Cell(item.workerName, flex: 10),

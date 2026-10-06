@@ -6,6 +6,7 @@ class WorkHistoryItem {
     required this.unitNo,
     required this.itemCode,
     required this.itemName,
+    this.jointNo = '',
     required this.workerId,
     required this.workerName,
     required this.equipmentId,
@@ -22,6 +23,7 @@ class WorkHistoryItem {
   final String unitNo;
   final String itemCode;
   final String itemName;
+  final String jointNo;
   final String workerId;
   final String workerName;
   final String equipmentId;

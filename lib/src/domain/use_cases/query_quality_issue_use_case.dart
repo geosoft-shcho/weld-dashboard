@@ -181,6 +181,7 @@ class QueryQualityIssueUseCase {
         unitNo: '',
         itemCode: '',
         itemName: '',
+        jointNo: '',
         workerName: '',
         equipmentName: '',
       );
@@ -191,6 +192,7 @@ class QueryQualityIssueUseCase {
       unitNo: match.unitNo,
       itemCode: match.itemCode,
       itemName: match.itemName,
+      jointNo: match.jointNo,
       workerName: match.workerName,
       equipmentName: match.equipmentName,
     );

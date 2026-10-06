@@ -25,6 +25,7 @@ class WorkDetailIdentity extends StatelessWidget {
           _pair('공사', job.projectNo),
           _pair('호기', DashboardFormatters.unitNo(job.unitNo)),
           _pair('품목', job.itemName.isEmpty ? job.itemCode : job.itemName),
+          _pair('이음부', job.jointNo),
           _pair('작업자', job.workerName),
           _pair('장비', job.equipmentName),
           _pair(

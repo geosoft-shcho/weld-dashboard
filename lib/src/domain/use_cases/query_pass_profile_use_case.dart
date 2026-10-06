@@ -149,6 +149,7 @@ class QueryPassProfileUseCase {
         unitNo: '',
         itemCode: '',
         itemName: '',
+        jointNo: '',
         workerName: '',
         equipmentName: '',
       );
@@ -159,6 +160,7 @@ class QueryPassProfileUseCase {
       unitNo: match.unitNo,
       itemCode: match.itemCode,
       itemName: match.itemName,
+      jointNo: match.jointNo,
       workerName: match.workerName,
       equipmentName: match.equipmentName,
     );

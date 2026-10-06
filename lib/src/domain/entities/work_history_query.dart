@@ -4,6 +4,7 @@ class WorkHistoryQuery {
     required this.projectNo,
     required this.unitNo,
     required this.itemCode,
+    this.jointNo = '',
     required this.workerId,
     required this.equipmentId,
     required this.fromDate,
@@ -33,6 +34,7 @@ class WorkHistoryQuery {
   final String projectNo;
   final String unitNo;
   final String itemCode;
+  final String jointNo;
   final String workerId;
   final String equipmentId;
   final DateTime? fromDate;
@@ -58,6 +60,7 @@ class WorkHistoryQuery {
         projectNo.isNotEmpty ||
         unitNo.isNotEmpty ||
         itemCode.isNotEmpty ||
+        jointNo.isNotEmpty ||
         workerId.isNotEmpty ||
         equipmentId.isNotEmpty ||
         fromDate != null ||
@@ -69,6 +72,7 @@ class WorkHistoryQuery {
         projectNo == other.projectNo &&
         unitNo == other.unitNo &&
         itemCode == other.itemCode &&
+        jointNo == other.jointNo &&
         workerId == other.workerId &&
         equipmentId == other.equipmentId &&
         _sameDay(fromDate, other.fromDate) &&
@@ -90,6 +94,7 @@ class WorkHistoryQuery {
     String? projectNo,
     String? unitNo,
     String? itemCode,
+    String? jointNo,
     String? workerId,
     String? equipmentId,
     DateTime? fromDate,
@@ -104,6 +109,7 @@ class WorkHistoryQuery {
       projectNo: projectNo ?? this.projectNo,
       unitNo: unitNo ?? this.unitNo,
       itemCode: itemCode ?? this.itemCode,
+      jointNo: jointNo ?? this.jointNo,
       workerId: workerId ?? this.workerId,
       equipmentId: equipmentId ?? this.equipmentId,
       fromDate: clearFromDate ? null : (fromDate ?? this.fromDate),

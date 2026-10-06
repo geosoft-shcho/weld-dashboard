@@ -34,6 +34,13 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
                 WorkHistoryUnitFilter(
                   unitNo: unit.unitNo,
                   itemCodes: unit.itemCodes,
+                  items: [
+                    for (final item in unit.items)
+                      WorkHistoryItemFilter(
+                        itemCode: item.itemCode,
+                        jointNos: item.jointNos,
+                      ),
+                  ],
                 ),
             ],
           ),
@@ -115,6 +122,7 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       commonKey: query.commonKey.trim(),
       itemCode: query.itemCode,
       unitNo: query.unitNo,
+      jointNo: query.jointNo,
       workerId: query.workerId,
       equipmentId: query.equipmentId,
       pageSize: pageSize,
@@ -154,6 +162,7 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       unitNo: job.unitNo,
       itemCode: job.itemCode,
       itemName: job.itemName,
+      jointNo: job.jointNo,
       workerId: job.workerId,
       workerName: summary.workerName,
       equipmentId: '',

@@ -72,6 +72,9 @@ class QueryWorkHistoryUseCase {
     if (query.itemCode.isNotEmpty && item.itemCode != query.itemCode) {
       return false;
     }
+    if (query.jointNo.isNotEmpty && item.jointNo != query.jointNo) {
+      return false;
+    }
     if (query.workerId.isNotEmpty && item.workerId != query.workerId) {
       return false;
     }

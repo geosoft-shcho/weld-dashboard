@@ -381,6 +381,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
       unitNo: job.unitNo,
       itemCode: job.itemCode,
       itemName: job.itemName,
+      jointNo: job.jointNo,
       workerId: job.workerId,
       workerName: response.hasWorker() ? response.worker.workerName : '',
       equipmentId: response.equipment.length == 1
@@ -407,6 +408,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
       unitNo: job.unitNo,
       itemCode: job.itemCode,
       itemName: job.itemName,
+      jointNo: job.jointNo,
       workerName: response.hasWorker() ? response.worker.workerName : '',
       equipmentName: equipmentNames.join(', '),
     );

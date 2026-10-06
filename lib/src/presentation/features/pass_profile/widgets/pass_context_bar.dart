@@ -36,6 +36,7 @@ class PassContextBar extends StatelessWidget {
           _pair('공사', data.projectNo),
           _pair('호기', DashboardFormatters.unitNo(data.unitNo)),
           _pair('품목', data.itemName.isEmpty ? data.itemCode : data.itemName),
+          _pair('이음부', data.jointNo),
           _pair('작업자', data.workerName),
           _pair('장비', data.equipmentName),
         ],

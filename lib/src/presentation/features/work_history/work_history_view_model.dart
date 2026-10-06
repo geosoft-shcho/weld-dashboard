@@ -75,6 +75,24 @@ class WorkHistoryViewModel extends ChangeNotifier {
     return const [];
   }
 
+  List<String> get jointNos {
+    final itemCode = _query.itemCode;
+    if (itemCode.isEmpty) {
+      return const [];
+    }
+    for (final unit in unitOptions) {
+      if (unit.unitNo != _query.unitNo) {
+        continue;
+      }
+      for (final item in unit.items) {
+        if (item.itemCode == itemCode) {
+          return item.jointNos;
+        }
+      }
+    }
+    return const [];
+  }
+
   Future<void> loadBoard() async {
     final version = ++_loadVersion;
     _moreVersion++;
@@ -134,16 +152,27 @@ class WorkHistoryViewModel extends ChangeNotifier {
 
   void didSelectProject(String projectNo) {
     _editFilters(
-      (query) => query.copyWith(projectNo: projectNo, unitNo: '', itemCode: ''),
+      (query) => query.copyWith(
+        projectNo: projectNo,
+        unitNo: '',
+        itemCode: '',
+        jointNo: '',
+      ),
     );
   }
 
   void didSelectUnit(String unitNo) {
-    _editFilters((query) => query.copyWith(unitNo: unitNo, itemCode: ''));
+    _editFilters(
+      (query) => query.copyWith(unitNo: unitNo, itemCode: '', jointNo: ''),
+    );
   }
 
   void didSelectItem(String itemCode) {
-    _editFilters((query) => query.copyWith(itemCode: itemCode));
+    _editFilters((query) => query.copyWith(itemCode: itemCode, jointNo: ''));
+  }
+
+  void didSelectJoint(String jointNo) {
+    _editFilters((query) => query.copyWith(jointNo: jointNo));
   }
 
   void didSelectWorker(String workerId) {
