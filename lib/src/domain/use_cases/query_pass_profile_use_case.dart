@@ -79,7 +79,7 @@ class QueryPassProfileUseCase {
       banners.add('명장 파형 없음');
     }
     if (series.beginner.isEmpty) {
-      banners.add('초보자 파형 없음');
+      banners.add('작업자 파형 없음');
     }
     if (series.robot.isEmpty) {
       banners.add('로봇 파형 없음');
@@ -162,6 +162,7 @@ class QueryPassProfileUseCase {
       itemName: match.itemName,
       jointNo: match.jointNo,
       workerName: match.workerName,
+      isMaster: match.isMaster,
       equipmentName: match.equipmentName,
     );
   }

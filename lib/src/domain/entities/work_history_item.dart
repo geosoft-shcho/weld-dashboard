@@ -10,6 +10,7 @@ class WorkHistoryItem {
     this.hasReport = false,
     required this.workerId,
     required this.workerName,
+    this.isMaster,
     required this.equipmentId,
     required this.equipmentName,
     required this.workedAt,
@@ -27,6 +28,7 @@ class WorkHistoryItem {
   final bool hasReport;
   final String workerId;
   final String workerName;
+  final bool? isMaster;
   final String equipmentId;
   final String equipmentName;
   final DateTime? workedAt;

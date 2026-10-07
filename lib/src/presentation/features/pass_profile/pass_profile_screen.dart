@@ -164,7 +164,7 @@ class _PassProfileReady extends StatelessWidget {
     return ListView(
       children: const [
         // Text(
-        //   '전류·전압·속도 파형 시계열, 명장 · 초보자 · 로봇 중첩 비교',
+        //   '전류·전압·속도 파형 시계열, 명장 · 작업자 · 로봇 중첩 비교',
         //   style: TextStyle(color: AppTheme.STATUS_OFF),
         // ),
         // SizedBox(height: 12),
@@ -298,13 +298,14 @@ String _comparisonKey(PassProfileViewModel viewModel) {
   return [
     viewModel.selectedComparisonJobId,
     viewModel.comparisonError,
-    for (final job in viewModel.comparisonJobs) job.jobId,
+    for (final job in viewModel.comparisonJobs) '${job.jobId}|${job.isMaster}',
   ].join('\u001f');
 }
 
 String _comparisonJobLabel(ComparisonJobCandidate job) {
   final worker = job.workerName.isEmpty ? '작업자 없음' : job.workerName;
-  return '${job.jobId} · $worker · ${DashboardFormatters.dateTime(job.startedAt)} · ${job.passCount}패스';
+  final role = DashboardFormatters.masterRole(job.isMaster);
+  return '${job.jobId} · $worker · $role · ${DashboardFormatters.dateTime(job.startedAt)} · ${job.passCount}패스';
 }
 
 class _PassLegendSection extends StatelessWidget {
@@ -434,6 +435,7 @@ String _contextKey(PassJointContext? data) {
     data.itemCode,
     data.itemName,
     data.workerName,
+    '${data.isMaster}',
     data.equipmentName,
   ].join('\u001f');
 }

@@ -7,6 +7,7 @@ class PassJointContext {
     required this.itemName,
     this.jointNo = '',
     required this.workerName,
+    this.isMaster,
     required this.equipmentName,
   });
 
@@ -17,5 +18,6 @@ class PassJointContext {
   final String itemName;
   final String jointNo;
   final String workerName;
+  final bool? isMaster;
   final String equipmentName;
 }

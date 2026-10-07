@@ -2,12 +2,14 @@ class ComparisonJobCandidate {
   const ComparisonJobCandidate({
     required this.jobId,
     required this.workerName,
+    this.isMaster,
     required this.startedAt,
     required this.passCount,
   });
 
   final String jobId;
   final String workerName;
+  final bool? isMaster;
   final DateTime? startedAt;
   final int passCount;
 }

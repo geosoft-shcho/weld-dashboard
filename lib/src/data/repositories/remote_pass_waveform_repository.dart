@@ -138,6 +138,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
         ComparisonJobCandidate(
           jobId: candidateId,
           workerName: summary.workerName,
+          isMaster: summary.hasIsMaster() ? summary.isMaster : null,
           startedAt: summary.job.hasStartedAt()
               ? summary.job.startedAt.toDateTime().toLocal()
               : null,
@@ -394,6 +395,9 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
       jointNo: job.jointNo,
       workerId: job.workerId,
       workerName: response.hasWorker() ? response.worker.workerName : '',
+      isMaster: response.hasWorker() && response.worker.hasIsMaster()
+          ? response.worker.isMaster
+          : null,
       equipmentId: response.equipment.length == 1
           ? response.equipment.first.equipmentId
           : '',
@@ -420,6 +424,9 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
       itemName: job.itemName,
       jointNo: job.jointNo,
       workerName: response.hasWorker() ? response.worker.workerName : '',
+      isMaster: response.hasWorker() && response.worker.hasIsMaster()
+          ? response.worker.isMaster
+          : null,
       equipmentName: equipmentNames.join(', '),
     );
   }

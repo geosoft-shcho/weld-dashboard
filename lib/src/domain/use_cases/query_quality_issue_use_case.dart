@@ -194,6 +194,7 @@ class QueryQualityIssueUseCase {
       itemName: match.itemName,
       jointNo: match.jointNo,
       workerName: match.workerName,
+      isMaster: match.isMaster,
       equipmentName: match.equipmentName,
     );
   }

@@ -139,6 +139,7 @@ class _HeaderRow extends StatelessWidget {
             _Cell('이음부', flex: 14, isHeader: true),
             _Cell('성적서', flex: 8, isHeader: true),
             _Cell('작업자', flex: 10, isHeader: true),
+            _Cell('구분', flex: 8, isHeader: true),
             _Cell('작업일시', flex: 14, isHeader: true),
             _Cell('장비', flex: 12, isHeader: true),
             _Cell('패스 수', flex: 6, isHeader: true),
@@ -178,7 +179,7 @@ class _DataRow extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                flex: 116,
+                flex: 124,
                 child: HoverButton(
                   onPressed: () => viewModel.didSelectRow(item.jobId),
                   builder: (context, states) {
@@ -203,6 +204,10 @@ class _DataRow extends StatelessWidget {
                           _Cell(item.jointNo, flex: 14),
                           _Cell(item.hasReport ? '있음' : '없음', flex: 8),
                           _Cell(item.workerName, flex: 10),
+                          _Cell(
+                            DashboardFormatters.masterRole(item.isMaster),
+                            flex: 8,
+                          ),
                           _Cell(
                             DashboardFormatters.dateTime(item.workedAt),
                             flex: 14,

@@ -78,6 +78,9 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
       jointNo: job.jointNo,
       workerId: job.workerId,
       workerName: response.hasWorker() ? response.worker.workerName : '',
+      isMaster: response.hasWorker() && response.worker.hasIsMaster()
+          ? response.worker.isMaster
+          : null,
       equipmentId: response.equipment.length == 1
           ? response.equipment.first.equipmentId
           : '',

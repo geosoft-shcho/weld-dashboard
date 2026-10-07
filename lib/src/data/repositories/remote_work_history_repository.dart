@@ -174,6 +174,7 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       hasReport: summary.hasReport,
       workerId: job.workerId,
       workerName: summary.workerName,
+      isMaster: summary.hasIsMaster() ? summary.isMaster : null,
       equipmentId: '',
       equipmentName: summary.equipmentNames.join(', '),
       workedAt: job.hasStartedAt()
