@@ -51,7 +51,7 @@ class _VideoMultimodalBody extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
                   child: InfoBar(
-                    title: const Text('첨부 조회 실패'),
+                    title: const Text('타임라인 조회 실패'),
                     content: Text(viewModel.errorMessage),
                     severity: InfoBarSeverity.error,
                     action: Button(

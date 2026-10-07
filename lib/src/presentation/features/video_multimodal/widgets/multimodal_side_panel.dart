@@ -413,7 +413,7 @@ class _AssetsBody extends StatelessWidget {
           _layerTable(),
         ],
       ),
-      foot: const _FootNote('VIDEO/AUDIO 편집 금지 · 첨부만 saved_attachment로 드래그'),
+      foot: const _FootNote('VIDEO/AUDIO 편집 금지 · 서버 트랙에 놓으면 클립이 생깁니다.'),
     );
   }
 
@@ -469,7 +469,7 @@ class _AssetsBody extends StatelessWidget {
         attachment.fileType == WorkAttachmentType.video ||
         attachment.fileType == WorkAttachmentType.audio;
     final isSelected =
-        viewModel.selectedBar?.attachmentId == attachment.attachmentId;
+        viewModel.selectedAttachment?.attachmentId == attachment.attachmentId;
     final row = _DataRow(
       [
         _DataCell.dot(_DOT_COLOR[attachment.fileType]!),
@@ -485,11 +485,9 @@ class _AssetsBody extends StatelessWidget {
       isSelected: isSelected,
       onTap: () => viewModel.didTapBar(attachment.attachmentId),
     );
-    if (isLocked) {
-      return row;
-    }
     return Draggable<String>(
-      data: 'file:${attachment.fileName}',
+      data:
+          '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}${attachment.attachmentId}',
       feedback: Material(
         color: MultimodalStudioPalette.PANEL_PAPER,
         child: Padding(

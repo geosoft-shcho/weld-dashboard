@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../../domain/entities/job_timeline.dart';
+import '../../../../domain/timeline_time.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_studio_palette.dart';
 
@@ -29,6 +31,7 @@ class TimelineBoardClip {
     required this.background,
     required this.foreground,
     required this.border,
+    this.showsPoseDots = false,
   });
 
   final String clipId;
@@ -39,6 +42,7 @@ class TimelineBoardClip {
   final Color background;
   final Color foreground;
   final Color border;
+  final bool showsPoseDots;
 }
 
 /// 클립 또는 막대 식별자
@@ -54,106 +58,29 @@ List<TimelineBoardRow> buildTimelineBoardRows(
   VideoMultimodalViewModel viewModel,
 ) {
   final rows = <TimelineBoardRow>[];
-  final videos = [
-    for (final bar in viewModel.visibleBars)
-      if (bar.isVideo) bar,
-  ];
-  final audios = [
-    for (final bar in viewModel.visibleBars)
-      if (!bar.isVideo) bar,
-  ];
-  if (videos.isNotEmpty && viewModel.isLaneVisible('video')) {
+  for (final track in viewModel.timelineTracks) {
+    if (!viewModel.isLaneVisible(track.trackId)) {
+      continue;
+    }
+    final clips = track.clips;
     rows.add(
       TimelineBoardRow(
-        laneKey: 'video',
-        label: '영상',
+        laneKey: track.trackId,
+        label: track.name.trim().isEmpty ? '트랙' : track.name.trim(),
         labelColor: MultimodalStudioPalette.SAND_700,
-        showsAiBadge: false,
-        clips: [
-          for (final bar in videos)
-            TimelineBoardClip(
-              clipId: '',
-              attachmentId: bar.attachmentId,
-              text: bar.fileName,
-              startSeconds: bar.startSeconds,
-              endSeconds: bar.endSeconds,
-              background: MultimodalStudioPalette.GRAPE_100,
-              foreground: MultimodalStudioPalette.GRAPE_400,
-              border: Colors.transparent,
-            ),
-        ],
-      ),
-    );
-  }
-  if (audios.isNotEmpty && viewModel.isLaneVisible('audio')) {
-    rows.add(
-      TimelineBoardRow(
-        laneKey: 'audio',
-        label: '오디오',
-        labelColor: MultimodalStudioPalette.PLUM_500,
-        showsAiBadge: false,
-        clips: [
-          for (final bar in audios)
-            TimelineBoardClip(
-              clipId: '',
-              attachmentId: bar.attachmentId,
-              text: bar.fileName,
-              startSeconds: bar.startSeconds,
-              endSeconds: bar.endSeconds,
-              background: MultimodalStudioPalette.KALE_0,
-              foreground: MultimodalStudioPalette.KALE_300,
-              border: Colors.transparent,
-            ),
-        ],
-      ),
-    );
-  }
-  const order = [
-    VideoMultimodalViewModel.TEXT_LANE_KEY,
-    'audio_manual',
-    'object',
-    'pose_object',
-    'saved_attachment',
-    'relation',
-  ];
-  for (final laneKey in order) {
-    final clips = [
-      for (final clip in viewModel.sampleClips)
-        if (clip.laneKey == laneKey) clip,
-    ];
-    final isDefaultLane =
-        laneKey == 'saved_attachment' || laneKey == 'relation';
-    if (!viewModel.isLaneVisible(laneKey)) {
-      continue;
-    }
-    if (clips.isEmpty && !isDefaultLane) {
-      continue;
-    }
-    final first = clips.isEmpty ? null : clips.first;
-    rows.add(
-      TimelineBoardRow(
-        laneKey: laneKey,
-        label: first?.laneLabel ?? _defaultLaneLabel(laneKey),
-        labelColor: _labelColor(laneKey),
-        showsAiBadge: first?.showsAiBadge ?? false,
+        showsAiBadge: clips.any((clip) => clip.showsToolMark),
         clips: [
           for (final clip in clips)
             TimelineBoardClip(
               clipId: clip.clipId,
               attachmentId: '',
-              text: clip.text,
-              startSeconds: clip.startSeconds,
-              endSeconds: clip.endSeconds,
-
-              /// 레인 색
-              background: timelineLaneBackground(laneKey),
-
-              /// 레인 색
-              foreground: timelineLaneForeground(laneKey),
-
-              border: clip.isDashed
-                  ? timelineLaneForeground(laneKey)
-                  : Colors.transparent,
+              text: viewModel.labelForClip(clip),
+              startSeconds: secondsFromNanoseconds(clip.startNanoseconds),
+              endSeconds: secondsFromNanoseconds(clip.endNanoseconds),
+              background: timelineKindBackground(clip.kind),
+              foreground: timelineKindForeground(clip.kind),
+              border: Colors.transparent,
+              showsPoseDots: clip.kind == TimelineClipKind.pose,
             ),
         ],
       ),
@@ -162,63 +89,47 @@ List<TimelineBoardRow> buildTimelineBoardRows(
   return rows;
 }
 
-String _defaultLaneLabel(String laneKey) {
-  switch (laneKey) {
-    case 'saved_attachment':
-      return '첨부 파일';
-    case 'relation':
-      return '관계 설정';
-    default:
-      return laneKey;
-  }
-}
-
-Color _labelColor(String laneKey) {
-  switch (laneKey) {
-    case 'object':
-    case 'audio_manual':
-      return MultimodalStudioPalette.PLUM_500;
-    case 'pose_object':
-    case VideoMultimodalViewModel.TEXT_LANE_KEY:
-      return MultimodalStudioPalette.GRAPE_700;
-    default:
-      return MultimodalStudioPalette.SAND_700;
-  }
-}
-
-Color timelineLaneBackground(String laneKey) {
-  switch (laneKey) {
-    case VideoMultimodalViewModel.TEXT_LANE_KEY:
+Color timelineKindBackground(TimelineClipKind kind) {
+  switch (kind) {
+    case TimelineClipKind.video:
+      return MultimodalStudioPalette.GRAPE_100;
+    case TimelineClipKind.audio:
+    case TimelineClipKind.subtitle:
       return MultimodalStudioPalette.KALE_0;
-    case 'audio_manual':
+    case TimelineClipKind.pose:
       return MultimodalStudioPalette.GRAPE_0;
-    case 'object':
+    case TimelineClipKind.tag:
+    case TimelineClipKind.region:
       return MultimodalStudioPalette.PLUM_100;
-    case 'pose_object':
-      return MultimodalStudioPalette.GRAPE_0;
-    case 'saved_attachment':
+    case TimelineClipKind.image:
+    case TimelineClipKind.pdf:
+    case TimelineClipKind.file:
       return MultimodalStudioPalette.PERSIMMON_0;
-    case 'relation':
-      return const Color(0xFF3A2438);
-    default:
+    case TimelineClipKind.timeseries:
+    case TimelineClipKind.pointCloud:
+    case TimelineClipKind.unspecified:
       return MultimodalStudioPalette.SAND_200;
   }
 }
 
-Color timelineLaneForeground(String laneKey) {
-  switch (laneKey) {
-    case VideoMultimodalViewModel.TEXT_LANE_KEY:
+Color timelineKindForeground(TimelineClipKind kind) {
+  switch (kind) {
+    case TimelineClipKind.video:
+    case TimelineClipKind.pose:
+      return MultimodalStudioPalette.GRAPE_400;
+    case TimelineClipKind.audio:
+    case TimelineClipKind.subtitle:
       return MultimodalStudioPalette.KALE_300;
-    case 'audio_manual':
-    case 'pose_object':
-      return MultimodalStudioPalette.GRAPE_700;
-    case 'object':
+    case TimelineClipKind.tag:
+    case TimelineClipKind.region:
       return MultimodalStudioPalette.PLUM_400;
-    case 'saved_attachment':
+    case TimelineClipKind.image:
+    case TimelineClipKind.pdf:
+    case TimelineClipKind.file:
       return MultimodalStudioPalette.PERSIMMON_300;
-    case 'relation':
-      return MultimodalStudioPalette.PLUM_400;
-    default:
+    case TimelineClipKind.timeseries:
+    case TimelineClipKind.pointCloud:
+    case TimelineClipKind.unspecified:
       return MultimodalStudioPalette.SAND_900;
   }
 }

@@ -15,6 +15,7 @@ import '../../../data/repositories/remote_pass_waveform_repository.dart';
 import '../../../data/repositories/remote_quality_job_media_repository.dart';
 import '../../../data/repositories/remote_quality_result_repository.dart';
 import '../../../data/repositories/remote_report_set_repository.dart';
+import '../../../data/repositories/remote_job_timeline_repository.dart';
 import '../../../data/repositories/remote_work_detail_repository.dart';
 import '../../../data/repositories/remote_work_history_repository.dart';
 import '../../../domain/repositories/catalog_repository.dart';
@@ -23,10 +24,19 @@ import '../../../domain/repositories/pass_waveform_repository.dart';
 import '../../../domain/repositories/quality_job_media_repository.dart';
 import '../../../domain/repositories/quality_result_repository.dart';
 import '../../../domain/repositories/report_set_repository.dart';
+import '../../../domain/repositories/job_timeline_repository.dart';
 import '../../../domain/repositories/work_detail_repository.dart';
 import '../../../domain/repositories/work_history_repository.dart';
 import '../../../domain/use_cases/list_collected_nodes_use_case.dart';
 import '../../../domain/use_cases/get_report_set_use_case.dart';
+import '../../../domain/use_cases/change_timeline_status_use_case.dart';
+import '../../../domain/use_cases/create_clip_use_case.dart';
+import '../../../domain/use_cases/create_track_use_case.dart';
+import '../../../domain/use_cases/delete_clip_use_case.dart';
+import '../../../domain/use_cases/delete_track_use_case.dart';
+import '../../../domain/use_cases/get_job_timeline_use_case.dart';
+import '../../../domain/use_cases/update_clip_use_case.dart';
+import '../../../domain/use_cases/update_track_use_case.dart';
 import '../../../domain/use_cases/list_quality_job_media_use_case.dart';
 import '../../../domain/use_cases/list_quality_results_use_case.dart';
 import '../../../domain/use_cases/list_report_sets_use_case.dart';
@@ -89,6 +99,17 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => LoadWorkDetailCatalogUseCase(locator()));
   locator.registerFactory(() => QueryWorkDetailUseCase());
   locator.registerFactory(() => ListHistoryWorkAttachmentsUseCase(locator()));
+  locator.registerLazySingleton<JobTimelineRepository>(
+    () => RemoteJobTimelineRepository(locator()),
+  );
+  locator.registerFactory(() => GetJobTimelineUseCase(locator()));
+  locator.registerFactory(() => CreateTrackUseCase(locator()));
+  locator.registerFactory(() => UpdateTrackUseCase(locator()));
+  locator.registerFactory(() => DeleteTrackUseCase(locator()));
+  locator.registerFactory(() => CreateClipUseCase(locator()));
+  locator.registerFactory(() => UpdateClipUseCase(locator()));
+  locator.registerFactory(() => DeleteClipUseCase(locator()));
+  locator.registerFactory(() => ChangeTimelineStatusUseCase(locator()));
   locator.registerFactory(() {
     final CameraRecordingRepository repository =
         BrowserCameraRecordingRepository();
@@ -108,6 +129,14 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactoryParam<VideoMultimodalViewModel, String, void>(
     (jobId, _) => VideoMultimodalViewModel(
       listHistoryWorkAttachmentsUseCase: locator(),
+      getJobTimelineUseCase: locator(),
+      createTrackUseCase: locator(),
+      updateTrackUseCase: locator(),
+      deleteTrackUseCase: locator(),
+      createClipUseCase: locator(),
+      updateClipUseCase: locator(),
+      deleteClipUseCase: locator(),
+      changeTimelineStatusUseCase: locator(),
       jobId: jobId,
     ),
   );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../domain/entities/job_timeline.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_studio_palette.dart';
 import 'timeline_board_helpers.dart';
@@ -16,12 +17,15 @@ class MultimodalTimelineBoard extends StatefulWidget {
 
 class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   final ScrollController _scrollController = ScrollController();
-  final GlobalKey _attachmentTrackKey = GlobalKey();
+  final ScrollController _objectScrollController = ScrollController();
+  final ScrollController _trackScrollController = ScrollController();
+  final TextEditingController _newTrackNameController = TextEditingController();
+  final TextEditingController _trackNameController = TextEditingController();
+  String _shownTrackId = '';
   DateTime _lastAutoScrollAt = DateTime.fromMillisecondsSinceEpoch(0);
   double _trackedPlayhead = -1;
-  double _draftStart = -1;
-  double _draftEnd = -1;
   TimelineClipEdit? _edit;
+  bool _isStatusChoicesOpen = false;
 
   VideoMultimodalViewModel get viewModel => widget.viewModel;
 
@@ -29,11 +33,15 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   void initState() {
     super.initState();
     _trackedPlayhead = widget.viewModel.playheadSeconds;
+    _objectScrollController.addListener(_syncTrackRowsToObjects);
+    _trackScrollController.addListener(_syncObjectRowsToTracks);
+    _syncSelectedTrackName();
   }
 
   @override
   void didUpdateWidget(covariant MultimodalTimelineBoard oldWidget) {
     super.didUpdateWidget(oldWidget);
+    _syncSelectedTrackName();
     final headMoved = _trackedPlayhead != viewModel.playheadSeconds;
     _trackedPlayhead = viewModel.playheadSeconds;
     if (!headMoved || !viewModel.isVideoPlaying) {
@@ -44,8 +52,111 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   @override
   void dispose() {
+    _objectScrollController.removeListener(_syncTrackRowsToObjects);
+    _trackScrollController.removeListener(_syncObjectRowsToTracks);
+    _newTrackNameController.dispose();
+    _trackNameController.dispose();
     _scrollController.dispose();
+    _objectScrollController.dispose();
+    _trackScrollController.dispose();
     super.dispose();
+  }
+
+  bool _isSyncingRowScroll = false;
+
+  void _syncTrackRowsToObjects() {
+    _alignRowScroll(_objectScrollController, _trackScrollController);
+  }
+
+  void _syncObjectRowsToTracks() {
+    _alignRowScroll(_trackScrollController, _objectScrollController);
+  }
+
+  void _alignRowScroll(ScrollController source, ScrollController target) {
+    if (_isSyncingRowScroll || !source.hasClients || !target.hasClients) {
+      return;
+    }
+    if (!source.position.hasContentDimensions ||
+        !target.position.hasContentDimensions) {
+      return;
+    }
+    final offset = source.offset.clamp(0.0, target.position.maxScrollExtent);
+    if ((target.offset - offset).abs() < 0.5) {
+      return;
+    }
+    _isSyncingRowScroll = true;
+    target.jumpTo(offset);
+    _isSyncingRowScroll = false;
+  }
+
+  void _syncSelectedTrackName() {
+    final track = viewModel.selectedServerTrack;
+    final trackId = track?.trackId ?? '';
+    if (trackId == _shownTrackId) {
+      return;
+    }
+    _shownTrackId = trackId;
+    _trackNameController.text = track?.name ?? '';
+  }
+
+  Future<void> _submitNewTrack() async {
+    await viewModel.didSubmitNewTimelineTrack(_newTrackNameController.text);
+    if (!mounted || viewModel.timelineHint.isNotEmpty) {
+      return;
+    }
+    _newTrackNameController.clear();
+  }
+
+  Future<void> _confirmDeleteTrack() async {
+    final didConfirm = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          content: const Text('이 트랙의 클립도 함께 지워집니다.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('취소'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('지우기'),
+            ),
+          ],
+        );
+      },
+    );
+    if (didConfirm != true || !mounted) {
+      return;
+    }
+    await viewModel.didTapDeleteSelectedTimelineTrack();
+  }
+
+  Future<void> _confirmDeleteSelection() async {
+    if (viewModel.isSelectedServerClip) {
+      final didConfirm = await showDialog<bool>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: const Text('이 클립을 삭제할까요?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('취소'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('확인'),
+              ),
+            ],
+          );
+        },
+      );
+      if (didConfirm != true || !mounted) {
+        return;
+      }
+    }
+    await viewModel.didTapDeleteSelection();
   }
 
   void _followPlayhead() {
@@ -72,8 +183,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     _scrollController.jumpTo(target);
   }
 
-  double _secondsOnTrack(Offset global) {
-    final box = _attachmentTrackKey.currentContext?.findRenderObject();
+  double _secondsInBox(BuildContext dropContext, Offset global) {
+    final box = dropContext.findRenderObject();
     if (box is! RenderBox) {
       return viewModel.playheadSeconds;
     }
@@ -132,27 +243,24 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   }
 
   Widget _filled(List<TimelineBoardRow> rows) {
-    return SingleChildScrollView(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _toolbar(),
-          if (viewModel.isRelationMode) _relationBanner(),
-          _header(),
-          if (viewModel.hasTimelineHint) _hint(),
-          SizedBox(
-            height: 22 + rows.length * 28,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _objects(rows),
-                Expanded(child: _tracks(rows)),
-              ],
-            ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _toolbar(),
+        _editTools(),
+        if (viewModel.isRelationMode) _relationBanner(),
+        _header(),
+        if (viewModel.hasTimelineHint) _hint(),
+        Expanded(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _objects(rows),
+              Expanded(child: _tracks(rows)),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -182,7 +290,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             _tool(
               'Delete',
               onPressed: viewModel.canDeleteSelection
-                  ? viewModel.didTapDeleteSelection
+                  ? _confirmDeleteSelection
                   : null,
             ),
           ]),
@@ -193,16 +301,121 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
               selected: viewModel.isLaneMenuOpen,
               onPressed: viewModel.didTapToggleLaneMenu,
             ),
-            _tool(
-              '👁',
-              selected: viewModel.areAuxiliaryRowsHidden,
-              onPressed: viewModel.didTapToggleAuxiliaryRows,
-            ),
             _tool('Marker', onPressed: viewModel.didTapAddMarker),
             _tool('Labels', onPressed: viewModel.didTapToggleLabels),
           ], isLast: true),
         ],
       ),
+    );
+  }
+
+  Widget _editTools() {
+    final canEditTrack = viewModel.canEditSelectedServerTrack;
+    return Material(
+      type: MaterialType.transparency,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
+        child: Wrap(
+          spacing: 4,
+          runSpacing: 4,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          children: [
+            _trackNameField(
+              key: const Key('new-timeline-track-name'),
+              controller: _newTrackNameController,
+              hint: '트랙 이름',
+            ),
+            _tool('트랙 추가', onPressed: _submitNewTrack),
+            _trackNameField(
+              key: const Key('selected-timeline-track-name'),
+              controller: _trackNameController,
+              hint: '선택한 트랙',
+              enabled: canEditTrack,
+            ),
+            _tool(
+              '트랙 수정',
+              onPressed: canEditTrack
+                  ? () => viewModel.didSubmitTimelineTrackName(
+                      _trackNameController.text,
+                    )
+                  : null,
+            ),
+            Tooltip(
+              message: '이 트랙의 클립도 함께 지워집니다.',
+              child: _tool(
+                '트랙 삭제',
+                onPressed: canEditTrack ? _confirmDeleteTrack : null,
+              ),
+            ),
+            _statusMenu(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _trackNameField({
+    required Key key,
+    required TextEditingController controller,
+    required String hint,
+    bool enabled = true,
+  }) {
+    return SizedBox(
+      width: 128,
+      height: 28,
+      child: TextField(
+        key: key,
+        controller: controller,
+        enabled: enabled,
+        style: const TextStyle(fontSize: 11),
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: hint,
+          hintStyle: const TextStyle(
+            fontSize: 11,
+            color: MultimodalStudioPalette.SAND_600,
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 6,
+            vertical: 6,
+          ),
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+  }
+
+  Widget _statusMenu() {
+    final current = viewModel.timelineStatus;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _tool(
+          '상태 ${_timelineStatusLabel(current)}',
+          selected: _isStatusChoicesOpen,
+          onPressed: () {
+            setState(() => _isStatusChoicesOpen = !_isStatusChoicesOpen);
+          },
+        ),
+        if (_isStatusChoicesOpen)
+          for (final status in const [
+            JobTimelineStatus.draft,
+            JobTimelineStatus.suggested,
+            JobTimelineStatus.confirmed,
+            JobTimelineStatus.rejected,
+          ])
+            if (status != current)
+              Padding(
+                padding: const EdgeInsets.only(left: 2),
+                child: _tool(
+                  _timelineStatusLabel(status),
+                  onPressed: () {
+                    setState(() => _isStatusChoicesOpen = false);
+                    viewModel.didChooseTimelineStatus(status);
+                  },
+                ),
+              ),
+      ],
     );
   }
 
@@ -286,13 +499,12 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   }
 
   Widget _laneMenu() {
-    const lanes = [
-      VideoMultimodalViewModel.TEXT_LANE_KEY,
-      'audio_manual',
-      'object',
-      'pose_object',
-      'saved_attachment',
-      'relation',
+    final lanes = <({String key, String label})>[
+      for (final track in viewModel.timelineTracks)
+        (
+          key: track.trackId,
+          label: track.name.trim().isEmpty ? '트랙' : track.name.trim(),
+        ),
     ];
     return Positioned(
       right: 12,
@@ -308,14 +520,14 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             children: [
               for (final lane in lanes)
                 InkWell(
-                  onTap: () => viewModel.didTapToggleLaneKey(lane),
+                  onTap: () => viewModel.didTapToggleLaneKey(lane.key),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(vertical: 2),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(
-                          viewModel.isLaneVisible(lane)
+                          viewModel.isLaneVisible(lane.key)
                               ? Icons.check_box
                               : Icons.check_box_outline_blank,
                           size: 16,
@@ -323,7 +535,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          lane,
+                          lane.label,
                           style: const TextStyle(
                             color: MultimodalStudioPalette.SAND_900,
                             fontSize: 11,
@@ -368,7 +580,16 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
               ),
             ),
           ),
-          for (final row in rows) _objectRow(row),
+          Expanded(
+            child: SingleChildScrollView(
+              key: const Key('timeline-object-rows'),
+              controller: _objectScrollController,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [for (final row in rows) _objectRow(row)],
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -378,8 +599,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     if (row.clips.isEmpty) {
       return _objectLabel(
         row,
-        swatch: timelineLaneBackground(row.laneKey),
-        border: timelineLaneForeground(row.laneKey),
+        swatch: MultimodalStudioPalette.SAND_200,
+        border: MultimodalStudioPalette.SAND_900,
       );
     }
     final clip = _rowSelection(row);
@@ -442,6 +663,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           Expanded(
             child: Text(
               row.label,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: row.labelColor,
@@ -451,12 +673,16 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             ),
           ),
           if (identity.isNotEmpty)
-            Text(
-              identity,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                color: MultimodalStudioPalette.SAND_600,
-                fontSize: 9,
+            Flexible(
+              child: Text(
+                identity,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.end,
+                style: const TextStyle(
+                  color: MultimodalStudioPalette.SAND_600,
+                  fontSize: 9,
+                ),
               ),
             ),
         ],
@@ -528,46 +754,63 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   Widget _tracks(List<TimelineBoardRow> rows) {
     final width = viewModel.trackWidth;
-    return SingleChildScrollView(
-      controller: _scrollController,
-      scrollDirection: Axis.horizontal,
-      child: SizedBox(
-        width: width,
-        child: Stack(
-          children: [
-            Column(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          controller: _scrollController,
+          scrollDirection: Axis.horizontal,
+          child: SizedBox(
+            width: width,
+            height: constraints.maxHeight,
+            child: Stack(
               children: [
-                _ruler(width),
-                for (final row in rows) _track(row, width),
-              ],
-            ),
-            Positioned(
-              left: viewModel.playheadSeconds * viewModel.pixelsPerSecond,
-              top: 0,
-              bottom: 0,
-              child: const IgnorePointer(
-                child: SizedBox(
-                  width: 2,
-                  child: ColoredBox(color: MultimodalStudioPalette.DANGER),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _ruler(width),
+                    Expanded(
+                      child: SingleChildScrollView(
+                        key: const Key('timeline-track-rows'),
+                        controller: _trackScrollController,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            for (final row in rows) _track(row, width),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-            ),
-            for (final marker in viewModel.markerSeconds)
-              Positioned(
-                left: marker * viewModel.pixelsPerSecond,
-                top: 0,
-                child: GestureDetector(
-                  onTap: () => viewModel.didTapMarker(marker),
-                  child: const Icon(
-                    Icons.bookmark,
-                    size: 16,
-                    color: MultimodalStudioPalette.CANTELOUPE_400,
+                Positioned(
+                  left: viewModel.playheadSeconds * viewModel.pixelsPerSecond,
+                  top: 0,
+                  bottom: 0,
+                  child: const IgnorePointer(
+                    child: SizedBox(
+                      width: 2,
+                      child: ColoredBox(color: MultimodalStudioPalette.DANGER),
+                    ),
                   ),
                 ),
-              ),
-          ],
-        ),
-      ),
+                for (final marker in viewModel.markerSeconds)
+                  Positioned(
+                    left: marker * viewModel.pixelsPerSecond,
+                    top: 0,
+                    child: GestureDetector(
+                      onTap: () => viewModel.didTapMarker(marker),
+                      child: const Icon(
+                        Icons.bookmark,
+                        size: 16,
+                        color: MultimodalStudioPalette.CANTELOUPE_400,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -594,36 +837,10 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   }
 
   Widget _track(TimelineBoardRow row, double width) {
-    final interactive = row.laneKey == 'audio_manual';
     final track = GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTapDown: interactive
-          ? null
-          : (details) => viewModel.didSeekToSeconds(
-              _secondsAt(details.localPosition.dx),
-            ),
-      onHorizontalDragStart: interactive
-          ? (details) {
-              final seconds = _secondsAt(details.localPosition.dx);
-              setState(() {
-                _draftStart = seconds;
-                _draftEnd = seconds;
-              });
-            }
-          : null,
-      onHorizontalDragUpdate: interactive
-          ? (details) =>
-                setState(() => _draftEnd = _secondsAt(details.localPosition.dx))
-          : null,
-      onHorizontalDragEnd: interactive
-          ? (_) {
-              viewModel.didAddManualClip(_draftStart, _draftEnd);
-              setState(() {
-                _draftStart = -1;
-                _draftEnd = -1;
-              });
-            }
-          : null,
+      onTapDown: (details) =>
+          viewModel.didSeekToSeconds(_secondsAt(details.localPosition.dx)),
       child: Container(
         height: 28,
         width: width,
@@ -631,33 +848,33 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         child: Stack(
           children: [
             for (final clip in row.clips) _clip(clip, row),
-            if (row.laneKey == 'pose_object')
-              for (final clip in row.clips) ..._poseDots(clip),
-            if (interactive && _draftStart >= 0) _draftClip(),
+            for (final clip in row.clips)
+              if (clip.showsPoseDots) ..._poseDots(clip),
           ],
         ),
       ),
     );
-    if (row.laneKey != 'saved_attachment') {
+    if (!viewModel.isServerTimelineTrack(row.laneKey)) {
       return track;
     }
-    return DragTarget<String>(
-      onAcceptWithDetails: (details) {
-        final data = details.data;
-        if (data.startsWith('media:')) {
-          viewModel.didRejectMediaDrop();
-          return;
-        }
-        final name = data.startsWith('file:') ? data.substring(5) : data;
-        viewModel.didDropSavedAttachment(name, _secondsOnTrack(details.offset));
-      },
-      builder: (context, candidate, rejected) {
-        return ColoredBox(
-          key: _attachmentTrackKey,
-          color: candidate.isEmpty
-              ? Colors.transparent
-              : MultimodalStudioPalette.GRAPE_100,
-          child: track,
+    return Builder(
+      builder: (dropContext) {
+        return DragTarget<String>(
+          onAcceptWithDetails: (details) {
+            viewModel.didDropAsset(
+              dragData: details.data,
+              laneKey: row.laneKey,
+              startSeconds: _secondsInBox(dropContext, details.offset),
+            );
+          },
+          builder: (context, candidate, rejected) {
+            return ColoredBox(
+              color: candidate.isEmpty
+                  ? Colors.transparent
+                  : MultimodalStudioPalette.GRAPE_100,
+              child: track,
+            );
+          },
         );
       },
     );
@@ -668,9 +885,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     final left = range.startSeconds * viewModel.pixelsPerSecond;
     var width =
         (range.endSeconds - range.startSeconds) * viewModel.pixelsPerSecond;
-    final minimum = row.laneKey == 'relation'
-        ? VideoMultimodalViewModel.MIN_RELATION_CLIP_WIDTH
-        : VideoMultimodalViewModel.MIN_CLIP_WIDTH;
+    final minimum = VideoMultimodalViewModel.MIN_CLIP_WIDTH;
     if (width < minimum) {
       width = minimum;
     }
@@ -864,8 +1079,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   }
 
   void _selectClip(TimelineBoardClip clip) {
-    if (clip.clipId.isNotEmpty &&
-        viewModel.didTapClipForRelation(clip.clipId)) {
+    if (viewModel.isRelationMode && clip.clipId.isNotEmpty) {
+      viewModel.didTapClipForRelation(clip.clipId);
       viewModel.didSeekToSeconds(clip.startSeconds);
       return;
     }
@@ -883,21 +1098,19 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     return clip.attachmentId.isNotEmpty &&
         clip.attachmentId == (viewModel.selectedBar?.attachmentId ?? '');
   }
+}
 
-  Widget _draftClip() {
-    final start = _draftStart < _draftEnd ? _draftStart : _draftEnd;
-    final end = _draftStart < _draftEnd ? _draftEnd : _draftStart;
-    return Positioned(
-      left: start * viewModel.pixelsPerSecond,
-      top: 4,
-      width: ((end - start) * viewModel.pixelsPerSecond).clamp(
-        2,
-        viewModel.trackWidth,
-      ),
-      height: 20,
-      child: const DecoratedBox(
-        decoration: BoxDecoration(color: MultimodalStudioPalette.GRAPE_100),
-      ),
-    );
+String _timelineStatusLabel(JobTimelineStatus status) {
+  switch (status) {
+    case JobTimelineStatus.draft:
+      return '초안';
+    case JobTimelineStatus.suggested:
+      return '제안';
+    case JobTimelineStatus.confirmed:
+      return '확정';
+    case JobTimelineStatus.rejected:
+      return '거절';
+    case JobTimelineStatus.unspecified:
+      return '상태 없음';
   }
 }

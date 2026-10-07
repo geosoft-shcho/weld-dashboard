@@ -1,9 +1,18 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../domain/entities/job_timeline.dart';
 import '../../../domain/entities/work_attachment.dart';
 import '../../../domain/entities/work_attachment_type.dart';
+import '../../../domain/timeline_time.dart';
+import '../../../domain/use_cases/change_timeline_status_use_case.dart';
+import '../../../domain/use_cases/create_clip_use_case.dart';
+import '../../../domain/use_cases/create_track_use_case.dart';
+import '../../../domain/use_cases/delete_clip_use_case.dart';
+import '../../../domain/use_cases/delete_track_use_case.dart';
+import '../../../domain/use_cases/get_job_timeline_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
-import 'timeline_clip_debug.dart';
+import '../../../domain/use_cases/update_clip_use_case.dart';
+import '../../../domain/use_cases/update_track_use_case.dart';
 import 'video_caption.dart';
 import 'video_frame_mark.dart';
 import 'video_frame_mark_debug.dart';
@@ -126,9 +135,26 @@ enum InferencePanelPhase { hidden, running, done, failed }
 
 class VideoMultimodalViewModel extends ChangeNotifier {
   VideoMultimodalViewModel({
-    required this._listHistoryWorkAttachmentsUseCase,
+    required ListHistoryWorkAttachmentsUseCase
+    listHistoryWorkAttachmentsUseCase,
+    required GetJobTimelineUseCase getJobTimelineUseCase,
+    required CreateTrackUseCase createTrackUseCase,
+    required UpdateTrackUseCase updateTrackUseCase,
+    required DeleteTrackUseCase deleteTrackUseCase,
+    required CreateClipUseCase createClipUseCase,
+    required UpdateClipUseCase updateClipUseCase,
+    required DeleteClipUseCase deleteClipUseCase,
+    required ChangeTimelineStatusUseCase changeTimelineStatusUseCase,
     required this.jobId,
-  });
+  }) : _listHistoryWorkAttachmentsUseCase = listHistoryWorkAttachmentsUseCase,
+       _getJobTimelineUseCase = getJobTimelineUseCase,
+       _createTrackUseCase = createTrackUseCase,
+       _updateTrackUseCase = updateTrackUseCase,
+       _deleteTrackUseCase = deleteTrackUseCase,
+       _createClipUseCase = createClipUseCase,
+       _updateClipUseCase = updateClipUseCase,
+       _deleteClipUseCase = deleteClipUseCase,
+       _changeTimelineStatusUseCase = changeTimelineStatusUseCase;
 
   static const double MIN_TIMELINE_HEIGHT = 320;
   static const double SIDE_WIDTH = 320;
@@ -137,33 +163,40 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const double PROVISIONAL_BAR_SECONDS = 10;
   static const double MIN_TRACK_WIDTH = 640;
   static const double MIN_CLIP_WIDTH = 6;
-  static const double MIN_RELATION_CLIP_WIDTH = 32;
   static const double MIN_REGION_SECONDS = 0.1;
-
-  /// 텍스트 레이어. 이 레인의 구간이 재생 중인 영상의 자막이 된다.
-  static const String TEXT_LANE_KEY = 'stt';
+  static const String ASSET_DRAG_PREFIX = 'asset:';
+  static const String RELATION_TRACK_NAME = '관계';
 
   final ListHistoryWorkAttachmentsUseCase _listHistoryWorkAttachmentsUseCase;
+  final GetJobTimelineUseCase _getJobTimelineUseCase;
+  final CreateTrackUseCase _createTrackUseCase;
+  final UpdateTrackUseCase _updateTrackUseCase;
+  final DeleteTrackUseCase _deleteTrackUseCase;
+  final CreateClipUseCase _createClipUseCase;
+  final UpdateClipUseCase _updateClipUseCase;
+  final DeleteClipUseCase _deleteClipUseCase;
+  final ChangeTimelineStatusUseCase _changeTimelineStatusUseCase;
   final String jobId;
 
   double _playheadSeconds = 0;
   int _seekToken = 0;
   VideoMultimodalSide _side = VideoMultimodalSide.none;
-  bool _isRelationMode = false;
   bool _isLaneMenuOpen = false;
-  bool _areAuxiliaryRowsHidden = false;
   bool _isLoading = false;
+  bool _isSavingTimeline = false;
   bool _hasError = false;
   String _errorMessage = '';
   final List<double> _markerSeconds = [];
   String _noticeText = '';
   List<WorkAttachment> _attachments = const [];
   List<TemporaryAttachmentBar> _bars = const [];
+  JobTimeline _timeline = JobTimeline.empty;
   final Set<String> _hiddenAttachmentIds = {};
   final Set<String> _hiddenLaneKeys = {};
-  String _relationAnchorClipId = '';
   String _selectedAttachmentId = '';
   String _selectedClipId = '';
+  bool _isRelationMode = false;
+  String _relationAnchorClipId = '';
   String _workName = '';
   String _assetsSearchQuery = '';
   String _timelineHint = '';
@@ -185,7 +218,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     PaletteSection(sectionKey: 'bbox', title: '객체 bbox', names: []),
     PaletteSection(sectionKey: 'vector', title: '키포인트 (tip/grip)', names: []),
   ];
-  final List<TimelineSampleClip> _sampleClips = [];
   final List<VideoFrameMark> _frameMarks = [];
   final List<SampleLayerSummary> _sampleLayers = const [];
 
@@ -197,9 +229,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get isPropertiesOpen => _side == VideoMultimodalSide.properties;
   bool get isAskOpen => _side == VideoMultimodalSide.ask;
   bool get isLabelsOpen => _side == VideoMultimodalSide.labels;
-  bool get isRelationMode => _isRelationMode;
   bool get isLaneMenuOpen => _isLaneMenuOpen;
-  bool get areAuxiliaryRowsHidden => _areAuxiliaryRowsHidden;
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
@@ -207,11 +237,52 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String get noticeText => _noticeText;
   bool get hasNotice => _noticeText.isNotEmpty;
   List<WorkAttachment> get attachments => List.unmodifiable(_attachments);
+  List<TimelineTrack> get timelineTracks => List.unmodifiable(_timeline.tracks);
+  JobTimelineStatus get timelineStatus => _timeline.status;
+  List<TimelineClip> get timelineClips => [
+    for (final track in _timeline.tracks) ...track.clips,
+  ];
 
   List<TemporaryAttachmentBar> get visibleBars => [
     for (final bar in _bars)
       if (!_hiddenAttachmentIds.contains(bar.attachmentId)) bar,
   ];
+
+  TimelineTrack? get selectedServerTrack {
+    final clip = _timelineClip(_selectedClipId);
+    if (clip == null) {
+      return null;
+    }
+    for (final track in _timeline.tracks) {
+      if (track.trackId == clip.trackId) {
+        return track;
+      }
+    }
+    return null;
+  }
+
+  WorkAttachment? get selectedAttachment {
+    if (_selectedAttachmentId.isEmpty) {
+      return null;
+    }
+    for (final attachment in _attachments) {
+      if (attachment.attachmentId == _selectedAttachmentId) {
+        return attachment;
+      }
+    }
+    return null;
+  }
+
+  bool get canEditSelectedServerTrack => selectedServerTrack != null;
+
+  bool isServerTimelineTrack(String laneKey) {
+    for (final track in _timeline.tracks) {
+      if (track.trackId == laneKey) {
+        return true;
+      }
+    }
+    return false;
+  }
 
   TemporaryAttachmentBar? get selectedBar {
     for (final bar in _bars) {
@@ -281,38 +352,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// 텍스트 레이어를 이 구간들로 바꾼다. 실제 API가 자막을 주면 이 메서드로 넣는다.
-  void didReplaceTextLayerSegments(List<TextLayerSegment> segments) {
-    _sampleClips.removeWhere((clip) => clip.laneKey == TEXT_LANE_KEY);
-    var index = 0;
-    for (final segment in segments) {
-      final text = segment.text.trim();
-      final start = segment.startSeconds < segment.endSeconds
-          ? segment.startSeconds
-          : segment.endSeconds;
-      final end = segment.startSeconds < segment.endSeconds
-          ? segment.endSeconds
-          : segment.startSeconds;
-      if (text.isEmpty || end - start < MIN_REGION_SECONDS) {
-        continue;
-      }
-      index += 1;
-      _addClip(
-        TimelineSampleClip(
-          clipId: 'text-$index',
-          laneKey: TEXT_LANE_KEY,
-          laneLabel: '자막',
-          text: text,
-          startSeconds: start,
-          endSeconds: end,
-          showsAiBadge: false,
-          isDashed: false,
-        ),
-      );
-    }
-    notifyListeners();
-  }
-
   List<VideoCaption> _captionsForVideo(TemporaryAttachmentBar? video) {
     if (video == null) {
       return const [];
@@ -322,24 +361,23 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return const [];
     }
     final captions = <VideoCaption>[];
-    for (final clip in _sampleClips) {
-      if (clip.laneKey != TEXT_LANE_KEY) {
+    for (final clip in timelineClips) {
+      if (clip.kind != TimelineClipKind.subtitle) {
         continue;
       }
-      final text = clip.text.trim();
+      final text = labelForClip(clip);
       if (text.isEmpty) {
         continue;
       }
-      if (clip.endSeconds <= video.startSeconds ||
-          clip.startSeconds >= video.endSeconds) {
+      final start = secondsFromNanoseconds(clip.startNanoseconds);
+      final end = secondsFromNanoseconds(clip.endNanoseconds);
+      if (end <= video.startSeconds || start >= video.endSeconds) {
         continue;
       }
-      final localStart = (clip.startSeconds - video.startSeconds)
+      final localStart = (start - video.startSeconds)
           .clamp(0.0, span)
           .toDouble();
-      final localEnd = (clip.endSeconds - video.startSeconds)
-          .clamp(0.0, span)
-          .toDouble();
+      final localEnd = (end - video.startSeconds).clamp(0.0, span).toDouble();
       if (localEnd - localStart < MIN_REGION_SECONDS) {
         continue;
       }
@@ -354,24 +392,141 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return captions;
   }
 
-  TemporaryAttachmentBar? get activeVideoBar {
-    for (final bar in visibleBars) {
-      if (!bar.isVideo) {
+  TimelineClip? _videoClipAt(double seconds) {
+    TimelineClip? chosen;
+    var chosenStart = 0.0;
+    for (final clip in timelineClips) {
+      if (clip.kind != TimelineClipKind.video || clip.playbackUrl.isEmpty) {
         continue;
       }
-      if (_playheadSeconds >= bar.startSeconds &&
-          _playheadSeconds < bar.endSeconds) {
-        return bar;
+      final start = secondsFromNanoseconds(clip.startNanoseconds);
+      final end = secondsFromNanoseconds(clip.endNanoseconds);
+      if (seconds < start || seconds >= end) {
+        continue;
+      }
+      if (chosen == null || start < chosenStart) {
+        chosen = clip;
+        chosenStart = start;
+      }
+    }
+    return chosen;
+  }
+
+  double? _timelineVideoStart(String mediaUrl) {
+    for (final clip in timelineClips) {
+      if (clip.kind == TimelineClipKind.video && clip.playbackUrl == mediaUrl) {
+        return secondsFromNanoseconds(clip.startNanoseconds);
       }
     }
     return null;
   }
 
+  TimelineClip? _timelineClip(String clipId) {
+    for (final clip in timelineClips) {
+      if (clip.clipId == clipId) {
+        return clip;
+      }
+    }
+    return null;
+  }
+
+  String _trackName(String trackId) {
+    for (final track in _timeline.tracks) {
+      if (track.trackId == trackId && track.name.trim().isNotEmpty) {
+        return track.name.trim();
+      }
+    }
+    return '트랙';
+  }
+
+  String labelForClip(TimelineClip clip) {
+    final note = clip.description.trim();
+    if (note.isNotEmpty) {
+      return note;
+    }
+    final fileName = clip.fileName.trim();
+    if (fileName.isNotEmpty) {
+      return fileName;
+    }
+    return _kindLabel(clip.kind);
+  }
+
+  String _kindLabel(TimelineClipKind kind) {
+    switch (kind) {
+      case TimelineClipKind.video:
+        return '영상';
+      case TimelineClipKind.audio:
+        return '음성';
+      case TimelineClipKind.image:
+        return '이미지';
+      case TimelineClipKind.pdf:
+        return 'PDF';
+      case TimelineClipKind.subtitle:
+        return '자막';
+      case TimelineClipKind.pose:
+        return '포즈';
+      case TimelineClipKind.timeseries:
+        return '시계열';
+      case TimelineClipKind.pointCloud:
+        return '포인트클라우드';
+      case TimelineClipKind.file:
+        return '파일';
+      case TimelineClipKind.tag:
+        return '태그';
+      case TimelineClipKind.region:
+        return '영역';
+      case TimelineClipKind.unspecified:
+        return '클립';
+    }
+  }
+
+  void _followClock({
+    required double startSeconds,
+    required double localSeconds,
+    required bool isPlaying,
+    bool notifyWhenIgnored = false,
+  }) {
+    final expectedLocal = _playheadSeconds - startSeconds;
+    final clockSettled = (localSeconds - expectedLocal).abs() <= 0.35;
+    if (DateTime.now().isBefore(_ignoreClockUntil) && !clockSettled) {
+      if (notifyWhenIgnored) {
+        notifyListeners();
+      }
+      return;
+    }
+    final next = (startSeconds + localSeconds).clamp(0.0, spanSeconds);
+    if ((next - _playheadSeconds).abs() < 0.03 &&
+        _isVideoPlaying == isPlaying) {
+      return;
+    }
+    _playheadSeconds = next;
+    _isVideoPlaying = isPlaying;
+    notifyListeners();
+  }
+
+  TemporaryAttachmentBar? get activeVideoBar {
+    final clip = _videoClipAt(_playheadSeconds);
+    if (clip == null) {
+      return null;
+    }
+    return TemporaryAttachmentBar(
+      attachmentId: clip.clipId,
+      fileName: clip.fileName,
+      fileTypeLabel: 'video',
+      mediaUrl: clip.playbackUrl,
+      note: clip.description,
+      isVideo: true,
+      startSeconds: secondsFromNanoseconds(clip.startNanoseconds),
+      endSeconds: secondsFromNanoseconds(clip.endNanoseconds),
+    );
+  }
+
   double get spanSeconds {
     var end = 0.0;
-    for (final bar in visibleBars) {
-      if (bar.endSeconds > end) {
-        end = bar.endSeconds;
+    for (final clip in timelineClips) {
+      final clipEnd = secondsFromNanoseconds(clip.endNanoseconds);
+      if (clipEnd > end) {
+        end = clipEnd;
       }
     }
     if (end <= 0) {
@@ -398,6 +553,16 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get isVideoPlaying => _isVideoPlaying;
   bool get wantsPlayback => _wantsPlayback;
   int get playbackToken => _playbackToken;
+
+  bool isLaneVisible(String laneKey) => !_hiddenLaneKeys.contains(laneKey);
+  String get assetsSearchQuery => _assetsSearchQuery;
+  String get timelineHint => _timelineHint;
+  bool get hasTimelineHint => _timelineHint.isNotEmpty;
+  String get selectedAudioLabel => _selectedAudioLabel;
+  bool get canDeleteSelection => _selectedClipId.isNotEmpty;
+  bool get isSelectedServerClip => _timelineClip(_selectedClipId) != null;
+  bool get isRelationMode => _isRelationMode;
+
   String get relationPrompt {
     if (!_isRelationMode) {
       return '';
@@ -408,12 +573,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return 'Relation 모드 — 두 번째 클립을 클릭하세요';
   }
 
-  bool isLaneVisible(String laneKey) => !_hiddenLaneKeys.contains(laneKey);
-  String get assetsSearchQuery => _assetsSearchQuery;
-  String get timelineHint => _timelineHint;
-  bool get hasTimelineHint => _timelineHint.isNotEmpty;
-  String get selectedAudioLabel => _selectedAudioLabel;
-  bool get canDeleteSelection => _selectedClipId.isNotEmpty;
   String get selectedClipId => _selectedClipId;
   InferencePanelPhase get inferencePhase => _inferencePhase;
   bool get isInferenceVisible => _inferencePhase != InferencePanelPhase.hidden;
@@ -424,16 +583,23 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   List<AskTurn> get askTurns => List.unmodifiable(_askTurns);
   List<PaletteSection> get paletteSections =>
       List.unmodifiable(_paletteSections);
-  List<TimelineSampleClip> get sampleClips => List.unmodifiable(_sampleClips);
   List<SampleLayerSummary> get sampleLayers => List.unmodifiable(_sampleLayers);
 
   TimelineSampleClip? get selectedClip {
-    for (final clip in _sampleClips) {
-      if (clip.clipId == _selectedClipId) {
-        return clip;
-      }
+    final timelineClip = _timelineClip(_selectedClipId);
+    if (timelineClip == null) {
+      return null;
     }
-    return null;
+    return TimelineSampleClip(
+      clipId: timelineClip.clipId,
+      laneKey: timelineClip.trackId,
+      laneLabel: _trackName(timelineClip.trackId),
+      text: labelForClip(timelineClip),
+      startSeconds: secondsFromNanoseconds(timelineClip.startNanoseconds),
+      endSeconds: secondsFromNanoseconds(timelineClip.endNanoseconds),
+      showsAiBadge: timelineClip.showsToolMark,
+      isDashed: false,
+    );
   }
 
   double get trackWidth {
@@ -449,6 +615,32 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _hasError = false;
     _errorMessage = '';
     notifyListeners();
+    if (jobId.isEmpty) {
+      _timeline = JobTimeline.empty;
+      _attachments = const [];
+      _bars = const [];
+      _frameMarks.clear();
+      _noticeText = '작업을 열지 못했습니다.';
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+    try {
+      _timeline = await _getJobTimelineUseCase.execute(jobId: jobId);
+      final name = _timeline.name.trim();
+      if (_workName.isEmpty && name.isNotEmpty) {
+        _workName = name;
+      }
+      notifyListeners();
+    } on JobTimelineException catch (error) {
+      _hasError = true;
+      _errorMessage = error.message;
+      _timeline = JobTimeline.empty;
+    } catch (error) {
+      _hasError = true;
+      _errorMessage = error.toString();
+      _timeline = JobTimeline.empty;
+    }
     try {
       final marks = loadMockVideoFrameMarks();
       _attachments = await _listHistoryWorkAttachmentsUseCase.execute(
@@ -463,11 +655,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         ..addAll(await marks);
       _side = VideoMultimodalSide.assets;
     } catch (error) {
-      _hasError = true;
-      _errorMessage = error.toString();
       _attachments = const [];
       _bars = const [];
       _frameMarks.clear();
+      if (!_hasError) {
+        _noticeText = error.toString();
+      }
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -500,6 +693,15 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required bool isPlaying,
   }) {
     final fittedChanged = _fitVideoDuration(mediaUrl, durationSeconds);
+    final timelineStart = _timelineVideoStart(mediaUrl);
+    if (timelineStart != null) {
+      _followClock(
+        startSeconds: timelineStart,
+        localSeconds: localSeconds,
+        isPlaying: isPlaying,
+      );
+      return;
+    }
     TemporaryAttachmentBar? bar;
     for (final candidate in _bars) {
       if (candidate.isVideo && candidate.mediaUrl == mediaUrl) {
@@ -513,71 +715,22 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       }
       return;
     }
-    final expectedLocal = _playheadSeconds - bar.startSeconds;
-    final clockSettled = (localSeconds - expectedLocal).abs() <= 0.35;
-    if (DateTime.now().isBefore(_ignoreClockUntil) && !clockSettled) {
-      if (fittedChanged) {
-        notifyListeners();
-      }
-      return;
-    }
-    final next = (bar.startSeconds + localSeconds).clamp(0.0, spanSeconds);
-    if ((next - _playheadSeconds).abs() < 0.03 &&
-        _isVideoPlaying == isPlaying) {
-      return;
-    }
-    _playheadSeconds = next;
-    _isVideoPlaying = isPlaying;
-    notifyListeners();
+    _followClock(
+      startSeconds: bar.startSeconds,
+      localSeconds: localSeconds,
+      isPlaying: isPlaying,
+      notifyWhenIgnored: fittedChanged,
+    );
   }
 
   void didSelectSampleClip(String clipId) {
-    TimelineSampleClip? clip;
-    for (final candidate in _sampleClips) {
-      if (candidate.clipId == clipId) {
-        clip = candidate;
-        break;
-      }
-    }
-    if (clip == null) {
+    final timelineClip = _timelineClip(clipId);
+    if (timelineClip == null) {
       return;
     }
     _selectedClipId = clipId;
-    _selectedAttachmentId = '';
     _side = VideoMultimodalSide.properties;
-    if (clip.laneKey == 'audio_manual' || clip.laneKey == TEXT_LANE_KEY) {
-      _selectedAudioLabel = clip.text;
-    }
-    didSeekToSeconds(clip.startSeconds);
-  }
-
-  void didAddManualClip(double startSeconds, double endSeconds) {
-    final start = startSeconds < endSeconds ? startSeconds : endSeconds;
-    final end = startSeconds < endSeconds ? endSeconds : startSeconds;
-    if (end - start < MIN_REGION_SECONDS) {
-      _timelineHint = '구간이 너무 짧습니다.';
-      notifyListeners();
-      return;
-    }
-    if (_selectedAudioLabel.isEmpty) {
-      _timelineHint = '오디오 구간 라벨을 먼저 선택하세요.';
-      notifyListeners();
-      return;
-    }
-    final clip = TimelineSampleClip(
-      clipId: 'manual-${_sampleClips.length + 1}',
-      laneKey: 'audio_manual',
-      laneLabel: '수동 · 자막',
-      text: _selectedAudioLabel,
-      startSeconds: start,
-      endSeconds: end,
-      showsAiBadge: false,
-      isDashed: false,
-    );
-    _addClip(clip);
-    _selectedClipId = clip.clipId;
-    _timelineHint = '';
-    notifyListeners();
+    didSeekToSeconds(secondsFromNanoseconds(timelineClip.startNanoseconds));
   }
 
   void didClearTimelineHint() {
@@ -710,6 +863,13 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didTapBar(String attachmentId) {
+    WorkAttachment? attachment;
+    for (final candidate in _attachments) {
+      if (candidate.attachmentId == attachmentId) {
+        attachment = candidate;
+        break;
+      }
+    }
     TemporaryAttachmentBar? bar;
     for (final candidate in _bars) {
       if (candidate.attachmentId == attachmentId) {
@@ -717,14 +877,20 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         break;
       }
     }
-    if (bar == null) {
+    if (attachment == null && bar == null) {
       return;
     }
     _selectedAttachmentId = attachmentId;
-    _selectedClipId = '';
+    if (_timelineClip(_selectedClipId) == null) {
+      _selectedClipId = '';
+    }
     _side = VideoMultimodalSide.properties;
     _isLaneMenuOpen = false;
-    didSeekToSeconds(bar.startSeconds);
+    if (bar != null) {
+      didSeekToSeconds(bar.startSeconds);
+      return;
+    }
+    notifyListeners();
   }
 
   void didTapRefresh() {
@@ -779,6 +945,256 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> didTapDeleteSelection() async {
+    if (_selectedClipId.isEmpty) {
+      return;
+    }
+    final clipId = _selectedClipId;
+    if (_timelineClip(clipId) == null) {
+      _selectedClipId = '';
+      notifyListeners();
+      return;
+    }
+    final didSave = await _commitServerWrite(
+      () => _deleteClipUseCase.execute(clipId: clipId),
+    );
+    if (didSave) {
+      _selectedClipId = '';
+      notifyListeners();
+    }
+  }
+
+  Future<bool> createTimelineTrack({
+    required String name,
+    int? order,
+    bool? isVisible,
+  }) {
+    return _commitServerWrite(
+      () => _createTrackUseCase.execute(
+        jobId: jobId,
+        name: name,
+        order: order,
+        isVisible: isVisible,
+      ),
+    );
+  }
+
+  Future<void> updateTimelineTrack({
+    required String trackId,
+    String? name,
+    int? order,
+    bool? isVisible,
+  }) {
+    return _commitServerWrite(
+      () => _updateTrackUseCase.execute(
+        trackId: trackId,
+        name: name,
+        order: order,
+        isVisible: isVisible,
+      ),
+    );
+  }
+
+  Future<void> deleteTimelineTrack(String trackId) {
+    return _commitServerWrite(
+      () => _deleteTrackUseCase.execute(trackId: trackId),
+    );
+  }
+
+  Future<bool> createTimelineClip({
+    required String trackId,
+    required TimelineClipKind kind,
+    required String startNs,
+    required String endNs,
+    String assetId = '',
+    String labelValueId = '',
+    String description = '',
+    bool omitsKind = false,
+    List<String> inputClipIds = const [],
+  }) {
+    return _commitServerWrite(
+      () => _createClipUseCase.execute(
+        trackId: trackId,
+        kind: kind,
+        startNs: startNs,
+        endNs: endNs,
+        assetId: assetId,
+        labelValueId: labelValueId,
+        description: description,
+        omitsKind: omitsKind,
+        inputClipIds: inputClipIds,
+      ),
+    );
+  }
+
+  Future<void> updateTimelineClip({
+    required String clipId,
+    String? trackId,
+    String? startNs,
+    String? endNs,
+    String? assetId,
+    String? labelValueId,
+    String? description,
+    bool? isReviewed,
+  }) {
+    final clip = _timelineClip(clipId);
+    if (clip == null) {
+      return Future.value();
+    }
+    final nextTrackId = trackId == null || trackId == clip.trackId
+        ? null
+        : trackId;
+    final nextStart = startNs == null || startNs == clip.startNs
+        ? null
+        : startNs;
+    final nextEnd = endNs == null || endNs == clip.endNs ? null : endNs;
+    final nextAssetId = assetId == null || assetId == clip.assetId
+        ? null
+        : assetId;
+    final nextDescription =
+        description == null || description == clip.description
+        ? null
+        : description;
+    if (nextTrackId == null &&
+        nextStart == null &&
+        nextEnd == null &&
+        nextAssetId == null &&
+        labelValueId == null &&
+        nextDescription == null &&
+        isReviewed == null) {
+      return Future.value();
+    }
+    final resolvedStart = nextStart ?? clip.startNs;
+    final resolvedEnd = nextEnd ?? clip.endNs;
+    if ((nextStart != null || nextEnd != null) &&
+        !isOpenNanosecondInterval(resolvedStart, resolvedEnd)) {
+      _timelineHint = '구간이 너무 짧습니다.';
+      notifyListeners();
+      return Future.value();
+    }
+    return _commitServerWrite(
+      () => _updateClipUseCase.execute(
+        clipId: clipId,
+        trackId: nextTrackId,
+        startNs: nextStart,
+        endNs: nextEnd,
+        assetId: nextAssetId,
+        labelValueId: labelValueId,
+        description: nextDescription,
+        isReviewed: isReviewed,
+      ),
+    );
+  }
+
+  Future<void> changeTimelineStatus(JobTimelineStatus toStatus) {
+    if (toStatus == _timeline.status) {
+      return Future.value();
+    }
+    return _commitServerWrite(
+      () => _changeTimelineStatusUseCase.execute(
+        jobId: jobId,
+        fromStatus: _timeline.status,
+        toStatus: toStatus,
+      ),
+    );
+  }
+
+  Future<void> didSubmitNewTimelineTrack(String name) async {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      _timelineHint = '트랙 이름을 입력하세요.';
+      notifyListeners();
+      return;
+    }
+    await createTimelineTrack(name: trimmed);
+  }
+
+  Future<void> didSubmitTimelineTrackName(String name) {
+    final track = selectedServerTrack;
+    if (track == null) {
+      return Future.value();
+    }
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      _timelineHint = '트랙 이름을 입력하세요.';
+      notifyListeners();
+      return Future.value();
+    }
+    if (trimmed == track.name.trim()) {
+      return Future.value();
+    }
+    return updateTimelineTrack(trackId: track.trackId, name: trimmed);
+  }
+
+  Future<void> didTapDeleteSelectedTimelineTrack() async {
+    final track = selectedServerTrack;
+    if (track == null) {
+      return;
+    }
+    final didSave = await _commitServerWrite(
+      () => _deleteTrackUseCase.execute(trackId: track.trackId),
+    );
+    if (didSave) {
+      _selectedClipId = '';
+      notifyListeners();
+    }
+  }
+
+  Future<void> didCreateTimelineClipOnTrack({
+    required String trackId,
+    required WorkAttachment attachment,
+    required double startSeconds,
+  }) async {
+    if (!isServerTimelineTrack(trackId) || attachment.attachmentId.isEmpty) {
+      return;
+    }
+    final startNs = nanosecondsFromSeconds(startSeconds);
+    final endNs = nanosecondsFromSeconds(startSeconds + MIN_REGION_SECONDS);
+    if (!isOpenNanosecondInterval(startNs, endNs)) {
+      _timelineHint = '구간이 너무 짧습니다.';
+      notifyListeners();
+      return;
+    }
+    await createTimelineClip(
+      trackId: trackId,
+      kind: _clipKindForAttachment(attachment),
+      startNs: startNs,
+      endNs: endNs,
+      assetId: attachment.attachmentId,
+    );
+  }
+
+  Future<void> didDropAsset({
+    required String dragData,
+    required String laneKey,
+    required double startSeconds,
+  }) {
+    if (dragData.startsWith('media:')) {
+      didRejectMediaDrop();
+      return Future.value();
+    }
+    final attachmentId = _attachmentIdFromDragData(dragData);
+    if (isServerTimelineTrack(laneKey)) {
+      if (attachmentId == null) {
+        return Future.value();
+      }
+      final attachment = _attachmentById(attachmentId);
+      if (attachment == null) {
+        return Future.value();
+      }
+      return didCreateTimelineClipOnTrack(
+        trackId: laneKey,
+        attachment: attachment,
+        startSeconds: startSeconds,
+      );
+    }
+    return Future.value();
+  }
+
+  Future<void> didChooseTimelineStatus(JobTimelineStatus toStatus) {
+    return changeTimelineStatus(toStatus);
+  }
+
   void didTapSelectTool() {
     _isRelationMode = false;
     _relationAnchorClipId = '';
@@ -802,8 +1218,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool didTapClipForRelation(String clipId) {
+  Future<bool> didTapClipForRelation(String clipId) async {
     if (!_isRelationMode || clipId.isEmpty) {
+      return false;
+    }
+    final clip = _timelineClip(clipId);
+    if (clip == null) {
       return false;
     }
     if (_relationAnchorClipId.isEmpty) {
@@ -815,77 +1235,207 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (_relationAnchorClipId == clipId) {
       return true;
     }
-    final anchor = _clipById(_relationAnchorClipId);
-    final next = _clipById(clipId);
-    if (anchor != null && next != null) {
-      final start = anchor.startSeconds < next.startSeconds
-          ? anchor.startSeconds
-          : next.startSeconds;
-      final end = anchor.endSeconds > next.endSeconds
-          ? anchor.endSeconds
-          : next.endSeconds;
-      final clip = TimelineSampleClip(
-        clipId: 'rel-${_sampleClips.length + 1}',
-        laneKey: 'relation',
-        laneLabel: '관계 설정',
-        text: '${anchor.text} ↔ ${next.text}',
-        startSeconds: start,
-        endSeconds: end,
-        showsAiBadge: false,
-        isDashed: false,
-      );
-      _addClip(clip, [anchor, next]);
+    final anchor = _timelineClip(_relationAnchorClipId);
+    if (anchor == null) {
+      return false;
     }
-    _isRelationMode = false;
-    _relationAnchorClipId = '';
-    _selectedClipId = clipId;
-    notifyListeners();
+    final startNs = _earlierNanoseconds(anchor.startNs, clip.startNs);
+    final endNs = _laterNanoseconds(anchor.endNs, clip.endNs);
+    if (startNs == null ||
+        endNs == null ||
+        !isOpenNanosecondInterval(startNs, endNs)) {
+      _timelineHint = '구간이 너무 짧습니다.';
+      notifyListeners();
+      return true;
+    }
+    final trackId = await _relationTrackIdAfterEnsure();
+    if (trackId == null) {
+      return true;
+    }
+    final didSave = await createTimelineClip(
+      trackId: trackId,
+      kind: TimelineClipKind.unspecified,
+      omitsKind: true,
+      startNs: startNs,
+      endNs: endNs,
+      description: '${labelForClip(anchor)} ↔ ${labelForClip(clip)}',
+      inputClipIds: [anchor.clipId, clip.clipId],
+    );
+    if (didSave) {
+      _isRelationMode = false;
+      _relationAnchorClipId = '';
+      notifyListeners();
+    }
     return true;
   }
 
-  void didTapDeleteSelection() {
-    if (_selectedClipId.isEmpty) {
-      return;
+  Future<String?> _relationTrackIdAfterEnsure() async {
+    final existing = _relationTrackId();
+    if (existing != null) {
+      return existing;
     }
-    _sampleClips.removeWhere((clip) => clip.clipId == _selectedClipId);
-    _selectedClipId = '';
-    notifyListeners();
+    final didCreate = await createTimelineTrack(name: RELATION_TRACK_NAME);
+    if (!didCreate) {
+      return null;
+    }
+    return _relationTrackId();
   }
 
-  void didCommitClipRange(
+  String? _relationTrackId() {
+    TimelineTrack? chosen;
+    for (final track in _timeline.tracks) {
+      if (track.name.trim() != RELATION_TRACK_NAME) {
+        continue;
+      }
+      if (chosen == null || track.order < chosen.order) {
+        chosen = track;
+      }
+    }
+    final trackId = chosen?.trackId ?? '';
+    if (trackId.isEmpty) {
+      return null;
+    }
+    return trackId;
+  }
+
+  String? _earlierNanoseconds(String left, String right) {
+    final leftValue = BigInt.tryParse(left);
+    final rightValue = BigInt.tryParse(right);
+    if (leftValue == null || rightValue == null) {
+      return null;
+    }
+    return leftValue <= rightValue ? left : right;
+  }
+
+  String? _laterNanoseconds(String left, String right) {
+    final leftValue = BigInt.tryParse(left);
+    final rightValue = BigInt.tryParse(right);
+    if (leftValue == null || rightValue == null) {
+      return null;
+    }
+    return leftValue >= rightValue ? left : right;
+  }
+
+  WorkAttachment? _attachmentById(String attachmentId) {
+    if (attachmentId.isEmpty) {
+      return null;
+    }
+    for (final attachment in _attachments) {
+      if (attachment.attachmentId == attachmentId) {
+        return attachment;
+      }
+    }
+    return null;
+  }
+
+  String? _attachmentIdFromDragData(String dragData) {
+    if (!dragData.startsWith(ASSET_DRAG_PREFIX)) {
+      return null;
+    }
+    final attachmentId = dragData.substring(ASSET_DRAG_PREFIX.length).trim();
+    if (attachmentId.isEmpty) {
+      return null;
+    }
+    return attachmentId;
+  }
+
+  TimelineClipKind _clipKindForAttachment(WorkAttachment attachment) {
+    switch (attachment.fileType) {
+      case WorkAttachmentType.video:
+        return TimelineClipKind.video;
+      case WorkAttachmentType.audio:
+        return TimelineClipKind.audio;
+      case WorkAttachmentType.image:
+        return TimelineClipKind.image;
+      case WorkAttachmentType.pdf:
+        return TimelineClipKind.pdf;
+      case WorkAttachmentType.text:
+        return TimelineClipKind.file;
+    }
+  }
+
+  Future<void> didCommitClipRange(
     String clipId,
     double startSeconds,
     double endSeconds,
-  ) {
-    final clip = _clipById(clipId);
+  ) async {
+    final clip = _timelineClip(clipId);
     if (clip == null) {
       return;
     }
-    final fromStart = clip.startSeconds;
-    final fromEnd = clip.endSeconds;
     final start = startSeconds < endSeconds ? startSeconds : endSeconds;
     final end = startSeconds < endSeconds ? endSeconds : startSeconds;
-    if (end - start < MIN_REGION_SECONDS) {
+    final startNs = nanosecondsFromSeconds(start);
+    final endNs = nanosecondsFromSeconds(end);
+    if (!isOpenNanosecondInterval(startNs, endNs)) {
       _timelineHint = '구간이 너무 짧습니다.';
       notifyListeners();
       return;
     }
-    final span = spanSeconds;
-    clip.startSeconds = start.clamp(0.0, span).toDouble();
-    clip.endSeconds = end.clamp(0.0, span).toDouble();
-    if (clip.endSeconds - clip.startSeconds < MIN_REGION_SECONDS) {
-      clip.endSeconds = (clip.startSeconds + MIN_REGION_SECONDS)
-          .clamp(0.0, span)
-          .toDouble();
+    await updateTimelineClip(clipId: clipId, startNs: startNs, endNs: endNs);
+  }
+
+  Future<bool> _commitServerWrite(Future<void> Function() write) async {
+    if (_isSavingTimeline || jobId.isEmpty) {
+      return false;
     }
-    final lengthChanged =
-        ((clip.endSeconds - clip.startSeconds) - (fromEnd - fromStart)).abs() >=
-        0.001;
-    if (lengthChanged) {
-      debugLaneClipResize(clip, fromStart, fromEnd);
+    _isSavingTimeline = true;
+    var didSave = false;
+    try {
+      try {
+        await write();
+      } on JobTimelineException catch (error) {
+        await _applyWriteFailure(error);
+        return false;
+      } catch (error) {
+        _timelineHint = error.toString();
+        return false;
+      }
+      didSave = await _replaceTimelineFromServer(clearHint: true);
+      return didSave;
+    } finally {
+      _isSavingTimeline = false;
+      notifyListeners();
     }
-    _timelineHint = '';
-    notifyListeners();
+  }
+
+  Future<void> _applyWriteFailure(JobTimelineException error) async {
+    switch (error.failure) {
+      case JobTimelineFailure.aborted:
+        final didRefresh = await _replaceTimelineFromServer(clearHint: false);
+        if (didRefresh) {
+          _timelineHint = error.message.isEmpty
+              ? '타임라인 상태가 바뀌어 다시 불러왔습니다.'
+              : '타임라인 상태가 바뀌어 다시 불러왔습니다. ${error.message}';
+        }
+      case JobTimelineFailure.notFound:
+        final didRefresh = await _replaceTimelineFromServer(clearHint: false);
+        if (didRefresh) {
+          _timelineHint = error.message.isEmpty
+              ? '대상을 찾지 못해 타임라인을 다시 불러왔습니다.'
+              : error.message;
+        }
+      case JobTimelineFailure.failedPrecondition:
+      case JobTimelineFailure.invalidArgument:
+      case JobTimelineFailure.unknown:
+        _timelineHint = error.message;
+    }
+  }
+
+  Future<bool> _replaceTimelineFromServer({required bool clearHint}) async {
+    try {
+      _timeline = await _getJobTimelineUseCase.execute(jobId: jobId);
+      if (clearHint) {
+        _timelineHint = '';
+      }
+      return true;
+    } on JobTimelineException catch (error) {
+      _timelineHint = error.message;
+      return false;
+    } catch (error) {
+      _timelineHint = error.toString();
+      return false;
+    }
   }
 
   void didCommitBarRange(
@@ -929,23 +1479,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void didDropSavedAttachment(String fileName, double seconds) {
-    final start = seconds.clamp(0.0, spanSeconds).toDouble();
-    final clip = TimelineSampleClip(
-      clipId: 'att-${_sampleClips.length + 1}',
-      laneKey: 'saved_attachment',
-      laneLabel: '첨부 파일',
-      text: fileName,
-      startSeconds: start,
-      endSeconds: (start + 1.5).clamp(start, spanSeconds + 1.5).toDouble(),
-      showsAiBadge: false,
-      isDashed: false,
-    );
-    _addClip(clip);
-    _timelineHint = '';
-    notifyListeners();
-  }
-
   void didRejectMediaDrop() {
     _timelineHint = '영상·오디오는 타임라인에 떨어뜨릴 수 없습니다.';
     notifyListeners();
@@ -957,36 +1490,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _addClip(
-    TimelineSampleClip clip, [
-    List<TimelineSampleClip> sources = const [],
-  ]) {
-    _sampleClips.add(clip);
-    debugLaneClip(clip, sources);
-  }
-
-  TimelineSampleClip? _clipById(String clipId) {
-    for (final clip in _sampleClips) {
-      if (clip.clipId == clipId) {
-        return clip;
-      }
-    }
-    return null;
-  }
-
   void didTapToggleLaneMenu() {
     _isLaneMenuOpen = !_isLaneMenuOpen;
-    notifyListeners();
-  }
-
-  void didTapToggleAuxiliaryRows() {
-    _areAuxiliaryRowsHidden = !_areAuxiliaryRowsHidden;
-    const auxiliary = ['relation', 'saved_attachment'];
-    if (_areAuxiliaryRowsHidden) {
-      _hiddenLaneKeys.addAll(auxiliary);
-    } else {
-      _hiddenLaneKeys.removeAll(auxiliary);
-    }
     notifyListeners();
   }
 
