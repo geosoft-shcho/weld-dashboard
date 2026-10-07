@@ -22,9 +22,12 @@ class WorkDetailIdentity extends StatelessWidget {
         runSpacing: 12,
         children: [
           _pair('공통키', job.commonKey),
-          _pair('작업지시', '${job.workOrderNo} · ${job.title}'),
-          _pair('조인트', '${job.jointNo} ${job.jointName}'),
+          _pair('공사', job.projectNo),
+          _pair('호기', DashboardFormatters.unitNo(job.unitNo)),
+          _pair('품목', job.itemName.isEmpty ? job.itemCode : job.itemName),
+          _pair('이음부', job.jointNo),
           _pair('작업자', job.workerName),
+          _pair('구분', DashboardFormatters.masterRole(job.isMaster)),
           _pair('장비', job.equipmentName),
           _pair(
             '작업일시 / 패스',

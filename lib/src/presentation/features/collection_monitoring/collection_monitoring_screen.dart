@@ -92,7 +92,6 @@ class _CollectionMonitoringBody extends StatelessWidget {
   }
 }
 
-// TabView 상태 관리를 위한 독립적인 StatefulWidget
 class _MonitoringTabView extends StatefulWidget {
   const _MonitoringTabView({required this.viewModel, required this.board});
 
@@ -106,7 +105,7 @@ class _MonitoringTabView extends StatefulWidget {
 class _MonitoringTabViewState extends State<_MonitoringTabView> {
   int currentIndex = 0;
 
-  static final Color _LINE = AppTheme.STATUS_OFF.withValues(alpha: 0.45);
+  static final Color _line = AppTheme.STATUS_OFF.withValues(alpha: 0.45);
 
   @override
   Widget build(BuildContext context) {
@@ -115,7 +114,7 @@ class _MonitoringTabViewState extends State<_MonitoringTabView> {
       children: [
         DecoratedBox(
           decoration: BoxDecoration(
-            border: Border(bottom: BorderSide(color: _LINE, width: 1)),
+            border: Border(bottom: BorderSide(color: _line, width: 1)),
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,

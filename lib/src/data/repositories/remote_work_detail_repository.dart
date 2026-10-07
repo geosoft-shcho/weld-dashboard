@@ -1,56 +1,116 @@
 import '../../domain/entities/work_attachment.dart';
 import '../../domain/entities/work_attachment_type.dart';
 import '../../domain/entities/work_detail_catalog.dart';
+import '../../domain/entities/work_history_item.dart';
 import '../../domain/repositories/work_detail_repository.dart';
-import '../datasources/generated/dashboard_service.pb.dart' as pb;
-import '../datasources/remote/dashboard_service_data_source.dart';
-import 'remote_work_history_repository.dart';
+import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
+import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
+import '../datasources/remote/media_tag_data_source.dart';
 
 class RemoteWorkDetailRepository implements WorkDetailRepository {
-  RemoteWorkDetailRepository(this._source);
+  RemoteWorkDetailRepository(this._mediaTag);
 
-  final DashboardServiceDataSource _source;
+  final MediaTagDataSource _mediaTag;
 
   @override
-  Future<WorkDetailCatalog> loadCatalog({String historyId = ''}) async {
-    final histories = await _source.client.listWorkHistory(
-      pb.ListWorkHistoryRequest(historyId: historyId),
+  Future<WorkDetailCatalog> loadCatalog({String jobId = ''}) async {
+    if (jobId.isEmpty) {
+      return const WorkDetailCatalog(items: [], attachments: []);
+    }
+    final response = await _mediaTag.workService.getJob(
+      work_pb.GetJobRequest(jobId: jobId),
     );
-    final attachments = await listAttachments();
+    if (!response.hasJob() || response.job.jobId.isEmpty) {
+      return const WorkDetailCatalog(items: [], attachments: []);
+    }
+    final attachments = await listAttachments(jobId: jobId);
     return WorkDetailCatalog(
-      items: [for (final item in histories.items) workHistoryItemFrom(item)],
+      items: [_itemFrom(response, attachmentCount: attachments.length)],
       attachments: attachments,
     );
   }
 
   @override
-  Future<List<WorkAttachment>> listAttachments() async {
-    final response = await _source.client.listWorkAttachments(
-      pb.ListWorkAttachmentsRequest(),
+  Future<List<WorkAttachment>> listAttachments({String jobId = ''}) async {
+    if (jobId.isEmpty) {
+      return const [];
+    }
+    final response = await _mediaTag.assetService.listJobAssets(
+      asset_pb.ListJobAssetsRequest(jobId: jobId),
     );
     final attachments = <WorkAttachment>[];
-    for (final item in response.items) {
-      final type =
-          WorkAttachmentType.fromFileName(item.fileName) ??
-          WorkAttachmentType.fromFileName(
-            item.fileUrl.isEmpty ? item.content : item.fileUrl,
-          );
-      if (type == null) {
+    for (final item in response.assets) {
+      final asset = item.asset;
+      final type = _typeOf(asset);
+      if (type == null || asset.assetId.isEmpty) {
         continue;
       }
       attachments.add(
         WorkAttachment(
-          attachmentId: item.attachmentId,
-          historyId: item.historyId,
+          attachmentId: asset.assetId,
+          jobId: jobId,
           fileType: type,
-          fileName: item.fileName,
-          note: item.note,
-          content: item.fileUrl.isEmpty
-              ? item.content
-              : _source.resolveFileUrl(item.fileUrl),
+          fileName: asset.fileName,
+          note: '',
+          content: _mediaTag.resolveContentUrl(asset.contentUrl),
         ),
       );
     }
     return attachments;
+  }
+
+  WorkHistoryItem _itemFrom(
+    work_pb.GetJobResponse response, {
+    required int attachmentCount,
+  }) {
+    final job = response.job;
+    final equipmentNames = [
+      for (final item in response.equipment)
+        if (item.equipmentName.isNotEmpty) item.equipmentName,
+    ];
+    return WorkHistoryItem(
+      jobId: job.jobId,
+      commonKey: job.commonKey,
+      projectNo: job.projectNo,
+      unitNo: job.unitNo,
+      itemCode: job.itemCode,
+      itemName: job.itemName,
+      jointNo: job.jointNo,
+      workerId: job.workerId,
+      workerName: response.hasWorker() ? response.worker.workerName : '',
+      isMaster: response.hasWorker() && response.worker.hasIsMaster()
+          ? response.worker.isMaster
+          : null,
+      equipmentId: response.equipment.length == 1
+          ? response.equipment.first.equipmentId
+          : '',
+      equipmentName: equipmentNames.join(', '),
+      workedAt: job.hasStartedAt()
+          ? job.startedAt.toDateTime().toLocal()
+          : null,
+      passCount: response.passes.length,
+      attachmentCount: attachmentCount,
+    );
+  }
+
+  WorkAttachmentType? _typeOf(asset_pb.Asset asset) {
+    switch (asset.kind) {
+      case asset_pb.AssetKind.ASSET_KIND_IMAGE:
+        return WorkAttachmentType.image;
+      case asset_pb.AssetKind.ASSET_KIND_VIDEO:
+        return WorkAttachmentType.video;
+      case asset_pb.AssetKind.ASSET_KIND_AUDIO:
+        return WorkAttachmentType.audio;
+      case asset_pb.AssetKind.ASSET_KIND_DOCUMENT:
+        return WorkAttachmentType.fromFileName(asset.fileName) ??
+            WorkAttachmentType.pdf;
+      case asset_pb.AssetKind.ASSET_KIND_TIMESERIES:
+      case asset_pb.AssetKind.ASSET_KIND_SUBTITLE:
+      case asset_pb.AssetKind.ASSET_KIND_OCR_JSON:
+        return WorkAttachmentType.fromFileName(asset.fileName) ??
+            WorkAttachmentType.text;
+      default:
+        return WorkAttachmentType.fromFileName(asset.fileName);
+    }
   }
 }

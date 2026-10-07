@@ -36,7 +36,7 @@ class PassLegendToolbar extends StatelessWidget {
     if (isEmpty) {
       return const SectionEmptyPlaceholder(
         title: '범례를 표시할 데이터가 없습니다',
-        message: '패스 또는 파형 시리즈가 없어 명장·초보자·로봇 범례를 켤 수 없습니다.',
+        message: '패스 또는 파형 시리즈가 없어 명장·작업자·로봇 범례를 켤 수 없습니다.',
       );
     }
     return Wrap(
@@ -52,7 +52,7 @@ class PassLegendToolbar extends StatelessWidget {
           onChanged: onToggleMaster,
         ),
         _legendToggle(
-          label: '초보자',
+          label: '작업자',
           color: AppTheme.CHART_BEGINNER,
           isOn: showBeginner,
           onChanged: onToggleBeginner,

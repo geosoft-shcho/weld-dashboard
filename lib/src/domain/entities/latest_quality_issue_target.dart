@@ -1,13 +1,13 @@
 class LatestQualityIssueTarget {
   const LatestQualityIssueTarget({
     required this.commonKey,
-    required this.historyId,
+    required this.jobId,
     this.passId = '',
     this.linkId = '',
   });
 
   final String commonKey;
-  final String historyId;
+  final String jobId;
   final String passId;
   final String linkId;
 }

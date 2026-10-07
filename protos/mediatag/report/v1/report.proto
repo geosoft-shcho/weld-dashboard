@@ -1,0 +1,230 @@
+// ============================================================================
+// ReportService - 검사 성적서(PDF OCR 결과) 조회 (v1)
+// tacit-db `doc` 스키마를 다룬다. 성적서 세트(report_set) 하나 = 한 품목분 문서 묶음이고,
+// 섹션 6종(취부·용접·치수·기밀·NDT·결재)이 세트에 붙는다. 세트는 품목(common_key)에 속하고, 그 품목의 작업
+// (이음부마다 하나일 수 있다) 모두가 같은 세트를 본다. job_id·common_key가 둘 다 비면 미매칭.
+// 설계: tacit docs/설계/공통키 및 작업 타임라인 통합 설계.md §3.2
+// ============================================================================
+//
+// 작성자: geosoft-Server
+// 최초 작성: 2026-09-29
+//
+// 수정 이력:
+//   2026-10-02  geosoft-Server: ListQualityResults — 작업·이음부 기준 품질 결과(구 대시보드 ListQualityResults 자리).
+//                패스·구간 연결은 없다(성적서에 패스 구분이 없음)
+//   2026-10-02  geosoft-Server: 세트를 품목(common_key)에 붙임 — 작업을 이음부 단위로 나누면 한 세트에 작업이 여러 건이라.
+//                ReportSet.common_key, ListReportSets·MatchReportSet에 common_key 추가
+//   2026-09-29  geosoft-Server: 최초 정의 — dashboard v1 ListQualityResults(quality_results 테이블) 대체
+//   2026-09-29  geosoft-Server: 미매칭 세트 목록(unmatched) 삭제 — 매칭은 적재기가 자동으로 하고, 사람이 고치는
+//                검수 화면이 생기면 그때 조회·매칭 RPC를 다시 둔다
+//   2026-09-30  geosoft-Server: split_asset_id(잘라 낸 작업별 PDF), 확인 목록(ReviewItem, review_count) 추가
+//   2026-09-30  geosoft-Server: ResolveReview(확인·보정), MatchReportSet(세트 ↔ 작업 매칭) 추가
+// ============================================================================
+
+syntax = "proto3";
+
+package mediatag.report.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gen/protobuf/mediatag/report/v1;reportv1";
+
+// 사용처: 대시보드(s4 품질 판정 카드).
+service ReportService {
+  // 작업(job_id) 또는 품목(common_key)의 성적서 세트 목록. 섹션 본문은 빼고 준다.
+  // job_id를 주면 그 작업에 매칭된 세트와 그 작업의 품목에 매칭된 세트를 함께 준다.
+  rpc ListReportSets(ListReportSetsRequest) returns (ListReportSetsResponse);
+  // 세트 하나 + 섹션 본문 전체.
+  rpc GetReportSet(GetReportSetRequest) returns (GetReportSetResponse);
+  // 확인 목록 한 칸을 확인·보정한다. corrected_value가 비면 "원문이 맞음"으로 확인만 한다.
+  // 섹션·세트의 값은 바꾸지 않는다(원문은 근거로 남기고 보정값은 여기) — 매칭은 보정값을 먼저 쓴다.
+  rpc ResolveReview(ResolveReviewRequest) returns (ResolveReviewResponse);
+  // 세트를 작업 또는 품목에 매칭한다. 잘라 낸 PDF(split_asset_id)를 같은 트랜잭션에서 첨부한다.
+  //   job_id: 그 작업에 매칭하고 세트의 common_key도 그 작업의 품목으로 채운다(PDF는 그 작업에 첨부).
+  //   common_key만: 품목에 매칭한다(PDF는 그 품목의 작업 모두에 첨부). 이음부 단위 작업은 이쪽을 쓴다.
+  //   둘 다 비면 매칭을 푼다(첨부는 그대로 — 필요하면 DetachAsset).
+  rpc MatchReportSet(MatchReportSetRequest) returns (MatchReportSetResponse);
+  // 작업·이음부 기준 품질 결과: 검사 종류별 판정과 이음부별 UT·MT 표. 성적서 원문 전체는 GetReportSet.
+  // job_id(그 작업의 이음부) 또는 common_key(+joint_no). 이음부를 안 주면 품목의 이음부 전체가 표로 온다.
+  rpc ListQualityResults(ListQualityResultsRequest) returns (ListQualityResultsResponse);
+}
+
+enum SectionKind {
+  SECTION_KIND_UNSPECIFIED = 0;
+  SECTION_KIND_FITUP = 1;        // doc.fitup_inspection
+  SECTION_KIND_WELDING = 2;      // doc.welding_inspection
+  SECTION_KIND_DIMENSIONAL = 3;  // doc.dimensional_inspection
+  SECTION_KIND_PRESSURE = 4;     // doc.pressure_test
+  SECTION_KIND_NDT = 5;          // doc.ndt_inspection
+  SECTION_KIND_APPROVALS = 6;    // doc.approvals
+}
+
+message ReportSet {
+  string report_set_id = 1;      // rpt_<ULID>
+  string job_id = 2;             // 매칭할 때 고른 작업. 품목에 직접 매칭했으면 비어 있다
+  string common_key = 14;        // 이 세트가 속한 품목. job_id와 둘 다 비면 미매칭
+  string source_asset_id = 3;    // 원본 PDF(호기 파일)
+  optional int32 page_start = 4; // 원본 PDF 기준 쪽(양끝 포함)
+  optional int32 page_end = 5;
+  // 원본에서 이 세트 구간만 잘라 낸 작업별 PDF(파생 Asset). 작업 화면·첨부는 이것. 비면 아직 안 잘랐다.
+  // 잘라 낸 PDF 안의 쪽 = 원본 쪽 - page_start + 1
+  string split_asset_id = 12;
+  // OCR로 읽은 원문 값(정규화 전). 매칭 재료이자 근거
+  string item_name = 6;
+  string unit_no = 7;
+  string project_no = 8;
+  string item_abbr = 9;
+  google.protobuf.Timestamp created_at = 10;
+  repeated SectionSummary sections = 11;
+  int32 review_count = 13;       // 확인 목록 중 아직 보정되지 않은 칸 수
+}
+
+message SectionSummary {
+  SectionKind kind = 1;
+  optional int32 page_start = 2; // 원본 PDF 쪽. 뷰어는 #page=N으로 연다
+  optional int32 page_end = 3;
+  string overall_result = 4;     // 'Accept' | 'Reject' | 빈값(결재·판독 실패)
+}
+
+message Section {
+  SectionKind kind = 1;
+  optional int32 page_start = 2;
+  optional int32 page_end = 3;
+  // 섹션 행의 컬럼 전체(id·report_set_id·created_at 제외)와 자식 테이블 배열
+  // (예: dimension_points, gauge_readings, ut_joints). 키는 DB 컬럼·테이블 이름 그대로.
+  // ponytail: 섹션 6종 × 수십 컬럼을 메시지로 옮기지 않고 Struct 하나로 둔다. 화면이 필드별
+  // 타입 검사가 필요해지면 섹션별 메시지로 바꾼다.
+  google.protobuf.Struct fields = 4;
+}
+
+message ListReportSetsRequest {
+  string job_id = 1;      // 그 작업에 매칭된 세트 + 그 작업의 품목에 매칭된 세트
+  string common_key = 2;  // 품목의 세트(job_id와 함께 주면 job_id를 따른다)
+}
+
+message ListReportSetsResponse {
+  repeated ReportSet report_sets = 1; // source_asset_id, page_start 순
+}
+
+message GetReportSetRequest {
+  string report_set_id = 1;
+}
+
+message GetReportSetResponse {
+  ReportSet report_set = 1;
+  repeated Section sections = 2;
+  repeated ReviewItem reviews = 3; // 확인 목록(쪽 순)
+}
+
+// 확인 목록 한 칸(doc.report_review) — 정확한지 애매해 사람이 볼 칸. 값은 섹션·세트에 그대로 들어 있고
+// 여기는 표시다. 형식에 안 맞아 비운 칸(UNREADABLE)은 원문이 여기에만 있다.
+message ReviewItem {
+  int64 id = 1;
+  optional int32 page = 2;       // 원본 기준 쪽
+  string field = 3;              // 템플릿 칸 이름(pdf-to-text가 표시)
+  string column_name = 4;        // '<테이블>.<컬럼>'(적재 때 표시)
+  optional string value = 5;     // 들어간 값. 없으면 비운 칸
+  string raw = 6;                // OCR 원문
+  optional double ocr_score = 7;
+  repeated double bbox = 8;      // 쪽 안 위치 [x0,y0,x1,y1](PDF 포인트)
+  ReviewReason reason = 9;
+  optional string corrected_value = 10;
+  string corrected_by = 11;      // rule | claude | human
+  google.protobuf.Timestamp corrected_at = 12;
+}
+
+enum ReviewReason {
+  REVIEW_REASON_UNSPECIFIED = 0;
+  REVIEW_REASON_LOW_CONFIDENCE = 1; // OCR 점수 낮음·VLM 재확인 실패·매칭 키 칸
+  REVIEW_REASON_VLM_RECHECKED = 2;  // VLM이 다시 읽어 바꾼 값
+  REVIEW_REASON_SNAPPED = 3;        // 허용 값 목록의 가장 가까운 값으로 바꿈
+  REVIEW_REASON_UNREADABLE = 4;     // 칸 형식에 안 맞아 비움
+}
+
+message ResolveReviewRequest {
+  int64 review_id = 1;
+  optional string corrected_value = 2; // 없으면 원문이 맞음으로 확인
+  string corrected_by = 3;             // human(기본) | claude | rule
+}
+
+message ResolveReviewResponse {
+  ReviewItem review = 1;
+}
+
+message MatchReportSetRequest {
+  string report_set_id = 1;
+  string job_id = 2;                   // 작업에 매칭
+  string common_key = 3;               // 품목에 매칭(job_id가 비었을 때). 둘 다 비면 매칭 해제
+}
+
+message MatchReportSetResponse {
+  ReportSet report_set = 1;
+}
+
+// ===== 품질 결과(작업·이음부 기준) =====
+
+message ListQualityResultsRequest {
+  string job_id = 1;      // 그 작업의 품목과 이음부(작업에 joint_no가 있으면 그 이음부 행만)
+  string common_key = 2;  // 품목(job_id가 비었을 때)
+  string joint_no = 3;    // common_key와 함께: 그 이음부 행만. 비우면 품목의 이음부 전체가 표로 온다
+}
+
+message ListQualityResultsResponse {
+  repeated QualityReport reports = 1; // 그 품목의 성적서 세트마다 하나(보통 1개). 성적서가 없으면 비어 있다
+}
+
+// 성적서 세트 하나의 품질 결과. 검사는 두 층이다:
+//   inspections — 검사 종류별 머리 정보와 판정. 취부·용접 외관·치수·기밀은 품목 전체에 대한 것이라 이음부를 골라도 같다.
+//   joints      — 이음부 표. 한 행 = 확인번호 하나의 UT·MT 결과. 작업(job.joint_no)과는 확인번호로 잇는다.
+message QualityReport {
+  string report_set_id = 1;
+  string common_key = 2;
+  string split_asset_id = 3;                  // 이 세트만 잘라 낸 PDF(쪽 번호는 원본 기준 — page_start로 그 검사 쪽을 연다)
+  repeated QualityInspection inspections = 4; // 취부 → 용접 외관 → 치수 → 기밀 → UT → MT 순
+  repeated JointQuality joints = 5;           // UT가 있는 이음부 먼저, 확인번호 순
+}
+
+message QualityInspection {
+  SectionKind kind = 1;          // FITUP·WELDING·DIMENSIONAL·PRESSURE·NDT
+  string method = 2;             // NDT일 때 'UT' | 'MT'. 나머지는 빈값
+  string report_no = 3;          // 보고서 번호(기밀·UT·MT). OCR 원문
+  string report_date = 4;        // 검사일 'YYYY-MM-DD'. 못 읽었으면 빈값
+  string result = 5;             // 종합 판정 원문('Accept'·'Reject', UT는 'No Indication' 등). 없으면 빈값
+  optional int32 page_start = 6; // 원본 PDF 기준 쪽
+  optional int32 page_end = 7;
+  string agency = 8;             // 검사 기관(UT·MT)
+  repeated QualityCheck checks = 9; // 항목별 판정(취부·용접 외관). 성적서의 항목 순서
+}
+
+message QualityCheck {
+  string name = 1;      // 항목(DB 컬럼 이름에서 — 'mis_fitting', 'undercut')
+  string criterion = 2; // 기준
+  string actual = 3;    // 실측
+  string result = 4;    // 'Accept' | 'Reject' | 빈값
+}
+
+// 확인번호 하나. UT 표에만·MT 표에만 있는 번호도 온다 — MT에만 있는 것은 원주 이음이 아닌 짧은 용접(UT 대상 아님)이다.
+message JointQuality {
+  string joint_no = 1;         // 확인번호('DGT-ELA-01'). OCR 값을 'DGT-XXX-nn' 꼴로 맞춘 것
+  repeated string job_ids = 2; // 이 이음부의 작업(시작 순). 재작업이 있으면 여러 개, 작업이 없으면 비어 있다
+  UtResult ut = 3;             // UT 표에 없으면 비어 있다
+  MtResult mt = 4;             // MT 표에 없으면 비어 있다
+}
+
+message UtResult {
+  string thickness_mm = 1;          // 모재 두께(원문)
+  optional double length_mm = 2;    // 검사 길이
+  optional int32 probe_angle = 3;
+  string indication = 4;            // 지시 유무 원문('NO RECORDABLE INDICATION')
+  string evaluation = 5;
+  string result = 6;                // 'Accept' | 'Reject' | 빈값(못 읽음)
+  string inspection_date = 7;       // 'YYYY-MM-DD'
+}
+
+message MtResult {
+  optional double check_length_mm = 1;
+  optional double indication_length_mm = 2;
+  string indication = 3;            // 'NO RECORDABLE INDICATION'
+  string result = 4;                // 'Accept' | 'Reject' | 빈값
+}

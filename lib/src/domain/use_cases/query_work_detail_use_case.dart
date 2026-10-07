@@ -5,9 +5,9 @@ import '../entities/work_history_item.dart';
 class QueryWorkDetailUseCase {
   WorkDetail execute({
     required WorkDetailCatalog catalog,
-    required String historyId,
+    required String jobId,
   }) {
-    final job = _jobFor(catalog.items, historyId);
+    final job = _jobFor(catalog.items, jobId);
     if (job == null) {
       return const WorkDetail(job: null, attachments: []);
     }
@@ -15,15 +15,15 @@ class QueryWorkDetailUseCase {
       job: job,
       attachments: [
         for (final attachment in catalog.attachments)
-          if (attachment.historyId == job.historyId) attachment,
+          if (attachment.jobId == job.jobId) attachment,
       ],
     );
   }
 
-  WorkHistoryItem? _jobFor(List<WorkHistoryItem> items, String historyId) {
-    if (historyId.isNotEmpty) {
+  WorkHistoryItem? _jobFor(List<WorkHistoryItem> items, String jobId) {
+    if (jobId.isNotEmpty) {
       for (final item in items) {
-        if (item.historyId == historyId) {
+        if (item.jobId == jobId) {
           return item;
         }
       }
@@ -35,12 +35,25 @@ class QueryWorkDetailUseCase {
         latest = item;
         continue;
       }
-      final byTime = item.workedAt.compareTo(latest.workedAt);
+      final byTime = _compareWorkedAt(item.workedAt, latest.workedAt);
       if (byTime > 0 ||
-          (byTime == 0 && item.historyId.compareTo(latest.historyId) < 0)) {
+          (byTime == 0 && item.jobId.compareTo(latest.jobId) < 0)) {
         latest = item;
       }
     }
     return latest;
+  }
+
+  int _compareWorkedAt(DateTime? left, DateTime? right) {
+    if (left == null && right == null) {
+      return 0;
+    }
+    if (left == null) {
+      return -1;
+    }
+    if (right == null) {
+      return 1;
+    }
+    return left.compareTo(right);
   }
 }

@@ -1,10 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/domain/entities/equipment.dart';
-import 'package:weld_dashboard/src/domain/entities/joint.dart';
 import 'package:weld_dashboard/src/domain/entities/work_history_catalog.dart';
 import 'package:weld_dashboard/src/domain/entities/work_history_item.dart';
+import 'package:weld_dashboard/src/domain/entities/work_history_project_filter.dart';
 import 'package:weld_dashboard/src/domain/entities/work_history_query.dart';
-import 'package:weld_dashboard/src/domain/entities/work_order.dart';
 import 'package:weld_dashboard/src/domain/entities/worker.dart';
 import 'package:weld_dashboard/src/domain/use_cases/query_work_history_use_case.dart';
 
@@ -17,8 +16,8 @@ void main() {
     expect(board.totalCount, 22);
     expect(board.visibleRows.length, 20);
     expect(board.doesHaveMore, isTrue);
-    expect(board.visibleRows.first.historyId, 'H001');
-    expect(board.visibleRows.last.historyId, 'H020');
+    expect(board.visibleRows.first.jobId, 'H001');
+    expect(board.visibleRows.last.jobId, 'H020');
   });
 
   test('second batch shows all rows without a pager', () {
@@ -28,26 +27,26 @@ void main() {
     );
     expect(board.visibleRows.length, 22);
     expect(board.doesHaveMore, isFalse);
-    expect(board.visibleRows.last.historyId, 'H022');
+    expect(board.visibleRows.last.jobId, 'H022');
   });
 
-  test('common key partial match and work order filter join masters', () {
+  test('common key partial match and project filter narrow the rows', () {
     final board = QueryWorkHistoryUseCase().execute(
       catalog: _catalog(),
       query: WorkHistoryQuery.initial().copyWith(
         commonKey: 'J-A-14',
-        workOrderId: 'WO1',
+        projectNo: 'TP129',
         visibleCount: 40,
       ),
     );
-    expect(board.visibleRows.map((item) => item.historyId).toList(), [
+    expect(board.visibleRows.map((item) => item.jobId).toList(), [
       'H001',
       'H009',
       'H017',
     ]);
     expect(board.visibleRows.first.passCount, 3);
     expect(board.visibleRows.first.attachmentCount, 2);
-    expect(board.joints.every((joint) => joint.workOrderId == 'WO1'), isTrue);
+    expect(board.projects, isNotEmpty);
   });
 
   test('invalid date range returns no rows', () {
@@ -65,30 +64,20 @@ void main() {
 }
 
 WorkHistoryCatalog _catalog() {
-  const workOrders = [
-    WorkOrder(
-      workOrderId: 'WO1',
-      workOrderNo: 'WO-2026-0312',
-      title: '압력용기 쉘 종용접',
+  const projects = [
+    WorkHistoryProjectFilter(
+      projectNo: 'TP129',
+      projectName: '압력용기 공사',
+      units: [
+        WorkHistoryUnitFilter(unitNo: '05', itemCodes: ['LD-A']),
+      ],
     ),
-    WorkOrder(
-      workOrderId: 'WO2',
-      workOrderNo: 'WO-2026-0318',
-      title: '배관 티 조인트 용접',
-    ),
-  ];
-  const joints = [
-    Joint(
-      jointId: 'JT-A14',
-      jointNo: 'J-A-14',
-      jointName: '쉘 종용접 하부',
-      workOrderId: 'WO1',
-    ),
-    Joint(
-      jointId: 'JT-B03',
-      jointNo: 'J-B-03',
-      jointName: '티 조인트 본관',
-      workOrderId: 'WO2',
+    WorkHistoryProjectFilter(
+      projectNo: 'DEMO',
+      projectName: '데모',
+      units: [
+        WorkHistoryUnitFilter(unitNo: '00', itemCodes: ['P600-1']),
+      ],
     ),
   ];
   const workers = [
@@ -105,22 +94,16 @@ WorkHistoryCatalog _catalog() {
   final items = [
     for (var index = 1; index <= 22; index++)
       WorkHistoryItem(
-        historyId: 'H${index.toString().padLeft(3, '0')}',
+        jobId: 'H${index.toString().padLeft(3, '0')}',
         commonKey: index == 1 || index == 9 || index == 17
             ? 'WO-2026-0312|J-A-14'
             : 'WO-2026-0318|J-B-03',
-        workOrderId: index == 1 || index == 9 || index == 17 ? 'WO1' : 'WO2',
-        workOrderNo: index == 1 || index == 9 || index == 17
-            ? 'WO-2026-0312'
-            : 'WO-2026-0318',
-        title: index == 1 || index == 9 || index == 17
-            ? '압력용기 쉘 종용접'
-            : '배관 티 조인트 용접',
-        jointId: index == 1 || index == 9 || index == 17 ? 'JT-A14' : 'JT-B03',
-        jointNo: index == 1 || index == 9 || index == 17 ? 'J-A-14' : 'J-B-03',
-        jointName: index == 1 || index == 9 || index == 17
-            ? '쉘 종용접 하부'
-            : '티 조인트 본관',
+        projectNo: index == 1 || index == 9 || index == 17 ? 'TP129' : 'DEMO',
+        unitNo: index == 1 || index == 9 || index == 17 ? '05' : '00',
+        itemCode: index == 1 || index == 9 || index == 17 ? 'LD-A' : 'P600-1',
+        itemName: index == 1 || index == 9 || index == 17
+            ? 'LEG DIAGONAL A'
+            : '600 파이프 1번',
         workerId: 'WK-01',
         workerName: '박대조',
         equipmentId: 'EQ-01',
@@ -132,8 +115,7 @@ WorkHistoryCatalog _catalog() {
   ];
   return WorkHistoryCatalog(
     items: items,
-    workOrders: workOrders,
-    joints: joints,
+    projects: projects,
     workers: workers,
     equipments: equipments,
   );

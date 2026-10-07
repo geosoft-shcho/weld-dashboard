@@ -17,12 +17,12 @@ void main() {
       const state = AppRouteState(
         pane: AppPane.history,
         stack: WorkHistoryStack.detail,
-        historyId: 'H001',
+        jobId: 'H001',
       );
       expect(state.toLocation(), '/history/detail/H001');
       final parsed = AppRouteState.tryParse(Uri.parse(state.toLocation()));
       expect(parsed?.stack, WorkHistoryStack.detail);
-      expect(parsed?.historyId, 'H001');
+      expect(parsed?.jobId, 'H001');
     });
 
     test('encodes quality via detail', () {
@@ -30,7 +30,7 @@ void main() {
         pane: AppPane.history,
         stack: WorkHistoryStack.qualityIssue,
         commonKey: 'ck',
-        historyId: 'H1',
+        jobId: 'H1',
         passId: 'P1',
         linkId: 'L1',
         qualityViaDetail: true,
@@ -46,12 +46,12 @@ void main() {
       const state = AppRouteState(
         pane: AppPane.history,
         stack: WorkHistoryStack.videoMultimodal,
-        historyId: 'H001',
+        jobId: 'H001',
       );
       expect(state.toLocation(), '/history/detail/H001/multimodal');
       final parsed = AppRouteState.tryParse(Uri.parse(state.toLocation()));
       expect(parsed?.stack, WorkHistoryStack.videoMultimodal);
-      expect(parsed?.historyId, 'H001');
+      expect(parsed?.jobId, 'H001');
       expect(parsed?.toLocation().contains('file'), isFalse);
     });
 

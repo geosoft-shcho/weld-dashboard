@@ -1,55 +1,63 @@
 import '../../domain/entities/equipment.dart';
-import '../../domain/entities/joint.dart';
 import '../../domain/entities/work_history_catalog.dart';
-import '../../domain/entities/work_history_page.dart';
-import '../../domain/entities/work_history_query.dart';
 import '../../domain/entities/work_history_item.dart';
-import '../../domain/entities/work_order.dart';
+import '../../domain/entities/work_history_page.dart';
+import '../../domain/entities/work_history_project_filter.dart';
+import '../../domain/entities/work_history_query.dart';
 import '../../domain/entities/worker.dart';
 import '../../domain/repositories/work_history_repository.dart';
-import '../datasources/generated/dashboard_service.pb.dart' as pb;
-import '../datasources/remote/dashboard_service_data_source.dart';
+import '../datasources/generated/google/protobuf/timestamp.pb.dart';
+import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
+import '../datasources/remote/media_tag_data_source.dart';
 
 class RemoteWorkHistoryRepository implements WorkHistoryRepository {
-  RemoteWorkHistoryRepository(this._source);
+  RemoteWorkHistoryRepository(this._mediaTag);
 
-  final DashboardServiceDataSource _source;
+  final MediaTagDataSource _mediaTag;
+
+  static const int _maxPageSize = 200;
 
   @override
   Future<WorkHistoryCatalog> loadMasters() async {
-    final workOrders = await _source.client.listWorkOrders(
-      pb.ListWorkOrdersRequest(),
-    );
-    final joints = await _source.client.listJoints(pb.ListJointsRequest());
-    final workers = await _source.client.listWorkers(pb.ListWorkersRequest());
-    final equipments = await _source.client.listEquipment(
-      pb.ListEquipmentRequest(),
+    final filters = await _mediaTag.workService.listJobFilters(
+      work_pb.ListJobFiltersRequest(),
     );
     return WorkHistoryCatalog(
       items: const [],
-      workOrders: [
-        for (final item in workOrders.items)
-          WorkOrder(
-            workOrderId: item.workOrderId,
-            workOrderNo: item.workOrderNo,
-            title: item.title,
-          ),
-      ],
-      joints: [
-        for (final item in joints.items)
-          Joint(
-            jointId: item.jointId,
-            jointNo: item.jointNo,
-            jointName: item.name,
-            workOrderId: item.workOrderId,
+      projects: [
+        for (final project in filters.projects)
+          WorkHistoryProjectFilter(
+            projectNo: project.project.projectNo,
+            projectName: project.project.projectName,
+            units: [
+              for (final unit in project.units)
+                WorkHistoryUnitFilter(
+                  unitNo: unit.unitNo,
+                  itemCodes: unit.itemCodes,
+                  items: [
+                    for (final item in unit.items)
+                      WorkHistoryItemFilter(
+                        itemCode: item.itemCode,
+                        jointNos: item.jointNos,
+                        joints: [
+                          for (final joint in item.joints)
+                            WorkHistoryJointFilter(
+                              jointNo: joint.jointNo,
+                              passNos: joint.passNos,
+                            ),
+                        ],
+                      ),
+                  ],
+                ),
+            ],
           ),
       ],
       workers: [
-        for (final item in workers.items)
+        for (final item in filters.workers)
           Worker(workerId: item.workerId, workerName: item.workerName),
       ],
       equipments: [
-        for (final item in equipments.items)
+        for (final item in filters.equipment)
           Equipment(
             equipmentId: item.equipmentId,
             equipmentName: item.equipmentName,
@@ -62,16 +70,16 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
   @override
   Future<WorkHistoryPage> listPage({
     required WorkHistoryQuery query,
-    required int limit,
-    required int offset,
+    required int pageSize,
+    required String pageToken,
   }) async {
-    final response = await _source.client.listWorkHistory(
-      _request(query, limit: limit, offset: offset),
+    if (pageSize <= 0) {
+      return _listAll(query);
+    }
+    final response = await _mediaTag.workService.listJobs(
+      _request(query, pageSize: pageSize, pageToken: pageToken),
     );
-    return WorkHistoryPage(
-      items: [for (final item in response.items) workHistoryItemFrom(item)],
-      totalCount: response.totalCount,
-    );
+    return _pageFrom(response);
   }
 
   @override
@@ -79,56 +87,105 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
     final masters = await loadMasters();
     final page = await listPage(
       query: query ?? WorkHistoryQuery.initial(),
-      limit: 0,
-      offset: 0,
+      pageSize: 0,
+      pageToken: '',
     );
     return WorkHistoryCatalog(
       items: page.items,
-      workOrders: masters.workOrders,
-      joints: masters.joints,
+      projects: masters.projects,
       workers: masters.workers,
       equipments: masters.equipments,
     );
   }
 
-  pb.ListWorkHistoryRequest _request(
+  Future<WorkHistoryPage> _listAll(WorkHistoryQuery query) async {
+    final items = <WorkHistoryItem>[];
+    var pageToken = '';
+    var totalCount = 0;
+    while (true) {
+      final response = await _mediaTag.workService.listJobs(
+        _request(query, pageSize: _maxPageSize, pageToken: pageToken),
+      );
+      items.addAll(_itemsFrom(response));
+      totalCount = response.totalCount;
+      pageToken = response.nextPageToken;
+      if (pageToken.isEmpty) {
+        return WorkHistoryPage(
+          items: items,
+          totalCount: totalCount,
+          nextPageToken: '',
+        );
+      }
+    }
+  }
+
+  work_pb.ListJobsRequest _request(
     WorkHistoryQuery query, {
-    required int limit,
-    required int offset,
+    required int pageSize,
+    required String pageToken,
   }) {
-    return pb.ListWorkHistoryRequest(
-      commonKey: query.commonKey,
-      workOrderId: query.workOrderId,
-      jointId: query.jointId,
+    final request = work_pb.ListJobsRequest(
+      projectNo: query.projectNo,
+      commonKey: query.commonKey.trim(),
+      itemCode: query.itemCode,
+      unitNo: query.unitNo,
+      jointNo: query.jointNo,
+      passNo: query.passNo,
       workerId: query.workerId,
       equipmentId: query.equipmentId,
-      from: query.fromDate == null ? '' : _date(query.fromDate!),
-      to: query.toDate == null ? '' : _date(query.toDate!),
-      limit: limit,
-      offset: offset,
+      pageSize: pageSize,
+      pageToken: pageToken,
+    );
+    final fromDate = query.fromDate;
+    if (fromDate != null) {
+      request.startedFrom = Timestamp.fromDateTime(_dayStart(fromDate));
+    }
+    final toDate = query.toDate;
+    if (toDate != null) {
+      request.startedTo = Timestamp.fromDateTime(
+        _dayStart(toDate).add(const Duration(days: 1)),
+      );
+    }
+    return request;
+  }
+
+  WorkHistoryPage _pageFrom(work_pb.ListJobsResponse response) {
+    return WorkHistoryPage(
+      items: _itemsFrom(response),
+      totalCount: response.totalCount,
+      nextPageToken: response.nextPageToken,
     );
   }
 
-  String _date(DateTime value) =>
-      '${value.year}-${value.month.toString().padLeft(2, '0')}-${value.day.toString().padLeft(2, '0')}';
-}
+  List<WorkHistoryItem> _itemsFrom(work_pb.ListJobsResponse response) {
+    return [for (final summary in response.jobs) _itemFrom(summary)];
+  }
 
-WorkHistoryItem workHistoryItemFrom(pb.WorkHistory item) {
-  return WorkHistoryItem(
-    historyId: item.historyId,
-    commonKey: item.commonKey,
-    workOrderId: item.workOrderId,
-    workOrderNo: item.workOrderNo,
-    title: item.title,
-    jointId: item.jointId,
-    jointNo: item.jointNo,
-    jointName: item.jointName,
-    workerId: item.workerId,
-    workerName: item.workerName,
-    equipmentId: item.equipmentId,
-    equipmentName: item.equipmentName,
-    workedAt: DateTime.parse(item.workedAt),
-    passCount: item.passCount,
-    attachmentCount: item.attachmentCount,
-  );
+  WorkHistoryItem _itemFrom(work_pb.JobSummary summary) {
+    final job = summary.job;
+    return WorkHistoryItem(
+      jobId: job.jobId,
+      commonKey: job.commonKey,
+      projectNo: job.projectNo,
+      unitNo: job.unitNo,
+      itemCode: job.itemCode,
+      itemName: job.itemName,
+      jointNo: job.jointNo,
+      hasReport: summary.hasReport,
+      workerId: job.workerId,
+      workerName: summary.workerName,
+      isMaster: summary.hasIsMaster() ? summary.isMaster : null,
+      equipmentId: '',
+      equipmentName: summary.equipmentNames.join(', '),
+      workedAt: job.hasStartedAt()
+          ? job.startedAt.toDateTime().toLocal()
+          : null,
+      passCount: summary.passCount,
+      attachmentCount: summary.attachmentCount,
+    );
+  }
+
+  DateTime _dayStart(DateTime value) {
+    return DateTime(value.year, value.month, value.day);
+  }
 }

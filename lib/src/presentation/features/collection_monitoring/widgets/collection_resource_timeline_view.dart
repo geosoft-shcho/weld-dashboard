@@ -205,9 +205,7 @@ class _CollectionResourceTimelineViewState
                   top: 0,
                   bottom: 0,
                   width: 12,
-                  child: const IgnorePointer(
-                    child: _NowMarker(),
-                  ),
+                  child: const IgnorePointer(child: _NowMarker()),
                 ),
             ],
           );
@@ -221,16 +219,11 @@ class _CollectionResourceTimelineViewState
     if (row == null) {
       return const SizedBox.shrink();
     }
-    final isEquipment =
-        widget.board.timeline.depth == CollectionResourceDepth.equipment;
-    final isFocused =
-        isEquipment &&
-        row.selectionKey == widget.board.timeline.focusedEquipmentId;
+    final focusedId = widget.board.timeline.focusedEquipmentId;
+    final isFocused = focusedId.isNotEmpty && row.selectionKey == focusedId;
     return GestureDetector(
-      onTap: () => _didTapResource(row),
-      onDoubleTap: isEquipment
-          ? () => widget.viewModel.didDoubleTapEquipment(row.selectionKey)
-          : null,
+      onTap: () => widget.viewModel.didTapTimelineNode(row.selectionKey),
+      onDoubleTap: () => widget.viewModel.didTapTimelineNode(row.selectionKey),
       child: DecoratedBox(
         decoration: BoxDecoration(
           color: isFocused
@@ -278,27 +271,14 @@ class _CollectionResourceTimelineViewState
     return null;
   }
 
-  void _didTapResource(CollectionTimelineResource resource) {
-    switch (widget.board.timeline.depth) {
-      case CollectionResourceDepth.project:
-        widget.viewModel.didTapProjectSection(resource.selectionKey);
-      case CollectionResourceDepth.line:
-        widget.viewModel.didTapLineSection(resource.selectionKey);
-      case CollectionResourceDepth.equipment:
-        widget.viewModel.didSelectRow(resource.selectionKey);
-    }
-  }
-
   String _emptyLabel(CollectionResourceDepth depth, int eventCount) {
     switch (depth) {
       case CollectionResourceDepth.project:
-        return '조건에 맞는 프로젝트가 없습니다';
+        return '조건에 맞는 공사가 없습니다';
       case CollectionResourceDepth.line:
         return '조건에 맞는 라인이 없습니다';
       case CollectionResourceDepth.equipment:
-        return eventCount == 0
-            ? '이 날짜의 수집 이벤트가 없습니다'
-            : '조건에 맞는 장비가 없습니다';
+        return eventCount == 0 ? '이 날짜의 수집 이벤트가 없습니다' : '조건에 맞는 장비가 없습니다';
     }
   }
 

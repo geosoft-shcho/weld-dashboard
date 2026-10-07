@@ -1,13 +1,16 @@
 class WorkHistoryQuery {
   const WorkHistoryQuery({
     required this.commonKey,
-    required this.workOrderId,
-    required this.jointId,
+    required this.projectNo,
+    required this.unitNo,
+    required this.itemCode,
+    this.jointNo = '',
+    this.passNo = 0,
     required this.workerId,
     required this.equipmentId,
     required this.fromDate,
     required this.toDate,
-    required this.selectedHistoryId,
+    required this.selectedJobId,
     required this.visibleCount,
   });
 
@@ -16,26 +19,33 @@ class WorkHistoryQuery {
   factory WorkHistoryQuery.initial() {
     return const WorkHistoryQuery(
       commonKey: '',
-      workOrderId: '',
-      jointId: '',
+      projectNo: '',
+      unitNo: '',
+      itemCode: '',
       workerId: '',
       equipmentId: '',
       fromDate: null,
       toDate: null,
-      selectedHistoryId: '',
+      selectedJobId: '',
       visibleCount: BATCH_SIZE,
     );
   }
 
   final String commonKey;
-  final String workOrderId;
-  final String jointId;
+  final String projectNo;
+  final String unitNo;
+  final String itemCode;
+  final String jointNo;
+  final int passNo;
   final String workerId;
   final String equipmentId;
   final DateTime? fromDate;
   final DateTime? toDate;
-  final String selectedHistoryId;
-  /// 클라이언트 슬라이스용(로컬 유스케이스·테스트). 서버 페이지는 limit/offset 사용.
+
+  /// 선택한 작업. 값은 `job_id`다.
+  final String selectedJobId;
+
+  /// 로컬 카탈로그 슬라이스용. 서버 페이지는 page_token 을 쓴다.
   final int visibleCount;
 
   bool get doesHaveInvalidDateRange {
@@ -49,19 +59,24 @@ class WorkHistoryQuery {
 
   bool get doesHaveFilter {
     return commonKey.trim().isNotEmpty ||
-        workOrderId.isNotEmpty ||
-        jointId.isNotEmpty ||
+        projectNo.isNotEmpty ||
+        unitNo.isNotEmpty ||
+        itemCode.isNotEmpty ||
+        jointNo.isNotEmpty ||
+        passNo != 0 ||
         workerId.isNotEmpty ||
         equipmentId.isNotEmpty ||
         fromDate != null ||
         toDate != null;
   }
 
-  /// 조회 버튼으로만 서버에 넘기는 필터(선택 행·페이지 제외).
   bool matchesDeferredFilters(WorkHistoryQuery other) {
     return commonKey.trim() == other.commonKey.trim() &&
-        workOrderId == other.workOrderId &&
-        jointId == other.jointId &&
+        projectNo == other.projectNo &&
+        unitNo == other.unitNo &&
+        itemCode == other.itemCode &&
+        jointNo == other.jointNo &&
+        passNo == other.passNo &&
         workerId == other.workerId &&
         equipmentId == other.equipmentId &&
         _sameDay(fromDate, other.fromDate) &&
@@ -80,26 +95,32 @@ class WorkHistoryQuery {
 
   WorkHistoryQuery copyWith({
     String? commonKey,
-    String? workOrderId,
-    String? jointId,
+    String? projectNo,
+    String? unitNo,
+    String? itemCode,
+    String? jointNo,
+    int? passNo,
     String? workerId,
     String? equipmentId,
     DateTime? fromDate,
     bool clearFromDate = false,
     DateTime? toDate,
     bool clearToDate = false,
-    String? selectedHistoryId,
+    String? selectedJobId,
     int? visibleCount,
   }) {
     return WorkHistoryQuery(
       commonKey: commonKey ?? this.commonKey,
-      workOrderId: workOrderId ?? this.workOrderId,
-      jointId: jointId ?? this.jointId,
+      projectNo: projectNo ?? this.projectNo,
+      unitNo: unitNo ?? this.unitNo,
+      itemCode: itemCode ?? this.itemCode,
+      jointNo: jointNo ?? this.jointNo,
+      passNo: passNo ?? this.passNo,
       workerId: workerId ?? this.workerId,
       equipmentId: equipmentId ?? this.equipmentId,
       fromDate: clearFromDate ? null : (fromDate ?? this.fromDate),
       toDate: clearToDate ? null : (toDate ?? this.toDate),
-      selectedHistoryId: selectedHistoryId ?? this.selectedHistoryId,
+      selectedJobId: selectedJobId ?? this.selectedJobId,
       visibleCount: visibleCount ?? this.visibleCount,
     );
   }

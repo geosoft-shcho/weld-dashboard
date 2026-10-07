@@ -16,21 +16,25 @@ class WorkDetailRepositoryImpl implements WorkDetailRepository {
   final CsvAssetDataSource _csvAssetDataSource;
 
   @override
-  Future<WorkDetailCatalog> loadCatalog({String historyId = ''}) async {
+  Future<WorkDetailCatalog> loadCatalog({String jobId = ''}) async {
     final history = await _workHistoryRepository.loadCatalog();
     final attachments = await listAttachments();
     return WorkDetailCatalog(items: history.items, attachments: attachments);
   }
 
   @override
-  Future<List<WorkAttachment>> listAttachments() async {
+  Future<List<WorkAttachment>> listAttachments({String jobId = ''}) async {
     final rows = await _csvAssetDataSource.loadWorkAttachmentRows();
     final attachments = <WorkAttachment>[];
     for (final row in rows) {
       final attachment = WorkAttachmentDto.fromRow(row).toDomain();
-      if (attachment != null) {
-        attachments.add(attachment);
+      if (attachment == null) {
+        continue;
       }
+      if (jobId.isNotEmpty && attachment.jobId != jobId) {
+        continue;
+      }
+      attachments.add(attachment);
     }
     return attachments;
   }

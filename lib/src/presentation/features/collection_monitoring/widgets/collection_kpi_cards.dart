@@ -22,7 +22,7 @@ class CollectionKpiCards extends StatelessWidget {
       children: [
         Expanded(
           child: _KpiCard(
-            title: '연결 상태',
+            title: '수집',
             value: kpi.equipmentCount == 0
                 ? '—'
                 : '${DashboardFormatters.count(kpi.connectedCount)} / ${DashboardFormatters.count(kpi.equipmentCount)}',

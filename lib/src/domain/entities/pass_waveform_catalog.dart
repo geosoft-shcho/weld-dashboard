@@ -15,6 +15,8 @@ class PassWaveformCatalog {
     required this.historyItems,
     required this.workers,
     this.context,
+    this.waveformNotice = '',
+    this.didFallBackToRaw = false,
   });
 
   final List<WeldPass> passes;
@@ -24,4 +26,6 @@ class PassWaveformCatalog {
   final List<WorkHistoryItem> historyItems;
   final List<Worker> workers;
   final PassJointContext? context;
+  final String waveformNotice;
+  final bool didFallBackToRaw;
 }

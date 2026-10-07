@@ -25,9 +25,9 @@ ATT-003,H002,video,clip.mp4,캡 패스 12초,
   test('H001 detail keeps image pdf and multiline text', () {
     final detail = QueryWorkDetailUseCase().execute(
       catalog: _catalog(),
-      historyId: 'H001',
+      jobId: 'H001',
     );
-    expect(detail.job?.historyId, 'H001');
+    expect(detail.job?.jobId, 'H001');
     expect(detail.attachments.map((item) => item.fileType).toList(), [
       WorkAttachmentType.image,
       WorkAttachmentType.pdf,
@@ -39,9 +39,9 @@ ATT-003,H002,video,clip.mp4,캡 패스 12초,
   test('empty history id picks latest job before snapshot', () {
     final detail = QueryWorkDetailUseCase().execute(
       catalog: _catalog(),
-      historyId: '',
+      jobId: '',
     );
-    expect(detail.job?.historyId, 'H002');
+    expect(detail.job?.jobId, 'H002');
   });
 }
 
@@ -55,7 +55,7 @@ WorkDetailCatalog _catalog() {
     attachments: const [
       WorkAttachment(
         attachmentId: 'ATT-001',
-        historyId: 'H001',
+        jobId: 'H001',
         fileType: WorkAttachmentType.image,
         fileName: '비드 외관_캡.jpg',
         note: '캡 패스 표면',
@@ -63,7 +63,7 @@ WorkDetailCatalog _catalog() {
       ),
       WorkAttachment(
         attachmentId: 'ATT-002',
-        historyId: 'H001',
+        jobId: 'H001',
         fileType: WorkAttachmentType.pdf,
         fileName: '성적서_H001.pdf',
         note: '페이퍼 스캔 3쪽',
@@ -71,7 +71,7 @@ WorkDetailCatalog _catalog() {
       ),
       WorkAttachment(
         attachmentId: 'ATT-012',
-        historyId: 'H001',
+        jobId: 'H001',
         fileType: WorkAttachmentType.text,
         fileName: '작업일지_H001.txt',
         note: '캡 패스 작업 메모',
@@ -79,7 +79,7 @@ WorkDetailCatalog _catalog() {
       ),
       WorkAttachment(
         attachmentId: 'ATT-003',
-        historyId: 'H002',
+        jobId: 'H002',
         fileType: WorkAttachmentType.video,
         fileName: '아크_캡_12s.mp4',
         note: '캡 패스 12초',
@@ -89,16 +89,14 @@ WorkDetailCatalog _catalog() {
   );
 }
 
-WorkHistoryItem _item(String historyId, DateTime workedAt) {
+WorkHistoryItem _item(String jobId, DateTime workedAt) {
   return WorkHistoryItem(
-    historyId: historyId,
+    jobId: jobId,
     commonKey: 'WO-2026-0312|J-A-14',
-    workOrderId: 'WO1',
-    workOrderNo: 'WO-2026-0312',
-    title: '압력용기 쉘 종용접',
-    jointId: 'JT-A14',
-    jointNo: 'J-A-14',
-    jointName: '쉘 종용접 하부',
+    projectNo: 'TP129',
+    unitNo: '05',
+    itemCode: 'LD-A',
+    itemName: '압력용기 쉘 종용접',
     workerId: 'WK-01',
     workerName: '박대조',
     equipmentId: 'EQ-01',

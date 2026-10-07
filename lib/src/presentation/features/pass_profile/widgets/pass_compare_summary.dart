@@ -48,7 +48,7 @@ class PassCompareSummary extends StatelessWidget {
                 ),
                 children: const [
                   _HeadCell(''),
-                  _HeadCell('명장 vs 초보자'),
+                  _HeadCell('명장 vs 작업자'),
                   _HeadCell('명장 vs 로봇'),
                 ],
               ),

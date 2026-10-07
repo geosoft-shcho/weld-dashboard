@@ -1,0 +1,180 @@
+// ============================================================================
+// AssetService - 파일(Asset) 조회·삭제·파생과 작업 첨부 (v1)
+// tacit-db `tacit.asset`·`asset_provenance`·`asset_input`·`job_asset`을 다룬다(스키마 지도 "파일" 묶음). Asset은 완전
+// 불변이라 수정 RPC가 없다. 바이트 등록은 적재기(수집)나 HTTP 업로드가 하고,
+// 바이트 조회는 content_url(정적 /files/<storage_path>, Range 지원)로 한다. ID만 있으면
+// /assets/{asset_id}/content가 storage_path를 조회해 같은 파일로 리다이렉트한다.
+// 설계: tacit docs/설계/엔티티.md §6, 공통키 및 작업 타임라인 통합 설계.md §3·§3.1
+// ============================================================================
+//
+// 작성자: geosoft-Server
+// 최초 작성: 2026-09-29
+//
+// 수정 이력:
+//   2026-09-29  geosoft-Server: tacit-tag tacittag.asset.v2를 tacit-db 기준으로 옮겨 최초 정의
+//                — display_name·revision·UpdateAsset 삭제(파일명 불변), origin_asset_id → provenance,
+//                  asset_kind 자유 문자열 → AssetKind enum, embedded_meta_json → properties
+//   2026-09-29  geosoft-Server: 첨부 RPC를 WorkService에서 옮겨 옴
+//   2026-09-30  geosoft-Server: ListDuplicateAssets 추가, Asset.source_path 추가(중복 허용·확인, 일괄 적재 원본 위치)
+//   2026-09-29  geosoft-Server: AssetKind REGION 추가
+//   2026-09-29  geosoft-Server: 첨부의 page_start·page_end 삭제(작업의 원본 PDF 쪽은 성적서 세트에 있음)
+//   2026-09-30  geosoft-Server: Provenance job_uuid·model_id·model_version → run_id·tool_id·tool_version
+//   2026-09-30  geosoft-Server: ExtractAudio 삭제 — 음성 추출은 도구(ToolService.StartRun, "audio-extract")
+//   2026-10-01  geosoft-Server: Asset.duration_ns(기록 구간 길이), collected_at·recorded_at 뜻 명확히
+// ============================================================================
+
+syntax = "proto3";
+
+package mediatag.asset.v1;
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "gen/protobuf/mediatag/asset/v1;assetv1";
+
+service AssetService {
+  // 외부 source URL(fileservice://...)에서 서버가 바이트를 가져와 Asset으로 등록한다.
+  // 미구현(UNIMPLEMENTED) — 허용 주소 규칙(SSRF 방지)과 함께 업로드 경로를 설계할 때 만든다.
+  rpc ImportAssetFromSource(ImportAssetFromSourceRequest) returns (ImportAssetFromSourceResponse);
+  // Asset 목록(페이지·kind 필터). 작업별 목록은 ListJobAssets.
+  rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
+  rpc GetAsset(GetAssetRequest) returns (GetAssetResponse);
+  // 첨부(job_asset)·파생 부모(asset_input)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
+  rpc DeleteAsset(DeleteAssetRequest) returns (DeleteAssetResponse);
+  // 내용(sha256)이 같은 Asset 묶음 목록. 중복은 등록을 막지 않고 여기서 확인해 사람이 정리한다.
+  rpc ListDuplicateAssets(ListDuplicateAssetsRequest) returns (ListDuplicateAssetsResponse);
+  // 음성 추출 같은 파생 만들기는 도구다 — ToolService.StartRun(도구 "audio-extract", 대상 = 영상 Asset).
+
+  // 첨부(job_asset) — "이 작업의 자료인가". Clip으로 놓으면 서버가 자동 첨부하므로, 이 RPC는
+  // 타임라인에 놓지 않고 작업 자료로만 둘 때(PDF 등)와 패스를 고칠 때 쓴다.
+  // 작업의 첨부 목록
+  rpc ListJobAssets(ListJobAssetsRequest) returns (ListJobAssetsResponse);
+  // 첨부. 이미 첨부돼 있으면 pass_id만 고친다(upsert).
+  // pass_id가 다른 작업의 패스면 InvalidArgument.
+  rpc AttachAsset(AttachAssetRequest) returns (AttachAssetResponse);
+  // Clip이나 매칭된 성적서 세트가 쓰는 첨부면 FailedPrecondition.
+  rpc DetachAsset(DetachAssetRequest) returns (DetachAssetResponse);
+}
+
+// 소비(렌더링) 방식 기준 분류. 엔티티.md §6.1 + ocr_json. DB CHECK와 같은 목록.
+enum AssetKind {
+  ASSET_KIND_UNSPECIFIED = 0;
+  ASSET_KIND_VIDEO = 1;
+  ASSET_KIND_AUDIO = 2;
+  ASSET_KIND_IMAGE = 3;
+  ASSET_KIND_DOCUMENT = 4;   // PDF 등
+  ASSET_KIND_POSE = 5;
+  ASSET_KIND_SUBTITLE = 6;
+  ASSET_KIND_TIMESERIES = 7; // 센서 csv·xlsx
+  ASSET_KIND_POINTCLOUD = 8; // 깊이카메라 원본(브라우저 재생 불가)
+  ASSET_KIND_OCR_JSON = 9;
+  ASSET_KIND_REGION = 10;    // 영상 속 영역(박스) 시퀀스 — 검출·추적 결과
+}
+
+message Asset {
+  string asset_id = 1;       // ast_<ULID>
+  AssetKind kind = 2;
+  string file_name = 3;      // 등록 시점 파일명, 불변
+  string sha256 = 4;         // 중복 제거 키 아님(같은 해시 여럿 가능)
+  string mime_type = 5;
+  int64 size_bytes = 6;
+  google.protobuf.Struct properties = 7; // kind별 실측값(재생 길이·해상도·fps·채널 등)
+  string equipment_id = 8;   // 수집 장비. 비면 모름
+  google.protobuf.Timestamp collected_at = 9; // 적재 시각 = 저장소에 들어온 시각(촬영·기록 시각이 아님)
+  google.protobuf.Timestamp recorded_at = 10; // 기록 시작 = 첫 샘플·프레임의 절대시각(선택). 파일 안 시각(t_ns·영상 PTS)은 여기서 0
+  optional int64 duration_ns = 14; // 자료 자체 길이(영상·음성·t_ns CSV). recorded_at부터 이만큼이 기록 구간
+  Provenance provenance = 11; // 파생·추론 Asset만. 원본 업로드면 비어 있음
+  string content_url = 12;   // 응답 전용: /files/<storage_path>. 저장하지 말 것 — 저장은 asset_id로(저장 방식이 바뀌면 경로도 바뀐다)
+  string source_path = 13;   // 일괄 적재한 원본 위치. 화면 업로드면 빈값
+}
+
+// 생성 경위. run_id·tool_id·tool_version은 셋 다 있거나 셋 다 없다(엔티티.md §6.2).
+message Provenance {
+  string operation = 1;      // 'text_extraction', 'depth_colormap', 'stt' 등
+  string run_id = 2;         // 도구 실행 1건(ToolRun). 도구를 거치지 않았으면 빈값
+  string tool_id = 3;
+  string tool_version = 4;
+  repeated string input_asset_ids = 5; // 파생 계보(부모 여럿 가능)
+  google.protobuf.Struct parameters = 6;
+}
+
+message ImportAssetFromSourceRequest {
+  string source_url = 1;
+}
+
+message ImportAssetFromSourceResponse {
+  Asset asset = 1;
+}
+
+message ListAssetsRequest {
+  int32 page_size = 1;   // 기본 50, 최대 200
+  string page_token = 2; // 비어 있으면 첫 페이지
+  AssetKind kind = 3;    // UNSPECIFIED면 전체
+}
+
+message ListAssetsResponse {
+  repeated Asset assets = 1;
+  string next_page_token = 2; // 비어 있으면 마지막 페이지
+}
+
+message GetAssetRequest {
+  string asset_id = 1;
+}
+
+message GetAssetResponse {
+  Asset asset = 1;
+}
+
+message DeleteAssetRequest {
+  string asset_id = 1;
+}
+
+message DeleteAssetResponse {}
+
+message ListDuplicateAssetsRequest {
+  int32 page_size = 1;   // 묶음 수 기준. 기본 50, 최대 200
+  string page_token = 2;
+}
+
+message ListDuplicateAssetsResponse {
+  repeated DuplicateGroup groups = 1; // 가장 최근에 중복이 생긴 묶음부터
+  string next_page_token = 2;
+}
+
+// 같은 sha256의 Asset들. 이름·원본 위치·첨부가 서로 다를 수 있다.
+message DuplicateGroup {
+  string sha256 = 1;
+  repeated Asset assets = 2; // collected_at 순
+}
+
+message JobAsset {
+  Asset asset = 1;
+  string pass_id = 2;             // 비면 작업 공용
+}
+
+message ListJobAssetsRequest {
+  string job_id = 1;
+  // 설정하면 그 패스의 첨부만. 빈 문자열이면 작업 공용 첨부만.
+  optional string pass_id = 2;
+}
+
+message ListJobAssetsResponse {
+  repeated JobAsset assets = 1;
+}
+
+message AttachAssetRequest {
+  string job_id = 1;
+  string asset_id = 2;
+  string pass_id = 3;             // 비면 작업 공용
+}
+
+message AttachAssetResponse {
+  JobAsset attachment = 1;
+}
+
+message DetachAssetRequest {
+  string job_id = 1;
+  string asset_id = 2;
+}
+
+message DetachAssetResponse {}

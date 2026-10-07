@@ -1,15 +1,16 @@
 class WorkHistoryItem {
   const WorkHistoryItem({
-    required this.historyId,
+    required this.jobId,
     required this.commonKey,
-    required this.workOrderId,
-    required this.workOrderNo,
-    required this.title,
-    required this.jointId,
-    required this.jointNo,
-    required this.jointName,
+    required this.projectNo,
+    required this.unitNo,
+    required this.itemCode,
+    required this.itemName,
+    this.jointNo = '',
+    this.hasReport = false,
     required this.workerId,
     required this.workerName,
+    this.isMaster,
     required this.equipmentId,
     required this.equipmentName,
     required this.workedAt,
@@ -17,19 +18,20 @@ class WorkHistoryItem {
     required this.attachmentCount,
   });
 
-  final String historyId;
+  final String jobId;
   final String commonKey;
-  final String workOrderId;
-  final String workOrderNo;
-  final String title;
-  final String jointId;
+  final String projectNo;
+  final String unitNo;
+  final String itemCode;
+  final String itemName;
   final String jointNo;
-  final String jointName;
+  final bool hasReport;
   final String workerId;
   final String workerName;
+  final bool? isMaster;
   final String equipmentId;
   final String equipmentName;
-  final DateTime workedAt;
+  final DateTime? workedAt;
   final int passCount;
   final int attachmentCount;
 

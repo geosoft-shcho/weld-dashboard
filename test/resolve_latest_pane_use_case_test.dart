@@ -25,7 +25,7 @@ void main() {
       ),
       snapshotAt: snapshotAt,
     );
-    expect(target?.historyId, 'H-NEW');
+    expect(target?.jobId, 'H-NEW');
     expect(target?.commonKey, 'KEY-B');
   });
 
@@ -55,7 +55,7 @@ void main() {
       ),
       snapshotAt: snapshotAt,
     );
-    expect(target?.historyId, 'H2');
+    expect(target?.jobId, 'H2');
     expect(target?.commonKey, 'KEY-B');
     expect(target?.linkId, 'L-B1');
     expect(target?.passId, 'PASS-B');
@@ -109,16 +109,14 @@ PassWaveformCatalog _catalog({
   );
 }
 
-WorkHistoryItem _item(String historyId, String commonKey, DateTime workedAt) {
+WorkHistoryItem _item(String jobId, String commonKey, DateTime workedAt) {
   return WorkHistoryItem(
-    historyId: historyId,
+    jobId: jobId,
     commonKey: commonKey,
-    workOrderId: 'WO',
-    workOrderNo: 'WO-1',
-    title: 't',
-    jointId: 'J',
-    jointNo: 'J1',
-    jointName: 'j',
+    projectNo: 'TP129',
+    unitNo: '05',
+    itemCode: 'LD-A',
+    itemName: 't',
     workerId: 'W',
     workerName: 'w',
     equipmentId: 'E',

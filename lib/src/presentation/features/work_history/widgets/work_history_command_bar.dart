@@ -89,7 +89,7 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                             onSubmitted: (_) => _didSubmitCommonKey(),
                             decoration: InputDecoration(
                               isDense: true,
-                              hintText: 'WO-…|J-…',
+                              hintText: '공통키',
                               hintStyle: TextStyle(
                                 color: AppTheme.INK.withValues(alpha: 0.45),
                                 fontSize: 13,
@@ -123,24 +123,29 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                   child: SizedBox(
                     width: 220,
                     child: InfoLabel(
-                      label: '작업지시',
+                      label: '공사',
                       child: ComboBox<String>(
                         isExpanded: true,
-                        value: query.workOrderId,
+                        value: _selectedOrAll(query.projectNo, [
+                          for (final project in board.projects)
+                            project.projectNo,
+                        ]),
                         items: [
                           const ComboBoxItem(value: '', child: Text('전체')),
-                          for (final workOrder in board.workOrders)
+                          for (final project in board.projects)
                             ComboBoxItem(
-                              value: workOrder.workOrderId,
+                              value: project.projectNo,
                               child: Text(
-                                '${workOrder.workOrderNo} ${workOrder.title}',
+                                project.projectName.isEmpty
+                                    ? project.projectNo
+                                    : project.projectName,
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
                         ],
                         onChanged: (value) {
                           if (value != null) {
-                            widget.viewModel.didSelectWorkOrder(value);
+                            widget.viewModel.didSelectProject(value);
                           }
                         },
                       ),
@@ -149,31 +154,121 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
                 ),
                 CommandBarWidgetItem(
                   child: SizedBox(
-                    width: 180,
+                    width: 120,
                     child: InfoLabel(
-                      label: '조인트',
+                      label: '호기',
                       child: ComboBox<String>(
                         isExpanded: true,
-                        value: query.jointId,
+                        value: _selectedOrAll(query.unitNo, [
+                          for (final unit in widget.viewModel.unitOptions)
+                            unit.unitNo,
+                        ]),
                         items: [
                           const ComboBoxItem(value: '', child: Text('전체')),
-                          for (final joint in widget.viewModel.jointOptions)
+                          for (final unit in widget.viewModel.unitOptions)
                             ComboBoxItem(
-                              value: joint.jointId,
-                              child: Text(
-                                '${joint.jointNo} ${joint.jointName}',
-                              ),
+                              value: unit.unitNo,
+                              child: Text(workHistoryUnitLabel(unit.unitNo)),
                             ),
                         ],
-                        onChanged: (value) {
-                          if (value != null) {
-                            widget.viewModel.didSelectJoint(value);
-                          }
-                        },
+                        onChanged: query.projectNo.isEmpty
+                            ? null
+                            : (value) {
+                                if (value != null) {
+                                  widget.viewModel.didSelectUnit(value);
+                                }
+                              },
                       ),
                     ),
                   ),
                 ),
+                CommandBarWidgetItem(
+                  child: SizedBox(
+                    width: 140,
+                    child: InfoLabel(
+                      label: '품목',
+                      child: ComboBox<String>(
+                        isExpanded: true,
+                        value: _selectedOrAll(
+                          query.itemCode,
+                          widget.viewModel.itemCodes,
+                        ),
+                        items: [
+                          const ComboBoxItem(value: '', child: Text('전체')),
+                          for (final itemCode in widget.viewModel.itemCodes)
+                            ComboBoxItem(
+                              value: itemCode,
+                              child: Text(itemCode),
+                            ),
+                        ],
+                        onChanged: query.unitNo.isEmpty
+                            ? null
+                            : (value) {
+                                if (value != null) {
+                                  widget.viewModel.didSelectItem(value);
+                                }
+                              },
+                      ),
+                    ),
+                  ),
+                ),
+                if (widget.viewModel.jointNos.isNotEmpty)
+                  CommandBarWidgetItem(
+                    child: SizedBox(
+                      width: 160,
+                      child: InfoLabel(
+                        label: '이음부',
+                        child: ComboBox<String>(
+                          isExpanded: true,
+                          value: _selectedOrAll(
+                            query.jointNo,
+                            widget.viewModel.jointNos,
+                          ),
+                          items: [
+                            const ComboBoxItem(value: '', child: Text('전체')),
+                            for (final jointNo in widget.viewModel.jointNos)
+                              ComboBoxItem(
+                                value: jointNo,
+                                child: Text(jointNo),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              widget.viewModel.didSelectJoint(value);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                if (widget.viewModel.passNos.isNotEmpty)
+                  CommandBarWidgetItem(
+                    child: SizedBox(
+                      width: 120,
+                      child: InfoLabel(
+                        label: '패스',
+                        child: ComboBox<int>(
+                          isExpanded: true,
+                          value: widget.viewModel.passNos.contains(query.passNo)
+                              ? query.passNo
+                              : 0,
+                          items: [
+                            const ComboBoxItem(value: 0, child: Text('전체')),
+                            for (final passNo in widget.viewModel.passNos)
+                              ComboBoxItem(
+                                value: passNo,
+                                child: Text('$passNo'),
+                              ),
+                          ],
+                          onChanged: (value) {
+                            if (value != null) {
+                              widget.viewModel.didSelectPass(value);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
                 CommandBarWidgetItem(
                   child: SizedBox(
                     width: 140,
@@ -312,6 +407,17 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
   }
 }
 
+String workHistoryUnitLabel(String unitNo) {
+  return DashboardFormatters.unitNo(unitNo);
+}
+
+String _selectedOrAll(String value, List<String> options) {
+  if (value.isNotEmpty && options.contains(value)) {
+    return value;
+  }
+  return '';
+}
+
 class WorkHistoryFilterChips extends StatelessWidget {
   const WorkHistoryFilterChips({
     super.key,
@@ -329,23 +435,27 @@ class WorkHistoryFilterChips extends StatelessWidget {
     if (query.commonKey.trim().isNotEmpty) {
       chips.add(_chip('공통키 ${query.commonKey.trim()}'));
     }
-    if (query.workOrderId.isNotEmpty) {
-      var label = query.workOrderId;
-      for (final workOrder in board.workOrders) {
-        if (workOrder.workOrderId == query.workOrderId) {
-          label = workOrder.workOrderNo;
+    if (query.projectNo.isNotEmpty) {
+      var label = query.projectNo;
+      for (final project in board.projects) {
+        if (project.projectNo == query.projectNo &&
+            project.projectName.isNotEmpty) {
+          label = project.projectName;
         }
       }
-      chips.add(_chip('작업지시 $label'));
+      chips.add(_chip('공사 $label'));
     }
-    if (query.jointId.isNotEmpty) {
-      var label = query.jointId;
-      for (final joint in viewModel.jointOptions) {
-        if (joint.jointId == query.jointId) {
-          label = joint.jointNo;
-        }
-      }
-      chips.add(_chip('조인트 $label'));
+    if (query.unitNo.isNotEmpty) {
+      chips.add(_chip('호기 ${workHistoryUnitLabel(query.unitNo)}'));
+    }
+    if (query.itemCode.isNotEmpty) {
+      chips.add(_chip('품목 ${query.itemCode}'));
+    }
+    if (query.jointNo.isNotEmpty) {
+      chips.add(_chip('이음부 ${query.jointNo}'));
+    }
+    if (query.passNo != 0) {
+      chips.add(_chip('패스 ${query.passNo}'));
     }
     if (query.workerId.isNotEmpty) {
       var label = query.workerId;

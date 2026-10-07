@@ -1,6 +1,7 @@
 import 'collection_board_query.dart';
 import 'collection_board_row.dart';
 import 'collection_timeline.dart';
+import 'connection_status.dart';
 
 export 'collection_board_row.dart';
 
@@ -38,12 +39,14 @@ class CollectionFilterOptions {
     required this.workers,
     required this.lineNames,
     required this.equipments,
+    this.connectionStatuses = const [],
   });
 
   final List<({String projectId, String projectName})> projects;
   final List<({String workerId, String workerName})> workers;
   final List<String> lineNames;
   final List<({String equipmentId, String equipmentName})> equipments;
+  final List<ConnectionStatus> connectionStatuses;
 }
 
 class CollectionBoard {

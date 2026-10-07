@@ -1,11 +1,11 @@
 class PassProfileArgs {
   const PassProfileArgs({
     required this.commonKey,
-    required this.historyId,
+    required this.jobId,
     this.passId = '',
   });
 
   final String commonKey;
-  final String historyId;
+  final String jobId;
   final String passId;
 }

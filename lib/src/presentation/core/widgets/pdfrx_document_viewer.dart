@@ -18,6 +18,7 @@ class PdfrxDocumentViewer extends StatefulWidget {
     this.fallbackPageCount = 0,
     this.expandViewport = true,
     this.viewportHeight,
+    this.initialPage,
   });
 
   final PdfrxDocumentSource source;
@@ -25,6 +26,7 @@ class PdfrxDocumentViewer extends StatefulWidget {
   final int fallbackPageCount;
   final bool expandViewport;
   final double? viewportHeight;
+  final int? initialPage;
 
   @override
   State<PdfrxDocumentViewer> createState() => _PdfrxDocumentViewerState();
@@ -46,6 +48,7 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
   int? _lastKnownPageNumber;
   int? _lastKnownPageCount;
   bool _wasControllerReady = false;
+  int? _appliedInitialPage;
 
   @override
   void initState() {
@@ -63,7 +66,12 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
   void didUpdateWidget(covariant PdfrxDocumentViewer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.source != widget.source) {
+      _appliedInitialPage = null;
       _resetDocumentUi();
+      return;
+    }
+    if (oldWidget.initialPage != widget.initialPage) {
+      _jumpToInitialPage();
     }
   }
 
@@ -120,7 +128,8 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
       final pageNumber = _controller.pageNumber ?? 1;
       final pageCount = _controller.pageCount;
       final didPageChange =
-          pageNumber != _lastKnownPageNumber || pageCount != _lastKnownPageCount;
+          pageNumber != _lastKnownPageNumber ||
+          pageCount != _lastKnownPageCount;
       final didReadyChange = !_wasControllerReady;
       _lastKnownPageNumber = pageNumber;
       _lastKnownPageCount = pageCount;
@@ -130,6 +139,9 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
         if (_pageJumpController.text != text) {
           _pageJumpController.text = text;
         }
+      }
+      if (didReadyChange) {
+        _jumpToInitialPage();
       }
       if (didPageChange || didReadyChange || didAttachSearcher) {
         setState(() {});
@@ -164,6 +176,17 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
         _searchStatusMessage = null;
       }
     });
+  }
+
+  void _jumpToInitialPage() {
+    final page = widget.initialPage;
+    if (page == null || !_controller.isReady || page == _appliedInitialPage) {
+      return;
+    }
+    _appliedInitialPage = page;
+    final pageCount = _controller.pageCount;
+    final target = pageCount <= 0 ? page : page.clamp(1, pageCount);
+    _controller.goToPage(pageNumber: target);
   }
 
   Future<void> _didTapPrevious() async {
@@ -219,8 +242,8 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
     if (searcher == null) {
       return;
     }
-    final query =
-        (queryOverride ?? _searchFieldKey.currentState?.query ?? '').trim();
+    final query = (queryOverride ?? _searchFieldKey.currentState?.query ?? '')
+        .trim();
     if (query.isEmpty) {
       searcher.resetTextSearch();
       setState(() => _searchStatusMessage = null);
@@ -320,14 +343,11 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
 
   @override
   Widget build(BuildContext context) {
-    final pageNumber =
-        _controller.isReady ? (_controller.pageNumber ?? 1) : 1;
+    final pageNumber = _controller.isReady ? (_controller.pageNumber ?? 1) : 1;
     final pageCount = _controller.isReady
         ? _controller.pageCount
         : (widget.fallbackPageCount > 0 ? widget.fallbackPageCount : 0);
-    final pageLabel = pageCount == 0
-        ? '불러오는 중'
-        : '$pageNumber / $pageCount';
+    final pageLabel = pageCount == 0 ? '불러오는 중' : '$pageNumber / $pageCount';
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -363,22 +383,10 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
         Button(onPressed: _didTapNext, child: const Text('다음 쪽')),
         Button(onPressed: _didTapZoomOut, child: const Text('축소')),
         Button(onPressed: _didTapZoomIn, child: const Text('확대')),
-        PdfrxSearchField(
-          key: _searchFieldKey,
-          onSubmit: _didSubmitSearch,
-        ),
-        Button(
-          onPressed: () => _didSubmitSearch(),
-          child: const Text('검색'),
-        ),
-        Button(
-          onPressed: _didTapSearchPrevious,
-          child: const Text('이전 히트'),
-        ),
-        Button(
-          onPressed: _didTapSearchNext,
-          child: const Text('다음 히트'),
-        ),
+        PdfrxSearchField(key: _searchFieldKey, onSubmit: _didSubmitSearch),
+        Button(onPressed: () => _didSubmitSearch(), child: const Text('검색')),
+        Button(onPressed: _didTapSearchPrevious, child: const Text('이전 히트')),
+        Button(onPressed: _didTapSearchNext, child: const Text('다음 히트')),
         if (_searchStatusMessage != null)
           Text(
             _searchStatusMessage!,
@@ -458,9 +466,7 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
         ),
       );
       if (node.children.isNotEmpty) {
-        tiles.addAll(
-          _buildOutlineTiles(node.children, depth: depth + 1),
-        );
+        tiles.addAll(_buildOutlineTiles(node.children, depth: depth + 1));
       }
     }
     return tiles;
@@ -475,10 +481,12 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
     BuildContext context,
     PdfViewerContextMenuBuilderParams params,
   ) {
-    final canCopy = params.isTextSelectionEnabled &&
+    final canCopy =
+        params.isTextSelectionEnabled &&
         params.textSelectionDelegate.isCopyAllowed &&
         params.textSelectionDelegate.hasSelectedText;
-    final canSelectAll = params.isTextSelectionEnabled &&
+    final canSelectAll =
+        params.isTextSelectionEnabled &&
         !params.textSelectionDelegate.isSelectingAllText;
     if (!canCopy && !canSelectAll) {
       return null;
@@ -598,20 +606,20 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
     final source = widget.source;
     return switch (source) {
       PdfrxAssetDocumentSource(:final assetPath) => PdfViewer.asset(
-          assetPath,
-          controller: _controller,
-          params: params,
-        ),
+        assetPath,
+        controller: _controller,
+        params: params,
+      ),
       PdfrxFileDocumentSource(:final filePath) => PdfViewer.file(
-          filePath,
-          controller: _controller,
-          params: params,
-        ),
+        filePath,
+        controller: _controller,
+        params: params,
+      ),
       PdfrxUriDocumentSource(:final uri) => PdfViewer.uri(
-          uri,
-          controller: _controller,
-          params: params,
-        ),
+        uri,
+        controller: _controller,
+        params: params,
+      ),
       PdfrxDataDocumentSource(:final bytes, :final sourceName) =>
         PdfViewer.data(
           bytes,

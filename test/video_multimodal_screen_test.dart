@@ -15,11 +15,11 @@ void main() {
   setUp(() async {
     await locator.reset();
     locator.registerFactoryParam<VideoMultimodalViewModel, String, void>(
-      (historyId, _) => VideoMultimodalViewModel(
+      (jobId, _) => VideoMultimodalViewModel(
         listHistoryWorkAttachmentsUseCase: ListHistoryWorkAttachmentsUseCase(
           _FakeWorkDetailRepository(),
         ),
-        historyId: historyId,
+        jobId: jobId,
       ),
     );
   });
@@ -34,7 +34,7 @@ void main() {
       FluentApp(
         home: ChangeNotifierProvider<AppCoordinator>.value(
           value: coordinator,
-          child: const VideoMultimodalScreen(historyId: 'H001'),
+          child: const VideoMultimodalScreen(jobId: 'H001'),
         ),
       ),
     );
@@ -49,16 +49,16 @@ void main() {
 
 class _FakeWorkDetailRepository implements WorkDetailRepository {
   @override
-  Future<WorkDetailCatalog> loadCatalog({String historyId = ''}) async {
+  Future<WorkDetailCatalog> loadCatalog({String jobId = ''}) async {
     return const WorkDetailCatalog(items: [], attachments: []);
   }
 
   @override
-  Future<List<WorkAttachment>> listAttachments() async {
-    return const [
+  Future<List<WorkAttachment>> listAttachments({String jobId = ''}) async {
+    const attachments = [
       WorkAttachment(
         attachmentId: 'a1',
-        historyId: 'H001',
+        jobId: 'H001',
         fileType: WorkAttachmentType.video,
         fileName: 'clip.mp4',
         note: '',
@@ -66,12 +66,19 @@ class _FakeWorkDetailRepository implements WorkDetailRepository {
       ),
       WorkAttachment(
         attachmentId: 'a2',
-        historyId: 'OTHER',
+        jobId: 'OTHER',
         fileType: WorkAttachmentType.pdf,
         fileName: 'other.pdf',
         note: '',
         content: 'memo',
       ),
+    ];
+    if (jobId.isEmpty) {
+      return attachments;
+    }
+    return [
+      for (final attachment in attachments)
+        if (attachment.jobId == jobId) attachment,
     ];
   }
 }

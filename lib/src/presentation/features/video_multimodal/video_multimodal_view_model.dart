@@ -127,7 +127,7 @@ enum InferencePanelPhase { hidden, running, done, failed }
 class VideoMultimodalViewModel extends ChangeNotifier {
   VideoMultimodalViewModel({
     required this._listHistoryWorkAttachmentsUseCase,
-    required this.historyId,
+    required this.jobId,
   });
 
   static const double MIN_TIMELINE_HEIGHT = 320;
@@ -144,7 +144,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const String TEXT_LANE_KEY = 'stt';
 
   final ListHistoryWorkAttachmentsUseCase _listHistoryWorkAttachmentsUseCase;
-  final String historyId;
+  final String jobId;
 
   double _playheadSeconds = 0;
   int _seekToken = 0;
@@ -387,7 +387,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (workName.isNotEmpty) {
       return workName;
     }
-    return historyId;
+    return jobId;
   }
 
   void didReceiveWorkName(String workName) {
@@ -452,7 +452,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     try {
       final marks = loadMockVideoFrameMarks();
       _attachments = await _listHistoryWorkAttachmentsUseCase.execute(
-        historyId: historyId,
+        jobId: jobId,
       );
       _bars = [
         ..._chain(_attachments, WorkAttachmentType.video),

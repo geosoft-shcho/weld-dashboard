@@ -4,7 +4,7 @@ import '../../domain/entities/work_attachment_type.dart';
 class WorkAttachmentDto {
   const WorkAttachmentDto({
     required this.attachmentId,
-    required this.historyId,
+    required this.jobId,
     required this.fileType,
     required this.fileName,
     required this.note,
@@ -14,7 +14,7 @@ class WorkAttachmentDto {
   factory WorkAttachmentDto.fromRow(Map<String, String> row) {
     return WorkAttachmentDto(
       attachmentId: row['attachment_id'] ?? '',
-      historyId: row['history_id'] ?? '',
+      jobId: row['history_id'] ?? '',
       fileType: row['file_type'] ?? '',
       fileName: row['file_name'] ?? '',
       note: row['note'] ?? '',
@@ -23,7 +23,7 @@ class WorkAttachmentDto {
   }
 
   final String attachmentId;
-  final String historyId;
+  final String jobId;
   final String fileType;
   final String fileName;
   final String note;
@@ -33,12 +33,12 @@ class WorkAttachmentDto {
     final type =
         WorkAttachmentType.fromFileName(fileName) ??
         WorkAttachmentType.fromFileName(content);
-    if (type == null || attachmentId.isEmpty || historyId.isEmpty) {
+    if (type == null || attachmentId.isEmpty || jobId.isEmpty) {
       return null;
     }
     return WorkAttachment(
       attachmentId: attachmentId,
-      historyId: historyId,
+      jobId: jobId,
       fileType: type,
       fileName: fileName,
       note: note,

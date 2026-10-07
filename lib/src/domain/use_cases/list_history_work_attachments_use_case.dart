@@ -1,20 +1,16 @@
 import '../entities/work_attachment.dart';
 import '../repositories/work_detail_repository.dart';
 
-/// 임시. ListWorkAttachments 전체에서 historyId 가 같은 첨부만 고른다.
+/// 고른 작업(`job_id`)의 첨부만 조회한다.
 class ListHistoryWorkAttachmentsUseCase {
   ListHistoryWorkAttachmentsUseCase(this._repository);
 
   final WorkDetailRepository _repository;
 
-  Future<List<WorkAttachment>> execute({required String historyId}) async {
-    if (historyId.isEmpty) {
-      return const [];
+  Future<List<WorkAttachment>> execute({required String jobId}) {
+    if (jobId.isEmpty) {
+      return Future.value(const []);
     }
-    final attachments = await _repository.listAttachments();
-    return [
-      for (final attachment in attachments)
-        if (attachment.historyId == historyId) attachment,
-    ];
+    return _repository.listAttachments(jobId: jobId);
   }
 }

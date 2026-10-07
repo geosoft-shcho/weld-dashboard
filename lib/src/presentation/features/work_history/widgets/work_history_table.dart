@@ -7,6 +7,7 @@ import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../navigation/app_coordinator.dart';
 import '../work_history_view_model.dart';
+import 'work_history_command_bar.dart';
 
 class WorkHistoryTable extends StatefulWidget {
   const WorkHistoryTable({
@@ -107,8 +108,7 @@ class _WorkHistoryTableState extends State<WorkHistoryTable> {
               return _DataRow(
                 item: board.visibleRows[index],
                 isSelected:
-                    board.visibleRows[index].historyId ==
-                    board.query.selectedHistoryId,
+                    board.visibleRows[index].jobId == board.query.selectedJobId,
                 viewModel: viewModel,
               );
             },
@@ -133,10 +133,13 @@ class _HeaderRow extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Row(
           children: [
-            _Cell('공통키', flex: 18, isHeader: true),
-            _Cell('작업지시', flex: 18, isHeader: true),
-            _Cell('조인트', flex: 14, isHeader: true),
+            _Cell('공통키', flex: 16, isHeader: true),
+            _Cell('공사', flex: 14, isHeader: true),
+            _Cell('품목', flex: 16, isHeader: true),
+            _Cell('이음부', flex: 14, isHeader: true),
+            _Cell('성적서', flex: 8, isHeader: true),
             _Cell('작업자', flex: 10, isHeader: true),
+            _Cell('구분', flex: 8, isHeader: true),
             _Cell('작업일시', flex: 14, isHeader: true),
             _Cell('장비', flex: 12, isHeader: true),
             _Cell('패스 수', flex: 6, isHeader: true),
@@ -176,9 +179,9 @@ class _DataRow extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                flex: 98,
+                flex: 124,
                 child: HoverButton(
-                  onPressed: () => viewModel.didSelectRow(item.historyId),
+                  onPressed: () => viewModel.didSelectRow(item.jobId),
                   builder: (context, states) {
                     final isHovered = states.contains(WidgetState.hovered);
                     return ColoredBox(
@@ -187,10 +190,24 @@ class _DataRow extends StatelessWidget {
                           : const Color(0x00000000),
                       child: Row(
                         children: [
-                          _Cell(item.commonKey, flex: 18),
-                          _Cell('${item.workOrderNo}\n${item.title}', flex: 18),
-                          _Cell('${item.jointNo} ${item.jointName}', flex: 14),
+                          _Cell(item.commonKey, flex: 16),
+                          _Cell(item.projectNo, flex: 14),
+                          _Cell(
+                            [
+                              workHistoryUnitLabel(item.unitNo),
+                              item.itemName.isEmpty
+                                  ? item.itemCode
+                                  : item.itemName,
+                            ].join('\n'),
+                            flex: 16,
+                          ),
+                          _Cell(item.jointNo, flex: 14),
+                          _Cell(item.hasReport ? '있음' : '없음', flex: 8),
                           _Cell(item.workerName, flex: 10),
+                          _Cell(
+                            DashboardFormatters.masterRole(item.isMaster),
+                            flex: 8,
+                          ),
                           _Cell(
                             DashboardFormatters.dateTime(item.workedAt),
                             flex: 14,
@@ -238,26 +255,26 @@ class _DataRow extends StatelessWidget {
   }
 
   void _openDetail(BuildContext context) {
-    viewModel.didSelectRow(item.historyId);
+    viewModel.didSelectRow(item.jobId);
     context.read<AppCoordinator>().didTapOpenWorkDetail(
       context,
-      historyId: item.historyId,
+      jobId: item.jobId,
     );
   }
 
   void _openPassProfile(BuildContext context) {
-    viewModel.didSelectRow(item.historyId);
+    viewModel.didSelectRow(item.jobId);
     context.read<AppCoordinator>().didTapOpenPassProfile(
       commonKey: item.commonKey,
-      historyId: item.historyId,
+      jobId: item.jobId,
     );
   }
 
   void _openQuality(BuildContext context) {
-    viewModel.didSelectRow(item.historyId);
+    viewModel.didSelectRow(item.jobId);
     context.read<AppCoordinator>().didTapOpenQualityIssue(
       commonKey: item.commonKey,
-      historyId: item.historyId,
+      jobId: item.jobId,
     );
   }
 
@@ -322,11 +339,7 @@ class _Footer extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Center(
         child: isLoadingMore
-            ? const SizedBox(
-                width: 20,
-                height: 20,
-                child: ProgressRing(),
-              )
+            ? const SizedBox(width: 20, height: 20, child: ProgressRing())
             : Text(
                 board.doesHaveMore
                     ? '$loaded / $total건 · 스크롤하면 더 불러옵니다'

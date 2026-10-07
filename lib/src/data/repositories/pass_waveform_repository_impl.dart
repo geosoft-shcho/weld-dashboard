@@ -1,4 +1,6 @@
+import '../../domain/entities/comparison_job_candidate.dart';
 import '../../domain/entities/pass_waveform_catalog.dart';
+import '../../domain/entities/pass_waveform_series.dart';
 import '../../domain/entities/quality_link.dart';
 import '../../domain/entities/quality_result_group.dart';
 import '../../domain/entities/quality_result_item.dart';
@@ -23,7 +25,12 @@ class PassWaveformRepositoryImpl implements PassWaveformRepository {
   final CsvAssetDataSource _csvAssetDataSource;
 
   @override
-  Future<PassWaveformCatalog> loadCatalog({String commonKey = '', String historyId = '', String passId = '', String normalize = 'raw'}) async {
+  Future<PassWaveformCatalog> loadCatalog({
+    String commonKey = '',
+    String jobId = '',
+    String passId = '',
+    String normalize = 'raw',
+  }) async {
     final history = await _workHistoryRepository.loadCatalog();
     final passRows = await _csvAssetDataSource.loadPassRows();
     final waveformRows = await _csvAssetDataSource.loadWaveformRows();
@@ -58,6 +65,33 @@ class PassWaveformRepositoryImpl implements PassWaveformRepository {
       historyItems: history.items,
       workers: history.workers,
     );
+  }
+
+  @override
+  Future<PassWaveformSeries> loadWaveform({
+    required String passId,
+    required String commonKey,
+    required String workerId,
+    String comparisonPassId = '',
+    String normalize = 'raw',
+  }) async {
+    return const PassWaveformSeries(rows: []);
+  }
+
+  @override
+  Future<ComparisonJobPage> listComparisonJobs({
+    required String projectNo,
+    required String itemCode,
+    required String unitNo,
+    required String excludeJobId,
+    String pageToken = '',
+  }) async {
+    return const ComparisonJobPage(jobs: [], nextPageToken: '');
+  }
+
+  @override
+  Future<List<WeldPass>> loadComparisonPasses({required String jobId}) async {
+    return const [];
   }
 
   List<QualityResultGroup> _groupsFrom(List<Map<String, String>> rows) {

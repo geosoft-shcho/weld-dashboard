@@ -11,15 +11,14 @@ import 'widgets/work_detail_stage.dart';
 import 'widgets/work_detail_tabs.dart';
 
 class WorkDetailScreen extends StatelessWidget {
-  const WorkDetailScreen({super.key, required this.historyId});
+  const WorkDetailScreen({super.key, required this.jobId});
 
-  final String historyId;
+  final String jobId;
 
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) =>
-          locator<WorkDetailViewModel>(param1: historyId)..loadDetail(),
+      create: (_) => locator<WorkDetailViewModel>(param1: jobId)..loadDetail(),
       child: const _WorkDetailBody(),
     );
   }
@@ -65,7 +64,7 @@ class _WorkDetailBody extends StatelessWidget {
                         : () => coordinator.didTapLeaveWorkDetailToPassProfile(
                             context,
                             commonKey: job.commonKey,
-                            historyId: job.historyId,
+                            jobId: job.jobId,
                           ),
                   ),
                   CommandBarButton(
@@ -76,7 +75,7 @@ class _WorkDetailBody extends StatelessWidget {
                         : () => coordinator.didTapLeaveWorkDetailToQualityIssue(
                             context,
                             commonKey: job.commonKey,
-                            historyId: job.historyId,
+                            jobId: job.jobId,
                           ),
                   ),
                 ],

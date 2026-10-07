@@ -48,7 +48,7 @@ class CollectionTimelineHost extends StatelessWidget {
             // Text(_badge(board), style: const TextStyle(fontSize: 12)),
             if (_doesShowDrillCrumbs) ...[
               const SizedBox(height: 8),
-              _DrillCrumbs(viewModel: viewModel, board: board),
+              _DrillCrumbs(viewModel: viewModel),
             ],
             const SizedBox(height: 8),
             Expanded(
@@ -80,7 +80,6 @@ class CollectionTimelineHost extends StatelessWidget {
                         ),
                         child: CollectionTimelineInspector(
                           viewModel: viewModel,
-                          board: board,
                         ),
                       ),
                     ),
@@ -144,35 +143,28 @@ class _BoardView extends StatelessWidget {
 }
 
 class _DrillCrumbs extends StatelessWidget {
-  const _DrillCrumbs({required this.viewModel, required this.board});
+  const _DrillCrumbs({required this.viewModel});
 
   final CollectionMonitoringViewModel viewModel;
-  final CollectionBoard board;
 
   @override
   Widget build(BuildContext context) {
-    final query = board.query;
     final crumbs = <Widget>[
       Button(
-        onPressed: viewModel.didTapFactoryCrumb,
-        child: const Text('공장 전체'),
+        onPressed: () => viewModel.didTapAncestor(0),
+        child: const Text('수집'),
       ),
     ];
-    if (query.isUnassignedOnly || query.projectIds.length == 1) {
+    final ancestors = viewModel.ancestors;
+    for (var index = 0; index < ancestors.length; index++) {
+      final label = ancestors[index].label.isEmpty
+          ? '미지정'
+          : ancestors[index].label;
       crumbs.add(const Text('›'));
       crumbs.add(
         Button(
-          onPressed: viewModel.didTapProjectCrumb,
-          child: Text(_projectLabel(board)),
-        ),
-      );
-    }
-    if (query.lineNames.length == 1) {
-      crumbs.add(const Text('›'));
-      crumbs.add(
-        Button(
-          onPressed: viewModel.didTapLineCrumb,
-          child: Text(query.lineNames.first),
+          onPressed: () => viewModel.didTapAncestor(index + 1),
+          child: Text(label),
         ),
       );
     }
@@ -182,19 +174,6 @@ class _DrillCrumbs extends StatelessWidget {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: crumbs,
     );
-  }
-
-  String _projectLabel(CollectionBoard board) {
-    if (board.query.isUnassignedOnly) {
-      return '미배정';
-    }
-    final projectId = board.query.projectIds.first;
-    for (final project in board.options.projects) {
-      if (project.projectId == projectId) {
-        return project.projectName;
-      }
-    }
-    return projectId;
   }
 }
 
@@ -285,7 +264,7 @@ class _Legend extends StatelessWidget {
       spacing: 12,
       runSpacing: 4,
       children: const [
-        _LegendItem(label: '연결(정상)', color: AppTheme.STATUS_OK),
+        _LegendItem(label: '수집', color: AppTheme.STATUS_OK),
         _LegendItem(label: '단절', color: AppTheme.STATUS_OFF),
         _LegendItem(label: '오류', color: AppTheme.STATUS_ERROR),
         _LegendItem(label: '유실≥10%', color: AppTheme.STATUS_WARN),

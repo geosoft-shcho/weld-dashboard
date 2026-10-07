@@ -9,9 +9,13 @@ class ListWorkHistoryPageUseCase {
 
   Future<WorkHistoryPage> execute({
     required WorkHistoryQuery query,
-    required int limit,
-    required int offset,
+    required int pageSize,
+    required String pageToken,
   }) {
-    return _repository.listPage(query: query, limit: limit, offset: offset);
+    return _repository.listPage(
+      query: query,
+      pageSize: pageSize,
+      pageToken: pageToken,
+    );
   }
 }

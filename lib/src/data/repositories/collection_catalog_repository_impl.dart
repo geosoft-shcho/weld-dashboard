@@ -1,3 +1,4 @@
+import '../../domain/entities/collected_node.dart';
 import '../../domain/entities/collection_catalog.dart';
 import '../../domain/entities/collection_board_query.dart';
 import '../../domain/entities/collection_event.dart';
@@ -53,6 +54,16 @@ class CollectionCatalogRepositoryImpl implements CollectionCatalogRepository {
           ? FALLBACK_SNAPSHOT_AT
           : statuses.first.snapshotAt,
     );
+  }
+
+  @override
+  Future<List<CollectedNode>> listCollectedNodes(
+    CollectedNodePath parent, {
+    int? startOffsetNs,
+    int? endOffsetNs,
+    CollectedTimeBasis basis = CollectedTimeBasis.work,
+  }) async {
+    return const [];
   }
 
   static CollectionEvent _eventFrom(

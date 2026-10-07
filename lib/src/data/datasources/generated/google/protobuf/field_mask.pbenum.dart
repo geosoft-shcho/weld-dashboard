@@ -1,6 +1,6 @@
 // This is a generated file - do not edit.
 //
-// Generated from dashboard_service.proto.
+// Generated from google/protobuf/field_mask.proto.
 
 // @dart = 3.3
 

@@ -230,6 +230,67 @@ void main() {
       CollectionTimelineResource.projectResourceId('PJ-01'),
     );
   });
+
+  test('equipment nodes without a project stay on the equipment axis', () {
+    final snapshotAt = DateTime(2026, 10, 1, 9);
+    final equipments = [
+      (id: 'DEMO-ACTIONCAM', name: '용접사 헬멧 액션캠'),
+      (id: 'DEMO-DEPTH-BACK', name: '뒤 깊이카메라(RealSense D555)'),
+      (id: 'DEMO-DEPTH-FRONT', name: '앞 깊이카메라(RealSense D555)'),
+      (id: 'DEMO-PANEL', name: '용접기 패널 촬영 카메라'),
+      (id: 'unspecified', name: '미지정'),
+    ];
+    final board = QueryCollectionBoardUseCase().execute(
+      catalog: CollectionCatalog(
+        snapshotAt: snapshotAt,
+        projects: const [
+          Project(projectId: 'PJ-01', projectName: '압력용기 공사'),
+        ],
+        workers: const [],
+        assignments: const [],
+        events: const [],
+        equipments: [
+          for (final equipment in equipments)
+            Equipment(
+              equipmentId: equipment.id,
+              equipmentName: equipment.name,
+              lineName: '',
+            ),
+        ],
+        statuses: [
+          for (final equipment in equipments)
+            CollectionStatus(
+              equipmentId: equipment.id,
+              snapshotAt: snapshotAt,
+              connectionStatus: ConnectionStatus.connected,
+              receivedCount: 1,
+              windowLabel: '09/15 04:44–09/16 23:54',
+              lossRatePercent: null,
+              timeSyncStatus: TimeSyncStatus.synced,
+              clockOffsetMs: null,
+              lastReceivedAt: snapshotAt,
+            ),
+        ],
+      ),
+      query: CollectionBoardQuery.initial().copyWith(
+        selectedDate: DateTime(2026, 10, 1),
+        snapshotAt: snapshotAt,
+      ),
+    );
+    expect(board.timeline.depth, CollectionResourceDepth.equipment);
+    expect(board.timeline.resourceHeaderLabel, '장비');
+    expect(board.timeline.resources.map((row) => row.label).toList(), [
+      '뒤 깊이카메라(RealSense D555)',
+      '미지정',
+      '앞 깊이카메라(RealSense D555)',
+      '용접기 패널 촬영 카메라',
+      '용접사 헬멧 액션캠',
+    ]);
+    expect(
+      board.timeline.resources.map((row) => row.label),
+      isNot(contains('미배정')),
+    );
+  });
 }
 
 CollectionBoardQuery _onCollectionDay() {

@@ -127,10 +127,10 @@ class _ShellScreenState extends State<ShellScreen> {
     }
     return PassProfileScreen(
       key: ValueKey(
-        'pane-pass|${nav.panePassCommonKey}|${nav.panePassHistoryId}|${nav.panePassPassId}',
+        'pane-pass|${nav.panePassCommonKey}|${nav.panePassJobId}|${nav.panePassPassId}',
       ),
       commonKey: nav.panePassCommonKey,
-      historyId: nav.panePassHistoryId,
+      jobId: nav.panePassJobId,
       passId: nav.panePassPassId,
     );
   }
@@ -141,10 +141,10 @@ class _ShellScreenState extends State<ShellScreen> {
     }
     return QualityIssueScreen(
       key: ValueKey(
-        'pane-quality|${nav.paneQualityCommonKey}|${nav.paneQualityHistoryId}|${nav.paneQualityPassId}|${nav.paneQualityLinkId}',
+        'pane-quality|${nav.paneQualityCommonKey}|${nav.paneQualityJobId}|${nav.paneQualityPassId}|${nav.paneQualityLinkId}',
       ),
       commonKey: nav.paneQualityCommonKey,
-      historyId: nav.paneQualityHistoryId,
+      jobId: nav.paneQualityJobId,
       passId: nav.paneQualityPassId,
       linkId: nav.paneQualityLinkId,
     );
@@ -156,30 +156,30 @@ class _ShellScreenState extends State<ShellScreen> {
         return const WorkHistoryScreen();
       case WorkHistoryStack.detail:
         return WorkDetailScreen(
-          key: ValueKey('detail|${nav.historyId}'),
-          historyId: nav.historyId,
+          key: ValueKey('detail|${nav.jobId}'),
+          jobId: nav.jobId,
         );
       case WorkHistoryStack.videoMultimodal:
         return VideoMultimodalScreen(
-          key: ValueKey('multimodal|${nav.historyId}'),
-          historyId: nav.historyId,
+          key: ValueKey('multimodal|${nav.jobId}'),
+          jobId: nav.jobId,
         );
       case WorkHistoryStack.passProfile:
         return PassProfileScreen(
           key: ValueKey(
-            'pass|${nav.historyCommonKey}|${nav.historyId}|${nav.passId}',
+            'pass|${nav.historyCommonKey}|${nav.jobId}|${nav.passId}',
           ),
           commonKey: nav.historyCommonKey,
-          historyId: nav.historyId,
+          jobId: nav.jobId,
           passId: nav.passId,
         );
       case WorkHistoryStack.qualityIssue:
         return QualityIssueScreen(
           key: ValueKey(
-            'quality|${nav.historyCommonKey}|${nav.historyId}|${nav.passId}|${nav.linkId}',
+            'quality|${nav.historyCommonKey}|${nav.jobId}|${nav.passId}|${nav.linkId}',
           ),
           commonKey: nav.historyCommonKey,
-          historyId: nav.historyId,
+          jobId: nav.jobId,
           passId: nav.passId,
           linkId: nav.linkId,
         );
@@ -192,16 +192,16 @@ class _ShellNavSnapshot {
     required this.selectedPaneIndex,
     required this.workHistoryStack,
     required this.historyCommonKey,
-    required this.historyId,
+    required this.jobId,
     required this.passId,
     required this.linkId,
     required this.canOpenLatestPassProfile,
     required this.canOpenLatestQualityIssue,
     required this.panePassCommonKey,
-    required this.panePassHistoryId,
+    required this.panePassJobId,
     required this.panePassPassId,
     required this.paneQualityCommonKey,
-    required this.paneQualityHistoryId,
+    required this.paneQualityJobId,
     required this.paneQualityPassId,
     required this.paneQualityLinkId,
   });
@@ -211,16 +211,16 @@ class _ShellNavSnapshot {
       selectedPaneIndex: coordinator.selectedPaneIndex,
       workHistoryStack: coordinator.workHistoryStack,
       historyCommonKey: coordinator.historyCommonKey,
-      historyId: coordinator.historyId,
+      jobId: coordinator.jobId,
       passId: coordinator.passId,
       linkId: coordinator.linkId,
       canOpenLatestPassProfile: coordinator.canOpenLatestPassProfile,
       canOpenLatestQualityIssue: coordinator.canOpenLatestQualityIssue,
       panePassCommonKey: coordinator.panePassCommonKey,
-      panePassHistoryId: coordinator.panePassHistoryId,
+      panePassJobId: coordinator.panePassJobId,
       panePassPassId: coordinator.panePassPassId,
       paneQualityCommonKey: coordinator.paneQualityCommonKey,
-      paneQualityHistoryId: coordinator.paneQualityHistoryId,
+      paneQualityJobId: coordinator.paneQualityJobId,
       paneQualityPassId: coordinator.paneQualityPassId,
       paneQualityLinkId: coordinator.paneQualityLinkId,
     );
@@ -229,16 +229,16 @@ class _ShellNavSnapshot {
   final int selectedPaneIndex;
   final WorkHistoryStack workHistoryStack;
   final String historyCommonKey;
-  final String historyId;
+  final String jobId;
   final String passId;
   final String linkId;
   final bool canOpenLatestPassProfile;
   final bool canOpenLatestQualityIssue;
   final String panePassCommonKey;
-  final String panePassHistoryId;
+  final String panePassJobId;
   final String panePassPassId;
   final String paneQualityCommonKey;
-  final String paneQualityHistoryId;
+  final String paneQualityJobId;
   final String paneQualityPassId;
   final String paneQualityLinkId;
 
@@ -248,16 +248,16 @@ class _ShellNavSnapshot {
         selectedPaneIndex == other.selectedPaneIndex &&
         workHistoryStack == other.workHistoryStack &&
         historyCommonKey == other.historyCommonKey &&
-        historyId == other.historyId &&
+        jobId == other.jobId &&
         passId == other.passId &&
         linkId == other.linkId &&
         canOpenLatestPassProfile == other.canOpenLatestPassProfile &&
         canOpenLatestQualityIssue == other.canOpenLatestQualityIssue &&
         panePassCommonKey == other.panePassCommonKey &&
-        panePassHistoryId == other.panePassHistoryId &&
+        panePassJobId == other.panePassJobId &&
         panePassPassId == other.panePassPassId &&
         paneQualityCommonKey == other.paneQualityCommonKey &&
-        paneQualityHistoryId == other.paneQualityHistoryId &&
+        paneQualityJobId == other.paneQualityJobId &&
         paneQualityPassId == other.paneQualityPassId &&
         paneQualityLinkId == other.paneQualityLinkId;
   }
@@ -267,16 +267,16 @@ class _ShellNavSnapshot {
     selectedPaneIndex,
     workHistoryStack,
     historyCommonKey,
-    historyId,
+    jobId,
     passId,
     linkId,
     canOpenLatestPassProfile,
     canOpenLatestQualityIssue,
     panePassCommonKey,
-    panePassHistoryId,
+    panePassJobId,
     panePassPassId,
     paneQualityCommonKey,
-    paneQualityHistoryId,
+    paneQualityJobId,
     paneQualityPassId,
     paneQualityLinkId,
   );
