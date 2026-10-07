@@ -135,26 +135,17 @@ enum InferencePanelPhase { hidden, running, done, failed }
 
 class VideoMultimodalViewModel extends ChangeNotifier {
   VideoMultimodalViewModel({
-    required ListHistoryWorkAttachmentsUseCase
-    listHistoryWorkAttachmentsUseCase,
-    required GetJobTimelineUseCase getJobTimelineUseCase,
-    required CreateTrackUseCase createTrackUseCase,
-    required UpdateTrackUseCase updateTrackUseCase,
-    required DeleteTrackUseCase deleteTrackUseCase,
-    required CreateClipUseCase createClipUseCase,
-    required UpdateClipUseCase updateClipUseCase,
-    required DeleteClipUseCase deleteClipUseCase,
-    required ChangeTimelineStatusUseCase changeTimelineStatusUseCase,
+    required this._listHistoryWorkAttachmentsUseCase,
+    required this._getJobTimelineUseCase,
+    required this._createTrackUseCase,
+    required this._updateTrackUseCase,
+    required this._deleteTrackUseCase,
+    required this._createClipUseCase,
+    required this._updateClipUseCase,
+    required this._deleteClipUseCase,
+    required this._changeTimelineStatusUseCase,
     required this.jobId,
-  }) : _listHistoryWorkAttachmentsUseCase = listHistoryWorkAttachmentsUseCase,
-       _getJobTimelineUseCase = getJobTimelineUseCase,
-       _createTrackUseCase = createTrackUseCase,
-       _updateTrackUseCase = updateTrackUseCase,
-       _deleteTrackUseCase = deleteTrackUseCase,
-       _createClipUseCase = createClipUseCase,
-       _updateClipUseCase = updateClipUseCase,
-       _deleteClipUseCase = deleteClipUseCase,
-       _changeTimelineStatusUseCase = changeTimelineStatusUseCase;
+  });
 
   static const double MIN_TIMELINE_HEIGHT = 320;
   static const double SIDE_WIDTH = 320;
