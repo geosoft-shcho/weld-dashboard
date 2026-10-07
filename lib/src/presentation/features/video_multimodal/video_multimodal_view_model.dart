@@ -16,7 +16,6 @@ import '../../../domain/use_cases/update_track_use_case.dart';
 import 'video_caption.dart';
 import 'video_frame_mark.dart';
 import 'video_frame_mark_debug.dart';
-import 'video_frame_mark_json.dart';
 
 enum VideoMultimodalSide { none, assets, properties, ask, labels }
 
@@ -633,7 +632,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _timeline = JobTimeline.empty;
     }
     try {
-      final marks = loadMockVideoFrameMarks();
       _attachments = await _listHistoryWorkAttachmentsUseCase.execute(
         jobId: jobId,
       );
@@ -641,14 +639,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         ..._chain(_attachments, WorkAttachmentType.video),
         ..._chain(_attachments, WorkAttachmentType.audio),
       ];
-      _frameMarks
-        ..clear()
-        ..addAll(await marks);
       _side = VideoMultimodalSide.assets;
     } catch (error) {
       _attachments = const [];
       _bars = const [];
-      _frameMarks.clear();
       if (!_hasError) {
         _noticeText = error.toString();
       }

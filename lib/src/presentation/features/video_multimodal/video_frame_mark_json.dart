@@ -1,18 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/services.dart';
-
 import 'video_frame_mark.dart';
-
-const String POSE_FRAME_MARK_ASSET = 'docs/mock-pose.json';
-const String TORCH_FRAME_MARK_ASSET = 'docs/mock-torch.json';
-
-/// 포즈·토치 목업을 한 번 읽어 재생 파일의 로컬 초 구간으로 바꾼다.
-Future<List<VideoFrameMark>> loadMockVideoFrameMarks() async {
-  final pose = await rootBundle.loadString(POSE_FRAME_MARK_ASSET);
-  final torch = await rootBundle.loadString(TORCH_FRAME_MARK_ASSET);
-  return [...parseVideoFrameMarks(pose), ...parseVideoFrameMarks(torch)];
-}
 
 List<VideoFrameMark> parseVideoFrameMarks(String source) {
   final decoded = jsonDecode(source);

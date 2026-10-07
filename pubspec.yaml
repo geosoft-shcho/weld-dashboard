@@ -44,5 +44,3 @@ flutter:
     - .env
     - assets/data/
     - assets/data/attachments/
-    - docs/mock-pose.json
-    - docs/mock-torch.json
