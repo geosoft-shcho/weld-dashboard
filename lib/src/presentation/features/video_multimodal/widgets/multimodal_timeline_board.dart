@@ -278,17 +278,17 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         children: [
           _toolGroup([
             _tool(
-              'Select',
+              '클립 선택',
               selected: !viewModel.isRelationMode,
               onPressed: viewModel.didTapSelectTool,
             ),
             _tool(
-              'Relation',
+              '클립 관계',
               selected: viewModel.isRelationMode,
               onPressed: viewModel.didTapToggleRelationMode,
             ),
             _tool(
-              'Delete',
+              '클립 삭제',
               onPressed: viewModel.canDeleteSelection
                   ? _confirmDeleteSelection
                   : null,
