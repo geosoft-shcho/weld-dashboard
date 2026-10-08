@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../domain/entities/tool_run.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_multimodal_view_model.dart';
 
@@ -234,12 +235,61 @@ class _LayerDeleteDialogState extends State<_LayerDeleteDialog> {
   }
 }
 
-class _InferencePickerDialog extends StatelessWidget {
+class _InferencePickerDialog extends StatefulWidget {
   const _InferencePickerDialog({required this.viewModel});
 
   final VideoMultimodalViewModel viewModel;
 
-  static const List<String> _models = ['pose-sample', 'bbox-sample'];
+  @override
+  State<_InferencePickerDialog> createState() => _InferencePickerDialogState();
+}
+
+class _InferencePickerDialogState extends State<_InferencePickerDialog> {
+  List<InferenceTool> _tools = const [];
+  bool _isLoading = true;
+  String _message = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTools();
+  }
+
+  Future<void> _loadTools() async {
+    try {
+      final tools = await widget.viewModel.loadInferenceTools();
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _tools = tools;
+        _isLoading = false;
+        _message = tools.isEmpty ? '사용할 수 있는 도구가 없습니다.' : '';
+      });
+    } on ToolRunException catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _message = error.message;
+      });
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+      setState(() {
+        _isLoading = false;
+        _message = error.toString();
+      });
+    }
+  }
+
+  void _start(InferenceTool tool) {
+    final toolName = tool.name.isEmpty ? tool.toolId : tool.name;
+    widget.viewModel.didStartInference(toolId: tool.toolId, toolName: toolName);
+    Navigator.pop(context);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -247,19 +297,23 @@ class _InferencePickerDialog extends StatelessWidget {
       title: const Text('추론 모델 선택'),
       content: SizedBox(
         width: 420,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (final model in _models)
-              ListTile(
-                title: Text(model),
-                onTap: () {
-                  viewModel.didShowInference(model);
-                  Navigator.pop(context);
-                },
+        child: _isLoading
+            ? const SizedBox(
+                height: 80,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (_message.isNotEmpty) Text(_message),
+                  for (final tool in _tools)
+                    ListTile(
+                      title: Text(tool.name.isEmpty ? tool.toolId : tool.name),
+                      onTap: () => _start(tool),
+                    ),
+                ],
               ),
-          ],
-        ),
       ),
       actions: [
         TextButton(
@@ -267,10 +321,7 @@ class _InferencePickerDialog extends StatelessWidget {
           child: const Text('취소'),
         ),
         FilledButton(
-          onPressed: () {
-            viewModel.didShowInference(_models.first);
-            Navigator.pop(context);
-          },
+          onPressed: _tools.isEmpty ? null : () => _start(_tools.first),
           child: const Text('실행'),
         ),
       ],

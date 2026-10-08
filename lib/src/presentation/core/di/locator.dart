@@ -16,6 +16,7 @@ import '../../../data/repositories/remote_quality_job_media_repository.dart';
 import '../../../data/repositories/remote_quality_result_repository.dart';
 import '../../../data/repositories/remote_report_set_repository.dart';
 import '../../../data/repositories/remote_job_timeline_repository.dart';
+import '../../../data/repositories/remote_tool_run_repository.dart';
 import '../../../data/repositories/remote_work_detail_repository.dart';
 import '../../../data/repositories/remote_work_history_repository.dart';
 import '../../../domain/repositories/catalog_repository.dart';
@@ -25,6 +26,7 @@ import '../../../domain/repositories/quality_job_media_repository.dart';
 import '../../../domain/repositories/quality_result_repository.dart';
 import '../../../domain/repositories/report_set_repository.dart';
 import '../../../domain/repositories/job_timeline_repository.dart';
+import '../../../domain/repositories/tool_run_repository.dart';
 import '../../../domain/repositories/work_detail_repository.dart';
 import '../../../domain/repositories/work_history_repository.dart';
 import '../../../domain/use_cases/list_collected_nodes_use_case.dart';
@@ -35,6 +37,7 @@ import '../../../domain/use_cases/create_track_use_case.dart';
 import '../../../domain/use_cases/delete_clip_use_case.dart';
 import '../../../domain/use_cases/delete_track_use_case.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
+import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
 import '../../../domain/use_cases/update_track_use_case.dart';
 import '../../../domain/use_cases/list_quality_job_media_use_case.dart';
@@ -110,6 +113,10 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactory(() => UpdateClipUseCase(locator()));
   locator.registerFactory(() => DeleteClipUseCase(locator()));
   locator.registerFactory(() => ChangeTimelineStatusUseCase(locator()));
+  locator.registerLazySingleton<ToolRunRepository>(
+    () => RemoteToolRunRepository(locator()),
+  );
+  locator.registerFactory(() => ToolRunUseCase(locator()));
   locator.registerFactory(() {
     final CameraRecordingRepository repository =
         BrowserCameraRecordingRepository();
@@ -137,6 +144,7 @@ void setupLocator({required bool pdfrxReady}) {
       updateClipUseCase: locator(),
       deleteClipUseCase: locator(),
       changeTimelineStatusUseCase: locator(),
+      toolRunUseCase: locator(),
       jobId: jobId,
     ),
   );

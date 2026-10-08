@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 
 import '../../../domain/entities/job_timeline.dart';
+import '../../../domain/entities/tool_run.dart';
 import '../../../domain/entities/work_attachment.dart';
 import '../../../domain/entities/work_attachment_type.dart';
 import '../../../domain/timeline_time.dart';
@@ -11,6 +14,7 @@ import '../../../domain/use_cases/delete_clip_use_case.dart';
 import '../../../domain/use_cases/delete_track_use_case.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
+import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
 import '../../../domain/use_cases/update_track_use_case.dart';
 import 'video_caption.dart';
@@ -130,7 +134,7 @@ class SampleLayerSummary {
   final int segmentCount;
 }
 
-enum InferencePanelPhase { hidden, running, done, failed }
+enum InferencePanelPhase { hidden, queued, running, failed }
 
 class VideoMultimodalViewModel extends ChangeNotifier {
   VideoMultimodalViewModel({
@@ -143,6 +147,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required this._updateClipUseCase,
     required this._deleteClipUseCase,
     required this._changeTimelineStatusUseCase,
+    required this._toolRunUseCase,
     required this.jobId,
   });
 
@@ -166,6 +171,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final UpdateClipUseCase _updateClipUseCase;
   final DeleteClipUseCase _deleteClipUseCase;
   final ChangeTimelineStatusUseCase _changeTimelineStatusUseCase;
+  final ToolRunUseCase _toolRunUseCase;
   final String jobId;
 
   double _playheadSeconds = 0;
@@ -200,6 +206,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   double _inferenceOffsetX = 24;
   double _inferenceOffsetY = 24;
   String _inferenceModelName = '';
+  String _inferenceMessage = '';
+  String _activeRunId = '';
+  int _toolRunEpoch = 0;
+  bool _isClosed = false;
   final List<AskTurn> _askTurns = [];
   final List<PaletteSection> _paletteSections = [
     PaletteSection(sectionKey: 'audio', title: '오디오 구간', names: []),
@@ -570,6 +580,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   double get inferenceOffsetX => _inferenceOffsetX;
   double get inferenceOffsetY => _inferenceOffsetY;
   String get inferenceModelName => _inferenceModelName;
+  String get inferenceMessage => _inferenceMessage;
+  bool get canCancelInference =>
+      _activeRunId.isNotEmpty &&
+      (_inferencePhase == InferencePanelPhase.queued ||
+          _inferencePhase == InferencePanelPhase.running);
   List<AskTurn> get askTurns => List.unmodifiable(_askTurns);
   List<PaletteSection> get paletteSections =>
       List.unmodifiable(_paletteSections);
@@ -644,6 +659,17 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _attachments = const [];
       _bars = const [];
       if (!_hasError) {
+        _noticeText = error.toString();
+      }
+    }
+    try {
+      await _restoreActiveToolRun();
+    } on ToolRunException catch (error) {
+      if (_noticeText.isEmpty) {
+        _noticeText = error.message;
+      }
+    } catch (error) {
+      if (_noticeText.isEmpty) {
         _noticeText = error.toString();
       }
     } finally {
@@ -803,35 +829,83 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void didShowInference(String modelName) {
-    _inferenceModelName = modelName;
-    _inferencePhase = InferencePanelPhase.running;
+  Future<List<InferenceTool>> loadInferenceTools() {
+    return _toolRunUseCase.listEnabledTools();
+  }
+
+  Future<void> didStartInference({
+    required String toolId,
+    required String toolName,
+  }) async {
+    final epoch = ++_toolRunEpoch;
+    _activeRunId = '';
+    _inferenceModelName = toolName;
+    _inferenceMessage = '';
+    _inferencePhase = InferencePanelPhase.queued;
     _isInferenceMinimized = false;
     notifyListeners();
-    Future<void>.delayed(const Duration(milliseconds: 1200), () {
-      if (_inferencePhase != InferencePanelPhase.running) {
+    try {
+      final run = await _toolRunUseCase.start(
+        toolId: toolId,
+        jobId: jobId,
+        clipId: isSelectedServerClip ? _selectedClipId : '',
+        assetId: isSelectedServerClip ? '' : _selectedAttachmentId,
+      );
+      if (epoch != _toolRunEpoch || _isClosed) {
         return;
       }
-      _inferencePhase = InferencePanelPhase.done;
+      if (run.runId.isEmpty) {
+        _inferencePhase = InferencePanelPhase.failed;
+        _inferenceMessage = '실행을 만들지 못했습니다.';
+        notifyListeners();
+        return;
+      }
+      _activeRunId = run.runId;
+      _inferencePhase = InferencePanelPhase.queued;
+      _inferenceMessage = '';
       notifyListeners();
-    });
+      unawaited(_followToolRun(epoch));
+    } on ToolRunException catch (error) {
+      if (epoch != _toolRunEpoch || _isClosed) {
+        return;
+      }
+      _inferencePhase = InferencePanelPhase.failed;
+      _inferenceMessage = error.message;
+      notifyListeners();
+    }
   }
 
-  void didCancelInference() {
-    if (_inferencePhase == InferencePanelPhase.hidden) {
+  Future<void> didCancelInference() async {
+    final runId = _activeRunId;
+    if (runId.isEmpty) {
       return;
     }
-    _inferencePhase = InferencePanelPhase.failed;
-    notifyListeners();
-  }
-
-  void didApplyInference() {
-    _noticeText = '추론 결과 적용은 이 화면에서 서버에 저장하지 않습니다.';
-    _inferencePhase = InferencePanelPhase.hidden;
-    notifyListeners();
+    final epoch = ++_toolRunEpoch;
+    try {
+      final run = await _toolRunUseCase.cancel(runId: runId);
+      if (epoch != _toolRunEpoch || _isClosed) {
+        return;
+      }
+      if (run.isInProgress) {
+        _rememberOpenRun(run);
+        unawaited(_followToolRun(epoch));
+        return;
+      }
+      await _finishToolRun(run, epoch);
+    } on ToolRunException catch (error) {
+      if (epoch != _toolRunEpoch || _isClosed) {
+        return;
+      }
+      _inferencePhase = InferencePanelPhase.failed;
+      _inferenceMessage = error.message;
+      notifyListeners();
+    }
   }
 
   void didCloseInference() {
+    _toolRunEpoch += 1;
+    _activeRunId = '';
+    _inferenceMessage = '';
     _inferencePhase = InferencePanelPhase.hidden;
     notifyListeners();
   }
@@ -1569,6 +1643,119 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         if (!bar.isVideo) bar,
     ];
     return true;
+  }
+
+  @override
+  void dispose() {
+    _isClosed = true;
+    _toolRunEpoch += 1;
+    super.dispose();
+  }
+
+  Future<void> _restoreActiveToolRun() async {
+    if (jobId.isEmpty || _inferencePhase != InferencePanelPhase.hidden) {
+      return;
+    }
+    final runs = await _toolRunUseCase.listJobRuns(jobId: jobId);
+    if (_inferencePhase != InferencePanelPhase.hidden) {
+      return;
+    }
+    ToolRunSnapshot? active;
+    for (final run in runs) {
+      if (run.isInProgress) {
+        active = run;
+      }
+    }
+    if (active == null) {
+      return;
+    }
+    var toolName = '도구 실행';
+    try {
+      final tools = await _toolRunUseCase.listEnabledTools();
+      for (final tool in tools) {
+        if (tool.toolId == active.toolId && tool.name.isNotEmpty) {
+          toolName = tool.name;
+          break;
+        }
+      }
+    } on ToolRunException {
+      toolName = '도구 실행';
+    }
+    if (_isClosed || _inferencePhase != InferencePanelPhase.hidden) {
+      return;
+    }
+    _inferenceModelName = toolName;
+    _rememberOpenRun(active);
+    unawaited(_followToolRun(_toolRunEpoch));
+  }
+
+  void _rememberOpenRun(ToolRunSnapshot run) {
+    _activeRunId = run.runId;
+    _inferenceMessage = '';
+    _inferencePhase = run.status == ToolRunStatus.running
+        ? InferencePanelPhase.running
+        : InferencePanelPhase.queued;
+    notifyListeners();
+  }
+
+  Future<void> _followToolRun(int epoch) async {
+    while (epoch == _toolRunEpoch && !_isClosed) {
+      final runId = _activeRunId;
+      if (runId.isEmpty) {
+        return;
+      }
+      try {
+        final run = await _toolRunUseCase.getRun(runId: runId);
+        if (epoch != _toolRunEpoch || _isClosed) {
+          return;
+        }
+        if (run.isInProgress) {
+          _rememberOpenRun(run);
+          continue;
+        }
+        await _finishToolRun(run, epoch);
+        return;
+      } on ToolRunException catch (error) {
+        if (epoch != _toolRunEpoch || _isClosed) {
+          return;
+        }
+        _inferencePhase = InferencePanelPhase.failed;
+        _inferenceMessage = error.message;
+        notifyListeners();
+        return;
+      }
+    }
+  }
+
+  Future<void> _finishToolRun(ToolRunSnapshot run, int epoch) async {
+    if (epoch != _toolRunEpoch || _isClosed) {
+      return;
+    }
+    switch (run.status) {
+      case ToolRunStatus.queued:
+      case ToolRunStatus.running:
+        _rememberOpenRun(run);
+      case ToolRunStatus.succeeded:
+        await _replaceTimelineFromServer(clearHint: true);
+        if (epoch != _toolRunEpoch || _isClosed) {
+          return;
+        }
+        _activeRunId = '';
+        _inferenceMessage = '';
+        _inferencePhase = InferencePanelPhase.hidden;
+        notifyListeners();
+      case ToolRunStatus.failed:
+        _inferencePhase = InferencePanelPhase.failed;
+        _inferenceMessage = run.errorMessage.isEmpty
+            ? '도구 실행에 실패했습니다.'
+            : run.errorMessage;
+        notifyListeners();
+      case ToolRunStatus.canceled:
+        _activeRunId = '';
+        _inferenceMessage = '';
+        _inferencePhase = InferencePanelPhase.hidden;
+        notifyListeners();
+    }
   }
 
   String _formatClock(double seconds) {

@@ -5,6 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../generated/mediatag/asset/v1/asset.connect.client.dart';
 import '../generated/mediatag/compose/v1/compose.connect.client.dart';
 import '../generated/mediatag/report/v1/report.connect.client.dart';
+import '../generated/mediatag/tool/v1/tool.connect.client.dart';
 import '../generated/mediatag/work/v1/work.connect.client.dart';
 import 'dashboard_http_client.dart';
 
@@ -19,6 +20,7 @@ class MediaTagDataSource {
     assetService = AssetServiceClient(transport);
     reportService = ReportServiceClient(transport);
     composeService = MediaComposeServiceClient(transport);
+    toolService = ToolServiceClient(transport);
   }
 
   final String baseUrl;
@@ -26,6 +28,7 @@ class MediaTagDataSource {
   late final AssetServiceClient assetService;
   late final ReportServiceClient reportService;
   late final MediaComposeServiceClient composeService;
+  late final ToolServiceClient toolService;
 
   String resolveContentUrl(String path) {
     if (path.isEmpty) {

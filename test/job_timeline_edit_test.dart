@@ -6,7 +6,9 @@ import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
 import 'package:weld_dashboard/src/domain/entities/work_attachment.dart';
 import 'package:weld_dashboard/src/domain/entities/work_attachment_type.dart';
 import 'package:weld_dashboard/src/domain/entities/work_detail_catalog.dart';
+import 'package:weld_dashboard/src/domain/entities/tool_run.dart';
 import 'package:weld_dashboard/src/domain/repositories/job_timeline_repository.dart';
+import 'package:weld_dashboard/src/domain/repositories/tool_run_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/work_detail_repository.dart';
 import 'package:weld_dashboard/src/domain/timeline_time.dart';
 import 'package:weld_dashboard/src/domain/use_cases/change_timeline_status_use_case.dart';
@@ -16,6 +18,7 @@ import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
@@ -25,10 +28,7 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('update mask lists only changed fields', () {
-    final request = buildUpdateClipRequest(
-      clipId: '1',
-      startNs: '1000000000',
-    );
+    final request = buildUpdateClipRequest(clipId: '1', startNs: '1000000000');
 
     expect(request.clip.clipId.toString(), '1');
     expect(request.clip.timelineStartNs.toString(), '1000000000');
@@ -83,10 +83,10 @@ void main() {
     expect(request.clip.hasSource(), isFalse);
     expect(request.clip.hasLabelValueId(), isFalse);
     expect(request.clip.description, 'clip.mp4 ↔ take-b.mp4');
-    expect(
-      request.clip.provenance.inputClipIds.map((id) => id.toString()),
-      ['1', '2'],
-    );
+    expect(request.clip.provenance.inputClipIds.map((id) => id.toString()), [
+      '1',
+      '2',
+    ]);
     expect(request.clip.provenance.hasConfidence(), isFalse);
     expect(request.clip.provenance.reviewed, isFalse);
     expect(request.clip.provenance.runId.toString(), '0');
@@ -477,10 +477,7 @@ void main() {
 
     expect(repository.createTrackCount, 0);
     expect(repository.createClipCount, 0);
-    expect(
-      viewModel.relationPrompt,
-      'Relation 모드 — 두 번째 클립을 클릭하세요',
-    );
+    expect(viewModel.relationPrompt, 'Relation 모드 — 두 번째 클립을 클릭하세요');
 
     await viewModel.didTapClipForRelation('clip-2');
 
@@ -494,10 +491,7 @@ void main() {
     expect(repository.lastCreatedClipInputClipIds, ['clip-1', 'clip-2']);
     expect(repository.lastCreatedClipAssetId, isEmpty);
     expect(repository.lastCreatedClipLabelValueId, isEmpty);
-    expect(
-      repository.lastCreatedClipDescription,
-      'clip.mp4 ↔ take-b.mp4',
-    );
+    expect(repository.lastCreatedClipDescription, 'clip.mp4 ↔ take-b.mp4');
     expect(repository.lastCreatedClipStartNs, '0');
     expect(repository.lastCreatedClipEndNs, '30000000000');
     expect(viewModel.isRelationMode, isFalse);
@@ -545,10 +539,7 @@ void main() {
     expect(repository.createTrackCount, 0);
     expect(repository.createClipCount, 0);
     expect(viewModel.isRelationMode, isTrue);
-    expect(
-      viewModel.relationPrompt,
-      'Relation 모드 — 두 번째 클립을 클릭하세요',
-    );
+    expect(viewModel.relationPrompt, 'Relation 모드 — 두 번째 클립을 클릭하세요');
   });
 
   test('a closed relation interval does not write', () async {
@@ -581,10 +572,7 @@ void main() {
     expect(await viewModel.didTapClipForRelation('missing'), isFalse);
     expect(repository.createTrackCount, 0);
     expect(repository.createClipCount, 0);
-    expect(
-      viewModel.relationPrompt,
-      'Relation 모드 — 첫 번째 클립을 클릭하세요',
-    );
+    expect(viewModel.relationPrompt, 'Relation 모드 — 첫 번째 클립을 클릭하세요');
   });
 
   test('clip selection outside relation mode does not write', () async {
@@ -781,6 +769,7 @@ VideoMultimodalViewModel _viewModel(
     updateClipUseCase: UpdateClipUseCase(repository),
     deleteClipUseCase: DeleteClipUseCase(repository),
     changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(repository),
+    toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
     jobId: 'job-1',
   );
 }
@@ -1061,5 +1050,34 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
     if (error != null) {
       throw error;
     }
+  }
+}
+
+class _IdleToolRunRepository implements ToolRunRepository {
+  @override
+  Future<List<InferenceTool>> listEnabledTools() async => const [];
+
+  @override
+  Future<List<ToolRunSnapshot>> listJobRuns({required String jobId}) async {
+    return const [];
+  }
+
+  @override
+  Future<ToolRunSnapshot> startRun({
+    required String toolId,
+    required ToolRunTargetKind kind,
+    required String targetId,
+  }) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<ToolRunSnapshot> getRun({required String runId}) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<ToolRunSnapshot> cancelRun({required String runId}) {
+    throw StateError('unused');
   }
 }

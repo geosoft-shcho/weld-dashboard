@@ -5,7 +5,9 @@ import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
 import 'package:weld_dashboard/src/domain/entities/work_attachment.dart';
 import 'package:weld_dashboard/src/domain/entities/work_attachment_type.dart';
 import 'package:weld_dashboard/src/domain/entities/work_detail_catalog.dart';
+import 'package:weld_dashboard/src/domain/entities/tool_run.dart';
 import 'package:weld_dashboard/src/domain/repositories/job_timeline_repository.dart';
+import 'package:weld_dashboard/src/domain/repositories/tool_run_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/work_detail_repository.dart';
 import 'package:weld_dashboard/src/domain/use_cases/change_timeline_status_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_clip_use_case.dart';
@@ -14,6 +16,7 @@ import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
 import 'package:weld_dashboard/src/presentation/core/di/locator.dart';
@@ -41,6 +44,7 @@ void main() {
         updateClipUseCase: UpdateClipUseCase(timeline),
         deleteClipUseCase: DeleteClipUseCase(timeline),
         changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(timeline),
+        toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
         jobId: jobId,
       );
     });
@@ -189,5 +193,34 @@ class _FakeWorkDetailRepository implements WorkDetailRepository {
       for (final attachment in attachments)
         if (attachment.jobId == jobId) attachment,
     ];
+  }
+}
+
+class _IdleToolRunRepository implements ToolRunRepository {
+  @override
+  Future<List<InferenceTool>> listEnabledTools() async => const [];
+
+  @override
+  Future<List<ToolRunSnapshot>> listJobRuns({required String jobId}) async {
+    return const [];
+  }
+
+  @override
+  Future<ToolRunSnapshot> startRun({
+    required String toolId,
+    required ToolRunTargetKind kind,
+    required String targetId,
+  }) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<ToolRunSnapshot> getRun({required String runId}) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<ToolRunSnapshot> cancelRun({required String runId}) {
+    throw StateError('unused');
   }
 }
