@@ -3,11 +3,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/data/repositories/job_timeline_edit_requests.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
+import 'package:weld_dashboard/src/domain/entities/label_vocab.dart';
 import 'package:weld_dashboard/src/domain/entities/work_attachment.dart';
 import 'package:weld_dashboard/src/domain/entities/work_attachment_type.dart';
 import 'package:weld_dashboard/src/domain/entities/work_detail_catalog.dart';
 import 'package:weld_dashboard/src/domain/entities/tool_run.dart';
 import 'package:weld_dashboard/src/domain/repositories/job_timeline_repository.dart';
+import 'package:weld_dashboard/src/domain/repositories/label_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/tool_run_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/work_detail_repository.dart';
 import 'package:weld_dashboard/src/domain/timeline_time.dart';
@@ -17,6 +19,7 @@ import 'package:weld_dashboard/src/domain/use_cases/create_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
@@ -770,6 +773,7 @@ VideoMultimodalViewModel _viewModel(
     deleteClipUseCase: DeleteClipUseCase(repository),
     changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(repository),
     toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
+    labelUseCase: LabelUseCase(_IdleLabelRepository()),
     jobId: 'job-1',
   );
 }
@@ -1050,6 +1054,32 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
     if (error != null) {
       throw error;
     }
+  }
+}
+
+class _IdleLabelRepository implements LabelRepository {
+  @override
+  Future<List<LabelSection>> listSections() async => const [];
+
+  @override
+  Future<LabelChip> createValue({
+    required String vocabKey,
+    required String name,
+  }) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<LabelChip> renameValue({
+    required String valueId,
+    required String name,
+  }) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<void> deprecateValue({required String valueId}) {
+    throw StateError('unused');
   }
 }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../../domain/entities/label_vocab.dart';
 import '../../../../domain/entities/work_attachment.dart';
 import '../../../../domain/entities/work_attachment_type.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
@@ -749,56 +750,103 @@ class _LabelsBodyState extends State<_LabelsBody> {
     super.dispose();
   }
 
+  Future<void> _addChip(String vocabKey) async {
+    final added = await widget.viewModel.didAddLabelValue(
+      vocabKey,
+      _controller.text,
+    );
+    if (!mounted || !added) {
+      return;
+    }
+    _controller.clear();
+    setState(() => _addingSectionKey = '');
+  }
+
+  Future<void> _renameChip(LabelSection section, LabelChip chip) async {
+    final next = await showMultimodalRenameLabelDialog(context, chip.name);
+    if (!mounted || next == null || next.isEmpty) {
+      return;
+    }
+    await widget.viewModel.didRenameLabelValue(
+      vocabKey: section.vocabKey,
+      valueId: chip.valueId,
+      name: next,
+    );
+  }
+
+  Future<void> _deprecateChip(LabelSection section, LabelChip chip) async {
+    final isConfirmed = await showMultimodalLabelDeleteDialog(
+      context,
+      chip.name,
+    );
+    if (!mounted || !isConfirmed) {
+      return;
+    }
+    await widget.viewModel.didDeprecateLabelValue(
+      vocabKey: section.vocabKey,
+      valueId: chip.valueId,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return _PanelFrame(
       head: _PanelHead(title: 'Labels', onClose: widget.onClose),
       body: ListView(
         children: [
-          for (final section in widget.viewModel.paletteSections) ...[
-            _SectionLabel(section.title),
+          if (widget.viewModel.labelMessage.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+              child: Text(
+                widget.viewModel.labelMessage,
+                style: const TextStyle(
+                  color: MultimodalStudioPalette.PANEL_INK,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          if (widget.viewModel.isLoadingLabels &&
+              widget.viewModel.labelSections.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(16),
+              child: Center(
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            ),
+          if (!widget.viewModel.isLoadingLabels &&
+              widget.viewModel.labelSections.isEmpty &&
+              widget.viewModel.labelMessage.isEmpty)
+            const Padding(
+              padding: EdgeInsets.all(8),
+              child: Text('사용할 수 있는 라벨이 없습니다.', style: TextStyle(fontSize: 12)),
+            ),
+          for (final section in widget.viewModel.labelSections) ...[
+            _SectionLabel(section.vocabKey),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Wrap(
                 spacing: 4,
                 runSpacing: 4,
                 children: [
-                  for (final name in section.names)
+                  for (final chip in section.chips)
                     _LabelChip(
-                      name: name,
-                      isSelected: widget.viewModel.selectedAudioLabel == name,
-                      onTap: () => widget.viewModel.didSelectPaletteLabel(name),
-                      onRename: () async {
-                        final next = await showMultimodalRenameLabelDialog(
-                          context,
-                          name,
-                        );
-                        if (next != null && next.isNotEmpty) {
-                          widget.viewModel.didRenamePaletteLabel(
-                            section.sectionKey,
-                            name,
-                            next,
-                          );
-                        }
-                      },
-                      onDelete: () async {
-                        final isConfirmed =
-                            await showMultimodalLabelDeleteDialog(
-                              context,
-                              name,
-                            );
-                        if (isConfirmed) {
-                          widget.viewModel.didDeletePaletteLabel(
-                            section.sectionKey,
-                            name,
-                          );
-                        }
-                      },
+                      key: ValueKey(chip.valueId),
+                      name: chip.name,
+                      isSelected:
+                          widget.viewModel.selectedLabelValueId == chip.valueId,
+                      onTap: () =>
+                          widget.viewModel.didSelectLabelValue(chip.valueId),
+                      onRename: () => _renameChip(section, chip),
+                      onDelete: () => _deprecateChip(section, chip),
                     ),
                 ],
               ),
             ),
-            if (_addingSectionKey == section.sectionKey)
+            if (_addingSectionKey == section.vocabKey)
               Padding(
                 padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
                 child: Row(
@@ -814,14 +862,7 @@ class _LabelsBodyState extends State<_LabelsBody> {
                     const SizedBox(width: 4),
                     _AccentButton(
                       label: '추가',
-                      onPressed: () {
-                        widget.viewModel.didAddPaletteLabel(
-                          section.sectionKey,
-                          _controller.text,
-                        );
-                        _controller.clear();
-                        setState(() => _addingSectionKey = '');
-                      },
+                      onPressed: () => _addChip(section.vocabKey),
                     ),
                   ],
                 ),
@@ -834,20 +875,21 @@ class _LabelsBodyState extends State<_LabelsBody> {
                   child: _QuietButton(
                     label: '라벨 추가',
                     onPressed: () =>
-                        setState(() => _addingSectionKey = section.sectionKey),
+                        setState(() => _addingSectionKey = section.vocabKey),
                   ),
                 ),
               ),
           ],
         ],
       ),
-      foot: const _FootNote('팔레트에서 고른 이름은 자막 막대를 그릴 때 씁니다.'),
+      foot: const _FootNote('고른 라벨은 이 패널에서 표시만 합니다.'),
     );
   }
 }
 
 class _LabelChip extends StatelessWidget {
   const _LabelChip({
+    super.key,
     required this.name,
     required this.isSelected,
     required this.onTap,

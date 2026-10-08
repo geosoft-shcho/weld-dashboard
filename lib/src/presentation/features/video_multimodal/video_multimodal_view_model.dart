@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../domain/entities/job_timeline.dart';
+import '../../../domain/entities/label_vocab.dart';
 import '../../../domain/entities/tool_run.dart';
 import '../../../domain/entities/work_attachment.dart';
 import '../../../domain/entities/work_attachment_type.dart';
@@ -13,6 +14,7 @@ import '../../../domain/use_cases/create_track_use_case.dart';
 import '../../../domain/use_cases/delete_clip_use_case.dart';
 import '../../../domain/use_cases/delete_track_use_case.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
+import '../../../domain/use_cases/label_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
@@ -82,18 +84,6 @@ class TimelineSampleClip {
   final bool isDashed;
 }
 
-class PaletteSection {
-  PaletteSection({
-    required this.sectionKey,
-    required this.title,
-    required this.names,
-  });
-
-  final String sectionKey;
-  final String title;
-  final List<String> names;
-}
-
 class AskTurn {
   const AskTurn({
     required this.isUser,
@@ -148,6 +138,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required this._deleteClipUseCase,
     required this._changeTimelineStatusUseCase,
     required this._toolRunUseCase,
+    required this._labelUseCase,
     required this.jobId,
   });
 
@@ -172,6 +163,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final DeleteClipUseCase _deleteClipUseCase;
   final ChangeTimelineStatusUseCase _changeTimelineStatusUseCase;
   final ToolRunUseCase _toolRunUseCase;
+  final LabelUseCase _labelUseCase;
   final String jobId;
 
   double _playheadSeconds = 0;
@@ -196,7 +188,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _workName = '';
   String _assetsSearchQuery = '';
   String _timelineHint = '';
-  String _selectedAudioLabel = '';
+  String _selectedLabelValueId = '';
+  bool _isLoadingLabels = false;
+  String _labelMessage = '';
+  int _labelEpoch = 0;
+  List<LabelSection> _labelSections = const [];
   bool _isVideoPlaying = false;
   bool _wantsPlayback = false;
   int _playbackToken = 0;
@@ -211,13 +207,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   int _toolRunEpoch = 0;
   bool _isClosed = false;
   final List<AskTurn> _askTurns = [];
-  final List<PaletteSection> _paletteSections = [
-    PaletteSection(sectionKey: 'audio', title: '오디오 구간', names: []),
-    PaletteSection(sectionKey: 'video', title: '비디오 객체', names: []),
-    PaletteSection(sectionKey: 'pose', title: '포즈', names: []),
-    PaletteSection(sectionKey: 'bbox', title: '객체 bbox', names: []),
-    PaletteSection(sectionKey: 'vector', title: '키포인트 (tip/grip)', names: []),
-  ];
   final List<VideoFrameMark> _frameMarks = [];
   final List<SampleLayerSummary> _sampleLayers = const [];
 
@@ -558,7 +547,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String get assetsSearchQuery => _assetsSearchQuery;
   String get timelineHint => _timelineHint;
   bool get hasTimelineHint => _timelineHint.isNotEmpty;
-  String get selectedAudioLabel => _selectedAudioLabel;
+  String get selectedLabelValueId => _selectedLabelValueId;
+  bool get isLoadingLabels => _isLoadingLabels;
+  String get labelMessage => _labelMessage;
   bool get canDeleteSelection => _selectedClipId.isNotEmpty;
   bool get isSelectedServerClip => _timelineClip(_selectedClipId) != null;
   bool get isRelationMode => _isRelationMode;
@@ -586,8 +577,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       (_inferencePhase == InferencePanelPhase.queued ||
           _inferencePhase == InferencePanelPhase.running);
   List<AskTurn> get askTurns => List.unmodifiable(_askTurns);
-  List<PaletteSection> get paletteSections =>
-      List.unmodifiable(_paletteSections);
+  List<LabelSection> get labelSections => List.unmodifiable(_labelSections);
   List<SampleLayerSummary> get sampleLayers => List.unmodifiable(_sampleLayers);
 
   TimelineSampleClip? get selectedClip {
@@ -773,60 +763,168 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     didSeekToSeconds(startSeconds);
   }
 
-  void didSelectPaletteLabel(String name) {
-    _selectedAudioLabel = name;
+  void didSelectLabelValue(String valueId) {
+    _selectedLabelValueId = valueId;
     _timelineHint = '';
     notifyListeners();
   }
 
-  void didAddPaletteLabel(String sectionKey, String name) {
+  Future<bool> didAddLabelValue(String vocabKey, String name) async {
     final trimmed = name.trim();
-    if (trimmed.isEmpty) {
-      return;
+    if (vocabKey.isEmpty || trimmed.isEmpty) {
+      return false;
     }
-    for (final section in _paletteSections) {
-      if (section.sectionKey == sectionKey) {
-        section.names.add(trimmed);
-        break;
+    try {
+      final chip = await _labelUseCase.createValue(
+        vocabKey: vocabKey,
+        name: trimmed,
+      );
+      if (_isClosed) {
+        return false;
       }
+      _putChip(vocabKey, chip);
+      _labelMessage = '';
+      notifyListeners();
+      return true;
+    } on LabelException catch (error) {
+      if (_isClosed) {
+        return false;
+      }
+      _labelMessage = error.message;
+      notifyListeners();
+      return false;
     }
-    notifyListeners();
   }
 
-  void didRenamePaletteLabel(
-    String sectionKey,
-    String oldName,
-    String newName,
-  ) {
-    final trimmed = newName.trim();
-    if (trimmed.isEmpty) {
+  Future<void> didRenameLabelValue({
+    required String vocabKey,
+    required String valueId,
+    required String name,
+  }) async {
+    final trimmed = name.trim();
+    if (vocabKey.isEmpty || valueId.isEmpty || trimmed.isEmpty) {
       return;
     }
-    for (final section in _paletteSections) {
-      if (section.sectionKey != sectionKey) {
-        continue;
+    try {
+      final chip = await _labelUseCase.renameValue(
+        valueId: valueId,
+        name: trimmed,
+      );
+      if (_isClosed) {
+        return;
       }
-      final index = section.names.indexOf(oldName);
-      if (index >= 0) {
-        section.names[index] = trimmed;
+      _putChip(vocabKey, chip);
+      _labelMessage = '';
+      notifyListeners();
+    } on LabelException catch (error) {
+      if (_isClosed) {
+        return;
       }
+      _labelMessage = error.message;
+      notifyListeners();
     }
-    if (_selectedAudioLabel == oldName) {
-      _selectedAudioLabel = trimmed;
-    }
-    notifyListeners();
   }
 
-  void didDeletePaletteLabel(String sectionKey, String name) {
-    for (final section in _paletteSections) {
-      if (section.sectionKey == sectionKey) {
-        section.names.remove(name);
+  Future<void> didDeprecateLabelValue({
+    required String vocabKey,
+    required String valueId,
+  }) async {
+    if (vocabKey.isEmpty || valueId.isEmpty) {
+      return;
+    }
+    try {
+      await _labelUseCase.deprecateValue(valueId: valueId);
+      if (_isClosed) {
+        return;
+      }
+      _removeChip(vocabKey, valueId);
+      if (_selectedLabelValueId == valueId) {
+        _selectedLabelValueId = '';
+      }
+      _labelMessage = '';
+      notifyListeners();
+    } on LabelException catch (error) {
+      if (_isClosed) {
+        return;
+      }
+      _labelMessage = error.message;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadLabelSections() async {
+    final epoch = ++_labelEpoch;
+    _isLoadingLabels = true;
+    _labelMessage = '';
+    notifyListeners();
+    try {
+      final sections = await _labelUseCase.listSections();
+      if (epoch != _labelEpoch || _isClosed) {
+        return;
+      }
+      _labelSections = sections;
+    } on LabelException catch (error) {
+      if (epoch != _labelEpoch || _isClosed) {
+        return;
+      }
+      _labelMessage = error.message;
+    } catch (error) {
+      if (epoch != _labelEpoch || _isClosed) {
+        return;
+      }
+      _labelMessage = error.toString();
+    } finally {
+      if (epoch == _labelEpoch && !_isClosed) {
+        _isLoadingLabels = false;
+        notifyListeners();
       }
     }
-    if (_selectedAudioLabel == name) {
-      _selectedAudioLabel = '';
+  }
+
+  void _putChip(String vocabKey, LabelChip chip) {
+    _labelSections = [
+      for (final section in _labelSections)
+        if (section.vocabKey != vocabKey)
+          section
+        else
+          LabelSection(
+            vocabKey: section.vocabKey,
+            chips: _chipsWith(section.chips, chip),
+          ),
+    ];
+  }
+
+  List<LabelChip> _chipsWith(List<LabelChip> chips, LabelChip chip) {
+    var found = false;
+    final next = <LabelChip>[];
+    for (final current in chips) {
+      if (current.valueId == chip.valueId) {
+        next.add(chip);
+        found = true;
+      } else {
+        next.add(current);
+      }
     }
-    notifyListeners();
+    if (!found) {
+      next.add(chip);
+    }
+    return next;
+  }
+
+  void _removeChip(String vocabKey, String valueId) {
+    _labelSections = [
+      for (final section in _labelSections)
+        if (section.vocabKey != vocabKey)
+          section
+        else
+          LabelSection(
+            vocabKey: section.vocabKey,
+            chips: [
+              for (final chip in section.chips)
+                if (chip.valueId != valueId) chip,
+            ],
+          ),
+    ];
   }
 
   Future<List<InferenceTool>> loadInferenceTools() {
@@ -969,7 +1067,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didTapToggleLabels() {
+    final willOpen = _side != VideoMultimodalSide.labels;
     _toggleSide(VideoMultimodalSide.labels);
+    if (willOpen) {
+      unawaited(loadLabelSections());
+    }
   }
 
   void didShowNotice(String text) {
@@ -1649,6 +1751,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   void dispose() {
     _isClosed = true;
     _toolRunEpoch += 1;
+    _labelEpoch += 1;
     super.dispose();
   }
 

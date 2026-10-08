@@ -2,11 +2,13 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
+import 'package:weld_dashboard/src/domain/entities/label_vocab.dart';
 import 'package:weld_dashboard/src/domain/entities/work_attachment.dart';
 import 'package:weld_dashboard/src/domain/entities/work_attachment_type.dart';
 import 'package:weld_dashboard/src/domain/entities/work_detail_catalog.dart';
 import 'package:weld_dashboard/src/domain/entities/tool_run.dart';
 import 'package:weld_dashboard/src/domain/repositories/job_timeline_repository.dart';
+import 'package:weld_dashboard/src/domain/repositories/label_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/tool_run_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/work_detail_repository.dart';
 import 'package:weld_dashboard/src/domain/use_cases/change_timeline_status_use_case.dart';
@@ -15,6 +17,7 @@ import 'package:weld_dashboard/src/domain/use_cases/create_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
@@ -45,6 +48,7 @@ void main() {
         deleteClipUseCase: DeleteClipUseCase(timeline),
         changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(timeline),
         toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
+        labelUseCase: LabelUseCase(_IdleLabelRepository()),
         jobId: jobId,
       );
     });
@@ -193,6 +197,32 @@ class _FakeWorkDetailRepository implements WorkDetailRepository {
       for (final attachment in attachments)
         if (attachment.jobId == jobId) attachment,
     ];
+  }
+}
+
+class _IdleLabelRepository implements LabelRepository {
+  @override
+  Future<List<LabelSection>> listSections() async => const [];
+
+  @override
+  Future<LabelChip> createValue({
+    required String vocabKey,
+    required String name,
+  }) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<LabelChip> renameValue({
+    required String valueId,
+    required String name,
+  }) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<void> deprecateValue({required String valueId}) {
+    throw StateError('unused');
   }
 }
 

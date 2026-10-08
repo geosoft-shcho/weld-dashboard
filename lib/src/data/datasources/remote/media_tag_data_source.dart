@@ -20,6 +20,7 @@ class MediaTagDataSource {
     assetService = AssetServiceClient(transport);
     reportService = ReportServiceClient(transport);
     composeService = MediaComposeServiceClient(transport);
+    labelService = LabelServiceClient(transport);
     toolService = ToolServiceClient(transport);
   }
 
@@ -28,6 +29,7 @@ class MediaTagDataSource {
   late final AssetServiceClient assetService;
   late final ReportServiceClient reportService;
   late final MediaComposeServiceClient composeService;
+  late final LabelServiceClient labelService;
   late final ToolServiceClient toolService;
 
   String resolveContentUrl(String path) {
