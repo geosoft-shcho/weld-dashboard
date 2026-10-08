@@ -170,6 +170,52 @@ void main() {
     expect(find.text('실행'), findsOneWidget);
   });
 
+  testWidgets('run starts the tool chosen in the list', (tester) async {
+    final tools = _ScriptedToolRuns()
+      ..tools = const [
+        InferenceTool(toolId: '7', name: 'pose'),
+        InferenceTool(toolId: '8', name: 'bbox'),
+      ];
+    final viewModel = _viewModel(tools);
+    addTearDown(viewModel.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Builder(
+          builder: (context) {
+            return TextButton(
+              onPressed: () =>
+                  showMultimodalInferencePicker(context, viewModel),
+              child: const Text('열기'),
+            );
+          },
+        ),
+      ),
+    );
+    await tester.tap(find.text('열기'));
+    await tester.pump();
+    await tester.pump();
+
+    FilledButton runButton() {
+      return tester.widget<FilledButton>(
+        find.widgetWithText(FilledButton, '실행'),
+      );
+    }
+
+    expect(runButton().onPressed, isNull);
+
+    await tester.tap(find.text('bbox'));
+    await tester.pump();
+    expect(viewModel.inferenceModelName, isEmpty);
+    expect(find.text('추론 모델 선택'), findsOneWidget);
+
+    await tester.tap(find.text('실행'));
+    await tester.pump();
+    expect(viewModel.inferenceModelName, 'bbox');
+    expect(tools.startedTargetId, '128');
+    expect(find.text('추론 모델 선택'), findsNothing);
+  });
+
   test('opening the page restores a queued run', () async {
     final tools = _ScriptedToolRuns()
       ..jobRuns = [

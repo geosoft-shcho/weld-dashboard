@@ -248,6 +248,7 @@ class _InferencePickerDialogState extends State<_InferencePickerDialog> {
   static const double SUMMARY_FONT_SIZE = 10;
 
   List<InferenceTool> _tools = const [];
+  String _selectedToolId = '';
   bool _isLoading = true;
   String _message = '';
 
@@ -287,9 +288,26 @@ class _InferencePickerDialogState extends State<_InferencePickerDialog> {
     }
   }
 
-  void _start(InferenceTool tool) {
-    final toolName = tool.name.isEmpty ? tool.toolId : tool.name;
-    widget.viewModel.didStartInference(toolId: tool.toolId, toolName: toolName);
+  void _select(InferenceTool tool) {
+    setState(() => _selectedToolId = tool.toolId);
+  }
+
+  void _startSelected() {
+    InferenceTool? selected;
+    for (final tool in _tools) {
+      if (tool.toolId == _selectedToolId) {
+        selected = tool;
+        break;
+      }
+    }
+    if (selected == null) {
+      return;
+    }
+    final toolName = selected.name.isEmpty ? selected.toolId : selected.name;
+    widget.viewModel.didStartInference(
+      toolId: selected.toolId,
+      toolName: toolName,
+    );
     Navigator.pop(context);
   }
 
@@ -315,6 +333,7 @@ class _InferencePickerDialogState extends State<_InferencePickerDialog> {
                       for (final tool in _tools)
                         ListTile(
                           visualDensity: VisualDensity.compact,
+                          selected: tool.toolId == _selectedToolId,
                           title: Text(
                             tool.name.isEmpty ? tool.toolId : tool.name,
                           ),
@@ -327,7 +346,7 @@ class _InferencePickerDialogState extends State<_InferencePickerDialog> {
                                     height: 1.35,
                                   ),
                                 ),
-                          onTap: () => _start(tool),
+                          onTap: () => _select(tool),
                         ),
                     ],
                   ),
@@ -340,7 +359,7 @@ class _InferencePickerDialogState extends State<_InferencePickerDialog> {
           child: const Text('취소'),
         ),
         FilledButton(
-          onPressed: _tools.isEmpty ? null : () => _start(_tools.first),
+          onPressed: _selectedToolId.isEmpty ? null : _startSelected,
           child: const Text('실행'),
         ),
       ],
