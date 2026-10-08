@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:weld_dashboard/src/data/datasources/generated/mediatag/asset/v1/asset.pbenum.dart';
 import 'package:weld_dashboard/src/data/datasources/generated/mediatag/tool/v1/tool.pb.dart';
 import 'package:weld_dashboard/src/data/repositories/tool_run_requests.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
@@ -84,6 +85,28 @@ void main() {
     ]);
     expect(tools.map((tool) => tool.name), ['pose']);
 
+    final stt = enabledInferenceTools([
+      Tool(
+        toolId: Int64(1),
+        name: 'STT faster-whisper',
+        endpoint: 'http://192.168.100.3:38901',
+        remoteModelName: 'faster-whisper',
+        toolVersion: 'large-v3-turbo',
+        pattern: ToolPattern.TOOL_PATTERN_PUSH,
+        payloadKind: 'stt',
+        supportedInputKinds: [AssetKind.ASSET_KIND_VIDEO],
+        unit: ToolUnit.TOOL_UNIT_SECOND,
+        dispatch: ToolDispatch.TOOL_DISPATCH_ON_DEMAND,
+        enabled: true,
+      ),
+    ]);
+    expect(
+      stt.single.summary,
+      'id 1 · endpoint http://192.168.100.3:38901\n'
+      'model faster-whisper · version large-v3-turbo\n'
+      'pattern push · payload stt · input video · unit second · dispatch on demand',
+    );
+
     final queued = toolRunSnapshotFrom(
       ToolRun(
         runId: Int64(3),
@@ -114,7 +137,13 @@ void main() {
 
   testWidgets('inference dialog lists enabled tools', (tester) async {
     final tools = _ScriptedToolRuns()
-      ..tools = const [InferenceTool(toolId: '7', name: 'pose')];
+      ..tools = const [
+        InferenceTool(
+          toolId: '7',
+          name: 'pose',
+          summary: 'id 7 · pattern push · input video',
+        ),
+      ];
     final viewModel = _viewModel(tools);
     addTearDown(viewModel.dispose);
 
@@ -136,6 +165,7 @@ void main() {
     await tester.pump();
 
     expect(find.text('pose'), findsOneWidget);
+    expect(find.text('id 7 · pattern push · input video'), findsOneWidget);
     expect(find.text('pose-sample'), findsNothing);
     expect(find.text('실행'), findsOneWidget);
   });

@@ -245,6 +245,8 @@ class _InferencePickerDialog extends StatefulWidget {
 }
 
 class _InferencePickerDialogState extends State<_InferencePickerDialog> {
+  static const double SUMMARY_FONT_SIZE = 10;
+
   List<InferenceTool> _tools = const [];
   bool _isLoading = true;
   String _message = '';
@@ -302,17 +304,34 @@ class _InferencePickerDialogState extends State<_InferencePickerDialog> {
                 height: 80,
                 child: Center(child: CircularProgressIndicator()),
               )
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  if (_message.isNotEmpty) Text(_message),
-                  for (final tool in _tools)
-                    ListTile(
-                      title: Text(tool.name.isEmpty ? tool.toolId : tool.name),
-                      onTap: () => _start(tool),
-                    ),
-                ],
+            : ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 420),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (_message.isNotEmpty) Text(_message),
+                      for (final tool in _tools)
+                        ListTile(
+                          visualDensity: VisualDensity.compact,
+                          title: Text(
+                            tool.name.isEmpty ? tool.toolId : tool.name,
+                          ),
+                          subtitle: tool.summary.isEmpty
+                              ? null
+                              : Text(
+                                  tool.summary,
+                                  style: const TextStyle(
+                                    fontSize: SUMMARY_FONT_SIZE,
+                                    height: 1.35,
+                                  ),
+                                ),
+                          onTap: () => _start(tool),
+                        ),
+                    ],
+                  ),
+                ),
               ),
       ),
       actions: [

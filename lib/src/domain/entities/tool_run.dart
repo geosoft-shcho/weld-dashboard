@@ -3,10 +3,15 @@ enum ToolRunStatus { queued, running, succeeded, failed, canceled }
 enum ToolRunTargetKind { job, asset, clip }
 
 class InferenceTool {
-  const InferenceTool({required this.toolId, required this.name});
+  const InferenceTool({
+    required this.toolId,
+    required this.name,
+    this.summary = '',
+  });
 
   final String toolId;
   final String name;
+  final String summary;
 }
 
 class ToolRunSnapshot {
