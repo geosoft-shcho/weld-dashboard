@@ -4,6 +4,10 @@
 
 | 일자 | 수정자 | 수정 내용 |
 |---|---|---|
+| 2026-10-08 | geosoft-Server | 라벨을 한 그루의 트리로 — `ListLabelVocabs`·`CreateLabelVocab`·`vocab_key` 삭제, `ListLabels` 추가 |
+| 2026-10-08 | geosoft-Server | 라벨 트리 — 값 아래에 값(`LabelValue.parent_value_id`), `LabelVocab`의 상위 필드 삭제 |
+| 2026-10-08 | geosoft-Server | 클립 사이의 관계(관계 클립 `kind = RELATION`, `Clip.relation`, 종류는 라벨 값) 추가, `ClipProvenance.input_clip_ids` 삭제(운영 적용 전) |
+| 2026-10-08 | geosoft-Server | `ListTools`는 켜진 도구만(`include_disabled`), `UpdateTool`은 `update_mask` 부분 수정으로 바뀜 |
 | 2026-10-08 | geosoft-Server | ID 숫자 전환이 운영에 적용됐음을 반영, `parent_asset_id` 설명을 숫자 기준으로 고침 |
 | 2026-10-07 | geosoft-Server | ID가 숫자(`int64`)로 바뀜 — 접두어 글자 ID 설명과 예시를 고치고 `ID 숫자 전환 안내.md`를 가리킴. 운영 적용 전 |
 | 2026-10-07 | geosoft-Server | 성적서 세트 조회에 섹션 종류 둘 추가 — `SECTION_KIND_SURFACE_TREATMENT`(7)·`SECTION_KIND_PAINT`(8). 기존 칸은 그대로(추가만) |
@@ -63,6 +67,8 @@ Content-Type: application/json
 3. 편집 화면은 `GetTimeline(include_assets=true)`로 타임라인·트랙·클립·파일 메타데이터를 한 번에 받는다.
 4. 작업 첨부는 `ListJobAssets`로 조회한다.
 5. 처리 도구 화면은 `ListTools`와 `ListRuns`로 복구하고, 실행 중인 건만 `GetRun`으로 갱신한다.
+   `ListTools`는 켜진 도구만 준다. 꺼진 도구까지(관리 화면, 실행 이력의 도구 이름 찾기) 받으려면 `include_disabled`를 켠다.
+   도구를 켜고 끄는 것은 `UpdateTool`에 `update_mask: enabled` — 마스크에 든 칸만 바뀐다(마스크가 없으면 `InvalidArgument`).
 
 `ListJobs`, `ListAssets`, `ListTimelines`는 `next_page_token`이 빌 때까지
 다음 페이지를 요청한다. 클라이언트에서 임의로 토큰을 해석하지 않는다.
@@ -79,7 +85,7 @@ Content-Type: application/json
 | LayerDocument | Track | 타임라인의 한 행 |
 | LayerSegment | Clip | 트랙 위 시간 구간 또는 태그 |
 | 전역 Asset | Asset | 원본·파생 파일을 ID로 참조하고 바이트는 `content_url`로 조회 |
-| Layer 팔레트의 문자열 label | `LabelService`의 공통 어휘·`label_value_id` | 공사·트랙마다 같은 문자열을 중복 생성하지 않음 |
+| Layer 팔레트의 문자열 label | `LabelService`의 공통 라벨·`label_value_id` | 공사·트랙마다 같은 문자열을 중복 생성하지 않음 |
 | InferenceModel/InferenceJob | Tool/ToolRun | AI 외에 음성 추출 같은 처리 도구도 같은 실행 흐름 사용 |
 
 프론트의 기본 동작은 다음과 같다.
@@ -154,7 +160,8 @@ mediatag v1은 작업·파일·타임라인·성적서·도구 역할별 서비�
 - **바뀐 필드(호환 깨짐)**: `Provenance.input_asset_ids`(배열, JSON `inputAssetIds`)가 없어지고
   `parent_asset_id`(숫자 하나, JSON `parentAssetId`)가 생겼다. 부모가 없으면 0이다.
 - 작업에 첨부된 것이 표준화 파일이나 잘라 낸 PDF면 그 파일이 뿌리로 보인다. 그 원본은 작업 첨부에 없다.
-- `ClipProvenance.input_clip_ids`는 그대로 있지만 늘 빈 배열이다.
+- 라벨은 한 그루의 트리다: `ListLabels`가 라벨 전부를 평평하게 주고 `parent_value_id`로 엮는다(0이면 맨 위 — 옛 어휘 `process_stage`·`speaker` 같은 분류가 맨 위 라벨이다). 라벨은 번호(`value_id`)로만 가리키고 이름은 겹쳐도 된다. 만들 때는 `CreateLabelValue`에 `name`과 (아래에 달려면) `parent_value_id`를 준다. `ListLabelVocabs`·`CreateLabelVocab`과 `vocab_key`(`LabelValue`·`LabelRef`·`CreateLabelValueRequest`)는 없앴다
+- `ClipProvenance.input_clip_ids`는 없앴다(저장한 적이 없는 칸이었다). 클립끼리 잇는 것은 **관계 클립**으로 한다 — `CreateClip`에 `kind = RELATION`, 구간(`timeline_start_ns`·`timeline_end_ns`), `relation`(`from_clip_id`·`to_clip_id`)을 보낸다. 관계 종류는 태그처럼 `label_value_id`(라벨 값, 선택)로 고른다. "이 구간에서 from이 to와 관련 있다"는 뜻이고, from 클립의 구간 전체면 그 값을 그대로 넣는다. `source`는 비운다. 두 클립은 같은 작업의 것이어야 한다. 다른 클립처럼 트랙에 놓이므로 같은 트랙에서는 구간이 겹칠 수 없다(관계용 트랙을 따로 두고, 겹치면 트랙을 하나 더 쓴다). 고치기·지우기는 `UpdateClip`(구간, `label_value_id`, 설명)·`DeleteClip`이고, 잇는 클립을 지우면 관계 클립도 지워진다. 관계 종류용 어휘는 따로 없다 — 라벨 어휘(`LabelService`)에 관계 종류용 어휘를 하나 만들어 쓴다(키 `relation`을 권한다 — 태그 화면은 그 트리를 빼고, 관계 화면은 그 트리만 보여 준다).
 
 ## 성적서 섹션: 표면처리·도장 검사
 

@@ -16,8 +16,9 @@ import 'dart:core' as $core;
 import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
+import '../../../google/protobuf/field_mask.pb.dart' as $1;
 import '../../../google/protobuf/timestamp.pb.dart' as $0;
-import '../../asset/v1/asset.pbenum.dart' as $1;
+import '../../asset/v1/asset.pbenum.dart' as $2;
 import 'tool.pbenum.dart';
 
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
@@ -33,7 +34,7 @@ class Tool extends $pb.GeneratedMessage {
     $core.String? toolVersion,
     ToolPattern? pattern,
     $core.String? payloadKind,
-    $core.Iterable<$1.AssetKind>? supportedInputKinds,
+    $core.Iterable<$2.AssetKind>? supportedInputKinds,
     ToolUnit? unit,
     ToolDispatch? dispatch,
     $core.bool? enabled,
@@ -78,11 +79,11 @@ class Tool extends $pb.GeneratedMessage {
         valueOf: ToolPattern.valueOf,
         enumValues: ToolPattern.values)
     ..aOS(7, _omitFieldNames ? '' : 'payloadKind')
-    ..pc<$1.AssetKind>(
+    ..pc<$2.AssetKind>(
         8, _omitFieldNames ? '' : 'supportedInputKinds', $pb.PbFieldType.KE,
-        valueOf: $1.AssetKind.valueOf,
-        enumValues: $1.AssetKind.values,
-        defaultEnumValue: $1.AssetKind.ASSET_KIND_UNSPECIFIED)
+        valueOf: $2.AssetKind.valueOf,
+        enumValues: $2.AssetKind.values,
+        defaultEnumValue: $2.AssetKind.ASSET_KIND_UNSPECIFIED)
     ..e<ToolUnit>(9, _omitFieldNames ? '' : 'unit', $pb.PbFieldType.OE,
         defaultOrMaker: ToolUnit.TOOL_UNIT_UNSPECIFIED,
         valueOf: ToolUnit.valueOf,
@@ -177,7 +178,7 @@ class Tool extends $pb.GeneratedMessage {
   void clearPayloadKind() => $_clearField(7);
 
   @$pb.TagNumber(8)
-  $pb.PbList<$1.AssetKind> get supportedInputKinds => $_getList(7);
+  $pb.PbList<$2.AssetKind> get supportedInputKinds => $_getList(7);
 
   @$pb.TagNumber(9)
   ToolUnit get unit => $_getN(8);
@@ -552,7 +553,13 @@ class RunTarget extends $pb.GeneratedMessage {
 }
 
 class ListToolsRequest extends $pb.GeneratedMessage {
-  factory ListToolsRequest() => create();
+  factory ListToolsRequest({
+    $core.bool? includeDisabled,
+  }) {
+    final result = create();
+    if (includeDisabled != null) result.includeDisabled = includeDisabled;
+    return result;
+  }
 
   ListToolsRequest._();
 
@@ -568,6 +575,7 @@ class ListToolsRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
       createEmptyInstance: create)
+    ..aOB(1, _omitFieldNames ? '' : 'includeDisabled')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -590,6 +598,15 @@ class ListToolsRequest extends $pb.GeneratedMessage {
   static ListToolsRequest getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<ListToolsRequest>(create);
   static ListToolsRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.bool get includeDisabled => $_getBF(0);
+  @$pb.TagNumber(1)
+  set includeDisabled($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasIncludeDisabled() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearIncludeDisabled() => $_clearField(1);
 }
 
 class ListToolsResponse extends $pb.GeneratedMessage {
@@ -765,9 +782,11 @@ class CreateToolResponse extends $pb.GeneratedMessage {
 class UpdateToolRequest extends $pb.GeneratedMessage {
   factory UpdateToolRequest({
     Tool? tool,
+    $1.FieldMask? updateMask,
   }) {
     final result = create();
     if (tool != null) result.tool = tool;
+    if (updateMask != null) result.updateMask = updateMask;
     return result;
   }
 
@@ -786,6 +805,8 @@ class UpdateToolRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
       createEmptyInstance: create)
     ..aOM<Tool>(1, _omitFieldNames ? '' : 'tool', subBuilder: Tool.create)
+    ..aOM<$1.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $1.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -819,6 +840,17 @@ class UpdateToolRequest extends $pb.GeneratedMessage {
   void clearTool() => $_clearField(1);
   @$pb.TagNumber(1)
   Tool ensureTool() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $1.FieldMask get updateMask => $_getN(1);
+  @$pb.TagNumber(2)
+  set updateMask($1.FieldMask value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasUpdateMask() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearUpdateMask() => $_clearField(2);
+  @$pb.TagNumber(2)
+  $1.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateToolResponse extends $pb.GeneratedMessage {
@@ -1499,6 +1531,8 @@ class ToolServiceApi {
 
   ToolServiceApi(this._client);
 
+  /// 도구 목록. 기본은 켜진(enabled) 도구만 — 화면의 도구 고르기용. 꺼진 도구까지 받으려면 include_disabled를 켠다
+  /// (도구 관리 화면, 실행 이력·클립 출처의 도구 이름 찾기).
   $async.Future<ListToolsResponse> listTools(
           $pb.ClientContext? ctx, ListToolsRequest request) =>
       _client.invoke<ListToolsResponse>(
@@ -1508,7 +1542,9 @@ class ToolServiceApi {
       _client.invoke<CreateToolResponse>(
           ctx, 'ToolService', 'CreateTool', request, CreateToolResponse());
 
-  /// 도구 전체 교체. tool.tool_id 필수
+  /// 도구를 고친다(update_mask에 든 칸만 — 다른 수정 RPC와 같다). tool.tool_id 필수. 켜고 끄기는 update_mask "enabled".
+  /// 고칠 수 있는 칸: name, endpoint, remote_model_name, tool_version, pattern, payload_kind, supported_input_kinds, unit,
+  /// dispatch, enabled.
   $async.Future<UpdateToolResponse> updateTool(
           $pb.ClientContext? ctx, UpdateToolRequest request) =>
       _client.invoke<UpdateToolResponse>(
@@ -1520,10 +1556,13 @@ class ToolServiceApi {
       _client.invoke<DeleteToolResponse>(
           ctx, 'ToolService', 'DeleteTool', request, DeleteToolResponse());
 
-  /// trigger는 MANUAL(Clip 하나 재계산 또는 Asset에 대한 요청)·AUTO_TAGGING(Timeline 전체)만 받는다.
-  /// ASSET_UPLOADED는 서버(적재기)가 등록 시점에 스스로 만든다. 내장 도구(endpoint가 빈 도구, 예: audio-extract)는
-  /// 서버가 바로 실행하고, 외부 도구는 디스패처가 생길 때까지 queued로 남는다. 결과는 GetRun(wait_for_terminal)의
-  /// output_asset_ids.
+  /// 도구 하나를 대상 하나에 돌려 달라고 요청한다. 실행 한 건을 만들어 대기열에 넣고 바로 돌려준다(status = QUEUED) —
+  /// 끝날 때까지 기다리지 않는다. 결과는 GetRun(wait_for_terminal)으로 받고, 도구가 만든 파일은 output_asset_ids에 있다.
+  ///   tool_id: 돌릴 도구(ListTools). target: 무엇에 돌릴지 — asset_id·clip_id·job_id 중 하나.
+  ///   trigger: MANUAL(사람이 한 건을 돌림 — 대상은 Asset 하나 또는 Clip 하나), AUTO_TAGGING(작업의 타임라인 전체 — 대상은 작업).
+  ///            ASSET_UPLOADED는 보내지 않는다 — 파일을 올릴 때 서버가 스스로 만드는 후처리 실행의 표시다(보내면 InvalidArgument).
+  /// 내장 도구(audio-extract·asset-postprocess)는 서버 안 워커가, 외부 도구(STT·포즈)는 서버가 그 도구의 서버에 보내 실행한다.
+  /// 어느 쪽이든 부르는 방법은 같다.
   $async.Future<StartRunResponse> startRun(
           $pb.ClientContext? ctx, StartRunRequest request) =>
       _client.invoke<StartRunResponse>(

@@ -4,29 +4,34 @@ import '../datasources/generated/mediatag/compose/v1/compose.pb.dart'
     as compose_pb;
 import 'proto_id.dart';
 
-compose_pb.ListLabelVocabsRequest buildListLabelVocabsRequest() {
-  return compose_pb.ListLabelVocabsRequest();
+compose_pb.ListLabelsRequest buildListLabelsRequest() {
+  return compose_pb.ListLabelsRequest();
 }
 
-List<LabelSection> labelSectionsFrom(List<compose_pb.LabelVocab> vocabs) {
-  final sections = <LabelSection>[];
-  for (final vocab in vocabs) {
-    if (vocab.key.isEmpty) {
+List<LabelNode> labelNodesFrom(List<compose_pb.LabelValue> labels) {
+  final flat = <LabelNode>[];
+  final ids = <String>{};
+  for (final value in labels) {
+    final node = labelNodeFrom(value);
+    if (node == null) {
       continue;
     }
-    final chips = <LabelChip>[];
-    for (final value in vocab.values) {
-      final chip = labelChipFrom(value);
-      if (chip != null) {
-        chips.add(chip);
-      }
-    }
-    sections.add(LabelSection(vocabKey: vocab.key, chips: chips));
+    flat.add(node);
+    ids.add(node.valueId);
   }
-  return sections;
+  final childrenByParent = <String, List<LabelNode>>{};
+  final roots = <LabelNode>[];
+  for (final node in flat) {
+    if (node.parentValueId.isEmpty || !ids.contains(node.parentValueId)) {
+      roots.add(node);
+    } else {
+      childrenByParent.putIfAbsent(node.parentValueId, () => []).add(node);
+    }
+  }
+  return [for (final root in roots) _withChildren(root, childrenByParent)];
 }
 
-LabelChip? labelChipFrom(compose_pb.LabelValue value) {
+LabelNode? labelNodeFrom(compose_pb.LabelValue value) {
   if (value.deprecated) {
     return null;
   }
@@ -34,18 +39,44 @@ LabelChip? labelChipFrom(compose_pb.LabelValue value) {
   if (valueId.isEmpty) {
     return null;
   }
-  return LabelChip(valueId: valueId, name: value.name);
+  return LabelNode(
+    valueId: valueId,
+    name: value.name,
+    parentValueId: idText(value.parentValueId),
+  );
+}
+
+LabelNode _withChildren(
+  LabelNode node,
+  Map<String, List<LabelNode>> childrenByParent,
+) {
+  final children = childrenByParent[node.valueId] ?? const <LabelNode>[];
+  return LabelNode(
+    valueId: node.valueId,
+    name: node.name,
+    parentValueId: node.parentValueId,
+    children: [
+      for (final child in children) _withChildren(child, childrenByParent),
+    ],
+  );
 }
 
 compose_pb.CreateLabelValueRequest buildCreateLabelValueRequest({
-  required String vocabKey,
   required String name,
+  String parentValueId = '',
 }) {
   final trimmed = name.trim();
-  if (vocabKey.isEmpty || trimmed.isEmpty) {
+  if (trimmed.isEmpty) {
     throw const LabelException('라벨 이름을 입력하세요.');
   }
-  return compose_pb.CreateLabelValueRequest(vocabKey: vocabKey, name: trimmed);
+  final parent = protoIdOrNull(parentValueId);
+  if (parent == null) {
+    return compose_pb.CreateLabelValueRequest(name: trimmed);
+  }
+  return compose_pb.CreateLabelValueRequest(
+    name: trimmed,
+    parentValueId: parent,
+  );
 }
 
 compose_pb.UpdateLabelValueRequest buildRenameLabelValueRequest({

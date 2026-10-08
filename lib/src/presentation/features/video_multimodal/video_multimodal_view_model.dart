@@ -196,7 +196,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool _isLoadingLabels = false;
   String _labelMessage = '';
   int _labelEpoch = 0;
-  List<LabelSection> _labelSections = const [];
+  List<LabelNode> _labelRoots = const [];
   bool _isVideoPlaying = false;
   bool _wantsPlayback = false;
   int _playbackToken = 0;
@@ -533,7 +533,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       (_inferencePhase == InferencePanelPhase.queued ||
           _inferencePhase == InferencePanelPhase.running);
   List<AskTurn> get askTurns => List.unmodifiable(_askTurns);
-  List<LabelSection> get labelSections => List.unmodifiable(_labelSections);
+  List<LabelNode> get labelRoots => List.unmodifiable(_labelRoots);
   List<SampleLayerSummary> get sampleLayers => List.unmodifiable(_sampleLayers);
 
   TimelineSampleClip? get selectedClip {
@@ -747,31 +747,25 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return updateTimelineClip(clipId: _selectedClipId, labelValueId: '0');
   }
 
-  String _labelName(String valueId) {
-    for (final section in _labelSections) {
-      for (final chip in section.chips) {
-        if (chip.valueId == valueId) {
-          return chip.name;
-        }
-      }
-    }
-    return '';
-  }
+  String _labelName(String valueId) => labelNameFrom(_labelRoots, valueId);
 
-  Future<bool> didAddLabelValue(String vocabKey, String name) async {
+  Future<bool> didAddLabelValue({
+    required String name,
+    String parentValueId = '',
+  }) async {
     final trimmed = name.trim();
-    if (vocabKey.isEmpty || trimmed.isEmpty) {
+    if (trimmed.isEmpty) {
       return false;
     }
     try {
-      final chip = await _labelUseCase.createValue(
-        vocabKey: vocabKey,
+      final node = await _labelUseCase.createValue(
         name: trimmed,
+        parentValueId: parentValueId,
       );
       if (_isClosed) {
         return false;
       }
-      _putChip(vocabKey, chip);
+      _labelRoots = insertLabelNode(_labelRoots, node);
       _labelMessage = '';
       notifyListeners();
       return true;
@@ -786,23 +780,22 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   Future<void> didRenameLabelValue({
-    required String vocabKey,
     required String valueId,
     required String name,
   }) async {
     final trimmed = name.trim();
-    if (vocabKey.isEmpty || valueId.isEmpty || trimmed.isEmpty) {
+    if (valueId.isEmpty || trimmed.isEmpty) {
       return;
     }
     try {
-      final chip = await _labelUseCase.renameValue(
+      final node = await _labelUseCase.renameValue(
         valueId: valueId,
         name: trimmed,
       );
       if (_isClosed) {
         return;
       }
-      _putChip(vocabKey, chip);
+      _labelRoots = renameLabelNode(_labelRoots, node.valueId, node.name);
       _labelMessage = '';
       notifyListeners();
     } on LabelException catch (error) {
@@ -814,11 +807,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> didDeprecateLabelValue({
-    required String vocabKey,
-    required String valueId,
-  }) async {
-    if (vocabKey.isEmpty || valueId.isEmpty) {
+  Future<void> didDeprecateLabelValue({required String valueId}) async {
+    if (valueId.isEmpty) {
       return;
     }
     try {
@@ -826,7 +816,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       if (_isClosed) {
         return;
       }
-      _removeChip(vocabKey, valueId);
+      _labelRoots = removeLabelNode(_labelRoots, valueId);
       if (_selectedLabelValueId == valueId) {
         _selectedLabelValueId = '';
       }
@@ -847,11 +837,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _labelMessage = '';
     notifyListeners();
     try {
-      final sections = await _labelUseCase.listSections();
+      final roots = await _labelUseCase.listLabels();
       if (epoch != _labelEpoch || _isClosed) {
         return;
       }
-      _labelSections = sections;
+      _labelRoots = roots;
     } on LabelException catch (error) {
       if (epoch != _labelEpoch || _isClosed) {
         return;
@@ -868,52 +858,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         notifyListeners();
       }
     }
-  }
-
-  void _putChip(String vocabKey, LabelChip chip) {
-    _labelSections = [
-      for (final section in _labelSections)
-        if (section.vocabKey != vocabKey)
-          section
-        else
-          LabelSection(
-            vocabKey: section.vocabKey,
-            chips: _chipsWith(section.chips, chip),
-          ),
-    ];
-  }
-
-  List<LabelChip> _chipsWith(List<LabelChip> chips, LabelChip chip) {
-    var found = false;
-    final next = <LabelChip>[];
-    for (final current in chips) {
-      if (current.valueId == chip.valueId) {
-        next.add(chip);
-        found = true;
-      } else {
-        next.add(current);
-      }
-    }
-    if (!found) {
-      next.add(chip);
-    }
-    return next;
-  }
-
-  void _removeChip(String vocabKey, String valueId) {
-    _labelSections = [
-      for (final section in _labelSections)
-        if (section.vocabKey != vocabKey)
-          section
-        else
-          LabelSection(
-            vocabKey: section.vocabKey,
-            chips: [
-              for (final chip in section.chips)
-                if (chip.valueId != valueId) chip,
-            ],
-          ),
-    ];
   }
 
   Future<List<InferenceTool>> loadInferenceTools() {

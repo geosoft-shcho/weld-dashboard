@@ -85,16 +85,8 @@ void main() {
     expect(request.clip.hasKind(), isFalse);
     expect(request.clip.hasSource(), isFalse);
     expect(request.clip.hasLabelValueId(), isFalse);
+    expect(request.clip.hasProvenance(), isFalse);
     expect(request.clip.description, 'clip.mp4 ↔ take-b.mp4');
-    expect(request.clip.provenance.inputClipIds.map((id) => id.toString()), [
-      '1',
-      '2',
-    ]);
-    expect(request.clip.provenance.hasConfidence(), isFalse);
-    expect(request.clip.provenance.reviewed, isFalse);
-    expect(request.clip.provenance.runId.toString(), '0');
-    expect(request.clip.provenance.toolId.toString(), '0');
-    expect(request.clip.provenance.toolVersion, isEmpty);
   });
 
   test('create track leaves id and visibility for the server', () {
@@ -1067,18 +1059,18 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
 
 class _IdleLabelRepository implements LabelRepository {
   @override
-  Future<List<LabelSection>> listSections() async => const [];
+  Future<List<LabelNode>> listLabels() async => const [];
 
   @override
-  Future<LabelChip> createValue({
-    required String vocabKey,
+  Future<LabelNode> createValue({
     required String name,
+    String parentValueId = '',
   }) {
     throw StateError('unused');
   }
 
   @override
-  Future<LabelChip> renameValue({
+  Future<LabelNode> renameValue({
     required String valueId,
     required String name,
   }) {

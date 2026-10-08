@@ -97,27 +97,21 @@ abstract final class MediaComposeService {
     mediatagcomposev1compose.DeleteClipResponse.new,
   );
 }
-/// 통제 어휘(어휘 = 분류 축, 값 = 그 축의 선택지). 모든 공사가 같이 쓴다. 값은 지우지 않고
-/// deprecated로 숨긴다.
+/// 라벨(통제 어휘). 모든 공사가 같이 쓴다. 지우지 않고 deprecated로 숨긴다.
 abstract final class LabelService {
   /// Fully-qualified name of the LabelService service.
   static const name = 'mediatag.compose.v1.LabelService';
 
-  /// 전체 어휘와 값. 어휘 수가 적어 페이지를 두지 않는다.
-  static const listLabelVocabs = connect.Spec(
-    '/$name/ListLabelVocabs',
+  /// 라벨 전부. 라벨은 한 그루의 트리다: 상위가 없는 것(parent_value_id = 0)이 맨 위 분류(루트)이고 그 아래로 값이 달린다
+  /// (에셋 트리와 같은 모양). 평평한 목록으로 주니 parent_value_id로 엮는다. 수가 적어 페이지를 두지 않는다.
+  static const listLabels = connect.Spec(
+    '/$name/ListLabels',
     connect.StreamType.unary,
-    mediatagcomposev1compose.ListLabelVocabsRequest.new,
-    mediatagcomposev1compose.ListLabelVocabsResponse.new,
+    mediatagcomposev1compose.ListLabelsRequest.new,
+    mediatagcomposev1compose.ListLabelsResponse.new,
   );
 
-  static const createLabelVocab = connect.Spec(
-    '/$name/CreateLabelVocab',
-    connect.StreamType.unary,
-    mediatagcomposev1compose.CreateLabelVocabRequest.new,
-    mediatagcomposev1compose.CreateLabelVocabResponse.new,
-  );
-
+  /// 라벨을 만든다. name 필수. parent_value_id를 주면 그 아래에, 안 주면 맨 위 분류(루트)로 만든다.
   static const createLabelValue = connect.Spec(
     '/$name/CreateLabelValue',
     connect.StreamType.unary,

@@ -68,6 +68,8 @@ class ClipKind extends $pb.ProtobufEnum {
       ClipKind._(10, _omitEnumNames ? '' : 'CLIP_KIND_TAG');
   static const ClipKind CLIP_KIND_REGION =
       ClipKind._(11, _omitEnumNames ? '' : 'CLIP_KIND_REGION');
+  static const ClipKind CLIP_KIND_RELATION =
+      ClipKind._(12, _omitEnumNames ? '' : 'CLIP_KIND_RELATION');
 
   static const $core.List<ClipKind> values = <ClipKind>[
     CLIP_KIND_UNSPECIFIED,
@@ -82,10 +84,11 @@ class ClipKind extends $pb.ProtobufEnum {
     CLIP_KIND_FILE,
     CLIP_KIND_TAG,
     CLIP_KIND_REGION,
+    CLIP_KIND_RELATION,
   ];
 
   static final $core.List<ClipKind?> _byValue =
-      $pb.ProtobufEnum.$_initByValueList(values, 11);
+      $pb.ProtobufEnum.$_initByValueList(values, 12);
   static ClipKind? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 

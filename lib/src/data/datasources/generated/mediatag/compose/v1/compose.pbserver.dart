@@ -111,10 +111,8 @@ abstract class MediaComposeServiceBase extends $pb.GeneratedService {
 }
 
 abstract class LabelServiceBase extends $pb.GeneratedService {
-  $async.Future<$4.ListLabelVocabsResponse> listLabelVocabs(
-      $pb.ServerContext ctx, $4.ListLabelVocabsRequest request);
-  $async.Future<$4.CreateLabelVocabResponse> createLabelVocab(
-      $pb.ServerContext ctx, $4.CreateLabelVocabRequest request);
+  $async.Future<$4.ListLabelsResponse> listLabels(
+      $pb.ServerContext ctx, $4.ListLabelsRequest request);
   $async.Future<$4.CreateLabelValueResponse> createLabelValue(
       $pb.ServerContext ctx, $4.CreateLabelValueRequest request);
   $async.Future<$4.UpdateLabelValueResponse> updateLabelValue(
@@ -122,10 +120,8 @@ abstract class LabelServiceBase extends $pb.GeneratedService {
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
-      case 'ListLabelVocabs':
-        return $4.ListLabelVocabsRequest();
-      case 'CreateLabelVocab':
-        return $4.CreateLabelVocabRequest();
+      case 'ListLabels':
+        return $4.ListLabelsRequest();
       case 'CreateLabelValue':
         return $4.CreateLabelValueRequest();
       case 'UpdateLabelValue':
@@ -138,10 +134,8 @@ abstract class LabelServiceBase extends $pb.GeneratedService {
   $async.Future<$pb.GeneratedMessage> handleCall($pb.ServerContext ctx,
       $core.String methodName, $pb.GeneratedMessage request) {
     switch (methodName) {
-      case 'ListLabelVocabs':
-        return listLabelVocabs(ctx, request as $4.ListLabelVocabsRequest);
-      case 'CreateLabelVocab':
-        return createLabelVocab(ctx, request as $4.CreateLabelVocabRequest);
+      case 'ListLabels':
+        return listLabels(ctx, request as $4.ListLabelsRequest);
       case 'CreateLabelValue':
         return createLabelValue(ctx, request as $4.CreateLabelValueRequest);
       case 'UpdateLabelValue':

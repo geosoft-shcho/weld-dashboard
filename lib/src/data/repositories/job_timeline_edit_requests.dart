@@ -86,10 +86,6 @@ compose_pb.CreateClipRequest buildCreateClipRequest({
   if (description.isNotEmpty) {
     clip.description = description;
   }
-  final inputs = protoIds(inputClipIds);
-  if (inputs.isNotEmpty) {
-    clip.provenance = compose_pb.ClipProvenance(inputClipIds: inputs);
-  }
   return compose_pb.CreateClipRequest(clip: clip);
 }
 

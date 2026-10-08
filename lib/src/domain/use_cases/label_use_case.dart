@@ -6,22 +6,22 @@ class LabelUseCase {
 
   final LabelRepository _repository;
 
-  Future<List<LabelSection>> listSections() {
-    return _repository.listSections();
+  Future<List<LabelNode>> listLabels() {
+    return _repository.listLabels();
   }
 
-  Future<LabelChip> createValue({
-    required String vocabKey,
+  Future<LabelNode> createValue({
     required String name,
+    String parentValueId = '',
   }) {
     final trimmed = name.trim();
-    if (vocabKey.isEmpty || trimmed.isEmpty) {
+    if (trimmed.isEmpty) {
       throw const LabelException('라벨 이름을 입력하세요.');
     }
-    return _repository.createValue(vocabKey: vocabKey, name: trimmed);
+    return _repository.createValue(name: trimmed, parentValueId: parentValueId);
   }
 
-  Future<LabelChip> renameValue({
+  Future<LabelNode> renameValue({
     required String valueId,
     required String name,
   }) {

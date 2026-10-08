@@ -14,6 +14,7 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
+import '../../../google/protobuf/field_mask.pbjson.dart' as $1;
 import '../../../google/protobuf/timestamp.pbjson.dart' as $0;
 
 @$core.Deprecated('Use toolPatternDescriptor instead')
@@ -259,11 +260,15 @@ final $typed_data.Uint8List runTargetDescriptor = $convert.base64Decode(
 @$core.Deprecated('Use listToolsRequestDescriptor instead')
 const ListToolsRequest$json = {
   '1': 'ListToolsRequest',
+  '2': [
+    {'1': 'include_disabled', '3': 1, '4': 1, '5': 8, '10': 'includeDisabled'},
+  ],
 };
 
 /// Descriptor for `ListToolsRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List listToolsRequestDescriptor =
-    $convert.base64Decode('ChBMaXN0VG9vbHNSZXF1ZXN0');
+final $typed_data.Uint8List listToolsRequestDescriptor = $convert.base64Decode(
+    'ChBMaXN0VG9vbHNSZXF1ZXN0EikKEGluY2x1ZGVfZGlzYWJsZWQYASABKAhSD2luY2x1ZGVEaX'
+    'NhYmxlZA==');
 
 @$core.Deprecated('Use listToolsResponseDescriptor instead')
 const ListToolsResponse$json = {
@@ -337,13 +342,22 @@ const UpdateToolRequest$json = {
       '6': '.mediatag.tool.v1.Tool',
       '10': 'tool'
     },
+    {
+      '1': 'update_mask',
+      '3': 2,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.FieldMask',
+      '10': 'updateMask'
+    },
   ],
 };
 
 /// Descriptor for `UpdateToolRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List updateToolRequestDescriptor = $convert.base64Decode(
     'ChFVcGRhdGVUb29sUmVxdWVzdBIqCgR0b29sGAEgASgLMhYubWVkaWF0YWcudG9vbC52MS5Ub2'
-    '9sUgR0b29s');
+    '9sUgR0b29sEjsKC3VwZGF0ZV9tYXNrGAIgASgLMhouZ29vZ2xlLnByb3RvYnVmLkZpZWxkTWFz'
+    'a1IKdXBkYXRlTWFzaw==');
 
 @$core.Deprecated('Use updateToolResponseDescriptor instead')
 const UpdateToolResponse$json = {
@@ -611,6 +625,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.tool.v1.CreateToolRequest': CreateToolRequest$json,
   '.mediatag.tool.v1.CreateToolResponse': CreateToolResponse$json,
   '.mediatag.tool.v1.UpdateToolRequest': UpdateToolRequest$json,
+  '.google.protobuf.FieldMask': $1.FieldMask$json,
   '.mediatag.tool.v1.UpdateToolResponse': UpdateToolResponse$json,
   '.mediatag.tool.v1.DeleteToolRequest': DeleteToolRequest$json,
   '.mediatag.tool.v1.DeleteToolResponse': DeleteToolResponse$json,

@@ -533,6 +533,9 @@ const UploadFormat$json = {
     },
     {'1': 'steps', '3': 7, '4': 3, '5': 9, '10': 'steps'},
   ],
+  '9': [
+    {'1': 8, '2': 9},
+  ],
 };
 
 /// Descriptor for `UploadFormat`. Decode as a `google.protobuf.DescriptorProto`.
@@ -541,7 +544,7 @@ final $typed_data.Uint8List uploadFormatDescriptor = $convert.base64Decode(
     'wSHgoKZXh0ZW5zaW9ucxgDIAMoCVIKZXh0ZW5zaW9ucxISCgRydWxlGAQgASgJUgRydWxlEjAK'
     'BGtpbmQYBSABKA4yHC5tZWRpYXRhZy5hc3NldC52MS5Bc3NldEtpbmRSBGtpbmQSMAoUdGltZV'
     '9vcmlnaW5fcmVxdWlyZWQYBiABKAhSEnRpbWVPcmlnaW5SZXF1aXJlZBIUCgVzdGVwcxgHIAMo'
-    'CVIFc3RlcHM=');
+    'CVIFc3RlcHNKBAgIEAk=');
 
 const $core.Map<$core.String, $core.dynamic> AssetServiceBase$json = {
   '1': 'AssetService',

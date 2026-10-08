@@ -206,5 +206,6 @@ message UploadFormat {
   string rule = 4;                 // 내용으로 판별하는 기준
   AssetKind kind = 5;
   bool time_origin_required = 6;   // metadata.timeOrigin(시간 0의 절대 시각)이 필요한가
-  repeated string steps = 7;       // 올린 뒤 도는 후처리: properties, duration, normalize, timeline
+  repeated string steps = 7;       // 올린 뒤 도는 후처리: properties, duration, normalize, timeline, report
+  reserved 8; // 옛 processing_profile — 성적서인지는 올리는 사람이 고르지 않고 글자 인식 결과로 정한다
 }

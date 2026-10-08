@@ -243,12 +243,14 @@ class SectionSummary extends $pb.GeneratedMessage {
     $core.int? pageStart,
     $core.int? pageEnd,
     $core.String? overallResult,
+    $fixnum.Int64? assetId,
   }) {
     final result = create();
     if (kind != null) result.kind = kind;
     if (pageStart != null) result.pageStart = pageStart;
     if (pageEnd != null) result.pageEnd = pageEnd;
     if (overallResult != null) result.overallResult = overallResult;
+    if (assetId != null) result.assetId = assetId;
     return result;
   }
 
@@ -273,6 +275,7 @@ class SectionSummary extends $pb.GeneratedMessage {
     ..a<$core.int>(2, _omitFieldNames ? '' : 'pageStart', $pb.PbFieldType.O3)
     ..a<$core.int>(3, _omitFieldNames ? '' : 'pageEnd', $pb.PbFieldType.O3)
     ..aOS(4, _omitFieldNames ? '' : 'overallResult')
+    ..aInt64(5, _omitFieldNames ? '' : 'assetId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -331,6 +334,17 @@ class SectionSummary extends $pb.GeneratedMessage {
   $core.bool hasOverallResult() => $_has(3);
   @$pb.TagNumber(4)
   void clearOverallResult() => $_clearField(4);
+
+  /// 이 문서(양식 한 건)만 잘라 낸 PDF Asset. 쪽 번호는 원본 기준 그대로다. 문서 하나를 따로 작업에 붙일 때
+  /// AssetService.AttachAsset에 이 값을 준다. 결재 구간처럼 문서가 아닌 섹션은 0.
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get assetId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set assetId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasAssetId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearAssetId() => $_clearField(5);
 }
 
 class Section extends $pb.GeneratedMessage {
@@ -339,12 +353,14 @@ class Section extends $pb.GeneratedMessage {
     $core.int? pageStart,
     $core.int? pageEnd,
     $1.Struct? fields,
+    $fixnum.Int64? assetId,
   }) {
     final result = create();
     if (kind != null) result.kind = kind;
     if (pageStart != null) result.pageStart = pageStart;
     if (pageEnd != null) result.pageEnd = pageEnd;
     if (fields != null) result.fields = fields;
+    if (assetId != null) result.assetId = assetId;
     return result;
   }
 
@@ -370,6 +386,7 @@ class Section extends $pb.GeneratedMessage {
     ..a<$core.int>(3, _omitFieldNames ? '' : 'pageEnd', $pb.PbFieldType.O3)
     ..aOM<$1.Struct>(4, _omitFieldNames ? '' : 'fields',
         subBuilder: $1.Struct.create)
+    ..aInt64(5, _omitFieldNames ? '' : 'assetId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -432,6 +449,15 @@ class Section extends $pb.GeneratedMessage {
   void clearFields() => $_clearField(4);
   @$pb.TagNumber(4)
   $1.Struct ensureFields() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get assetId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set assetId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasAssetId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearAssetId() => $_clearField(5);
 }
 
 class ListReportSetsRequest extends $pb.GeneratedMessage {

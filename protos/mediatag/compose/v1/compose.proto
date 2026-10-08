@@ -18,6 +18,9 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-08  geosoft-Server: 라벨을 한 그루의 트리로 — 어휘(LabelVocab)를 없애고 상위가 없는 라벨이 맨 위 분류. ListLabelVocabs·CreateLabelVocab →
+//                ListLabels, LabelValue.vocab_key·LabelRef.vocab_key 삭제, LabelValue.parent_value_id
+//   2026-10-08  geosoft-Server: 클립 사이의 관계 — CLIP_KIND_RELATION·Clip.relation(관계 종류는 라벨 값). ClipProvenance.input_clip_ids 삭제
 //   2026-10-07  geosoft-Server: track_id·clip_id·value_id·asset_id·run_id·tool_id를 숫자(int64)로 — ID는 모두 DB가 매기는 번호
 //   2026-10-07  geosoft-Server: job_id·pass_id를 숫자(int64)로(다른 ID는 그대로 문자열)
 //   2026-09-29  geosoft-Server: tacit-tag ProjectService·LayerDocumentService를 대체해 최초 정의
@@ -72,14 +75,17 @@ service MediaComposeService {
   // 오류 조건·자동 첨부는 CreateClip과 같다. 검수는 update_mask "provenance.reviewed".
   rpc UpdateClip(UpdateClipRequest) returns (UpdateClipResponse);
   rpc DeleteClip(DeleteClipRequest) returns (DeleteClipResponse);
+
+  // 클립 사이의 관계(릴레이션)도 클립이다: CreateClip에 kind = RELATION, relation(from_clip_id·to_clip_id), 구간을 준다.
+  // 관계 종류는 태그처럼 라벨 값(label_value_id)으로 고른다. 지우기·고치기도 DeleteClip·UpdateClip 그대로다.
 }
 
-// 통제 어휘(어휘 = 분류 축, 값 = 그 축의 선택지). 모든 공사가 같이 쓴다. 값은 지우지 않고
-// deprecated로 숨긴다.
+// 라벨(통제 어휘). 모든 공사가 같이 쓴다. 지우지 않고 deprecated로 숨긴다.
 service LabelService {
-  // 전체 어휘와 값. 어휘 수가 적어 페이지를 두지 않는다.
-  rpc ListLabelVocabs(ListLabelVocabsRequest) returns (ListLabelVocabsResponse);
-  rpc CreateLabelVocab(CreateLabelVocabRequest) returns (CreateLabelVocabResponse);
+  // 라벨 전부. 라벨은 한 그루의 트리다: 상위가 없는 것(parent_value_id = 0)이 맨 위 분류(루트)이고 그 아래로 값이 달린다
+  // (에셋 트리와 같은 모양). 평평한 목록으로 주니 parent_value_id로 엮는다. 수가 적어 페이지를 두지 않는다.
+  rpc ListLabels(ListLabelsRequest) returns (ListLabelsResponse);
+  // 라벨을 만든다. name 필수. parent_value_id를 주면 그 아래에, 안 주면 맨 위 분류(루트)로 만든다.
   rpc CreateLabelValue(CreateLabelValueRequest) returns (CreateLabelValueResponse);
   // name·deprecated·description만 바꿀 수 있다. 이름을 바꿔도 Clip은 value_id로
   // 가리키므로 따로 갱신할 게 없다.
@@ -108,10 +114,12 @@ enum ClipKind {
   CLIP_KIND_FILE = 9;   // 렌더러 없는 첨부(다운로드만)
   CLIP_KIND_TAG = 10;   // 분류 판단. source 없음, label 필수
   CLIP_KIND_REGION = 11; // 영상 속 영역. source = region Asset(프레임별 박스)
+  CLIP_KIND_RELATION = 12; // 클립 사이의 관계. source 없음, relation 필수, label은 관계 종류(선택)
 }
 
 message LabelRef {
-  string vocab_key = 1;
+  reserved 1;      // 옛 vocab_key
+  reserved "vocab_key";
   int64 value_id = 2;
 }
 
@@ -144,12 +152,22 @@ message Clip {
   optional int64 timeline_start_ns = 4;
   optional int64 timeline_end_ns = 5;
   ClipSource source = 6;    // kind=tag면 비어 있음
-  int64 label_value_id = 7; // kind=tag면 필수
+  int64 label_value_id = 7; // kind=tag면 필수. kind=relation이면 관계 종류(선택). 그 밖의 kind도 라벨을 붙일 수 있다
   string description = 8;
   ClipProvenance provenance = 9; // 있으면 도구가 만든 것(confidence가 있으면 검수 필요한 주장), 없으면 사람이 놓은 사실
   google.protobuf.Timestamp embedded_at = 10; // 검색 색인 반영 시각. 현재 서버는 채우지 않음
   google.protobuf.Timestamp created_at = 11;
   google.protobuf.Timestamp updated_at = 12;
+  ClipRelation relation = 13; // kind=relation일 때만(필수). 그 밖의 kind에는 넣지 않는다
+}
+
+// 관계 클립이 잇는 두 클립. "이 구간(timeline_start_ns~end_ns)에서 from이 to와 관련 있다"는 뜻이다 — 구간은 관계 클립이
+// 스스로 갖는다(from 클립의 구간 전체면 그 값을 그대로 넣는다). 방향이 있고, 대등한 관계는 화면이 방향을 무시한다.
+// 두 클립은 관계 클립과 같은 작업의 것이어야 하고 서로 달라야 한다. 잇는 클립을 지우면 관계 클립도 지워진다.
+// 관계 종류는 Clip.label_value_id(라벨, 선택) — 태그와 같은 라벨 트리를 쓴다. 관계 종류용 맨 위 분류를 LabelService로 하나 만든다.
+message ClipRelation {
+  int64 from_clip_id = 1;     // 만든 뒤에는 못 바꾼다
+  int64 to_clip_id = 2;       // 만든 뒤에는 못 바꾼다
 }
 
 // 가리키는 Asset과 그 안의 범위. start/end·locator가 모두 비면 Asset 전체.
@@ -168,7 +186,8 @@ message ClipProvenance {
   int64 run_id = 3;          // 만든 도구 실행 1건
   int64 tool_id = 4;
   string tool_version = 5;
-  repeated int64 input_clip_ids = 6; // 근거로 삼은 다른 Clip. 지금은 늘 비어 있다(오토태깅을 만들 때 채운다)
+  reserved 6; // 옛 input_clip_ids — 저장한 적이 없는 칸이다. 클립끼리 잇는 것은 관계 클립(kind=relation, Clip.relation)
+  reserved "input_clip_ids";
 }
 
 message GetTimelineRequest {
@@ -274,43 +293,33 @@ message DeleteClipRequest {
 
 message DeleteClipResponse {}
 
-// ===== 라벨 어휘 =====
+// ===== 라벨 =====
 
-message LabelVocab {
-  string key = 1;               // 어휘 이름(예: process_stage, speaker). 만든 사람이 정한다
-  string parent_vocab_key = 2;  // 선택. 이 축이 세분화하는 상위 축
-  int64 parent_value_id = 3;   // 선택. 그 상위 축의 어느 값을 세분화하는지
-  repeated LabelValue values = 4;
-}
-
+// 라벨 하나. 맨 위 분류(루트)도 그 아래 값도 같은 모양이다. 찾을 때는 value_id로 찾는다 — 이름은 사람이 보는 값이다.
 message LabelValue {
   int64 value_id = 1;          // 서버 발급
-  string vocab_key = 2;
+  reserved 2;                   // 옛 vocab_key — 어휘 표를 없앴다. 맨 위 분류는 상위가 없는 라벨이다
+  reserved "vocab_key";
   string name = 3;
   bool deprecated = 4;          // true면 표시 제외
   string description = 5;
+  int64 parent_value_id = 6;    // 상위 라벨. 0이면 맨 위 분류(루트). 만든 뒤에는 못 바꾼다
 }
 
-message ListLabelVocabsRequest {
+message ListLabelsRequest {
   bool include_deprecated = 1;
 }
 
-message ListLabelVocabsResponse {
-  repeated LabelVocab vocabs = 1;
-}
-
-message CreateLabelVocabRequest {
-  LabelVocab vocab = 1;         // values는 무시
-}
-
-message CreateLabelVocabResponse {
-  LabelVocab vocab = 1;
+message ListLabelsResponse {
+  repeated LabelValue labels = 1; // value_id 순
 }
 
 message CreateLabelValueRequest {
-  string vocab_key = 1;
+  reserved 1;                   // 옛 vocab_key
+  reserved "vocab_key";
   string name = 2;
   string description = 3;
+  int64 parent_value_id = 4;    // 선택. 그 라벨 아래에 단다. 비우면 맨 위 분류(루트)
 }
 
 message CreateLabelValueResponse {

@@ -1,4 +1,5 @@
 import 'package:fixnum/fixnum.dart';
+import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/data/datasources/generated/mediatag/compose/v1/compose.pb.dart';
@@ -25,6 +26,7 @@ import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachment
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
+import 'package:weld_dashboard/src/presentation/core/themes/app_theme.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_side_panel.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_studio_palette.dart';
@@ -33,27 +35,33 @@ import 'package:weld_dashboard/src/presentation/features/video_multimodal/widget
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('list request omits include_deprecated and drops hidden values', () {
-    final request = buildListLabelVocabsRequest();
+  test('list request omits include_deprecated and builds the label tree', () {
+    final request = buildListLabelsRequest();
     expect(request.hasIncludeDeprecated(), isFalse);
 
-    final sections = labelSectionsFrom([
-      LabelVocab(
-        key: 'speaker',
-        values: [
-          LabelValue(valueId: Int64(4), name: 'speaker_1'),
-          LabelValue(valueId: Int64(5), name: 'retired', deprecated: true),
-          LabelValue(name: 'missing'),
-        ],
+    final roots = labelNodesFrom([
+      LabelValue(valueId: Int64(1), name: 'speaker'),
+      LabelValue(valueId: Int64(4), parentValueId: Int64(1), name: 'speaker_1'),
+      LabelValue(
+        valueId: Int64(5),
+        parentValueId: Int64(1),
+        name: 'retired',
+        deprecated: true,
       ),
-      LabelVocab(key: ''),
+      LabelValue(name: 'missing'),
+      LabelValue(valueId: Int64(8), parentValueId: Int64(4), name: 'speaker_1'),
+      LabelValue(valueId: Int64(9), parentValueId: Int64(99), name: 'loose'),
     ]);
 
-    expect(sections, hasLength(1));
-    expect(sections.single.vocabKey, 'speaker');
-    expect(sections.single.chips, hasLength(1));
-    expect(sections.single.chips.single.valueId, '4');
-    expect(sections.single.chips.single.name, 'speaker_1');
+    expect(roots, hasLength(2));
+    expect(roots.first.valueId, '1');
+    expect(roots.first.name, 'speaker');
+    expect(roots.first.children.single.valueId, '4');
+    expect(roots.first.children.single.name, 'speaker_1');
+    expect(roots.first.children.single.children.single.valueId, '8');
+    expect(roots.first.children.single.children.single.name, 'speaker_1');
+    expect(roots.last.valueId, '9');
+    expect(roots.last.name, 'loose');
   });
 
   test('rename mask is name and deprecate mask is deprecated', () {
@@ -70,26 +78,32 @@ void main() {
     expect(hidden.updateMask.paths, ['deprecated']);
 
     final created = buildCreateLabelValueRequest(
-      vocabKey: 'speaker',
       name: 'arc',
+      parentValueId: '1',
     );
-    expect(created.vocabKey, 'speaker');
+    expect(created.hasParentValueId(), isTrue);
+    expect(created.parentValueId.toString(), '1');
     expect(created.name, 'arc');
     expect(created.hasDescription(), isFalse);
+
+    final root = buildCreateLabelValueRequest(name: 'speaker');
+    expect(root.hasParentValueId(), isFalse);
+    expect(root.name, 'speaker');
     expect(
-      () => buildCreateLabelValueRequest(vocabKey: 'speaker', name: ' '),
+      () => buildCreateLabelValueRequest(name: ' '),
       throwsA(isA<LabelException>()),
     );
   });
 
   test('opening labels loads vocabs and keeps the chip identity', () async {
     final labels = _ScriptedLabels()
-      ..sections = const [
-        LabelSection(
-          vocabKey: 'speaker',
-          chips: [
-            LabelChip(valueId: '4', name: 'torch'),
-            LabelChip(valueId: '8', name: 'torch'),
+      ..roots = const [
+        LabelNode(
+          valueId: '1',
+          name: 'speaker',
+          children: [
+            LabelNode(valueId: '4', name: 'torch', parentValueId: '1'),
+            LabelNode(valueId: '8', name: 'torch', parentValueId: '1'),
           ],
         ),
       ];
@@ -102,8 +116,9 @@ void main() {
 
     expect(viewModel.isLabelsOpen, isTrue);
     expect(labels.listCount, 1);
-    expect(viewModel.labelSections.single.vocabKey, 'speaker');
-    expect(viewModel.labelSections.single.chips.map((chip) => chip.valueId), [
+    expect(viewModel.labelRoots.single.name, 'speaker');
+    expect(viewModel.labelRoots.single.valueId, '1');
+    expect(viewModel.labelRoots.single.children.map((node) => node.valueId), [
       '4',
       '8',
     ]);
@@ -113,32 +128,39 @@ void main() {
     expect(timeline.createClipCount, 0);
     expect(viewModel.timelineClips, isEmpty);
 
-    expect(await viewModel.didAddLabelValue('speaker', '  '), isFalse);
+    expect(await viewModel.didAddLabelValue(name: '  '), isFalse);
     expect(labels.createCount, 0);
 
-    labels.created = const LabelChip(valueId: '9', name: 'arc');
-    expect(await viewModel.didAddLabelValue('speaker', ' arc '), isTrue);
-    expect(labels.createdVocabKey, 'speaker');
+    labels.created = const LabelNode(
+      valueId: '9',
+      name: 'arc',
+      parentValueId: '1',
+    );
+    expect(
+      await viewModel.didAddLabelValue(name: ' arc ', parentValueId: '1'),
+      isTrue,
+    );
+    expect(labels.createdParentValueId, '1');
     expect(labels.createdName, 'arc');
-    expect(viewModel.labelSections.single.chips.last.valueId, '9');
+    expect(viewModel.labelRoots.single.children.last.valueId, '9');
 
-    labels.renamed = const LabelChip(valueId: '8', name: 'weld');
-    await viewModel.didRenameLabelValue(
-      vocabKey: 'speaker',
+    labels.renamed = const LabelNode(
       valueId: '8',
       name: 'weld',
+      parentValueId: '1',
     );
+    await viewModel.didRenameLabelValue(valueId: '8', name: 'weld');
     expect(labels.renamedValueId, '8');
-    expect(viewModel.labelSections.single.chips.map((chip) => chip.name), [
+    expect(viewModel.labelRoots.single.children.map((node) => node.name), [
       'torch',
       'weld',
       'arc',
     ]);
     expect(viewModel.selectedLabelValueId, '8');
 
-    await viewModel.didDeprecateLabelValue(vocabKey: 'speaker', valueId: '8');
+    await viewModel.didDeprecateLabelValue(valueId: '8');
     expect(labels.deprecatedValueId, '8');
-    expect(viewModel.labelSections.single.chips.map((chip) => chip.valueId), [
+    expect(viewModel.labelRoots.single.children.map((node) => node.valueId), [
       '4',
       '9',
     ]);
@@ -146,12 +168,15 @@ void main() {
     expect(timeline.createClipCount, 0);
   });
 
-  testWidgets('labels panel shows vocab keys from the server', (tester) async {
+  testWidgets('labels panel shows the label tree as rows', (tester) async {
     final labels = _ScriptedLabels()
-      ..sections = const [
-        LabelSection(
-          vocabKey: 'speaker',
-          chips: [LabelChip(valueId: '4', name: 'speaker_1')],
+      ..roots = const [
+        LabelNode(
+          valueId: '1',
+          name: 'speaker',
+          children: [
+            LabelNode(valueId: '4', name: 'speaker_1', parentValueId: '1'),
+          ],
         ),
       ];
     final viewModel = _viewModel(labels, _CountingTimelineRepository());
@@ -162,9 +187,12 @@ void main() {
         listenable: viewModel,
         builder: (context, _) {
           return MaterialApp(
-            home: viewModel.side == VideoMultimodalSide.none
-                ? const SizedBox.shrink()
-                : MultimodalSidePanel(viewModel: viewModel, onClose: () {}),
+            home: fluent.FluentTheme(
+              data: AppTheme.dark,
+              child: viewModel.side == VideoMultimodalSide.none
+                  ? const SizedBox.shrink()
+                  : MultimodalSidePanel(viewModel: viewModel, onClose: () {}),
+            ),
           );
         },
       ),
@@ -176,16 +204,64 @@ void main() {
     expect(find.text('오디오 구간'), findsNothing);
     expect(find.text('비디오 객체'), findsNothing);
     expect(find.text('speaker'), findsOneWidget);
-    expect(find.text('#speaker_1'), findsOneWidget);
-    expect(find.text('라벨 추가'), findsOneWidget);
+    expect(find.text('speaker_1'), findsOneWidget);
+    expect(find.text('#speaker_1'), findsNothing);
+    expect(find.text('아래에 추가'), findsNothing);
+    expect(find.text('맨 위 라벨 추가'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(ListView),
+        matching: find.text('맨 위 라벨 추가'),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(ListView),
+        matching: find.text('클립에 붙이기'),
+      ),
+      findsNothing,
+    );
+    expect(find.byIcon(Icons.edit_outlined), findsNothing);
     expect(find.text('자막 막대'), findsNothing);
     expect(
       tester
-          .widget<TextButton>(find.widgetWithText(TextButton, '클립에 붙이기'))
+          .widget<fluent.Button>(find.widgetWithText(fluent.Button, '클립에 붙이기'))
           .onPressed,
       isNull,
     );
     expect(find.text('라벨 떼기'), findsNothing);
+
+    await tester.tap(find.text('맨 위 라벨 추가'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    expect(
+      find.descendant(
+        of: find.byType(ListView),
+        matching: find.text('새 라벨 이름'),
+      ),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.text('speaker'));
+    await tester.pump();
+    expect(viewModel.selectedLabelValueId, '1');
+    expect(find.text('아래에 추가'), findsOneWidget);
+    expect(find.byIcon(Icons.edit_outlined), findsOneWidget);
+    expect(
+      tester
+          .widget<fluent.Button>(find.widgetWithText(fluent.Button, '클립에 붙이기'))
+          .onPressed,
+      isNull,
+    );
+
+    await tester.tap(find.byIcon(Icons.expand_more));
+    await tester.pump();
+    expect(find.text('speaker_1'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.chevron_right));
+    await tester.pump();
+    expect(find.text('speaker_1'), findsOneWidget);
   });
 
   test('timeline keeps a clip label id and drops zero', () {
@@ -233,12 +309,13 @@ void main() {
     expect(cleared.clip.labelValueId.toInt(), 0);
 
     final labels = _ScriptedLabels()
-      ..sections = const [
-        LabelSection(
-          vocabKey: 'speaker',
-          chips: [
-            LabelChip(valueId: '4', name: 'speaker_1'),
-            LabelChip(valueId: '8', name: 'torch'),
+      ..roots = const [
+        LabelNode(
+          valueId: '1',
+          name: 'speaker',
+          children: [
+            LabelNode(valueId: '4', name: 'speaker_1', parentValueId: '1'),
+            LabelNode(valueId: '8', name: 'torch', parentValueId: '1'),
           ],
         ),
       ];
@@ -283,18 +360,18 @@ void main() {
     expect(labeledRow.text, '#speaker_1');
     expect(labeledRow.background, MultimodalStudioPalette.PLUM_100);
 
-    labels.renamed = const LabelChip(valueId: '4', name: 'host');
-    await viewModel.didRenameLabelValue(
-      vocabKey: 'speaker',
+    labels.renamed = const LabelNode(
       valueId: '4',
       name: 'host',
+      parentValueId: '1',
     );
+    await viewModel.didRenameLabelValue(valueId: '4', name: 'host');
     expect(timeline.updateClipCount, 1);
     expect(viewModel.labelForClip(viewModel.timelineClips.single), 'host');
-    expect(viewModel.labelSections.single.chips.first.valueId, '4');
-    expect(viewModel.labelSections.single.chips.last.name, 'torch');
+    expect(viewModel.labelRoots.single.children.first.valueId, '4');
+    expect(viewModel.labelRoots.single.children.last.name, 'torch');
 
-    await viewModel.didDeprecateLabelValue(vocabKey: 'speaker', valueId: '4');
+    await viewModel.didDeprecateLabelValue(valueId: '4');
     expect(timeline.updateClipCount, 1);
     expect(viewModel.labelForClip(viewModel.timelineClips.single), '4');
     expect(viewModel.clipCaption(viewModel.timelineClips.single), '#4');
@@ -337,35 +414,35 @@ VideoMultimodalViewModel _viewModel(
 }
 
 class _ScriptedLabels implements LabelRepository {
-  List<LabelSection> sections = const [];
+  List<LabelNode> roots = const [];
   int listCount = 0;
   int createCount = 0;
-  String createdVocabKey = '';
+  String createdParentValueId = '';
   String createdName = '';
-  LabelChip created = const LabelChip(valueId: '9', name: 'arc');
+  LabelNode created = const LabelNode(valueId: '9', name: 'arc');
   String renamedValueId = '';
-  LabelChip renamed = const LabelChip(valueId: '8', name: 'weld');
+  LabelNode renamed = const LabelNode(valueId: '8', name: 'weld');
   String deprecatedValueId = '';
 
   @override
-  Future<List<LabelSection>> listSections() async {
+  Future<List<LabelNode>> listLabels() async {
     listCount += 1;
-    return sections;
+    return roots;
   }
 
   @override
-  Future<LabelChip> createValue({
-    required String vocabKey,
+  Future<LabelNode> createValue({
     required String name,
+    String parentValueId = '',
   }) async {
     createCount += 1;
-    createdVocabKey = vocabKey;
+    createdParentValueId = parentValueId;
     createdName = name;
     return created;
   }
 
   @override
-  Future<LabelChip> renameValue({
+  Future<LabelNode> renameValue({
     required String valueId,
     required String name,
   }) async {

@@ -10,6 +10,7 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-08  geosoft-Server: 문서(양식 한 건)마다 잘라 낸 PDF — SectionSummary.asset_id·Section.asset_id
 //   2026-10-07  geosoft-Server: report_set_id·source_asset_id·split_asset_id를 숫자(int64)로
 //   2026-10-07  geosoft-Server: job_id·job_ids를 숫자(int64)로
 //   2026-10-02  geosoft-Server: ListQualityResults — 작업·이음부 기준 품질 결과(구 대시보드 ListQualityResults 자리).
@@ -90,6 +91,9 @@ message SectionSummary {
   optional int32 page_start = 2; // 원본 PDF 쪽. 뷰어는 #page=N으로 연다
   optional int32 page_end = 3;
   string overall_result = 4;     // 'Accept' | 'Reject' | 빈값(결재·판독 실패)
+  // 이 문서(양식 한 건)만 잘라 낸 PDF Asset. 쪽 번호는 원본 기준 그대로다. 문서 하나를 따로 작업에 붙일 때
+  // AssetService.AttachAsset에 이 값을 준다. 결재 구간처럼 문서가 아닌 섹션은 0.
+  int64 asset_id = 5;
 }
 
 message Section {
@@ -101,6 +105,7 @@ message Section {
   // ponytail: 섹션 8종 × 수십 컬럼을 메시지로 옮기지 않고 Struct 하나로 둔다. 화면이 필드별
   // 타입 검사가 필요해지면 섹션별 메시지로 바꾼다.
   google.protobuf.Struct fields = 4;
+  int64 asset_id = 5; // 이 문서만 잘라 낸 PDF Asset(SectionSummary.asset_id와 같다)
 }
 
 message ListReportSetsRequest {

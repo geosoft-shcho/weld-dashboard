@@ -11,40 +11,43 @@ class RemoteLabelRepository implements LabelRepository {
   final MediaTagDataSource _mediaTag;
 
   @override
-  Future<List<LabelSection>> listSections() {
+  Future<List<LabelNode>> listLabels() {
     return _call(
       emptyMessage: '라벨 목록을 불러오지 못했습니다.',
       call: () async {
-        final response = await _mediaTag.labelService.listLabelVocabs(
-          buildListLabelVocabsRequest(),
+        final response = await _mediaTag.labelService.listLabels(
+          buildListLabelsRequest(),
         );
-        return labelSectionsFrom(response.vocabs);
+        return labelNodesFrom(response.labels);
       },
     );
   }
 
   @override
-  Future<LabelChip> createValue({
-    required String vocabKey,
+  Future<LabelNode> createValue({
     required String name,
+    String parentValueId = '',
   }) {
     return _call(
       emptyMessage: '라벨을 만들지 못했습니다.',
       call: () async {
         final response = await _mediaTag.labelService.createLabelValue(
-          buildCreateLabelValueRequest(vocabKey: vocabKey, name: name),
+          buildCreateLabelValueRequest(
+            name: name,
+            parentValueId: parentValueId,
+          ),
         );
-        final chip = labelChipFrom(response.value);
-        if (chip == null) {
+        final node = labelNodeFrom(response.value);
+        if (node == null) {
           throw const LabelException('라벨을 만들지 못했습니다.');
         }
-        return chip;
+        return node;
       },
     );
   }
 
   @override
-  Future<LabelChip> renameValue({
+  Future<LabelNode> renameValue({
     required String valueId,
     required String name,
   }) {
@@ -54,11 +57,11 @@ class RemoteLabelRepository implements LabelRepository {
         final response = await _mediaTag.labelService.updateLabelValue(
           buildRenameLabelValueRequest(valueId: valueId, name: name),
         );
-        final chip = labelChipFrom(response.value);
-        if (chip == null) {
+        final node = labelNodeFrom(response.value);
+        if (node == null) {
           throw const LabelException('라벨 이름을 바꾸지 못했습니다.');
         }
-        return chip;
+        return node;
       },
     );
   }

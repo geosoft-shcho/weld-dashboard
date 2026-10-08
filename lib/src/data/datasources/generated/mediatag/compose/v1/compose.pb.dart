@@ -28,11 +28,9 @@ export 'compose.pbenum.dart';
 
 class LabelRef extends $pb.GeneratedMessage {
   factory LabelRef({
-    $core.String? vocabKey,
     $fixnum.Int64? valueId,
   }) {
     final result = create();
-    if (vocabKey != null) result.vocabKey = vocabKey;
     if (valueId != null) result.valueId = valueId;
     return result;
   }
@@ -51,7 +49,6 @@ class LabelRef extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'vocabKey')
     ..aInt64(2, _omitFieldNames ? '' : 'valueId')
     ..hasRequiredFields = false;
 
@@ -74,21 +71,12 @@ class LabelRef extends $pb.GeneratedMessage {
       _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<LabelRef>(create);
   static LabelRef? _defaultInstance;
 
-  @$pb.TagNumber(1)
-  $core.String get vocabKey => $_getSZ(0);
-  @$pb.TagNumber(1)
-  set vocabKey($core.String value) => $_setString(0, value);
-  @$pb.TagNumber(1)
-  $core.bool hasVocabKey() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearVocabKey() => $_clearField(1);
-
   @$pb.TagNumber(2)
-  $fixnum.Int64 get valueId => $_getI64(1);
+  $fixnum.Int64 get valueId => $_getI64(0);
   @$pb.TagNumber(2)
-  set valueId($fixnum.Int64 value) => $_setInt64(1, value);
+  set valueId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(2)
-  $core.bool hasValueId() => $_has(1);
+  $core.bool hasValueId() => $_has(0);
   @$pb.TagNumber(2)
   void clearValueId() => $_clearField(2);
 }
@@ -386,6 +374,7 @@ class Clip extends $pb.GeneratedMessage {
     $0.Timestamp? embeddedAt,
     $0.Timestamp? createdAt,
     $0.Timestamp? updatedAt,
+    ClipRelation? relation,
   }) {
     final result = create();
     if (clipId != null) result.clipId = clipId;
@@ -400,6 +389,7 @@ class Clip extends $pb.GeneratedMessage {
     if (embeddedAt != null) result.embeddedAt = embeddedAt;
     if (createdAt != null) result.createdAt = createdAt;
     if (updatedAt != null) result.updatedAt = updatedAt;
+    if (relation != null) result.relation = relation;
     return result;
   }
 
@@ -437,6 +427,8 @@ class Clip extends $pb.GeneratedMessage {
         subBuilder: $0.Timestamp.create)
     ..aOM<$0.Timestamp>(12, _omitFieldNames ? '' : 'updatedAt',
         subBuilder: $0.Timestamp.create)
+    ..aOM<ClipRelation>(13, _omitFieldNames ? '' : 'relation',
+        subBuilder: ClipRelation.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -576,6 +568,90 @@ class Clip extends $pb.GeneratedMessage {
   void clearUpdatedAt() => $_clearField(12);
   @$pb.TagNumber(12)
   $0.Timestamp ensureUpdatedAt() => $_ensure(11);
+
+  @$pb.TagNumber(13)
+  ClipRelation get relation => $_getN(12);
+  @$pb.TagNumber(13)
+  set relation(ClipRelation value) => $_setField(13, value);
+  @$pb.TagNumber(13)
+  $core.bool hasRelation() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearRelation() => $_clearField(13);
+  @$pb.TagNumber(13)
+  ClipRelation ensureRelation() => $_ensure(12);
+}
+
+/// 관계 클립이 잇는 두 클립. "이 구간(timeline_start_ns~end_ns)에서 from이 to와 관련 있다"는 뜻이다 — 구간은 관계 클립이
+/// 스스로 갖는다(from 클립의 구간 전체면 그 값을 그대로 넣는다). 방향이 있고, 대등한 관계는 화면이 방향을 무시한다.
+/// 두 클립은 관계 클립과 같은 작업의 것이어야 하고 서로 달라야 한다. 잇는 클립을 지우면 관계 클립도 지워진다.
+/// 관계 종류는 Clip.label_value_id(라벨, 선택) — 태그와 같은 라벨 트리를 쓴다. 관계 종류용 맨 위 분류를 LabelService로 하나 만든다.
+class ClipRelation extends $pb.GeneratedMessage {
+  factory ClipRelation({
+    $fixnum.Int64? fromClipId,
+    $fixnum.Int64? toClipId,
+  }) {
+    final result = create();
+    if (fromClipId != null) result.fromClipId = fromClipId;
+    if (toClipId != null) result.toClipId = toClipId;
+    return result;
+  }
+
+  ClipRelation._();
+
+  factory ClipRelation.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ClipRelation.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ClipRelation',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'fromClipId')
+    ..aInt64(2, _omitFieldNames ? '' : 'toClipId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ClipRelation clone() => ClipRelation()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ClipRelation copyWith(void Function(ClipRelation) updates) =>
+      super.copyWith((message) => updates(message as ClipRelation))
+          as ClipRelation;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ClipRelation create() => ClipRelation._();
+  @$core.override
+  ClipRelation createEmptyInstance() => create();
+  static $pb.PbList<ClipRelation> createRepeated() =>
+      $pb.PbList<ClipRelation>();
+  @$core.pragma('dart2js:noInline')
+  static ClipRelation getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ClipRelation>(create);
+  static ClipRelation? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get fromClipId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set fromClipId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasFromClipId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearFromClipId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get toClipId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set toClipId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasToClipId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearToClipId() => $_clearField(2);
 }
 
 /// 가리키는 Asset과 그 안의 범위. start/end·locator가 모두 비면 Asset 전체.
@@ -682,7 +758,6 @@ class ClipProvenance extends $pb.GeneratedMessage {
     $fixnum.Int64? runId,
     $fixnum.Int64? toolId,
     $core.String? toolVersion,
-    $core.Iterable<$fixnum.Int64>? inputClipIds,
   }) {
     final result = create();
     if (confidence != null) result.confidence = confidence;
@@ -690,7 +765,6 @@ class ClipProvenance extends $pb.GeneratedMessage {
     if (runId != null) result.runId = runId;
     if (toolId != null) result.toolId = toolId;
     if (toolVersion != null) result.toolVersion = toolVersion;
-    if (inputClipIds != null) result.inputClipIds.addAll(inputClipIds);
     return result;
   }
 
@@ -714,8 +788,6 @@ class ClipProvenance extends $pb.GeneratedMessage {
     ..aInt64(3, _omitFieldNames ? '' : 'runId')
     ..aInt64(4, _omitFieldNames ? '' : 'toolId')
     ..aOS(5, _omitFieldNames ? '' : 'toolVersion')
-    ..p<$fixnum.Int64>(
-        6, _omitFieldNames ? '' : 'inputClipIds', $pb.PbFieldType.K6)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -783,9 +855,6 @@ class ClipProvenance extends $pb.GeneratedMessage {
   $core.bool hasToolVersion() => $_has(4);
   @$pb.TagNumber(5)
   void clearToolVersion() => $_clearField(5);
-
-  @$pb.TagNumber(6)
-  $pb.PbList<$fixnum.Int64> get inputClipIds => $_getList(5);
 }
 
 class GetTimelineRequest extends $pb.GeneratedMessage {
@@ -2238,106 +2307,21 @@ class DeleteClipResponse extends $pb.GeneratedMessage {
   static DeleteClipResponse? _defaultInstance;
 }
 
-class LabelVocab extends $pb.GeneratedMessage {
-  factory LabelVocab({
-    $core.String? key,
-    $core.String? parentVocabKey,
-    $fixnum.Int64? parentValueId,
-    $core.Iterable<LabelValue>? values,
-  }) {
-    final result = create();
-    if (key != null) result.key = key;
-    if (parentVocabKey != null) result.parentVocabKey = parentVocabKey;
-    if (parentValueId != null) result.parentValueId = parentValueId;
-    if (values != null) result.values.addAll(values);
-    return result;
-  }
-
-  LabelVocab._();
-
-  factory LabelVocab.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory LabelVocab.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'LabelVocab',
-      package:
-          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
-      createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'key')
-    ..aOS(2, _omitFieldNames ? '' : 'parentVocabKey')
-    ..aInt64(3, _omitFieldNames ? '' : 'parentValueId')
-    ..pc<LabelValue>(4, _omitFieldNames ? '' : 'values', $pb.PbFieldType.PM,
-        subBuilder: LabelValue.create)
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  LabelVocab clone() => LabelVocab()..mergeFromMessage(this);
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  LabelVocab copyWith(void Function(LabelVocab) updates) =>
-      super.copyWith((message) => updates(message as LabelVocab)) as LabelVocab;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static LabelVocab create() => LabelVocab._();
-  @$core.override
-  LabelVocab createEmptyInstance() => create();
-  static $pb.PbList<LabelVocab> createRepeated() => $pb.PbList<LabelVocab>();
-  @$core.pragma('dart2js:noInline')
-  static LabelVocab getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<LabelVocab>(create);
-  static LabelVocab? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $core.String get key => $_getSZ(0);
-  @$pb.TagNumber(1)
-  set key($core.String value) => $_setString(0, value);
-  @$pb.TagNumber(1)
-  $core.bool hasKey() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearKey() => $_clearField(1);
-
-  @$pb.TagNumber(2)
-  $core.String get parentVocabKey => $_getSZ(1);
-  @$pb.TagNumber(2)
-  set parentVocabKey($core.String value) => $_setString(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasParentVocabKey() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearParentVocabKey() => $_clearField(2);
-
-  @$pb.TagNumber(3)
-  $fixnum.Int64 get parentValueId => $_getI64(2);
-  @$pb.TagNumber(3)
-  set parentValueId($fixnum.Int64 value) => $_setInt64(2, value);
-  @$pb.TagNumber(3)
-  $core.bool hasParentValueId() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearParentValueId() => $_clearField(3);
-
-  @$pb.TagNumber(4)
-  $pb.PbList<LabelValue> get values => $_getList(3);
-}
-
+/// 라벨 하나. 맨 위 분류(루트)도 그 아래 값도 같은 모양이다. 찾을 때는 value_id로 찾는다 — 이름은 사람이 보는 값이다.
 class LabelValue extends $pb.GeneratedMessage {
   factory LabelValue({
     $fixnum.Int64? valueId,
-    $core.String? vocabKey,
     $core.String? name,
     $core.bool? deprecated,
     $core.String? description,
+    $fixnum.Int64? parentValueId,
   }) {
     final result = create();
     if (valueId != null) result.valueId = valueId;
-    if (vocabKey != null) result.vocabKey = vocabKey;
     if (name != null) result.name = name;
     if (deprecated != null) result.deprecated = deprecated;
     if (description != null) result.description = description;
+    if (parentValueId != null) result.parentValueId = parentValueId;
     return result;
   }
 
@@ -2356,10 +2340,10 @@ class LabelValue extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'valueId')
-    ..aOS(2, _omitFieldNames ? '' : 'vocabKey')
     ..aOS(3, _omitFieldNames ? '' : 'name')
     ..aOB(4, _omitFieldNames ? '' : 'deprecated')
     ..aOS(5, _omitFieldNames ? '' : 'description')
+    ..aInt64(6, _omitFieldNames ? '' : 'parentValueId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2390,45 +2374,45 @@ class LabelValue extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearValueId() => $_clearField(1);
 
-  @$pb.TagNumber(2)
-  $core.String get vocabKey => $_getSZ(1);
-  @$pb.TagNumber(2)
-  set vocabKey($core.String value) => $_setString(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasVocabKey() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearVocabKey() => $_clearField(2);
-
   @$pb.TagNumber(3)
-  $core.String get name => $_getSZ(2);
+  $core.String get name => $_getSZ(1);
   @$pb.TagNumber(3)
-  set name($core.String value) => $_setString(2, value);
+  set name($core.String value) => $_setString(1, value);
   @$pb.TagNumber(3)
-  $core.bool hasName() => $_has(2);
+  $core.bool hasName() => $_has(1);
   @$pb.TagNumber(3)
   void clearName() => $_clearField(3);
 
   @$pb.TagNumber(4)
-  $core.bool get deprecated => $_getBF(3);
+  $core.bool get deprecated => $_getBF(2);
   @$pb.TagNumber(4)
-  set deprecated($core.bool value) => $_setBool(3, value);
+  set deprecated($core.bool value) => $_setBool(2, value);
   @$pb.TagNumber(4)
-  $core.bool hasDeprecated() => $_has(3);
+  $core.bool hasDeprecated() => $_has(2);
   @$pb.TagNumber(4)
   void clearDeprecated() => $_clearField(4);
 
   @$pb.TagNumber(5)
-  $core.String get description => $_getSZ(4);
+  $core.String get description => $_getSZ(3);
   @$pb.TagNumber(5)
-  set description($core.String value) => $_setString(4, value);
+  set description($core.String value) => $_setString(3, value);
   @$pb.TagNumber(5)
-  $core.bool hasDescription() => $_has(4);
+  $core.bool hasDescription() => $_has(3);
   @$pb.TagNumber(5)
   void clearDescription() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get parentValueId => $_getI64(4);
+  @$pb.TagNumber(6)
+  set parentValueId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(6)
+  $core.bool hasParentValueId() => $_has(4);
+  @$pb.TagNumber(6)
+  void clearParentValueId() => $_clearField(6);
 }
 
-class ListLabelVocabsRequest extends $pb.GeneratedMessage {
-  factory ListLabelVocabsRequest({
+class ListLabelsRequest extends $pb.GeneratedMessage {
+  factory ListLabelsRequest({
     $core.bool? includeDeprecated,
   }) {
     final result = create();
@@ -2436,17 +2420,17 @@ class ListLabelVocabsRequest extends $pb.GeneratedMessage {
     return result;
   }
 
-  ListLabelVocabsRequest._();
+  ListLabelsRequest._();
 
-  factory ListLabelVocabsRequest.fromBuffer($core.List<$core.int> data,
+  factory ListLabelsRequest.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory ListLabelVocabsRequest.fromJson($core.String json,
+  factory ListLabelsRequest.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'ListLabelVocabsRequest',
+      _omitMessageNames ? '' : 'ListLabelsRequest',
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
@@ -2454,27 +2438,25 @@ class ListLabelVocabsRequest extends $pb.GeneratedMessage {
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ListLabelVocabsRequest clone() =>
-      ListLabelVocabsRequest()..mergeFromMessage(this);
+  ListLabelsRequest clone() => ListLabelsRequest()..mergeFromMessage(this);
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ListLabelVocabsRequest copyWith(
-          void Function(ListLabelVocabsRequest) updates) =>
-      super.copyWith((message) => updates(message as ListLabelVocabsRequest))
-          as ListLabelVocabsRequest;
+  ListLabelsRequest copyWith(void Function(ListLabelsRequest) updates) =>
+      super.copyWith((message) => updates(message as ListLabelsRequest))
+          as ListLabelsRequest;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static ListLabelVocabsRequest create() => ListLabelVocabsRequest._();
+  static ListLabelsRequest create() => ListLabelsRequest._();
   @$core.override
-  ListLabelVocabsRequest createEmptyInstance() => create();
-  static $pb.PbList<ListLabelVocabsRequest> createRepeated() =>
-      $pb.PbList<ListLabelVocabsRequest>();
+  ListLabelsRequest createEmptyInstance() => create();
+  static $pb.PbList<ListLabelsRequest> createRepeated() =>
+      $pb.PbList<ListLabelsRequest>();
   @$core.pragma('dart2js:noInline')
-  static ListLabelVocabsRequest getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<ListLabelVocabsRequest>(create);
-  static ListLabelVocabsRequest? _defaultInstance;
+  static ListLabelsRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListLabelsRequest>(create);
+  static ListLabelsRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.bool get includeDeprecated => $_getBF(0);
@@ -2486,194 +2468,68 @@ class ListLabelVocabsRequest extends $pb.GeneratedMessage {
   void clearIncludeDeprecated() => $_clearField(1);
 }
 
-class ListLabelVocabsResponse extends $pb.GeneratedMessage {
-  factory ListLabelVocabsResponse({
-    $core.Iterable<LabelVocab>? vocabs,
+class ListLabelsResponse extends $pb.GeneratedMessage {
+  factory ListLabelsResponse({
+    $core.Iterable<LabelValue>? labels,
   }) {
     final result = create();
-    if (vocabs != null) result.vocabs.addAll(vocabs);
+    if (labels != null) result.labels.addAll(labels);
     return result;
   }
 
-  ListLabelVocabsResponse._();
+  ListLabelsResponse._();
 
-  factory ListLabelVocabsResponse.fromBuffer($core.List<$core.int> data,
+  factory ListLabelsResponse.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory ListLabelVocabsResponse.fromJson($core.String json,
+  factory ListLabelsResponse.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'ListLabelVocabsResponse',
+      _omitMessageNames ? '' : 'ListLabelsResponse',
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..pc<LabelVocab>(1, _omitFieldNames ? '' : 'vocabs', $pb.PbFieldType.PM,
-        subBuilder: LabelVocab.create)
+    ..pc<LabelValue>(1, _omitFieldNames ? '' : 'labels', $pb.PbFieldType.PM,
+        subBuilder: LabelValue.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ListLabelVocabsResponse clone() =>
-      ListLabelVocabsResponse()..mergeFromMessage(this);
+  ListLabelsResponse clone() => ListLabelsResponse()..mergeFromMessage(this);
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ListLabelVocabsResponse copyWith(
-          void Function(ListLabelVocabsResponse) updates) =>
-      super.copyWith((message) => updates(message as ListLabelVocabsResponse))
-          as ListLabelVocabsResponse;
+  ListLabelsResponse copyWith(void Function(ListLabelsResponse) updates) =>
+      super.copyWith((message) => updates(message as ListLabelsResponse))
+          as ListLabelsResponse;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static ListLabelVocabsResponse create() => ListLabelVocabsResponse._();
+  static ListLabelsResponse create() => ListLabelsResponse._();
   @$core.override
-  ListLabelVocabsResponse createEmptyInstance() => create();
-  static $pb.PbList<ListLabelVocabsResponse> createRepeated() =>
-      $pb.PbList<ListLabelVocabsResponse>();
+  ListLabelsResponse createEmptyInstance() => create();
+  static $pb.PbList<ListLabelsResponse> createRepeated() =>
+      $pb.PbList<ListLabelsResponse>();
   @$core.pragma('dart2js:noInline')
-  static ListLabelVocabsResponse getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<ListLabelVocabsResponse>(create);
-  static ListLabelVocabsResponse? _defaultInstance;
+  static ListLabelsResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListLabelsResponse>(create);
+  static ListLabelsResponse? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $pb.PbList<LabelVocab> get vocabs => $_getList(0);
-}
-
-class CreateLabelVocabRequest extends $pb.GeneratedMessage {
-  factory CreateLabelVocabRequest({
-    LabelVocab? vocab,
-  }) {
-    final result = create();
-    if (vocab != null) result.vocab = vocab;
-    return result;
-  }
-
-  CreateLabelVocabRequest._();
-
-  factory CreateLabelVocabRequest.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory CreateLabelVocabRequest.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'CreateLabelVocabRequest',
-      package:
-          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
-      createEmptyInstance: create)
-    ..aOM<LabelVocab>(1, _omitFieldNames ? '' : 'vocab',
-        subBuilder: LabelVocab.create)
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  CreateLabelVocabRequest clone() =>
-      CreateLabelVocabRequest()..mergeFromMessage(this);
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  CreateLabelVocabRequest copyWith(
-          void Function(CreateLabelVocabRequest) updates) =>
-      super.copyWith((message) => updates(message as CreateLabelVocabRequest))
-          as CreateLabelVocabRequest;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static CreateLabelVocabRequest create() => CreateLabelVocabRequest._();
-  @$core.override
-  CreateLabelVocabRequest createEmptyInstance() => create();
-  static $pb.PbList<CreateLabelVocabRequest> createRepeated() =>
-      $pb.PbList<CreateLabelVocabRequest>();
-  @$core.pragma('dart2js:noInline')
-  static CreateLabelVocabRequest getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<CreateLabelVocabRequest>(create);
-  static CreateLabelVocabRequest? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  LabelVocab get vocab => $_getN(0);
-  @$pb.TagNumber(1)
-  set vocab(LabelVocab value) => $_setField(1, value);
-  @$pb.TagNumber(1)
-  $core.bool hasVocab() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearVocab() => $_clearField(1);
-  @$pb.TagNumber(1)
-  LabelVocab ensureVocab() => $_ensure(0);
-}
-
-class CreateLabelVocabResponse extends $pb.GeneratedMessage {
-  factory CreateLabelVocabResponse({
-    LabelVocab? vocab,
-  }) {
-    final result = create();
-    if (vocab != null) result.vocab = vocab;
-    return result;
-  }
-
-  CreateLabelVocabResponse._();
-
-  factory CreateLabelVocabResponse.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory CreateLabelVocabResponse.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'CreateLabelVocabResponse',
-      package:
-          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
-      createEmptyInstance: create)
-    ..aOM<LabelVocab>(1, _omitFieldNames ? '' : 'vocab',
-        subBuilder: LabelVocab.create)
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  CreateLabelVocabResponse clone() =>
-      CreateLabelVocabResponse()..mergeFromMessage(this);
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  CreateLabelVocabResponse copyWith(
-          void Function(CreateLabelVocabResponse) updates) =>
-      super.copyWith((message) => updates(message as CreateLabelVocabResponse))
-          as CreateLabelVocabResponse;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static CreateLabelVocabResponse create() => CreateLabelVocabResponse._();
-  @$core.override
-  CreateLabelVocabResponse createEmptyInstance() => create();
-  static $pb.PbList<CreateLabelVocabResponse> createRepeated() =>
-      $pb.PbList<CreateLabelVocabResponse>();
-  @$core.pragma('dart2js:noInline')
-  static CreateLabelVocabResponse getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<CreateLabelVocabResponse>(create);
-  static CreateLabelVocabResponse? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  LabelVocab get vocab => $_getN(0);
-  @$pb.TagNumber(1)
-  set vocab(LabelVocab value) => $_setField(1, value);
-  @$pb.TagNumber(1)
-  $core.bool hasVocab() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearVocab() => $_clearField(1);
-  @$pb.TagNumber(1)
-  LabelVocab ensureVocab() => $_ensure(0);
+  $pb.PbList<LabelValue> get labels => $_getList(0);
 }
 
 class CreateLabelValueRequest extends $pb.GeneratedMessage {
   factory CreateLabelValueRequest({
-    $core.String? vocabKey,
     $core.String? name,
     $core.String? description,
+    $fixnum.Int64? parentValueId,
   }) {
     final result = create();
-    if (vocabKey != null) result.vocabKey = vocabKey;
     if (name != null) result.name = name;
     if (description != null) result.description = description;
+    if (parentValueId != null) result.parentValueId = parentValueId;
     return result;
   }
 
@@ -2691,9 +2547,9 @@ class CreateLabelValueRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'vocabKey')
     ..aOS(2, _omitFieldNames ? '' : 'name')
     ..aOS(3, _omitFieldNames ? '' : 'description')
+    ..aInt64(4, _omitFieldNames ? '' : 'parentValueId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2719,32 +2575,32 @@ class CreateLabelValueRequest extends $pb.GeneratedMessage {
       $pb.GeneratedMessage.$_defaultFor<CreateLabelValueRequest>(create);
   static CreateLabelValueRequest? _defaultInstance;
 
-  @$pb.TagNumber(1)
-  $core.String get vocabKey => $_getSZ(0);
-  @$pb.TagNumber(1)
-  set vocabKey($core.String value) => $_setString(0, value);
-  @$pb.TagNumber(1)
-  $core.bool hasVocabKey() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearVocabKey() => $_clearField(1);
-
   @$pb.TagNumber(2)
-  $core.String get name => $_getSZ(1);
+  $core.String get name => $_getSZ(0);
   @$pb.TagNumber(2)
-  set name($core.String value) => $_setString(1, value);
+  set name($core.String value) => $_setString(0, value);
   @$pb.TagNumber(2)
-  $core.bool hasName() => $_has(1);
+  $core.bool hasName() => $_has(0);
   @$pb.TagNumber(2)
   void clearName() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.String get description => $_getSZ(2);
+  $core.String get description => $_getSZ(1);
   @$pb.TagNumber(3)
-  set description($core.String value) => $_setString(2, value);
+  set description($core.String value) => $_setString(1, value);
   @$pb.TagNumber(3)
-  $core.bool hasDescription() => $_has(2);
+  $core.bool hasDescription() => $_has(1);
   @$pb.TagNumber(3)
   void clearDescription() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get parentValueId => $_getI64(2);
+  @$pb.TagNumber(4)
+  set parentValueId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(4)
+  $core.bool hasParentValueId() => $_has(2);
+  @$pb.TagNumber(4)
+  void clearParentValueId() => $_clearField(4);
 }
 
 class CreateLabelValueResponse extends $pb.GeneratedMessage {
@@ -3016,22 +2872,20 @@ class MediaComposeServiceApi {
           'DeleteClip', request, DeleteClipResponse());
 }
 
-/// 통제 어휘(어휘 = 분류 축, 값 = 그 축의 선택지). 모든 공사가 같이 쓴다. 값은 지우지 않고
-/// deprecated로 숨긴다.
+/// 라벨(통제 어휘). 모든 공사가 같이 쓴다. 지우지 않고 deprecated로 숨긴다.
 class LabelServiceApi {
   final $pb.RpcClient _client;
 
   LabelServiceApi(this._client);
 
-  /// 전체 어휘와 값. 어휘 수가 적어 페이지를 두지 않는다.
-  $async.Future<ListLabelVocabsResponse> listLabelVocabs(
-          $pb.ClientContext? ctx, ListLabelVocabsRequest request) =>
-      _client.invoke<ListLabelVocabsResponse>(ctx, 'LabelService',
-          'ListLabelVocabs', request, ListLabelVocabsResponse());
-  $async.Future<CreateLabelVocabResponse> createLabelVocab(
-          $pb.ClientContext? ctx, CreateLabelVocabRequest request) =>
-      _client.invoke<CreateLabelVocabResponse>(ctx, 'LabelService',
-          'CreateLabelVocab', request, CreateLabelVocabResponse());
+  /// 라벨 전부. 라벨은 한 그루의 트리다: 상위가 없는 것(parent_value_id = 0)이 맨 위 분류(루트)이고 그 아래로 값이 달린다
+  /// (에셋 트리와 같은 모양). 평평한 목록으로 주니 parent_value_id로 엮는다. 수가 적어 페이지를 두지 않는다.
+  $async.Future<ListLabelsResponse> listLabels(
+          $pb.ClientContext? ctx, ListLabelsRequest request) =>
+      _client.invoke<ListLabelsResponse>(
+          ctx, 'LabelService', 'ListLabels', request, ListLabelsResponse());
+
+  /// 라벨을 만든다. name 필수. parent_value_id를 주면 그 아래에, 안 주면 맨 위 분류(루트)로 만든다.
   $async.Future<CreateLabelValueResponse> createLabelValue(
           $pb.ClientContext? ctx, CreateLabelValueRequest request) =>
       _client.invoke<CreateLabelValueResponse>(ctx, 'LabelService',

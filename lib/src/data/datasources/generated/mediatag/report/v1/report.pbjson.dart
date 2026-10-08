@@ -159,6 +159,7 @@ const SectionSummary$json = {
       '17': true
     },
     {'1': 'overall_result', '3': 4, '4': 1, '5': 9, '10': 'overallResult'},
+    {'1': 'asset_id', '3': 5, '4': 1, '5': 3, '10': 'assetId'},
   ],
   '8': [
     {'1': '_page_start'},
@@ -171,7 +172,8 @@ final $typed_data.Uint8List sectionSummaryDescriptor = $convert.base64Decode(
     'Cg5TZWN0aW9uU3VtbWFyeRIzCgRraW5kGAEgASgOMh8ubWVkaWF0YWcucmVwb3J0LnYxLlNlY3'
     'Rpb25LaW5kUgRraW5kEiIKCnBhZ2Vfc3RhcnQYAiABKAVIAFIJcGFnZVN0YXJ0iAEBEh4KCHBh'
     'Z2VfZW5kGAMgASgFSAFSB3BhZ2VFbmSIAQESJQoOb3ZlcmFsbF9yZXN1bHQYBCABKAlSDW92ZX'
-    'JhbGxSZXN1bHRCDQoLX3BhZ2Vfc3RhcnRCCwoJX3BhZ2VfZW5k');
+    'JhbGxSZXN1bHQSGQoIYXNzZXRfaWQYBSABKANSB2Fzc2V0SWRCDQoLX3BhZ2Vfc3RhcnRCCwoJ'
+    'X3BhZ2VfZW5k');
 
 @$core.Deprecated('Use sectionDescriptor instead')
 const Section$json = {
@@ -211,6 +213,7 @@ const Section$json = {
       '6': '.google.protobuf.Struct',
       '10': 'fields'
     },
+    {'1': 'asset_id', '3': 5, '4': 1, '5': 3, '10': 'assetId'},
   ],
   '8': [
     {'1': '_page_start'},
@@ -223,7 +226,8 @@ final $typed_data.Uint8List sectionDescriptor = $convert.base64Decode(
     'CgdTZWN0aW9uEjMKBGtpbmQYASABKA4yHy5tZWRpYXRhZy5yZXBvcnQudjEuU2VjdGlvbktpbm'
     'RSBGtpbmQSIgoKcGFnZV9zdGFydBgCIAEoBUgAUglwYWdlU3RhcnSIAQESHgoIcGFnZV9lbmQY'
     'AyABKAVIAVIHcGFnZUVuZIgBARIvCgZmaWVsZHMYBCABKAsyFy5nb29nbGUucHJvdG9idWYuU3'
-    'RydWN0UgZmaWVsZHNCDQoLX3BhZ2Vfc3RhcnRCCwoJX3BhZ2VfZW5k');
+    'RydWN0UgZmaWVsZHMSGQoIYXNzZXRfaWQYBSABKANSB2Fzc2V0SWRCDQoLX3BhZ2Vfc3RhcnRC'
+    'CwoJX3BhZ2VfZW5k');
 
 @$core.Deprecated('Use listReportSetsRequestDescriptor instead')
 const ListReportSetsRequest$json = {

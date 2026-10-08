@@ -442,18 +442,18 @@ class _ScriptedToolRuns implements ToolRunRepository {
 
 class _IdleLabelRepository implements LabelRepository {
   @override
-  Future<List<LabelSection>> listSections() async => const [];
+  Future<List<LabelNode>> listLabels() async => const [];
 
   @override
-  Future<LabelChip> createValue({
-    required String vocabKey,
+  Future<LabelNode> createValue({
     required String name,
+    String parentValueId = '',
   }) {
     throw StateError('unused');
   }
 
   @override
-  Future<LabelChip> renameValue({
+  Future<LabelNode> renameValue({
     required String valueId,
     required String name,
   }) {

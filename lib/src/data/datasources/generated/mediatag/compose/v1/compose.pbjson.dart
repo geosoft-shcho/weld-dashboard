@@ -54,6 +54,7 @@ const ClipKind$json = {
     {'1': 'CLIP_KIND_FILE', '2': 9},
     {'1': 'CLIP_KIND_TAG', '2': 10},
     {'1': 'CLIP_KIND_REGION', '2': 11},
+    {'1': 'CLIP_KIND_RELATION', '2': 12},
   ],
 };
 
@@ -63,21 +64,24 @@ final $typed_data.Uint8List clipKindDescriptor = $convert.base64Decode(
     '8QARITCg9DTElQX0tJTkRfQVVESU8QAhITCg9DTElQX0tJTkRfSU1BR0UQAxIRCg1DTElQX0tJ'
     'TkRfUERGEAQSFgoSQ0xJUF9LSU5EX1NVQlRJVExFEAUSEgoOQ0xJUF9LSU5EX1BPU0UQBhIYCh'
     'RDTElQX0tJTkRfVElNRVNFUklFUxAHEhgKFENMSVBfS0lORF9QT0lOVENMT1VEEAgSEgoOQ0xJ'
-    'UF9LSU5EX0ZJTEUQCRIRCg1DTElQX0tJTkRfVEFHEAoSFAoQQ0xJUF9LSU5EX1JFR0lPThAL');
+    'UF9LSU5EX0ZJTEUQCRIRCg1DTElQX0tJTkRfVEFHEAoSFAoQQ0xJUF9LSU5EX1JFR0lPThALEh'
+    'YKEkNMSVBfS0lORF9SRUxBVElPThAM');
 
 @$core.Deprecated('Use labelRefDescriptor instead')
 const LabelRef$json = {
   '1': 'LabelRef',
   '2': [
-    {'1': 'vocab_key', '3': 1, '4': 1, '5': 9, '10': 'vocabKey'},
     {'1': 'value_id', '3': 2, '4': 1, '5': 3, '10': 'valueId'},
   ],
+  '9': [
+    {'1': 1, '2': 2},
+  ],
+  '10': ['vocab_key'],
 };
 
 /// Descriptor for `LabelRef`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List labelRefDescriptor = $convert.base64Decode(
-    'CghMYWJlbFJlZhIbCgl2b2NhYl9rZXkYASABKAlSCHZvY2FiS2V5EhkKCHZhbHVlX2lkGAIgAS'
-    'gDUgd2YWx1ZUlk');
+    'CghMYWJlbFJlZhIZCgh2YWx1ZV9pZBgCIAEoA1IHdmFsdWVJZEoECAEQAlIJdm9jYWJfa2V5');
 
 @$core.Deprecated('Use timelineDescriptor instead')
 const Timeline$json = {
@@ -260,6 +264,14 @@ const Clip$json = {
       '6': '.google.protobuf.Timestamp',
       '10': 'updatedAt'
     },
+    {
+      '1': 'relation',
+      '3': 13,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.compose.v1.ClipRelation',
+      '10': 'relation'
+    },
   ],
   '8': [
     {'1': '_timeline_start_ns'},
@@ -279,8 +291,23 @@ final $typed_data.Uint8List clipDescriptor = $convert.base64Decode(
     'VSCnByb3ZlbmFuY2USOwoLZW1iZWRkZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGlt'
     'ZXN0YW1wUgplbWJlZGRlZEF0EjkKCmNyZWF0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idW'
     'YuVGltZXN0YW1wUgljcmVhdGVkQXQSOQoKdXBkYXRlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90'
-    'b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdEIUChJfdGltZWxpbmVfc3RhcnRfbnNCEgoQX3RpbW'
-    'VsaW5lX2VuZF9ucw==');
+    'b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdBI9CghyZWxhdGlvbhgNIAEoCzIhLm1lZGlhdGFnLm'
+    'NvbXBvc2UudjEuQ2xpcFJlbGF0aW9uUghyZWxhdGlvbkIUChJfdGltZWxpbmVfc3RhcnRfbnNC'
+    'EgoQX3RpbWVsaW5lX2VuZF9ucw==');
+
+@$core.Deprecated('Use clipRelationDescriptor instead')
+const ClipRelation$json = {
+  '1': 'ClipRelation',
+  '2': [
+    {'1': 'from_clip_id', '3': 1, '4': 1, '5': 3, '10': 'fromClipId'},
+    {'1': 'to_clip_id', '3': 2, '4': 1, '5': 3, '10': 'toClipId'},
+  ],
+};
+
+/// Descriptor for `ClipRelation`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List clipRelationDescriptor = $convert.base64Decode(
+    'CgxDbGlwUmVsYXRpb24SIAoMZnJvbV9jbGlwX2lkGAEgASgDUgpmcm9tQ2xpcElkEhwKCnRvX2'
+    'NsaXBfaWQYAiABKANSCHRvQ2xpcElk');
 
 @$core.Deprecated('Use clipSourceDescriptor instead')
 const ClipSource$json = {
@@ -336,19 +363,22 @@ const ClipProvenance$json = {
     {'1': 'run_id', '3': 3, '4': 1, '5': 3, '10': 'runId'},
     {'1': 'tool_id', '3': 4, '4': 1, '5': 3, '10': 'toolId'},
     {'1': 'tool_version', '3': 5, '4': 1, '5': 9, '10': 'toolVersion'},
-    {'1': 'input_clip_ids', '3': 6, '4': 3, '5': 3, '10': 'inputClipIds'},
   ],
   '8': [
     {'1': '_confidence'},
   ],
+  '9': [
+    {'1': 6, '2': 7},
+  ],
+  '10': ['input_clip_ids'],
 };
 
 /// Descriptor for `ClipProvenance`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List clipProvenanceDescriptor = $convert.base64Decode(
     'Cg5DbGlwUHJvdmVuYW5jZRIjCgpjb25maWRlbmNlGAEgASgBSABSCmNvbmZpZGVuY2WIAQESGg'
     'oIcmV2aWV3ZWQYAiABKAhSCHJldmlld2VkEhUKBnJ1bl9pZBgDIAEoA1IFcnVuSWQSFwoHdG9v'
-    'bF9pZBgEIAEoA1IGdG9vbElkEiEKDHRvb2xfdmVyc2lvbhgFIAEoCVILdG9vbFZlcnNpb24SJA'
-    'oOaW5wdXRfY2xpcF9pZHMYBiADKANSDGlucHV0Q2xpcElkc0INCgtfY29uZmlkZW5jZQ==');
+    'bF9pZBgEIAEoA1IGdG9vbElkEiEKDHRvb2xfdmVyc2lvbhgFIAEoCVILdG9vbFZlcnNpb25CDQ'
+    'oLX2NvbmZpZGVuY2VKBAgGEAdSDmlucHV0X2NsaXBfaWRz');
 
 @$core.Deprecated('Use getTimelineRequestDescriptor instead')
 const GetTimelineRequest$json = {
@@ -828,52 +858,32 @@ const DeleteClipResponse$json = {
 final $typed_data.Uint8List deleteClipResponseDescriptor =
     $convert.base64Decode('ChJEZWxldGVDbGlwUmVzcG9uc2U=');
 
-@$core.Deprecated('Use labelVocabDescriptor instead')
-const LabelVocab$json = {
-  '1': 'LabelVocab',
-  '2': [
-    {'1': 'key', '3': 1, '4': 1, '5': 9, '10': 'key'},
-    {'1': 'parent_vocab_key', '3': 2, '4': 1, '5': 9, '10': 'parentVocabKey'},
-    {'1': 'parent_value_id', '3': 3, '4': 1, '5': 3, '10': 'parentValueId'},
-    {
-      '1': 'values',
-      '3': 4,
-      '4': 3,
-      '5': 11,
-      '6': '.mediatag.compose.v1.LabelValue',
-      '10': 'values'
-    },
-  ],
-};
-
-/// Descriptor for `LabelVocab`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List labelVocabDescriptor = $convert.base64Decode(
-    'CgpMYWJlbFZvY2FiEhAKA2tleRgBIAEoCVIDa2V5EigKEHBhcmVudF92b2NhYl9rZXkYAiABKA'
-    'lSDnBhcmVudFZvY2FiS2V5EiYKD3BhcmVudF92YWx1ZV9pZBgDIAEoA1INcGFyZW50VmFsdWVJ'
-    'ZBI3CgZ2YWx1ZXMYBCADKAsyHy5tZWRpYXRhZy5jb21wb3NlLnYxLkxhYmVsVmFsdWVSBnZhbH'
-    'Vlcw==');
-
 @$core.Deprecated('Use labelValueDescriptor instead')
 const LabelValue$json = {
   '1': 'LabelValue',
   '2': [
     {'1': 'value_id', '3': 1, '4': 1, '5': 3, '10': 'valueId'},
-    {'1': 'vocab_key', '3': 2, '4': 1, '5': 9, '10': 'vocabKey'},
     {'1': 'name', '3': 3, '4': 1, '5': 9, '10': 'name'},
     {'1': 'deprecated', '3': 4, '4': 1, '5': 8, '10': 'deprecated'},
     {'1': 'description', '3': 5, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'parent_value_id', '3': 6, '4': 1, '5': 3, '10': 'parentValueId'},
   ],
+  '9': [
+    {'1': 2, '2': 3},
+  ],
+  '10': ['vocab_key'],
 };
 
 /// Descriptor for `LabelValue`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List labelValueDescriptor = $convert.base64Decode(
-    'CgpMYWJlbFZhbHVlEhkKCHZhbHVlX2lkGAEgASgDUgd2YWx1ZUlkEhsKCXZvY2FiX2tleRgCIA'
-    'EoCVIIdm9jYWJLZXkSEgoEbmFtZRgDIAEoCVIEbmFtZRIeCgpkZXByZWNhdGVkGAQgASgIUgpk'
-    'ZXByZWNhdGVkEiAKC2Rlc2NyaXB0aW9uGAUgASgJUgtkZXNjcmlwdGlvbg==');
+    'CgpMYWJlbFZhbHVlEhkKCHZhbHVlX2lkGAEgASgDUgd2YWx1ZUlkEhIKBG5hbWUYAyABKAlSBG'
+    '5hbWUSHgoKZGVwcmVjYXRlZBgEIAEoCFIKZGVwcmVjYXRlZBIgCgtkZXNjcmlwdGlvbhgFIAEo'
+    'CVILZGVzY3JpcHRpb24SJgoPcGFyZW50X3ZhbHVlX2lkGAYgASgDUg1wYXJlbnRWYWx1ZUlkSg'
+    'QIAhADUgl2b2NhYl9rZXk=');
 
-@$core.Deprecated('Use listLabelVocabsRequestDescriptor instead')
-const ListLabelVocabsRequest$json = {
-  '1': 'ListLabelVocabsRequest',
+@$core.Deprecated('Use listLabelsRequestDescriptor instead')
+const ListLabelsRequest$json = {
+  '1': 'ListLabelsRequest',
   '2': [
     {
       '1': 'include_deprecated',
@@ -885,89 +895,50 @@ const ListLabelVocabsRequest$json = {
   ],
 };
 
-/// Descriptor for `ListLabelVocabsRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List listLabelVocabsRequestDescriptor =
-    $convert.base64Decode(
-        'ChZMaXN0TGFiZWxWb2NhYnNSZXF1ZXN0Ei0KEmluY2x1ZGVfZGVwcmVjYXRlZBgBIAEoCFIRaW'
-        '5jbHVkZURlcHJlY2F0ZWQ=');
+/// Descriptor for `ListLabelsRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listLabelsRequestDescriptor = $convert.base64Decode(
+    'ChFMaXN0TGFiZWxzUmVxdWVzdBItChJpbmNsdWRlX2RlcHJlY2F0ZWQYASABKAhSEWluY2x1ZG'
+    'VEZXByZWNhdGVk');
 
-@$core.Deprecated('Use listLabelVocabsResponseDescriptor instead')
-const ListLabelVocabsResponse$json = {
-  '1': 'ListLabelVocabsResponse',
+@$core.Deprecated('Use listLabelsResponseDescriptor instead')
+const ListLabelsResponse$json = {
+  '1': 'ListLabelsResponse',
   '2': [
     {
-      '1': 'vocabs',
+      '1': 'labels',
       '3': 1,
       '4': 3,
       '5': 11,
-      '6': '.mediatag.compose.v1.LabelVocab',
-      '10': 'vocabs'
+      '6': '.mediatag.compose.v1.LabelValue',
+      '10': 'labels'
     },
   ],
 };
 
-/// Descriptor for `ListLabelVocabsResponse`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List listLabelVocabsResponseDescriptor =
-    $convert.base64Decode(
-        'ChdMaXN0TGFiZWxWb2NhYnNSZXNwb25zZRI3CgZ2b2NhYnMYASADKAsyHy5tZWRpYXRhZy5jb2'
-        '1wb3NlLnYxLkxhYmVsVm9jYWJSBnZvY2Ficw==');
-
-@$core.Deprecated('Use createLabelVocabRequestDescriptor instead')
-const CreateLabelVocabRequest$json = {
-  '1': 'CreateLabelVocabRequest',
-  '2': [
-    {
-      '1': 'vocab',
-      '3': 1,
-      '4': 1,
-      '5': 11,
-      '6': '.mediatag.compose.v1.LabelVocab',
-      '10': 'vocab'
-    },
-  ],
-};
-
-/// Descriptor for `CreateLabelVocabRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List createLabelVocabRequestDescriptor =
-    $convert.base64Decode(
-        'ChdDcmVhdGVMYWJlbFZvY2FiUmVxdWVzdBI1CgV2b2NhYhgBIAEoCzIfLm1lZGlhdGFnLmNvbX'
-        'Bvc2UudjEuTGFiZWxWb2NhYlIFdm9jYWI=');
-
-@$core.Deprecated('Use createLabelVocabResponseDescriptor instead')
-const CreateLabelVocabResponse$json = {
-  '1': 'CreateLabelVocabResponse',
-  '2': [
-    {
-      '1': 'vocab',
-      '3': 1,
-      '4': 1,
-      '5': 11,
-      '6': '.mediatag.compose.v1.LabelVocab',
-      '10': 'vocab'
-    },
-  ],
-};
-
-/// Descriptor for `CreateLabelVocabResponse`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List createLabelVocabResponseDescriptor =
-    $convert.base64Decode(
-        'ChhDcmVhdGVMYWJlbFZvY2FiUmVzcG9uc2USNQoFdm9jYWIYASABKAsyHy5tZWRpYXRhZy5jb2'
-        '1wb3NlLnYxLkxhYmVsVm9jYWJSBXZvY2Fi');
+/// Descriptor for `ListLabelsResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listLabelsResponseDescriptor = $convert.base64Decode(
+    'ChJMaXN0TGFiZWxzUmVzcG9uc2USNwoGbGFiZWxzGAEgAygLMh8ubWVkaWF0YWcuY29tcG9zZS'
+    '52MS5MYWJlbFZhbHVlUgZsYWJlbHM=');
 
 @$core.Deprecated('Use createLabelValueRequestDescriptor instead')
 const CreateLabelValueRequest$json = {
   '1': 'CreateLabelValueRequest',
   '2': [
-    {'1': 'vocab_key', '3': 1, '4': 1, '5': 9, '10': 'vocabKey'},
     {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
     {'1': 'description', '3': 3, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'parent_value_id', '3': 4, '4': 1, '5': 3, '10': 'parentValueId'},
   ],
+  '9': [
+    {'1': 1, '2': 2},
+  ],
+  '10': ['vocab_key'],
 };
 
 /// Descriptor for `CreateLabelValueRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List createLabelValueRequestDescriptor = $convert.base64Decode(
-    'ChdDcmVhdGVMYWJlbFZhbHVlUmVxdWVzdBIbCgl2b2NhYl9rZXkYASABKAlSCHZvY2FiS2V5Eh'
-    'IKBG5hbWUYAiABKAlSBG5hbWUSIAoLZGVzY3JpcHRpb24YAyABKAlSC2Rlc2NyaXB0aW9u');
+    'ChdDcmVhdGVMYWJlbFZhbHVlUmVxdWVzdBISCgRuYW1lGAIgASgJUgRuYW1lEiAKC2Rlc2NyaX'
+    'B0aW9uGAMgASgJUgtkZXNjcmlwdGlvbhImCg9wYXJlbnRfdmFsdWVfaWQYBCABKANSDXBhcmVu'
+    'dFZhbHVlSWRKBAgBEAJSCXZvY2FiX2tleQ==');
 
 @$core.Deprecated('Use createLabelValueResponseDescriptor instead')
 const CreateLabelValueResponse$json = {
@@ -1117,6 +1088,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.google.protobuf.Value': $1.Value$json,
   '.google.protobuf.ListValue': $1.ListValue$json,
   '.mediatag.compose.v1.ClipProvenance': ClipProvenance$json,
+  '.mediatag.compose.v1.ClipRelation': ClipRelation$json,
   '.mediatag.asset.v1.Asset': $2.Asset$json,
   '.mediatag.asset.v1.Provenance': $2.Provenance$json,
   '.mediatag.compose.v1.ListTimelinesRequest': ListTimelinesRequest$json,
@@ -1172,14 +1144,9 @@ const $core.Map<$core.String, $core.dynamic> LabelServiceBase$json = {
   '1': 'LabelService',
   '2': [
     {
-      '1': 'ListLabelVocabs',
-      '2': '.mediatag.compose.v1.ListLabelVocabsRequest',
-      '3': '.mediatag.compose.v1.ListLabelVocabsResponse'
-    },
-    {
-      '1': 'CreateLabelVocab',
-      '2': '.mediatag.compose.v1.CreateLabelVocabRequest',
-      '3': '.mediatag.compose.v1.CreateLabelVocabResponse'
+      '1': 'ListLabels',
+      '2': '.mediatag.compose.v1.ListLabelsRequest',
+      '3': '.mediatag.compose.v1.ListLabelsResponse'
     },
     {
       '1': 'CreateLabelValue',
@@ -1197,13 +1164,9 @@ const $core.Map<$core.String, $core.dynamic> LabelServiceBase$json = {
 @$core.Deprecated('Use labelServiceDescriptor instead')
 const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
     LabelServiceBase$messageJson = {
-  '.mediatag.compose.v1.ListLabelVocabsRequest': ListLabelVocabsRequest$json,
-  '.mediatag.compose.v1.ListLabelVocabsResponse': ListLabelVocabsResponse$json,
-  '.mediatag.compose.v1.LabelVocab': LabelVocab$json,
+  '.mediatag.compose.v1.ListLabelsRequest': ListLabelsRequest$json,
+  '.mediatag.compose.v1.ListLabelsResponse': ListLabelsResponse$json,
   '.mediatag.compose.v1.LabelValue': LabelValue$json,
-  '.mediatag.compose.v1.CreateLabelVocabRequest': CreateLabelVocabRequest$json,
-  '.mediatag.compose.v1.CreateLabelVocabResponse':
-      CreateLabelVocabResponse$json,
   '.mediatag.compose.v1.CreateLabelValueRequest': CreateLabelValueRequest$json,
   '.mediatag.compose.v1.CreateLabelValueResponse':
       CreateLabelValueResponse$json,
@@ -1215,12 +1178,10 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
 
 /// Descriptor for `LabelService`. Decode as a `google.protobuf.ServiceDescriptorProto`.
 final $typed_data.Uint8List labelServiceDescriptor = $convert.base64Decode(
-    'CgxMYWJlbFNlcnZpY2USbAoPTGlzdExhYmVsVm9jYWJzEisubWVkaWF0YWcuY29tcG9zZS52MS'
-    '5MaXN0TGFiZWxWb2NhYnNSZXF1ZXN0GiwubWVkaWF0YWcuY29tcG9zZS52MS5MaXN0TGFiZWxW'
-    'b2NhYnNSZXNwb25zZRJvChBDcmVhdGVMYWJlbFZvY2FiEiwubWVkaWF0YWcuY29tcG9zZS52MS'
-    '5DcmVhdGVMYWJlbFZvY2FiUmVxdWVzdBotLm1lZGlhdGFnLmNvbXBvc2UudjEuQ3JlYXRlTGFi'
-    'ZWxWb2NhYlJlc3BvbnNlEm8KEENyZWF0ZUxhYmVsVmFsdWUSLC5tZWRpYXRhZy5jb21wb3NlLn'
-    'YxLkNyZWF0ZUxhYmVsVmFsdWVSZXF1ZXN0Gi0ubWVkaWF0YWcuY29tcG9zZS52MS5DcmVhdGVM'
-    'YWJlbFZhbHVlUmVzcG9uc2USbwoQVXBkYXRlTGFiZWxWYWx1ZRIsLm1lZGlhdGFnLmNvbXBvc2'
-    'UudjEuVXBkYXRlTGFiZWxWYWx1ZVJlcXVlc3QaLS5tZWRpYXRhZy5jb21wb3NlLnYxLlVwZGF0'
-    'ZUxhYmVsVmFsdWVSZXNwb25zZQ==');
+    'CgxMYWJlbFNlcnZpY2USXQoKTGlzdExhYmVscxImLm1lZGlhdGFnLmNvbXBvc2UudjEuTGlzdE'
+    'xhYmVsc1JlcXVlc3QaJy5tZWRpYXRhZy5jb21wb3NlLnYxLkxpc3RMYWJlbHNSZXNwb25zZRJv'
+    'ChBDcmVhdGVMYWJlbFZhbHVlEiwubWVkaWF0YWcuY29tcG9zZS52MS5DcmVhdGVMYWJlbFZhbH'
+    'VlUmVxdWVzdBotLm1lZGlhdGFnLmNvbXBvc2UudjEuQ3JlYXRlTGFiZWxWYWx1ZVJlc3BvbnNl'
+    'Em8KEFVwZGF0ZUxhYmVsVmFsdWUSLC5tZWRpYXRhZy5jb21wb3NlLnYxLlVwZGF0ZUxhYmVsVm'
+    'FsdWVSZXF1ZXN0Gi0ubWVkaWF0YWcuY29tcG9zZS52MS5VcGRhdGVMYWJlbFZhbHVlUmVzcG9u'
+    'c2U=');
