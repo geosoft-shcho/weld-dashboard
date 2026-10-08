@@ -1,7 +1,7 @@
 // ============================================================================
 // WorkService - 공사·작업·패스·작업자·장비 조회, 수집 현황, 파형 비교 (v1)
 // tacit-db `tacit.project`·`job`·`pass`·`worker`·`equipment`를 다룬다(스키마 지도 "작업" 묶음).
-// 작업·패스는 적재기가 만들고 여기선 조회만 한다. 첨부는 AssetService.
+// 작업·패스는 주로 적재기가 만든다. 화면에서는 CreateProject·CreateJob으로 공사·작업을 만든다. 첨부는 AssetService.
 //
 // 수집 현황(대시보드 s0): 장비 연결 상태가 아니라 실제로 저장된 Asset이 얼마나 있는지를
 // 한 단계씩 보여준다.
@@ -15,6 +15,22 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-08  geosoft-Server: 품목 이름은 배정 줄의 값 — UpdateJob 마스크에서 item_name을 빼고 UpdateProjectItem 추가.
+//                CreateJob은 이미 배정된 품목이면 item_name을 안 줘도 된다
+//   2026-10-08  geosoft-Server: 품목 기준정보 — CreateProjectItems(공사·호기에 품목 배정), ListItems(쓰인 품목), Job.project_item_id.
+//                ListJobFilters의 호기·품목은 배정 표에서 읽어 작업이 없어도 나온다(ProjectItem.item_name·project_item_id)
+//   2026-10-08  geosoft-Server: Worker.worker_code·Job.item_abbr 삭제(쓰는 곳이 없다). 호기 번호는 서버가 두 자리로 맞춘다(5 → 05)
+//   2026-10-07  geosoft-Server: 공사에 숫자 ID(Project.project_id) — 공사를 project_id로도 가리킬 수 있다(Job.project_id,
+//                ListJobsRequest.project_id, DeleteProjectRequest.project_id). 작업 이름 Job.job_name
+//   2026-10-07  geosoft-Server: 작업자·장비 ID도 숫자(int64)로 — 옛 글자 값은 worker_code·equipment_code. 작업자·장비 만들기·고치기·
+//                지우기(CreateWorker·UpdateWorker·DeleteWorker·CreateEquipment·UpdateEquipment·DeleteEquipment)
+//   2026-10-07  geosoft-Server: 공사·작업·패스 수정·삭제와 패스 생성(UpdateProject·DeleteProject·UpdateJob·DeleteJob·CreatePass·
+//                UpdatePass·DeletePass). CreateJob은 품목 이름·이음부·시작 시각도 필수
+//   2026-10-07  geosoft-Server: CreateJob이 패스도 함께 만든다(CreateJobRequest.passes, 선택) — 작업과 패스가 한 번에, 전부 아니면 전무
+//   2026-10-07  geosoft-Server: GetPassWaveform이 돌려주는 표준화 Asset ID도 숫자(int64)로
+//   2026-10-07  geosoft-Server: 작업·패스 ID를 숫자(int64)로 — job_id·pass_id는 시스템이 매기는 번호, 옛 글자 ID는 Job.job_key
+//   2026-10-07  geosoft-Server: CreateJob — 화면에서 작업을 만든다. job_id·job_key·common_key는 서버가 발급
+//   2026-10-07  geosoft-Server: CreateProject — 화면에서 공사를 만든다(작업·패스 생성, 업로드의 선행)
 //   2026-10-02  geosoft-Server: 패스 필터·목록(ListJobsRequest.pass_no, ProjectItem.joints[].pass_nos)
 //   2026-10-02  geosoft-Server: 이음부 필터·목록(ListJobsRequest.joint_no, ProjectUnit.items), 수집 현황에 품목 단계
 //                (COLLECTION_LEVEL_ITEM, CollectionPath.common_key) — 공사 → 품목(호기+품목, 성적서 단위) → 작업(이음부) → 패스
@@ -38,6 +54,7 @@ syntax = "proto3";
 
 package mediatag.work.v1;
 
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "mediatag/asset/v1/asset.proto";
 
@@ -46,12 +63,52 @@ option go_package = "gen/protobuf/mediatag/work/v1;workv1";
 // 사용처: 대시보드(s0 수집 현황, s2 작업 이력·필터, s3 파형 비교, s3/s4 컨텍스트), 컴포즈(열 작업 고르기).
 service WorkService {
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+  // 공사를 만든다. project.project_no는 필수이고 발급 후 불변. 같은 번호가 있으면 AlreadyExists.
+  rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse);
   rpc ListWorkers(ListWorkersRequest) returns (ListWorkersResponse);
+  // 작업자를 만든다. worker.worker_name 필수.
+  rpc CreateWorker(CreateWorkerRequest) returns (CreateWorkerResponse);
+  // update_mask: worker_name, team, is_master
+  rpc UpdateWorker(UpdateWorkerRequest) returns (UpdateWorkerResponse);
+  // 작업을 맡은 작업자는 FailedPrecondition.
+  rpc DeleteWorker(DeleteWorkerRequest) returns (DeleteWorkerResponse);
   rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse);
+  // 장비를 만든다. equipment.equipment_name 필수. equipment_code가 겹치면 AlreadyExists.
+  rpc CreateEquipment(CreateEquipmentRequest) returns (CreateEquipmentResponse);
+  // update_mask: equipment_name, line_name, equipment_code
+  rpc UpdateEquipment(UpdateEquipmentRequest) returns (UpdateEquipmentResponse);
+  // 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
+  rpc DeleteEquipment(DeleteEquipmentRequest) returns (DeleteEquipmentResponse);
+  // 공사의 호기에 품목을 배정한다(묶음). 작업을 만들기 전에 품목을 미리 등록할 때 쓴다. 이미 있는 배정은 그대로 두고
+  // (이름도 안 바꾼다) 그 줄을 돌려준다. project_id·unit_no·item_code·item_name 필수, 없는 공사면 InvalidArgument.
+  rpc CreateProjectItems(CreateProjectItemsRequest) returns (CreateProjectItemsResponse);
+  // 배정 줄의 품목 이름을 고친다(item.project_item_id·item_name 필수). 그 배정을 가리키는 작업 모두의 item_name이 바뀐다.
+  rpc UpdateProjectItem(UpdateProjectItemRequest) returns (UpdateProjectItemResponse);
+  // 배정에 쓰인 품목(코드·이름)을 중복 없이. 품목을 넣을 때 이름을 다시 고르는 추천 목록으로 쓴다.
+  rpc ListItems(ListItemsRequest) returns (ListItemsResponse);
   // 작업 목록(ListJobs) 필터의 드롭다운 값을 한 번에: 공사(호기·품목 포함)·작업자·장비.
   rpc ListJobFilters(ListJobFiltersRequest) returns (ListJobFiltersResponse);
   // 작업 목록. 행마다 표시용 이름·개수를 붙여 준다(행별 추가 조회 불필요).
   rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
+  // 공사 이름·현장·발주처를 고친다(update_mask: project_name, site_name, customer). 공사 번호는 못 바꾼다.
+  rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse);
+  // 작업이 하나라도 있는 공사는 FailedPrecondition.
+  rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse);
+  // 작업을 만든다. 필수: job.project_no(또는 project_id)·unit_no·item_code(공백 없이, 정규화된 값 — '05'·'TFPB')·joint_no·started_at, 그리고 item_name(이미 배정된 품목이면 안 줘도 되고, 줘도 저장된 이름을 따른다).
+  // job_id·job_key·common_key는 서버가 정하고 보낸 값은 무시한다. 공사·작업자가 없으면 InvalidArgument.
+  // passes를 주면 패스도 함께 만든다 — 하나라도 틀리면 작업도 만들어지지 않는다. 나중에 더할 때는 CreatePass.
+  rpc CreateJob(CreateJobRequest) returns (CreateJobResponse);
+  // 작업을 고친다(update_mask에 든 칸만). job_id는 그대로이고, 공사·호기·품목·이음부·시작 시각이 바뀌면 common_key·job_key를
+  // 다시 만든다 — 성적서는 품목(common_key)에 붙어 있어 바뀐 품목의 성적서를 보게 된다. 필수 칸은 비울 수 없다.
+  rpc UpdateJob(UpdateJobRequest) returns (UpdateJobResponse);
+  // 작업과 그 패스를 지운다. 첨부·타임라인·매칭된 성적서 세트가 있으면 FailedPrecondition(먼저 떼거나 지운다).
+  rpc DeleteJob(DeleteJobRequest) returns (DeleteJobResponse);
+  // 패스를 만든다. pass.job_id·pass_no(1 이상)는 필수. 같은 번호의 패스가 있으면 AlreadyExists.
+  rpc CreatePass(CreatePassRequest) returns (CreatePassResponse);
+  // 패스를 고친다(update_mask: pass_no, started_at, ended_at).
+  rpc UpdatePass(UpdatePassRequest) returns (UpdatePassResponse);
+  // 패스를 지운다. 그 패스에 붙어 있던 첨부는 작업 공용이 된다.
+  rpc DeletePass(DeletePassRequest) returns (DeletePassResponse);
   // 작업 + 패스 + 작업자 + 쓰인 장비
   rpc GetJob(GetJobRequest) returns (GetJobResponse);
 
@@ -65,52 +122,104 @@ service WorkService {
 
 // 작업 공간 = 공사. PDF DB·CARO의 project_no와 같은 값.
 message Project {
-  string project_no = 1;   // 'TP129', 데모 'DEMO'
+  string project_no = 1;   // 'TP129', 데모 'DEMO'. 사람이 정한 공사 번호(유일). 작업·성적서는 이 값으로 공사에 이어진다
   string project_name = 2;
   string site_name = 3;
   string customer = 4;
+  int64 project_id = 5;    // 시스템이 매기는 번호
 }
 
 // 작업자. 명장/대조군 구분은 비교·학습 데이터의 핵심.
 message Worker {
-  string worker_id = 1;
+  int64 worker_id = 1;         // 시스템이 매기는 번호
   string worker_name = 2;
   string team = 3;
   optional bool is_master = 4; // 없으면 모름
+  reserved 5; // 옛 worker_code
 }
 
 // 수집 장비(카메라·마이크·센서·용접기 패널 등).
 message Equipment {
-  string equipment_id = 1;
+  int64 equipment_id = 1;      // 시스템이 매기는 번호
   string equipment_name = 2;
   string line_name = 3;
+  string equipment_code = 4;   // 사람이 정한 값('DEMO-DEPTH-FRONT'). 적재기가 이 값으로 장비를 찾는다. 없어도 되고, 있으면 유일
 }
 
 // 작업 1회 = 이력 1건 = 타임라인 1개.
 message Job {
-  string job_id = 1;       // JOB-{common_key}-{YYYYMMDD}_{hash4}. 이음부 단위 작업이면 JOB-{common_key}-{이음부}-{YYYYMMDD}_{hash4}
+  int64 job_id = 1;        // 시스템이 매기는 번호. 뜻이 없다
   string common_key = 2;   // 재작업 job들을 묶는 키
   string project_no = 3;   // 비면 공사 미지정
   string unit_no = 4;
   string item_code = 5;
-  string item_name = 6;
-  string item_abbr = 7;
+  string item_name = 6;    // 배정 줄(project_item)의 이름. 고칠 때는 UpdateProjectItem
+  reserved 7; // 옛 item_abbr — item_code에 같은 정보가 있다
   string item_no = 8;
   string operation_no = 9;
   string material = 10;
   optional double outer_diameter_mm = 11;
   optional double thickness_mm = 12;
-  string worker_id = 13;
+  int64 worker_id = 13;
   google.protobuf.Timestamp started_at = 14; // 타임라인 0점
   google.protobuf.Timestamp ended_at = 15;
   // 이음부 번호('DGT-ELA-01', 성적서 UT 표의 확인번호). 작업을 이음부(원주 이음 한 곳) 단위로 만든 경우에만 있다 —
   // 비면 품목 전체 작업. 같은 common_key(품목) 아래에 이음부마다 작업이 하나씩 있다.
   string joint_no = 16;
+  // 사람이 읽는 조합 키: JOB-{common_key}-[{이음부}-]{YYYYMMDD}_{hash4}. 공사·호기·품목·이음부가 바뀌면 다시 만들어진다 —
+  // 식별·저장에는 job_id를 쓰고, 이 값은 화면 표시와 외부 자료 대조에만 쓴다.
+  string job_key = 17;
+  // 공사의 번호(project_no와 같은 공사). 만들거나 고칠 때 project_no 대신 이 값을 줘도 된다(둘 다 주면 이 값을 따른다).
+  int64 project_id = 18;
+  string job_name = 19;    // 사람이 붙이는 작업 이름. 없어도 된다
+  // 배정된 품목(공사·호기·품목)의 번호. 읽기 전용 — 만들거나 고칠 때는 project·unit_no·item_code로 정하고, 그 배정이
+  // 없으면 서버가 만든다. 0이면 배정이 아직 안 붙은 작업.
+  int64 project_item_id = 20;
+}
+
+// 공사·호기에 배정한 품목 한 줄. (project_id, unit_no, item_code)가 유일하다. 이름은 배정 줄마다 따로 둔다.
+message ItemAssignment {
+  int64 project_item_id = 1; // 시스템이 매기는 번호(만들 때는 비운다)
+  int64 project_id = 2;
+  string unit_no = 3;        // 한 자리 숫자는 서버가 두 자리로 맞춘다(5 → 05)
+  string item_code = 4;
+  string item_name = 5;
+}
+
+// 품목 코드와 이름(ListItems). 같은 코드에 이름이 여러 개면 여러 줄로 나온다.
+message Item {
+  string item_code = 1;
+  string item_name = 2;
+}
+
+message CreateProjectItemsRequest {
+  int64 project_id = 1;
+  repeated ItemAssignment items = 2; // 줄마다 unit_no·item_code·item_name. project_id는 위 값을 쓴다
+}
+
+message CreateProjectItemsResponse {
+  repeated ItemAssignment items = 1; // 요청과 같은 순서. 이미 있던 배정은 저장된 이름으로 온다
+}
+
+message UpdateProjectItemRequest {
+  ItemAssignment item = 1; // project_item_id와 item_name만 읽는다
+}
+
+message UpdateProjectItemResponse {
+  ItemAssignment item = 1;
+}
+
+message ListItemsRequest {
+  int64 project_id = 1; // 그 공사에서 쓴 품목. 0이면 전체 공사
+}
+
+message ListItemsResponse {
+  repeated Item items = 1; // item_code, item_name 오름차순
 }
 
 message Pass {
-  string pass_id = 1;      // {job_id}-P{pass_no:02}
-  string job_id = 2;
+  int64 pass_id = 1;       // 시스템이 매기는 번호
+  int64 job_id = 2;
   int32 pass_no = 3;       // 1 = 초층(root)
   google.protobuf.Timestamp started_at = 4;
   google.protobuf.Timestamp ended_at = 5;
@@ -133,6 +242,127 @@ message ListProjectsResponse {
   repeated Project projects = 1;
 }
 
+message CreateProjectRequest {
+  Project project = 1;
+}
+
+message CreateProjectResponse {
+  Project project = 1;
+}
+
+message CreateWorkerRequest {
+  Worker worker = 1;
+}
+
+message CreateWorkerResponse {
+  Worker worker = 1;
+}
+
+message UpdateWorkerRequest {
+  Worker worker = 1;                       // worker.worker_id 필수
+  google.protobuf.FieldMask update_mask = 2; // worker_name, team, is_master
+}
+
+message UpdateWorkerResponse {
+  Worker worker = 1;
+}
+
+message DeleteWorkerRequest {
+  int64 worker_id = 1;
+}
+
+message DeleteWorkerResponse {}
+
+message CreateEquipmentRequest {
+  Equipment equipment = 1;
+}
+
+message CreateEquipmentResponse {
+  Equipment equipment = 1;
+}
+
+message UpdateEquipmentRequest {
+  Equipment equipment = 1;                 // equipment.equipment_id 필수
+  google.protobuf.FieldMask update_mask = 2; // equipment_name, line_name, equipment_code
+}
+
+message UpdateEquipmentResponse {
+  Equipment equipment = 1;
+}
+
+message DeleteEquipmentRequest {
+  int64 equipment_id = 1;
+}
+
+message DeleteEquipmentResponse {}
+
+message UpdateProjectRequest {
+  Project project = 1;                     // project.project_id 또는 project_no 필수
+  google.protobuf.FieldMask update_mask = 2; // project_name, site_name, customer
+}
+
+message UpdateProjectResponse {
+  Project project = 1;
+}
+
+message DeleteProjectRequest {
+  string project_no = 1;
+  int64 project_id = 2;   // project_no 대신 번호로(주면 이 값을 따른다)
+}
+
+message DeleteProjectResponse {}
+
+message CreateJobRequest {
+  Job job = 1;
+  // 선택. 함께 만들 패스 — pass_no(1 이상, 서로 달라야 한다)만 필수이고 시각은 비워도 된다. pass_id·job_id는 무시한다.
+  repeated Pass passes = 2;
+}
+
+message CreateJobResponse {
+  Job job = 1;
+  repeated Pass passes = 2; // 만든 패스(패스 번호 순)
+}
+
+message UpdateJobRequest {
+  Job job = 1;                             // job.job_id 필수
+  // project_no(또는 project_id), unit_no, item_code, job_name, item_no, joint_no, operation_no, material,
+  // outer_diameter_mm, thickness_mm, worker_id, started_at, ended_at
+  google.protobuf.FieldMask update_mask = 2;
+}
+
+message UpdateJobResponse {
+  Job job = 1;
+}
+
+message DeleteJobRequest {
+  int64 job_id = 1;
+}
+
+message DeleteJobResponse {}
+
+message CreatePassRequest {
+  Pass pass = 1;
+}
+
+message CreatePassResponse {
+  Pass pass = 1;
+}
+
+message UpdatePassRequest {
+  Pass pass = 1;                           // pass.pass_id 필수
+  google.protobuf.FieldMask update_mask = 2; // pass_no, started_at, ended_at
+}
+
+message UpdatePassResponse {
+  Pass pass = 1;
+}
+
+message DeletePassRequest {
+  int64 pass_id = 1;
+}
+
+message DeletePassResponse {}
+
 message ListJobFiltersRequest {}
 
 // 드롭다운 값. 고른 값은 ListJobs의 project_no·unit_no·item_code·worker_id·equipment_id에 넣는다.
@@ -142,8 +372,7 @@ message ListJobFiltersResponse {
   repeated Equipment equipment = 3;    // ListEquipment와 같은 목록
 }
 
-// 공사 하나와 그 공사 작업(job)에 실제로 쓰인 호기·품목. 호기·품목은 따로 저장하는 표가 없고 조회할 때 작업에서
-// 모은다 — 작업이 없는 호기·품목은 나오지 않는다.
+// 공사 하나와 그 공사에 배정된 호기·품목(tacit.project_item). 작업이 없는 호기·품목도 나온다.
 message ProjectFilter {
   Project project = 1;
   repeated ProjectUnit units = 2;  // unit_no 오름차순
@@ -156,11 +385,13 @@ message ProjectUnit {
   repeated ProjectItem items = 3;  // item_codes와 같은 품목·같은 순서 + 품목마다 이음부
 }
 
-// 품목 하나와 그 품목 작업의 이음부. 이음부 단위 작업이 없는 품목은 joint_nos가 비어 있다.
+// 배정된 품목 하나와 그 품목 작업의 이음부. 작업이 없거나 이음부 단위 작업이 없는 품목은 joint_nos가 비어 있다.
 message ProjectItem {
   string item_code = 1;
   repeated string joint_nos = 2;   // 'DGT-ELA-01', 오름차순. 고른 값은 ListJobs의 joint_no에
   repeated ProjectJoint joints = 3; // joint_nos와 같은 이음부·같은 순서 + 이음부마다 패스
+  string item_name = 4;
+  int64 project_item_id = 5;       // 배정 줄의 번호
 }
 
 // 이음부 하나와 그 이음부 작업들에 있는 패스 번호. 패스가 없는 작업(성적서에서 만든 TP129 등)은 pass_nos가 비어 있다.
@@ -184,14 +415,15 @@ message ListEquipmentResponse {
 // 필터는 모두 선택이고 AND로 묶인다. 정렬은 started_at 내림차순, 같으면 job_id 내림차순.
 message ListJobsRequest {
   string project_no = 1;
+  int64 project_id = 14;     // project_no 대신 번호로(둘 다 주면 둘 다 맞아야 한다)
   string common_key = 2;     // 부분 일치
   string item_code = 3;      // 정규화값 'TFPB'
   string unit_no = 11;       // 호기, 정규화값 '05'
   string joint_no = 12;             // 이음부 번호 완전 일치('DGT-ELA-01'). 품목 안에서만 유일하므로 보통 item_code와 함께
-  int32 pass_no = 13;        // 그 패스가 있는 작업만(1 = 초층). 0이면 거르지 않는다. 패스 ID는 {job_id}-P{pass_no:02}
-  string worker_id = 4;
+  int32 pass_no = 13;        // 그 패스가 있는 작업만(1 = 초층). 0이면 거르지 않는다
+  int64 worker_id = 4;
   bool master_only = 5;      // 명장(worker.is_master) 작업만 — s3 비교 대상 고르기
-  string equipment_id = 6;   // 그 장비의 Asset이 첨부된 작업
+  int64 equipment_id = 6;   // 그 장비의 Asset이 첨부된 작업
   google.protobuf.Timestamp started_from = 7; // started_at >= from
   google.protobuf.Timestamp started_to = 8;   // started_at < to
   int32 page_size = 9;       // 기본 50, 최대 200
@@ -205,7 +437,7 @@ message ListJobsResponse {
 }
 
 message GetJobRequest {
-  string job_id = 1;
+  int64 job_id = 1;
 }
 
 message GetJobResponse {
@@ -245,11 +477,11 @@ enum CollectionLevel {
 message CollectionPath {
   CollectionView view = 1;
   CollectionLevel level = 2;
-  string equipment_id = 3;
-  string worker_id = 4;
+  int64 equipment_id = 3;
+  int64 worker_id = 4;
   string project_no = 5;
-  string job_id = 6;
-  string pass_id = 7;
+  int64 job_id = 6;
+  int64 pass_id = 7;
   string common_key = 8;   // 품목 단계
 }
 
@@ -299,24 +531,28 @@ message CollectionSummary {
 }
 
 message GetPassWaveformRequest {
-  string pass_id = 1;
-  // 비우면 전체 채널(DTW면 용접 4채널). "imu"를 적으면 앞·뒤 IMU의 acc_x~gyro_z 여섯 채널씩을 뜻한다.
+  int64 pass_id = 1;
+  // 비우면 전체 채널(DTW면 용접 4채널). "imu"를 적으면 앞·뒤 IMU 열두 채널(imu_front_acc_x~imu_back_gyro_z), 축 이름만(gyro_x) 적으면 그 축의 앞·뒤 둘을 뜻한다.
+  // 이름이 통일되는 채널은 통일 이름(current_a 등)·파일 원본 이름(전류_A 등) 어느 쪽으로 적어도 된다.
   repeated string channels = 2;
   int32 max_points = 3;         // 시리즈당 점 상한(화면용 줄이기). 0이면 서버 기본값
   // 비교할 패스. 화면이 비교 작업(지금은 명장 작업을 직접 고름 — ListJobs master_only, 추천 알고리즘이 생기면
-  // 그 결과)의 패스 목록(ListPasses)에서 고른다. 패스 수가 작업마다 다르니 처음↔처음, 끝↔끝, 가운데는 같은
+  // 그 결과)의 패스 목록(GetJob의 passes)에서 고른다. ListJobs의 pass_no로 찾은 작업도 GetJob으로 패스의 pass_id를 받는다. 패스 수가 작업마다 다르니 처음↔처음, 끝↔끝, 가운데는 같은
   // pass_no로 짝짓는 것을 권한다.
-  string comparison_pass_id = 4;
+  int64 comparison_pass_id = 4;
   WaveformNormalize normalize = 5;
 }
 
 enum WaveformNormalize {
-  WAVEFORM_NORMALIZE_UNSPECIFIED = 0; // = 원본. 파일마다 시리즈 하나, 시각은 패스 시작 기준
+  // = 원본. 파일마다 시리즈 하나, 시각은 패스 시작 기준. 채널 이름은 여기서도 current_a·voltage_v·
+  // wire_feed_speed_mpm·rotation_speed_rpm·angular_velocity_dps·pipe_angle_deg로 통일된다(파일에는 전류_A,
+  // current_A 등으로 적혀 있다). IMU는 앞·뒤를 이름으로 구분한다: imu_front_acc_x~imu_back_gyro_z.
+  WAVEFORM_NORMALIZE_UNSPECIFIED = 0;
   // 비교 파형을 대상 파형의 시간축에 DTW로 맞춘다(DTW 서버 호출, 저장 안 함 — 채널마다 따로 맞춤). 비교 패스가 있을 때만 쓰인다.
   // 대상·비교 모두 시리즈 하나로 온다(파일들을 한 격자로 모은 것, asset_id 없음). 대상은 그대로이고 비교가 대상의
   // 시간축에 맞춰져, 두 시리즈는 시각·길이가 같다. 정렬은 원본 간격(30fps)으로 하고 max_points로 줄이는 것은 맞춘 뒤다.
   // 용접 채널 current_a·voltage_v·wire_feed_speed_mpm·rotation_speed_rpm은 항상 들어 있고, 그 밖의 채널(IMU
-  // 자이로 등)은 channels에 적은 것만 맞춰 준다(두 패스에 다 있는 채널만 온다) — 이름은 "장비ID/채널"(장비가 있는 파일) 또는 채널 이름 그대로.
+  // 자이로 등)은 channels에 적은 것만 맞춰 준다(두 패스에 다 있는 채널만 온다) — 이름은 원본 보기와 같다.
   WAVEFORM_NORMALIZE_DTW = 1;
 }
 
@@ -326,8 +562,8 @@ message GetPassWaveformResponse {
 }
 
 message PassWaveform {
-  string job_id = 1;
-  string pass_id = 2;
+  int64 job_id = 1;
+  int64 pass_id = 2;
   int32 pass_no = 3;
   string worker_name = 4;
   optional bool is_master = 5;
@@ -336,14 +572,14 @@ message PassWaveform {
 
 // 표준화 CSV 한 파일에서 자른 구간. 두 작업을 겹쳐 보도록 시각은 패스 시작 기준 오프셋이다.
 message WaveformSeries {
-  string asset_id = 1;          // 표준화 파생 Asset
-  string equipment_id = 2;
+  int64 asset_id = 1;          // 표준화 파생 Asset
+  int64 equipment_id = 2;
   repeated int64 t_offset_ns = 3; // pass.started_at 기준
   repeated WaveformChannel channels = 4;
 }
 
 message WaveformChannel {
   string name = 1;              // 'current_a', 'voltage_v', 'rotation_speed_rpm' 등
-  string unit = 2;
+  string unit = 2;              // 통일되는 채널만: A, V, m/min, rpm, deg/s, deg. 그 밖(IMU 등)은 빈 값
   repeated double values = 3;   // t_offset_ns와 같은 길이. 결측은 NaN
 }

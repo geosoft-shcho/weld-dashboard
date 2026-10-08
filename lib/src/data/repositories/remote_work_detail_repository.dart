@@ -6,6 +6,7 @@ import '../../domain/repositories/work_detail_repository.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/media_tag_data_source.dart';
+import 'proto_id.dart';
 
 class RemoteWorkDetailRepository implements WorkDetailRepository {
   RemoteWorkDetailRepository(this._mediaTag);
@@ -18,9 +19,9 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
       return const WorkDetailCatalog(items: [], attachments: []);
     }
     final response = await _mediaTag.workService.getJob(
-      work_pb.GetJobRequest(jobId: jobId),
+      work_pb.GetJobRequest(jobId: protoId(jobId)),
     );
-    if (!response.hasJob() || response.job.jobId.isEmpty) {
+    if (!response.hasJob() || idText(response.job.jobId).isEmpty) {
       return const WorkDetailCatalog(items: [], attachments: []);
     }
     final attachments = await listAttachments(jobId: jobId);
@@ -36,18 +37,19 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
       return const [];
     }
     final response = await _mediaTag.assetService.listJobAssets(
-      asset_pb.ListJobAssetsRequest(jobId: jobId),
+      asset_pb.ListJobAssetsRequest(jobId: protoId(jobId)),
     );
     final attachments = <WorkAttachment>[];
     for (final item in response.assets) {
       final asset = item.asset;
       final type = _typeOf(asset);
-      if (type == null || asset.assetId.isEmpty) {
+      final assetId = idText(asset.assetId);
+      if (type == null || assetId.isEmpty) {
         continue;
       }
       attachments.add(
         WorkAttachment(
-          attachmentId: asset.assetId,
+          attachmentId: assetId,
           jobId: jobId,
           fileType: type,
           fileName: asset.fileName,
@@ -69,20 +71,21 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
         if (item.equipmentName.isNotEmpty) item.equipmentName,
     ];
     return WorkHistoryItem(
-      jobId: job.jobId,
+      jobId: idText(job.jobId),
+      jobKey: job.jobKey,
       commonKey: job.commonKey,
       projectNo: job.projectNo,
       unitNo: job.unitNo,
       itemCode: job.itemCode,
       itemName: job.itemName,
       jointNo: job.jointNo,
-      workerId: job.workerId,
+      workerId: idText(job.workerId),
       workerName: response.hasWorker() ? response.worker.workerName : '',
       isMaster: response.hasWorker() && response.worker.hasIsMaster()
           ? response.worker.isMaster
           : null,
       equipmentId: response.equipment.length == 1
-          ? response.equipment.first.equipmentId
+          ? idText(response.equipment.first.equipmentId)
           : '',
       equipmentName: equipmentNames.join(', '),
       workedAt: job.hasStartedAt()

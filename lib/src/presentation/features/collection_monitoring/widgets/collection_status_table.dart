@@ -135,7 +135,10 @@ class _CollectionStatusTableState extends State<CollectionStatusTable> {
             children: [
               Text(row.equipmentName),
               Text(
-                '${row.equipmentId} · ${row.lineName}',
+                [
+                  if (row.equipmentCode.isNotEmpty) row.equipmentCode,
+                  if (row.lineName.isNotEmpty) row.lineName,
+                ].join(' · '),
                 style: const TextStyle(fontSize: 11, color: Color(0xFF8E949E)),
               ),
             ],

@@ -12,6 +12,7 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-07  geosoft-Server: tool_id·run_id·output_asset_ids를 숫자(int64)로. 대상은 target_id(글자) 대신 RunTarget(job_id·asset_id·clip_id 중 하나)
 //   2026-09-29  geosoft-Server: tacit-tag tacittag.inference.v2(common·model_registry·
 //                inference_run)를 합쳐 최초 정의 — pattern·dispatch 추가, project_id·
 //                source_layer_id·result_layer_id → trigger·target_id, output_shape·
@@ -73,9 +74,9 @@ enum ToolDispatch {
 
 enum RunTrigger {
   RUN_TRIGGER_UNSPECIFIED = 0;
-  RUN_TRIGGER_MANUAL = 1;         // 사람이 직접 요청. target = Clip(clp_, 재계산) 또는 Asset(ast_, 예: 음성 추출)
+  RUN_TRIGGER_MANUAL = 1;         // 사람이 직접 요청. target = Clip(재계산) 또는 Asset(예: 음성 추출)
   RUN_TRIGGER_AUTO_TAGGING = 2;   // target = Timeline(= 작업, JOB-)
-  RUN_TRIGGER_ASSET_UPLOADED = 3; // target = Asset(ast_), 서버 전용
+  RUN_TRIGGER_ASSET_UPLOADED = 3; // target = Asset, 서버 전용
 }
 
 enum RunStatus {
@@ -88,7 +89,7 @@ enum RunStatus {
 }
 
 message Tool {
-  string tool_id = 1;           // tol_<ULID>. Create 시 비우면 서버 발급
+  int64 tool_id = 1;            // 서버 발급(Create 때 보낸 값은 무시)
   string name = 2;
   string endpoint = 3;          // 도구 고유 URL 또는 공용 게이트웨이 base URL. mediatag 안에서 도는 도구는 빈값
   string remote_model_name = 4; // 게이트웨이일 때 그 안의 모델 이름
@@ -102,10 +103,10 @@ message Tool {
 }
 
 message ToolRun {
-  string run_id = 1;
-  string tool_id = 2;
+  int64 run_id = 1;
+  int64 tool_id = 2;
   RunTrigger trigger = 3;
-  string target_id = 4;         // 접두어로 종류 구분: clp_/ast_/JOB-(= 그 작업의 타임라인)
+  reserved 4;                   // 예전 target_id(글자, 접두어로 종류 구분)
   RunStatus status = 5;
   string external_job_id = 6;   // pull 패턴일 때 외부 시스템의 job id
   string error_code = 7;        // FAILED일 때
@@ -119,7 +120,17 @@ message ToolRun {
   int32 estimated_remaining_seconds = 14; // 0이면 미제공
   int32 attempt_count = 15;     // 디스패치 재시도 누적
   // 이 실행이 만든 파생 Asset(provenance.run_id로 찾는다, 저장하지 않음)
-  repeated string output_asset_ids = 16;
+  repeated int64 output_asset_ids = 16;
+  RunTarget target = 17;        // 대상이 지워진 실행은 비어 있다
+}
+
+// 도구를 돌리는 대상. 셋 중 하나만 채운다.
+message RunTarget {
+  oneof target {
+    int64 job_id = 1;   // 그 작업의 타임라인 전체
+    int64 asset_id = 2;
+    int64 clip_id = 3;
+  }
 }
 
 message ListToolsRequest {}
@@ -145,15 +156,16 @@ message UpdateToolResponse {
 }
 
 message DeleteToolRequest {
-  string tool_id = 1;
+  int64 tool_id = 1;
 }
 
 message DeleteToolResponse {}
 
 message StartRunRequest {
-  string tool_id = 1;
+  int64 tool_id = 1;
   RunTrigger trigger = 2;
-  string target_id = 3;
+  reserved 3;              // 예전 target_id
+  RunTarget target = 4;
 }
 
 message StartRunResponse {
@@ -161,7 +173,7 @@ message StartRunResponse {
 }
 
 message GetRunRequest {
-  string run_id = 1;
+  int64 run_id = 1;
   bool wait_for_terminal = 2;   // true면 종료 상태 또는 상한까지 대기(long-poll)
   int32 wait_timeout_seconds = 3; // 0이면 30, 최대 600. 종료되면 즉시 응답
 }
@@ -171,8 +183,9 @@ message GetRunResponse {
 }
 
 message ListRunsRequest {
-  // 대상(Timeline·Clip·Asset) 기준. Timeline을 주면 그 타임라인 Clip 대상 실행도 포함한다.
-  string target_id = 1;
+  // 대상(작업·Clip·Asset) 기준. 작업을 주면 그 타임라인 Clip 대상 실행도 포함한다.
+  reserved 1;              // 예전 target_id
+  RunTarget target = 2;
 }
 
 message ListRunsResponse {
@@ -180,7 +193,7 @@ message ListRunsResponse {
 }
 
 message CancelRunRequest {
-  string run_id = 1;
+  int64 run_id = 1;
 }
 
 message CancelRunResponse {

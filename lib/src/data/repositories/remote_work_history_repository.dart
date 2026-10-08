@@ -9,6 +9,7 @@ import '../../domain/repositories/work_history_repository.dart';
 import '../datasources/generated/google/protobuf/timestamp.pb.dart';
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/media_tag_data_source.dart';
+import 'proto_id.dart';
 
 class RemoteWorkHistoryRepository implements WorkHistoryRepository {
   RemoteWorkHistoryRepository(this._mediaTag);
@@ -54,13 +55,14 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       ],
       workers: [
         for (final item in filters.workers)
-          Worker(workerId: item.workerId, workerName: item.workerName),
+          Worker(workerId: idText(item.workerId), workerName: item.workerName),
       ],
       equipments: [
         for (final item in filters.equipment)
           Equipment(
-            equipmentId: item.equipmentId,
+            equipmentId: idText(item.equipmentId),
             equipmentName: item.equipmentName,
+            equipmentCode: item.equipmentCode,
             lineName: item.lineName,
           ),
       ],
@@ -131,11 +133,17 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       unitNo: query.unitNo,
       jointNo: query.jointNo,
       passNo: query.passNo,
-      workerId: query.workerId,
-      equipmentId: query.equipmentId,
       pageSize: pageSize,
       pageToken: pageToken,
     );
+    final workerId = protoIdOrNull(query.workerId);
+    if (workerId != null) {
+      request.workerId = workerId;
+    }
+    final equipmentId = protoIdOrNull(query.equipmentId);
+    if (equipmentId != null) {
+      request.equipmentId = equipmentId;
+    }
     final fromDate = query.fromDate;
     if (fromDate != null) {
       request.startedFrom = Timestamp.fromDateTime(_dayStart(fromDate));
@@ -164,7 +172,8 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
   WorkHistoryItem _itemFrom(work_pb.JobSummary summary) {
     final job = summary.job;
     return WorkHistoryItem(
-      jobId: job.jobId,
+      jobId: idText(job.jobId),
+      jobKey: job.jobKey,
       commonKey: job.commonKey,
       projectNo: job.projectNo,
       unitNo: job.unitNo,
@@ -172,7 +181,7 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       itemName: job.itemName,
       jointNo: job.jointNo,
       hasReport: summary.hasReport,
-      workerId: job.workerId,
+      workerId: idText(job.workerId),
       workerName: summary.workerName,
       isMaster: summary.hasIsMaster() ? summary.isMaster : null,
       equipmentId: '',

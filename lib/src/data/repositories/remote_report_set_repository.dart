@@ -7,6 +7,7 @@ import '../datasources/generated/mediatag/report/v1/report.pb.dart'
     as report_pb;
 import '../datasources/generated/mediatag/report/v1/report.pbenum.dart';
 import '../datasources/remote/media_tag_data_source.dart';
+import 'proto_id.dart';
 
 class RemoteReportSetRepository implements ReportSetRepository {
   RemoteReportSetRepository(this._mediaTag);
@@ -20,7 +21,7 @@ class RemoteReportSetRepository implements ReportSetRepository {
     }
     try {
       final response = await _mediaTag.reportService.listReportSets(
-        report_pb.ListReportSetsRequest(jobId: jobId),
+        report_pb.ListReportSetsRequest(jobId: protoId(jobId)),
       );
       return [for (final set in response.reportSets) _summaryFrom(set)];
     } on ConnectException catch (error) {
@@ -38,7 +39,7 @@ class RemoteReportSetRepository implements ReportSetRepository {
     }
     try {
       final response = await _mediaTag.reportService.getReportSet(
-        report_pb.GetReportSetRequest(reportSetId: reportSetId),
+        report_pb.GetReportSetRequest(reportSetId: protoId(reportSetId)),
       );
       final set = response.reportSet;
       final summary = _summaryFrom(set);
@@ -49,10 +50,10 @@ class RemoteReportSetRepository implements ReportSetRepository {
             _sectionFrom(section, summary.pageStart),
         ],
         reviews: [for (final review in response.reviews) _reviewFrom(review)],
-        pdfUrl: set.splitAssetId.isEmpty
+        pdfUrl: idText(set.splitAssetId).isEmpty
             ? ''
             : _mediaTag.resolveContentUrl(
-                '/assets/${set.splitAssetId}/content',
+                '/assets/${idText(set.splitAssetId)}/content',
               ),
       );
     } on ConnectException catch (error) {
@@ -65,9 +66,9 @@ class RemoteReportSetRepository implements ReportSetRepository {
 
   ReportSetSummary _summaryFrom(report_pb.ReportSet set) {
     return ReportSetSummary(
-      reportSetId: set.reportSetId,
+      reportSetId: idText(set.reportSetId),
       commonKey: set.commonKey,
-      jobId: set.jobId,
+      jobId: idText(set.jobId),
       itemName: set.itemName,
       unitNo: set.unitNo,
       projectNo: set.projectNo,

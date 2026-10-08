@@ -28,6 +28,8 @@ const SectionKind$json = {
     {'1': 'SECTION_KIND_PRESSURE', '2': 4},
     {'1': 'SECTION_KIND_NDT', '2': 5},
     {'1': 'SECTION_KIND_APPROVALS', '2': 6},
+    {'1': 'SECTION_KIND_SURFACE_TREATMENT', '2': 7},
+    {'1': 'SECTION_KIND_PAINT', '2': 8},
   ],
 };
 
@@ -36,7 +38,8 @@ final $typed_data.Uint8List sectionKindDescriptor = $convert.base64Decode(
     'CgtTZWN0aW9uS2luZBIcChhTRUNUSU9OX0tJTkRfVU5TUEVDSUZJRUQQABIWChJTRUNUSU9OX0'
     'tJTkRfRklUVVAQARIYChRTRUNUSU9OX0tJTkRfV0VMRElORxACEhwKGFNFQ1RJT05fS0lORF9E'
     'SU1FTlNJT05BTBADEhkKFVNFQ1RJT05fS0lORF9QUkVTU1VSRRAEEhQKEFNFQ1RJT05fS0lORF'
-    '9ORFQQBRIaChZTRUNUSU9OX0tJTkRfQVBQUk9WQUxTEAY=');
+    '9ORFQQBRIaChZTRUNUSU9OX0tJTkRfQVBQUk9WQUxTEAYSIgoeU0VDVElPTl9LSU5EX1NVUkZB'
+    'Q0VfVFJFQVRNRU5UEAcSFgoSU0VDVElPTl9LSU5EX1BBSU5UEAg=');
 
 @$core.Deprecated('Use reviewReasonDescriptor instead')
 const ReviewReason$json = {
@@ -61,10 +64,10 @@ final $typed_data.Uint8List reviewReasonDescriptor = $convert.base64Decode(
 const ReportSet$json = {
   '1': 'ReportSet',
   '2': [
-    {'1': 'report_set_id', '3': 1, '4': 1, '5': 9, '10': 'reportSetId'},
-    {'1': 'job_id', '3': 2, '4': 1, '5': 9, '10': 'jobId'},
+    {'1': 'report_set_id', '3': 1, '4': 1, '5': 3, '10': 'reportSetId'},
+    {'1': 'job_id', '3': 2, '4': 1, '5': 3, '10': 'jobId'},
     {'1': 'common_key', '3': 14, '4': 1, '5': 9, '10': 'commonKey'},
-    {'1': 'source_asset_id', '3': 3, '4': 1, '5': 9, '10': 'sourceAssetId'},
+    {'1': 'source_asset_id', '3': 3, '4': 1, '5': 3, '10': 'sourceAssetId'},
     {
       '1': 'page_start',
       '3': 4,
@@ -83,7 +86,7 @@ const ReportSet$json = {
       '10': 'pageEnd',
       '17': true
     },
-    {'1': 'split_asset_id', '3': 12, '4': 1, '5': 9, '10': 'splitAssetId'},
+    {'1': 'split_asset_id', '3': 12, '4': 1, '5': 3, '10': 'splitAssetId'},
     {'1': 'item_name', '3': 6, '4': 1, '5': 9, '10': 'itemName'},
     {'1': 'unit_no', '3': 7, '4': 1, '5': 9, '10': 'unitNo'},
     {'1': 'project_no', '3': 8, '4': 1, '5': 9, '10': 'projectNo'},
@@ -114,11 +117,11 @@ const ReportSet$json = {
 
 /// Descriptor for `ReportSet`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List reportSetDescriptor = $convert.base64Decode(
-    'CglSZXBvcnRTZXQSIgoNcmVwb3J0X3NldF9pZBgBIAEoCVILcmVwb3J0U2V0SWQSFQoGam9iX2'
-    'lkGAIgASgJUgVqb2JJZBIdCgpjb21tb25fa2V5GA4gASgJUgljb21tb25LZXkSJgoPc291cmNl'
-    'X2Fzc2V0X2lkGAMgASgJUg1zb3VyY2VBc3NldElkEiIKCnBhZ2Vfc3RhcnQYBCABKAVIAFIJcG'
+    'CglSZXBvcnRTZXQSIgoNcmVwb3J0X3NldF9pZBgBIAEoA1ILcmVwb3J0U2V0SWQSFQoGam9iX2'
+    'lkGAIgASgDUgVqb2JJZBIdCgpjb21tb25fa2V5GA4gASgJUgljb21tb25LZXkSJgoPc291cmNl'
+    'X2Fzc2V0X2lkGAMgASgDUg1zb3VyY2VBc3NldElkEiIKCnBhZ2Vfc3RhcnQYBCABKAVIAFIJcG'
     'FnZVN0YXJ0iAEBEh4KCHBhZ2VfZW5kGAUgASgFSAFSB3BhZ2VFbmSIAQESJAoOc3BsaXRfYXNz'
-    'ZXRfaWQYDCABKAlSDHNwbGl0QXNzZXRJZBIbCglpdGVtX25hbWUYBiABKAlSCGl0ZW1OYW1lEh'
+    'ZXRfaWQYDCABKANSDHNwbGl0QXNzZXRJZBIbCglpdGVtX25hbWUYBiABKAlSCGl0ZW1OYW1lEh'
     'cKB3VuaXRfbm8YByABKAlSBnVuaXRObxIdCgpwcm9qZWN0X25vGAggASgJUglwcm9qZWN0Tm8S'
     'GwoJaXRlbV9hYmJyGAkgASgJUghpdGVtQWJichI5CgpjcmVhdGVkX2F0GAogASgLMhouZ29vZ2'
     'xlLnByb3RvYnVmLlRpbWVzdGFtcFIJY3JlYXRlZEF0Ej4KCHNlY3Rpb25zGAsgAygLMiIubWVk'
@@ -226,14 +229,14 @@ final $typed_data.Uint8List sectionDescriptor = $convert.base64Decode(
 const ListReportSetsRequest$json = {
   '1': 'ListReportSetsRequest',
   '2': [
-    {'1': 'job_id', '3': 1, '4': 1, '5': 9, '10': 'jobId'},
+    {'1': 'job_id', '3': 1, '4': 1, '5': 3, '10': 'jobId'},
     {'1': 'common_key', '3': 2, '4': 1, '5': 9, '10': 'commonKey'},
   ],
 };
 
 /// Descriptor for `ListReportSetsRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listReportSetsRequestDescriptor = $convert.base64Decode(
-    'ChVMaXN0UmVwb3J0U2V0c1JlcXVlc3QSFQoGam9iX2lkGAEgASgJUgVqb2JJZBIdCgpjb21tb2'
+    'ChVMaXN0UmVwb3J0U2V0c1JlcXVlc3QSFQoGam9iX2lkGAEgASgDUgVqb2JJZBIdCgpjb21tb2'
     '5fa2V5GAIgASgJUgljb21tb25LZXk=');
 
 @$core.Deprecated('Use listReportSetsResponseDescriptor instead')
@@ -261,13 +264,13 @@ final $typed_data.Uint8List listReportSetsResponseDescriptor =
 const GetReportSetRequest$json = {
   '1': 'GetReportSetRequest',
   '2': [
-    {'1': 'report_set_id', '3': 1, '4': 1, '5': 9, '10': 'reportSetId'},
+    {'1': 'report_set_id', '3': 1, '4': 1, '5': 3, '10': 'reportSetId'},
   ],
 };
 
 /// Descriptor for `GetReportSetRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List getReportSetRequestDescriptor = $convert.base64Decode(
-    'ChNHZXRSZXBvcnRTZXRSZXF1ZXN0EiIKDXJlcG9ydF9zZXRfaWQYASABKAlSC3JlcG9ydFNldE'
+    'ChNHZXRSZXBvcnRTZXRSZXF1ZXN0EiIKDXJlcG9ydF9zZXRfaWQYASABKANSC3JlcG9ydFNldE'
     'lk');
 
 @$core.Deprecated('Use getReportSetResponseDescriptor instead')
@@ -426,16 +429,16 @@ final $typed_data.Uint8List resolveReviewResponseDescriptor = $convert.base64Dec
 const MatchReportSetRequest$json = {
   '1': 'MatchReportSetRequest',
   '2': [
-    {'1': 'report_set_id', '3': 1, '4': 1, '5': 9, '10': 'reportSetId'},
-    {'1': 'job_id', '3': 2, '4': 1, '5': 9, '10': 'jobId'},
+    {'1': 'report_set_id', '3': 1, '4': 1, '5': 3, '10': 'reportSetId'},
+    {'1': 'job_id', '3': 2, '4': 1, '5': 3, '10': 'jobId'},
     {'1': 'common_key', '3': 3, '4': 1, '5': 9, '10': 'commonKey'},
   ],
 };
 
 /// Descriptor for `MatchReportSetRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List matchReportSetRequestDescriptor = $convert.base64Decode(
-    'ChVNYXRjaFJlcG9ydFNldFJlcXVlc3QSIgoNcmVwb3J0X3NldF9pZBgBIAEoCVILcmVwb3J0U2'
-    'V0SWQSFQoGam9iX2lkGAIgASgJUgVqb2JJZBIdCgpjb21tb25fa2V5GAMgASgJUgljb21tb25L'
+    'ChVNYXRjaFJlcG9ydFNldFJlcXVlc3QSIgoNcmVwb3J0X3NldF9pZBgBIAEoA1ILcmVwb3J0U2'
+    'V0SWQSFQoGam9iX2lkGAIgASgDUgVqb2JJZBIdCgpjb21tb25fa2V5GAMgASgJUgljb21tb25L'
     'ZXk=');
 
 @$core.Deprecated('Use matchReportSetResponseDescriptor instead')
@@ -463,7 +466,7 @@ final $typed_data.Uint8List matchReportSetResponseDescriptor =
 const ListQualityResultsRequest$json = {
   '1': 'ListQualityResultsRequest',
   '2': [
-    {'1': 'job_id', '3': 1, '4': 1, '5': 9, '10': 'jobId'},
+    {'1': 'job_id', '3': 1, '4': 1, '5': 3, '10': 'jobId'},
     {'1': 'common_key', '3': 2, '4': 1, '5': 9, '10': 'commonKey'},
     {'1': 'joint_no', '3': 3, '4': 1, '5': 9, '10': 'jointNo'},
   ],
@@ -472,7 +475,7 @@ const ListQualityResultsRequest$json = {
 /// Descriptor for `ListQualityResultsRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listQualityResultsRequestDescriptor =
     $convert.base64Decode(
-        'ChlMaXN0UXVhbGl0eVJlc3VsdHNSZXF1ZXN0EhUKBmpvYl9pZBgBIAEoCVIFam9iSWQSHQoKY2'
+        'ChlMaXN0UXVhbGl0eVJlc3VsdHNSZXF1ZXN0EhUKBmpvYl9pZBgBIAEoA1IFam9iSWQSHQoKY2'
         '9tbW9uX2tleRgCIAEoCVIJY29tbW9uS2V5EhkKCGpvaW50X25vGAMgASgJUgdqb2ludE5v');
 
 @$core.Deprecated('Use listQualityResultsResponseDescriptor instead')
@@ -500,9 +503,9 @@ final $typed_data.Uint8List listQualityResultsResponseDescriptor =
 const QualityReport$json = {
   '1': 'QualityReport',
   '2': [
-    {'1': 'report_set_id', '3': 1, '4': 1, '5': 9, '10': 'reportSetId'},
+    {'1': 'report_set_id', '3': 1, '4': 1, '5': 3, '10': 'reportSetId'},
     {'1': 'common_key', '3': 2, '4': 1, '5': 9, '10': 'commonKey'},
-    {'1': 'split_asset_id', '3': 3, '4': 1, '5': 9, '10': 'splitAssetId'},
+    {'1': 'split_asset_id', '3': 3, '4': 1, '5': 3, '10': 'splitAssetId'},
     {
       '1': 'inspections',
       '3': 4,
@@ -524,8 +527,8 @@ const QualityReport$json = {
 
 /// Descriptor for `QualityReport`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List qualityReportDescriptor = $convert.base64Decode(
-    'Cg1RdWFsaXR5UmVwb3J0EiIKDXJlcG9ydF9zZXRfaWQYASABKAlSC3JlcG9ydFNldElkEh0KCm'
-    'NvbW1vbl9rZXkYAiABKAlSCWNvbW1vbktleRIkCg5zcGxpdF9hc3NldF9pZBgDIAEoCVIMc3Bs'
+    'Cg1RdWFsaXR5UmVwb3J0EiIKDXJlcG9ydF9zZXRfaWQYASABKANSC3JlcG9ydFNldElkEh0KCm'
+    'NvbW1vbl9rZXkYAiABKAlSCWNvbW1vbktleRIkCg5zcGxpdF9hc3NldF9pZBgDIAEoA1IMc3Bs'
     'aXRBc3NldElkEkcKC2luc3BlY3Rpb25zGAQgAygLMiUubWVkaWF0YWcucmVwb3J0LnYxLlF1YW'
     'xpdHlJbnNwZWN0aW9uUgtpbnNwZWN0aW9ucxI4CgZqb2ludHMYBSADKAsyIC5tZWRpYXRhZy5y'
     'ZXBvcnQudjEuSm9pbnRRdWFsaXR5UgZqb2ludHM=');
@@ -612,7 +615,7 @@ const JointQuality$json = {
   '1': 'JointQuality',
   '2': [
     {'1': 'joint_no', '3': 1, '4': 1, '5': 9, '10': 'jointNo'},
-    {'1': 'job_ids', '3': 2, '4': 3, '5': 9, '10': 'jobIds'},
+    {'1': 'job_ids', '3': 2, '4': 3, '5': 3, '10': 'jobIds'},
     {
       '1': 'ut',
       '3': 3,
@@ -635,7 +638,7 @@ const JointQuality$json = {
 /// Descriptor for `JointQuality`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List jointQualityDescriptor = $convert.base64Decode(
     'CgxKb2ludFF1YWxpdHkSGQoIam9pbnRfbm8YASABKAlSB2pvaW50Tm8SFwoHam9iX2lkcxgCIA'
-    'MoCVIGam9iSWRzEiwKAnV0GAMgASgLMhwubWVkaWF0YWcucmVwb3J0LnYxLlV0UmVzdWx0UgJ1'
+    'MoA1IGam9iSWRzEiwKAnV0GAMgASgLMhwubWVkaWF0YWcucmVwb3J0LnYxLlV0UmVzdWx0UgJ1'
     'dBIsCgJtdBgEIAEoCzIcLm1lZGlhdGFnLnJlcG9ydC52MS5NdFJlc3VsdFICbXQ=');
 
 @$core.Deprecated('Use utResultDescriptor instead')

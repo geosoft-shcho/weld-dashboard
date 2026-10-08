@@ -29,7 +29,7 @@ export 'compose.pbenum.dart';
 class LabelRef extends $pb.GeneratedMessage {
   factory LabelRef({
     $core.String? vocabKey,
-    $core.String? valueId,
+    $fixnum.Int64? valueId,
   }) {
     final result = create();
     if (vocabKey != null) result.vocabKey = vocabKey;
@@ -52,7 +52,7 @@ class LabelRef extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'vocabKey')
-    ..aOS(2, _omitFieldNames ? '' : 'valueId')
+    ..aInt64(2, _omitFieldNames ? '' : 'valueId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -84,9 +84,9 @@ class LabelRef extends $pb.GeneratedMessage {
   void clearVocabKey() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get valueId => $_getSZ(1);
+  $fixnum.Int64 get valueId => $_getI64(1);
   @$pb.TagNumber(2)
-  set valueId($core.String value) => $_setString(1, value);
+  set valueId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasValueId() => $_has(1);
   @$pb.TagNumber(2)
@@ -95,7 +95,7 @@ class LabelRef extends $pb.GeneratedMessage {
 
 class Timeline extends $pb.GeneratedMessage {
   factory Timeline({
-    $core.String? jobId,
+    $fixnum.Int64? jobId,
     $core.String? name,
     TimelineStatus? status,
     $core.String? description,
@@ -130,7 +130,7 @@ class Timeline extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
     ..aOS(2, _omitFieldNames ? '' : 'name')
     ..e<TimelineStatus>(3, _omitFieldNames ? '' : 'status', $pb.PbFieldType.OE,
         defaultOrMaker: TimelineStatus.TIMELINE_STATUS_UNSPECIFIED,
@@ -167,9 +167,9 @@ class Timeline extends $pb.GeneratedMessage {
   static Timeline? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get jobId => $_getSZ(0);
+  $fixnum.Int64 get jobId => $_getI64(0);
   @$pb.TagNumber(1)
-  set jobId($core.String value) => $_setString(0, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasJobId() => $_has(0);
   @$pb.TagNumber(1)
@@ -241,8 +241,8 @@ class Timeline extends $pb.GeneratedMessage {
 
 class Track extends $pb.GeneratedMessage {
   factory Track({
-    $core.String? trackId,
-    $core.String? jobId,
+    $fixnum.Int64? trackId,
+    $fixnum.Int64? jobId,
     $core.String? name,
     $core.int? order,
     $core.bool? visible,
@@ -274,8 +274,8 @@ class Track extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'trackId')
-    ..aOS(2, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(1, _omitFieldNames ? '' : 'trackId')
+    ..aInt64(2, _omitFieldNames ? '' : 'jobId')
     ..aOS(3, _omitFieldNames ? '' : 'name')
     ..a<$core.int>(4, _omitFieldNames ? '' : 'order', $pb.PbFieldType.O3)
     ..aOB(5, _omitFieldNames ? '' : 'visible')
@@ -305,18 +305,18 @@ class Track extends $pb.GeneratedMessage {
   static Track? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get trackId => $_getSZ(0);
+  $fixnum.Int64 get trackId => $_getI64(0);
   @$pb.TagNumber(1)
-  set trackId($core.String value) => $_setString(0, value);
+  set trackId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasTrackId() => $_has(0);
   @$pb.TagNumber(1)
   void clearTrackId() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get jobId => $_getSZ(1);
+  $fixnum.Int64 get jobId => $_getI64(1);
   @$pb.TagNumber(2)
-  set jobId($core.String value) => $_setString(1, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasJobId() => $_has(1);
   @$pb.TagNumber(2)
@@ -374,13 +374,13 @@ class Track extends $pb.GeneratedMessage {
 
 class Clip extends $pb.GeneratedMessage {
   factory Clip({
-    $core.String? clipId,
-    $core.String? trackId,
+    $fixnum.Int64? clipId,
+    $fixnum.Int64? trackId,
     ClipKind? kind,
     $fixnum.Int64? timelineStartNs,
     $fixnum.Int64? timelineEndNs,
     ClipSource? source,
-    $core.String? labelValueId,
+    $fixnum.Int64? labelValueId,
     $core.String? description,
     ClipProvenance? provenance,
     $0.Timestamp? embeddedAt,
@@ -417,8 +417,8 @@ class Clip extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'clipId')
-    ..aOS(2, _omitFieldNames ? '' : 'trackId')
+    ..aInt64(1, _omitFieldNames ? '' : 'clipId')
+    ..aInt64(2, _omitFieldNames ? '' : 'trackId')
     ..e<ClipKind>(3, _omitFieldNames ? '' : 'kind', $pb.PbFieldType.OE,
         defaultOrMaker: ClipKind.CLIP_KIND_UNSPECIFIED,
         valueOf: ClipKind.valueOf,
@@ -427,7 +427,7 @@ class Clip extends $pb.GeneratedMessage {
     ..aInt64(5, _omitFieldNames ? '' : 'timelineEndNs')
     ..aOM<ClipSource>(6, _omitFieldNames ? '' : 'source',
         subBuilder: ClipSource.create)
-    ..aOS(7, _omitFieldNames ? '' : 'labelValueId')
+    ..aInt64(7, _omitFieldNames ? '' : 'labelValueId')
     ..aOS(8, _omitFieldNames ? '' : 'description')
     ..aOM<ClipProvenance>(9, _omitFieldNames ? '' : 'provenance',
         subBuilder: ClipProvenance.create)
@@ -459,18 +459,18 @@ class Clip extends $pb.GeneratedMessage {
   static Clip? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get clipId => $_getSZ(0);
+  $fixnum.Int64 get clipId => $_getI64(0);
   @$pb.TagNumber(1)
-  set clipId($core.String value) => $_setString(0, value);
+  set clipId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasClipId() => $_has(0);
   @$pb.TagNumber(1)
   void clearClipId() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get trackId => $_getSZ(1);
+  $fixnum.Int64 get trackId => $_getI64(1);
   @$pb.TagNumber(2)
-  set trackId($core.String value) => $_setString(1, value);
+  set trackId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasTrackId() => $_has(1);
   @$pb.TagNumber(2)
@@ -516,9 +516,9 @@ class Clip extends $pb.GeneratedMessage {
   ClipSource ensureSource() => $_ensure(5);
 
   @$pb.TagNumber(7)
-  $core.String get labelValueId => $_getSZ(6);
+  $fixnum.Int64 get labelValueId => $_getI64(6);
   @$pb.TagNumber(7)
-  set labelValueId($core.String value) => $_setString(6, value);
+  set labelValueId($fixnum.Int64 value) => $_setInt64(6, value);
   @$pb.TagNumber(7)
   $core.bool hasLabelValueId() => $_has(6);
   @$pb.TagNumber(7)
@@ -581,7 +581,7 @@ class Clip extends $pb.GeneratedMessage {
 /// 가리키는 Asset과 그 안의 범위. start/end·locator가 모두 비면 Asset 전체.
 class ClipSource extends $pb.GeneratedMessage {
   factory ClipSource({
-    $core.String? assetId,
+    $fixnum.Int64? assetId,
     $fixnum.Int64? startNs,
     $fixnum.Int64? endNs,
     $1.Struct? locator,
@@ -608,7 +608,7 @@ class ClipSource extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'assetId')
+    ..aInt64(1, _omitFieldNames ? '' : 'assetId')
     ..aInt64(2, _omitFieldNames ? '' : 'startNs')
     ..aInt64(3, _omitFieldNames ? '' : 'endNs')
     ..aOM<$1.Struct>(4, _omitFieldNames ? '' : 'locator',
@@ -635,9 +635,9 @@ class ClipSource extends $pb.GeneratedMessage {
   static ClipSource? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get assetId => $_getSZ(0);
+  $fixnum.Int64 get assetId => $_getI64(0);
   @$pb.TagNumber(1)
-  set assetId($core.String value) => $_setString(0, value);
+  set assetId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasAssetId() => $_has(0);
   @$pb.TagNumber(1)
@@ -679,10 +679,10 @@ class ClipProvenance extends $pb.GeneratedMessage {
   factory ClipProvenance({
     $core.double? confidence,
     $core.bool? reviewed,
-    $core.String? runId,
-    $core.String? toolId,
+    $fixnum.Int64? runId,
+    $fixnum.Int64? toolId,
     $core.String? toolVersion,
-    $core.Iterable<$core.String>? inputClipIds,
+    $core.Iterable<$fixnum.Int64>? inputClipIds,
   }) {
     final result = create();
     if (confidence != null) result.confidence = confidence;
@@ -711,10 +711,11 @@ class ClipProvenance extends $pb.GeneratedMessage {
     ..a<$core.double>(
         1, _omitFieldNames ? '' : 'confidence', $pb.PbFieldType.OD)
     ..aOB(2, _omitFieldNames ? '' : 'reviewed')
-    ..aOS(3, _omitFieldNames ? '' : 'runId')
-    ..aOS(4, _omitFieldNames ? '' : 'toolId')
+    ..aInt64(3, _omitFieldNames ? '' : 'runId')
+    ..aInt64(4, _omitFieldNames ? '' : 'toolId')
     ..aOS(5, _omitFieldNames ? '' : 'toolVersion')
-    ..pPS(6, _omitFieldNames ? '' : 'inputClipIds')
+    ..p<$fixnum.Int64>(
+        6, _omitFieldNames ? '' : 'inputClipIds', $pb.PbFieldType.K6)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -757,18 +758,18 @@ class ClipProvenance extends $pb.GeneratedMessage {
   void clearReviewed() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.String get runId => $_getSZ(2);
+  $fixnum.Int64 get runId => $_getI64(2);
   @$pb.TagNumber(3)
-  set runId($core.String value) => $_setString(2, value);
+  set runId($fixnum.Int64 value) => $_setInt64(2, value);
   @$pb.TagNumber(3)
   $core.bool hasRunId() => $_has(2);
   @$pb.TagNumber(3)
   void clearRunId() => $_clearField(3);
 
   @$pb.TagNumber(4)
-  $core.String get toolId => $_getSZ(3);
+  $fixnum.Int64 get toolId => $_getI64(3);
   @$pb.TagNumber(4)
-  set toolId($core.String value) => $_setString(3, value);
+  set toolId($fixnum.Int64 value) => $_setInt64(3, value);
   @$pb.TagNumber(4)
   $core.bool hasToolId() => $_has(3);
   @$pb.TagNumber(4)
@@ -784,13 +785,13 @@ class ClipProvenance extends $pb.GeneratedMessage {
   void clearToolVersion() => $_clearField(5);
 
   @$pb.TagNumber(6)
-  $pb.PbList<$core.String> get inputClipIds => $_getList(5);
+  $pb.PbList<$fixnum.Int64> get inputClipIds => $_getList(5);
 }
 
 class GetTimelineRequest extends $pb.GeneratedMessage {
   factory GetTimelineRequest({
-    $core.String? jobId,
-    $core.String? passId,
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? passId,
     $core.bool? includeAssets,
   }) {
     final result = create();
@@ -814,8 +815,8 @@ class GetTimelineRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'jobId')
-    ..aOS(2, _omitFieldNames ? '' : 'passId')
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(2, _omitFieldNames ? '' : 'passId')
     ..aOB(3, _omitFieldNames ? '' : 'includeAssets')
     ..hasRequiredFields = false;
 
@@ -841,9 +842,9 @@ class GetTimelineRequest extends $pb.GeneratedMessage {
   static GetTimelineRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get jobId => $_getSZ(0);
+  $fixnum.Int64 get jobId => $_getI64(0);
   @$pb.TagNumber(1)
-  set jobId($core.String value) => $_setString(0, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasJobId() => $_has(0);
   @$pb.TagNumber(1)
@@ -852,9 +853,9 @@ class GetTimelineRequest extends $pb.GeneratedMessage {
   /// 선택. 주면 그 패스 구간(pass.started_at~ended_at을 job.started_at 기준 ns로 바꾼 값)과
   /// 겹치는 클립만 준다. 트랙은 전부 준다(빈 트랙도 행으로 보이게).
   @$pb.TagNumber(2)
-  $core.String get passId => $_getSZ(1);
+  $fixnum.Int64 get passId => $_getI64(1);
   @$pb.TagNumber(2)
-  set passId($core.String value) => $_setString(1, value);
+  set passId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasPassId() => $_has(1);
   @$pb.TagNumber(2)
@@ -1280,7 +1281,7 @@ class UpdateTimelineResponse extends $pb.GeneratedMessage {
 
 class ChangeTimelineStatusRequest extends $pb.GeneratedMessage {
   factory ChangeTimelineStatusRequest({
-    $core.String? jobId,
+    $fixnum.Int64? jobId,
     TimelineStatus? fromStatus,
     TimelineStatus? toStatus,
   }) {
@@ -1305,7 +1306,7 @@ class ChangeTimelineStatusRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
     ..e<TimelineStatus>(
         2, _omitFieldNames ? '' : 'fromStatus', $pb.PbFieldType.OE,
         defaultOrMaker: TimelineStatus.TIMELINE_STATUS_UNSPECIFIED,
@@ -1344,9 +1345,9 @@ class ChangeTimelineStatusRequest extends $pb.GeneratedMessage {
   static ChangeTimelineStatusRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get jobId => $_getSZ(0);
+  $fixnum.Int64 get jobId => $_getI64(0);
   @$pb.TagNumber(1)
-  set jobId($core.String value) => $_setString(0, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasJobId() => $_has(0);
   @$pb.TagNumber(1)
@@ -1437,7 +1438,7 @@ class ChangeTimelineStatusResponse extends $pb.GeneratedMessage {
 
 class DeleteTimelineRequest extends $pb.GeneratedMessage {
   factory DeleteTimelineRequest({
-    $core.String? jobId,
+    $fixnum.Int64? jobId,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
@@ -1458,7 +1459,7 @@ class DeleteTimelineRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1485,9 +1486,9 @@ class DeleteTimelineRequest extends $pb.GeneratedMessage {
   static DeleteTimelineRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get jobId => $_getSZ(0);
+  $fixnum.Int64 get jobId => $_getI64(0);
   @$pb.TagNumber(1)
-  set jobId($core.String value) => $_setString(0, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasJobId() => $_has(0);
   @$pb.TagNumber(1)
@@ -1790,7 +1791,7 @@ class UpdateTrackResponse extends $pb.GeneratedMessage {
 
 class DeleteTrackRequest extends $pb.GeneratedMessage {
   factory DeleteTrackRequest({
-    $core.String? trackId,
+    $fixnum.Int64? trackId,
   }) {
     final result = create();
     if (trackId != null) result.trackId = trackId;
@@ -1811,7 +1812,7 @@ class DeleteTrackRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'trackId')
+    ..aInt64(1, _omitFieldNames ? '' : 'trackId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1836,9 +1837,9 @@ class DeleteTrackRequest extends $pb.GeneratedMessage {
   static DeleteTrackRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get trackId => $_getSZ(0);
+  $fixnum.Int64 get trackId => $_getI64(0);
   @$pb.TagNumber(1)
-  set trackId($core.String value) => $_setString(0, value);
+  set trackId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasTrackId() => $_has(0);
   @$pb.TagNumber(1)
@@ -2141,7 +2142,7 @@ class UpdateClipResponse extends $pb.GeneratedMessage {
 
 class DeleteClipRequest extends $pb.GeneratedMessage {
   factory DeleteClipRequest({
-    $core.String? clipId,
+    $fixnum.Int64? clipId,
   }) {
     final result = create();
     if (clipId != null) result.clipId = clipId;
@@ -2162,7 +2163,7 @@ class DeleteClipRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'clipId')
+    ..aInt64(1, _omitFieldNames ? '' : 'clipId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2187,9 +2188,9 @@ class DeleteClipRequest extends $pb.GeneratedMessage {
   static DeleteClipRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get clipId => $_getSZ(0);
+  $fixnum.Int64 get clipId => $_getI64(0);
   @$pb.TagNumber(1)
-  set clipId($core.String value) => $_setString(0, value);
+  set clipId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasClipId() => $_has(0);
   @$pb.TagNumber(1)
@@ -2241,7 +2242,7 @@ class LabelVocab extends $pb.GeneratedMessage {
   factory LabelVocab({
     $core.String? key,
     $core.String? parentVocabKey,
-    $core.String? parentValueId,
+    $fixnum.Int64? parentValueId,
     $core.Iterable<LabelValue>? values,
   }) {
     final result = create();
@@ -2268,7 +2269,7 @@ class LabelVocab extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'key')
     ..aOS(2, _omitFieldNames ? '' : 'parentVocabKey')
-    ..aOS(3, _omitFieldNames ? '' : 'parentValueId')
+    ..aInt64(3, _omitFieldNames ? '' : 'parentValueId')
     ..pc<LabelValue>(4, _omitFieldNames ? '' : 'values', $pb.PbFieldType.PM,
         subBuilder: LabelValue.create)
     ..hasRequiredFields = false;
@@ -2311,9 +2312,9 @@ class LabelVocab extends $pb.GeneratedMessage {
   void clearParentVocabKey() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.String get parentValueId => $_getSZ(2);
+  $fixnum.Int64 get parentValueId => $_getI64(2);
   @$pb.TagNumber(3)
-  set parentValueId($core.String value) => $_setString(2, value);
+  set parentValueId($fixnum.Int64 value) => $_setInt64(2, value);
   @$pb.TagNumber(3)
   $core.bool hasParentValueId() => $_has(2);
   @$pb.TagNumber(3)
@@ -2325,7 +2326,7 @@ class LabelVocab extends $pb.GeneratedMessage {
 
 class LabelValue extends $pb.GeneratedMessage {
   factory LabelValue({
-    $core.String? valueId,
+    $fixnum.Int64? valueId,
     $core.String? vocabKey,
     $core.String? name,
     $core.bool? deprecated,
@@ -2354,7 +2355,7 @@ class LabelValue extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'valueId')
+    ..aInt64(1, _omitFieldNames ? '' : 'valueId')
     ..aOS(2, _omitFieldNames ? '' : 'vocabKey')
     ..aOS(3, _omitFieldNames ? '' : 'name')
     ..aOB(4, _omitFieldNames ? '' : 'deprecated')
@@ -2381,9 +2382,9 @@ class LabelValue extends $pb.GeneratedMessage {
   static LabelValue? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get valueId => $_getSZ(0);
+  $fixnum.Int64 get valueId => $_getI64(0);
   @$pb.TagNumber(1)
-  set valueId($core.String value) => $_setString(0, value);
+  set valueId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasValueId() => $_has(0);
   @$pb.TagNumber(1)

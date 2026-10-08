@@ -101,7 +101,7 @@ final $typed_data.Uint8List runStatusDescriptor = $convert.base64Decode(
 const Tool$json = {
   '1': 'Tool',
   '2': [
-    {'1': 'tool_id', '3': 1, '4': 1, '5': 9, '10': 'toolId'},
+    {'1': 'tool_id', '3': 1, '4': 1, '5': 3, '10': 'toolId'},
     {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
     {'1': 'endpoint', '3': 3, '4': 1, '5': 9, '10': 'endpoint'},
     {'1': 'remote_model_name', '3': 4, '4': 1, '5': 9, '10': 'remoteModelName'},
@@ -145,7 +145,7 @@ const Tool$json = {
 
 /// Descriptor for `Tool`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List toolDescriptor = $convert.base64Decode(
-    'CgRUb29sEhcKB3Rvb2xfaWQYASABKAlSBnRvb2xJZBISCgRuYW1lGAIgASgJUgRuYW1lEhoKCG'
+    'CgRUb29sEhcKB3Rvb2xfaWQYASABKANSBnRvb2xJZBISCgRuYW1lGAIgASgJUgRuYW1lEhoKCG'
     'VuZHBvaW50GAMgASgJUghlbmRwb2ludBIqChFyZW1vdGVfbW9kZWxfbmFtZRgEIAEoCVIPcmVt'
     'b3RlTW9kZWxOYW1lEiEKDHRvb2xfdmVyc2lvbhgFIAEoCVILdG9vbFZlcnNpb24SNwoHcGF0dG'
     'VybhgGIAEoDjIdLm1lZGlhdGFnLnRvb2wudjEuVG9vbFBhdHRlcm5SB3BhdHRlcm4SIQoMcGF5'
@@ -159,8 +159,8 @@ final $typed_data.Uint8List toolDescriptor = $convert.base64Decode(
 const ToolRun$json = {
   '1': 'ToolRun',
   '2': [
-    {'1': 'run_id', '3': 1, '4': 1, '5': 9, '10': 'runId'},
-    {'1': 'tool_id', '3': 2, '4': 1, '5': 9, '10': 'toolId'},
+    {'1': 'run_id', '3': 1, '4': 1, '5': 3, '10': 'runId'},
+    {'1': 'tool_id', '3': 2, '4': 1, '5': 3, '10': 'toolId'},
     {
       '1': 'trigger',
       '3': 3,
@@ -169,7 +169,6 @@ const ToolRun$json = {
       '6': '.mediatag.tool.v1.RunTrigger',
       '10': 'trigger'
     },
-    {'1': 'target_id', '3': 4, '4': 1, '5': 9, '10': 'targetId'},
     {
       '1': 'status',
       '3': 5,
@@ -208,25 +207,54 @@ const ToolRun$json = {
       '10': 'estimatedRemainingSeconds'
     },
     {'1': 'attempt_count', '3': 15, '4': 1, '5': 5, '10': 'attemptCount'},
-    {'1': 'output_asset_ids', '3': 16, '4': 3, '5': 9, '10': 'outputAssetIds'},
+    {'1': 'output_asset_ids', '3': 16, '4': 3, '5': 3, '10': 'outputAssetIds'},
+    {
+      '1': 'target',
+      '3': 17,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.tool.v1.RunTarget',
+      '10': 'target'
+    },
+  ],
+  '9': [
+    {'1': 4, '2': 5},
   ],
 };
 
 /// Descriptor for `ToolRun`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List toolRunDescriptor = $convert.base64Decode(
-    'CgdUb29sUnVuEhUKBnJ1bl9pZBgBIAEoCVIFcnVuSWQSFwoHdG9vbF9pZBgCIAEoCVIGdG9vbE'
+    'CgdUb29sUnVuEhUKBnJ1bl9pZBgBIAEoA1IFcnVuSWQSFwoHdG9vbF9pZBgCIAEoA1IGdG9vbE'
     'lkEjYKB3RyaWdnZXIYAyABKA4yHC5tZWRpYXRhZy50b29sLnYxLlJ1blRyaWdnZXJSB3RyaWdn'
-    'ZXISGwoJdGFyZ2V0X2lkGAQgASgJUgh0YXJnZXRJZBIzCgZzdGF0dXMYBSABKA4yGy5tZWRpYX'
-    'RhZy50b29sLnYxLlJ1blN0YXR1c1IGc3RhdHVzEiYKD2V4dGVybmFsX2pvYl9pZBgGIAEoCVIN'
-    'ZXh0ZXJuYWxKb2JJZBIdCgplcnJvcl9jb2RlGAcgASgJUgllcnJvckNvZGUSIwoNZXJyb3JfbW'
-    'Vzc2FnZRgIIAEoCVIMZXJyb3JNZXNzYWdlEjkKCmNyZWF0ZWRfYXQYCSABKAsyGi5nb29nbGUu'
-    'cHJvdG9idWYuVGltZXN0YW1wUgljcmVhdGVkQXQSOQoKdXBkYXRlZF9hdBgKIAEoCzIaLmdvb2'
-    'dsZS5wcm90b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdBIlCg5xdWV1ZV9wb3NpdGlvbhgLIAEo'
-    'BVINcXVldWVQb3NpdGlvbhIhCgxxdWV1ZV9sZW5ndGgYDCABKAVSC3F1ZXVlTGVuZ3RoEikKEH'
-    'Byb2dyZXNzX3BlcmNlbnQYDSABKAFSD3Byb2dyZXNzUGVyY2VudBI+Chtlc3RpbWF0ZWRfcmVt'
-    'YWluaW5nX3NlY29uZHMYDiABKAVSGWVzdGltYXRlZFJlbWFpbmluZ1NlY29uZHMSIwoNYXR0ZW'
-    '1wdF9jb3VudBgPIAEoBVIMYXR0ZW1wdENvdW50EigKEG91dHB1dF9hc3NldF9pZHMYECADKAlS'
-    'Dm91dHB1dEFzc2V0SWRz');
+    'ZXISMwoGc3RhdHVzGAUgASgOMhsubWVkaWF0YWcudG9vbC52MS5SdW5TdGF0dXNSBnN0YXR1cx'
+    'ImCg9leHRlcm5hbF9qb2JfaWQYBiABKAlSDWV4dGVybmFsSm9iSWQSHQoKZXJyb3JfY29kZRgH'
+    'IAEoCVIJZXJyb3JDb2RlEiMKDWVycm9yX21lc3NhZ2UYCCABKAlSDGVycm9yTWVzc2FnZRI5Cg'
+    'pjcmVhdGVkX2F0GAkgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcFIJY3JlYXRlZEF0'
+    'EjkKCnVwZGF0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wUgl1cGRhdG'
+    'VkQXQSJQoOcXVldWVfcG9zaXRpb24YCyABKAVSDXF1ZXVlUG9zaXRpb24SIQoMcXVldWVfbGVu'
+    'Z3RoGAwgASgFUgtxdWV1ZUxlbmd0aBIpChBwcm9ncmVzc19wZXJjZW50GA0gASgBUg9wcm9ncm'
+    'Vzc1BlcmNlbnQSPgobZXN0aW1hdGVkX3JlbWFpbmluZ19zZWNvbmRzGA4gASgFUhllc3RpbWF0'
+    'ZWRSZW1haW5pbmdTZWNvbmRzEiMKDWF0dGVtcHRfY291bnQYDyABKAVSDGF0dGVtcHRDb3VudB'
+    'IoChBvdXRwdXRfYXNzZXRfaWRzGBAgAygDUg5vdXRwdXRBc3NldElkcxIzCgZ0YXJnZXQYESAB'
+    'KAsyGy5tZWRpYXRhZy50b29sLnYxLlJ1blRhcmdldFIGdGFyZ2V0SgQIBBAF');
+
+@$core.Deprecated('Use runTargetDescriptor instead')
+const RunTarget$json = {
+  '1': 'RunTarget',
+  '2': [
+    {'1': 'job_id', '3': 1, '4': 1, '5': 3, '9': 0, '10': 'jobId'},
+    {'1': 'asset_id', '3': 2, '4': 1, '5': 3, '9': 0, '10': 'assetId'},
+    {'1': 'clip_id', '3': 3, '4': 1, '5': 3, '9': 0, '10': 'clipId'},
+  ],
+  '8': [
+    {'1': 'target'},
+  ],
+};
+
+/// Descriptor for `RunTarget`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List runTargetDescriptor = $convert.base64Decode(
+    'CglSdW5UYXJnZXQSFwoGam9iX2lkGAEgASgDSABSBWpvYklkEhsKCGFzc2V0X2lkGAIgASgDSA'
+    'BSB2Fzc2V0SWQSGQoHY2xpcF9pZBgDIAEoA0gAUgZjbGlwSWRCCAoGdGFyZ2V0');
 
 @$core.Deprecated('Use listToolsRequestDescriptor instead')
 const ListToolsRequest$json = {
@@ -341,13 +369,13 @@ final $typed_data.Uint8List updateToolResponseDescriptor = $convert.base64Decode
 const DeleteToolRequest$json = {
   '1': 'DeleteToolRequest',
   '2': [
-    {'1': 'tool_id', '3': 1, '4': 1, '5': 9, '10': 'toolId'},
+    {'1': 'tool_id', '3': 1, '4': 1, '5': 3, '10': 'toolId'},
   ],
 };
 
 /// Descriptor for `DeleteToolRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List deleteToolRequestDescriptor = $convert.base64Decode(
-    'ChFEZWxldGVUb29sUmVxdWVzdBIXCgd0b29sX2lkGAEgASgJUgZ0b29sSWQ=');
+    'ChFEZWxldGVUb29sUmVxdWVzdBIXCgd0b29sX2lkGAEgASgDUgZ0b29sSWQ=');
 
 @$core.Deprecated('Use deleteToolResponseDescriptor instead')
 const DeleteToolResponse$json = {
@@ -362,7 +390,7 @@ final $typed_data.Uint8List deleteToolResponseDescriptor =
 const StartRunRequest$json = {
   '1': 'StartRunRequest',
   '2': [
-    {'1': 'tool_id', '3': 1, '4': 1, '5': 9, '10': 'toolId'},
+    {'1': 'tool_id', '3': 1, '4': 1, '5': 3, '10': 'toolId'},
     {
       '1': 'trigger',
       '3': 2,
@@ -371,15 +399,25 @@ const StartRunRequest$json = {
       '6': '.mediatag.tool.v1.RunTrigger',
       '10': 'trigger'
     },
-    {'1': 'target_id', '3': 3, '4': 1, '5': 9, '10': 'targetId'},
+    {
+      '1': 'target',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.tool.v1.RunTarget',
+      '10': 'target'
+    },
+  ],
+  '9': [
+    {'1': 3, '2': 4},
   ],
 };
 
 /// Descriptor for `StartRunRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List startRunRequestDescriptor = $convert.base64Decode(
-    'Cg9TdGFydFJ1blJlcXVlc3QSFwoHdG9vbF9pZBgBIAEoCVIGdG9vbElkEjYKB3RyaWdnZXIYAi'
-    'ABKA4yHC5tZWRpYXRhZy50b29sLnYxLlJ1blRyaWdnZXJSB3RyaWdnZXISGwoJdGFyZ2V0X2lk'
-    'GAMgASgJUgh0YXJnZXRJZA==');
+    'Cg9TdGFydFJ1blJlcXVlc3QSFwoHdG9vbF9pZBgBIAEoA1IGdG9vbElkEjYKB3RyaWdnZXIYAi'
+    'ABKA4yHC5tZWRpYXRhZy50b29sLnYxLlJ1blRyaWdnZXJSB3RyaWdnZXISMwoGdGFyZ2V0GAQg'
+    'ASgLMhsubWVkaWF0YWcudG9vbC52MS5SdW5UYXJnZXRSBnRhcmdldEoECAMQBA==');
 
 @$core.Deprecated('Use startRunResponseDescriptor instead')
 const StartRunResponse$json = {
@@ -405,7 +443,7 @@ final $typed_data.Uint8List startRunResponseDescriptor = $convert.base64Decode(
 const GetRunRequest$json = {
   '1': 'GetRunRequest',
   '2': [
-    {'1': 'run_id', '3': 1, '4': 1, '5': 9, '10': 'runId'},
+    {'1': 'run_id', '3': 1, '4': 1, '5': 3, '10': 'runId'},
     {'1': 'wait_for_terminal', '3': 2, '4': 1, '5': 8, '10': 'waitForTerminal'},
     {
       '1': 'wait_timeout_seconds',
@@ -419,7 +457,7 @@ const GetRunRequest$json = {
 
 /// Descriptor for `GetRunRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List getRunRequestDescriptor = $convert.base64Decode(
-    'Cg1HZXRSdW5SZXF1ZXN0EhUKBnJ1bl9pZBgBIAEoCVIFcnVuSWQSKgoRd2FpdF9mb3JfdGVybW'
+    'Cg1HZXRSdW5SZXF1ZXN0EhUKBnJ1bl9pZBgBIAEoA1IFcnVuSWQSKgoRd2FpdF9mb3JfdGVybW'
     'luYWwYAiABKAhSD3dhaXRGb3JUZXJtaW5hbBIwChR3YWl0X3RpbWVvdXRfc2Vjb25kcxgDIAEo'
     'BVISd2FpdFRpbWVvdXRTZWNvbmRz');
 
@@ -447,13 +485,24 @@ final $typed_data.Uint8List getRunResponseDescriptor = $convert.base64Decode(
 const ListRunsRequest$json = {
   '1': 'ListRunsRequest',
   '2': [
-    {'1': 'target_id', '3': 1, '4': 1, '5': 9, '10': 'targetId'},
+    {
+      '1': 'target',
+      '3': 2,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.tool.v1.RunTarget',
+      '10': 'target'
+    },
+  ],
+  '9': [
+    {'1': 1, '2': 2},
   ],
 };
 
 /// Descriptor for `ListRunsRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listRunsRequestDescriptor = $convert.base64Decode(
-    'Cg9MaXN0UnVuc1JlcXVlc3QSGwoJdGFyZ2V0X2lkGAEgASgJUgh0YXJnZXRJZA==');
+    'Cg9MaXN0UnVuc1JlcXVlc3QSMwoGdGFyZ2V0GAIgASgLMhsubWVkaWF0YWcudG9vbC52MS5SdW'
+    '5UYXJnZXRSBnRhcmdldEoECAEQAg==');
 
 @$core.Deprecated('Use listRunsResponseDescriptor instead')
 const ListRunsResponse$json = {
@@ -479,13 +528,13 @@ final $typed_data.Uint8List listRunsResponseDescriptor = $convert.base64Decode(
 const CancelRunRequest$json = {
   '1': 'CancelRunRequest',
   '2': [
-    {'1': 'run_id', '3': 1, '4': 1, '5': 9, '10': 'runId'},
+    {'1': 'run_id', '3': 1, '4': 1, '5': 3, '10': 'runId'},
   ],
 };
 
 /// Descriptor for `CancelRunRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List cancelRunRequestDescriptor = $convert
-    .base64Decode('ChBDYW5jZWxSdW5SZXF1ZXN0EhUKBnJ1bl9pZBgBIAEoCVIFcnVuSWQ=');
+    .base64Decode('ChBDYW5jZWxSdW5SZXF1ZXN0EhUKBnJ1bl9pZBgBIAEoA1IFcnVuSWQ=');
 
 @$core.Deprecated('Use cancelRunResponseDescriptor instead')
 const CancelRunResponse$json = {
@@ -566,6 +615,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.tool.v1.DeleteToolRequest': DeleteToolRequest$json,
   '.mediatag.tool.v1.DeleteToolResponse': DeleteToolResponse$json,
   '.mediatag.tool.v1.StartRunRequest': StartRunRequest$json,
+  '.mediatag.tool.v1.RunTarget': RunTarget$json,
   '.mediatag.tool.v1.StartRunResponse': StartRunResponse$json,
   '.mediatag.tool.v1.ToolRun': ToolRun$json,
   '.google.protobuf.Timestamp': $0.Timestamp$json,

@@ -13,6 +13,7 @@
 import 'dart:async' as $async;
 import 'dart:core' as $core;
 
+import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
 import '../../../google/protobuf/timestamp.pb.dart' as $0;
@@ -25,7 +26,7 @@ export 'tool.pbenum.dart';
 
 class Tool extends $pb.GeneratedMessage {
   factory Tool({
-    $core.String? toolId,
+    $fixnum.Int64? toolId,
     $core.String? name,
     $core.String? endpoint,
     $core.String? remoteModelName,
@@ -67,7 +68,7 @@ class Tool extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'toolId')
+    ..aInt64(1, _omitFieldNames ? '' : 'toolId')
     ..aOS(2, _omitFieldNames ? '' : 'name')
     ..aOS(3, _omitFieldNames ? '' : 'endpoint')
     ..aOS(4, _omitFieldNames ? '' : 'remoteModelName')
@@ -113,9 +114,9 @@ class Tool extends $pb.GeneratedMessage {
   static Tool? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get toolId => $_getSZ(0);
+  $fixnum.Int64 get toolId => $_getI64(0);
   @$pb.TagNumber(1)
-  set toolId($core.String value) => $_setString(0, value);
+  set toolId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasToolId() => $_has(0);
   @$pb.TagNumber(1)
@@ -208,10 +209,9 @@ class Tool extends $pb.GeneratedMessage {
 
 class ToolRun extends $pb.GeneratedMessage {
   factory ToolRun({
-    $core.String? runId,
-    $core.String? toolId,
+    $fixnum.Int64? runId,
+    $fixnum.Int64? toolId,
     RunTrigger? trigger,
-    $core.String? targetId,
     RunStatus? status,
     $core.String? externalJobId,
     $core.String? errorCode,
@@ -223,13 +223,13 @@ class ToolRun extends $pb.GeneratedMessage {
     $core.double? progressPercent,
     $core.int? estimatedRemainingSeconds,
     $core.int? attemptCount,
-    $core.Iterable<$core.String>? outputAssetIds,
+    $core.Iterable<$fixnum.Int64>? outputAssetIds,
+    RunTarget? target,
   }) {
     final result = create();
     if (runId != null) result.runId = runId;
     if (toolId != null) result.toolId = toolId;
     if (trigger != null) result.trigger = trigger;
-    if (targetId != null) result.targetId = targetId;
     if (status != null) result.status = status;
     if (externalJobId != null) result.externalJobId = externalJobId;
     if (errorCode != null) result.errorCode = errorCode;
@@ -243,6 +243,7 @@ class ToolRun extends $pb.GeneratedMessage {
       result.estimatedRemainingSeconds = estimatedRemainingSeconds;
     if (attemptCount != null) result.attemptCount = attemptCount;
     if (outputAssetIds != null) result.outputAssetIds.addAll(outputAssetIds);
+    if (target != null) result.target = target;
     return result;
   }
 
@@ -260,13 +261,12 @@ class ToolRun extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'runId')
-    ..aOS(2, _omitFieldNames ? '' : 'toolId')
+    ..aInt64(1, _omitFieldNames ? '' : 'runId')
+    ..aInt64(2, _omitFieldNames ? '' : 'toolId')
     ..e<RunTrigger>(3, _omitFieldNames ? '' : 'trigger', $pb.PbFieldType.OE,
         defaultOrMaker: RunTrigger.RUN_TRIGGER_UNSPECIFIED,
         valueOf: RunTrigger.valueOf,
         enumValues: RunTrigger.values)
-    ..aOS(4, _omitFieldNames ? '' : 'targetId')
     ..e<RunStatus>(5, _omitFieldNames ? '' : 'status', $pb.PbFieldType.OE,
         defaultOrMaker: RunStatus.RUN_STATUS_UNSPECIFIED,
         valueOf: RunStatus.valueOf,
@@ -287,7 +287,10 @@ class ToolRun extends $pb.GeneratedMessage {
         $pb.PbFieldType.O3)
     ..a<$core.int>(
         15, _omitFieldNames ? '' : 'attemptCount', $pb.PbFieldType.O3)
-    ..pPS(16, _omitFieldNames ? '' : 'outputAssetIds')
+    ..p<$fixnum.Int64>(
+        16, _omitFieldNames ? '' : 'outputAssetIds', $pb.PbFieldType.K6)
+    ..aOM<RunTarget>(17, _omitFieldNames ? '' : 'target',
+        subBuilder: RunTarget.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -310,18 +313,18 @@ class ToolRun extends $pb.GeneratedMessage {
   static ToolRun? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get runId => $_getSZ(0);
+  $fixnum.Int64 get runId => $_getI64(0);
   @$pb.TagNumber(1)
-  set runId($core.String value) => $_setString(0, value);
+  set runId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasRunId() => $_has(0);
   @$pb.TagNumber(1)
   void clearRunId() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get toolId => $_getSZ(1);
+  $fixnum.Int64 get toolId => $_getI64(1);
   @$pb.TagNumber(2)
-  set toolId($core.String value) => $_setString(1, value);
+  set toolId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasToolId() => $_has(1);
   @$pb.TagNumber(2)
@@ -336,122 +339,216 @@ class ToolRun extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   void clearTrigger() => $_clearField(3);
 
-  @$pb.TagNumber(4)
-  $core.String get targetId => $_getSZ(3);
-  @$pb.TagNumber(4)
-  set targetId($core.String value) => $_setString(3, value);
-  @$pb.TagNumber(4)
-  $core.bool hasTargetId() => $_has(3);
-  @$pb.TagNumber(4)
-  void clearTargetId() => $_clearField(4);
-
   @$pb.TagNumber(5)
-  RunStatus get status => $_getN(4);
+  RunStatus get status => $_getN(3);
   @$pb.TagNumber(5)
   set status(RunStatus value) => $_setField(5, value);
   @$pb.TagNumber(5)
-  $core.bool hasStatus() => $_has(4);
+  $core.bool hasStatus() => $_has(3);
   @$pb.TagNumber(5)
   void clearStatus() => $_clearField(5);
 
   @$pb.TagNumber(6)
-  $core.String get externalJobId => $_getSZ(5);
+  $core.String get externalJobId => $_getSZ(4);
   @$pb.TagNumber(6)
-  set externalJobId($core.String value) => $_setString(5, value);
+  set externalJobId($core.String value) => $_setString(4, value);
   @$pb.TagNumber(6)
-  $core.bool hasExternalJobId() => $_has(5);
+  $core.bool hasExternalJobId() => $_has(4);
   @$pb.TagNumber(6)
   void clearExternalJobId() => $_clearField(6);
 
   @$pb.TagNumber(7)
-  $core.String get errorCode => $_getSZ(6);
+  $core.String get errorCode => $_getSZ(5);
   @$pb.TagNumber(7)
-  set errorCode($core.String value) => $_setString(6, value);
+  set errorCode($core.String value) => $_setString(5, value);
   @$pb.TagNumber(7)
-  $core.bool hasErrorCode() => $_has(6);
+  $core.bool hasErrorCode() => $_has(5);
   @$pb.TagNumber(7)
   void clearErrorCode() => $_clearField(7);
 
   @$pb.TagNumber(8)
-  $core.String get errorMessage => $_getSZ(7);
+  $core.String get errorMessage => $_getSZ(6);
   @$pb.TagNumber(8)
-  set errorMessage($core.String value) => $_setString(7, value);
+  set errorMessage($core.String value) => $_setString(6, value);
   @$pb.TagNumber(8)
-  $core.bool hasErrorMessage() => $_has(7);
+  $core.bool hasErrorMessage() => $_has(6);
   @$pb.TagNumber(8)
   void clearErrorMessage() => $_clearField(8);
 
   @$pb.TagNumber(9)
-  $0.Timestamp get createdAt => $_getN(8);
+  $0.Timestamp get createdAt => $_getN(7);
   @$pb.TagNumber(9)
   set createdAt($0.Timestamp value) => $_setField(9, value);
   @$pb.TagNumber(9)
-  $core.bool hasCreatedAt() => $_has(8);
+  $core.bool hasCreatedAt() => $_has(7);
   @$pb.TagNumber(9)
   void clearCreatedAt() => $_clearField(9);
   @$pb.TagNumber(9)
-  $0.Timestamp ensureCreatedAt() => $_ensure(8);
+  $0.Timestamp ensureCreatedAt() => $_ensure(7);
 
   @$pb.TagNumber(10)
-  $0.Timestamp get updatedAt => $_getN(9);
+  $0.Timestamp get updatedAt => $_getN(8);
   @$pb.TagNumber(10)
   set updatedAt($0.Timestamp value) => $_setField(10, value);
   @$pb.TagNumber(10)
-  $core.bool hasUpdatedAt() => $_has(9);
+  $core.bool hasUpdatedAt() => $_has(8);
   @$pb.TagNumber(10)
   void clearUpdatedAt() => $_clearField(10);
   @$pb.TagNumber(10)
-  $0.Timestamp ensureUpdatedAt() => $_ensure(9);
+  $0.Timestamp ensureUpdatedAt() => $_ensure(8);
 
   /// 아래는 저장하지 않는 실행 중 파생 값(tacit-tag 설계-23 §7.1)
   @$pb.TagNumber(11)
-  $core.int get queuePosition => $_getIZ(10);
+  $core.int get queuePosition => $_getIZ(9);
   @$pb.TagNumber(11)
-  set queuePosition($core.int value) => $_setSignedInt32(10, value);
+  set queuePosition($core.int value) => $_setSignedInt32(9, value);
   @$pb.TagNumber(11)
-  $core.bool hasQueuePosition() => $_has(10);
+  $core.bool hasQueuePosition() => $_has(9);
   @$pb.TagNumber(11)
   void clearQueuePosition() => $_clearField(11);
 
   @$pb.TagNumber(12)
-  $core.int get queueLength => $_getIZ(11);
+  $core.int get queueLength => $_getIZ(10);
   @$pb.TagNumber(12)
-  set queueLength($core.int value) => $_setSignedInt32(11, value);
+  set queueLength($core.int value) => $_setSignedInt32(10, value);
   @$pb.TagNumber(12)
-  $core.bool hasQueueLength() => $_has(11);
+  $core.bool hasQueueLength() => $_has(10);
   @$pb.TagNumber(12)
   void clearQueueLength() => $_clearField(12);
 
   @$pb.TagNumber(13)
-  $core.double get progressPercent => $_getN(12);
+  $core.double get progressPercent => $_getN(11);
   @$pb.TagNumber(13)
-  set progressPercent($core.double value) => $_setDouble(12, value);
+  set progressPercent($core.double value) => $_setDouble(11, value);
   @$pb.TagNumber(13)
-  $core.bool hasProgressPercent() => $_has(12);
+  $core.bool hasProgressPercent() => $_has(11);
   @$pb.TagNumber(13)
   void clearProgressPercent() => $_clearField(13);
 
   @$pb.TagNumber(14)
-  $core.int get estimatedRemainingSeconds => $_getIZ(13);
+  $core.int get estimatedRemainingSeconds => $_getIZ(12);
   @$pb.TagNumber(14)
-  set estimatedRemainingSeconds($core.int value) => $_setSignedInt32(13, value);
+  set estimatedRemainingSeconds($core.int value) => $_setSignedInt32(12, value);
   @$pb.TagNumber(14)
-  $core.bool hasEstimatedRemainingSeconds() => $_has(13);
+  $core.bool hasEstimatedRemainingSeconds() => $_has(12);
   @$pb.TagNumber(14)
   void clearEstimatedRemainingSeconds() => $_clearField(14);
 
   @$pb.TagNumber(15)
-  $core.int get attemptCount => $_getIZ(14);
+  $core.int get attemptCount => $_getIZ(13);
   @$pb.TagNumber(15)
-  set attemptCount($core.int value) => $_setSignedInt32(14, value);
+  set attemptCount($core.int value) => $_setSignedInt32(13, value);
   @$pb.TagNumber(15)
-  $core.bool hasAttemptCount() => $_has(14);
+  $core.bool hasAttemptCount() => $_has(13);
   @$pb.TagNumber(15)
   void clearAttemptCount() => $_clearField(15);
 
   /// 이 실행이 만든 파생 Asset(provenance.run_id로 찾는다, 저장하지 않음)
   @$pb.TagNumber(16)
-  $pb.PbList<$core.String> get outputAssetIds => $_getList(15);
+  $pb.PbList<$fixnum.Int64> get outputAssetIds => $_getList(14);
+
+  @$pb.TagNumber(17)
+  RunTarget get target => $_getN(15);
+  @$pb.TagNumber(17)
+  set target(RunTarget value) => $_setField(17, value);
+  @$pb.TagNumber(17)
+  $core.bool hasTarget() => $_has(15);
+  @$pb.TagNumber(17)
+  void clearTarget() => $_clearField(17);
+  @$pb.TagNumber(17)
+  RunTarget ensureTarget() => $_ensure(15);
+}
+
+enum RunTarget_Target { jobId, assetId, clipId, notSet }
+
+/// 도구를 돌리는 대상. 셋 중 하나만 채운다.
+class RunTarget extends $pb.GeneratedMessage {
+  factory RunTarget({
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? assetId,
+    $fixnum.Int64? clipId,
+  }) {
+    final result = create();
+    if (jobId != null) result.jobId = jobId;
+    if (assetId != null) result.assetId = assetId;
+    if (clipId != null) result.clipId = clipId;
+    return result;
+  }
+
+  RunTarget._();
+
+  factory RunTarget.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory RunTarget.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static const $core.Map<$core.int, RunTarget_Target> _RunTarget_TargetByTag = {
+    1: RunTarget_Target.jobId,
+    2: RunTarget_Target.assetId,
+    3: RunTarget_Target.clipId,
+    0: RunTarget_Target.notSet
+  };
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RunTarget',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
+      createEmptyInstance: create)
+    ..oo(0, [1, 2, 3])
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(2, _omitFieldNames ? '' : 'assetId')
+    ..aInt64(3, _omitFieldNames ? '' : 'clipId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RunTarget clone() => RunTarget()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RunTarget copyWith(void Function(RunTarget) updates) =>
+      super.copyWith((message) => updates(message as RunTarget)) as RunTarget;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static RunTarget create() => RunTarget._();
+  @$core.override
+  RunTarget createEmptyInstance() => create();
+  static $pb.PbList<RunTarget> createRepeated() => $pb.PbList<RunTarget>();
+  @$core.pragma('dart2js:noInline')
+  static RunTarget getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<RunTarget>(create);
+  static RunTarget? _defaultInstance;
+
+  RunTarget_Target whichTarget() => _RunTarget_TargetByTag[$_whichOneof(0)]!;
+  void clearTarget() => $_clearField($_whichOneof(0));
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get jobId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasJobId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearJobId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get assetId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set assetId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasAssetId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearAssetId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get clipId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set clipId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasClipId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearClipId() => $_clearField(3);
 }
 
 class ListToolsRequest extends $pb.GeneratedMessage {
@@ -785,7 +882,7 @@ class UpdateToolResponse extends $pb.GeneratedMessage {
 
 class DeleteToolRequest extends $pb.GeneratedMessage {
   factory DeleteToolRequest({
-    $core.String? toolId,
+    $fixnum.Int64? toolId,
   }) {
     final result = create();
     if (toolId != null) result.toolId = toolId;
@@ -806,7 +903,7 @@ class DeleteToolRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'toolId')
+    ..aInt64(1, _omitFieldNames ? '' : 'toolId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -831,9 +928,9 @@ class DeleteToolRequest extends $pb.GeneratedMessage {
   static DeleteToolRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get toolId => $_getSZ(0);
+  $fixnum.Int64 get toolId => $_getI64(0);
   @$pb.TagNumber(1)
-  set toolId($core.String value) => $_setString(0, value);
+  set toolId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasToolId() => $_has(0);
   @$pb.TagNumber(1)
@@ -883,14 +980,14 @@ class DeleteToolResponse extends $pb.GeneratedMessage {
 
 class StartRunRequest extends $pb.GeneratedMessage {
   factory StartRunRequest({
-    $core.String? toolId,
+    $fixnum.Int64? toolId,
     RunTrigger? trigger,
-    $core.String? targetId,
+    RunTarget? target,
   }) {
     final result = create();
     if (toolId != null) result.toolId = toolId;
     if (trigger != null) result.trigger = trigger;
-    if (targetId != null) result.targetId = targetId;
+    if (target != null) result.target = target;
     return result;
   }
 
@@ -908,12 +1005,13 @@ class StartRunRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'toolId')
+    ..aInt64(1, _omitFieldNames ? '' : 'toolId')
     ..e<RunTrigger>(2, _omitFieldNames ? '' : 'trigger', $pb.PbFieldType.OE,
         defaultOrMaker: RunTrigger.RUN_TRIGGER_UNSPECIFIED,
         valueOf: RunTrigger.valueOf,
         enumValues: RunTrigger.values)
-    ..aOS(3, _omitFieldNames ? '' : 'targetId')
+    ..aOM<RunTarget>(4, _omitFieldNames ? '' : 'target',
+        subBuilder: RunTarget.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -938,9 +1036,9 @@ class StartRunRequest extends $pb.GeneratedMessage {
   static StartRunRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get toolId => $_getSZ(0);
+  $fixnum.Int64 get toolId => $_getI64(0);
   @$pb.TagNumber(1)
-  set toolId($core.String value) => $_setString(0, value);
+  set toolId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasToolId() => $_has(0);
   @$pb.TagNumber(1)
@@ -955,14 +1053,16 @@ class StartRunRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearTrigger() => $_clearField(2);
 
-  @$pb.TagNumber(3)
-  $core.String get targetId => $_getSZ(2);
-  @$pb.TagNumber(3)
-  set targetId($core.String value) => $_setString(2, value);
-  @$pb.TagNumber(3)
-  $core.bool hasTargetId() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearTargetId() => $_clearField(3);
+  @$pb.TagNumber(4)
+  RunTarget get target => $_getN(2);
+  @$pb.TagNumber(4)
+  set target(RunTarget value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasTarget() => $_has(2);
+  @$pb.TagNumber(4)
+  void clearTarget() => $_clearField(4);
+  @$pb.TagNumber(4)
+  RunTarget ensureTarget() => $_ensure(2);
 }
 
 class StartRunResponse extends $pb.GeneratedMessage {
@@ -1026,7 +1126,7 @@ class StartRunResponse extends $pb.GeneratedMessage {
 
 class GetRunRequest extends $pb.GeneratedMessage {
   factory GetRunRequest({
-    $core.String? runId,
+    $fixnum.Int64? runId,
     $core.bool? waitForTerminal,
     $core.int? waitTimeoutSeconds,
   }) {
@@ -1052,7 +1152,7 @@ class GetRunRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'runId')
+    ..aInt64(1, _omitFieldNames ? '' : 'runId')
     ..aOB(2, _omitFieldNames ? '' : 'waitForTerminal')
     ..a<$core.int>(
         3, _omitFieldNames ? '' : 'waitTimeoutSeconds', $pb.PbFieldType.O3)
@@ -1080,9 +1180,9 @@ class GetRunRequest extends $pb.GeneratedMessage {
   static GetRunRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get runId => $_getSZ(0);
+  $fixnum.Int64 get runId => $_getI64(0);
   @$pb.TagNumber(1)
-  set runId($core.String value) => $_setString(0, value);
+  set runId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasRunId() => $_has(0);
   @$pb.TagNumber(1)
@@ -1168,10 +1268,10 @@ class GetRunResponse extends $pb.GeneratedMessage {
 
 class ListRunsRequest extends $pb.GeneratedMessage {
   factory ListRunsRequest({
-    $core.String? targetId,
+    RunTarget? target,
   }) {
     final result = create();
-    if (targetId != null) result.targetId = targetId;
+    if (target != null) result.target = target;
     return result;
   }
 
@@ -1189,7 +1289,8 @@ class ListRunsRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'targetId')
+    ..aOM<RunTarget>(2, _omitFieldNames ? '' : 'target',
+        subBuilder: RunTarget.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1213,15 +1314,16 @@ class ListRunsRequest extends $pb.GeneratedMessage {
       $pb.GeneratedMessage.$_defaultFor<ListRunsRequest>(create);
   static ListRunsRequest? _defaultInstance;
 
-  /// 대상(Timeline·Clip·Asset) 기준. Timeline을 주면 그 타임라인 Clip 대상 실행도 포함한다.
-  @$pb.TagNumber(1)
-  $core.String get targetId => $_getSZ(0);
-  @$pb.TagNumber(1)
-  set targetId($core.String value) => $_setString(0, value);
-  @$pb.TagNumber(1)
-  $core.bool hasTargetId() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearTargetId() => $_clearField(1);
+  @$pb.TagNumber(2)
+  RunTarget get target => $_getN(0);
+  @$pb.TagNumber(2)
+  set target(RunTarget value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTarget() => $_has(0);
+  @$pb.TagNumber(2)
+  void clearTarget() => $_clearField(2);
+  @$pb.TagNumber(2)
+  RunTarget ensureTarget() => $_ensure(0);
 }
 
 class ListRunsResponse extends $pb.GeneratedMessage {
@@ -1278,7 +1380,7 @@ class ListRunsResponse extends $pb.GeneratedMessage {
 
 class CancelRunRequest extends $pb.GeneratedMessage {
   factory CancelRunRequest({
-    $core.String? runId,
+    $fixnum.Int64? runId,
   }) {
     final result = create();
     if (runId != null) result.runId = runId;
@@ -1299,7 +1401,7 @@ class CancelRunRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'runId')
+    ..aInt64(1, _omitFieldNames ? '' : 'runId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1324,9 +1426,9 @@ class CancelRunRequest extends $pb.GeneratedMessage {
   static CancelRunRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get runId => $_getSZ(0);
+  $fixnum.Int64 get runId => $_getI64(0);
   @$pb.TagNumber(1)
-  set runId($core.String value) => $_setString(0, value);
+  set runId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasRunId() => $_has(0);
   @$pb.TagNumber(1)

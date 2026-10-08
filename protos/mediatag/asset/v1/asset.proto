@@ -1,7 +1,7 @@
 // ============================================================================
 // AssetService - 파일(Asset) 조회·삭제·파생과 작업 첨부 (v1)
-// tacit-db `tacit.asset`·`asset_provenance`·`asset_input`·`job_asset`을 다룬다(스키마 지도 "파일" 묶음). Asset은 완전
-// 불변이라 수정 RPC가 없다. 바이트 등록은 적재기(수집)나 HTTP 업로드가 하고,
+// tacit-db `tacit.asset`·`asset_provenance`·`job_asset`을 다룬다(스키마 지도 "파일" 묶음). Asset은 완전
+// 불변이라 수정 RPC가 없다. 바이트 등록은 적재기(수집)나 HTTP 업로드(POST /assets?file_name=…, 본문 = 파일 바이트)가 하고,
 // 바이트 조회는 content_url(정적 /files/<storage_path>, Range 지원)로 한다. ID만 있으면
 // /assets/{asset_id}/content가 storage_path를 조회해 같은 파일로 리다이렉트한다.
 // 설계: tacit docs/설계/엔티티.md §6, 공통키 및 작업 타임라인 통합 설계.md §3·§3.1
@@ -11,6 +11,11 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-08  geosoft-Server: ListUploadFormats — 화면 업로드(POST /assets)가 받는 자료 형식 표
+//   2026-10-07  geosoft-Server: equipment_id를 숫자(int64)로
+//   2026-10-07  geosoft-Server: 화면 업로드 주소(POST /assets) 안내 — RPC는 그대로
+//   2026-10-07  geosoft-Server: asset_id·parent_asset_id·run_id·tool_id를 숫자(int64)로 — 시스템 ID는 모두 DB가 매기는 번호
+//   2026-10-07  geosoft-Server: job_id·pass_id를 숫자(int64)로
 //   2026-09-29  geosoft-Server: tacit-tag tacittag.asset.v2를 tacit-db 기준으로 옮겨 최초 정의
 //                — display_name·revision·UpdateAsset 삭제(파일명 불변), origin_asset_id → provenance,
 //                  asset_kind 자유 문자열 → AssetKind enum, embedded_meta_json → properties
@@ -36,13 +41,16 @@ service AssetService {
   // 외부 source URL(fileservice://...)에서 서버가 바이트를 가져와 Asset으로 등록한다.
   // 미구현(UNIMPLEMENTED) — 허용 주소 규칙(SSRF 방지)과 함께 업로드 경로를 설계할 때 만든다.
   rpc ImportAssetFromSource(ImportAssetFromSourceRequest) returns (ImportAssetFromSourceResponse);
-  // Asset 목록(페이지·kind 필터). 작업별 목록은 ListJobAssets.
+  // Asset 목록(페이지·kind 필터·부모 필터). 작업별 목록은 ListJobAssets.
   rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
   rpc GetAsset(GetAssetRequest) returns (GetAssetResponse);
-  // 첨부(job_asset)·파생 부모(asset_input)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
+  // 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
   rpc DeleteAsset(DeleteAssetRequest) returns (DeleteAssetResponse);
   // 내용(sha256)이 같은 Asset 묶음 목록. 중복은 등록을 막지 않고 여기서 확인해 사람이 정리한다.
   rpc ListDuplicateAssets(ListDuplicateAssetsRequest) returns (ListDuplicateAssetsResponse);
+  // 화면 업로드(POST /assets, multipart)가 받는 자료 형식. 서버는 파일 내용으로 종류를 정한다 — 확장자는 파일 선택 창에
+  // 쓸 안내 값이다. 표에 없는 파일도 올릴 수 있고(종류 미지정으로 등록만), 실행 파일은 거절한다.
+  rpc ListUploadFormats(ListUploadFormatsRequest) returns (ListUploadFormatsResponse);
   // 음성 추출 같은 파생 만들기는 도구다 — ToolService.StartRun(도구 "audio-extract", 대상 = 영상 Asset).
 
   // 첨부(job_asset) — "이 작업의 자료인가". Clip으로 놓으면 서버가 자동 첨부하므로, 이 RPC는
@@ -72,30 +80,33 @@ enum AssetKind {
 }
 
 message Asset {
-  string asset_id = 1;       // ast_<ULID>
+  int64 asset_id = 1;        // DB가 매기는 번호
   AssetKind kind = 2;
   string file_name = 3;      // 등록 시점 파일명, 불변
   string sha256 = 4;         // 중복 제거 키 아님(같은 해시 여럿 가능)
   string mime_type = 5;
   int64 size_bytes = 6;
   google.protobuf.Struct properties = 7; // kind별 실측값(재생 길이·해상도·fps·채널 등)
-  string equipment_id = 8;   // 수집 장비. 비면 모름
+  int64 equipment_id = 8;    // 수집 장비. 0이면 모름
   google.protobuf.Timestamp collected_at = 9; // 적재 시각 = 저장소에 들어온 시각(촬영·기록 시각이 아님)
   google.protobuf.Timestamp recorded_at = 10; // 기록 시작 = 첫 샘플·프레임의 절대시각(선택). 파일 안 시각(t_ns·영상 PTS)은 여기서 0
   optional int64 duration_ns = 14; // 자료 자체 길이(영상·음성·t_ns CSV). recorded_at부터 이만큼이 기록 구간
   Provenance provenance = 11; // 파생·추론 Asset만. 원본 업로드면 비어 있음
   string content_url = 12;   // 응답 전용: /files/<storage_path>. 저장하지 말 것 — 저장은 asset_id로(저장 방식이 바뀌면 경로도 바뀐다)
   string source_path = 13;   // 일괄 적재한 원본 위치. 화면 업로드면 빈값
+  int32 child_count = 15;    // 응답 전용: 이 Asset으로 만든 파생(자식) 수. 0보다 크면 ListAssets(parent_asset_id)로 펼친다
 }
 
 // 생성 경위. run_id·tool_id·tool_version은 셋 다 있거나 셋 다 없다(엔티티.md §6.2).
 message Provenance {
   string operation = 1;      // 'text_extraction', 'depth_colormap', 'stt' 등
-  string run_id = 2;         // 도구 실행 1건(ToolRun). 도구를 거치지 않았으면 빈값
-  string tool_id = 3;
+  int64 run_id = 2;          // 도구 실행 1건(ToolRun). 도구를 거치지 않았으면 0
+  int64 tool_id = 3;
   string tool_version = 4;
-  repeated string input_asset_ids = 5; // 파생 계보(부모 여럿 가능)
+  reserved 5;                // 예전 input_asset_ids(부모 여럿) — 부모는 하나라 parent_asset_id로 바꿈
+  reserved "input_asset_ids";
   google.protobuf.Struct parameters = 6;
+  int64 parent_asset_id = 7; // 무엇으로 만들었나(부모는 하나). 부모 없이 만든 것이면 0. 에셋 트리는 이 값으로 잇는다
 }
 
 message ImportAssetFromSourceRequest {
@@ -110,6 +121,7 @@ message ListAssetsRequest {
   int32 page_size = 1;   // 기본 50, 최대 200
   string page_token = 2; // 비어 있으면 첫 페이지
   AssetKind kind = 3;    // UNSPECIFIED면 전체
+  int64 parent_asset_id = 4; // 설정하면 그 Asset의 자식(그걸로 만든 파생)만 — 에셋 트리를 한 단계 펼칠 때
 }
 
 message ListAssetsResponse {
@@ -118,7 +130,7 @@ message ListAssetsResponse {
 }
 
 message GetAssetRequest {
-  string asset_id = 1;
+  int64 asset_id = 1;
 }
 
 message GetAssetResponse {
@@ -126,7 +138,7 @@ message GetAssetResponse {
 }
 
 message DeleteAssetRequest {
-  string asset_id = 1;
+  int64 asset_id = 1;
 }
 
 message DeleteAssetResponse {}
@@ -149,13 +161,13 @@ message DuplicateGroup {
 
 message JobAsset {
   Asset asset = 1;
-  string pass_id = 2;             // 비면 작업 공용
+  int64 pass_id = 2;              // 0이면 작업 공용
 }
 
 message ListJobAssetsRequest {
-  string job_id = 1;
-  // 설정하면 그 패스의 첨부만. 빈 문자열이면 작업 공용 첨부만.
-  optional string pass_id = 2;
+  int64 job_id = 1;
+  // 설정하면 그 패스의 첨부만. 0이면 작업 공용 첨부만.
+  optional int64 pass_id = 2;
 }
 
 message ListJobAssetsResponse {
@@ -163,9 +175,9 @@ message ListJobAssetsResponse {
 }
 
 message AttachAssetRequest {
-  string job_id = 1;
-  string asset_id = 2;
-  string pass_id = 3;             // 비면 작업 공용
+  int64 job_id = 1;
+  int64 asset_id = 2;
+  int64 pass_id = 3;              // 0이면 작업 공용
 }
 
 message AttachAssetResponse {
@@ -173,8 +185,26 @@ message AttachAssetResponse {
 }
 
 message DetachAssetRequest {
-  string job_id = 1;
-  string asset_id = 2;
+  int64 job_id = 1;
+  int64 asset_id = 2;
 }
 
 message DetachAssetResponse {}
+
+message ListUploadFormatsRequest {}
+
+message ListUploadFormatsResponse {
+  repeated UploadFormat formats = 1;
+  int64 max_bytes = 2; // 파일 하나의 크기 한도
+}
+
+// 받는 자료 한 종류.
+message UploadFormat {
+  string name = 1;                 // video, depth_raw, audio, panel, imu, rpm, signals, pose, image, document
+  string label = 2;                // 화면 표시 이름
+  repeated string extensions = 3;  // 파일 선택 창 안내용(점 없이 소문자). 서버는 내용으로 판별한다
+  string rule = 4;                 // 내용으로 판별하는 기준
+  AssetKind kind = 5;
+  bool time_origin_required = 6;   // metadata.timeOrigin(시간 0의 절대 시각)이 필요한가
+  repeated string steps = 7;       // 올린 뒤 도는 후처리: properties, duration, normalize, timeline
+}

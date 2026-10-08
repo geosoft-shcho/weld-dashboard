@@ -6,6 +6,7 @@ import '../datasources/generated/mediatag/report/v1/report.pb.dart'
     as report_pb;
 import '../datasources/generated/mediatag/report/v1/report.pbenum.dart';
 import '../datasources/remote/media_tag_data_source.dart';
+import 'proto_id.dart';
 
 class RemoteQualityResultRepository implements QualityResultRepository {
   RemoteQualityResultRepository(this._mediaTag);
@@ -19,7 +20,7 @@ class RemoteQualityResultRepository implements QualityResultRepository {
     }
     try {
       final response = await _mediaTag.reportService.listQualityResults(
-        report_pb.ListQualityResultsRequest(jobId: jobId),
+        report_pb.ListQualityResultsRequest(jobId: protoId(jobId)),
       );
       return [for (final report in response.reports) _reportFrom(report)];
     } on ConnectException catch (error) {
@@ -32,7 +33,7 @@ class RemoteQualityResultRepository implements QualityResultRepository {
 
   QualityResultReport _reportFrom(report_pb.QualityReport report) {
     return QualityResultReport(
-      reportSetId: report.reportSetId,
+      reportSetId: idText(report.reportSetId),
       inspections: [
         for (final inspection in report.inspections)
           _inspectionFrom(inspection),

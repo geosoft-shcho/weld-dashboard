@@ -99,6 +99,9 @@ class TimeBasis extends $pb.ProtobufEnum {
 }
 
 class WaveformNormalize extends $pb.ProtobufEnum {
+  /// = 원본. 파일마다 시리즈 하나, 시각은 패스 시작 기준. 채널 이름은 여기서도 current_a·voltage_v·
+  /// wire_feed_speed_mpm·rotation_speed_rpm·angular_velocity_dps·pipe_angle_deg로 통일된다(파일에는 전류_A,
+  /// current_A 등으로 적혀 있다). IMU는 앞·뒤를 이름으로 구분한다: imu_front_acc_x~imu_back_gyro_z.
   static const WaveformNormalize WAVEFORM_NORMALIZE_UNSPECIFIED =
       WaveformNormalize._(
           0, _omitEnumNames ? '' : 'WAVEFORM_NORMALIZE_UNSPECIFIED');
@@ -107,7 +110,7 @@ class WaveformNormalize extends $pb.ProtobufEnum {
   /// 대상·비교 모두 시리즈 하나로 온다(파일들을 한 격자로 모은 것, asset_id 없음). 대상은 그대로이고 비교가 대상의
   /// 시간축에 맞춰져, 두 시리즈는 시각·길이가 같다. 정렬은 원본 간격(30fps)으로 하고 max_points로 줄이는 것은 맞춘 뒤다.
   /// 용접 채널 current_a·voltage_v·wire_feed_speed_mpm·rotation_speed_rpm은 항상 들어 있고, 그 밖의 채널(IMU
-  /// 자이로 등)은 channels에 적은 것만 맞춰 준다(두 패스에 다 있는 채널만 온다) — 이름은 "장비ID/채널"(장비가 있는 파일) 또는 채널 이름 그대로.
+  /// 자이로 등)은 channels에 적은 것만 맞춰 준다(두 패스에 다 있는 채널만 온다) — 이름은 원본 보기와 같다.
   static const WaveformNormalize WAVEFORM_NORMALIZE_DTW =
       WaveformNormalize._(1, _omitEnumNames ? '' : 'WAVEFORM_NORMALIZE_DTW');
 

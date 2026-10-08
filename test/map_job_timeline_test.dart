@@ -11,39 +11,39 @@ void main() {
   test('groups clips by track and keeps content url only', () {
     final response = compose_pb.GetTimelineResponse(
       timeline: compose_pb.Timeline(
-        jobId: 'job-1',
+        jobId: Int64(1),
         name: '용접',
         status: compose_pb.TimelineStatus.TIMELINE_STATUS_DRAFT,
       ),
       tracks: [
         compose_pb.Track(
-          trackId: 'hidden',
+          trackId: Int64(2),
           name: '숨김',
           order: 2,
           visible: false,
         ),
-        compose_pb.Track(trackId: 'video', name: '영상', order: 1),
+        compose_pb.Track(trackId: Int64(1), name: '영상', order: 1),
       ],
       clips: [
         compose_pb.Clip(
-          clipId: 'clip-1',
-          trackId: 'video',
+          clipId: Int64(10),
+          trackId: Int64(1),
           kind: compose_pb.ClipKind.CLIP_KIND_VIDEO,
           timelineStartNs: Int64.ZERO,
           timelineEndNs: Int64(2000000000),
-          source: compose_pb.ClipSource(assetId: 'asset-1'),
-          provenance: compose_pb.ClipProvenance(toolId: 'pose'),
+          source: compose_pb.ClipSource(assetId: Int64(20)),
+          provenance: compose_pb.ClipProvenance(toolId: Int64(7)),
         ),
         compose_pb.Clip(
-          clipId: 'missing-end',
-          trackId: 'video',
+          clipId: Int64(11),
+          trackId: Int64(1),
           kind: compose_pb.ClipKind.CLIP_KIND_AUDIO,
           timelineStartNs: Int64.ZERO,
         ),
       ],
       assets: [
         asset_pb.Asset(
-          assetId: 'asset-1',
+          assetId: Int64(20),
           fileName: 'cam.mp4',
           contentUrl: '/assets/asset-1/content',
           sourcePath: '/secret/cam.mp4',

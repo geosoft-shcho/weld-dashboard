@@ -1,6 +1,7 @@
 class WorkHistoryItem {
   const WorkHistoryItem({
     required this.jobId,
+    this.jobKey = '',
     required this.commonKey,
     required this.projectNo,
     required this.unitNo,
@@ -19,6 +20,7 @@ class WorkHistoryItem {
   });
 
   final String jobId;
+  final String jobKey;
   final String commonKey;
   final String projectNo;
   final String unitNo;

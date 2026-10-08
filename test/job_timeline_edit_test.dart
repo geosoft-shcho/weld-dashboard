@@ -26,11 +26,11 @@ void main() {
 
   test('update mask lists only changed fields', () {
     final request = buildUpdateClipRequest(
-      clipId: 'clip-1',
+      clipId: '1',
       startNs: '1000000000',
     );
 
-    expect(request.clip.clipId, 'clip-1');
+    expect(request.clip.clipId.toString(), '1');
     expect(request.clip.timelineStartNs.toString(), '1000000000');
     expect(request.clip.hasTimelineEndNs(), isFalse);
     expect(request.clip.hasTrackId(), isFalse);
@@ -40,7 +40,7 @@ void main() {
   });
 
   test('track update omits fields that were not changed', () {
-    final request = buildUpdateTrackRequest(trackId: 'track-1', name: '음성');
+    final request = buildUpdateTrackRequest(trackId: '1', name: '음성');
 
     expect(request.track.name, '음성');
     expect(request.track.hasOrder(), isFalse);
@@ -50,17 +50,17 @@ void main() {
 
   test('create clip attaches by asset id and skips provenance', () {
     final request = buildCreateClipRequest(
-      trackId: 'track-1',
+      trackId: '1',
       kind: TimelineClipKind.video,
       startNs: '0',
       endNs: '1000000000',
-      assetId: 'asset-1',
+      assetId: '20',
     );
 
     expect(request.clip.hasClipId(), isFalse);
     expect(request.clip.hasProvenance(), isFalse);
     expect(request.clip.hasKind(), isTrue);
-    expect(request.clip.source.assetId, 'asset-1');
+    expect(request.clip.source.assetId.toString(), '20');
     expect(request.clip.timelineEndNs.toString(), '1000000000');
     expect(
       request.clip.timelineStartNs.compareTo(request.clip.timelineEndNs),
@@ -70,31 +70,34 @@ void main() {
 
   test('relation clip omits kind and keeps only input clip ids', () {
     final request = buildCreateClipRequest(
-      trackId: 'track-relation',
+      trackId: '3',
       kind: TimelineClipKind.unspecified,
       startNs: '0',
       endNs: '1000000000',
       description: 'clip.mp4 ↔ take-b.mp4',
       omitsKind: true,
-      inputClipIds: const ['clip-1', 'clip-2'],
+      inputClipIds: const ['1', '2'],
     );
 
     expect(request.clip.hasKind(), isFalse);
     expect(request.clip.hasSource(), isFalse);
-    expect(request.clip.labelValueId, isEmpty);
+    expect(request.clip.hasLabelValueId(), isFalse);
     expect(request.clip.description, 'clip.mp4 ↔ take-b.mp4');
-    expect(request.clip.provenance.inputClipIds, ['clip-1', 'clip-2']);
+    expect(
+      request.clip.provenance.inputClipIds.map((id) => id.toString()),
+      ['1', '2'],
+    );
     expect(request.clip.provenance.hasConfidence(), isFalse);
     expect(request.clip.provenance.reviewed, isFalse);
-    expect(request.clip.provenance.runId, isEmpty);
-    expect(request.clip.provenance.toolId, isEmpty);
+    expect(request.clip.provenance.runId.toString(), '0');
+    expect(request.clip.provenance.toolId.toString(), '0');
     expect(request.clip.provenance.toolVersion, isEmpty);
   });
 
   test('create track leaves id and visibility for the server', () {
-    final request = buildCreateTrackRequest(jobId: 'job-1', name: '자막');
+    final request = buildCreateTrackRequest(jobId: '1', name: '자막');
 
-    expect(request.track.jobId, 'job-1');
+    expect(request.track.jobId.toString(), '1');
     expect(request.track.hasTrackId(), isFalse);
     expect(request.track.hasVisible(), isFalse);
   });
@@ -361,7 +364,7 @@ void main() {
     );
     await tester.pumpWidget(_board(viewModel));
 
-    await tester.tap(find.text('Delete'));
+    await tester.tap(find.text('클립 삭제'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('이 클립을 삭제할까요?'), findsOneWidget);
@@ -373,7 +376,7 @@ void main() {
     expect(repository.deleteCount, 0);
     expect(viewModel.selectedClipId, 'clip-1');
 
-    await tester.tap(find.text('Delete'));
+    await tester.tap(find.text('클립 삭제'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     await tester.tap(find.text('확인'));
@@ -602,7 +605,7 @@ void main() {
     await tester.runAsync(() => viewModel.loadAttachments());
     await tester.pumpWidget(_board(viewModel));
 
-    await tester.tap(find.text('Relation'));
+    await tester.tap(find.text('클립 관계'));
     await tester.pump();
     expect(find.text('Relation 모드 — 첫 번째 클립을 클릭하세요'), findsOneWidget);
     expect(repository.createTrackCount, 0);

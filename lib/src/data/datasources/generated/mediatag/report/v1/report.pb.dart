@@ -26,9 +26,9 @@ export 'report.pbenum.dart';
 
 class ReportSet extends $pb.GeneratedMessage {
   factory ReportSet({
-    $core.String? reportSetId,
-    $core.String? jobId,
-    $core.String? sourceAssetId,
+    $fixnum.Int64? reportSetId,
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? sourceAssetId,
     $core.int? pageStart,
     $core.int? pageEnd,
     $core.String? itemName,
@@ -37,7 +37,7 @@ class ReportSet extends $pb.GeneratedMessage {
     $core.String? itemAbbr,
     $0.Timestamp? createdAt,
     $core.Iterable<SectionSummary>? sections,
-    $core.String? splitAssetId,
+    $fixnum.Int64? splitAssetId,
     $core.int? reviewCount,
     $core.String? commonKey,
   }) {
@@ -73,9 +73,9 @@ class ReportSet extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'reportSetId')
-    ..aOS(2, _omitFieldNames ? '' : 'jobId')
-    ..aOS(3, _omitFieldNames ? '' : 'sourceAssetId')
+    ..aInt64(1, _omitFieldNames ? '' : 'reportSetId')
+    ..aInt64(2, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(3, _omitFieldNames ? '' : 'sourceAssetId')
     ..a<$core.int>(4, _omitFieldNames ? '' : 'pageStart', $pb.PbFieldType.O3)
     ..a<$core.int>(5, _omitFieldNames ? '' : 'pageEnd', $pb.PbFieldType.O3)
     ..aOS(6, _omitFieldNames ? '' : 'itemName')
@@ -87,7 +87,7 @@ class ReportSet extends $pb.GeneratedMessage {
     ..pc<SectionSummary>(
         11, _omitFieldNames ? '' : 'sections', $pb.PbFieldType.PM,
         subBuilder: SectionSummary.create)
-    ..aOS(12, _omitFieldNames ? '' : 'splitAssetId')
+    ..aInt64(12, _omitFieldNames ? '' : 'splitAssetId')
     ..a<$core.int>(13, _omitFieldNames ? '' : 'reviewCount', $pb.PbFieldType.O3)
     ..aOS(14, _omitFieldNames ? '' : 'commonKey')
     ..hasRequiredFields = false;
@@ -112,27 +112,27 @@ class ReportSet extends $pb.GeneratedMessage {
   static ReportSet? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get reportSetId => $_getSZ(0);
+  $fixnum.Int64 get reportSetId => $_getI64(0);
   @$pb.TagNumber(1)
-  set reportSetId($core.String value) => $_setString(0, value);
+  set reportSetId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasReportSetId() => $_has(0);
   @$pb.TagNumber(1)
   void clearReportSetId() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get jobId => $_getSZ(1);
+  $fixnum.Int64 get jobId => $_getI64(1);
   @$pb.TagNumber(2)
-  set jobId($core.String value) => $_setString(1, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasJobId() => $_has(1);
   @$pb.TagNumber(2)
   void clearJobId() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.String get sourceAssetId => $_getSZ(2);
+  $fixnum.Int64 get sourceAssetId => $_getI64(2);
   @$pb.TagNumber(3)
-  set sourceAssetId($core.String value) => $_setString(2, value);
+  set sourceAssetId($fixnum.Int64 value) => $_setInt64(2, value);
   @$pb.TagNumber(3)
   $core.bool hasSourceAssetId() => $_has(2);
   @$pb.TagNumber(3)
@@ -210,9 +210,9 @@ class ReportSet extends $pb.GeneratedMessage {
   /// 원본에서 이 세트 구간만 잘라 낸 작업별 PDF(파생 Asset). 작업 화면·첨부는 이것. 비면 아직 안 잘랐다.
   /// 잘라 낸 PDF 안의 쪽 = 원본 쪽 - page_start + 1
   @$pb.TagNumber(12)
-  $core.String get splitAssetId => $_getSZ(11);
+  $fixnum.Int64 get splitAssetId => $_getI64(11);
   @$pb.TagNumber(12)
-  set splitAssetId($core.String value) => $_setString(11, value);
+  set splitAssetId($fixnum.Int64 value) => $_setInt64(11, value);
   @$pb.TagNumber(12)
   $core.bool hasSplitAssetId() => $_has(11);
   @$pb.TagNumber(12)
@@ -420,7 +420,7 @@ class Section extends $pb.GeneratedMessage {
 
   /// 섹션 행의 컬럼 전체(id·report_set_id·created_at 제외)와 자식 테이블 배열
   /// (예: dimension_points, gauge_readings, ut_joints). 키는 DB 컬럼·테이블 이름 그대로.
-  /// ponytail: 섹션 6종 × 수십 컬럼을 메시지로 옮기지 않고 Struct 하나로 둔다. 화면이 필드별
+  /// ponytail: 섹션 8종 × 수십 컬럼을 메시지로 옮기지 않고 Struct 하나로 둔다. 화면이 필드별
   /// 타입 검사가 필요해지면 섹션별 메시지로 바꾼다.
   @$pb.TagNumber(4)
   $1.Struct get fields => $_getN(3);
@@ -436,7 +436,7 @@ class Section extends $pb.GeneratedMessage {
 
 class ListReportSetsRequest extends $pb.GeneratedMessage {
   factory ListReportSetsRequest({
-    $core.String? jobId,
+    $fixnum.Int64? jobId,
     $core.String? commonKey,
   }) {
     final result = create();
@@ -459,7 +459,7 @@ class ListReportSetsRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
     ..aOS(2, _omitFieldNames ? '' : 'commonKey')
     ..hasRequiredFields = false;
 
@@ -487,9 +487,9 @@ class ListReportSetsRequest extends $pb.GeneratedMessage {
   static ListReportSetsRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get jobId => $_getSZ(0);
+  $fixnum.Int64 get jobId => $_getI64(0);
   @$pb.TagNumber(1)
-  set jobId($core.String value) => $_setString(0, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasJobId() => $_has(0);
   @$pb.TagNumber(1)
@@ -561,7 +561,7 @@ class ListReportSetsResponse extends $pb.GeneratedMessage {
 
 class GetReportSetRequest extends $pb.GeneratedMessage {
   factory GetReportSetRequest({
-    $core.String? reportSetId,
+    $fixnum.Int64? reportSetId,
   }) {
     final result = create();
     if (reportSetId != null) result.reportSetId = reportSetId;
@@ -582,7 +582,7 @@ class GetReportSetRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'reportSetId')
+    ..aInt64(1, _omitFieldNames ? '' : 'reportSetId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -607,9 +607,9 @@ class GetReportSetRequest extends $pb.GeneratedMessage {
   static GetReportSetRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get reportSetId => $_getSZ(0);
+  $fixnum.Int64 get reportSetId => $_getI64(0);
   @$pb.TagNumber(1)
-  set reportSetId($core.String value) => $_setString(0, value);
+  set reportSetId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasReportSetId() => $_has(0);
   @$pb.TagNumber(1)
@@ -1026,8 +1026,8 @@ class ResolveReviewResponse extends $pb.GeneratedMessage {
 
 class MatchReportSetRequest extends $pb.GeneratedMessage {
   factory MatchReportSetRequest({
-    $core.String? reportSetId,
-    $core.String? jobId,
+    $fixnum.Int64? reportSetId,
+    $fixnum.Int64? jobId,
     $core.String? commonKey,
   }) {
     final result = create();
@@ -1051,8 +1051,8 @@ class MatchReportSetRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'reportSetId')
-    ..aOS(2, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(1, _omitFieldNames ? '' : 'reportSetId')
+    ..aInt64(2, _omitFieldNames ? '' : 'jobId')
     ..aOS(3, _omitFieldNames ? '' : 'commonKey')
     ..hasRequiredFields = false;
 
@@ -1080,18 +1080,18 @@ class MatchReportSetRequest extends $pb.GeneratedMessage {
   static MatchReportSetRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get reportSetId => $_getSZ(0);
+  $fixnum.Int64 get reportSetId => $_getI64(0);
   @$pb.TagNumber(1)
-  set reportSetId($core.String value) => $_setString(0, value);
+  set reportSetId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasReportSetId() => $_has(0);
   @$pb.TagNumber(1)
   void clearReportSetId() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get jobId => $_getSZ(1);
+  $fixnum.Int64 get jobId => $_getI64(1);
   @$pb.TagNumber(2)
-  set jobId($core.String value) => $_setString(1, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasJobId() => $_has(1);
   @$pb.TagNumber(2)
@@ -1171,7 +1171,7 @@ class MatchReportSetResponse extends $pb.GeneratedMessage {
 
 class ListQualityResultsRequest extends $pb.GeneratedMessage {
   factory ListQualityResultsRequest({
-    $core.String? jobId,
+    $fixnum.Int64? jobId,
     $core.String? commonKey,
     $core.String? jointNo,
   }) {
@@ -1196,7 +1196,7 @@ class ListQualityResultsRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
     ..aOS(2, _omitFieldNames ? '' : 'commonKey')
     ..aOS(3, _omitFieldNames ? '' : 'jointNo')
     ..hasRequiredFields = false;
@@ -1225,9 +1225,9 @@ class ListQualityResultsRequest extends $pb.GeneratedMessage {
   static ListQualityResultsRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get jobId => $_getSZ(0);
+  $fixnum.Int64 get jobId => $_getI64(0);
   @$pb.TagNumber(1)
-  set jobId($core.String value) => $_setString(0, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasJobId() => $_has(0);
   @$pb.TagNumber(1)
@@ -1312,9 +1312,9 @@ class ListQualityResultsResponse extends $pb.GeneratedMessage {
 ///   joints      — 이음부 표. 한 행 = 확인번호 하나의 UT·MT 결과. 작업(job.joint_no)과는 확인번호로 잇는다.
 class QualityReport extends $pb.GeneratedMessage {
   factory QualityReport({
-    $core.String? reportSetId,
+    $fixnum.Int64? reportSetId,
     $core.String? commonKey,
-    $core.String? splitAssetId,
+    $fixnum.Int64? splitAssetId,
     $core.Iterable<QualityInspection>? inspections,
     $core.Iterable<JointQuality>? joints,
   }) {
@@ -1341,9 +1341,9 @@ class QualityReport extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'reportSetId')
+    ..aInt64(1, _omitFieldNames ? '' : 'reportSetId')
     ..aOS(2, _omitFieldNames ? '' : 'commonKey')
-    ..aOS(3, _omitFieldNames ? '' : 'splitAssetId')
+    ..aInt64(3, _omitFieldNames ? '' : 'splitAssetId')
     ..pc<QualityInspection>(
         4, _omitFieldNames ? '' : 'inspections', $pb.PbFieldType.PM,
         subBuilder: QualityInspection.create)
@@ -1373,9 +1373,9 @@ class QualityReport extends $pb.GeneratedMessage {
   static QualityReport? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get reportSetId => $_getSZ(0);
+  $fixnum.Int64 get reportSetId => $_getI64(0);
   @$pb.TagNumber(1)
-  set reportSetId($core.String value) => $_setString(0, value);
+  set reportSetId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasReportSetId() => $_has(0);
   @$pb.TagNumber(1)
@@ -1391,9 +1391,9 @@ class QualityReport extends $pb.GeneratedMessage {
   void clearCommonKey() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.String get splitAssetId => $_getSZ(2);
+  $fixnum.Int64 get splitAssetId => $_getI64(2);
   @$pb.TagNumber(3)
-  set splitAssetId($core.String value) => $_setString(2, value);
+  set splitAssetId($fixnum.Int64 value) => $_setInt64(2, value);
   @$pb.TagNumber(3)
   $core.bool hasSplitAssetId() => $_has(2);
   @$pb.TagNumber(3)
@@ -1654,7 +1654,7 @@ class QualityCheck extends $pb.GeneratedMessage {
 class JointQuality extends $pb.GeneratedMessage {
   factory JointQuality({
     $core.String? jointNo,
-    $core.Iterable<$core.String>? jobIds,
+    $core.Iterable<$fixnum.Int64>? jobIds,
     UtResult? ut,
     MtResult? mt,
   }) {
@@ -1681,7 +1681,7 @@ class JointQuality extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'jointNo')
-    ..pPS(2, _omitFieldNames ? '' : 'jobIds')
+    ..p<$fixnum.Int64>(2, _omitFieldNames ? '' : 'jobIds', $pb.PbFieldType.K6)
     ..aOM<UtResult>(3, _omitFieldNames ? '' : 'ut', subBuilder: UtResult.create)
     ..aOM<MtResult>(4, _omitFieldNames ? '' : 'mt', subBuilder: MtResult.create)
     ..hasRequiredFields = false;
@@ -1717,7 +1717,7 @@ class JointQuality extends $pb.GeneratedMessage {
   void clearJointNo() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $pb.PbList<$core.String> get jobIds => $_getList(1);
+  $pb.PbList<$fixnum.Int64> get jobIds => $_getList(1);
 
   @$pb.TagNumber(3)
   UtResult get ut => $_getN(2);

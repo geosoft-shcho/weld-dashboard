@@ -14,6 +14,7 @@ import '../../domain/entities/worker.dart';
 import '../../domain/repositories/collection_catalog_repository.dart';
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as pb;
 import '../datasources/remote/media_tag_data_source.dart';
+import 'proto_id.dart';
 
 class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
   RemoteCollectionCatalogRepository(this._source);
@@ -44,8 +45,9 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
     final equipments = [
       for (final item in equipmentResponse.equipment)
         Equipment(
-          equipmentId: item.equipmentId,
+          equipmentId: idText(item.equipmentId),
           equipmentName: item.equipmentName,
+          equipmentCode: item.equipmentCode,
           lineName: item.lineName,
         ),
     ];
@@ -87,7 +89,7 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
       ],
       workers: [
         for (final item in workerResponse.workers)
-          Worker(workerId: item.workerId, workerName: item.workerName),
+          Worker(workerId: idText(item.workerId), workerName: item.workerName),
       ],
       assignments: _assignmentsFrom(nodes, dayStart, dayEnd),
       statuses: [for (final node in nodes) _statusFrom(node, snapshotAt)],
@@ -259,7 +261,7 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
   }
 
   pb.CollectionPath _pathToProto(CollectedNodePath path) {
-    return pb.CollectionPath(
+    final message = pb.CollectionPath(
       view: switch (path.view) {
         CollectedNodeView.equipment =>
           pb.CollectionView.COLLECTION_VIEW_EQUIPMENT,
@@ -277,13 +279,26 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
         CollectedNodeLevel.job => pb.CollectionLevel.COLLECTION_LEVEL_JOB,
         CollectedNodeLevel.pass => pb.CollectionLevel.COLLECTION_LEVEL_PASS,
       },
-      equipmentId: path.equipmentId,
-      workerId: path.workerId,
       projectNo: path.projectNo,
       commonKey: path.commonKey,
-      jobId: path.jobId,
-      passId: path.passId,
     );
+    final equipmentId = protoIdOrNull(path.equipmentId);
+    if (equipmentId != null) {
+      message.equipmentId = equipmentId;
+    }
+    final workerId = protoIdOrNull(path.workerId);
+    if (workerId != null) {
+      message.workerId = workerId;
+    }
+    final jobId = protoIdOrNull(path.jobId);
+    if (jobId != null) {
+      message.jobId = jobId;
+    }
+    final passId = protoIdOrNull(path.passId);
+    if (passId != null) {
+      message.passId = passId;
+    }
+    return message;
   }
 
   CollectedNode _nodeFromProto(pb.CollectionNode node) {
@@ -306,12 +321,12 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
           pb.CollectionLevel.COLLECTION_LEVEL_PASS => CollectedNodeLevel.pass,
           _ => CollectedNodeLevel.unspecified,
         },
-        equipmentId: path.equipmentId,
-        workerId: path.workerId,
+        equipmentId: idText(path.equipmentId),
+        workerId: idText(path.workerId),
         projectNo: path.projectNo,
         commonKey: path.commonKey,
-        jobId: path.jobId,
-        passId: path.passId,
+        jobId: idText(path.jobId),
+        passId: idText(path.passId),
       ),
       label: node.label,
       hasChildren: node.hasChildren,

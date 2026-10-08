@@ -9,6 +9,7 @@ import '../datasources/generated/mediatag/compose/v1/compose.pb.dart'
 import '../datasources/generated/mediatag/compose/v1/compose.pbenum.dart';
 import '../datasources/remote/media_tag_data_source.dart';
 import 'job_timeline_edit_requests.dart';
+import 'proto_id.dart';
 
 class RemoteJobTimelineRepository implements JobTimelineRepository {
   RemoteJobTimelineRepository(this._mediaTag);
@@ -22,7 +23,7 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
     }
     try {
       final response = await _mediaTag.composeService.getTimeline(
-        compose_pb.GetTimelineRequest(jobId: jobId, includeAssets: true),
+        compose_pb.GetTimelineRequest(jobId: protoId(jobId), includeAssets: true),
       );
       return jobTimelineFromResponse(
         response,
@@ -190,7 +191,7 @@ JobTimeline jobTimelineFromResponse(
 }) {
   final assetsById = <String, asset_pb.Asset>{
     for (final asset in response.assets)
-      if (asset.assetId.isNotEmpty) asset.assetId: asset,
+      if (idText(asset.assetId).isNotEmpty) idText(asset.assetId): asset,
   };
   final clipsByTrackId = <String, List<TimelineClip>>{};
   for (final clip in response.clips) {
@@ -223,21 +224,22 @@ JobTimeline jobTimelineFromResponse(
   for (final entry in ordered) {
     final track = entry.value;
     final isVisible = track.hasVisible() ? track.visible : true;
-    if (!isVisible || track.trackId.isEmpty) {
+    final trackId = idText(track.trackId);
+    if (!isVisible || trackId.isEmpty) {
       continue;
     }
     tracks.add(
       TimelineTrack(
-        trackId: track.trackId,
+        trackId: trackId,
         name: track.name,
         order: track.order,
         isVisible: true,
-        clips: clipsByTrackId[track.trackId] ?? const [],
+        clips: clipsByTrackId[trackId] ?? const [],
       ),
     );
   }
   return JobTimeline(
-    jobId: response.timeline.jobId,
+    jobId: idText(response.timeline.jobId),
     name: response.timeline.name,
     status: jobTimelineStatusFromProto(response.timeline.status),
     tracks: tracks,
@@ -249,8 +251,10 @@ TimelineClip? _clipFrom(
   Map<String, asset_pb.Asset> assetsById,
   String Function(String contentUrl) resolveContentUrl,
 ) {
-  if (clip.clipId.isEmpty ||
-      clip.trackId.isEmpty ||
+  final clipId = idText(clip.clipId);
+  final trackId = idText(clip.trackId);
+  if (clipId.isEmpty ||
+      trackId.isEmpty ||
       !clip.hasTimelineStartNs() ||
       !clip.hasTimelineEndNs()) {
     return null;
@@ -260,13 +264,13 @@ TimelineClip? _clipFrom(
   if (!isOpenNanosecondInterval(start, end)) {
     return null;
   }
-  final assetId = clip.hasSource() ? clip.source.assetId : '';
+  final assetId = clip.hasSource() ? idText(clip.source.assetId) : '';
   final asset = assetsById[assetId];
   final contentUrl = asset == null ? '' : asset.contentUrl;
   final provenance = clip.hasProvenance() ? clip.provenance : null;
   return TimelineClip(
-    clipId: clip.clipId,
-    trackId: clip.trackId,
+    clipId: clipId,
+    trackId: trackId,
     kind: _kindFrom(clip.kind),
     startNs: start,
     endNs: end,
@@ -276,7 +280,8 @@ TimelineClip? _clipFrom(
     description: clip.description,
     showsToolBadge:
         provenance != null &&
-        (provenance.runId.isNotEmpty || provenance.toolId.isNotEmpty),
+        (idText(provenance.runId).isNotEmpty ||
+            idText(provenance.toolId).isNotEmpty),
   );
 }
 

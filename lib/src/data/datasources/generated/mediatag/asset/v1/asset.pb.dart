@@ -26,20 +26,21 @@ export 'asset.pbenum.dart';
 
 class Asset extends $pb.GeneratedMessage {
   factory Asset({
-    $core.String? assetId,
+    $fixnum.Int64? assetId,
     AssetKind? kind,
     $core.String? fileName,
     $core.String? sha256,
     $core.String? mimeType,
     $fixnum.Int64? sizeBytes,
     $0.Struct? properties,
-    $core.String? equipmentId,
+    $fixnum.Int64? equipmentId,
     $1.Timestamp? collectedAt,
     $1.Timestamp? recordedAt,
     Provenance? provenance,
     $core.String? contentUrl,
     $core.String? sourcePath,
     $fixnum.Int64? durationNs,
+    $core.int? childCount,
   }) {
     final result = create();
     if (assetId != null) result.assetId = assetId;
@@ -56,6 +57,7 @@ class Asset extends $pb.GeneratedMessage {
     if (contentUrl != null) result.contentUrl = contentUrl;
     if (sourcePath != null) result.sourcePath = sourcePath;
     if (durationNs != null) result.durationNs = durationNs;
+    if (childCount != null) result.childCount = childCount;
     return result;
   }
 
@@ -73,7 +75,7 @@ class Asset extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'assetId')
+    ..aInt64(1, _omitFieldNames ? '' : 'assetId')
     ..e<AssetKind>(2, _omitFieldNames ? '' : 'kind', $pb.PbFieldType.OE,
         defaultOrMaker: AssetKind.ASSET_KIND_UNSPECIFIED,
         valueOf: AssetKind.valueOf,
@@ -84,7 +86,7 @@ class Asset extends $pb.GeneratedMessage {
     ..aInt64(6, _omitFieldNames ? '' : 'sizeBytes')
     ..aOM<$0.Struct>(7, _omitFieldNames ? '' : 'properties',
         subBuilder: $0.Struct.create)
-    ..aOS(8, _omitFieldNames ? '' : 'equipmentId')
+    ..aInt64(8, _omitFieldNames ? '' : 'equipmentId')
     ..aOM<$1.Timestamp>(9, _omitFieldNames ? '' : 'collectedAt',
         subBuilder: $1.Timestamp.create)
     ..aOM<$1.Timestamp>(10, _omitFieldNames ? '' : 'recordedAt',
@@ -94,6 +96,7 @@ class Asset extends $pb.GeneratedMessage {
     ..aOS(12, _omitFieldNames ? '' : 'contentUrl')
     ..aOS(13, _omitFieldNames ? '' : 'sourcePath')
     ..aInt64(14, _omitFieldNames ? '' : 'durationNs')
+    ..a<$core.int>(15, _omitFieldNames ? '' : 'childCount', $pb.PbFieldType.O3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -116,9 +119,9 @@ class Asset extends $pb.GeneratedMessage {
   static Asset? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get assetId => $_getSZ(0);
+  $fixnum.Int64 get assetId => $_getI64(0);
   @$pb.TagNumber(1)
-  set assetId($core.String value) => $_setString(0, value);
+  set assetId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasAssetId() => $_has(0);
   @$pb.TagNumber(1)
@@ -181,9 +184,9 @@ class Asset extends $pb.GeneratedMessage {
   $0.Struct ensureProperties() => $_ensure(6);
 
   @$pb.TagNumber(8)
-  $core.String get equipmentId => $_getSZ(7);
+  $fixnum.Int64 get equipmentId => $_getI64(7);
   @$pb.TagNumber(8)
-  set equipmentId($core.String value) => $_setString(7, value);
+  set equipmentId($fixnum.Int64 value) => $_setInt64(7, value);
   @$pb.TagNumber(8)
   $core.bool hasEquipmentId() => $_has(7);
   @$pb.TagNumber(8)
@@ -248,25 +251,34 @@ class Asset extends $pb.GeneratedMessage {
   $core.bool hasDurationNs() => $_has(13);
   @$pb.TagNumber(14)
   void clearDurationNs() => $_clearField(14);
+
+  @$pb.TagNumber(15)
+  $core.int get childCount => $_getIZ(14);
+  @$pb.TagNumber(15)
+  set childCount($core.int value) => $_setSignedInt32(14, value);
+  @$pb.TagNumber(15)
+  $core.bool hasChildCount() => $_has(14);
+  @$pb.TagNumber(15)
+  void clearChildCount() => $_clearField(15);
 }
 
 /// 생성 경위. run_id·tool_id·tool_version은 셋 다 있거나 셋 다 없다(엔티티.md §6.2).
 class Provenance extends $pb.GeneratedMessage {
   factory Provenance({
     $core.String? operation,
-    $core.String? runId,
-    $core.String? toolId,
+    $fixnum.Int64? runId,
+    $fixnum.Int64? toolId,
     $core.String? toolVersion,
-    $core.Iterable<$core.String>? inputAssetIds,
     $0.Struct? parameters,
+    $fixnum.Int64? parentAssetId,
   }) {
     final result = create();
     if (operation != null) result.operation = operation;
     if (runId != null) result.runId = runId;
     if (toolId != null) result.toolId = toolId;
     if (toolVersion != null) result.toolVersion = toolVersion;
-    if (inputAssetIds != null) result.inputAssetIds.addAll(inputAssetIds);
     if (parameters != null) result.parameters = parameters;
+    if (parentAssetId != null) result.parentAssetId = parentAssetId;
     return result;
   }
 
@@ -285,12 +297,12 @@ class Provenance extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'operation')
-    ..aOS(2, _omitFieldNames ? '' : 'runId')
-    ..aOS(3, _omitFieldNames ? '' : 'toolId')
+    ..aInt64(2, _omitFieldNames ? '' : 'runId')
+    ..aInt64(3, _omitFieldNames ? '' : 'toolId')
     ..aOS(4, _omitFieldNames ? '' : 'toolVersion')
-    ..pPS(5, _omitFieldNames ? '' : 'inputAssetIds')
     ..aOM<$0.Struct>(6, _omitFieldNames ? '' : 'parameters',
         subBuilder: $0.Struct.create)
+    ..aInt64(7, _omitFieldNames ? '' : 'parentAssetId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -322,18 +334,18 @@ class Provenance extends $pb.GeneratedMessage {
   void clearOperation() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get runId => $_getSZ(1);
+  $fixnum.Int64 get runId => $_getI64(1);
   @$pb.TagNumber(2)
-  set runId($core.String value) => $_setString(1, value);
+  set runId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasRunId() => $_has(1);
   @$pb.TagNumber(2)
   void clearRunId() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.String get toolId => $_getSZ(2);
+  $fixnum.Int64 get toolId => $_getI64(2);
   @$pb.TagNumber(3)
-  set toolId($core.String value) => $_setString(2, value);
+  set toolId($fixnum.Int64 value) => $_setInt64(2, value);
   @$pb.TagNumber(3)
   $core.bool hasToolId() => $_has(2);
   @$pb.TagNumber(3)
@@ -348,19 +360,25 @@ class Provenance extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   void clearToolVersion() => $_clearField(4);
 
-  @$pb.TagNumber(5)
-  $pb.PbList<$core.String> get inputAssetIds => $_getList(4);
-
   @$pb.TagNumber(6)
-  $0.Struct get parameters => $_getN(5);
+  $0.Struct get parameters => $_getN(4);
   @$pb.TagNumber(6)
   set parameters($0.Struct value) => $_setField(6, value);
   @$pb.TagNumber(6)
-  $core.bool hasParameters() => $_has(5);
+  $core.bool hasParameters() => $_has(4);
   @$pb.TagNumber(6)
   void clearParameters() => $_clearField(6);
   @$pb.TagNumber(6)
-  $0.Struct ensureParameters() => $_ensure(5);
+  $0.Struct ensureParameters() => $_ensure(4);
+
+  @$pb.TagNumber(7)
+  $fixnum.Int64 get parentAssetId => $_getI64(5);
+  @$pb.TagNumber(7)
+  set parentAssetId($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(7)
+  $core.bool hasParentAssetId() => $_has(5);
+  @$pb.TagNumber(7)
+  void clearParentAssetId() => $_clearField(7);
 }
 
 class ImportAssetFromSourceRequest extends $pb.GeneratedMessage {
@@ -492,11 +510,13 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     $core.int? pageSize,
     $core.String? pageToken,
     AssetKind? kind,
+    $fixnum.Int64? parentAssetId,
   }) {
     final result = create();
     if (pageSize != null) result.pageSize = pageSize;
     if (pageToken != null) result.pageToken = pageToken;
     if (kind != null) result.kind = kind;
+    if (parentAssetId != null) result.parentAssetId = parentAssetId;
     return result;
   }
 
@@ -520,6 +540,7 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
         defaultOrMaker: AssetKind.ASSET_KIND_UNSPECIFIED,
         valueOf: AssetKind.valueOf,
         enumValues: AssetKind.values)
+    ..aInt64(4, _omitFieldNames ? '' : 'parentAssetId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -569,6 +590,15 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
   $core.bool hasKind() => $_has(2);
   @$pb.TagNumber(3)
   void clearKind() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get parentAssetId => $_getI64(3);
+  @$pb.TagNumber(4)
+  set parentAssetId($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasParentAssetId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearParentAssetId() => $_clearField(4);
 }
 
 class ListAssetsResponse extends $pb.GeneratedMessage {
@@ -637,7 +667,7 @@ class ListAssetsResponse extends $pb.GeneratedMessage {
 
 class GetAssetRequest extends $pb.GeneratedMessage {
   factory GetAssetRequest({
-    $core.String? assetId,
+    $fixnum.Int64? assetId,
   }) {
     final result = create();
     if (assetId != null) result.assetId = assetId;
@@ -658,7 +688,7 @@ class GetAssetRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'assetId')
+    ..aInt64(1, _omitFieldNames ? '' : 'assetId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -683,9 +713,9 @@ class GetAssetRequest extends $pb.GeneratedMessage {
   static GetAssetRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get assetId => $_getSZ(0);
+  $fixnum.Int64 get assetId => $_getI64(0);
   @$pb.TagNumber(1)
-  set assetId($core.String value) => $_setString(0, value);
+  set assetId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasAssetId() => $_has(0);
   @$pb.TagNumber(1)
@@ -753,7 +783,7 @@ class GetAssetResponse extends $pb.GeneratedMessage {
 
 class DeleteAssetRequest extends $pb.GeneratedMessage {
   factory DeleteAssetRequest({
-    $core.String? assetId,
+    $fixnum.Int64? assetId,
   }) {
     final result = create();
     if (assetId != null) result.assetId = assetId;
@@ -774,7 +804,7 @@ class DeleteAssetRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'assetId')
+    ..aInt64(1, _omitFieldNames ? '' : 'assetId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -799,9 +829,9 @@ class DeleteAssetRequest extends $pb.GeneratedMessage {
   static DeleteAssetRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get assetId => $_getSZ(0);
+  $fixnum.Int64 get assetId => $_getI64(0);
   @$pb.TagNumber(1)
-  set assetId($core.String value) => $_setString(0, value);
+  set assetId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasAssetId() => $_has(0);
   @$pb.TagNumber(1)
@@ -1057,7 +1087,7 @@ class DuplicateGroup extends $pb.GeneratedMessage {
 class JobAsset extends $pb.GeneratedMessage {
   factory JobAsset({
     Asset? asset,
-    $core.String? passId,
+    $fixnum.Int64? passId,
   }) {
     final result = create();
     if (asset != null) result.asset = asset;
@@ -1080,7 +1110,7 @@ class JobAsset extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
     ..aOM<Asset>(1, _omitFieldNames ? '' : 'asset', subBuilder: Asset.create)
-    ..aOS(2, _omitFieldNames ? '' : 'passId')
+    ..aInt64(2, _omitFieldNames ? '' : 'passId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1114,9 +1144,9 @@ class JobAsset extends $pb.GeneratedMessage {
   Asset ensureAsset() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $core.String get passId => $_getSZ(1);
+  $fixnum.Int64 get passId => $_getI64(1);
   @$pb.TagNumber(2)
-  set passId($core.String value) => $_setString(1, value);
+  set passId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasPassId() => $_has(1);
   @$pb.TagNumber(2)
@@ -1125,8 +1155,8 @@ class JobAsset extends $pb.GeneratedMessage {
 
 class ListJobAssetsRequest extends $pb.GeneratedMessage {
   factory ListJobAssetsRequest({
-    $core.String? jobId,
-    $core.String? passId,
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? passId,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
@@ -1148,8 +1178,8 @@ class ListJobAssetsRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'jobId')
-    ..aOS(2, _omitFieldNames ? '' : 'passId')
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(2, _omitFieldNames ? '' : 'passId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1175,19 +1205,19 @@ class ListJobAssetsRequest extends $pb.GeneratedMessage {
   static ListJobAssetsRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get jobId => $_getSZ(0);
+  $fixnum.Int64 get jobId => $_getI64(0);
   @$pb.TagNumber(1)
-  set jobId($core.String value) => $_setString(0, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasJobId() => $_has(0);
   @$pb.TagNumber(1)
   void clearJobId() => $_clearField(1);
 
-  /// 설정하면 그 패스의 첨부만. 빈 문자열이면 작업 공용 첨부만.
+  /// 설정하면 그 패스의 첨부만. 0이면 작업 공용 첨부만.
   @$pb.TagNumber(2)
-  $core.String get passId => $_getSZ(1);
+  $fixnum.Int64 get passId => $_getI64(1);
   @$pb.TagNumber(2)
-  set passId($core.String value) => $_setString(1, value);
+  set passId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasPassId() => $_has(1);
   @$pb.TagNumber(2)
@@ -1250,9 +1280,9 @@ class ListJobAssetsResponse extends $pb.GeneratedMessage {
 
 class AttachAssetRequest extends $pb.GeneratedMessage {
   factory AttachAssetRequest({
-    $core.String? jobId,
-    $core.String? assetId,
-    $core.String? passId,
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? assetId,
+    $fixnum.Int64? passId,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
@@ -1275,9 +1305,9 @@ class AttachAssetRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'jobId')
-    ..aOS(2, _omitFieldNames ? '' : 'assetId')
-    ..aOS(3, _omitFieldNames ? '' : 'passId')
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(2, _omitFieldNames ? '' : 'assetId')
+    ..aInt64(3, _omitFieldNames ? '' : 'passId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1302,27 +1332,27 @@ class AttachAssetRequest extends $pb.GeneratedMessage {
   static AttachAssetRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get jobId => $_getSZ(0);
+  $fixnum.Int64 get jobId => $_getI64(0);
   @$pb.TagNumber(1)
-  set jobId($core.String value) => $_setString(0, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasJobId() => $_has(0);
   @$pb.TagNumber(1)
   void clearJobId() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get assetId => $_getSZ(1);
+  $fixnum.Int64 get assetId => $_getI64(1);
   @$pb.TagNumber(2)
-  set assetId($core.String value) => $_setString(1, value);
+  set assetId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasAssetId() => $_has(1);
   @$pb.TagNumber(2)
   void clearAssetId() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.String get passId => $_getSZ(2);
+  $fixnum.Int64 get passId => $_getI64(2);
   @$pb.TagNumber(3)
-  set passId($core.String value) => $_setString(2, value);
+  set passId($fixnum.Int64 value) => $_setInt64(2, value);
   @$pb.TagNumber(3)
   $core.bool hasPassId() => $_has(2);
   @$pb.TagNumber(3)
@@ -1391,8 +1421,8 @@ class AttachAssetResponse extends $pb.GeneratedMessage {
 
 class DetachAssetRequest extends $pb.GeneratedMessage {
   factory DetachAssetRequest({
-    $core.String? jobId,
-    $core.String? assetId,
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? assetId,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
@@ -1414,8 +1444,8 @@ class DetachAssetRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
-    ..aOS(1, _omitFieldNames ? '' : 'jobId')
-    ..aOS(2, _omitFieldNames ? '' : 'assetId')
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(2, _omitFieldNames ? '' : 'assetId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1440,18 +1470,18 @@ class DetachAssetRequest extends $pb.GeneratedMessage {
   static DetachAssetRequest? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $core.String get jobId => $_getSZ(0);
+  $fixnum.Int64 get jobId => $_getI64(0);
   @$pb.TagNumber(1)
-  set jobId($core.String value) => $_setString(0, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
   @$pb.TagNumber(1)
   $core.bool hasJobId() => $_has(0);
   @$pb.TagNumber(1)
   void clearJobId() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $core.String get assetId => $_getSZ(1);
+  $fixnum.Int64 get assetId => $_getI64(1);
   @$pb.TagNumber(2)
-  set assetId($core.String value) => $_setString(1, value);
+  set assetId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
   $core.bool hasAssetId() => $_has(1);
   @$pb.TagNumber(2)
@@ -1499,6 +1529,237 @@ class DetachAssetResponse extends $pb.GeneratedMessage {
   static DetachAssetResponse? _defaultInstance;
 }
 
+class ListUploadFormatsRequest extends $pb.GeneratedMessage {
+  factory ListUploadFormatsRequest() => create();
+
+  ListUploadFormatsRequest._();
+
+  factory ListUploadFormatsRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListUploadFormatsRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListUploadFormatsRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListUploadFormatsRequest clone() =>
+      ListUploadFormatsRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListUploadFormatsRequest copyWith(
+          void Function(ListUploadFormatsRequest) updates) =>
+      super.copyWith((message) => updates(message as ListUploadFormatsRequest))
+          as ListUploadFormatsRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListUploadFormatsRequest create() => ListUploadFormatsRequest._();
+  @$core.override
+  ListUploadFormatsRequest createEmptyInstance() => create();
+  static $pb.PbList<ListUploadFormatsRequest> createRepeated() =>
+      $pb.PbList<ListUploadFormatsRequest>();
+  @$core.pragma('dart2js:noInline')
+  static ListUploadFormatsRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListUploadFormatsRequest>(create);
+  static ListUploadFormatsRequest? _defaultInstance;
+}
+
+class ListUploadFormatsResponse extends $pb.GeneratedMessage {
+  factory ListUploadFormatsResponse({
+    $core.Iterable<UploadFormat>? formats,
+    $fixnum.Int64? maxBytes,
+  }) {
+    final result = create();
+    if (formats != null) result.formats.addAll(formats);
+    if (maxBytes != null) result.maxBytes = maxBytes;
+    return result;
+  }
+
+  ListUploadFormatsResponse._();
+
+  factory ListUploadFormatsResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListUploadFormatsResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListUploadFormatsResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..pc<UploadFormat>(1, _omitFieldNames ? '' : 'formats', $pb.PbFieldType.PM,
+        subBuilder: UploadFormat.create)
+    ..aInt64(2, _omitFieldNames ? '' : 'maxBytes')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListUploadFormatsResponse clone() =>
+      ListUploadFormatsResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListUploadFormatsResponse copyWith(
+          void Function(ListUploadFormatsResponse) updates) =>
+      super.copyWith((message) => updates(message as ListUploadFormatsResponse))
+          as ListUploadFormatsResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListUploadFormatsResponse create() => ListUploadFormatsResponse._();
+  @$core.override
+  ListUploadFormatsResponse createEmptyInstance() => create();
+  static $pb.PbList<ListUploadFormatsResponse> createRepeated() =>
+      $pb.PbList<ListUploadFormatsResponse>();
+  @$core.pragma('dart2js:noInline')
+  static ListUploadFormatsResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListUploadFormatsResponse>(create);
+  static ListUploadFormatsResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<UploadFormat> get formats => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get maxBytes => $_getI64(1);
+  @$pb.TagNumber(2)
+  set maxBytes($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMaxBytes() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMaxBytes() => $_clearField(2);
+}
+
+/// 받는 자료 한 종류.
+class UploadFormat extends $pb.GeneratedMessage {
+  factory UploadFormat({
+    $core.String? name,
+    $core.String? label,
+    $core.Iterable<$core.String>? extensions,
+    $core.String? rule,
+    AssetKind? kind,
+    $core.bool? timeOriginRequired,
+    $core.Iterable<$core.String>? steps,
+  }) {
+    final result = create();
+    if (name != null) result.name = name;
+    if (label != null) result.label = label;
+    if (extensions != null) result.extensions.addAll(extensions);
+    if (rule != null) result.rule = rule;
+    if (kind != null) result.kind = kind;
+    if (timeOriginRequired != null)
+      result.timeOriginRequired = timeOriginRequired;
+    if (steps != null) result.steps.addAll(steps);
+    return result;
+  }
+
+  UploadFormat._();
+
+  factory UploadFormat.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory UploadFormat.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'UploadFormat',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'name')
+    ..aOS(2, _omitFieldNames ? '' : 'label')
+    ..pPS(3, _omitFieldNames ? '' : 'extensions')
+    ..aOS(4, _omitFieldNames ? '' : 'rule')
+    ..e<AssetKind>(5, _omitFieldNames ? '' : 'kind', $pb.PbFieldType.OE,
+        defaultOrMaker: AssetKind.ASSET_KIND_UNSPECIFIED,
+        valueOf: AssetKind.valueOf,
+        enumValues: AssetKind.values)
+    ..aOB(6, _omitFieldNames ? '' : 'timeOriginRequired')
+    ..pPS(7, _omitFieldNames ? '' : 'steps')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UploadFormat clone() => UploadFormat()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UploadFormat copyWith(void Function(UploadFormat) updates) =>
+      super.copyWith((message) => updates(message as UploadFormat))
+          as UploadFormat;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UploadFormat create() => UploadFormat._();
+  @$core.override
+  UploadFormat createEmptyInstance() => create();
+  static $pb.PbList<UploadFormat> createRepeated() =>
+      $pb.PbList<UploadFormat>();
+  @$core.pragma('dart2js:noInline')
+  static UploadFormat getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UploadFormat>(create);
+  static UploadFormat? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get name => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set name($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasName() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearName() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get label => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set label($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasLabel() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearLabel() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<$core.String> get extensions => $_getList(2);
+
+  @$pb.TagNumber(4)
+  $core.String get rule => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set rule($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasRule() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearRule() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  AssetKind get kind => $_getN(4);
+  @$pb.TagNumber(5)
+  set kind(AssetKind value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasKind() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearKind() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.bool get timeOriginRequired => $_getBF(5);
+  @$pb.TagNumber(6)
+  set timeOriginRequired($core.bool value) => $_setBool(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasTimeOriginRequired() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearTimeOriginRequired() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $pb.PbList<$core.String> get steps => $_getList(6);
+}
+
 class AssetServiceApi {
   final $pb.RpcClient _client;
 
@@ -1511,7 +1772,7 @@ class AssetServiceApi {
       _client.invoke<ImportAssetFromSourceResponse>(ctx, 'AssetService',
           'ImportAssetFromSource', request, ImportAssetFromSourceResponse());
 
-  /// Asset 목록(페이지·kind 필터). 작업별 목록은 ListJobAssets.
+  /// Asset 목록(페이지·kind 필터·부모 필터). 작업별 목록은 ListJobAssets.
   $async.Future<ListAssetsResponse> listAssets(
           $pb.ClientContext? ctx, ListAssetsRequest request) =>
       _client.invoke<ListAssetsResponse>(
@@ -1521,7 +1782,7 @@ class AssetServiceApi {
       _client.invoke<GetAssetResponse>(
           ctx, 'AssetService', 'GetAsset', request, GetAssetResponse());
 
-  /// 첨부(job_asset)·파생 부모(asset_input)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
+  /// 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
   $async.Future<DeleteAssetResponse> deleteAsset(
           $pb.ClientContext? ctx, DeleteAssetRequest request) =>
       _client.invoke<DeleteAssetResponse>(
@@ -1532,6 +1793,13 @@ class AssetServiceApi {
           $pb.ClientContext? ctx, ListDuplicateAssetsRequest request) =>
       _client.invoke<ListDuplicateAssetsResponse>(ctx, 'AssetService',
           'ListDuplicateAssets', request, ListDuplicateAssetsResponse());
+
+  /// 화면 업로드(POST /assets, multipart)가 받는 자료 형식. 서버는 파일 내용으로 종류를 정한다 — 확장자는 파일 선택 창에
+  /// 쓸 안내 값이다. 표에 없는 파일도 올릴 수 있고(종류 미지정으로 등록만), 실행 파일은 거절한다.
+  $async.Future<ListUploadFormatsResponse> listUploadFormats(
+          $pb.ClientContext? ctx, ListUploadFormatsRequest request) =>
+      _client.invoke<ListUploadFormatsResponse>(ctx, 'AssetService',
+          'ListUploadFormats', request, ListUploadFormatsResponse());
 
   /// 첨부(job_asset) — "이 작업의 자료인가". Clip으로 놓으면 서버가 자동 첨부하므로, 이 RPC는
   /// 타임라인에 놓지 않고 작업 자료로만 둘 때(PDF 등)와 패스를 고칠 때 쓴다.

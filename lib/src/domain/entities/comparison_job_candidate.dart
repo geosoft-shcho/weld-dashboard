@@ -1,6 +1,7 @@
 class ComparisonJobCandidate {
   const ComparisonJobCandidate({
     required this.jobId,
+    this.jobKey = '',
     required this.workerName,
     this.isMaster,
     required this.startedAt,
@@ -8,6 +9,7 @@ class ComparisonJobCandidate {
   });
 
   final String jobId;
+  final String jobKey;
   final String workerName;
   final bool? isMaster;
   final DateTime? startedAt;

@@ -19,7 +19,7 @@ abstract final class AssetService {
     mediatagassetv1asset.ImportAssetFromSourceResponse.new,
   );
 
-  /// Asset 목록(페이지·kind 필터). 작업별 목록은 ListJobAssets.
+  /// Asset 목록(페이지·kind 필터·부모 필터). 작업별 목록은 ListJobAssets.
   static const listAssets = connect.Spec(
     '/$name/ListAssets',
     connect.StreamType.unary,
@@ -34,7 +34,7 @@ abstract final class AssetService {
     mediatagassetv1asset.GetAssetResponse.new,
   );
 
-  /// 첨부(job_asset)·파생 부모(asset_input)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
+  /// 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
   static const deleteAsset = connect.Spec(
     '/$name/DeleteAsset',
     connect.StreamType.unary,
@@ -43,12 +43,21 @@ abstract final class AssetService {
   );
 
   /// 내용(sha256)이 같은 Asset 묶음 목록. 중복은 등록을 막지 않고 여기서 확인해 사람이 정리한다.
-  /// 음성 추출 같은 파생 만들기는 도구다 — ToolService.StartRun(도구 "audio-extract", 대상 = 영상 Asset).
   static const listDuplicateAssets = connect.Spec(
     '/$name/ListDuplicateAssets',
     connect.StreamType.unary,
     mediatagassetv1asset.ListDuplicateAssetsRequest.new,
     mediatagassetv1asset.ListDuplicateAssetsResponse.new,
+  );
+
+  /// 화면 업로드(POST /assets, multipart)가 받는 자료 형식. 서버는 파일 내용으로 종류를 정한다 — 확장자는 파일 선택 창에
+  /// 쓸 안내 값이다. 표에 없는 파일도 올릴 수 있고(종류 미지정으로 등록만), 실행 파일은 거절한다.
+  /// 음성 추출 같은 파생 만들기는 도구다 — ToolService.StartRun(도구 "audio-extract", 대상 = 영상 Asset).
+  static const listUploadFormats = connect.Spec(
+    '/$name/ListUploadFormats',
+    connect.StreamType.unary,
+    mediatagassetv1asset.ListUploadFormatsRequest.new,
+    mediatagassetv1asset.ListUploadFormatsResponse.new,
   );
 
   /// 첨부(job_asset) — "이 작업의 자료인가". Clip으로 놓으면 서버가 자동 첨부하므로, 이 RPC는

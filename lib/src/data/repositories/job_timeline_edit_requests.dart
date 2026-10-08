@@ -6,6 +6,7 @@ import '../datasources/generated/google/protobuf/field_mask.pb.dart';
 import '../datasources/generated/mediatag/compose/v1/compose.pb.dart'
     as compose_pb;
 import '../datasources/generated/mediatag/compose/v1/compose.pbenum.dart';
+import 'proto_id.dart';
 
 compose_pb.CreateTrackRequest buildCreateTrackRequest({
   required String jobId,
@@ -13,7 +14,7 @@ compose_pb.CreateTrackRequest buildCreateTrackRequest({
   int? order,
   bool? isVisible,
 }) {
-  final track = compose_pb.Track(jobId: jobId, name: name);
+  final track = compose_pb.Track(jobId: protoId(jobId), name: name);
   if (order != null) {
     track.order = order;
   }
@@ -29,7 +30,7 @@ compose_pb.UpdateTrackRequest buildUpdateTrackRequest({
   int? order,
   bool? isVisible,
 }) {
-  final track = compose_pb.Track(trackId: trackId);
+  final track = compose_pb.Track(trackId: protoId(trackId));
   final paths = <String>[];
   if (name != null) {
     track.name = name;
@@ -52,7 +53,7 @@ compose_pb.UpdateTrackRequest buildUpdateTrackRequest({
 compose_pb.DeleteTrackRequest buildDeleteTrackRequest({
   required String trackId,
 }) {
-  return compose_pb.DeleteTrackRequest(trackId: trackId);
+  return compose_pb.DeleteTrackRequest(trackId: protoId(trackId));
 }
 
 compose_pb.CreateClipRequest buildCreateClipRequest({
@@ -67,24 +68,27 @@ compose_pb.CreateClipRequest buildCreateClipRequest({
   List<String> inputClipIds = const [],
 }) {
   final clip = compose_pb.Clip(
-    trackId: trackId,
+    trackId: protoId(trackId),
     timelineStartNs: Int64.parseInt(startNs),
     timelineEndNs: Int64.parseInt(endNs),
   );
   if (!omitsKind) {
     clip.kind = protoClipKindFrom(kind);
   }
-  if (assetId.isNotEmpty) {
-    clip.source = compose_pb.ClipSource(assetId: assetId);
+  final sourceAssetId = protoIdOrNull(assetId);
+  if (sourceAssetId != null) {
+    clip.source = compose_pb.ClipSource(assetId: sourceAssetId);
   }
-  if (labelValueId.isNotEmpty) {
-    clip.labelValueId = labelValueId;
+  final labelId = protoIdOrNull(labelValueId);
+  if (labelId != null) {
+    clip.labelValueId = labelId;
   }
   if (description.isNotEmpty) {
     clip.description = description;
   }
-  if (inputClipIds.isNotEmpty) {
-    clip.provenance = compose_pb.ClipProvenance(inputClipIds: inputClipIds);
+  final inputs = protoIds(inputClipIds);
+  if (inputs.isNotEmpty) {
+    clip.provenance = compose_pb.ClipProvenance(inputClipIds: inputs);
   }
   return compose_pb.CreateClipRequest(clip: clip);
 }
@@ -99,10 +103,10 @@ compose_pb.UpdateClipRequest buildUpdateClipRequest({
   String? description,
   bool? isReviewed,
 }) {
-  final clip = compose_pb.Clip(clipId: clipId);
+  final clip = compose_pb.Clip(clipId: protoId(clipId));
   final paths = <String>[];
   if (trackId != null) {
-    clip.trackId = trackId;
+    clip.trackId = protoId(trackId);
     paths.add('track_id');
   }
   if (startNs != null) {
@@ -114,11 +118,11 @@ compose_pb.UpdateClipRequest buildUpdateClipRequest({
     paths.add('timeline_end_ns');
   }
   if (assetId != null) {
-    clip.source = compose_pb.ClipSource(assetId: assetId);
+    clip.source = compose_pb.ClipSource(assetId: protoId(assetId));
     paths.add('source');
   }
   if (labelValueId != null) {
-    clip.labelValueId = labelValueId;
+    clip.labelValueId = protoId(labelValueId);
     paths.add('label_value_id');
   }
   if (description != null) {
@@ -136,7 +140,7 @@ compose_pb.UpdateClipRequest buildUpdateClipRequest({
 }
 
 compose_pb.DeleteClipRequest buildDeleteClipRequest({required String clipId}) {
-  return compose_pb.DeleteClipRequest(clipId: clipId);
+  return compose_pb.DeleteClipRequest(clipId: protoId(clipId));
 }
 
 compose_pb.ChangeTimelineStatusRequest buildChangeTimelineStatusRequest({
@@ -145,7 +149,7 @@ compose_pb.ChangeTimelineStatusRequest buildChangeTimelineStatusRequest({
   required JobTimelineStatus toStatus,
 }) {
   return compose_pb.ChangeTimelineStatusRequest(
-    jobId: jobId,
+    jobId: protoId(jobId),
     fromStatus: protoTimelineStatusFrom(fromStatus),
     toStatus: protoTimelineStatusFrom(toStatus),
   );

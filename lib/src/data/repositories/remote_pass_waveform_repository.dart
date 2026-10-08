@@ -12,6 +12,7 @@ import '../../domain/entities/worker.dart';
 import '../../domain/repositories/pass_waveform_repository.dart';
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/media_tag_data_source.dart';
+import 'proto_id.dart';
 
 class RemotePassWaveformRepository implements PassWaveformRepository {
   RemotePassWaveformRepository(this._mediaTag);
@@ -38,9 +39,9 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
       );
     }
     final response = await _mediaTag.workService.getJob(
-      work_pb.GetJobRequest(jobId: jobId),
+      work_pb.GetJobRequest(jobId: protoId(jobId)),
     );
-    if (!response.hasJob() || response.job.jobId.isEmpty) {
+    if (!response.hasJob() || idText(response.job.jobId).isEmpty) {
       return const PassWaveformCatalog(
         passes: [],
         waveformRows: [],
@@ -54,12 +55,12 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     final passes = [
       for (final item in response.passes)
         WeldPass(
-          passId: item.passId,
+          passId: idText(item.passId),
           commonKey: job.commonKey,
           passNo: item.passNo,
           passName: '',
           masterProfileId: '',
-          controlWorkerId: job.workerId,
+          controlWorkerId: idText(job.workerId),
           startedAt: item.hasStartedAt() ? item.startedAt.toDateTime() : null,
         ),
     ]..sort((left, right) => left.passNo.compareTo(right.passNo));
@@ -69,7 +70,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     final waveforms = await _waveformRows(
       passId: selectedPassId,
       commonKey: job.commonKey,
-      workerId: job.workerId,
+      workerId: idText(job.workerId),
       normalize: normalize,
     );
     final worker = response.hasWorker() ? response.worker : null;
@@ -81,9 +82,14 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
       links: const [],
       qualityGroups: const [],
       historyItems: [_itemFrom(response)],
-      workers: worker == null || worker.workerId.isEmpty
+      workers: worker == null || idText(worker.workerId).isEmpty
           ? const []
-          : [Worker(workerId: worker.workerId, workerName: worker.workerName)],
+          : [
+              Worker(
+                workerId: idText(worker.workerId),
+                workerName: worker.workerName,
+              ),
+            ],
       context: _contextFrom(response),
     );
   }
@@ -130,13 +136,14 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     );
     final jobs = <ComparisonJobCandidate>[];
     for (final summary in response.jobs) {
-      final candidateId = summary.job.jobId;
+      final candidateId = idText(summary.job.jobId);
       if (candidateId.isEmpty || candidateId == excludeJobId) {
         continue;
       }
       jobs.add(
         ComparisonJobCandidate(
           jobId: candidateId,
+          jobKey: summary.job.jobKey,
           workerName: summary.workerName,
           isMaster: summary.hasIsMaster() ? summary.isMaster : null,
           startedAt: summary.job.hasStartedAt()
@@ -156,21 +163,21 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     }
     try {
       final response = await _mediaTag.workService.getJob(
-        work_pb.GetJobRequest(jobId: jobId),
+        work_pb.GetJobRequest(jobId: protoId(jobId)),
       );
-      if (!response.hasJob() || response.job.jobId.isEmpty) {
+      if (!response.hasJob() || idText(response.job.jobId).isEmpty) {
         throw const ComparisonJobNotFoundException();
       }
       final job = response.job;
       final passes = [
         for (final item in response.passes)
           WeldPass(
-            passId: item.passId,
+            passId: idText(item.passId),
             commonKey: job.commonKey,
             passNo: item.passNo,
             passName: '',
             masterProfileId: '',
-            controlWorkerId: job.workerId,
+            controlWorkerId: idText(job.workerId),
             startedAt: item.hasStartedAt() ? item.startedAt.toDateTime() : null,
           ),
       ]..sort((left, right) => left.passNo.compareTo(right.passNo));
@@ -242,13 +249,17 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     required String comparisonPassId,
     required bool useDtw,
   }) {
-    return work_pb.GetPassWaveformRequest(
-      passId: passId,
-      comparisonPassId: comparisonPassId,
+    final request = work_pb.GetPassWaveformRequest(
+      passId: protoId(passId),
       normalize: useDtw
           ? work_pb.WaveformNormalize.WAVEFORM_NORMALIZE_DTW
           : work_pb.WaveformNormalize.WAVEFORM_NORMALIZE_UNSPECIFIED,
     );
+    final comparisonId = protoIdOrNull(comparisonPassId);
+    if (comparisonId != null) {
+      request.comparisonPassId = comparisonId;
+    }
+    return request;
   }
 
   List<WaveformRow> _rowsFromResponse(
@@ -332,9 +343,11 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
         }
         rows.add(
           WaveformRow(
-            seriesId: series.assetId.isEmpty
-                ? (waveform.passId.isEmpty ? passId : waveform.passId)
-                : series.assetId,
+            seriesId: idText(series.assetId).isEmpty
+                ? (idText(waveform.passId).isEmpty
+                      ? passId
+                      : idText(waveform.passId))
+                : idText(series.assetId),
             passId: passId,
             commonKey: commonKey,
             seriesRole: role,
@@ -386,20 +399,21 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
         if (item.equipmentName.isNotEmpty) item.equipmentName,
     ];
     return WorkHistoryItem(
-      jobId: job.jobId,
+      jobId: idText(job.jobId),
+      jobKey: job.jobKey,
       commonKey: job.commonKey,
       projectNo: job.projectNo,
       unitNo: job.unitNo,
       itemCode: job.itemCode,
       itemName: job.itemName,
       jointNo: job.jointNo,
-      workerId: job.workerId,
+      workerId: idText(job.workerId),
       workerName: response.hasWorker() ? response.worker.workerName : '',
       isMaster: response.hasWorker() && response.worker.hasIsMaster()
           ? response.worker.isMaster
           : null,
       equipmentId: response.equipment.length == 1
-          ? response.equipment.first.equipmentId
+          ? idText(response.equipment.first.equipmentId)
           : '',
       equipmentName: equipmentNames.join(', '),
       workedAt: job.hasStartedAt()

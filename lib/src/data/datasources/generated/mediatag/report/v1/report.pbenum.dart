@@ -30,6 +30,12 @@ class SectionKind extends $pb.ProtobufEnum {
   static const SectionKind SECTION_KIND_APPROVALS =
       SectionKind._(6, _omitEnumNames ? '' : 'SECTION_KIND_APPROVALS');
 
+  /// 아래 둘은 한 장이 품목 여럿(LEG DIAGONAL A.B.E)을 묶는 문서다 — 그 품목들의 세트가 같은 문서를 함께 가리킨다.
+  static const SectionKind SECTION_KIND_SURFACE_TREATMENT =
+      SectionKind._(7, _omitEnumNames ? '' : 'SECTION_KIND_SURFACE_TREATMENT');
+  static const SectionKind SECTION_KIND_PAINT =
+      SectionKind._(8, _omitEnumNames ? '' : 'SECTION_KIND_PAINT');
+
   static const $core.List<SectionKind> values = <SectionKind>[
     SECTION_KIND_UNSPECIFIED,
     SECTION_KIND_FITUP,
@@ -38,10 +44,12 @@ class SectionKind extends $pb.ProtobufEnum {
     SECTION_KIND_PRESSURE,
     SECTION_KIND_NDT,
     SECTION_KIND_APPROVALS,
+    SECTION_KIND_SURFACE_TREATMENT,
+    SECTION_KIND_PAINT,
   ];
 
   static final $core.List<SectionKind?> _byValue =
-      $pb.ProtobufEnum.$_initByValueList(values, 6);
+      $pb.ProtobufEnum.$_initByValueList(values, 8);
   static SectionKind? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 

@@ -336,7 +336,8 @@ String _comparisonKey(QualityIssueViewModel viewModel) {
 String _comparisonJobLabel(ComparisonJobCandidate job) {
   final worker = job.workerName.isEmpty ? '작업자 없음' : job.workerName;
   final role = DashboardFormatters.masterRole(job.isMaster);
-  return '${job.jobId} · $worker · $role · ${DashboardFormatters.dateTime(job.startedAt)} · ${job.passCount}패스';
+  final title = job.jobKey.isEmpty ? '작업' : job.jobKey;
+  return '$title · $worker · $role · ${DashboardFormatters.dateTime(job.startedAt)} · ${job.passCount}패스';
 }
 
 class _QualityLegendSection extends StatelessWidget {

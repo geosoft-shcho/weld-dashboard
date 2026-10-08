@@ -6,6 +6,7 @@ class CollectionBoardRow {
     required this.equipmentId,
     required this.equipmentName,
     required this.lineName,
+    this.equipmentCode = '',
     required this.connectionStatus,
     required this.receivedCount,
     required this.windowLabel,
@@ -20,6 +21,7 @@ class CollectionBoardRow {
   final String equipmentId;
   final String equipmentName;
   final String lineName;
+  final String equipmentCode;
   final ConnectionStatus connectionStatus;
   final int receivedCount;
   final String windowLabel;

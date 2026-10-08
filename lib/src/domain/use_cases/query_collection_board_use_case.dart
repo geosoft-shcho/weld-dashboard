@@ -405,6 +405,7 @@ class QueryCollectionBoardUseCase {
     return CollectionBoardRow(
       equipmentId: equipment.equipmentId,
       equipmentName: equipment.equipmentName,
+      equipmentCode: equipment.equipmentCode,
       lineName: equipment.lineName,
       connectionStatus: status.connectionStatus,
       receivedCount: status.receivedCount,

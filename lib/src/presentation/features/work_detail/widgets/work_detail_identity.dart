@@ -21,6 +21,7 @@ class WorkDetailIdentity extends StatelessWidget {
         spacing: 24,
         runSpacing: 12,
         children: [
+          if (job.jobKey.isNotEmpty) _pair('작업', job.jobKey),
           _pair('공통키', job.commonKey),
           _pair('공사', job.projectNo),
           _pair('호기', DashboardFormatters.unitNo(job.unitNo)),

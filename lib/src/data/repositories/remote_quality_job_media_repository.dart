@@ -2,6 +2,7 @@ import '../../domain/entities/quality_job_media.dart';
 import '../../domain/repositories/quality_job_media_repository.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
 import '../datasources/remote/media_tag_data_source.dart';
+import 'proto_id.dart';
 
 class RemoteQualityJobMediaRepository implements QualityJobMediaRepository {
   RemoteQualityJobMediaRepository(this._mediaTag);
@@ -17,13 +18,17 @@ class RemoteQualityJobMediaRepository implements QualityJobMediaRepository {
       return const [];
     }
     final response = await _mediaTag.assetService.listJobAssets(
-      asset_pb.ListJobAssetsRequest(jobId: jobId, passId: passId),
+      asset_pb.ListJobAssetsRequest(
+        jobId: protoId(jobId),
+        passId: protoId(passId),
+      ),
     );
     final pdfs = <QualityJobMedia>[];
     final videos = <QualityJobMedia>[];
     for (final item in response.assets) {
       final asset = item.asset;
-      if (asset.assetId.isEmpty) {
+      final assetId = idText(asset.assetId);
+      if (assetId.isEmpty) {
         continue;
       }
       final isVideo = asset.kind == asset_pb.AssetKind.ASSET_KIND_VIDEO;
@@ -31,10 +36,10 @@ class RemoteQualityJobMediaRepository implements QualityJobMediaRepository {
         continue;
       }
       final media = QualityJobMedia(
-        assetId: asset.assetId,
+        assetId: assetId,
         fileName: asset.fileName,
         url: _mediaTag.resolveContentUrl(asset.contentUrl),
-        passId: item.passId,
+        passId: idText(item.passId),
         isVideo: isVideo,
         recordedAt: asset.hasRecordedAt()
             ? asset.recordedAt.toDateTime()
