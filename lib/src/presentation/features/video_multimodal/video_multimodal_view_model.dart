@@ -72,6 +72,7 @@ class TimelineSampleClip {
     required this.endSeconds,
     required this.showsAiBadge,
     required this.isDashed,
+    this.hasLabel = false,
   });
 
   final String clipId;
@@ -82,6 +83,7 @@ class TimelineSampleClip {
   double endSeconds;
   final bool showsAiBadge;
   final bool isDashed;
+  final bool hasLabel;
 }
 
 class AskTurn {
@@ -428,7 +430,22 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return '트랙';
   }
 
+  bool get canAttachLabelToSelection =>
+      isSelectedServerClip && _selectedLabelValueId.isNotEmpty;
+
+  bool get canDetachLabelFromSelection {
+    final clip = _timelineClip(_selectedClipId);
+    return clip != null && clip.labelValueId.isNotEmpty;
+  }
+
   String labelForClip(TimelineClip clip) {
+    if (clip.labelValueId.isNotEmpty) {
+      final name = _labelName(clip.labelValueId);
+      if (name.isNotEmpty) {
+        return name;
+      }
+      return clip.labelValueId;
+    }
     final note = clip.description.trim();
     if (note.isNotEmpty) {
       return note;
@@ -438,6 +455,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return fileName;
     }
     return _kindLabel(clip.kind);
+  }
+
+  String clipCaption(TimelineClip clip) {
+    final text = labelForClip(clip);
+    if (clip.labelValueId.isEmpty) {
+      return text;
+    }
+    return '#$text';
   }
 
   String _kindLabel(TimelineClipKind kind) {
@@ -589,11 +614,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       clipId: timelineClip.clipId,
       laneKey: timelineClip.trackId,
       laneLabel: _trackName(timelineClip.trackId),
-      text: labelForClip(timelineClip),
+      text: clipCaption(timelineClip),
       startSeconds: secondsFromNanoseconds(timelineClip.startNanoseconds),
       endSeconds: secondsFromNanoseconds(timelineClip.endNanoseconds),
       showsAiBadge: timelineClip.showsToolMark,
       isDashed: false,
+      hasLabel: timelineClip.labelValueId.isNotEmpty,
     );
   }
 
@@ -652,6 +678,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         _noticeText = error.toString();
       }
     }
+    await loadLabelSections();
     try {
       await _restoreActiveToolRun();
     } on ToolRunException catch (error) {
@@ -767,6 +794,34 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _selectedLabelValueId = valueId;
     _timelineHint = '';
     notifyListeners();
+  }
+
+  Future<void> didAttachLabelToSelectedClip() {
+    if (!canAttachLabelToSelection) {
+      return Future.value();
+    }
+    return updateTimelineClip(
+      clipId: _selectedClipId,
+      labelValueId: _selectedLabelValueId,
+    );
+  }
+
+  Future<void> didDetachLabelFromSelectedClip() {
+    if (!canDetachLabelFromSelection) {
+      return Future.value();
+    }
+    return updateTimelineClip(clipId: _selectedClipId, labelValueId: '0');
+  }
+
+  String _labelName(String valueId) {
+    for (final section in _labelSections) {
+      for (final chip in section.chips) {
+        if (chip.valueId == valueId) {
+          return chip.name;
+        }
+      }
+    }
+    return '';
   }
 
   Future<bool> didAddLabelValue(String vocabKey, String name) async {

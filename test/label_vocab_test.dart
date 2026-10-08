@@ -2,7 +2,9 @@ import 'package:fixnum/fixnum.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/data/datasources/generated/mediatag/compose/v1/compose.pb.dart';
+import 'package:weld_dashboard/src/data/repositories/job_timeline_edit_requests.dart';
 import 'package:weld_dashboard/src/data/repositories/label_requests.dart';
+import 'package:weld_dashboard/src/data/repositories/remote_job_timeline_repository.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
 import 'package:weld_dashboard/src/domain/entities/label_vocab.dart';
 import 'package:weld_dashboard/src/domain/entities/tool_run.dart';
@@ -25,6 +27,8 @@ import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_side_panel.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_studio_palette.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/timeline_board_helpers.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -175,6 +179,138 @@ void main() {
     expect(find.text('#speaker_1'), findsOneWidget);
     expect(find.text('라벨 추가'), findsOneWidget);
     expect(find.text('자막 막대'), findsNothing);
+    expect(
+      tester
+          .widget<TextButton>(find.widgetWithText(TextButton, '클립에 붙이기'))
+          .onPressed,
+      isNull,
+    );
+    expect(find.text('라벨 떼기'), findsNothing);
+  });
+
+  test('timeline keeps a clip label id and drops zero', () {
+    final timeline = jobTimelineFromResponse(
+      GetTimelineResponse(
+        timeline: Timeline(jobId: Int64(128), name: '작업'),
+        tracks: [Track(trackId: Int64(1), name: '영상', order: 1)],
+        clips: [
+          Clip(
+            clipId: Int64(10),
+            trackId: Int64(1),
+            timelineStartNs: Int64.ZERO,
+            timelineEndNs: Int64(10000000000),
+            description: '메모',
+          ),
+          Clip(
+            clipId: Int64(11),
+            trackId: Int64(1),
+            timelineStartNs: Int64(10000000000),
+            timelineEndNs: Int64(20000000000),
+            labelValueId: Int64(4),
+            description: '메모',
+          ),
+        ],
+      ),
+      resolveContentUrl: (url) => url,
+    );
+
+    expect(timeline.clips.first.labelValueId, isEmpty);
+    expect(timeline.clips.first.description, '메모');
+    expect(timeline.clips.last.labelValueId, '4');
+    expect(timeline.clips.last.description, '메모');
+  });
+
+  test('attach writes only the label id and rename leaves the clip', () async {
+    final labeled = buildUpdateClipRequest(clipId: '10', labelValueId: '4');
+    expect(labeled.updateMask.paths, ['label_value_id']);
+    expect(labeled.clip.labelValueId.toString(), '4');
+    expect(labeled.clip.hasSource(), isFalse);
+    expect(labeled.clip.hasTimelineStartNs(), isFalse);
+    expect(labeled.clip.hasDescription(), isFalse);
+
+    final cleared = buildUpdateClipRequest(clipId: '10', labelValueId: '0');
+    expect(cleared.updateMask.paths, ['label_value_id']);
+    expect(cleared.clip.labelValueId.toInt(), 0);
+
+    final labels = _ScriptedLabels()
+      ..sections = const [
+        LabelSection(
+          vocabKey: 'speaker',
+          chips: [
+            LabelChip(valueId: '4', name: 'speaker_1'),
+            LabelChip(valueId: '8', name: 'torch'),
+          ],
+        ),
+      ];
+    final timeline = _CountingTimelineRepository()..hasClip = true;
+    final viewModel = _viewModel(labels, timeline);
+    addTearDown(viewModel.dispose);
+
+    await viewModel.loadAttachments();
+    expect(labels.listCount, 1);
+    expect(viewModel.labelForClip(viewModel.timelineClips.single), '메모');
+    expect(viewModel.clipCaption(viewModel.timelineClips.single), '메모');
+    expect(
+      buildTimelineBoardRows(viewModel).single.clips.single.hasLabel,
+      isFalse,
+    );
+
+    viewModel.didSelectLabelValue('4');
+    expect(viewModel.canAttachLabelToSelection, isFalse);
+    expect(timeline.updateClipCount, 0);
+    expect(timeline.createClipCount, 0);
+
+    viewModel.didSelectSampleClip('10');
+    expect(viewModel.canAttachLabelToSelection, isTrue);
+    expect(viewModel.canDetachLabelFromSelection, isFalse);
+
+    await viewModel.didAttachLabelToSelectedClip();
+    expect(timeline.updateClipCount, 1);
+    expect(timeline.updatedLabelValueId, '4');
+    expect(timeline.updatedTrackId, isNull);
+    expect(timeline.updatedStartNs, isNull);
+    expect(timeline.updatedEndNs, isNull);
+    expect(timeline.updatedAssetId, isNull);
+    expect(timeline.updatedDescription, isNull);
+    expect(timeline.updatedReviewed, isNull);
+    expect(timeline.createClipCount, 0);
+    expect(viewModel.timelineClips.single.description, '메모');
+    expect(viewModel.timelineClips.single.labelValueId, '4');
+    expect(viewModel.labelForClip(viewModel.timelineClips.single), 'speaker_1');
+    expect(viewModel.clipCaption(viewModel.timelineClips.single), '#speaker_1');
+    final labeledRow = buildTimelineBoardRows(viewModel).single.clips.single;
+    expect(labeledRow.hasLabel, isTrue);
+    expect(labeledRow.text, '#speaker_1');
+    expect(labeledRow.background, MultimodalStudioPalette.PLUM_100);
+
+    labels.renamed = const LabelChip(valueId: '4', name: 'host');
+    await viewModel.didRenameLabelValue(
+      vocabKey: 'speaker',
+      valueId: '4',
+      name: 'host',
+    );
+    expect(timeline.updateClipCount, 1);
+    expect(viewModel.labelForClip(viewModel.timelineClips.single), 'host');
+    expect(viewModel.labelSections.single.chips.first.valueId, '4');
+    expect(viewModel.labelSections.single.chips.last.name, 'torch');
+
+    await viewModel.didDeprecateLabelValue(vocabKey: 'speaker', valueId: '4');
+    expect(timeline.updateClipCount, 1);
+    expect(viewModel.labelForClip(viewModel.timelineClips.single), '4');
+    expect(viewModel.clipCaption(viewModel.timelineClips.single), '#4');
+
+    await viewModel.didDetachLabelFromSelectedClip();
+    expect(timeline.updateClipCount, 2);
+    expect(timeline.updatedLabelValueId, '0');
+    expect(viewModel.timelineClips.single.labelValueId, isEmpty);
+    expect(viewModel.timelineClips.single.description, '메모');
+    expect(viewModel.labelForClip(viewModel.timelineClips.single), '메모');
+    expect(viewModel.clipCaption(viewModel.timelineClips.single), '메모');
+    expect(
+      buildTimelineBoardRows(viewModel).single.clips.single.hasLabel,
+      isFalse,
+    );
+    expect(viewModel.canDetachLabelFromSelection, isFalse);
   });
 }
 
@@ -286,10 +422,48 @@ class _EmptyWorkDetailRepository implements WorkDetailRepository {
 
 class _CountingTimelineRepository implements JobTimelineRepository {
   int createClipCount = 0;
+  int updateClipCount = 0;
+  bool hasClip = false;
+  String clipLabelValueId = '';
+  String? updatedLabelValueId;
+  String? updatedTrackId;
+  String? updatedStartNs;
+  String? updatedEndNs;
+  String? updatedAssetId;
+  String? updatedDescription;
+  bool? updatedReviewed;
 
   @override
   Future<JobTimeline> getTimeline({required String jobId}) async {
-    return JobTimeline.empty;
+    if (!hasClip) {
+      return JobTimeline.empty;
+    }
+    return JobTimeline(
+      jobId: jobId,
+      name: '작업',
+      tracks: [
+        TimelineTrack(
+          trackId: '1',
+          name: '영상',
+          order: 1,
+          clips: [
+            TimelineClip(
+              clipId: '10',
+              trackId: '1',
+              kind: TimelineClipKind.video,
+              startNs: '0',
+              endNs: '10000000000',
+              assetId: '',
+              fileName: 'clip.mp4',
+              playbackUrl: '',
+              description: '메모',
+              showsToolBadge: false,
+              labelValueId: clipLabelValueId,
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   @override
@@ -336,7 +510,19 @@ class _CountingTimelineRepository implements JobTimelineRepository {
     String? labelValueId,
     String? description,
     bool? isReviewed,
-  }) async {}
+  }) async {
+    updateClipCount += 1;
+    updatedLabelValueId = labelValueId;
+    updatedTrackId = trackId;
+    updatedStartNs = startNs;
+    updatedEndNs = endNs;
+    updatedAssetId = assetId;
+    updatedDescription = description;
+    updatedReviewed = isReviewed;
+    if (labelValueId != null) {
+      clipLabelValueId = labelValueId == '0' ? '' : labelValueId;
+    }
+  }
 
   @override
   Future<void> deleteClip({required String clipId}) async {}

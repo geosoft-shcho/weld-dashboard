@@ -23,7 +23,10 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
     }
     try {
       final response = await _mediaTag.composeService.getTimeline(
-        compose_pb.GetTimelineRequest(jobId: protoId(jobId), includeAssets: true),
+        compose_pb.GetTimelineRequest(
+          jobId: protoId(jobId),
+          includeAssets: true,
+        ),
       );
       return jobTimelineFromResponse(
         response,
@@ -278,6 +281,7 @@ TimelineClip? _clipFrom(
     fileName: asset == null ? '' : asset.fileName,
     playbackUrl: contentUrl.isEmpty ? '' : resolveContentUrl(contentUrl),
     description: clip.description,
+    labelValueId: idText(clip.labelValueId),
     showsToolBadge:
         provenance != null &&
         (idText(provenance.runId).isNotEmpty ||

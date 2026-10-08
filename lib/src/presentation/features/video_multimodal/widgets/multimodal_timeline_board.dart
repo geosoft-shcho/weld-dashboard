@@ -930,6 +930,9 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                     color: clip.foreground,
                     fontSize: 11,
                     height: 1.6,
+                    fontWeight: clip.hasLabel
+                        ? FontWeight.w700
+                        : FontWeight.w400,
                   ),
                 ),
               ),

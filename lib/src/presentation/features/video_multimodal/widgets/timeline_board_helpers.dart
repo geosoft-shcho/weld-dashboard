@@ -32,6 +32,7 @@ class TimelineBoardClip {
     required this.foreground,
     required this.border,
     this.showsPoseDots = false,
+    this.hasLabel = false,
   });
 
   final String clipId;
@@ -43,6 +44,7 @@ class TimelineBoardClip {
   final Color foreground;
   final Color border;
   final bool showsPoseDots;
+  final bool hasLabel;
 }
 
 /// 클립 또는 막대 식별자
@@ -74,13 +76,20 @@ List<TimelineBoardRow> buildTimelineBoardRows(
             TimelineBoardClip(
               clipId: clip.clipId,
               attachmentId: '',
-              text: viewModel.labelForClip(clip),
+              text: viewModel.clipCaption(clip),
               startSeconds: secondsFromNanoseconds(clip.startNanoseconds),
               endSeconds: secondsFromNanoseconds(clip.endNanoseconds),
-              background: timelineKindBackground(clip.kind),
-              foreground: timelineKindForeground(clip.kind),
-              border: Colors.transparent,
+              background: clip.labelValueId.isEmpty
+                  ? timelineKindBackground(clip.kind)
+                  : MultimodalStudioPalette.PLUM_100,
+              foreground: clip.labelValueId.isEmpty
+                  ? timelineKindForeground(clip.kind)
+                  : MultimodalStudioPalette.PLUM_400,
+              border: clip.labelValueId.isEmpty
+                  ? Colors.transparent
+                  : MultimodalStudioPalette.PLUM_500,
               showsPoseDots: clip.kind == TimelineClipKind.pose,
+              hasLabel: clip.labelValueId.isNotEmpty,
             ),
         ],
       ),

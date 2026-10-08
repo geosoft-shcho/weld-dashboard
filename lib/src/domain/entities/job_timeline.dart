@@ -27,6 +27,7 @@ class TimelineClip {
     required this.playbackUrl,
     required this.description,
     required this.showsToolBadge,
+    this.labelValueId = '',
   });
 
   final String clipId;
@@ -39,6 +40,7 @@ class TimelineClip {
   final String playbackUrl;
   final String description;
   final bool showsToolBadge;
+  final String labelValueId;
 
   String get startNanoseconds => startNs;
   String get endNanoseconds => endNs;

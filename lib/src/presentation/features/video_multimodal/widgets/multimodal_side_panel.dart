@@ -196,7 +196,7 @@ class _AccentButton extends StatelessWidget {
   const _AccentButton({required this.label, required this.onPressed});
 
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
 
   @override
   Widget build(BuildContext context) {
@@ -584,7 +584,10 @@ class _PropertiesBody extends StatelessWidget {
                     _DataCell('값', isHeader: true, flex: 3),
                   ], isHeader: true),
                   _DataRow([
-                    const _DataCell('이름', flex: 2),
+                    _DataCell(
+                      clip != null && clip.hasLabel ? '라벨' : '이름',
+                      flex: 2,
+                    ),
                     _DataCell(clip?.text ?? bar!.fileName, flex: 3),
                   ]),
                   _DataRow([
@@ -882,7 +885,32 @@ class _LabelsBodyState extends State<_LabelsBody> {
           ],
         ],
       ),
-      foot: const _FootNote('고른 라벨은 이 패널에서 표시만 합니다.'),
+      foot: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(8, 8, 8, 0),
+            child: Wrap(
+              spacing: 4,
+              runSpacing: 4,
+              children: [
+                _AccentButton(
+                  label: '클립에 붙이기',
+                  onPressed: widget.viewModel.canAttachLabelToSelection
+                      ? widget.viewModel.didAttachLabelToSelectedClip
+                      : null,
+                ),
+                if (widget.viewModel.canDetachLabelFromSelection)
+                  _QuietButton(
+                    label: '라벨 떼기',
+                    onPressed: widget.viewModel.didDetachLabelFromSelectedClip,
+                  ),
+              ],
+            ),
+          ),
+          const _FootNote('붙이기를 누르면 고른 라벨이 선택 클립에 연결됩니다.'),
+        ],
+      ),
     );
   }
 }
