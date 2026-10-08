@@ -49,4 +49,6 @@ abstract class JobTimelineRepository {
     required JobTimelineStatus fromStatus,
     required JobTimelineStatus toStatus,
   });
+
+  Future<String> readContent({required String url});
 }

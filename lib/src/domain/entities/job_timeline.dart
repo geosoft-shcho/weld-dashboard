@@ -64,11 +64,35 @@ class TimelineTrack {
   final List<TimelineClip> clips;
 }
 
+enum TimelineOverlayKind { subtitle, pose }
+
+/// 재생 중인 영상 위에 올릴 자막·포즈. 보드용 클립과 따로 둔다.
+class TimelineOverlay {
+  const TimelineOverlay({
+    required this.assetId,
+    required this.kind,
+    required this.contentUrl,
+    required this.timelineStartNs,
+    required this.timelineEndNs,
+    this.sourceStartNs = '',
+    this.sourceEndNs = '',
+  });
+
+  final String assetId;
+  final TimelineOverlayKind kind;
+  final String contentUrl;
+  final String timelineStartNs;
+  final String timelineEndNs;
+  final String sourceStartNs;
+  final String sourceEndNs;
+}
+
 class JobTimeline {
   const JobTimeline({
     required this.jobId,
     required this.name,
     required this.tracks,
+    this.overlays = const [],
     this.status = JobTimelineStatus.unspecified,
   });
 
@@ -78,6 +102,7 @@ class JobTimeline {
   final String name;
   final JobTimelineStatus status;
   final List<TimelineTrack> tracks;
+  final List<TimelineOverlay> overlays;
 
   List<TimelineClip> get clips => [for (final track in tracks) ...track.clips];
 }

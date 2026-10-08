@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:connectrpc/connect.dart' as connect;
 import 'package:connectrpc/protobuf.dart' as connect_protobuf;
 import 'package:connectrpc/protocol/connect.dart' as connect_protocol;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -31,6 +35,24 @@ class MediaTagDataSource {
   late final MediaComposeServiceClient composeService;
   late final LabelServiceClient labelService;
   late final ToolServiceClient toolService;
+
+  Future<String> readContent(String url) async {
+    final response = await createDashboardHttpClient()(
+      connect.HttpRequest(url, 'GET', connect.Headers(), null, null),
+    );
+    if (response.status < 200 || response.status >= 300) {
+      throw StateError('content ${response.status}');
+    }
+    final chunks = await response.body.toList();
+    final length = chunks.fold<int>(0, (sum, chunk) => sum + chunk.length);
+    final bytes = Uint8List(length);
+    var offset = 0;
+    for (final chunk in chunks) {
+      bytes.setRange(offset, offset + chunk.length, chunk);
+      offset += chunk.length;
+    }
+    return utf8.decode(bytes, allowMalformed: true);
+  }
 
   String resolveContentUrl(String path) {
     if (path.isEmpty) {

@@ -41,6 +41,18 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
   }
 
   @override
+  Future<String> readContent({required String url}) async {
+    if (url.isEmpty) {
+      return '';
+    }
+    try {
+      return await _mediaTag.readContent(url);
+    } catch (_) {
+      return '';
+    }
+  }
+
+  @override
   Future<void> createTrack({
     required String jobId,
     required String name,
@@ -196,11 +208,27 @@ JobTimeline jobTimelineFromResponse(
     for (final asset in response.assets)
       if (idText(asset.assetId).isNotEmpty) idText(asset.assetId): asset,
   };
+  final visibleTrackIds = <String>{
+    for (final track in response.tracks)
+      if ((track.hasVisible() ? track.visible : true) &&
+          idText(track.trackId).isNotEmpty)
+        idText(track.trackId),
+  };
+  final overlays = <TimelineOverlay>[];
   final clipsByTrackId = <String, List<TimelineClip>>{};
   for (final clip in response.clips) {
     final mapped = _clipFrom(clip, assetsById, resolveContentUrl);
     if (mapped == null) {
       continue;
+    }
+    final overlay = _overlayFrom(
+      clip,
+      assetsById,
+      resolveContentUrl,
+      visibleTrackIds,
+    );
+    if (overlay != null) {
+      overlays.add(overlay);
     }
     clipsByTrackId.putIfAbsent(mapped.trackId, () => []).add(mapped);
   }
@@ -246,7 +274,63 @@ JobTimeline jobTimelineFromResponse(
     name: response.timeline.name,
     status: jobTimelineStatusFromProto(response.timeline.status),
     tracks: tracks,
+    overlays: overlays,
   );
+}
+
+TimelineOverlay? _overlayFrom(
+  compose_pb.Clip clip,
+  Map<String, asset_pb.Asset> assetsById,
+  String Function(String contentUrl) resolveContentUrl,
+  Set<String> visibleTrackIds,
+) {
+  final trackId = idText(clip.trackId);
+  if (!visibleTrackIds.contains(trackId) ||
+      !clip.hasTimelineStartNs() ||
+      !clip.hasTimelineEndNs() ||
+      !clip.hasSource()) {
+    return null;
+  }
+  final assetId = idText(clip.source.assetId);
+  final asset = assetsById[assetId];
+  if (asset == null || asset.contentUrl.isEmpty) {
+    return null;
+  }
+  final kind = _overlayKind(clip.kind, asset.kind);
+  if (kind == null) {
+    return null;
+  }
+  final start = clip.timelineStartNs.toString();
+  final end = clip.timelineEndNs.toString();
+  if (!isOpenNanosecondInterval(start, end)) {
+    return null;
+  }
+  return TimelineOverlay(
+    assetId: assetId,
+    kind: kind,
+    contentUrl: resolveContentUrl(asset.contentUrl),
+    timelineStartNs: start,
+    timelineEndNs: end,
+    sourceStartNs: clip.source.hasStartNs()
+        ? clip.source.startNs.toString()
+        : '',
+    sourceEndNs: clip.source.hasEndNs() ? clip.source.endNs.toString() : '',
+  );
+}
+
+TimelineOverlayKind? _overlayKind(
+  ClipKind clipKind,
+  asset_pb.AssetKind assetKind,
+) {
+  if (clipKind == ClipKind.CLIP_KIND_SUBTITLE &&
+      assetKind == asset_pb.AssetKind.ASSET_KIND_SUBTITLE) {
+    return TimelineOverlayKind.subtitle;
+  }
+  if (clipKind == ClipKind.CLIP_KIND_POSE &&
+      assetKind == asset_pb.AssetKind.ASSET_KIND_POSE) {
+    return TimelineOverlayKind.pose;
+  }
+  return null;
 }
 
 TimelineClip? _clipFrom(

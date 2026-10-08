@@ -8,7 +8,7 @@ import 'package:video_player/video_player.dart';
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_caption.dart';
-import '../video_frame_mark.dart';
+import '../video_overlay_frame.dart';
 import 'multimodal_studio_palette.dart';
 import 'video_frame_mark_layer.dart';
 
@@ -21,9 +21,7 @@ class MultimodalVideoPlayer extends StatefulWidget {
     required this.playbackToken,
     required this.wantsPlayback,
     required this.captions,
-    required this.marks,
-    required this.onUpdateBox,
-    required this.onUpdateSkeleton,
+    required this.frames,
     required this.onClock,
   });
 
@@ -33,17 +31,7 @@ class MultimodalVideoPlayer extends StatefulWidget {
   final int playbackToken;
   final bool wantsPlayback;
   final List<VideoCaption> captions;
-  final List<VideoFrameMark> marks;
-  final void Function(
-    int markIndex,
-    double left,
-    double top,
-    double width,
-    double height,
-  )
-  onUpdateBox;
-  final void Function(int markIndex, List<VideoFramePoint> points)
-  onUpdateSkeleton;
+  final List<VideoOverlayFrame> frames;
   final ValueChanged<VideoPlaybackClock> onClock;
 
   @override
@@ -54,8 +42,6 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   VideoPlayerController? _videoController;
   ChewieController? _chewieController;
   int _captionGeneration = 0;
-  VideoMarkSelection? _selection;
-  bool _didHitMark = false;
   Timer? _clockTimer;
   VoidCallback? _clockListener;
   String _errorText = '';
@@ -70,7 +56,6 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   void didUpdateWidget(covariant MultimodalVideoPlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.mediaUrl != widget.mediaUrl) {
-      _selection = null;
       _open();
       return;
     }
@@ -256,25 +241,6 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     }
   }
 
-  void _handleSelect(VideoMarkSelection selection) {
-    _didHitMark = true;
-    if (_selection == selection) {
-      return;
-    }
-    setState(() => _selection = selection);
-  }
-
-  void _handleStagePointerDown(PointerDownEvent _) {
-    if (_didHitMark) {
-      _didHitMark = false;
-      return;
-    }
-    if (_selection == null) {
-      return;
-    }
-    setState(() => _selection = null);
-  }
-
   void _release() {
     _clockTimer?.cancel();
     _clockTimer = null;
@@ -306,26 +272,18 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
             : Center(
                 child: AspectRatio(
                   aspectRatio: chewieController.aspectRatio ?? 16 / 9,
-                  child: Listener(
-                    behavior: HitTestBehavior.deferToChild,
-                    onPointerDown: _handleStagePointerDown,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        Chewie(
-                          key: ValueKey(_captionGeneration),
-                          controller: chewieController,
-                        ),
-                        VideoFrameMarkLayer(
-                          controller: videoController,
-                          marks: widget.marks,
-                          selection: _selection,
-                          onSelect: _handleSelect,
-                          onCommitBox: widget.onUpdateBox,
-                          onCommitSkeleton: widget.onUpdateSkeleton,
-                        ),
-                      ],
-                    ),
+                  child: Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Chewie(
+                        key: ValueKey(_captionGeneration),
+                        controller: chewieController,
+                      ),
+                      VideoFrameMarkLayer(
+                        controller: videoController,
+                        frames: widget.frames,
+                      ),
+                    ],
                   ),
                 ),
               ),

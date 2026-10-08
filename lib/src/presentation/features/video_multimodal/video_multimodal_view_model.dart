@@ -20,8 +20,10 @@ import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
 import '../../../domain/use_cases/update_track_use_case.dart';
 import 'video_caption.dart';
-import 'video_frame_mark.dart';
-import 'video_frame_mark_debug.dart';
+import 'video_overlay_clock.dart';
+import 'video_overlay_frame.dart';
+import 'video_overlay_json.dart';
+import 'video_subtitle_text.dart';
 
 enum VideoMultimodalSide { none, assets, properties, ask, labels }
 
@@ -209,7 +211,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   int _toolRunEpoch = 0;
   bool _isClosed = false;
   final List<AskTurn> _askTurns = [];
-  final List<VideoFrameMark> _frameMarks = [];
+  int _overlayEpoch = 0;
+  final Map<String, List<VideoOverlayFrame>> _framesByAssetId = {};
+  final Map<String, List<VideoCaption>> _cuesByAssetId = {};
   final List<SampleLayerSummary> _sampleLayers = const [];
 
   double get pixelsPerSecond => DEFAULT_PIXELS_PER_SECOND;
@@ -284,103 +288,30 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return null;
   }
 
-  List<VideoCaption> get activeVideoCaptions =>
-      _captionsForVideo(activeVideoBar);
-
-  /// 재생 중인 영상 파일의 박스·스켈레톤. 실제 좌표가 오면 이 목록을 바꾼다.
-  List<VideoFrameMark> get activeVideoFrameMarks => activeVideoBar == null
-      ? const <VideoFrameMark>[]
-      : List<VideoFrameMark>.unmodifiable(_frameMarks);
-
-  void didUpdateVideoBox({
-    required int markIndex,
-    required double left,
-    required double top,
-    required double width,
-    required double height,
-  }) {
-    if (markIndex < 0 || markIndex >= _frameMarks.length) {
-      return;
-    }
-    final mark = _frameMarks[markIndex];
-    if (mark is! VideoBoxMark) {
-      return;
-    }
-    final next = VideoBoxMark(
-      name: mark.name,
-      left: left,
-      top: top,
-      width: width,
-      height: height,
-      start: mark.start,
-      end: mark.end,
-    );
-    _frameMarks[markIndex] = next;
-    debugVideoFrameMark(markIndex, next);
-    notifyListeners();
-  }
-
-  void didUpdateVideoSkeleton({
-    required int markIndex,
-    required List<VideoFramePoint> points,
-  }) {
-    if (markIndex < 0 || markIndex >= _frameMarks.length) {
-      return;
-    }
-    final mark = _frameMarks[markIndex];
-    if (mark is! VideoSkeletonMark) {
-      return;
-    }
-    final next = VideoSkeletonMark(
-      name: mark.name,
-      points: List<VideoFramePoint>.of(points),
-      bones: mark.bones,
-      start: mark.start,
-      end: mark.end,
-    );
-    _frameMarks[markIndex] = next;
-    debugVideoFrameMark(markIndex, next);
-    notifyListeners();
-  }
-
-  List<VideoCaption> _captionsForVideo(TemporaryAttachmentBar? video) {
+  List<VideoCaption> get activeVideoCaptions {
+    final video = activeVideoBar;
     if (video == null) {
       return const [];
     }
-    final span = video.endSeconds - video.startSeconds;
-    if (span <= 0) {
+    return captionsOnVideo(
+      videoStartSeconds: video.startSeconds,
+      videoEndSeconds: video.endSeconds,
+      overlays: _timeline.overlays,
+      cuesByAssetId: _cuesByAssetId,
+    );
+  }
+
+  List<VideoOverlayFrame> get activeVideoOverlayFrames {
+    final video = activeVideoBar;
+    if (video == null) {
       return const [];
     }
-    final captions = <VideoCaption>[];
-    for (final clip in timelineClips) {
-      if (clip.kind != TimelineClipKind.subtitle) {
-        continue;
-      }
-      final text = labelForClip(clip);
-      if (text.isEmpty) {
-        continue;
-      }
-      final start = secondsFromNanoseconds(clip.startNanoseconds);
-      final end = secondsFromNanoseconds(clip.endNanoseconds);
-      if (end <= video.startSeconds || start >= video.endSeconds) {
-        continue;
-      }
-      final localStart = (start - video.startSeconds)
-          .clamp(0.0, span)
-          .toDouble();
-      final localEnd = (end - video.startSeconds).clamp(0.0, span).toDouble();
-      if (localEnd - localStart < MIN_REGION_SECONDS) {
-        continue;
-      }
-      captions.add(
-        VideoCaption(
-          text: text,
-          start: Duration(milliseconds: (localStart * 1000).round()),
-          end: Duration(milliseconds: (localEnd * 1000).round()),
-        ),
-      );
-    }
-    return captions;
+    return framesOnVideo(
+      videoStartSeconds: video.startSeconds,
+      videoEndSeconds: video.endSeconds,
+      overlays: _timeline.overlays,
+      framesByAssetId: _framesByAssetId,
+    );
   }
 
   TimelineClip? _videoClipAt(double seconds) {
@@ -635,12 +566,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _isLoading = true;
     _hasError = false;
     _errorMessage = '';
+    _overlayEpoch += 1;
     notifyListeners();
     if (jobId.isEmpty) {
       _timeline = JobTimeline.empty;
       _attachments = const [];
       _bars = const [];
-      _frameMarks.clear();
+      _framesByAssetId.clear();
+      _cuesByAssetId.clear();
       _noticeText = '작업을 열지 못했습니다.';
       _isLoading = false;
       notifyListeners();
@@ -678,6 +611,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         _noticeText = error.toString();
       }
     }
+    await _loadOverlayBodies();
     await loadLabelSections();
     try {
       await _restoreActiveToolRun();
@@ -1641,6 +1575,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   Future<bool> _replaceTimelineFromServer({required bool clearHint}) async {
     try {
       _timeline = await _getJobTimelineUseCase.execute(jobId: jobId);
+      _overlayEpoch += 1;
+      await _loadOverlayBodies();
       if (clearHint) {
         _timelineHint = '';
       }
@@ -1807,7 +1743,38 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _isClosed = true;
     _toolRunEpoch += 1;
     _labelEpoch += 1;
+    _overlayEpoch += 1;
     super.dispose();
+  }
+
+  Future<void> _loadOverlayBodies() async {
+    final epoch = _overlayEpoch;
+    _framesByAssetId.clear();
+    _cuesByAssetId.clear();
+    final urlsByAssetId = <String, String>{};
+    for (final overlay in _timeline.overlays) {
+      urlsByAssetId.putIfAbsent(overlay.assetId, () => overlay.contentUrl);
+    }
+    final bodiesByAssetId = <String, String>{};
+    for (final entry in urlsByAssetId.entries) {
+      if (epoch != _overlayEpoch || _isClosed) {
+        return;
+      }
+      bodiesByAssetId[entry.key] = await _getJobTimelineUseCase.readContent(
+        url: entry.value,
+      );
+    }
+    if (epoch != _overlayEpoch || _isClosed) {
+      return;
+    }
+    for (final overlay in _timeline.overlays) {
+      final body = bodiesByAssetId[overlay.assetId] ?? '';
+      if (overlay.kind == TimelineOverlayKind.pose) {
+        _framesByAssetId[overlay.assetId] = parsePoseOverlay(body);
+      } else {
+        _cuesByAssetId[overlay.assetId] = parseSubtitleCues(body);
+      }
+    }
   }
 
   Future<void> _restoreActiveToolRun() async {

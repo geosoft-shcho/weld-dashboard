@@ -42,22 +42,7 @@ class MultimodalVideoStage extends StatelessWidget {
         playbackToken: viewModel.playbackToken,
         wantsPlayback: viewModel.wantsPlayback,
         captions: viewModel.activeVideoCaptions,
-        marks: viewModel.activeVideoFrameMarks,
-        onUpdateBox: (markIndex, left, top, width, height) {
-          viewModel.didUpdateVideoBox(
-            markIndex: markIndex,
-            left: left,
-            top: top,
-            width: width,
-            height: height,
-          );
-        },
-        onUpdateSkeleton: (markIndex, points) {
-          viewModel.didUpdateVideoSkeleton(
-            markIndex: markIndex,
-            points: points,
-          );
-        },
+        frames: viewModel.activeVideoOverlayFrames,
         onClock: (clock) {
           viewModel.didReceiveVideoClock(
             mediaUrl: video.mediaUrl,

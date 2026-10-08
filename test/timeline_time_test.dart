@@ -99,4 +99,9 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
   }) {
     throw StateError('unused');
   }
+
+  @override
+  Future<String> readContent({required String url}) {
+    throw StateError('unused');
+  }
 }

@@ -12,4 +12,8 @@ class GetJobTimelineUseCase {
     }
     return _repository.getTimeline(jobId: jobId);
   }
+
+  Future<String> readContent({required String url}) {
+    return _repository.readContent(url: url);
+  }
 }

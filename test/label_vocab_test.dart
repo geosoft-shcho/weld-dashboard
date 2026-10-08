@@ -533,4 +533,7 @@ class _CountingTimelineRepository implements JobTimelineRepository {
     required JobTimelineStatus fromStatus,
     required JobTimelineStatus toStatus,
   }) async {}
+
+  @override
+  Future<String> readContent({required String url}) async => '';
 }

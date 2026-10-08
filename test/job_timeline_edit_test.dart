@@ -893,6 +893,11 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
     writeCount += 1;
     throw StateError('unused');
   }
+
+  @override
+  Future<String> readContent({required String url}) {
+    throw StateError('unused');
+  }
 }
 
 class _ScriptedTimelineRepository implements JobTimelineRepository {
@@ -1055,6 +1060,9 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
       throw error;
     }
   }
+
+  @override
+  Future<String> readContent({required String url}) async => '';
 }
 
 class _IdleLabelRepository implements LabelRepository {
