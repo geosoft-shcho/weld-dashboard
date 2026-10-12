@@ -786,6 +786,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didTapCitation(AskCitation citation) {
+    _selectCitationClip(citation);
     if (_citationVideo(citation) == null) {
       _noticeText = '이 근거 영상을 열 수 없습니다.';
       notifyListeners();
@@ -796,6 +797,17 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _wantsPlayback = true;
     _playbackToken += 1;
     notifyListeners();
+  }
+
+  void _selectCitationClip(AskCitation citation) {
+    if (citation.segmentId.isEmpty) {
+      return;
+    }
+    final named = _timelineClip(citation.segmentId);
+    if (named == null) {
+      return;
+    }
+    _selectedClipId = named.clipId;
   }
 
   TimelineClip? _citationVideo(AskCitation citation) {

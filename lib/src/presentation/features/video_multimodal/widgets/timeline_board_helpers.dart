@@ -55,6 +55,25 @@ String rangeIdOf(TimelineBoardClip clip) {
   return clip.attachmentId;
 }
 
+/// 행이 목록 화면 밖에 있으면 그 행의 위쪽이 보이도록 옮길 스크롤 위치.
+double? revealOffsetForObjectRow({
+  required int rowIndex,
+  required double rowExtent,
+  required double pixels,
+  required double viewport,
+  required double maxScrollExtent,
+}) {
+  if (rowIndex < 0 || rowExtent <= 0 || viewport <= 0) {
+    return null;
+  }
+  final top = rowIndex * rowExtent;
+  final bottom = top + rowExtent;
+  if (top >= pixels && bottom <= pixels + viewport) {
+    return null;
+  }
+  return top.clamp(0.0, maxScrollExtent);
+}
+
 /// 레인 생성
 List<TimelineBoardRow> buildTimelineBoardRows(
   VideoMultimodalViewModel viewModel,

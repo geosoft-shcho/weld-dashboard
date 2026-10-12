@@ -29,6 +29,7 @@ import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/timeline_board_helpers.dart';
 
 void main() {
   test('ask request sends project, question, and a later session', () {
@@ -177,6 +178,7 @@ void main() {
       ]),
     );
     await viewModel.loadAttachments();
+    viewModel.didTapToggleAsk();
 
     viewModel.didTapCitation(
       const AskCitation(
@@ -189,6 +191,9 @@ void main() {
     expect(viewModel.playheadSeconds, 1946);
     expect(viewModel.wantsPlayback, isTrue);
     expect(viewModel.noticeText, isEmpty);
+    expect(viewModel.selectedClipId, 'clip__1218');
+    expect(viewModel.isAskOpen, isTrue);
+    expect(viewModel.isPropertiesOpen, isFalse);
     expect(viewModel.activeVideoBar?.mediaUrl, mediaUrl);
     expect(viewModel.activeVideoBar?.startSeconds, 0);
 
@@ -222,6 +227,60 @@ void main() {
     );
     expect(viewModel.playheadSeconds, 1946);
     expect(viewModel.activeVideoBar?.mediaUrl, mediaUrl);
+    expect(viewModel.selectedClipId, 'clip__1218');
+  });
+
+  test('a citation without a matching segment keeps the selection', () async {
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timeline: _timelineWith([
+        _clip(clipId: 'video-1', playbackUrl: 'http://media.example/video.mp4'),
+      ]),
+    );
+    await viewModel.loadAttachments();
+    viewModel.didSelectSampleClip('video-1');
+    expect(viewModel.selectedClipId, 'video-1');
+    expect(viewModel.isPropertiesOpen, isTrue);
+
+    viewModel.didTapCitation(
+      const AskCitation(
+        startSeconds: 1946,
+        endSeconds: 2894.1,
+        segmentId: 'clip__missing',
+      ),
+    );
+    expect(viewModel.selectedClipId, 'video-1');
+    expect(viewModel.isPropertiesOpen, isTrue);
+    expect(viewModel.playheadSeconds, 1946);
+  });
+
+  test('a matching tag stays selected when no video covers the time', () async {
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timeline: _timelineWith([
+        _clip(
+          clipId: 'clip__1218',
+          kind: TimelineClipKind.tag,
+          playbackUrl: '',
+          endSeconds: 100,
+        ),
+      ]),
+    );
+    await viewModel.loadAttachments();
+    viewModel.didTapToggleAsk();
+    viewModel.didTapCitation(
+      const AskCitation(
+        startSeconds: 1946,
+        endSeconds: 2894.1,
+        segmentId: 'clip__1218',
+      ),
+    );
+    expect(viewModel.selectedClipId, 'clip__1218');
+    expect(viewModel.isAskOpen, isTrue);
+    expect(viewModel.playheadSeconds, 0);
+    expect(viewModel.noticeText, '이 근거 영상을 열 수 없습니다.');
   });
 
   test('a citation without a video does not change playback', () async {
@@ -237,6 +296,30 @@ void main() {
     expect(viewModel.playheadSeconds, 0);
     expect(viewModel.noticeText, '이 근거 영상을 열 수 없습니다.');
     expect(viewModel.wantsPlayback, isFalse);
+    expect(viewModel.selectedClipId, isEmpty);
+  });
+
+  test('an object row outside the list scrolls to that row', () {
+    expect(
+      revealOffsetForObjectRow(
+        rowIndex: 4,
+        rowExtent: 28,
+        pixels: 0,
+        viewport: 56,
+        maxScrollExtent: 200,
+      ),
+      112,
+    );
+    expect(
+      revealOffsetForObjectRow(
+        rowIndex: 0,
+        rowExtent: 28,
+        pixels: 0,
+        viewport: 56,
+        maxScrollExtent: 200,
+      ),
+      isNull,
+    );
   });
 }
 

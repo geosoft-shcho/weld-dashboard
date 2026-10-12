@@ -16,6 +16,7 @@ class MultimodalTimelineBoard extends StatefulWidget {
 }
 
 class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
+  static const double _OBJECT_ROW_HEIGHT = 28;
   final ScrollController _scrollController = ScrollController();
   final ScrollController _objectScrollController = ScrollController();
   final ScrollController _trackScrollController = ScrollController();
@@ -24,6 +25,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   String _shownTrackId = '';
   DateTime _lastAutoScrollAt = DateTime.fromMillisecondsSinceEpoch(0);
   double _trackedPlayhead = -1;
+  String _trackedClipId = '';
   TimelineClipEdit? _edit;
   bool _isStatusChoicesOpen = false;
 
@@ -33,6 +35,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   void initState() {
     super.initState();
     _trackedPlayhead = widget.viewModel.playheadSeconds;
+    _trackedClipId = widget.viewModel.selectedClipId;
     _objectScrollController.addListener(_syncTrackRowsToObjects);
     _trackScrollController.addListener(_syncObjectRowsToTracks);
     _syncSelectedTrackName();
@@ -44,6 +47,15 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     _syncSelectedTrackName();
     final headMoved = _trackedPlayhead != viewModel.playheadSeconds;
     _trackedPlayhead = viewModel.playheadSeconds;
+    final clipChanged = _trackedClipId != viewModel.selectedClipId;
+    _trackedClipId = viewModel.selectedClipId;
+    if (clipChanged && viewModel.selectedClipId.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _revealSelectedObjectRow();
+        }
+      });
+    }
     if (!headMoved || !viewModel.isVideoPlaying) {
       return;
     }
@@ -181,6 +193,28 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       position.maxScrollExtent,
     );
     _scrollController.jumpTo(target);
+  }
+
+  void _revealSelectedObjectRow() {
+    if (!_objectScrollController.hasClients) {
+      return;
+    }
+    final rows = buildTimelineBoardRows(viewModel);
+    final rowIndex = rows.indexWhere(
+      (row) => row.clips.any((clip) => clip.clipId == viewModel.selectedClipId),
+    );
+    final position = _objectScrollController.position;
+    final offset = revealOffsetForObjectRow(
+      rowIndex: rowIndex,
+      rowExtent: _OBJECT_ROW_HEIGHT,
+      pixels: position.pixels,
+      viewport: position.viewportDimension,
+      maxScrollExtent: position.maxScrollExtent,
+    );
+    if (offset == null) {
+      return;
+    }
+    _objectScrollController.jumpTo(offset);
   }
 
   double _secondsInBox(BuildContext dropContext, Offset global) {
@@ -628,7 +662,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     String identity = '',
   }) {
     return Container(
-      height: 28,
+      height: _OBJECT_ROW_HEIGHT,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       color: isSelected ? MultimodalStudioPalette.GRAPE_100 : null,
       child: Row(
