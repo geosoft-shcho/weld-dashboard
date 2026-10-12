@@ -32,6 +32,20 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
   }
 
   @override
+  Future<String> loadProjectId({required String jobId}) async {
+    if (jobId.isEmpty) {
+      return '';
+    }
+    final response = await _mediaTag.workService.getJob(
+      work_pb.GetJobRequest(jobId: protoId(jobId)),
+    );
+    if (!response.hasJob()) {
+      return '';
+    }
+    return idText(response.job.projectId);
+  }
+
+  @override
   Future<List<WorkAttachment>> listAttachments({String jobId = ''}) async {
     if (jobId.isEmpty) {
       return const [];

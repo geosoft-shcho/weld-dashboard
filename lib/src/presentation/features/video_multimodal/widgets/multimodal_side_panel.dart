@@ -691,12 +691,12 @@ class _AskBodyState extends State<_AskBody> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(turn.text, style: _fieldTextStyle),
-                          if (turn.citationStartSeconds != null)
+                          for (final citation in turn.citations)
                             _QuietButton(
                               label:
-                                  '${turn.citationStartSeconds!.toStringAsFixed(1)}–${turn.citationEndSeconds!.toStringAsFixed(1)}',
+                                  '${citation.startSeconds.toStringAsFixed(1)}–${citation.endSeconds.toStringAsFixed(1)}',
                               onPressed: () => widget.viewModel.didTapCitation(
-                                turn.citationStartSeconds!,
+                                citation.startSeconds,
                               ),
                             ),
                         ],
@@ -722,11 +722,16 @@ class _AskBodyState extends State<_AskBody> {
                   style: _fieldTextStyle,
                   cursorColor: MultimodalStudioPalette.PANEL_ACCENT,
                   decoration: _fieldDecoration('영상 내용에 대해 질문하세요'),
-                  onSubmitted: (_) => _send(),
+                  onSubmitted: widget.viewModel.isAsking
+                      ? null
+                      : (_) => _send(),
                 ),
               ),
               const SizedBox(width: 4),
-              _AccentButton(label: '전송', onPressed: _send),
+              _AccentButton(
+                label: '전송',
+                onPressed: widget.viewModel.isAsking ? null : _send,
+              ),
             ],
           ),
         ),

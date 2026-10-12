@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../domain/entities/ask_answer.dart';
 import '../../../domain/entities/job_timeline.dart';
 import '../../../domain/entities/label_vocab.dart';
 import '../../../domain/entities/tool_run.dart';
 import '../../../domain/entities/work_attachment.dart';
 import '../../../domain/entities/work_attachment_type.dart';
 import '../../../domain/timeline_time.dart';
+import '../../../domain/use_cases/ask_question_use_case.dart';
 import '../../../domain/use_cases/change_timeline_status_use_case.dart';
 import '../../../domain/use_cases/create_clip_use_case.dart';
 import '../../../domain/use_cases/create_track_use_case.dart';
@@ -17,6 +19,7 @@ import '../../../domain/use_cases/delete_track_use_case.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
 import '../../../domain/use_cases/label_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
+import '../../../domain/use_cases/load_job_project_id_use_case.dart';
 import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
 import '../../../domain/use_cases/update_timeline_use_case.dart';
@@ -94,14 +97,12 @@ class AskTurn {
   const AskTurn({
     required this.isUser,
     required this.text,
-    this.citationStartSeconds,
-    this.citationEndSeconds,
+    this.citations = const [],
   });
 
   final bool isUser;
   final String text;
-  final double? citationStartSeconds;
-  final double? citationEndSeconds;
+  final List<AskCitation> citations;
 }
 
 class SampleLayerSummary {
@@ -147,6 +148,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required this._deleteTimelineUseCase,
     required this._toolRunUseCase,
     required this._labelUseCase,
+    required this._askQuestionUseCase,
+    required this._loadJobProjectIdUseCase,
     required this.jobId,
   });
 
@@ -174,6 +177,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final DeleteTimelineUseCase _deleteTimelineUseCase;
   final ToolRunUseCase _toolRunUseCase;
   final LabelUseCase _labelUseCase;
+  final AskQuestionUseCase _askQuestionUseCase;
+  final LoadJobProjectIdUseCase _loadJobProjectIdUseCase;
   final String jobId;
 
   double _playheadSeconds = 0;
@@ -217,6 +222,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   int _toolRunEpoch = 0;
   bool _isClosed = false;
   final List<AskTurn> _askTurns = [];
+  String _askSessionId = '';
+  String _projectId = '';
+  bool _isAsking = false;
   int _overlayEpoch = 0;
   final Map<String, List<VideoOverlayFrame>> _framesByAssetId = {};
   final Map<String, List<VideoCaption>> _cuesByAssetId = {};
@@ -542,6 +550,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       (_inferencePhase == InferencePanelPhase.queued ||
           _inferencePhase == InferencePanelPhase.running);
   List<AskTurn> get askTurns => List.unmodifiable(_askTurns);
+  bool get isAsking => _isAsking;
   List<LabelNode> get labelRoots => List.unmodifiable(_labelRoots);
   List<SampleLayerSummary> get sampleLayers => List.unmodifiable(_sampleLayers);
 
@@ -620,6 +629,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         _noticeText = error.toString();
       }
     }
+    await _loadProjectId();
     await _loadOverlayBodies();
     await loadLabelSections();
     try {
@@ -712,21 +722,67 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void didSendAsk(String text) {
-    final trimmed = text.trim();
-    if (trimmed.isEmpty) {
+  Future<void> didSendAsk(String text) async {
+    final question = text.trim();
+    if (question.isEmpty || _isAsking || _isClosed) {
       return;
     }
-    _askTurns.add(AskTurn(isUser: true, text: trimmed));
-    _askTurns.add(
-      const AskTurn(
-        isUser: false,
-        text: '이 화면에서는 질의 서버에 연결하지 않습니다. 아래 구간으로 이동할 수 있습니다.',
-        citationStartSeconds: 1,
-        citationEndSeconds: 3.5,
-      ),
-    );
+    _askTurns.add(AskTurn(isUser: true, text: question));
+    _isAsking = true;
     notifyListeners();
+    try {
+      if (_projectId.isEmpty) {
+        await _loadProjectId();
+      }
+      final answer = await _askQuestionUseCase.execute(
+        projectId: _projectId,
+        question: question,
+        sessionId: _askSessionId,
+      );
+      if (_isClosed) {
+        return;
+      }
+      if (answer.sessionId.isNotEmpty) {
+        _askSessionId = answer.sessionId;
+      }
+      final answerText = answer.answer.trim();
+      _askTurns.add(
+        AskTurn(
+          isUser: false,
+          text: answerText.isEmpty ? '답변이 없습니다.' : answerText,
+          citations: answer.citations,
+        ),
+      );
+    } on AskException catch (error) {
+      if (_isClosed) {
+        return;
+      }
+      _askTurns.add(AskTurn(isUser: false, text: error.message));
+    } catch (_) {
+      if (_isClosed) {
+        return;
+      }
+      _askTurns.add(const AskTurn(isUser: false, text: '질의에 답하지 못했습니다.'));
+    } finally {
+      _isAsking = false;
+      if (!_isClosed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> _loadProjectId() async {
+    if (jobId.isEmpty) {
+      return;
+    }
+    try {
+      final projectId = await _loadJobProjectIdUseCase.execute(jobId: jobId);
+      if (!_isClosed && projectId.isNotEmpty) {
+        _projectId = projectId;
+      }
+    } catch (_) {
+      return;
+    }
   }
 
   void didTapCitation(double startSeconds) {

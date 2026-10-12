@@ -23,6 +23,11 @@ class WorkDetailRepositoryImpl implements WorkDetailRepository {
   }
 
   @override
+  Future<String> loadProjectId({required String jobId}) async {
+    return '';
+  }
+
+  @override
   Future<List<WorkAttachment>> listAttachments({String jobId = ''}) async {
     final rows = await _csvAssetDataSource.loadWorkAttachmentRows();
     final attachments = <WorkAttachment>[];

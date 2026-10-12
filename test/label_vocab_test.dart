@@ -22,7 +22,11 @@ import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.dart';
+import 'package:weld_dashboard/src/domain/entities/ask_answer.dart';
+import 'package:weld_dashboard/src/domain/repositories/ask_repository.dart';
+import 'package:weld_dashboard/src/domain/use_cases/ask_question_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
@@ -413,6 +417,10 @@ VideoMultimodalViewModel _viewModel(
     deleteTimelineUseCase: DeleteTimelineUseCase(timeline),
     toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
     labelUseCase: LabelUseCase(labels),
+    askQuestionUseCase: AskQuestionUseCase(_IdleAskRepository()),
+    loadJobProjectIdUseCase: LoadJobProjectIdUseCase(
+      _EmptyWorkDetailRepository(),
+    ),
     jobId: '128',
   );
 }
@@ -489,7 +497,23 @@ class _IdleToolRunRepository implements ToolRunRepository {
   }
 }
 
+class _IdleAskRepository implements AskRepository {
+  @override
+  Future<AskAnswer> askQuestion({
+    required String projectId,
+    required String question,
+    String sessionId = '',
+  }) {
+    throw StateError('unused');
+  }
+}
+
 class _EmptyWorkDetailRepository implements WorkDetailRepository {
+  @override
+  Future<String> loadProjectId({required String jobId}) async {
+    return '';
+  }
+
   @override
   Future<WorkDetailCatalog> loadCatalog({String jobId = ''}) async {
     return const WorkDetailCatalog(items: [], attachments: []);
