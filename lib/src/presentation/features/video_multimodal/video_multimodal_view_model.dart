@@ -785,8 +785,34 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     }
   }
 
-  void didTapCitation(double startSeconds) {
-    didSeekToSeconds(startSeconds);
+  void didTapCitation(AskCitation citation) {
+    if (_citationVideo(citation) == null) {
+      _noticeText = '이 근거 영상을 열 수 없습니다.';
+      notifyListeners();
+      return;
+    }
+    _noticeText = '';
+    didSeekToSeconds(citation.startSeconds);
+    _wantsPlayback = true;
+    _playbackToken += 1;
+    notifyListeners();
+  }
+
+  TimelineClip? _citationVideo(AskCitation citation) {
+    final named = _timelineClip(citation.segmentId);
+    if (named != null &&
+        named.kind == TimelineClipKind.video &&
+        named.playbackUrl.isNotEmpty &&
+        _clipCovers(named, citation.startSeconds)) {
+      return named;
+    }
+    return _videoClipAt(citation.startSeconds);
+  }
+
+  bool _clipCovers(TimelineClip clip, double seconds) {
+    final start = secondsFromNanoseconds(clip.startNanoseconds);
+    final end = secondsFromNanoseconds(clip.endNanoseconds);
+    return seconds >= start && seconds < end;
   }
 
   void didSelectLabelValue(String valueId) {

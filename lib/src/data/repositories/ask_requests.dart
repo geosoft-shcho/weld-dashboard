@@ -25,6 +25,8 @@ AskAnswer askAnswerFrom(rag_pb.AskQuestionResponse response) {
         AskCitation(
           startSeconds: citation.startSec,
           endSeconds: citation.endSec,
+          text: citation.text,
+          segmentId: citation.segmentId,
         ),
     ],
   );

@@ -65,6 +65,30 @@ void main() {
     expect(answer.citations.first.endSeconds, 23.44);
   });
 
+  test('ask answer keeps the citation time and segment', () {
+    final response = rag_pb.AskQuestionResponse()
+      ..mergeFromProto3Json({
+        'answer': '캡 구간입니다.',
+        'projectId': '7',
+        'citations': [
+          {
+            'startSec': 1946,
+            'endSec': 2894.1,
+            'text': '캡(cap) 용접 구간 · 01호기 DGT-ERB-01',
+            'score': 0.3428,
+            'layerId': 'tag',
+            'segmentId': 'clip__1218',
+          },
+        ],
+      });
+    final answer = askAnswerFrom(response);
+    final citation = answer.citations.single;
+    expect(citation.startSeconds, 1946);
+    expect(citation.endSeconds, 2894.1);
+    expect(citation.text, '캡(cap) 용접 구간 · 01호기 DGT-ERB-01');
+    expect(citation.segmentId, 'clip__1218');
+  });
+
   test('empty question and missing project skip the server', () async {
     final asks = _ScriptedAsk();
     final useCase = AskQuestionUseCase(asks);
@@ -137,28 +161,138 @@ void main() {
     expect(asks.calls, isEmpty);
     expect(viewModel.askTurns.last.text, '공사 번호를 찾지 못했습니다.');
   });
+
+  test('a citation seeks the video that covers its start', () async {
+    const mediaUrl = 'http://media.example/video.mp4';
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timeline: _timelineWith([
+        _clip(
+          clipId: 'clip__1218',
+          kind: TimelineClipKind.tag,
+          playbackUrl: '',
+        ),
+        _clip(clipId: 'video-1', playbackUrl: mediaUrl),
+      ]),
+    );
+    await viewModel.loadAttachments();
+
+    viewModel.didTapCitation(
+      const AskCitation(
+        startSeconds: 1946,
+        endSeconds: 2894.1,
+        text: '캡(cap) 용접 구간 · 01호기 DGT-ERB-01',
+        segmentId: 'clip__1218',
+      ),
+    );
+    expect(viewModel.playheadSeconds, 1946);
+    expect(viewModel.wantsPlayback, isTrue);
+    expect(viewModel.noticeText, isEmpty);
+    expect(viewModel.activeVideoBar?.mediaUrl, mediaUrl);
+    expect(viewModel.activeVideoBar?.startSeconds, 0);
+
+    viewModel.didSeekToSeconds(4);
+    expect(viewModel.playheadSeconds, 4);
+    expect(viewModel.activeVideoBar?.mediaUrl, mediaUrl);
+  });
+
+  test('a citation plays the video clip named by its segment', () async {
+    const mediaUrl = 'http://media.example/named.mp4';
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timeline: _timelineWith([
+        _clip(clipId: 'clip__1218', playbackUrl: mediaUrl),
+        _clip(
+          clipId: 'earlier',
+          playbackUrl: 'http://media.example/earlier.mp4',
+          endSeconds: 1000,
+        ),
+      ]),
+    );
+    await viewModel.loadAttachments();
+
+    viewModel.didTapCitation(
+      const AskCitation(
+        startSeconds: 1946,
+        endSeconds: 2894.1,
+        segmentId: 'clip__1218',
+      ),
+    );
+    expect(viewModel.playheadSeconds, 1946);
+    expect(viewModel.activeVideoBar?.mediaUrl, mediaUrl);
+  });
+
+  test('a citation without a video does not change playback', () async {
+    final viewModel = _viewModel(_ScriptedAsk(), projectId: '42');
+    await viewModel.loadAttachments();
+    viewModel.didTapCitation(
+      const AskCitation(
+        startSeconds: 1946,
+        endSeconds: 2894.1,
+        segmentId: 'clip__1218',
+      ),
+    );
+    expect(viewModel.playheadSeconds, 0);
+    expect(viewModel.noticeText, '이 근거 영상을 열 수 없습니다.');
+    expect(viewModel.wantsPlayback, isFalse);
+  });
+}
+
+JobTimeline _timelineWith(List<TimelineClip> clips) {
+  return JobTimeline(
+    jobId: '128',
+    name: '작업',
+    tracks: [
+      TimelineTrack(trackId: 'track-1', name: '영상', order: 0, clips: clips),
+    ],
+  );
+}
+
+TimelineClip _clip({
+  required String clipId,
+  String playbackUrl = 'http://media.example/video.mp4',
+  TimelineClipKind kind = TimelineClipKind.video,
+  double endSeconds = 4000,
+}) {
+  return TimelineClip(
+    clipId: clipId,
+    trackId: 'track-1',
+    kind: kind,
+    startNs: '0',
+    endNs: '${(endSeconds * 1000000000).round()}',
+    assetId: '1',
+    fileName: 'video.mp4',
+    playbackUrl: playbackUrl,
+    description: '',
+    showsToolBadge: false,
+  );
 }
 
 VideoMultimodalViewModel _viewModel(
   _ScriptedAsk asks, {
   required String projectId,
+  JobTimeline timeline = JobTimeline.empty,
 }) {
-  final timeline = _IdleTimeline();
+  final timelineRepository = _IdleTimeline(timeline);
   final workDetail = _ProjectWorkDetail(projectId);
   return VideoMultimodalViewModel(
     listHistoryWorkAttachmentsUseCase: ListHistoryWorkAttachmentsUseCase(
       workDetail,
     ),
-    getJobTimelineUseCase: GetJobTimelineUseCase(timeline),
-    createTrackUseCase: CreateTrackUseCase(timeline),
-    updateTrackUseCase: UpdateTrackUseCase(timeline),
-    deleteTrackUseCase: DeleteTrackUseCase(timeline),
-    createClipUseCase: CreateClipUseCase(timeline),
-    updateClipUseCase: UpdateClipUseCase(timeline),
-    deleteClipUseCase: DeleteClipUseCase(timeline),
-    changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(timeline),
-    updateTimelineUseCase: UpdateTimelineUseCase(timeline),
-    deleteTimelineUseCase: DeleteTimelineUseCase(timeline),
+    getJobTimelineUseCase: GetJobTimelineUseCase(timelineRepository),
+    createTrackUseCase: CreateTrackUseCase(timelineRepository),
+    updateTrackUseCase: UpdateTrackUseCase(timelineRepository),
+    deleteTrackUseCase: DeleteTrackUseCase(timelineRepository),
+    createClipUseCase: CreateClipUseCase(timelineRepository),
+    updateClipUseCase: UpdateClipUseCase(timelineRepository),
+    deleteClipUseCase: DeleteClipUseCase(timelineRepository),
+    changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(
+      timelineRepository,
+    ),
+    updateTimelineUseCase: UpdateTimelineUseCase(timelineRepository),
+    deleteTimelineUseCase: DeleteTimelineUseCase(timelineRepository),
     toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
     labelUseCase: LabelUseCase(_IdleLabelRepository()),
     askQuestionUseCase: AskQuestionUseCase(asks),
@@ -214,9 +348,13 @@ class _ProjectWorkDetail implements WorkDetailRepository {
 }
 
 class _IdleTimeline implements JobTimelineRepository {
+  _IdleTimeline(this.timeline);
+
+  final JobTimeline timeline;
+
   @override
   Future<JobTimeline> getTimeline({required String jobId}) async {
-    return JobTimeline.empty;
+    return timeline;
   }
 
   @override

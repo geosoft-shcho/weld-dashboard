@@ -1,8 +1,15 @@
 class AskCitation {
-  const AskCitation({required this.startSeconds, required this.endSeconds});
+  const AskCitation({
+    required this.startSeconds,
+    required this.endSeconds,
+    this.text = '',
+    this.segmentId = '',
+  });
 
   final double startSeconds;
   final double endSeconds;
+  final String text;
+  final String segmentId;
 }
 
 class AskAnswer {

@@ -1,7 +1,9 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../core/themes/app_theme.dart';
+import '../video_caption.dart';
 import '../video_multimodal_view_model.dart';
+import '../video_overlay_frame.dart';
 import 'multimodal_video_player.dart';
 
 class MultimodalVideoStage extends StatelessWidget {
@@ -32,20 +34,34 @@ class MultimodalVideoStage extends StatelessWidget {
     }
     final localMs = ((viewModel.playheadSeconds - video.startSeconds) * 1000)
         .round();
+    return _player(
+      mediaUrl: video.mediaUrl,
+      seekToMs: localMs,
+      captions: viewModel.activeVideoCaptions,
+      frames: viewModel.activeVideoOverlayFrames,
+    );
+  }
+
+  Widget _player({
+    required String mediaUrl,
+    required int seekToMs,
+    required List<VideoCaption> captions,
+    required List<VideoOverlayFrame> frames,
+  }) {
     return ColoredBox(
       color: AppTheme.SURFACE,
       child: MultimodalVideoPlayer(
-        key: ValueKey(video.mediaUrl),
-        mediaUrl: video.mediaUrl,
-        seekToMs: localMs,
+        key: ValueKey(mediaUrl),
+        mediaUrl: mediaUrl,
+        seekToMs: seekToMs,
         seekToken: viewModel.seekToken,
         playbackToken: viewModel.playbackToken,
         wantsPlayback: viewModel.wantsPlayback,
-        captions: viewModel.activeVideoCaptions,
-        frames: viewModel.activeVideoOverlayFrames,
+        captions: captions,
+        frames: frames,
         onClock: (clock) {
           viewModel.didReceiveVideoClock(
-            mediaUrl: video.mediaUrl,
+            mediaUrl: mediaUrl,
             localSeconds: clock.position.inMilliseconds / 1000,
             durationSeconds: clock.duration.inMilliseconds / 1000,
             isPlaying: clock.isPlaying,

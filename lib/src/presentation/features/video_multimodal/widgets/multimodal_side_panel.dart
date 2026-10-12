@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
 
 import '../../../core/themes/app_theme.dart';
+import '../../../../domain/entities/ask_answer.dart';
 import '../../../../domain/entities/label_vocab.dart';
 import '../../../../domain/entities/work_attachment.dart';
 import '../../../../domain/entities/work_attachment_type.dart';
@@ -649,7 +650,9 @@ class _AskBodyState extends State<_AskBody> {
 
   @override
   Widget build(BuildContext context) {
-    final turns = widget.viewModel.askTurns;
+    final viewModel = widget.viewModel;
+    final turns = viewModel.askTurns;
+    final playheadSeconds = viewModel.playheadSeconds;
     return _PanelFrame(
       head: _PanelHead(title: '영상 질의', onClose: widget.onClose),
       body: turns.isEmpty
@@ -661,48 +664,22 @@ class _AskBodyState extends State<_AskBody> {
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: MultimodalStudioPalette.PANEL_MUTED,
-                    fontSize: 11,
-                    height: 1.4,
+                    fontSize: 12,
+                    height: 1.45,
                   ),
                 ),
               ),
             )
           : ListView(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(12),
               children: [
                 for (final turn in turns)
-                  Align(
-                    alignment: turn.isUser
-                        ? Alignment.centerRight
-                        : Alignment.centerLeft,
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(maxWidth: 280),
-                      decoration: BoxDecoration(
-                        color: turn.isUser
-                            ? MultimodalStudioPalette.PANEL_ACCENT_FILL
-                            : MultimodalStudioPalette.PANEL_PAPER,
-                        border: Border.all(
-                          color: MultimodalStudioPalette.PANEL_LINE,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(turn.text, style: _fieldTextStyle),
-                          for (final citation in turn.citations)
-                            _QuietButton(
-                              label:
-                                  '${citation.startSeconds.toStringAsFixed(1)}–${citation.endSeconds.toStringAsFixed(1)}',
-                              onPressed: () => widget.viewModel.didTapCitation(
-                                citation.startSeconds,
-                              ),
-                            ),
-                        ],
-                      ),
-                    ),
+                  _AskMessage(
+                    turn: turn,
+                    playheadSeconds: playheadSeconds,
+                    onCitation: viewModel.didTapCitation,
                   ),
+                if (viewModel.isAsking) const _AskPending(),
               ],
             ),
       foot: DecoratedBox(
@@ -738,6 +715,171 @@ class _AskBodyState extends State<_AskBody> {
       ),
     );
   }
+}
+
+class _AskMessage extends StatelessWidget {
+  const _AskMessage({
+    required this.turn,
+    required this.playheadSeconds,
+    required this.onCitation,
+  });
+
+  final AskTurn turn;
+  final double playheadSeconds;
+  final ValueChanged<AskCitation> onCitation;
+
+  @override
+  Widget build(BuildContext context) {
+    final bubble = Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(10, 8, 10, 8),
+      constraints: turn.isUser ? const BoxConstraints(maxWidth: 240) : null,
+      decoration: BoxDecoration(
+        color: turn.isUser
+            ? MultimodalStudioPalette.PANEL_ACCENT_FILL
+            : MultimodalStudioPalette.PANEL_PAPER,
+        border: Border.all(color: MultimodalStudioPalette.PANEL_LINE),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            turn.text,
+            style: const TextStyle(
+              fontSize: 13,
+              height: 1.45,
+              color: MultimodalStudioPalette.PANEL_INK,
+            ),
+          ),
+          for (var index = 0; index < turn.citations.length; index++)
+            _AskCitationButton(
+              index: index,
+              citation: turn.citations[index],
+              isSelected: _isCitationAtPlayhead(
+                playheadSeconds,
+                turn.citations[index],
+              ),
+              onPressed: () => onCitation(turn.citations[index]),
+            ),
+        ],
+      ),
+    );
+    if (turn.isUser) {
+      return Align(alignment: Alignment.centerRight, child: bubble);
+    }
+    return SizedBox(width: double.infinity, child: bubble);
+  }
+}
+
+class _AskCitationButton extends StatelessWidget {
+  const _AskCitationButton({
+    required this.index,
+    required this.citation,
+    required this.isSelected,
+    required this.onPressed,
+  });
+
+  final int index;
+  final AskCitation citation;
+  final bool isSelected;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final range =
+        '${_citationClock(citation.startSeconds)}–${_citationClock(citation.endSeconds)}';
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: MultimodalStudioPalette.PANEL_INK,
+          backgroundColor: isSelected
+              ? MultimodalStudioPalette.PANEL_ACCENT_FILL
+              : MultimodalStudioPalette.PANEL_PAGE,
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          minimumSize: const Size.fromHeight(36),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+          side: BorderSide(
+            color: isSelected
+                ? MultimodalStudioPalette.PANEL_ACCENT
+                : MultimodalStudioPalette.PANEL_LINE,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${index + 1}. ${_citationTitle(citation.text)}',
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+            ),
+            Text(
+              range,
+              style: const TextStyle(
+                fontSize: 11,
+                color: MultimodalStudioPalette.PANEL_MUTED,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AskPending extends StatelessWidget {
+  const _AskPending();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(bottom: 8),
+      child: Text(
+        '답변을 찾는 중입니다.',
+        style: TextStyle(
+          fontSize: 12,
+          height: 1.4,
+          color: MultimodalStudioPalette.PANEL_MUTED,
+        ),
+      ),
+    );
+  }
+}
+
+bool _isCitationAtPlayhead(double playheadSeconds, AskCitation citation) {
+  return (playheadSeconds - citation.startSeconds).abs() < 0.05;
+}
+
+String _citationTitle(String text) {
+  final parts = [
+    for (final part in text.split('|'))
+      if (part.trim().isNotEmpty) part.trim(),
+  ];
+  if (parts.isEmpty) {
+    return '근거 영상';
+  }
+  final title = parts.length >= 4 ? parts[3] : parts.last;
+  for (final part in parts) {
+    if (part.startsWith('job=')) {
+      return '$title · 작업 ${part.substring(4)}';
+    }
+  }
+  return title;
+}
+
+String _citationClock(double seconds) {
+  final whole = seconds.floor().clamp(0, 86400);
+  final hours = whole ~/ 3600;
+  final minutes = (whole % 3600) ~/ 60;
+  final remain = whole % 60;
+  final minuteText = minutes.toString().padLeft(2, '0');
+  final secondText = remain.toString().padLeft(2, '0');
+  if (hours > 0) {
+    return '$hours:$minuteText:$secondText';
+  }
+  return '$minuteText:$secondText';
 }
 
 class _LabelsBody extends StatefulWidget {
