@@ -92,6 +92,7 @@ class JobTimeline {
     required this.jobId,
     required this.name,
     required this.tracks,
+    this.description = '',
     this.overlays = const [],
     this.status = JobTimelineStatus.unspecified,
   });
@@ -100,6 +101,7 @@ class JobTimeline {
 
   final String jobId;
   final String name;
+  final String description;
   final JobTimelineStatus status;
   final List<TimelineTrack> tracks;
   final List<TimelineOverlay> overlays;

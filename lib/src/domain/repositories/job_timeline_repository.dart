@@ -50,5 +50,13 @@ abstract class JobTimelineRepository {
     required JobTimelineStatus toStatus,
   });
 
+  Future<void> updateTimeline({
+    required String jobId,
+    String? name,
+    String? description,
+  });
+
+  Future<void> deleteTimeline({required String jobId});
+
   Future<String> readContent({required String url});
 }

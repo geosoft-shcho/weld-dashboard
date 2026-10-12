@@ -171,6 +171,34 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
   }
 
   @override
+  Future<void> updateTimeline({
+    required String jobId,
+    String? name,
+    String? description,
+  }) {
+    return _write(
+      emptyMessage: '타임라인을 저장하지 못했습니다.',
+      call: () => _mediaTag.composeService.updateTimeline(
+        buildUpdateTimelineRequest(
+          jobId: jobId,
+          name: name,
+          description: description,
+        ),
+      ),
+    );
+  }
+
+  @override
+  Future<void> deleteTimeline({required String jobId}) {
+    return _write(
+      emptyMessage: '타임라인을 지우지 못했습니다.',
+      call: () => _mediaTag.composeService.deleteTimeline(
+        buildDeleteTimelineRequest(jobId: jobId),
+      ),
+    );
+  }
+
+  @override
   Future<void> changeTimelineStatus({
     required String jobId,
     required JobTimelineStatus fromStatus,
@@ -272,6 +300,7 @@ JobTimeline jobTimelineFromResponse(
   return JobTimeline(
     jobId: idText(response.timeline.jobId),
     name: response.timeline.name,
+    description: response.timeline.description,
     status: jobTimelineStatusFromProto(response.timeline.status),
     tracks: tracks,
     overlays: overlays,

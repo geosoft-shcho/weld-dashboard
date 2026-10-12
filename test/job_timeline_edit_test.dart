@@ -17,12 +17,14 @@ import 'package:weld_dashboard/src/domain/use_cases/change_timeline_status_use_c
 import 'package:weld_dashboard/src/domain/use_cases/create_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/delete_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_timeline_board.dart';
@@ -40,6 +42,20 @@ void main() {
     expect(request.clip.hasProvenance(), isFalse);
     expect(request.updateMask.paths, ['timeline_start_ns']);
     expect(request.updateMask.toProto3Json(), 'timelineStartNs');
+  });
+
+  test('timeline update mask lists only the changed name', () {
+    final request = buildUpdateTimelineRequest(jobId: '128', name: '수정한 이름');
+
+    expect(request.timeline.jobId.toString(), '128');
+    expect(request.timeline.name, '수정한 이름');
+    expect(request.updateMask.paths, ['name']);
+  });
+
+  test('timeline delete sends only the job id', () {
+    final request = buildDeleteTimelineRequest(jobId: '128');
+
+    expect(request.jobId.toString(), '128');
   });
 
   test('track update omits fields that were not changed', () {
@@ -182,6 +198,84 @@ void main() {
     expect(repository.lastFromStatus, JobTimelineStatus.draft);
     expect(repository.lastToStatus, JobTimelineStatus.suggested);
     expect(repository.getCount, 2);
+  });
+
+  test('unchanged timeline save skips UpdateTimeline', () async {
+    final repository = _ScriptedTimelineRepository(_loadedTimeline());
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+
+    final emptyName = await viewModel.didSaveTimeline(
+      name: '  ',
+      description: '',
+    );
+    final message = await viewModel.didSaveTimeline(
+      name: '작업',
+      description: '',
+    );
+
+    expect(emptyName, '타임라인 이름을 입력하세요.');
+    expect(message, isNull);
+    expect(repository.updateTimelineCount, 0);
+  });
+
+  test('timeline save sends only the changed name and reloads', () async {
+    final repository = _ScriptedTimelineRepository(_loadedTimeline());
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+
+    final message = await viewModel.didSaveTimeline(
+      name: '수정',
+      description: '',
+    );
+
+    expect(message, isNull);
+    expect(repository.updateTimelineCount, 1);
+    expect(repository.lastUpdatedTimelineName, '수정');
+    expect(repository.lastUpdatedTimelineDescription, isNull);
+    expect(viewModel.timelineName, '수정');
+    expect(repository.getCount, 2);
+  });
+
+  test('timeline save keeps the server message when the write fails', () async {
+    final repository = _ScriptedTimelineRepository(_loadedTimeline());
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+    repository.failure = const JobTimelineException(
+      '저장 거절',
+      failure: JobTimelineFailure.invalidArgument,
+    );
+
+    final message = await viewModel.didSaveTimeline(
+      name: '수정',
+      description: '',
+    );
+
+    expect(message, '저장 거절');
+    expect(viewModel.timelineName, '작업');
+    expect(repository.getCount, 1);
+  });
+
+  test('timeline delete reloads and clears the selected clip', () async {
+    final repository = _ScriptedTimelineRepository(_loadedTimeline());
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+    viewModel.didSelectSampleClip('clip-1');
+    repository.nextTimeline = const JobTimeline(
+      jobId: 'job-1',
+      name: '',
+      status: JobTimelineStatus.draft,
+      tracks: [],
+    );
+
+    final message = await viewModel.didDeleteTimeline();
+
+    expect(message, isNull);
+    expect(repository.deleteTimelineCount, 1);
+    expect(repository.lastDeletedTimelineJobId, 'job-1');
+    expect(repository.getCount, 2);
+    expect(viewModel.selectedClipId, isEmpty);
+    expect(viewModel.timelineTracks, isEmpty);
   });
 
   test('server clip resize sends only the changed endpoint', () async {
@@ -764,6 +858,8 @@ VideoMultimodalViewModel _viewModel(
     updateClipUseCase: UpdateClipUseCase(repository),
     deleteClipUseCase: DeleteClipUseCase(repository),
     changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(repository),
+    updateTimelineUseCase: UpdateTimelineUseCase(repository),
+    deleteTimelineUseCase: DeleteTimelineUseCase(repository),
     toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
     labelUseCase: LabelUseCase(_IdleLabelRepository()),
     jobId: 'job-1',
@@ -887,6 +983,22 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
   }
 
   @override
+  Future<void> updateTimeline({
+    required String jobId,
+    String? name,
+    String? description,
+  }) {
+    writeCount += 1;
+    throw StateError('unused');
+  }
+
+  @override
+  Future<void> deleteTimeline({required String jobId}) {
+    writeCount += 1;
+    throw StateError('unused');
+  }
+
+  @override
   Future<String> readContent({required String url}) {
     throw StateError('unused');
   }
@@ -903,6 +1015,11 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
   int deleteCount = 0;
   String? lastDeletedClipId;
   int changeCount = 0;
+  int updateTimelineCount = 0;
+  String? lastUpdatedTimelineName;
+  String? lastUpdatedTimelineDescription;
+  int deleteTimelineCount = 0;
+  String? lastDeletedTimelineJobId;
   int createTrackCount = 0;
   String? lastCreatedTrackName;
   int? lastCreatedTrackOrder;
@@ -1046,6 +1163,41 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
     changeCount += 1;
     lastFromStatus = fromStatus;
     lastToStatus = toStatus;
+    final error = failure;
+    failure = null;
+    if (error != null) {
+      throw error;
+    }
+  }
+
+  @override
+  Future<void> updateTimeline({
+    required String jobId,
+    String? name,
+    String? description,
+  }) async {
+    updateTimelineCount += 1;
+    lastUpdatedTimelineName = name;
+    lastUpdatedTimelineDescription = description;
+    final error = failure;
+    failure = null;
+    if (error != null) {
+      throw error;
+    }
+    current = JobTimeline(
+      jobId: current.jobId,
+      name: name ?? current.name,
+      description: description ?? current.description,
+      status: current.status,
+      tracks: current.tracks,
+      overlays: current.overlays,
+    );
+  }
+
+  @override
+  Future<void> deleteTimeline({required String jobId}) async {
+    deleteTimelineCount += 1;
+    lastDeletedTimelineJobId = jobId;
     final error = failure;
     failure = null;
     if (error != null) {

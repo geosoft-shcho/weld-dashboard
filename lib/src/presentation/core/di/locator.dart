@@ -37,11 +37,13 @@ import '../../../domain/use_cases/change_timeline_status_use_case.dart';
 import '../../../domain/use_cases/create_clip_use_case.dart';
 import '../../../domain/use_cases/create_track_use_case.dart';
 import '../../../domain/use_cases/delete_clip_use_case.dart';
+import '../../../domain/use_cases/delete_timeline_use_case.dart';
 import '../../../domain/use_cases/delete_track_use_case.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
 import '../../../domain/use_cases/label_use_case.dart';
 import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
+import '../../../domain/use_cases/update_timeline_use_case.dart';
 import '../../../domain/use_cases/update_track_use_case.dart';
 import '../../../domain/use_cases/list_quality_job_media_use_case.dart';
 import '../../../domain/use_cases/list_quality_results_use_case.dart';
@@ -116,6 +118,8 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactory(() => UpdateClipUseCase(locator()));
   locator.registerFactory(() => DeleteClipUseCase(locator()));
   locator.registerFactory(() => ChangeTimelineStatusUseCase(locator()));
+  locator.registerFactory(() => UpdateTimelineUseCase(locator()));
+  locator.registerFactory(() => DeleteTimelineUseCase(locator()));
   locator.registerLazySingleton<ToolRunRepository>(
     () => RemoteToolRunRepository(locator()),
   );
@@ -151,6 +155,8 @@ void setupLocator({required bool pdfrxReady}) {
       updateClipUseCase: locator(),
       deleteClipUseCase: locator(),
       changeTimelineStatusUseCase: locator(),
+      updateTimelineUseCase: locator(),
+      deleteTimelineUseCase: locator(),
       toolRunUseCase: locator(),
       labelUseCase: locator(),
       jobId: jobId,

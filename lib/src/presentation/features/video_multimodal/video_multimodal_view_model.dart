@@ -12,12 +12,14 @@ import '../../../domain/use_cases/change_timeline_status_use_case.dart';
 import '../../../domain/use_cases/create_clip_use_case.dart';
 import '../../../domain/use_cases/create_track_use_case.dart';
 import '../../../domain/use_cases/delete_clip_use_case.dart';
+import '../../../domain/use_cases/delete_timeline_use_case.dart';
 import '../../../domain/use_cases/delete_track_use_case.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
 import '../../../domain/use_cases/label_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
+import '../../../domain/use_cases/update_timeline_use_case.dart';
 import '../../../domain/use_cases/update_track_use_case.dart';
 import 'video_caption.dart';
 import 'video_overlay_clock.dart';
@@ -141,6 +143,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required this._updateClipUseCase,
     required this._deleteClipUseCase,
     required this._changeTimelineStatusUseCase,
+    required this._updateTimelineUseCase,
+    required this._deleteTimelineUseCase,
     required this._toolRunUseCase,
     required this._labelUseCase,
     required this.jobId,
@@ -166,6 +170,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final UpdateClipUseCase _updateClipUseCase;
   final DeleteClipUseCase _deleteClipUseCase;
   final ChangeTimelineStatusUseCase _changeTimelineStatusUseCase;
+  final UpdateTimelineUseCase _updateTimelineUseCase;
+  final DeleteTimelineUseCase _deleteTimelineUseCase;
   final ToolRunUseCase _toolRunUseCase;
   final LabelUseCase _labelUseCase;
   final String jobId;
@@ -482,6 +488,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   String get playheadLabel => _formatClock(_playheadSeconds);
   String get spanLabel => _formatClock(spanSeconds);
+  String get timelineName => _timeline.name;
+  String get timelineDescription => _timeline.description;
+
   String get pageTitle {
     final workName = _workName.trim();
     if (workName.isNotEmpty) {
@@ -1178,6 +1187,53 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         isReviewed: isReviewed,
       ),
     );
+  }
+
+  Future<String?> didSaveTimeline({
+    required String name,
+    required String description,
+  }) async {
+    final nextName = name.trim();
+    if (nextName.isEmpty) {
+      return '타임라인 이름을 입력하세요.';
+    }
+    final nextDescription = description.trim();
+    final changedName = nextName == _timeline.name ? null : nextName;
+    final changedDescription = nextDescription == _timeline.description
+        ? null
+        : nextDescription;
+    if (changedName == null && changedDescription == null) {
+      return null;
+    }
+    final didSave = await _commitServerWrite(
+      () => _updateTimelineUseCase.execute(
+        jobId: jobId,
+        name: changedName,
+        description: changedDescription,
+      ),
+    );
+    if (didSave) {
+      return null;
+    }
+    return _writeFailureMessage('타임라인을 저장하지 못했습니다.');
+  }
+
+  Future<String?> didDeleteTimeline() async {
+    final didDelete = await _commitServerWrite(
+      () => _deleteTimelineUseCase.execute(jobId: jobId),
+    );
+    if (!didDelete) {
+      return _writeFailureMessage('타임라인을 지우지 못했습니다.');
+    }
+    _selectedClipId = '';
+    _relationAnchorClipId = '';
+    _isRelationMode = false;
+    notifyListeners();
+    return null;
+  }
+
+  String _writeFailureMessage(String fallback) {
+    return _timelineHint.isEmpty ? fallback : _timelineHint;
   }
 
   Future<void> changeTimelineStatus(JobTimelineStatus toStatus) {

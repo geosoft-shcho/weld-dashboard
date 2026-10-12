@@ -20,12 +20,14 @@ import 'package:weld_dashboard/src/domain/use_cases/change_timeline_status_use_c
 import 'package:weld_dashboard/src/domain/use_cases/create_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/delete_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_dialogs.dart';
@@ -379,6 +381,8 @@ VideoMultimodalViewModel _viewModel(
     changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(
       timelineRepository,
     ),
+    updateTimelineUseCase: UpdateTimelineUseCase(timelineRepository),
+    deleteTimelineUseCase: DeleteTimelineUseCase(timelineRepository),
     toolRunUseCase: ToolRunUseCase(tools),
     labelUseCase: LabelUseCase(_IdleLabelRepository()),
     jobId: '128',
@@ -589,6 +593,16 @@ class _QuietTimelineRepository implements JobTimelineRepository {
     required JobTimelineStatus fromStatus,
     required JobTimelineStatus toStatus,
   }) async {}
+
+  @override
+  Future<void> updateTimeline({
+    required String jobId,
+    String? name,
+    String? description,
+  }) async {}
+
+  @override
+  Future<void> deleteTimeline({required String jobId}) async {}
 
   @override
   Future<String> readContent({required String url}) async => '';

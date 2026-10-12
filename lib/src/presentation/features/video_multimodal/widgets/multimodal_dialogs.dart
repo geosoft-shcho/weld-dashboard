@@ -12,7 +12,7 @@ Future<void> showMultimodalLayerDeleteDialog(
     context: context,
     builder: (dialogContext) {
       return WorkDetailMaterialScope(
-        child: _LayerDeleteDialog(viewModel: viewModel),
+        child: _TimelineDeleteDialog(viewModel: viewModel),
       );
     },
   );
@@ -33,27 +33,14 @@ Future<void> showMultimodalInferencePicker(
 }
 
 Future<void> showMultimodalPersistDialog(
-  BuildContext context, {
-  required bool succeeded,
-}) {
+  BuildContext context,
+  VideoMultimodalViewModel viewModel,
+) {
   return showDialog<void>(
     context: context,
     builder: (dialogContext) {
-      final title = succeeded ? '레이어 반영 완료' : '레이어 반영 실패';
-      final body = succeeded
-          ? '"자막" (TEXT) — 수정\n"포즈" (POSE) — segment 1건 추가'
-          : '레이어 저장에 실패했습니다.';
       return WorkDetailMaterialScope(
-        child: AlertDialog(
-          title: Text(title),
-          content: Text(body),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: const Text('닫기'),
-            ),
-          ],
-        ),
+        child: _TimelineSaveDialog(viewModel: viewModel),
       );
     },
   );
@@ -101,136 +88,155 @@ Future<String?> showMultimodalRenameLabelDialog(
   );
 }
 
-class _LayerDeleteDialog extends StatefulWidget {
-  const _LayerDeleteDialog({required this.viewModel});
+class _TimelineSaveDialog extends StatefulWidget {
+  const _TimelineSaveDialog({required this.viewModel});
 
   final VideoMultimodalViewModel viewModel;
 
   @override
-  State<_LayerDeleteDialog> createState() => _LayerDeleteDialogState();
+  State<_TimelineSaveDialog> createState() => _TimelineSaveDialogState();
 }
 
-class _LayerDeleteDialogState extends State<_LayerDeleteDialog> {
-  String _selectedLayerId = '';
+class _TimelineSaveDialogState extends State<_TimelineSaveDialog> {
+  late final TextEditingController _nameController;
+  late final TextEditingController _descriptionController;
+  String _message = '';
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    final layers = widget.viewModel.sampleLayers;
-    if (layers.isNotEmpty) {
-      _selectedLayerId = layers.first.layerId;
-    }
+    _nameController = TextEditingController(
+      text: widget.viewModel.timelineName,
+    );
+    _descriptionController = TextEditingController(
+      text: widget.viewModel.timelineDescription,
+    );
   }
 
-  SampleLayerSummary? get _selected {
-    for (final layer in widget.viewModel.sampleLayers) {
-      if (layer.layerId == _selectedLayerId) {
-        return layer;
-      }
-    }
-    return null;
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _descriptionController.dispose();
+    super.dispose();
   }
 
-  Future<void> _confirm() async {
-    final layer = _selected;
-    if (layer == null) {
+  Future<void> _save() async {
+    setState(() {
+      _isSaving = true;
+      _message = '';
+    });
+    final message = await widget.viewModel.didSaveTimeline(
+      name: _nameController.text,
+      description: _descriptionController.text,
+    );
+    if (!mounted) {
       return;
     }
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return WorkDetailMaterialScope(
-          child: AlertDialog(
-            title: const Text('레이어 삭제'),
-            content: Text('「${layer.displayName}」 레이어를 삭제하시겠습니까?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('취소'),
-              ),
-              FilledButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('삭제'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    if (confirmed == true && mounted) {
+    if (message == null) {
       Navigator.pop(context);
+      return;
     }
+    setState(() {
+      _isSaving = false;
+      _message = message;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final layers = widget.viewModel.sampleLayers;
-    if (layers.isEmpty) {
-      return AlertDialog(
-        title: const Text('레이어 삭제'),
-        content: const Text('삭제할 수 있는 레이어(TEXT·TAG·POSE)가 없습니다.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('닫기'),
-          ),
-        ],
-      );
-    }
-    final selected = _selected;
     return AlertDialog(
-      title: const Text('레이어 삭제'),
-      content: SizedBox(
-        width: 460,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              '삭제할 annotation 레이어를 선택하세요. 상세 정보는 프로젝트 조회(GetProject) 요약과 로드된 레이어 문서(GetLayer)를 기준으로 표시합니다.',
-            ),
+      title: const Text('타임라인 저장'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            controller: _nameController,
+            autofocus: true,
+            decoration: const InputDecoration(labelText: '이름'),
+          ),
+          TextField(
+            controller: _descriptionController,
+            decoration: const InputDecoration(labelText: '설명'),
+          ),
+          if (_message.isNotEmpty) ...[
             const SizedBox(height: 8),
-            for (final layer in layers)
-              ListTile(
-                selected: layer.layerId == _selectedLayerId,
-                title: Text(layer.displayName),
-                subtitle: Text(layer.kind),
-                onTap: () => setState(() => _selectedLayerId = layer.layerId),
-              ),
-            if (selected != null) ...[
-              const Divider(),
-              _field('표시 이름', selected.displayName),
-              _field('종류', selected.kind),
-              _field('순서', '${selected.order}'),
-              _field('숨김', selected.isHidden ? '예' : '아니오'),
-              _field('메인 레이어', selected.isMainLayer ? '예' : '아니오'),
-              _field('revision', selected.revision),
-              _field('콘텐츠 상태', selected.contentStatus),
-              _field('tagType', selected.tagType),
-              _field('segment 수', '${selected.segmentCount}'),
-            ],
+            Text(_message),
           ],
-        ),
+        ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context),
+          onPressed: _isSaving ? null : () => Navigator.pop(context),
           child: const Text('취소'),
         ),
-        FilledButton(onPressed: _confirm, child: const Text('삭제')),
+        FilledButton(
+          onPressed: _isSaving ? null : _save,
+          child: const Text('저장'),
+        ),
       ],
     );
   }
+}
 
-  Widget _field(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
+class _TimelineDeleteDialog extends StatefulWidget {
+  const _TimelineDeleteDialog({required this.viewModel});
+
+  final VideoMultimodalViewModel viewModel;
+
+  @override
+  State<_TimelineDeleteDialog> createState() => _TimelineDeleteDialogState();
+}
+
+class _TimelineDeleteDialogState extends State<_TimelineDeleteDialog> {
+  String _message = '';
+  bool _isDeleting = false;
+
+  Future<void> _delete() async {
+    setState(() {
+      _isDeleting = true;
+      _message = '';
+    });
+    final message = await widget.viewModel.didDeleteTimeline();
+    if (!mounted) {
+      return;
+    }
+    if (message == null) {
+      Navigator.pop(context);
+      return;
+    }
+    setState(() {
+      _isDeleting = false;
+      _message = message;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('타임라인 삭제'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SizedBox(width: 120, child: Text(label)),
-          Expanded(child: Text(value)),
+          const Text('타임라인과 트랙·클립을 지웁니다. 작업과 첨부 파일은 남습니다.'),
+          if (_message.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(_message),
+          ],
         ],
       ),
+      actions: [
+        TextButton(
+          onPressed: _isDeleting ? null : () => Navigator.pop(context),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          onPressed: _isDeleting ? null : _delete,
+          child: const Text('삭제'),
+        ),
+      ],
     );
   }
 }

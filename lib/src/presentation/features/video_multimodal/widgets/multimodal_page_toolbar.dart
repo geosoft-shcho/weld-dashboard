@@ -147,17 +147,15 @@ class MultimodalPageToolbar extends StatelessWidget {
                     children: [
                       _ToolbarButton(
                         icon: FluentIcons.save,
-                        label: '레이어 저장',
+                        label: '타임라인 저장',
                         enabled: !locked,
                         accent: true,
-                        onPressed: () => showMultimodalPersistDialog(
-                          context,
-                          succeeded: viewModel.pageTitle.trim().isNotEmpty,
-                        ),
+                        onPressed: () =>
+                            showMultimodalPersistDialog(context, viewModel),
                       ),
                       _ToolbarButton(
                         icon: FluentIcons.delete,
-                        label: '레이어 삭제',
+                        label: '타임라인 삭제',
                         enabled: !locked,
                         onPressed: () =>
                             showMultimodalLayerDeleteDialog(context, viewModel),

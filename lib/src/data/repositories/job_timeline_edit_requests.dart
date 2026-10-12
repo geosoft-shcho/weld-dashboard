@@ -139,6 +139,33 @@ compose_pb.DeleteClipRequest buildDeleteClipRequest({required String clipId}) {
   return compose_pb.DeleteClipRequest(clipId: protoId(clipId));
 }
 
+compose_pb.UpdateTimelineRequest buildUpdateTimelineRequest({
+  required String jobId,
+  String? name,
+  String? description,
+}) {
+  final timeline = compose_pb.Timeline(jobId: protoId(jobId));
+  final paths = <String>[];
+  if (name != null) {
+    timeline.name = name;
+    paths.add('name');
+  }
+  if (description != null) {
+    timeline.description = description;
+    paths.add('description');
+  }
+  return compose_pb.UpdateTimelineRequest(
+    timeline: timeline,
+    updateMask: FieldMask(paths: paths),
+  );
+}
+
+compose_pb.DeleteTimelineRequest buildDeleteTimelineRequest({
+  required String jobId,
+}) {
+  return compose_pb.DeleteTimelineRequest(jobId: protoId(jobId));
+}
+
 compose_pb.ChangeTimelineStatusRequest buildChangeTimelineStatusRequest({
   required String jobId,
   required JobTimelineStatus fromStatus,
