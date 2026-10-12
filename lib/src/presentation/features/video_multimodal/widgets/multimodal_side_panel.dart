@@ -207,7 +207,7 @@ class _AccentButton extends StatelessWidget {
       onPressed: onPressed,
       style: TextButton.styleFrom(
         backgroundColor: MultimodalStudioPalette.PANEL_ACCENT,
-        foregroundColor: MultimodalStudioPalette.PANEL_PAGE,
+        foregroundColor: const fluent.Color.fromARGB(255, 18, 13, 13),
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -691,25 +691,28 @@ class _AskBodyState extends State<_AskBody> {
         ),
         child: Padding(
           padding: const EdgeInsets.all(8),
-          child: Row(
-            children: [
-              Expanded(
-                child: TextField(
-                  controller: _controller,
-                  style: _fieldTextStyle,
-                  cursorColor: MultimodalStudioPalette.PANEL_ACCENT,
-                  decoration: _fieldDecoration('영상 내용에 대해 질문하세요'),
-                  onSubmitted: widget.viewModel.isAsking
-                      ? null
-                      : (_) => _send(),
+          child: IntrinsicHeight(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _controller,
+                    style: _fieldTextStyle,
+                    cursorColor: MultimodalStudioPalette.PANEL_ACCENT,
+                    decoration: _fieldDecoration('영상 내용에 대해 질문하세요'),
+                    onSubmitted: widget.viewModel.isAsking
+                        ? null
+                        : (_) => _send(),
+                  ),
                 ),
-              ),
-              const SizedBox(width: 4),
-              _AccentButton(
-                label: '전송',
-                onPressed: widget.viewModel.isAsking ? null : _send,
-              ),
-            ],
+                const SizedBox(width: 4),
+                _AccentButton(
+                  label: '전송',
+                  onPressed: widget.viewModel.isAsking ? null : _send,
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -988,19 +991,25 @@ class _LabelsBodyState extends State<_LabelsBody> {
   Widget _addField(String parentValueId, int depth) {
     return Padding(
       padding: EdgeInsets.fromLTRB(8 + depth * _INDENT_STEP, 4, 8, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              style: _fieldTextStyle,
-              cursorColor: MultimodalStudioPalette.PANEL_ACCENT,
-              decoration: _fieldDecoration('새 라벨 이름'),
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _controller,
+                style: _fieldTextStyle,
+                cursorColor: MultimodalStudioPalette.PANEL_ACCENT,
+                decoration: _fieldDecoration('새 라벨 이름'),
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          _AccentButton(label: '추가', onPressed: () => _addLabel(parentValueId)),
-        ],
+            const SizedBox(width: 4),
+            _AccentButton(
+              label: '추가',
+              onPressed: () => _addLabel(parentValueId),
+            ),
+          ],
+        ),
       ),
     );
   }

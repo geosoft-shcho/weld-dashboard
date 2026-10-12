@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/data/datasources/generated/tacittag/rag/v2/rag.pb.dart'
     as rag_pb;
@@ -29,6 +30,7 @@ import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_side_panel.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/timeline_board_helpers.dart';
 
 void main() {
@@ -297,6 +299,29 @@ void main() {
     expect(viewModel.noticeText, '이 근거 영상을 열 수 없습니다.');
     expect(viewModel.wantsPlayback, isFalse);
     expect(viewModel.selectedClipId, isEmpty);
+  });
+
+  testWidgets('the ask field and send button share a height', (tester) async {
+    final viewModel = _viewModel(_ScriptedAsk(), projectId: '42');
+    addTearDown(viewModel.dispose);
+    await viewModel.loadAttachments();
+    viewModel.didTapToggleAsk();
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ListenableBuilder(
+          listenable: viewModel,
+          builder: (context, _) {
+            return MultimodalSidePanel(viewModel: viewModel, onClose: () {});
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    final field = tester.getSize(find.byType(TextField));
+    final button = tester.getSize(find.widgetWithText(TextButton, '전송'));
+    expect(button.height, field.height);
   });
 
   test('an object row outside the list scrolls to that row', () {
