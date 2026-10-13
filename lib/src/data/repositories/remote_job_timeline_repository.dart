@@ -47,7 +47,10 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
       final response = await _mediaTag.composeService.getClip(
         buildGetClipRequest(clipId),
       );
-      return clipDetailFromResponse(response);
+      return clipDetailFromResponse(
+        response,
+        resolveContentUrl: _mediaTag.resolveContentUrl,
+      );
     } on ConnectException catch (error) {
       throw timelineExceptionFromConnect(
         error,
@@ -442,6 +445,8 @@ TimelineClipKind _kindFrom(ClipKind kind) {
       return TimelineClipKind.tag;
     case ClipKind.CLIP_KIND_REGION:
       return TimelineClipKind.region;
+    case ClipKind.CLIP_KIND_RELATION:
+      return TimelineClipKind.unspecified;
     case ClipKind.CLIP_KIND_UNSPECIFIED:
       return TimelineClipKind.unspecified;
   }

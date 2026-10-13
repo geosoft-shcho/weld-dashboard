@@ -592,8 +592,7 @@ class _PropertiesBody extends StatelessWidget {
                       child: fluent.ProgressRing(),
                     )
                   else if (clip != null &&
-                      viewModel.clipDetailMessage.isNotEmpty &&
-                      viewModel.clipDetailFields.isEmpty)
+                      viewModel.clipDetailMessage.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.all(12),
                       child: Text(
@@ -603,14 +602,14 @@ class _PropertiesBody extends StatelessWidget {
                           fontSize: 11,
                         ),
                       ),
-                    )
-                  else if (clip != null)
+                    ),
+                  if (clip != null && !viewModel.isClipDetailLoading)
                     for (final field in viewModel.clipDetailFields)
                       _DataRow([
                         _DataCell(field.label, flex: 2),
                         _DataCell(field.value, flex: 3),
-                      ])
-                  else ...[
+                      ]),
+                  if (clip == null) ...[
                     _DataRow([
                       const _DataCell('이름', flex: 2),
                       _DataCell(bar!.fileName, flex: 3),

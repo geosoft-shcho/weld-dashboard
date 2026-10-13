@@ -5,7 +5,8 @@ import 'video_overlay_frame.dart';
 const double POSE_PERCENT_SCALE = 100;
 
 /// content_url 포즈 본문을 프레임으로 바꾼다.
-/// 확인한 본문은 `data.lsfResult.value.sequence`이고, 좌표는 0~100이다.
+/// `persons[].value.sequence`와 `data.lsfResult.value.sequence`를 지원한다.
+/// 좌표는 0~100이다.
 List<VideoOverlayFrame> parsePoseOverlay(String source) {
   if (source.trim().isEmpty) {
     return const [];
@@ -19,6 +20,34 @@ List<VideoOverlayFrame> parsePoseOverlay(String source) {
   if (decoded is! Map) {
     return const [];
   }
+
+  final persons = decoded['persons'];
+  if (persons is List) {
+    final coordinateUnit = decoded['coordinateUnit'];
+    if (coordinateUnit != null && coordinateUnit != 'percent') {
+      return const [];
+    }
+    final frameRate = _number(decoded['frameRate']);
+    final names = _names(decoded['keypointSchema']);
+    final links = _links(decoded['skeleton']);
+    final frames = <VideoOverlayFrame>[];
+    var hasSequence = false;
+    for (final person in persons) {
+      if (person is! Map) {
+        continue;
+      }
+      final value = person['value'];
+      final sequence = value is Map ? value['sequence'] : null;
+      if (sequence is List && sequence.isNotEmpty) {
+        hasSequence = true;
+        frames.addAll(_parseSequence(sequence, frameRate, names, links));
+      }
+    }
+    if (hasSequence) {
+      return frames;
+    }
+  }
+
   final data = decoded['data'];
   if (data is! Map) {
     return const [];
@@ -32,19 +61,32 @@ List<VideoOverlayFrame> parsePoseOverlay(String source) {
   final frameRate = _number(data['frameRate']);
   final names = _names(data['keypointSchema']);
   final links = _links(data['skeleton']);
+  return _parseSequence(sequence, frameRate, names, links);
+}
+
+List<VideoOverlayFrame> _parseSequence(
+  List sequence,
+  double frameRate,
+  List<String> names,
+  List<List<String>> links,
+) {
   final frames = <VideoOverlayFrame>[];
   for (var index = 0; index < sequence.length; index++) {
     final item = sequence[index];
     if (item is! Map || item['enabled'] != true) {
       continue;
     }
-    final start = _number(item['time']);
+    final start = _validTime(item['time']);
+    if (start == null) {
+      continue;
+    }
     final next = index + 1 < sequence.length
         ? _itemTime(sequence[index + 1])
-        : start;
-    final spanEnd = next > start
-        ? next
-        : start + (frameRate > 0 ? 1 / frameRate : 1 / 24);
+        : null;
+    final interval = frameRate > 0 && frameRate.isFinite
+        ? 1 / frameRate
+        : 1 / 24;
+    final spanEnd = next != null && next > start ? next : start + interval;
     final named = _points(item['keypoints'], names);
     final boxes = _boxes(item);
     if (boxes.isEmpty && named.points.isEmpty) {
@@ -70,14 +112,21 @@ List<VideoOverlayBox> _boxes(Map item) {
       item['height'] == null) {
     return const [];
   }
-  return [
-    VideoOverlayBox(
-      left: _unit(item['x']),
-      top: _unit(item['y']),
-      width: _unit(item['width']),
-      height: _unit(item['height']),
-    ),
-  ];
+  final left = _unit(item['x']);
+  final top = _unit(item['y']);
+  final width = _unit(item['width']);
+  final height = _unit(item['height']);
+  if (left == null ||
+      top == null ||
+      width == null ||
+      height == null ||
+      width <= 0 ||
+      height <= 0 ||
+      left + width > 1 ||
+      top + height > 1) {
+    return const [];
+  }
+  return [VideoOverlayBox(left: left, top: top, width: width, height: height)];
 }
 
 class _NamedPoints {
@@ -104,8 +153,13 @@ _NamedPoints _points(Object? raw, List<String> schema) {
     if (item == null) {
       continue;
     }
+    final x = _unit(item['x']);
+    final y = _unit(item['y']);
+    if (x == null || y == null) {
+      continue;
+    }
     indexesByName[name] = points.length;
-    points.add(VideoOverlayPoint(x: _unit(item['x']), y: _unit(item['y'])));
+    points.add(VideoOverlayPoint(x: x, y: y));
   }
   return _NamedPoints(points, indexesByName);
 }
@@ -146,11 +200,19 @@ List<List<String>> _links(Object? raw) {
   return links;
 }
 
-double _itemTime(Object? item) {
+double? _itemTime(Object? item) {
   if (item is! Map) {
-    return 0;
+    return null;
   }
-  return _number(item['time']);
+  return _validTime(item['time']);
+}
+
+double? _validTime(Object? value) {
+  if (value is! num) {
+    return null;
+  }
+  final time = value.toDouble();
+  return time.isFinite && time >= 0 ? time : null;
 }
 
 double _number(Object? value) {
@@ -160,7 +222,16 @@ double _number(Object? value) {
   return 0;
 }
 
-double _unit(Object? value) => _number(value) / POSE_PERCENT_SCALE;
+double? _unit(Object? value) {
+  if (value is! num) {
+    return null;
+  }
+  final number = value.toDouble();
+  if (!number.isFinite || number < 0 || number > POSE_PERCENT_SCALE) {
+    return null;
+  }
+  return number / POSE_PERCENT_SCALE;
+}
 
 Duration _seconds(double seconds) {
   return Duration(microseconds: (seconds * 1000000).round());

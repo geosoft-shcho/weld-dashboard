@@ -16,14 +16,19 @@ compose_pb.GetClipRequest buildGetClipRequest(String clipId) {
   return compose_pb.GetClipRequest(
     clipId: protoId(clipId),
     includeAssets: true,
+    includeTarget: true,
   );
 }
 
-ClipDetail clipDetailFromResponse(compose_pb.GetClipResponse response) {
+ClipDetail clipDetailFromResponse(
+  compose_pb.GetClipResponse response, {
+  String Function(String contentUrl) resolveContentUrl = _sameUrl,
+}) {
   if (!response.hasClip()) {
     return ClipDetail.empty;
   }
   final clip = response.clip;
+  final provenance = clip.hasProvenance() ? clip.provenance : null;
   final fields = <ClipField>[];
   void add(String label, String value) {
     fields.add(ClipField(label: label, value: value));
@@ -48,8 +53,7 @@ ClipDetail clipDetailFromResponse(compose_pb.GetClipResponse response) {
   }
   add('labelValueId', _id(clip.labelValueId));
   add('description', _text(clip.description));
-  if (clip.hasProvenance()) {
-    final provenance = clip.provenance;
+  if (provenance != null) {
     add(
       'provenance.confidence',
       provenance.hasConfidence() ? '${provenance.confidence}' : _dash,
@@ -81,8 +85,7 @@ ClipDetail clipDetailFromResponse(compose_pb.GetClipResponse response) {
     add('relation.toClipId', _dash);
   }
 
-  final hasAsset =
-      response.hasAsset() && response.asset.assetId != Int64.ZERO;
+  final hasAsset = response.hasAsset() && response.asset.assetId != Int64.ZERO;
   if (!hasAsset) {
     add('asset', '가리키는 파일 없음');
   } else {
@@ -121,17 +124,98 @@ ClipDetail clipDetailFromResponse(compose_pb.GetClipResponse response) {
     add('asset.childCount', '${asset.childCount}');
   }
 
+  final hasTargetClip =
+      response.hasTargetClip() && response.targetClip.clipId != Int64.ZERO;
+  if (hasTargetClip) {
+    final target = response.targetClip;
+    add('targetClip.clipId', _id(target.clipId));
+    add('targetClip.kind', _enumLabel(target.kind.name));
+    add(
+      'targetClip.timelineStartNs',
+      _ns(target.hasTimelineStartNs(), target.timelineStartNs),
+    );
+    add(
+      'targetClip.timelineEndNs',
+      _ns(target.hasTimelineEndNs(), target.timelineEndNs),
+    );
+  } else {
+    add('targetClip', _none);
+  }
+
+  final hasTargetAsset =
+      response.hasTargetAsset() && response.targetAsset.assetId != Int64.ZERO;
+  if (hasTargetAsset) {
+    final target = response.targetAsset;
+    add('targetAsset.assetId', _id(target.assetId));
+    add('targetAsset.kind', _enumLabel(target.kind.name));
+    add('targetAsset.fileName', _text(target.fileName));
+    add('targetAsset.contentUrl', _text(target.contentUrl));
+  } else {
+    add('targetAsset', _none);
+  }
+
   return ClipDetail(
     clipId: clip.clipId.toString(),
     fields: fields,
     hasAsset: hasAsset,
     isVideo: clip.kind == compose_pb.ClipKind.CLIP_KIND_VIDEO,
+    isPose: clip.kind == compose_pb.ClipKind.CLIP_KIND_POSE,
     timelineStartNs: clip.hasTimelineStartNs()
         ? clip.timelineStartNs.toString()
         : '',
     timelineEndNs: clip.hasTimelineEndNs() ? clip.timelineEndNs.toString() : '',
+    sourceStartNs: clip.hasSource() && clip.source.hasStartNs()
+        ? clip.source.startNs.toString()
+        : '',
+    sourceEndNs: clip.hasSource() && clip.source.hasEndNs()
+        ? clip.source.endNs.toString()
+        : '',
+    assetId: hasAsset ? response.asset.assetId.toString() : '',
+    assetFileName: hasAsset ? response.asset.fileName : '',
+    assetContentUrl: hasAsset && response.asset.contentUrl.isNotEmpty
+        ? resolveContentUrl(response.asset.contentUrl)
+        : '',
+    targetKind: provenance == null
+        ? ClipTargetKind.unspecified
+        : _targetKindFrom(provenance.targetKind),
+    targetId: provenance == null || provenance.targetId == Int64.ZERO
+        ? ''
+        : provenance.targetId.toString(),
+    hasTargetClip: hasTargetClip,
+    targetClipId: hasTargetClip ? response.targetClip.clipId.toString() : '',
+    targetClipKind: hasTargetClip
+        ? _enumLabel(response.targetClip.kind.name)
+        : '',
+    targetTimelineStartNs:
+        hasTargetClip && response.targetClip.hasTimelineStartNs()
+        ? response.targetClip.timelineStartNs.toString()
+        : '',
+    targetTimelineEndNs: hasTargetClip && response.targetClip.hasTimelineEndNs()
+        ? response.targetClip.timelineEndNs.toString()
+        : '',
+    hasTargetAsset: hasTargetAsset,
+    targetAssetId: hasTargetAsset
+        ? response.targetAsset.assetId.toString()
+        : '',
+    targetAssetFileName: hasTargetAsset ? response.targetAsset.fileName : '',
+    targetAssetContentUrl:
+        hasTargetAsset && response.targetAsset.contentUrl.isNotEmpty
+        ? resolveContentUrl(response.targetAsset.contentUrl)
+        : '',
   );
 }
+
+ClipTargetKind _targetKindFrom(compose_pb.ClipTargetKind kind) {
+  if (kind == compose_pb.ClipTargetKind.CLIP_TARGET_KIND_CLIP) {
+    return ClipTargetKind.clip;
+  }
+  if (kind == compose_pb.ClipTargetKind.CLIP_TARGET_KIND_ASSET) {
+    return ClipTargetKind.asset;
+  }
+  return ClipTargetKind.unspecified;
+}
+
+String _sameUrl(String contentUrl) => contentUrl;
 
 String _id(Int64 id) => id == Int64.ZERO ? _none : id.toString();
 

@@ -205,6 +205,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool _isClipDetailLoading = false;
   String _clipDetailMessage = '';
   ClipDetail? _clipDetail;
+  TimelineClip? _playbackVideoClip;
+  TimelineOverlay? _selectedPoseOverlay;
+  List<VideoOverlayFrame> _selectedPoseFrames = const [];
   bool _isRelationMode = false;
   String _relationAnchorClipId = '';
   String _workName = '';
@@ -326,6 +329,19 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final video = activeVideoBar;
     if (video == null) {
       return const [];
+    }
+    final selected = _timelineClip(_selectedClipId);
+    final poseOverlay = _selectedPoseOverlay;
+    if (selected?.kind == TimelineClipKind.pose) {
+      if (poseOverlay == null) {
+        return const [];
+      }
+      return framesOnVideo(
+        videoStartSeconds: video.startSeconds,
+        videoEndSeconds: video.endSeconds,
+        overlays: [poseOverlay],
+        framesByAssetId: {poseOverlay.assetId: _selectedPoseFrames},
+      );
     }
     return framesOnVideo(
       videoStartSeconds: video.startSeconds,
@@ -472,13 +488,17 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   TemporaryAttachmentBar? get activeVideoBar {
     final selected = _timelineClip(_selectedClipId);
+    if (selected?.kind == TimelineClipKind.pose && _playbackVideoClip == null) {
+      return null;
+    }
     final clip =
-        selected != null &&
-            selected.kind == TimelineClipKind.video &&
-            selected.playbackUrl.isNotEmpty &&
-            _clipCovers(selected, _playheadSeconds)
-        ? selected
-        : _videoClipAt(_playheadSeconds);
+        _playbackVideoClip ??
+        (selected != null &&
+                selected.kind == TimelineClipKind.video &&
+                selected.playbackUrl.isNotEmpty &&
+                _clipCovers(selected, _playheadSeconds)
+            ? selected
+            : _videoClipAt(_playheadSeconds));
     if (clip == null) {
       return null;
     }
@@ -753,6 +773,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return;
     }
     _selectedClipId = clipId;
+    _clearPosePlayback();
     _side = VideoMultimodalSide.properties;
     didSeekToSeconds(secondsFromNanoseconds(timelineClip.startNanoseconds));
     unawaited(_loadClipDetail(clipId));
@@ -770,17 +791,30 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         return;
       }
       _clipDetail = detail;
-      _startVideoRange(detail);
+      if (detail.isPose) {
+        await _startPosePlayback(detail, epoch);
+      } else {
+        _startVideoRange(detail);
+      }
+      if (epoch != _clipDetailEpoch || _isClosed) {
+        return;
+      }
     } on JobTimelineException catch (error) {
       if (epoch != _clipDetailEpoch || _isClosed) {
         return;
       }
       _clipDetailMessage = error.message;
+      if (_clipDetail?.isPose == true) {
+        debugPrint('[POSE] clipId=$clipId failed: ${error.message}');
+      }
     } catch (error) {
       if (epoch != _clipDetailEpoch || _isClosed) {
         return;
       }
       _clipDetailMessage = error.toString();
+      if (_clipDetail?.isPose == true) {
+        debugPrint('[POSE] clipId=$clipId failed: $error');
+      }
     }
     _isClipDetailLoading = false;
     notifyListeners();
@@ -797,7 +831,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final startNs = detail.timelineStartNs.isEmpty
         ? clip.startNs
         : detail.timelineStartNs;
-    final endNs = detail.timelineEndNs.isEmpty ? clip.endNs : detail.timelineEndNs;
+    final endNs = detail.timelineEndNs.isEmpty
+        ? clip.endNs
+        : detail.timelineEndNs;
     if (!isOpenNanosecondInterval(startNs, endNs)) {
       return;
     }
@@ -806,8 +842,145 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     didSeekToSeconds(secondsFromNanoseconds(startNs));
   }
 
+  Future<void> _startPosePlayback(ClipDetail pose, int epoch) async {
+    debugPrint(
+      '[POSE] clipId=${pose.clipId} poseAssetId=${pose.assetId} '
+      'hasPoseUrl=${pose.assetContentUrl.isNotEmpty}',
+    );
+    debugPrint(
+      '[POSE] hasTargetClip=${pose.hasTargetClip} '
+      'targetClipId=${pose.targetClipId} '
+      'targetKind=${pose.targetClipKind} '
+      'hasTargetAsset=${pose.hasTargetAsset} '
+      'targetAssetId=${pose.targetAssetId} '
+      'hasVideoUrl=${pose.targetAssetContentUrl.isNotEmpty}',
+    );
+    if (!pose.hasAsset) {
+      _failPose(pose, '포즈 클립이 가리키는 파일이 없습니다.');
+      return;
+    }
+    if (!pose.hasTargetClip) {
+      _failPose(pose, '포즈의 대상 영상 클립이 없습니다.');
+      return;
+    }
+    if (pose.targetClipKind != 'VIDEO') {
+      _failPose(pose, '포즈의 대상 클립이 영상이 아닙니다.');
+      return;
+    }
+    if (pose.assetContentUrl.isEmpty) {
+      _failPose(pose, '포즈 좌표 파일 주소가 없습니다.');
+      return;
+    }
+    if (!isOpenNanosecondInterval(pose.timelineStartNs, pose.timelineEndNs)) {
+      _failPose(pose, '포즈 클립의 시간 구간이 올바르지 않습니다.');
+      return;
+    }
+
+    if (!pose.hasTargetAsset) {
+      _failPose(pose, '포즈의 대상 영상 파일이 없습니다.');
+      return;
+    }
+    if (pose.targetAssetContentUrl.isEmpty) {
+      _failPose(pose, '대상 영상의 재생 주소가 없습니다.');
+      return;
+    }
+    if (!isOpenNanosecondInterval(
+      pose.targetTimelineStartNs,
+      pose.targetTimelineEndNs,
+    )) {
+      _failPose(pose, '대상 영상의 시간 구간이 올바르지 않습니다.');
+      return;
+    }
+    final video = TimelineClip(
+      clipId: pose.targetClipId,
+      trackId: '',
+      kind: TimelineClipKind.video,
+      startNs: pose.targetTimelineStartNs,
+      endNs: pose.targetTimelineEndNs,
+      assetId: pose.targetAssetId,
+      fileName: pose.targetAssetFileName,
+      playbackUrl: pose.targetAssetContentUrl,
+      description: '',
+      showsToolBadge: false,
+    );
+
+    final poseOverlapsVideo = _intervalsOverlap(
+      pose.timelineStartNs,
+      pose.timelineEndNs,
+      video.startNs,
+      video.endNs,
+    );
+    final overlayStartNs = poseOverlapsVideo
+        ? pose.timelineStartNs
+        : video.startNs;
+    final overlayEndNs = poseOverlapsVideo ? pose.timelineEndNs : video.endNs;
+    if (!poseOverlapsVideo) {
+      debugPrint(
+        '[POSE] timeline does not overlap target video; '
+        'aligning pose content to video start',
+      );
+    }
+
+    _playbackVideoClip = video;
+    _wantsPlayback = true;
+    _playbackToken += 1;
+    didSeekToSeconds(secondsFromNanoseconds(overlayStartNs));
+
+    debugPrint('[POSE] loading pose content: assetId=${pose.assetId}');
+    final body = await _getJobTimelineUseCase.readContent(
+      url: pose.assetContentUrl,
+    );
+    if (epoch != _clipDetailEpoch || _isClosed) {
+      debugPrint('[POSE] stale pose content ignored: ${pose.clipId}');
+      return;
+    }
+    final frames = parsePoseOverlay(body);
+    debugPrint(
+      '[POSE] pose content loaded: clipId=${pose.clipId} '
+      'bytes=${body.length} frames=${frames.length}',
+    );
+    if (frames.isEmpty) {
+      _failPose(pose, '포즈 좌표 파일을 읽지 못했거나 표시할 좌표가 없습니다.');
+      return;
+    }
+    _selectedPoseOverlay = TimelineOverlay(
+      assetId: pose.assetId,
+      kind: TimelineOverlayKind.pose,
+      contentUrl: pose.assetContentUrl,
+      timelineStartNs: overlayStartNs,
+      timelineEndNs: overlayEndNs,
+      sourceStartNs: pose.sourceStartNs,
+      sourceEndNs: pose.sourceEndNs,
+    );
+    _selectedPoseFrames = frames;
+    final visibleFrames = activeVideoOverlayFrames;
+    debugPrint(
+      '[POSE] overlay ready: clipId=${pose.clipId} '
+      'mappedFrames=${visibleFrames.length} '
+      'alignedToVideo=${!poseOverlapsVideo}',
+    );
+  }
+
+  bool _intervalsOverlap(
+    String firstStartNs,
+    String firstEndNs,
+    String secondStartNs,
+    String secondEndNs,
+  ) {
+    final firstStart = secondsFromNanoseconds(firstStartNs);
+    final firstEnd = secondsFromNanoseconds(firstEndNs);
+    final secondStart = secondsFromNanoseconds(secondStartNs);
+    final secondEnd = secondsFromNanoseconds(secondEndNs);
+    return firstStart < secondEnd && secondStart < firstEnd;
+  }
+
+  void _failPose(ClipDetail pose, String message) {
+    _clipDetailMessage = message;
+    debugPrint('[POSE] clipId=${pose.clipId} failed: $message');
+  }
+
   TimelineClip? _selectedVideo(String mediaUrl) {
-    final clip = _timelineClip(_selectedClipId);
+    final clip = _playbackVideoClip ?? _timelineClip(_selectedClipId);
     if (clip == null ||
         clip.kind != TimelineClipKind.video ||
         clip.playbackUrl != mediaUrl) {
@@ -844,6 +1017,15 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _isClipDetailLoading = false;
     _clipDetailMessage = '';
     _clipDetail = null;
+    _clearPosePlayback();
+  }
+
+  void _clearPosePlayback() {
+    _playbackVideoClip = null;
+    _selectedPoseOverlay = null;
+    _selectedPoseFrames = const [];
+    _wantsPlayback = false;
+    _playbackToken += 1;
   }
 
   void didClearTimelineHint() {
@@ -1987,6 +2169,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _isClosed = true;
+    _clipDetailEpoch += 1;
     _toolRunEpoch += 1;
     _labelEpoch += 1;
     _overlayEpoch += 1;

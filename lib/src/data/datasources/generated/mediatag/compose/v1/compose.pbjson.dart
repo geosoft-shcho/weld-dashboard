@@ -820,13 +820,15 @@ const GetClipRequest$json = {
   '2': [
     {'1': 'clip_id', '3': 1, '4': 1, '5': 3, '10': 'clipId'},
     {'1': 'include_assets', '3': 2, '4': 1, '5': 8, '10': 'includeAssets'},
+    {'1': 'include_target', '3': 3, '4': 1, '5': 8, '10': 'includeTarget'},
   ],
 };
 
 /// Descriptor for `GetClipRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List getClipRequestDescriptor = $convert.base64Decode(
     'Cg5HZXRDbGlwUmVxdWVzdBIXCgdjbGlwX2lkGAEgASgDUgZjbGlwSWQSJQoOaW5jbHVkZV9hc3'
-    'NldHMYAiABKAhSDWluY2x1ZGVBc3NldHM=');
+    'NldHMYAiABKAhSDWluY2x1ZGVBc3NldHMSJQoOaW5jbHVkZV90YXJnZXQYAyABKAhSDWluY2x1'
+    'ZGVUYXJnZXQ=');
 
 @$core.Deprecated('Use getClipResponseDescriptor instead')
 const GetClipResponse$json = {
@@ -848,6 +850,22 @@ const GetClipResponse$json = {
       '6': '.mediatag.asset.v1.Asset',
       '10': 'asset'
     },
+    {
+      '1': 'target_clip',
+      '3': 3,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.compose.v1.Clip',
+      '10': 'targetClip'
+    },
+    {
+      '1': 'target_asset',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.asset.v1.Asset',
+      '10': 'targetAsset'
+    },
   ],
 };
 
@@ -855,7 +873,9 @@ const GetClipResponse$json = {
 final $typed_data.Uint8List getClipResponseDescriptor = $convert.base64Decode(
     'Cg9HZXRDbGlwUmVzcG9uc2USLQoEY2xpcBgBIAEoCzIZLm1lZGlhdGFnLmNvbXBvc2UudjEuQ2'
     'xpcFIEY2xpcBIuCgVhc3NldBgCIAEoCzIYLm1lZGlhdGFnLmFzc2V0LnYxLkFzc2V0UgVhc3Nl'
-    'dA==');
+    'dBI6Cgt0YXJnZXRfY2xpcBgDIAEoCzIZLm1lZGlhdGFnLmNvbXBvc2UudjEuQ2xpcFIKdGFyZ2'
+    'V0Q2xpcBI7Cgx0YXJnZXRfYXNzZXQYBCABKAsyGC5tZWRpYXRhZy5hc3NldC52MS5Bc3NldFIL'
+    'dGFyZ2V0QXNzZXQ=');
 
 @$core.Deprecated('Use updateClipRequestDescriptor instead')
 const UpdateClipRequest$json = {

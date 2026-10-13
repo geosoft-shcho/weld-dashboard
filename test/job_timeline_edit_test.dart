@@ -730,82 +730,89 @@ void main() {
     expect((firstRow.top - trackClip.top).abs(), lessThan(16));
   });
 
-  testWidgets('ruler seeks at 50 pixels per minute before and after scrolling', (
-    tester,
-  ) async {
-    final viewModel = _viewModel(
-      _ScriptedTimelineRepository(
-        _timelineWithClip(
-          clipId: '1',
-          playbackUrl: 'https://example.test/video.mp4',
-          endNs: '2700000000000',
+  testWidgets(
+    'ruler seeks at 50 pixels per minute before and after scrolling',
+    (tester) async {
+      final viewModel = _viewModel(
+        _ScriptedTimelineRepository(
+          _timelineWithClip(
+            clipId: '1',
+            playbackUrl: 'https://example.test/video.mp4',
+            endNs: '2700000000000',
+          ),
         ),
-      ),
-    );
-    await tester.runAsync(() => viewModel.loadAttachments());
-    await tester.pumpWidget(_board(viewModel));
-    final ruler = find.byWidgetPredicate(
-      (widget) => widget is CustomPaint && widget.painter is TimelineRulerPainter,
-    );
-    expect(viewModel.pixelsPerSecond * 60, 50);
-    expect(viewModel.pixelsPerSecond * 300, 250);
-    expect(viewModel.pixelsPerSecond * 400, closeTo(333.3333, 0.001));
-    await tester.tapAt(tester.getTopLeft(ruler) + const Offset(50, 5));
-    await tester.pump();
-    expect(viewModel.playheadSeconds, closeTo(60, 0.001));
+      );
+      await tester.runAsync(() => viewModel.loadAttachments());
+      await tester.pumpWidget(_board(viewModel));
+      final ruler = find.byWidgetPredicate(
+        (widget) =>
+            widget is CustomPaint && widget.painter is TimelineRulerPainter,
+      );
+      expect(viewModel.pixelsPerSecond * 60, 50);
+      expect(viewModel.pixelsPerSecond * 300, 250);
+      expect(viewModel.pixelsPerSecond * 400, closeTo(333.3333, 0.001));
+      await tester.tapAt(tester.getTopLeft(ruler) + const Offset(50, 5));
+      await tester.pump();
+      expect(viewModel.playheadSeconds, closeTo(60, 0.001));
 
-    final scroll = tester.widget<SingleChildScrollView>(
-      find.ancestor(of: ruler, matching: find.byType(SingleChildScrollView)).first,
-    );
-    scroll.controller!.jumpTo(100);
-    await tester.pump();
-    await tester.tapAt(tester.getTopLeft(ruler) + const Offset(150, 5));
-    await tester.pump();
-    expect(viewModel.playheadSeconds, closeTo(180, 0.001));
-  });
+      final scroll = tester.widget<SingleChildScrollView>(
+        find
+            .ancestor(of: ruler, matching: find.byType(SingleChildScrollView))
+            .first,
+      );
+      scroll.controller!.jumpTo(100);
+      await tester.pump();
+      await tester.tapAt(tester.getTopLeft(ruler) + const Offset(150, 5));
+      await tester.pump();
+      expect(viewModel.playheadSeconds, closeTo(180, 0.001));
+    },
+  );
 
-  test('selecting a clip reads GetClip and keeps the latest response', () async {
-    final repository = _ScriptedTimelineRepository(_pairTimeline());
-    repository.holdClipDetail = true;
-    final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+  test(
+    'selecting a clip reads GetClip and keeps the latest response',
+    () async {
+      final repository = _ScriptedTimelineRepository(_pairTimeline());
+      repository.holdClipDetail = true;
+      final viewModel = _viewModel(repository);
+      await viewModel.loadAttachments();
 
-    viewModel.didSelectSampleClip('clip-a');
-    viewModel.didSelectSampleClip('clip-b');
-    expect(repository.getClipIds, ['clip-a', 'clip-b']);
+      viewModel.didSelectSampleClip('clip-a');
+      viewModel.didSelectSampleClip('clip-b');
+      expect(repository.getClipIds, ['clip-a', 'clip-b']);
 
-    repository.clipGates[1].complete(
-      const ClipDetail(
-        clipId: 'clip-b',
-        hasAsset: true,
-        fields: [
-          ClipField(label: 'clipId', value: 'clip-b'),
-          ClipField(label: 'provenance.targetId', value: '클립 9247'),
-        ],
-      ),
-    );
-    await Future<void>.delayed(Duration.zero);
-    expect(viewModel.selectedClipId, 'clip-b');
-    expect(
-      viewModel.clipDetailFields
-          .firstWhere((field) => field.label == 'provenance.targetId')
-          .value,
-      '클립 9247',
-    );
+      repository.clipGates[1].complete(
+        const ClipDetail(
+          clipId: 'clip-b',
+          hasAsset: true,
+          fields: [
+            ClipField(label: 'clipId', value: 'clip-b'),
+            ClipField(label: 'provenance.targetId', value: '클립 9247'),
+          ],
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(viewModel.selectedClipId, 'clip-b');
+      expect(
+        viewModel.clipDetailFields
+            .firstWhere((field) => field.label == 'provenance.targetId')
+            .value,
+        '클립 9247',
+      );
 
-    repository.clipGates[0].complete(
-      const ClipDetail(
-        clipId: 'clip-a',
-        fields: [ClipField(label: 'clipId', value: 'clip-a')],
-      ),
-    );
-    await Future<void>.delayed(Duration.zero);
-    expect(viewModel.selectedClipId, 'clip-b');
-    expect(
-      viewModel.clipDetailFields.any((field) => field.value == 'clip-a'),
-      isFalse,
-    );
-  });
+      repository.clipGates[0].complete(
+        const ClipDetail(
+          clipId: 'clip-a',
+          fields: [ClipField(label: 'clipId', value: 'clip-a')],
+        ),
+      );
+      await Future<void>.delayed(Duration.zero);
+      expect(viewModel.selectedClipId, 'clip-b');
+      expect(
+        viewModel.clipDetailFields.any((field) => field.value == 'clip-a'),
+        isFalse,
+      );
+    },
+  );
 
   test('a missing clip keeps the selected timeline clip', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
@@ -825,62 +832,338 @@ void main() {
     expect(viewModel.selectedClip?.clipId, 'clip-1');
   });
 
-  test('a video GetClip plays from timelineStartNs until timelineEndNs', () async {
-    const mediaUrl = 'http://media.example/9764.mp4';
-    final repository = _ScriptedTimelineRepository(
-      _timelineWithClip(
+  test(
+    'a video GetClip plays from timelineStartNs until timelineEndNs',
+    () async {
+      const mediaUrl = 'http://media.example/9764.mp4';
+      final repository = _ScriptedTimelineRepository(
+        _timelineWithClip(
+          clipId: '9764',
+          playbackUrl: mediaUrl,
+          endNs: '390083999999',
+        ),
+      );
+      repository.nextClipDetail = const ClipDetail(
         clipId: '9764',
-        playbackUrl: mediaUrl,
-        endNs: '390083999999',
-      ),
+        fields: [],
+        isVideo: true,
+        timelineStartNs: '0',
+        timelineEndNs: '390083999999',
+      );
+      final viewModel = _viewModel(repository);
+      await viewModel.loadAttachments();
+
+      viewModel.didSelectSampleClip('9764');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(repository.getClipIds, ['9764']);
+      expect(viewModel.playheadSeconds, closeTo(0, 0.0001));
+      expect(viewModel.wantsPlayback, isTrue);
+      expect(viewModel.activeVideoBar?.mediaUrl, mediaUrl);
+      expect(viewModel.activeVideoBar?.startSeconds, closeTo(0, 0.0001));
+      expect(viewModel.activeVideoBar?.endSeconds, closeTo(390.084, 0.001));
+
+      viewModel.didReceiveVideoClock(
+        mediaUrl: mediaUrl,
+        localSeconds: 392,
+        durationSeconds: 392,
+        isPlaying: false,
+      );
+      expect(viewModel.playheadSeconds, closeTo(0, 0.0001));
+      expect(viewModel.wantsPlayback, isTrue);
+
+      await Future<void>.delayed(const Duration(milliseconds: 500));
+      viewModel.didReceiveVideoClock(
+        mediaUrl: mediaUrl,
+        localSeconds: 1,
+        durationSeconds: 392,
+        isPlaying: true,
+      );
+      expect(viewModel.playheadSeconds, closeTo(1, 0.0001));
+
+      viewModel.didReceiveVideoClock(
+        mediaUrl: mediaUrl,
+        localSeconds: 390.084,
+        durationSeconds: 392,
+        isPlaying: true,
+      );
+      expect(viewModel.wantsPlayback, isFalse);
+      expect(viewModel.playheadSeconds, lessThan(390.084));
+      expect(viewModel.activeVideoBar?.attachmentId, '9764');
+    },
+  );
+
+  test(
+    'a pose GetClip keeps pose selected and plays its target video',
+    () async {
+      const poseUrl = 'http://media.example/pose.json';
+      const videoUrl = 'http://media.example/video.mp4';
+      final repository = _ScriptedTimelineRepository(
+        _poseTimeline('http://media.example/stale-timeline-video.mp4'),
+      );
+      repository.clipDetailsById['pose-1'] = const ClipDetail(
+        clipId: 'pose-1',
+        fields: [ClipField(label: 'kind', value: 'POSE')],
+        hasAsset: true,
+        isPose: true,
+        timelineStartNs: '10000000000',
+        timelineEndNs: '20000000000',
+        sourceStartNs: '2000000000',
+        sourceEndNs: '8000000000',
+        assetId: '30',
+        assetContentUrl: poseUrl,
+        targetKind: ClipTargetKind.clip,
+        targetId: 'video-1',
+        hasTargetClip: true,
+        targetClipId: 'video-1',
+        targetClipKind: 'VIDEO',
+        targetTimelineStartNs: '5000000000',
+        targetTimelineEndNs: '30000000000',
+        hasTargetAsset: true,
+        targetAssetId: '20',
+        targetAssetFileName: 'target.mp4',
+        targetAssetContentUrl: videoUrl,
+      );
+      repository.contentByUrl[poseUrl] = _poseBody(time: 3);
+      final viewModel = _viewModel(repository);
+      await viewModel.loadAttachments();
+
+      viewModel.didSelectSampleClip('pose-1');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(viewModel.selectedClipId, 'pose-1');
+      expect(viewModel.selectedClip?.clipId, 'pose-1');
+      expect(viewModel.activeVideoBar?.attachmentId, 'video-1');
+      expect(viewModel.activeVideoBar?.mediaUrl, videoUrl);
+      expect(viewModel.wantsPlayback, isTrue);
+      expect(viewModel.playheadSeconds, 10);
+      expect(repository.readUrls, [poseUrl]);
+      expect(viewModel.activeVideoOverlayFrames, hasLength(1));
+      expect(
+        viewModel.activeVideoOverlayFrames.single.start,
+        const Duration(seconds: 6),
+      );
+    },
+  );
+
+  test(
+    'a pose without target clip does not select an arbitrary video',
+    () async {
+      final repository = _ScriptedTimelineRepository(
+        _poseTimeline('http://media.example/video.mp4'),
+      );
+      repository.clipDetailsById['pose-1'] = const ClipDetail(
+        clipId: 'pose-1',
+        fields: [ClipField(label: 'kind', value: 'POSE')],
+        hasAsset: true,
+        isPose: true,
+        timelineStartNs: '10000000000',
+        timelineEndNs: '20000000000',
+        assetId: '30',
+        assetContentUrl: 'http://media.example/pose.json',
+        hasTargetAsset: true,
+        targetAssetId: '20',
+        targetAssetContentUrl: 'http://media.example/video.mp4',
+      );
+      final viewModel = _viewModel(repository);
+      await viewModel.loadAttachments();
+
+      viewModel.didSelectSampleClip('pose-1');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(viewModel.selectedClipId, 'pose-1');
+      expect(viewModel.activeVideoBar, isNull);
+      expect(viewModel.clipDetailMessage, contains('대상 영상 클립'));
+    },
+  );
+
+  test(
+    'a pose with an asset target does not treat it as a video clip',
+    () async {
+      final repository = _ScriptedTimelineRepository(
+        _poseTimeline('http://media.example/video.mp4'),
+      );
+      repository.clipDetailsById['pose-1'] = const ClipDetail(
+        clipId: 'pose-1',
+        fields: [ClipField(label: 'kind', value: 'POSE')],
+        hasAsset: true,
+        isPose: true,
+        timelineStartNs: '10000000000',
+        timelineEndNs: '20000000000',
+        assetId: '30',
+        assetContentUrl: 'http://media.example/pose.json',
+        hasTargetAsset: true,
+        targetAssetId: '20',
+        targetAssetContentUrl: 'http://media.example/video.mp4',
+      );
+      final viewModel = _viewModel(repository);
+      await viewModel.loadAttachments();
+
+      viewModel.didSelectSampleClip('pose-1');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(repository.getClipIds, ['pose-1']);
+      expect(viewModel.activeVideoBar, isNull);
+      expect(viewModel.clipDetailMessage, contains('대상 영상 클립'));
+    },
+  );
+
+  test('a pose without target asset does not start video playback', () async {
+    final repository = _ScriptedTimelineRepository(
+      _poseTimeline('http://media.example/video.mp4'),
     );
-    repository.nextClipDetail = const ClipDetail(
-      clipId: '9764',
+    repository.clipDetailsById['pose-1'] = const ClipDetail(
+      clipId: 'pose-1',
       fields: [],
-      isVideo: true,
-      timelineStartNs: '0',
-      timelineEndNs: '390083999999',
+      hasAsset: true,
+      isPose: true,
+      timelineStartNs: '10000000000',
+      timelineEndNs: '20000000000',
+      assetId: '30',
+      assetContentUrl: 'http://media.example/pose.json',
+      hasTargetClip: true,
+      targetClipId: 'video-1',
+      targetClipKind: 'VIDEO',
+      targetTimelineStartNs: '5000000000',
+      targetTimelineEndNs: '30000000000',
     );
     final viewModel = _viewModel(repository);
     await viewModel.loadAttachments();
 
-    viewModel.didSelectSampleClip('9764');
+    viewModel.didSelectSampleClip('pose-1');
     await Future<void>.delayed(Duration.zero);
 
-    expect(repository.getClipIds, ['9764']);
-    expect(viewModel.playheadSeconds, closeTo(0, 0.0001));
-    expect(viewModel.wantsPlayback, isTrue);
-    expect(viewModel.activeVideoBar?.mediaUrl, mediaUrl);
-    expect(viewModel.activeVideoBar?.startSeconds, closeTo(0, 0.0001));
-    expect(viewModel.activeVideoBar?.endSeconds, closeTo(390.084, 0.001));
+    expect(viewModel.activeVideoBar, isNull);
+    expect(viewModel.clipDetailMessage, contains('대상 영상 파일'));
+  });
 
-    viewModel.didReceiveVideoClock(
-      mediaUrl: mediaUrl,
-      localSeconds: 392,
-      durationSeconds: 392,
-      isPlaying: false,
+  test('a pose uses the target returned by its own GetClip', () async {
+    const poseUrl = 'http://media.example/pose.json';
+    const videoUrl = 'http://media.example/target.mp4';
+    final poseTimeline = _poseTimeline(videoUrl);
+    final repository = _ScriptedTimelineRepository(
+      JobTimeline(
+        jobId: poseTimeline.jobId,
+        name: poseTimeline.name,
+        tracks: [poseTimeline.tracks.last],
+      ),
     );
-    expect(viewModel.playheadSeconds, closeTo(0, 0.0001));
-    expect(viewModel.wantsPlayback, isTrue);
+    repository.clipDetailsById['pose-1'] = const ClipDetail(
+      clipId: 'pose-1',
+      fields: [],
+      hasAsset: true,
+      isPose: true,
+      timelineStartNs: '10000000000',
+      timelineEndNs: '20000000000',
+      assetId: '30',
+      assetContentUrl: poseUrl,
+      targetKind: ClipTargetKind.clip,
+      targetId: 'video-1',
+      hasTargetClip: true,
+      targetClipId: 'video-1',
+      targetClipKind: 'VIDEO',
+      targetTimelineStartNs: '5000000000',
+      targetTimelineEndNs: '30000000000',
+      hasTargetAsset: true,
+      targetAssetId: '20',
+      targetAssetFileName: 'target.mp4',
+      targetAssetContentUrl: videoUrl,
+    );
+    repository.contentByUrl[poseUrl] = _poseBody(time: 1);
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
 
-    await Future<void>.delayed(const Duration(milliseconds: 500));
-    viewModel.didReceiveVideoClock(
-      mediaUrl: mediaUrl,
-      localSeconds: 1,
-      durationSeconds: 392,
-      isPlaying: true,
-    );
-    expect(viewModel.playheadSeconds, closeTo(1, 0.0001));
+    viewModel.didSelectSampleClip('pose-1');
+    await Future<void>.delayed(Duration.zero);
 
-    viewModel.didReceiveVideoClock(
-      mediaUrl: mediaUrl,
-      localSeconds: 390.084,
-      durationSeconds: 392,
-      isPlaying: true,
+    expect(repository.getClipIds, ['pose-1']);
+    expect(viewModel.selectedClipId, 'pose-1');
+    expect(viewModel.activeVideoBar?.mediaUrl, videoUrl);
+  });
+
+  test(
+    'a pose outside its target timeline aligns to the video start',
+    () async {
+      const poseUrl = 'http://media.example/pose.json';
+      const videoUrl = 'http://media.example/video.mp4';
+      final repository = _ScriptedTimelineRepository(_poseTimeline(videoUrl));
+      repository.clipDetailsById['pose-1'] = const ClipDetail(
+        clipId: 'pose-1',
+        fields: [],
+        hasAsset: true,
+        isPose: true,
+        timelineStartNs: '40000000000',
+        timelineEndNs: '50000000000',
+        assetId: '30',
+        assetContentUrl: poseUrl,
+        targetKind: ClipTargetKind.clip,
+        targetId: 'video-1',
+        hasTargetClip: true,
+        targetClipId: 'video-1',
+        targetClipKind: 'VIDEO',
+        targetTimelineStartNs: '5000000000',
+        targetTimelineEndNs: '30000000000',
+        hasTargetAsset: true,
+        targetAssetId: '20',
+        targetAssetFileName: 'video.mp4',
+        targetAssetContentUrl: videoUrl,
+      );
+      repository.contentByUrl[poseUrl] = _poseBody(time: 1);
+      final viewModel = _viewModel(repository);
+      await viewModel.loadAttachments();
+
+      viewModel.didSelectSampleClip('pose-1');
+      await Future<void>.delayed(Duration.zero);
+
+      expect(viewModel.activeVideoBar?.attachmentId, 'video-1');
+      expect(viewModel.playheadSeconds, 5);
+      expect(viewModel.activeVideoOverlayFrames, hasLength(1));
+      expect(
+        viewModel.activeVideoOverlayFrames.single.start,
+        const Duration(seconds: 1),
+      );
+    },
+  );
+
+  test('a late pose body cannot overwrite a newer clip selection', () async {
+    const poseUrl = 'http://media.example/pose.json';
+    const videoUrl = 'http://media.example/video.mp4';
+    final repository = _ScriptedTimelineRepository(_poseTimeline(videoUrl));
+    repository.clipDetailsById['pose-1'] = const ClipDetail(
+      clipId: 'pose-1',
+      fields: [],
+      hasAsset: true,
+      isPose: true,
+      timelineStartNs: '10000000000',
+      timelineEndNs: '20000000000',
+      assetId: '30',
+      assetContentUrl: poseUrl,
+      targetKind: ClipTargetKind.clip,
+      targetId: 'video-1',
+      hasTargetClip: true,
+      targetClipId: 'video-1',
+      targetClipKind: 'VIDEO',
+      targetTimelineStartNs: '5000000000',
+      targetTimelineEndNs: '30000000000',
+      hasTargetAsset: true,
+      targetAssetId: '20',
+      targetAssetFileName: 'video.mp4',
+      targetAssetContentUrl: videoUrl,
     );
-    expect(viewModel.wantsPlayback, isFalse);
-    expect(viewModel.playheadSeconds, lessThan(390.084));
-    expect(viewModel.activeVideoBar?.attachmentId, '9764');
+    final poseBody = Completer<String>();
+    repository.contentGatesByUrl[poseUrl] = poseBody;
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+
+    viewModel.didSelectSampleClip('pose-1');
+    await Future<void>.delayed(Duration.zero);
+    viewModel.didSelectSampleClip('video-1');
+    poseBody.complete(_poseBody(time: 1));
+    await Future<void>.delayed(Duration.zero);
+
+    expect(viewModel.selectedClipId, 'video-1');
+    expect(viewModel.activeVideoBar?.attachmentId, 'video-1');
+    expect(viewModel.activeVideoOverlayFrames, isEmpty);
   });
 }
 
@@ -1006,6 +1289,61 @@ JobTimeline _timelineWithClip({
     ],
   );
 }
+
+JobTimeline _poseTimeline(String videoUrl) {
+  return JobTimeline(
+    jobId: 'job-1',
+    name: '작업',
+    tracks: [
+      TimelineTrack(
+        trackId: 'video-track',
+        name: '영상',
+        order: 1,
+        clips: [
+          TimelineClip(
+            clipId: 'video-1',
+            trackId: 'video-track',
+            kind: TimelineClipKind.video,
+            startNs: '5000000000',
+            endNs: '30000000000',
+            assetId: '20',
+            fileName: 'video.mp4',
+            playbackUrl: videoUrl,
+            description: '',
+            showsToolBadge: false,
+          ),
+        ],
+      ),
+      const TimelineTrack(
+        trackId: 'pose-track',
+        name: '포즈',
+        order: 2,
+        clips: [
+          TimelineClip(
+            clipId: 'pose-1',
+            trackId: 'pose-track',
+            kind: TimelineClipKind.pose,
+            startNs: '10000000000',
+            endNs: '20000000000',
+            assetId: '30',
+            fileName: 'pose.json',
+            playbackUrl: '',
+            description: '',
+            showsToolBadge: true,
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+String _poseBody({required double time}) =>
+    '''
+{"data":{"frameRate":24,"keypointSchema":["tip"],"skeleton":[],
+"lsfResult":{"value":{"sequence":[{"time":$time,"enabled":true,
+"x":10,"y":20,"width":30,"height":40,
+"keypoints":[{"name":"tip","x":50,"y":60}]}]}}}}
+''';
 
 JobTimeline _pairTimeline() {
   return const JobTimeline(
@@ -1315,6 +1653,10 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
   final List<Completer<ClipDetail>> clipGates = [];
   bool holdClipDetail = false;
   ClipDetail? nextClipDetail;
+  final Map<String, ClipDetail> clipDetailsById = {};
+  final Map<String, String> contentByUrl = {};
+  final Map<String, Completer<String>> contentGatesByUrl = {};
+  final List<String> readUrls = [];
   JobTimelineException? clipFailure;
 
   @override
@@ -1338,7 +1680,8 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
       clipGates.add(gate);
       return gate.future;
     }
-    return nextClipDetail ??
+    return clipDetailsById[clipId] ??
+        nextClipDetail ??
         ClipDetail(
           clipId: clipId,
           fields: [ClipField(label: 'clipId', value: clipId)],
@@ -1494,7 +1837,14 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
   }
 
   @override
-  Future<String> readContent({required String url}) async => '';
+  Future<String> readContent({required String url}) async {
+    readUrls.add(url);
+    final gate = contentGatesByUrl[url];
+    if (gate != null) {
+      return gate.future;
+    }
+    return contentByUrl[url] ?? '';
+  }
 }
 
 class _IdleLabelRepository implements LabelRepository {

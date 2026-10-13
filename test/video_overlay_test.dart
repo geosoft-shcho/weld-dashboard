@@ -1,9 +1,12 @@
+import 'dart:ui' show Size;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_overlay_clock.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_overlay_frame.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_overlay_json.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_subtitle_text.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/video_frame_mark_layer.dart';
 
 void main() {
   test('pose body keeps the box and the torch points', () {
@@ -48,9 +51,137 @@ void main() {
     expect(frames.single.bones.single.endIndex, 1);
   });
 
+  test('person value sequence becomes box and skeleton frames', () {
+    final frames = parsePoseOverlay('''
+{
+  "status": "ready",
+  "frameRate": 24,
+  "duration": 28.0,
+  "coordinateUnit": "percent",
+  "keypointSchema": ["tip", "grip"],
+  "skeleton": [["tip", "grip"]],
+  "persons": [
+    {
+      "personId": "p1",
+      "label": "Torch",
+      "value": {"sequence": [
+        {"frame": 1, "time": 0.0, "enabled": false},
+        {
+          "frame": 21,
+          "time": 0.867,
+          "enabled": true,
+          "x": 52.1,
+          "y": 0.0,
+          "width": 47.9,
+          "height": 100.0,
+          "keypoints": [
+            {"name": "tip", "x": 82.08, "y": 57.46},
+            {"name": "grip", "x": 79.54, "y": 54.47}
+          ]
+        },
+        {"frame": 22, "time": 0.933, "enabled": false}
+      ]}
+    }
+  ]
+}
+''');
+
+    expect(frames, hasLength(1));
+    expect(frames.single.start, const Duration(microseconds: 867000));
+    expect(frames.single.end, const Duration(microseconds: 933000));
+    expect(frames.single.boxes.single.left, closeTo(0.521, 0.0001));
+    expect(frames.single.boxes.single.height, 1);
+    expect(frames.single.points, hasLength(2));
+    expect(frames.single.points.first.x, closeTo(0.8208, 0.0001));
+    expect(frames.single.bones, hasLength(1));
+  });
+
+  test('each person can draw at the same time', () {
+    final frames = parsePoseOverlay('''
+{
+  "frameRate": 20,
+  "keypointSchema": ["point"],
+  "persons": [
+    {"value":{"sequence":[{"time":1,"enabled":true,
+      "keypoints":[{"name":"point","x":10,"y":20}]}]}},
+    {"value":{"sequence":[{"time":1,"enabled":true,
+      "keypoints":[{"name":"point","x":80,"y":90}]}]}}
+  ]
+}
+''');
+
+    expect(frames, hasLength(2));
+    expect(
+      frames.every((frame) => frame.start == const Duration(seconds: 1)),
+      isTrue,
+    );
+    expect(
+      frames.every((frame) => frame.end == const Duration(milliseconds: 1050)),
+      isTrue,
+    );
+  });
+
+  test('value sequence takes precedence over duplicate person tracks', () {
+    final frames = parsePoseOverlay('''
+{
+  "frameRate": 24,
+  "keypointSchema": ["point"],
+  "persons": [{
+    "tracks": [{"time":1,"enabled":true,
+      "keypoints":[{"name":"point","x":10,"y":10}]}],
+    "value": {"sequence":[{"time":2,"enabled":true,
+      "keypoints":[{"name":"point","x":80,"y":80}]}]}
+  }]
+}
+''');
+
+    expect(frames, hasLength(1));
+    expect(frames.single.start, const Duration(seconds: 2));
+    expect(frames.single.points.single.x, 0.8);
+    expect(frames.single.end, const Duration(microseconds: 2041667));
+  });
+
+  test('invalid sequence time is skipped', () {
+    final frames = parsePoseOverlay('''
+{"persons":[{"value":{"sequence":[
+  {"time":-1,"enabled":true,"keypoints":[{"name":"p","x":10,"y":10}]},
+  {"time":"bad","enabled":true,"keypoints":[{"name":"p","x":20,"y":20}]}
+]}}]}
+''');
+
+    expect(frames, isEmpty);
+  });
+
   test('a broken pose body is empty', () {
     expect(parsePoseOverlay('not-json'), isEmpty);
     expect(parsePoseOverlay('{"data":{}}'), isEmpty);
+  });
+
+  test('pose body skips coordinates outside the confirmed 0 to 100 space', () {
+    final frames = parsePoseOverlay('''
+{"data":{"frameRate":24,"keypointSchema":["bad","good"],
+"skeleton":[["bad","good"]],"lsfResult":{"value":{"sequence":[{
+"time":0,"enabled":true,"x":90,"y":20,"width":20,"height":30,
+"keypoints":[{"name":"bad","x":-1,"y":20},
+{"name":"good","x":50,"y":60}]}]}}}}
+''');
+
+    expect(frames, hasLength(1));
+    expect(frames.single.boxes, isEmpty);
+    expect(frames.single.points, hasLength(1));
+    expect(frames.single.bones, isEmpty);
+  });
+
+  test('overlay frame follows the contained video area with letterboxing', () {
+    final frame = fittedVideoFrame(
+      const Size(1920, 1080),
+      const Size(100, 100),
+    );
+
+    expect(frame.left, 0);
+    expect(frame.top, closeTo(21.875, 0.001));
+    expect(frame.width, 100);
+    expect(frame.height, closeTo(56.25, 0.001));
   });
 
   test('one webvtt cue becomes a caption and json without text does not', () {

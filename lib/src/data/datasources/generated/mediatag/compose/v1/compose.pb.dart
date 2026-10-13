@@ -2114,10 +2114,12 @@ class GetClipRequest extends $pb.GeneratedMessage {
   factory GetClipRequest({
     $fixnum.Int64? clipId,
     $core.bool? includeAssets,
+    $core.bool? includeTarget,
   }) {
     final result = create();
     if (clipId != null) result.clipId = clipId;
     if (includeAssets != null) result.includeAssets = includeAssets;
+    if (includeTarget != null) result.includeTarget = includeTarget;
     return result;
   }
 
@@ -2137,6 +2139,7 @@ class GetClipRequest extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'clipId')
     ..aOB(2, _omitFieldNames ? '' : 'includeAssets')
+    ..aOB(3, _omitFieldNames ? '' : 'includeTarget')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2177,16 +2180,29 @@ class GetClipRequest extends $pb.GeneratedMessage {
   $core.bool hasIncludeAssets() => $_has(1);
   @$pb.TagNumber(2)
   void clearIncludeAssets() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.bool get includeTarget => $_getBF(2);
+  @$pb.TagNumber(3)
+  set includeTarget($core.bool value) => $_setBool(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasIncludeTarget() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearIncludeTarget() => $_clearField(3);
 }
 
 class GetClipResponse extends $pb.GeneratedMessage {
   factory GetClipResponse({
     Clip? clip,
     $2.Asset? asset,
+    Clip? targetClip,
+    $2.Asset? targetAsset,
   }) {
     final result = create();
     if (clip != null) result.clip = clip;
     if (asset != null) result.asset = asset;
+    if (targetClip != null) result.targetClip = targetClip;
+    if (targetAsset != null) result.targetAsset = targetAsset;
     return result;
   }
 
@@ -2206,6 +2222,9 @@ class GetClipResponse extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOM<Clip>(1, _omitFieldNames ? '' : 'clip', subBuilder: Clip.create)
     ..aOM<$2.Asset>(2, _omitFieldNames ? '' : 'asset',
+        subBuilder: $2.Asset.create)
+    ..aOM<Clip>(3, _omitFieldNames ? '' : 'targetClip', subBuilder: Clip.create)
+    ..aOM<$2.Asset>(4, _omitFieldNames ? '' : 'targetAsset',
         subBuilder: $2.Asset.create)
     ..hasRequiredFields = false;
 
@@ -2251,6 +2270,31 @@ class GetClipResponse extends $pb.GeneratedMessage {
   void clearAsset() => $_clearField(2);
   @$pb.TagNumber(2)
   $2.Asset ensureAsset() => $_ensure(1);
+
+  /// include_target이고 clip.provenance.target_kind가 CLIP일 때 그 대상 클립. 한 단계만 따라간다(대상의 대상은 안 본다).
+  @$pb.TagNumber(3)
+  Clip get targetClip => $_getN(2);
+  @$pb.TagNumber(3)
+  set targetClip(Clip value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTargetClip() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTargetClip() => $_clearField(3);
+  @$pb.TagNumber(3)
+  Clip ensureTargetClip() => $_ensure(2);
+
+  /// include_target일 때 대상 Asset — target_kind가 CLIP이면 target_clip.source가 가리키는 Asset(source가 없으면 비어 있음),
+  /// ASSET이면 target_id의 Asset. 대상이 없거나 지워졌으면 둘 다 비어 있음(오류 아님).
+  @$pb.TagNumber(4)
+  $2.Asset get targetAsset => $_getN(3);
+  @$pb.TagNumber(4)
+  set targetAsset($2.Asset value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasTargetAsset() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearTargetAsset() => $_clearField(4);
+  @$pb.TagNumber(4)
+  $2.Asset ensureTargetAsset() => $_ensure(3);
 }
 
 class UpdateClipRequest extends $pb.GeneratedMessage {

@@ -137,14 +137,33 @@ class ClipField {
   final String value;
 }
 
+enum ClipTargetKind { unspecified, clip, asset }
+
 class ClipDetail {
   const ClipDetail({
     required this.clipId,
     required this.fields,
     this.hasAsset = false,
     this.isVideo = false,
+    this.isPose = false,
     this.timelineStartNs = '',
     this.timelineEndNs = '',
+    this.sourceStartNs = '',
+    this.sourceEndNs = '',
+    this.assetId = '',
+    this.assetFileName = '',
+    this.assetContentUrl = '',
+    this.targetKind = ClipTargetKind.unspecified,
+    this.targetId = '',
+    this.hasTargetClip = false,
+    this.targetClipId = '',
+    this.targetClipKind = '',
+    this.targetTimelineStartNs = '',
+    this.targetTimelineEndNs = '',
+    this.hasTargetAsset = false,
+    this.targetAssetId = '',
+    this.targetAssetFileName = '',
+    this.targetAssetContentUrl = '',
   });
 
   static const empty = ClipDetail(clipId: '', fields: []);
@@ -153,8 +172,25 @@ class ClipDetail {
   final List<ClipField> fields;
   final bool hasAsset;
   final bool isVideo;
+  final bool isPose;
   final String timelineStartNs;
   final String timelineEndNs;
+  final String sourceStartNs;
+  final String sourceEndNs;
+  final String assetId;
+  final String assetFileName;
+  final String assetContentUrl;
+  final ClipTargetKind targetKind;
+  final String targetId;
+  final bool hasTargetClip;
+  final String targetClipId;
+  final String targetClipKind;
+  final String targetTimelineStartNs;
+  final String targetTimelineEndNs;
+  final bool hasTargetAsset;
+  final String targetAssetId;
+  final String targetAssetFileName;
+  final String targetAssetContentUrl;
 
   String valueOf(String label) {
     for (final field in fields) {

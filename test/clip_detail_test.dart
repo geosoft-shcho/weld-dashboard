@@ -6,17 +6,18 @@ import 'package:weld_dashboard/src/data/datasources/generated/mediatag/asset/v1/
 import 'package:weld_dashboard/src/data/datasources/generated/mediatag/compose/v1/compose.pb.dart'
     as compose_pb;
 import 'package:weld_dashboard/src/data/repositories/clip_detail_mapping.dart';
+import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
 
 void main() {
-  test('GetClip asks for the clip and its asset', () {
+  test('GetClip asks for the clip, asset, and target', () {
     final request = buildGetClipRequest('17226');
     expect(request.clipId.toString(), '17226');
     expect(request.includeAssets, isTrue);
+    expect(request.includeTarget, isTrue);
   });
 
   test('clip and asset fields stay on the detail', () {
-    final locator = Struct()
-      ..fields['page'] = (Value()..numberValue = 2);
+    final locator = Struct()..fields['page'] = (Value()..numberValue = 2);
     final response = compose_pb.GetClipResponse(
       clip: compose_pb.Clip(
         clipId: Int64(17226),
@@ -130,5 +131,103 @@ void main() {
     expect(detail.valueOf('provenance.targetKind'), 'ASSET');
     expect(detail.valueOf('provenance.targetId'), '파일 44');
     expect(detail.valueOf('asset'), '가리키는 파일 없음');
+  });
+
+  test('pose detail reads its provenance target and pose content URL', () {
+    final detail = clipDetailFromResponse(
+      compose_pb.GetClipResponse(
+        clip: compose_pb.Clip(
+          clipId: Int64(17226),
+          kind: compose_pb.ClipKind.CLIP_KIND_POSE,
+          timelineStartNs: Int64(10000000000),
+          timelineEndNs: Int64(20000000000),
+          source: compose_pb.ClipSource(
+            assetId: Int64(30),
+            startNs: Int64(2000000000),
+            endNs: Int64(8000000000),
+          ),
+          provenance: compose_pb.ClipProvenance(
+            targetKind: compose_pb.ClipTargetKind.CLIP_TARGET_KIND_CLIP,
+            targetId: Int64(9247),
+          ),
+        ),
+        asset: asset_pb.Asset(
+          assetId: Int64(30),
+          kind: asset_pb.AssetKind.ASSET_KIND_POSE,
+          fileName: 'pose.json',
+          contentUrl: '/files/pose.json',
+        ),
+        targetClip: compose_pb.Clip(
+          clipId: Int64(9247),
+          kind: compose_pb.ClipKind.CLIP_KIND_VIDEO,
+          timelineStartNs: Int64(5000000000),
+          timelineEndNs: Int64(30000000000),
+        ),
+        targetAsset: asset_pb.Asset(
+          assetId: Int64(20),
+          kind: asset_pb.AssetKind.ASSET_KIND_VIDEO,
+          fileName: 'target.mp4',
+          contentUrl: '/files/target.mp4',
+        ),
+      ),
+      resolveContentUrl: (url) => 'http://host$url',
+    );
+
+    expect(detail.isPose, isTrue);
+    expect(detail.targetKind, ClipTargetKind.clip);
+    expect(detail.targetId, '9247');
+    expect(detail.assetContentUrl, 'http://host/files/pose.json');
+    expect(detail.sourceStartNs, '2000000000');
+    expect(detail.sourceEndNs, '8000000000');
+    expect(detail.hasTargetClip, isTrue);
+    expect(detail.targetClipId, '9247');
+    expect(detail.targetClipKind, 'VIDEO');
+    expect(detail.targetTimelineStartNs, '5000000000');
+    expect(detail.targetTimelineEndNs, '30000000000');
+    expect(detail.hasTargetAsset, isTrue);
+    expect(detail.targetAssetId, '20');
+    expect(detail.targetAssetFileName, 'target.mp4');
+    expect(detail.targetAssetContentUrl, 'http://host/files/target.mp4');
+    expect(detail.valueOf('targetClip.kind'), 'VIDEO');
+    expect(detail.valueOf('targetAsset.fileName'), 'target.mp4');
+  });
+
+  test('pose target keeps its kind and rejects zero ids', () {
+    ClipDetail detailFor(compose_pb.ClipTargetKind kind, Int64 id) {
+      return clipDetailFromResponse(
+        compose_pb.GetClipResponse(
+          clip: compose_pb.Clip(
+            clipId: Int64(1),
+            kind: compose_pb.ClipKind.CLIP_KIND_POSE,
+            provenance: compose_pb.ClipProvenance(
+              targetKind: kind,
+              targetId: id,
+            ),
+          ),
+          asset: asset_pb.Asset(assetId: Int64(2)),
+        ),
+      );
+    }
+
+    final clip = detailFor(
+      compose_pb.ClipTargetKind.CLIP_TARGET_KIND_CLIP,
+      Int64(9247),
+    );
+    expect(clip.targetKind, ClipTargetKind.clip);
+    expect(clip.targetId, '9247');
+
+    final asset = detailFor(
+      compose_pb.ClipTargetKind.CLIP_TARGET_KIND_ASSET,
+      Int64(44),
+    );
+    expect(asset.targetKind, ClipTargetKind.asset);
+    expect(asset.targetId, '44');
+
+    final missing = detailFor(
+      compose_pb.ClipTargetKind.CLIP_TARGET_KIND_CLIP,
+      Int64.ZERO,
+    );
+    expect(missing.targetKind, ClipTargetKind.clip);
+    expect(missing.targetId, isEmpty);
   });
 }
