@@ -18,6 +18,10 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-12  geosoft-Server: ClipProvenance.target_kind·target_id — 그 클립을 만든 실행이 무엇을 대상으로 돌았는지(읽기 전용)
+//   2026-10-12  geosoft-Server: GetClip — 클립 하나를 번호로 읽는다(include_assets면 가리키는 Asset 메타도)
+//   2026-10-12  geosoft-Server: ClipSource.locator 모양을 kind별로 정하고 서버가 검사 — pdf는 쪽 안의 박스({page, x, y, width, height})
+//                를 받는다. locator를 안 쓰는 kind에 보내면 InvalidArgument
 //   2026-10-08  geosoft-Server: 라벨을 한 그루의 트리로 — 어휘(LabelVocab)를 없애고 상위가 없는 라벨이 맨 위 분류. ListLabelVocabs·CreateLabelVocab →
 //                ListLabels, LabelValue.vocab_key·LabelRef.vocab_key 삭제, LabelValue.parent_value_id
 //   2026-10-08  geosoft-Server: 클립 사이의 관계 — CLIP_KIND_RELATION·Clip.relation(관계 종류는 라벨 값). ClipProvenance.input_clip_ids 삭제
@@ -72,6 +76,8 @@ service MediaComposeService {
   // 같은 트랙 클립과 구간이 겹치면 FailedPrecondition. source.asset_id가 이 작업에
   // 첨부되지 않았으면 같은 트랜잭션에서 작업 공용으로 첨부한다.
   rpc CreateClip(CreateClipRequest) returns (CreateClipResponse);
+  // 클립 하나. include_assets를 주면 그 클립이 가리키는 Asset도. 없으면 NOT_FOUND.
+  rpc GetClip(GetClipRequest) returns (GetClipResponse);
   // 오류 조건·자동 첨부는 CreateClip과 같다. 검수는 update_mask "provenance.reviewed".
   rpc UpdateClip(UpdateClipRequest) returns (UpdateClipResponse);
   rpc DeleteClip(DeleteClipRequest) returns (DeleteClipResponse);
@@ -115,6 +121,13 @@ enum ClipKind {
   CLIP_KIND_TAG = 10;   // 분류 판단. source 없음, label 필수
   CLIP_KIND_REGION = 11; // 영상 속 영역. source = region Asset(프레임별 박스)
   CLIP_KIND_RELATION = 12; // 클립 사이의 관계. source 없음, relation 필수, label은 관계 종류(선택)
+}
+
+// 클립을 만든 실행이 무엇을 대상으로 돌았는지(ClipProvenance.target_kind).
+enum ClipTargetKind {
+  CLIP_TARGET_KIND_UNSPECIFIED = 0; // 대상 없음(지워짐)
+  CLIP_TARGET_KIND_CLIP = 1;        // target_id = clip_id
+  CLIP_TARGET_KIND_ASSET = 2;       // target_id = asset_id
 }
 
 message LabelRef {
@@ -175,8 +188,13 @@ message ClipSource {
   int64 asset_id = 1;
   optional int64 start_ns = 2; // Asset 자신의 시간축
   optional int64 end_ns = 3;
-  // kind별 위치(자유 형식 JSON). pdf: {"page": N}, image: {"x","y","width","height"}(0~1 비율),
-  // pointcloud: {"points": [[x,y,z], ...]}. 영상 속 영역은 locator가 아니라 REGION Clip으로 둔다.
+  // kind별 위치(JSON, 모양은 kind가 정한다 — 다른 모양·다른 kind에 쓰면 InvalidArgument). 2D 좌표는 0~1 비율·좌상단
+  // 원점, 쪽은 1부터.
+  //   pdf:        {"page": N} 한 쪽 · {"page": N, "x","y","width","height"} 그 쪽 안의 박스 ·
+  //               {"page_start": A, "page_end": B} 쪽 범위. 글자·문단을 골라도 그 사각형을 박스로 보낸다
+  //   image:      {"x","y","width","height"}
+  //   pointcloud: {"points": [[x,y,z], ...]}
+  // 영상 속 영역은 locator가 아니라 REGION Clip으로 둔다.
   google.protobuf.Struct locator = 4;
 }
 
@@ -188,6 +206,11 @@ message ClipProvenance {
   string tool_version = 5;
   reserved 6; // 옛 input_clip_ids — 저장한 적이 없는 칸이다. 클립끼리 잇는 것은 관계 클립(kind=relation, Clip.relation)
   reserved "input_clip_ids";
+  // 이 클립을 만든 실행의 대상(ToolRun.target과 같은 값). 읽기 전용 — 서버가 run_id로 찾아 채운다(저장하지 않음).
+  // target_id는 target_kind가 가리키는 종류의 번호다(CLIP이면 clip_id, ASSET이면 asset_id) — 번호는 종류마다 따로 세므로
+  // 반드시 target_kind를 먼저 본다. 대상이 지워졌으면 UNSPECIFIED·0이다.
+  ClipTargetKind target_kind = 7;
+  int64 target_id = 8;
 }
 
 message GetTimelineRequest {
@@ -274,6 +297,16 @@ message CreateClipRequest {
 
 message CreateClipResponse {
   Clip clip = 1;
+}
+
+message GetClipRequest {
+  int64 clip_id = 1;
+  bool include_assets = 2;  // true면 클립이 가리키는 Asset 메타도
+}
+
+message GetClipResponse {
+  Clip clip = 1;
+  mediatag.asset.v1.Asset asset = 2; // include_assets일 때 clip.source가 가리키는 Asset. source가 없는 클립(tag·relation)이면 비어 있음
 }
 
 message UpdateClipRequest {

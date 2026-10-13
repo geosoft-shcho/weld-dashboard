@@ -586,34 +586,49 @@ class _PropertiesBody extends StatelessWidget {
                     _DataCell('항목', isHeader: true, flex: 2),
                     _DataCell('값', isHeader: true, flex: 3),
                   ], isHeader: true),
-                  _DataRow([
-                    _DataCell(
-                      clip != null && clip.hasLabel ? '라벨' : '이름',
-                      flex: 2,
-                    ),
-                    _DataCell(clip?.text ?? bar!.fileName, flex: 3),
-                  ]),
-                  _DataRow([
-                    _DataCell(clip == null ? '유형' : '레인', flex: 2),
-                    _DataCell(
-                      clip == null ? bar!.fileTypeLabel : clip.laneLabel,
-                      flex: 3,
-                    ),
-                  ]),
-                  _DataRow([
-                    const _DataCell('구간', flex: 2),
-                    _DataCell(
-                      clip == null
-                          ? viewModel.playheadLabel
-                          : '${clip.startSeconds.toStringAsFixed(1)}–${clip.endSeconds.toStringAsFixed(1)}초',
-                      flex: 3,
-                    ),
-                  ]),
-                  if (bar != null && bar.note.isNotEmpty)
+                  if (clip != null && viewModel.isClipDetailLoading)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: fluent.ProgressRing(),
+                    )
+                  else if (clip != null &&
+                      viewModel.clipDetailMessage.isNotEmpty &&
+                      viewModel.clipDetailFields.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Text(
+                        viewModel.clipDetailMessage,
+                        style: const TextStyle(
+                          color: MultimodalStudioPalette.PANEL_MUTED,
+                          fontSize: 11,
+                        ),
+                      ),
+                    )
+                  else if (clip != null)
+                    for (final field in viewModel.clipDetailFields)
+                      _DataRow([
+                        _DataCell(field.label, flex: 2),
+                        _DataCell(field.value, flex: 3),
+                      ])
+                  else ...[
                     _DataRow([
-                      const _DataCell('메모', flex: 2),
-                      _DataCell(bar.note, flex: 3),
+                      const _DataCell('이름', flex: 2),
+                      _DataCell(bar!.fileName, flex: 3),
                     ]),
+                    _DataRow([
+                      const _DataCell('유형', flex: 2),
+                      _DataCell(bar.fileTypeLabel, flex: 3),
+                    ]),
+                    _DataRow([
+                      const _DataCell('구간', flex: 2),
+                      _DataCell(viewModel.playheadLabel, flex: 3),
+                    ]),
+                    if (bar.note.isNotEmpty)
+                      _DataRow([
+                        const _DataCell('메모', flex: 2),
+                        _DataCell(bar.note, flex: 3),
+                      ]),
+                  ],
                 ],
               ),
             ),

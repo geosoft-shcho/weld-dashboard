@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:connectrpc/connect.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -19,6 +21,7 @@ import 'package:weld_dashboard/src/domain/use_cases/create_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_track_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/get_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/entities/ask_answer.dart';
 import 'package:weld_dashboard/src/domain/repositories/ask_repository.dart';
@@ -724,6 +727,125 @@ void main() {
     final trackClip = tester.getRect(find.text('file-0.mp4'));
     expect((firstRow.top - trackClip.top).abs(), lessThan(16));
   });
+
+  test('selecting a clip reads GetClip and keeps the latest response', () async {
+    final repository = _ScriptedTimelineRepository(_pairTimeline());
+    repository.holdClipDetail = true;
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+
+    viewModel.didSelectSampleClip('clip-a');
+    viewModel.didSelectSampleClip('clip-b');
+    expect(repository.getClipIds, ['clip-a', 'clip-b']);
+
+    repository.clipGates[1].complete(
+      const ClipDetail(
+        clipId: 'clip-b',
+        hasAsset: true,
+        fields: [
+          ClipField(label: 'clipId', value: 'clip-b'),
+          ClipField(label: 'provenance.targetId', value: '클립 9247'),
+        ],
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(viewModel.selectedClipId, 'clip-b');
+    expect(
+      viewModel.clipDetailFields
+          .firstWhere((field) => field.label == 'provenance.targetId')
+          .value,
+      '클립 9247',
+    );
+
+    repository.clipGates[0].complete(
+      const ClipDetail(
+        clipId: 'clip-a',
+        fields: [ClipField(label: 'clipId', value: 'clip-a')],
+      ),
+    );
+    await Future<void>.delayed(Duration.zero);
+    expect(viewModel.selectedClipId, 'clip-b');
+    expect(
+      viewModel.clipDetailFields.any((field) => field.value == 'clip-a'),
+      isFalse,
+    );
+  });
+
+  test('a missing clip keeps the selected timeline clip', () async {
+    final repository = _ScriptedTimelineRepository(_loadedTimeline());
+    repository.clipFailure = const JobTimelineException(
+      '클립을 찾지 못했습니다.',
+      failure: JobTimelineFailure.notFound,
+    );
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+
+    viewModel.didSelectSampleClip('clip-1');
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repository.getClipIds, ['clip-1']);
+    expect(viewModel.selectedClipId, 'clip-1');
+    expect(viewModel.clipDetailMessage, '클립을 찾지 못했습니다.');
+    expect(viewModel.selectedClip?.clipId, 'clip-1');
+  });
+
+  test('a video GetClip plays from timelineStartNs until timelineEndNs', () async {
+    const mediaUrl = 'http://media.example/9764.mp4';
+    final repository = _ScriptedTimelineRepository(
+      _timelineWithClip(
+        clipId: '9764',
+        playbackUrl: mediaUrl,
+        endNs: '390083999999',
+      ),
+    );
+    repository.nextClipDetail = const ClipDetail(
+      clipId: '9764',
+      fields: [],
+      isVideo: true,
+      timelineStartNs: '0',
+      timelineEndNs: '390083999999',
+    );
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+
+    viewModel.didSelectSampleClip('9764');
+    await Future<void>.delayed(Duration.zero);
+
+    expect(repository.getClipIds, ['9764']);
+    expect(viewModel.playheadSeconds, closeTo(0, 0.0001));
+    expect(viewModel.wantsPlayback, isTrue);
+    expect(viewModel.activeVideoBar?.mediaUrl, mediaUrl);
+    expect(viewModel.activeVideoBar?.startSeconds, closeTo(0, 0.0001));
+    expect(viewModel.activeVideoBar?.endSeconds, closeTo(390.084, 0.001));
+
+    viewModel.didReceiveVideoClock(
+      mediaUrl: mediaUrl,
+      localSeconds: 392,
+      durationSeconds: 392,
+      isPlaying: false,
+    );
+    expect(viewModel.playheadSeconds, closeTo(0, 0.0001));
+    expect(viewModel.wantsPlayback, isTrue);
+
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    viewModel.didReceiveVideoClock(
+      mediaUrl: mediaUrl,
+      localSeconds: 1,
+      durationSeconds: 392,
+      isPlaying: true,
+    );
+    expect(viewModel.playheadSeconds, closeTo(1, 0.0001));
+
+    viewModel.didReceiveVideoClock(
+      mediaUrl: mediaUrl,
+      localSeconds: 390.084,
+      durationSeconds: 392,
+      isPlaying: true,
+    );
+    expect(viewModel.wantsPlayback, isFalse);
+    expect(viewModel.playheadSeconds, lessThan(390.084));
+    expect(viewModel.activeVideoBar?.attachmentId, '9764');
+  });
 }
 
 Widget _board(VideoMultimodalViewModel viewModel) {
@@ -817,6 +939,78 @@ JobTimeline _manyTrackTimeline() {
   );
 }
 
+JobTimeline _timelineWithClip({
+  required String clipId,
+  required String playbackUrl,
+  required String endNs,
+}) {
+  return JobTimeline(
+    jobId: 'job-1',
+    name: '작업',
+    tracks: [
+      TimelineTrack(
+        trackId: 'track-1',
+        name: '영상',
+        order: 1,
+        clips: [
+          TimelineClip(
+            clipId: clipId,
+            trackId: 'track-1',
+            kind: TimelineClipKind.video,
+            startNs: '0',
+            endNs: endNs,
+            assetId: '9',
+            fileName: 'take.mp4',
+            playbackUrl: playbackUrl,
+            description: '',
+            showsToolBadge: false,
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
+JobTimeline _pairTimeline() {
+  return const JobTimeline(
+    jobId: 'job-1',
+    name: '작업',
+    tracks: [
+      TimelineTrack(
+        trackId: 'track-1',
+        name: '영상',
+        order: 1,
+        clips: [
+          TimelineClip(
+            clipId: 'clip-a',
+            trackId: 'track-1',
+            kind: TimelineClipKind.video,
+            startNs: '0',
+            endNs: '1000000000',
+            assetId: '1',
+            fileName: 'a.mp4',
+            playbackUrl: 'https://example.test/a.mp4',
+            description: '',
+            showsToolBadge: false,
+          ),
+          TimelineClip(
+            clipId: 'clip-b',
+            trackId: 'track-1',
+            kind: TimelineClipKind.tag,
+            startNs: '0',
+            endNs: '1000000000',
+            assetId: '',
+            fileName: '',
+            playbackUrl: '',
+            description: '',
+            showsToolBadge: false,
+          ),
+        ],
+      ),
+    ],
+  );
+}
+
 JobTimeline _loadedTimeline() {
   return const JobTimeline(
     jobId: 'job-1',
@@ -855,6 +1049,7 @@ VideoMultimodalViewModel _viewModel(
       workDetail ?? _EmptyWorkDetailRepository(),
     ),
     getJobTimelineUseCase: GetJobTimelineUseCase(repository),
+    getClipUseCase: GetClipUseCase(repository),
     createTrackUseCase: CreateTrackUseCase(repository),
     updateTrackUseCase: UpdateTrackUseCase(repository),
     deleteTrackUseCase: DeleteTrackUseCase(repository),
@@ -933,6 +1128,11 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
 
   @override
   Future<JobTimeline> getTimeline({required String jobId}) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<ClipDetail> getClip({required String clipId}) {
     throw StateError('unused');
   }
 
@@ -1075,6 +1275,11 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
   String? lastTrackId;
   JobTimelineStatus? lastFromStatus;
   JobTimelineStatus? lastToStatus;
+  final List<String> getClipIds = [];
+  final List<Completer<ClipDetail>> clipGates = [];
+  bool holdClipDetail = false;
+  ClipDetail? nextClipDetail;
+  JobTimelineException? clipFailure;
 
   @override
   Future<JobTimeline> getTimeline({required String jobId}) async {
@@ -1084,6 +1289,24 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
       current = upcoming;
     }
     return current;
+  }
+
+  @override
+  Future<ClipDetail> getClip({required String clipId}) async {
+    getClipIds.add(clipId);
+    if (clipFailure != null) {
+      throw clipFailure!;
+    }
+    if (holdClipDetail) {
+      final gate = Completer<ClipDetail>();
+      clipGates.add(gate);
+      return gate.future;
+    }
+    return nextClipDetail ??
+        ClipDetail(
+          clipId: clipId,
+          fields: [ClipField(label: 'clipId', value: clipId)],
+        );
   }
 
   @override

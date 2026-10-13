@@ -67,6 +67,21 @@ final $typed_data.Uint8List clipKindDescriptor = $convert.base64Decode(
     'UF9LSU5EX0ZJTEUQCRIRCg1DTElQX0tJTkRfVEFHEAoSFAoQQ0xJUF9LSU5EX1JFR0lPThALEh'
     'YKEkNMSVBfS0lORF9SRUxBVElPThAM');
 
+@$core.Deprecated('Use clipTargetKindDescriptor instead')
+const ClipTargetKind$json = {
+  '1': 'ClipTargetKind',
+  '2': [
+    {'1': 'CLIP_TARGET_KIND_UNSPECIFIED', '2': 0},
+    {'1': 'CLIP_TARGET_KIND_CLIP', '2': 1},
+    {'1': 'CLIP_TARGET_KIND_ASSET', '2': 2},
+  ],
+};
+
+/// Descriptor for `ClipTargetKind`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List clipTargetKindDescriptor = $convert.base64Decode(
+    'Cg5DbGlwVGFyZ2V0S2luZBIgChxDTElQX1RBUkdFVF9LSU5EX1VOU1BFQ0lGSUVEEAASGQoVQ0'
+    'xJUF9UQVJHRVRfS0lORF9DTElQEAESGgoWQ0xJUF9UQVJHRVRfS0lORF9BU1NFVBAC');
+
 @$core.Deprecated('Use labelRefDescriptor instead')
 const LabelRef$json = {
   '1': 'LabelRef',
@@ -363,6 +378,15 @@ const ClipProvenance$json = {
     {'1': 'run_id', '3': 3, '4': 1, '5': 3, '10': 'runId'},
     {'1': 'tool_id', '3': 4, '4': 1, '5': 3, '10': 'toolId'},
     {'1': 'tool_version', '3': 5, '4': 1, '5': 9, '10': 'toolVersion'},
+    {
+      '1': 'target_kind',
+      '3': 7,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.compose.v1.ClipTargetKind',
+      '10': 'targetKind'
+    },
+    {'1': 'target_id', '3': 8, '4': 1, '5': 3, '10': 'targetId'},
   ],
   '8': [
     {'1': '_confidence'},
@@ -377,8 +401,10 @@ const ClipProvenance$json = {
 final $typed_data.Uint8List clipProvenanceDescriptor = $convert.base64Decode(
     'Cg5DbGlwUHJvdmVuYW5jZRIjCgpjb25maWRlbmNlGAEgASgBSABSCmNvbmZpZGVuY2WIAQESGg'
     'oIcmV2aWV3ZWQYAiABKAhSCHJldmlld2VkEhUKBnJ1bl9pZBgDIAEoA1IFcnVuSWQSFwoHdG9v'
-    'bF9pZBgEIAEoA1IGdG9vbElkEiEKDHRvb2xfdmVyc2lvbhgFIAEoCVILdG9vbFZlcnNpb25CDQ'
-    'oLX2NvbmZpZGVuY2VKBAgGEAdSDmlucHV0X2NsaXBfaWRz');
+    'bF9pZBgEIAEoA1IGdG9vbElkEiEKDHRvb2xfdmVyc2lvbhgFIAEoCVILdG9vbFZlcnNpb24SRA'
+    'oLdGFyZ2V0X2tpbmQYByABKA4yIy5tZWRpYXRhZy5jb21wb3NlLnYxLkNsaXBUYXJnZXRLaW5k'
+    'Ugp0YXJnZXRLaW5kEhsKCXRhcmdldF9pZBgIIAEoA1IIdGFyZ2V0SWRCDQoLX2NvbmZpZGVuY2'
+    'VKBAgGEAdSDmlucHV0X2NsaXBfaWRz');
 
 @$core.Deprecated('Use getTimelineRequestDescriptor instead')
 const GetTimelineRequest$json = {
@@ -788,6 +814,49 @@ final $typed_data.Uint8List createClipResponseDescriptor = $convert.base64Decode
     'ChJDcmVhdGVDbGlwUmVzcG9uc2USLQoEY2xpcBgBIAEoCzIZLm1lZGlhdGFnLmNvbXBvc2Uudj'
     'EuQ2xpcFIEY2xpcA==');
 
+@$core.Deprecated('Use getClipRequestDescriptor instead')
+const GetClipRequest$json = {
+  '1': 'GetClipRequest',
+  '2': [
+    {'1': 'clip_id', '3': 1, '4': 1, '5': 3, '10': 'clipId'},
+    {'1': 'include_assets', '3': 2, '4': 1, '5': 8, '10': 'includeAssets'},
+  ],
+};
+
+/// Descriptor for `GetClipRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getClipRequestDescriptor = $convert.base64Decode(
+    'Cg5HZXRDbGlwUmVxdWVzdBIXCgdjbGlwX2lkGAEgASgDUgZjbGlwSWQSJQoOaW5jbHVkZV9hc3'
+    'NldHMYAiABKAhSDWluY2x1ZGVBc3NldHM=');
+
+@$core.Deprecated('Use getClipResponseDescriptor instead')
+const GetClipResponse$json = {
+  '1': 'GetClipResponse',
+  '2': [
+    {
+      '1': 'clip',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.compose.v1.Clip',
+      '10': 'clip'
+    },
+    {
+      '1': 'asset',
+      '3': 2,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.asset.v1.Asset',
+      '10': 'asset'
+    },
+  ],
+};
+
+/// Descriptor for `GetClipResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getClipResponseDescriptor = $convert.base64Decode(
+    'Cg9HZXRDbGlwUmVzcG9uc2USLQoEY2xpcBgBIAEoCzIZLm1lZGlhdGFnLmNvbXBvc2UudjEuQ2'
+    'xpcFIEY2xpcBIuCgVhc3NldBgCIAEoCzIYLm1lZGlhdGFnLmFzc2V0LnYxLkFzc2V0UgVhc3Nl'
+    'dA==');
+
 @$core.Deprecated('Use updateClipRequestDescriptor instead')
 const UpdateClipRequest$json = {
   '1': 'UpdateClipRequest',
@@ -1060,6 +1129,11 @@ const $core.Map<$core.String, $core.dynamic> MediaComposeServiceBase$json = {
       '3': '.mediatag.compose.v1.CreateClipResponse'
     },
     {
+      '1': 'GetClip',
+      '2': '.mediatag.compose.v1.GetClipRequest',
+      '3': '.mediatag.compose.v1.GetClipResponse'
+    },
+    {
       '1': 'UpdateClip',
       '2': '.mediatag.compose.v1.UpdateClipRequest',
       '3': '.mediatag.compose.v1.UpdateClipResponse'
@@ -1110,6 +1184,8 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.compose.v1.DeleteTrackResponse': DeleteTrackResponse$json,
   '.mediatag.compose.v1.CreateClipRequest': CreateClipRequest$json,
   '.mediatag.compose.v1.CreateClipResponse': CreateClipResponse$json,
+  '.mediatag.compose.v1.GetClipRequest': GetClipRequest$json,
+  '.mediatag.compose.v1.GetClipResponse': GetClipResponse$json,
   '.mediatag.compose.v1.UpdateClipRequest': UpdateClipRequest$json,
   '.mediatag.compose.v1.UpdateClipResponse': UpdateClipResponse$json,
   '.mediatag.compose.v1.DeleteClipRequest': DeleteClipRequest$json,
@@ -1135,10 +1211,12 @@ final $typed_data.Uint8List mediaComposeServiceDescriptor = $convert.base64Decod
     'ZWRpYXRhZy5jb21wb3NlLnYxLkRlbGV0ZVRyYWNrUmVxdWVzdBooLm1lZGlhdGFnLmNvbXBvc2'
     'UudjEuRGVsZXRlVHJhY2tSZXNwb25zZRJdCgpDcmVhdGVDbGlwEiYubWVkaWF0YWcuY29tcG9z'
     'ZS52MS5DcmVhdGVDbGlwUmVxdWVzdBonLm1lZGlhdGFnLmNvbXBvc2UudjEuQ3JlYXRlQ2xpcF'
-    'Jlc3BvbnNlEl0KClVwZGF0ZUNsaXASJi5tZWRpYXRhZy5jb21wb3NlLnYxLlVwZGF0ZUNsaXBS'
-    'ZXF1ZXN0GicubWVkaWF0YWcuY29tcG9zZS52MS5VcGRhdGVDbGlwUmVzcG9uc2USXQoKRGVsZX'
-    'RlQ2xpcBImLm1lZGlhdGFnLmNvbXBvc2UudjEuRGVsZXRlQ2xpcFJlcXVlc3QaJy5tZWRpYXRh'
-    'Zy5jb21wb3NlLnYxLkRlbGV0ZUNsaXBSZXNwb25zZQ==');
+    'Jlc3BvbnNlElQKB0dldENsaXASIy5tZWRpYXRhZy5jb21wb3NlLnYxLkdldENsaXBSZXF1ZXN0'
+    'GiQubWVkaWF0YWcuY29tcG9zZS52MS5HZXRDbGlwUmVzcG9uc2USXQoKVXBkYXRlQ2xpcBImLm'
+    '1lZGlhdGFnLmNvbXBvc2UudjEuVXBkYXRlQ2xpcFJlcXVlc3QaJy5tZWRpYXRhZy5jb21wb3Nl'
+    'LnYxLlVwZGF0ZUNsaXBSZXNwb25zZRJdCgpEZWxldGVDbGlwEiYubWVkaWF0YWcuY29tcG9zZS'
+    '52MS5EZWxldGVDbGlwUmVxdWVzdBonLm1lZGlhdGFnLmNvbXBvc2UudjEuRGVsZXRlQ2xpcFJl'
+    'c3BvbnNl');
 
 const $core.Map<$core.String, $core.dynamic> LabelServiceBase$json = {
   '1': 'LabelService',

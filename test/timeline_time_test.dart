@@ -33,6 +33,11 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
   }
 
   @override
+  Future<ClipDetail> getClip({required String clipId}) {
+    throw StateError('unused');
+  }
+
+  @override
   Future<void> createTrack({
     required String jobId,
     required String name,

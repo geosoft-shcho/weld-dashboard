@@ -82,6 +82,14 @@ abstract final class MediaComposeService {
     mediatagcomposev1compose.CreateClipResponse.new,
   );
 
+  /// 클립 하나. include_assets를 주면 그 클립이 가리키는 Asset도. 없으면 NOT_FOUND.
+  static const getClip = connect.Spec(
+    '/$name/GetClip',
+    connect.StreamType.unary,
+    mediatagcomposev1compose.GetClipRequest.new,
+    mediatagcomposev1compose.GetClipResponse.new,
+  );
+
   /// 오류 조건·자동 첨부는 CreateClip과 같다. 검수는 update_mask "provenance.reviewed".
   static const updateClip = connect.Spec(
     '/$name/UpdateClip',

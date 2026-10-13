@@ -17,6 +17,7 @@ import 'package:weld_dashboard/src/domain/use_cases/create_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_track_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/get_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/entities/ask_answer.dart';
 import 'package:weld_dashboard/src/domain/repositories/ask_repository.dart';
@@ -46,6 +47,7 @@ void main() {
           _FakeWorkDetailRepository(),
         ),
         getJobTimelineUseCase: GetJobTimelineUseCase(timeline),
+        getClipUseCase: GetClipUseCase(timeline),
         createTrackUseCase: CreateTrackUseCase(timeline),
         updateTrackUseCase: UpdateTrackUseCase(timeline),
         deleteTrackUseCase: DeleteTrackUseCase(timeline),
@@ -119,6 +121,11 @@ class _FakeTimelineRepository implements JobTimelineRepository {
         ),
       ],
     );
+  }
+
+  @override
+  Future<ClipDetail> getClip({required String clipId}) async {
+    return ClipDetail.empty;
   }
 
   @override

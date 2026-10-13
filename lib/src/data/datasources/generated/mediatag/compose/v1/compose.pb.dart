@@ -737,8 +737,13 @@ class ClipSource extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   void clearEndNs() => $_clearField(3);
 
-  /// kind별 위치(자유 형식 JSON). pdf: {"page": N}, image: {"x","y","width","height"}(0~1 비율),
-  /// pointcloud: {"points": [[x,y,z], ...]}. 영상 속 영역은 locator가 아니라 REGION Clip으로 둔다.
+  /// kind별 위치(JSON, 모양은 kind가 정한다 — 다른 모양·다른 kind에 쓰면 InvalidArgument). 2D 좌표는 0~1 비율·좌상단
+  /// 원점, 쪽은 1부터.
+  ///   pdf:        {"page": N} 한 쪽 · {"page": N, "x","y","width","height"} 그 쪽 안의 박스 ·
+  ///               {"page_start": A, "page_end": B} 쪽 범위. 글자·문단을 골라도 그 사각형을 박스로 보낸다
+  ///   image:      {"x","y","width","height"}
+  ///   pointcloud: {"points": [[x,y,z], ...]}
+  /// 영상 속 영역은 locator가 아니라 REGION Clip으로 둔다.
   @$pb.TagNumber(4)
   $1.Struct get locator => $_getN(3);
   @$pb.TagNumber(4)
@@ -758,6 +763,8 @@ class ClipProvenance extends $pb.GeneratedMessage {
     $fixnum.Int64? runId,
     $fixnum.Int64? toolId,
     $core.String? toolVersion,
+    ClipTargetKind? targetKind,
+    $fixnum.Int64? targetId,
   }) {
     final result = create();
     if (confidence != null) result.confidence = confidence;
@@ -765,6 +772,8 @@ class ClipProvenance extends $pb.GeneratedMessage {
     if (runId != null) result.runId = runId;
     if (toolId != null) result.toolId = toolId;
     if (toolVersion != null) result.toolVersion = toolVersion;
+    if (targetKind != null) result.targetKind = targetKind;
+    if (targetId != null) result.targetId = targetId;
     return result;
   }
 
@@ -788,6 +797,12 @@ class ClipProvenance extends $pb.GeneratedMessage {
     ..aInt64(3, _omitFieldNames ? '' : 'runId')
     ..aInt64(4, _omitFieldNames ? '' : 'toolId')
     ..aOS(5, _omitFieldNames ? '' : 'toolVersion')
+    ..e<ClipTargetKind>(
+        7, _omitFieldNames ? '' : 'targetKind', $pb.PbFieldType.OE,
+        defaultOrMaker: ClipTargetKind.CLIP_TARGET_KIND_UNSPECIFIED,
+        valueOf: ClipTargetKind.valueOf,
+        enumValues: ClipTargetKind.values)
+    ..aInt64(8, _omitFieldNames ? '' : 'targetId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -855,6 +870,27 @@ class ClipProvenance extends $pb.GeneratedMessage {
   $core.bool hasToolVersion() => $_has(4);
   @$pb.TagNumber(5)
   void clearToolVersion() => $_clearField(5);
+
+  /// 이 클립을 만든 실행의 대상(ToolRun.target과 같은 값). 읽기 전용 — 서버가 run_id로 찾아 채운다(저장하지 않음).
+  /// target_id는 target_kind가 가리키는 종류의 번호다(CLIP이면 clip_id, ASSET이면 asset_id) — 번호는 종류마다 따로 세므로
+  /// 반드시 target_kind를 먼저 본다. 대상이 지워졌으면 UNSPECIFIED·0이다.
+  @$pb.TagNumber(7)
+  ClipTargetKind get targetKind => $_getN(5);
+  @$pb.TagNumber(7)
+  set targetKind(ClipTargetKind value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasTargetKind() => $_has(5);
+  @$pb.TagNumber(7)
+  void clearTargetKind() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $fixnum.Int64 get targetId => $_getI64(6);
+  @$pb.TagNumber(8)
+  set targetId($fixnum.Int64 value) => $_setInt64(6, value);
+  @$pb.TagNumber(8)
+  $core.bool hasTargetId() => $_has(6);
+  @$pb.TagNumber(8)
+  void clearTargetId() => $_clearField(8);
 }
 
 class GetTimelineRequest extends $pb.GeneratedMessage {
@@ -2074,6 +2110,149 @@ class CreateClipResponse extends $pb.GeneratedMessage {
   Clip ensureClip() => $_ensure(0);
 }
 
+class GetClipRequest extends $pb.GeneratedMessage {
+  factory GetClipRequest({
+    $fixnum.Int64? clipId,
+    $core.bool? includeAssets,
+  }) {
+    final result = create();
+    if (clipId != null) result.clipId = clipId;
+    if (includeAssets != null) result.includeAssets = includeAssets;
+    return result;
+  }
+
+  GetClipRequest._();
+
+  factory GetClipRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetClipRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetClipRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'clipId')
+    ..aOB(2, _omitFieldNames ? '' : 'includeAssets')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetClipRequest clone() => GetClipRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetClipRequest copyWith(void Function(GetClipRequest) updates) =>
+      super.copyWith((message) => updates(message as GetClipRequest))
+          as GetClipRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetClipRequest create() => GetClipRequest._();
+  @$core.override
+  GetClipRequest createEmptyInstance() => create();
+  static $pb.PbList<GetClipRequest> createRepeated() =>
+      $pb.PbList<GetClipRequest>();
+  @$core.pragma('dart2js:noInline')
+  static GetClipRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetClipRequest>(create);
+  static GetClipRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get clipId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set clipId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasClipId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearClipId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.bool get includeAssets => $_getBF(1);
+  @$pb.TagNumber(2)
+  set includeAssets($core.bool value) => $_setBool(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasIncludeAssets() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearIncludeAssets() => $_clearField(2);
+}
+
+class GetClipResponse extends $pb.GeneratedMessage {
+  factory GetClipResponse({
+    Clip? clip,
+    $2.Asset? asset,
+  }) {
+    final result = create();
+    if (clip != null) result.clip = clip;
+    if (asset != null) result.asset = asset;
+    return result;
+  }
+
+  GetClipResponse._();
+
+  factory GetClipResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetClipResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetClipResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
+      createEmptyInstance: create)
+    ..aOM<Clip>(1, _omitFieldNames ? '' : 'clip', subBuilder: Clip.create)
+    ..aOM<$2.Asset>(2, _omitFieldNames ? '' : 'asset',
+        subBuilder: $2.Asset.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetClipResponse clone() => GetClipResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetClipResponse copyWith(void Function(GetClipResponse) updates) =>
+      super.copyWith((message) => updates(message as GetClipResponse))
+          as GetClipResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetClipResponse create() => GetClipResponse._();
+  @$core.override
+  GetClipResponse createEmptyInstance() => create();
+  static $pb.PbList<GetClipResponse> createRepeated() =>
+      $pb.PbList<GetClipResponse>();
+  @$core.pragma('dart2js:noInline')
+  static GetClipResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetClipResponse>(create);
+  static GetClipResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Clip get clip => $_getN(0);
+  @$pb.TagNumber(1)
+  set clip(Clip value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasClip() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearClip() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Clip ensureClip() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $2.Asset get asset => $_getN(1);
+  @$pb.TagNumber(2)
+  set asset($2.Asset value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasAsset() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearAsset() => $_clearField(2);
+  @$pb.TagNumber(2)
+  $2.Asset ensureAsset() => $_ensure(1);
+}
+
 class UpdateClipRequest extends $pb.GeneratedMessage {
   factory UpdateClipRequest({
     Clip? clip,
@@ -2860,6 +3039,12 @@ class MediaComposeServiceApi {
           $pb.ClientContext? ctx, CreateClipRequest request) =>
       _client.invoke<CreateClipResponse>(ctx, 'MediaComposeService',
           'CreateClip', request, CreateClipResponse());
+
+  /// 클립 하나. include_assets를 주면 그 클립이 가리키는 Asset도. 없으면 NOT_FOUND.
+  $async.Future<GetClipResponse> getClip(
+          $pb.ClientContext? ctx, GetClipRequest request) =>
+      _client.invoke<GetClipResponse>(
+          ctx, 'MediaComposeService', 'GetClip', request, GetClipResponse());
 
   /// 오류 조건·자동 첨부는 CreateClip과 같다. 검수는 update_mask "provenance.reviewed".
   $async.Future<UpdateClipResponse> updateClip(

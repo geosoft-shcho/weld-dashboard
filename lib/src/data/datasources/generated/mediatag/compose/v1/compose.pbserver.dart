@@ -39,6 +39,8 @@ abstract class MediaComposeServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $4.DeleteTrackRequest request);
   $async.Future<$4.CreateClipResponse> createClip(
       $pb.ServerContext ctx, $4.CreateClipRequest request);
+  $async.Future<$4.GetClipResponse> getClip(
+      $pb.ServerContext ctx, $4.GetClipRequest request);
   $async.Future<$4.UpdateClipResponse> updateClip(
       $pb.ServerContext ctx, $4.UpdateClipRequest request);
   $async.Future<$4.DeleteClipResponse> deleteClip(
@@ -64,6 +66,8 @@ abstract class MediaComposeServiceBase extends $pb.GeneratedService {
         return $4.DeleteTrackRequest();
       case 'CreateClip':
         return $4.CreateClipRequest();
+      case 'GetClip':
+        return $4.GetClipRequest();
       case 'UpdateClip':
         return $4.UpdateClipRequest();
       case 'DeleteClip':
@@ -95,6 +99,8 @@ abstract class MediaComposeServiceBase extends $pb.GeneratedService {
         return deleteTrack(ctx, request as $4.DeleteTrackRequest);
       case 'CreateClip':
         return createClip(ctx, request as $4.CreateClipRequest);
+      case 'GetClip':
+        return getClip(ctx, request as $4.GetClipRequest);
       case 'UpdateClip':
         return updateClip(ctx, request as $4.UpdateClipRequest);
       case 'DeleteClip':

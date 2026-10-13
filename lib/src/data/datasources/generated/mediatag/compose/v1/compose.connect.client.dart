@@ -170,6 +170,24 @@ extension type MediaComposeServiceClient (connect.Transport _transport) {
     );
   }
 
+  /// 클립 하나. include_assets를 주면 그 클립이 가리키는 Asset도. 없으면 NOT_FOUND.
+  Future<mediatagcomposev1compose.GetClipResponse> getClip(
+    mediatagcomposev1compose.GetClipRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.MediaComposeService.getClip,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
   /// 오류 조건·자동 첨부는 CreateClip과 같다. 검수는 update_mask "provenance.reviewed".
   Future<mediatagcomposev1compose.UpdateClipResponse> updateClip(
     mediatagcomposev1compose.UpdateClipRequest input, {

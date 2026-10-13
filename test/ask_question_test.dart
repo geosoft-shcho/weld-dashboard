@@ -21,6 +21,7 @@ import 'package:weld_dashboard/src/domain/use_cases/create_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_track_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/get_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
@@ -390,6 +391,7 @@ VideoMultimodalViewModel _viewModel(
       workDetail,
     ),
     getJobTimelineUseCase: GetJobTimelineUseCase(timelineRepository),
+    getClipUseCase: GetClipUseCase(timelineRepository),
     createTrackUseCase: CreateTrackUseCase(timelineRepository),
     updateTrackUseCase: UpdateTrackUseCase(timelineRepository),
     deleteTrackUseCase: DeleteTrackUseCase(timelineRepository),
@@ -463,6 +465,11 @@ class _IdleTimeline implements JobTimelineRepository {
   @override
   Future<JobTimeline> getTimeline({required String jobId}) async {
     return timeline;
+  }
+
+  @override
+  Future<ClipDetail> getClip({required String clipId}) async {
+    return ClipDetail.empty;
   }
 
   @override

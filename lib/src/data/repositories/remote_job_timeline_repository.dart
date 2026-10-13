@@ -8,6 +8,7 @@ import '../datasources/generated/mediatag/compose/v1/compose.pb.dart'
     as compose_pb;
 import '../datasources/generated/mediatag/compose/v1/compose.pbenum.dart';
 import '../datasources/remote/media_tag_data_source.dart';
+import 'clip_detail_mapping.dart';
 import 'job_timeline_edit_requests.dart';
 import 'proto_id.dart';
 
@@ -36,6 +37,21 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
       throw timelineExceptionFromConnect(
         error,
         emptyMessage: '타임라인을 불러오지 못했습니다.',
+      );
+    }
+  }
+
+  @override
+  Future<ClipDetail> getClip({required String clipId}) async {
+    try {
+      final response = await _mediaTag.composeService.getClip(
+        buildGetClipRequest(clipId),
+      );
+      return clipDetailFromResponse(response);
+    } on ConnectException catch (error) {
+      throw timelineExceptionFromConnect(
+        error,
+        emptyMessage: '클립을 불러오지 못했습니다.',
       );
     }
   }

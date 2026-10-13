@@ -3,6 +3,8 @@ import '../entities/job_timeline.dart';
 abstract class JobTimelineRepository {
   Future<JobTimeline> getTimeline({required String jobId});
 
+  Future<ClipDetail> getClip({required String clipId});
+
   Future<void> createTrack({
     required String jobId,
     required String name,

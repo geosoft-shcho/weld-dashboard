@@ -45,6 +45,8 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   Timer? _clockTimer;
   VoidCallback? _clockListener;
   String _errorText = '';
+  bool _leftTarget = false;
+  bool _pullingFromEnd = false;
 
   @override
   void initState() {
@@ -60,6 +62,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       return;
     }
     if (oldWidget.seekToken != widget.seekToken) {
+      _leftTarget = false;
       _seekTo(widget.seekToMs);
     }
     if (oldWidget.playbackToken != widget.playbackToken) {
@@ -101,8 +104,11 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
         _videoController = videoController;
         _chewieController = chewieController;
       });
-      _watch(videoController);
       await _seekTo(widget.seekToMs);
+      if (!mounted) {
+        return;
+      }
+      _watch(videoController);
       if (widget.wantsPlayback) {
         await videoController.play();
       }
@@ -189,6 +195,13 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
         return;
       }
       final value = controller.value;
+      if (value.position.inMilliseconds > widget.seekToMs + 500) {
+        _leftTarget = true;
+      }
+      if (_sitsAtEnd(value)) {
+        _pullToTarget(controller);
+        return;
+      }
       final clock = VideoPlaybackClock(
         position: value.position,
         duration: value.duration,
@@ -217,6 +230,35 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       emit();
     });
     emit();
+  }
+
+  bool _sitsAtEnd(VideoPlayerValue value) {
+    if (_leftTarget || _pullingFromEnd) {
+      return false;
+    }
+    final durationMs = value.duration.inMilliseconds;
+    if (durationMs < 1000) {
+      return false;
+    }
+    final atEnd = value.position.inMilliseconds >= durationMs - 400;
+    final targetBeforeEnd = widget.seekToMs < durationMs - 1000;
+    return atEnd && targetBeforeEnd;
+  }
+
+  Future<void> _pullToTarget(VideoPlayerController controller) async {
+    if (_pullingFromEnd) {
+      return;
+    }
+    _pullingFromEnd = true;
+    await _seekTo(widget.seekToMs);
+    if (!mounted) {
+      _pullingFromEnd = false;
+      return;
+    }
+    if (widget.wantsPlayback) {
+      await controller.play();
+    }
+    _pullingFromEnd = false;
   }
 
   Future<void> _seekTo(int milliseconds) async {

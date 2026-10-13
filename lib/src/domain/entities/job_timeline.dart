@@ -129,3 +129,39 @@ class JobTimelineException implements Exception {
   @override
   String toString() => message;
 }
+
+class ClipField {
+  const ClipField({required this.label, required this.value});
+
+  final String label;
+  final String value;
+}
+
+class ClipDetail {
+  const ClipDetail({
+    required this.clipId,
+    required this.fields,
+    this.hasAsset = false,
+    this.isVideo = false,
+    this.timelineStartNs = '',
+    this.timelineEndNs = '',
+  });
+
+  static const empty = ClipDetail(clipId: '', fields: []);
+
+  final String clipId;
+  final List<ClipField> fields;
+  final bool hasAsset;
+  final bool isVideo;
+  final String timelineStartNs;
+  final String timelineEndNs;
+
+  String valueOf(String label) {
+    for (final field in fields) {
+      if (field.label == label) {
+        return field.value;
+      }
+    }
+    return '';
+  }
+}

@@ -95,5 +95,28 @@ class ClipKind extends $pb.ProtobufEnum {
   const ClipKind._(super.value, super.name);
 }
 
+/// 클립을 만든 실행이 무엇을 대상으로 돌았는지(ClipProvenance.target_kind).
+class ClipTargetKind extends $pb.ProtobufEnum {
+  static const ClipTargetKind CLIP_TARGET_KIND_UNSPECIFIED =
+      ClipTargetKind._(0, _omitEnumNames ? '' : 'CLIP_TARGET_KIND_UNSPECIFIED');
+  static const ClipTargetKind CLIP_TARGET_KIND_CLIP =
+      ClipTargetKind._(1, _omitEnumNames ? '' : 'CLIP_TARGET_KIND_CLIP');
+  static const ClipTargetKind CLIP_TARGET_KIND_ASSET =
+      ClipTargetKind._(2, _omitEnumNames ? '' : 'CLIP_TARGET_KIND_ASSET');
+
+  static const $core.List<ClipTargetKind> values = <ClipTargetKind>[
+    CLIP_TARGET_KIND_UNSPECIFIED,
+    CLIP_TARGET_KIND_CLIP,
+    CLIP_TARGET_KIND_ASSET,
+  ];
+
+  static final $core.List<ClipTargetKind?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static ClipTargetKind? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const ClipTargetKind._(super.value, super.name);
+}
+
 const $core.bool _omitEnumNames =
     $core.bool.fromEnvironment('protobuf.omit_enum_names');
