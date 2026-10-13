@@ -222,6 +222,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool _wantsPlayback = false;
   int _playbackToken = 0;
   DateTime _ignoreClockUntil = DateTime.fromMillisecondsSinceEpoch(0);
+  double? _seekAnchorSeconds;
   InferencePanelPhase _inferencePhase = InferencePanelPhase.hidden;
   bool _isInferenceMinimized = false;
   double _inferenceOffsetX = 24;
@@ -470,12 +471,18 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }) {
     final expectedLocal = _playheadSeconds - startSeconds;
     final clockSettled = (localSeconds - expectedLocal).abs() <= 0.35;
-    if (DateTime.now().isBefore(_ignoreClockUntil) && !clockSettled) {
+    final anchor = _seekAnchorSeconds;
+    final stillAtAnchor =
+        anchor != null && (startSeconds + localSeconds - anchor).abs() <= 0.35;
+    if ((stillAtAnchor || DateTime.now().isBefore(_ignoreClockUntil)) &&
+        !clockSettled) {
       if (notifyWhenIgnored) {
         notifyListeners();
       }
       return;
     }
+    _seekAnchorSeconds = null;
+    _ignoreClockUntil = DateTime.fromMillisecondsSinceEpoch(0);
     final next = (startSeconds + localSeconds).clamp(0.0, spanSeconds);
     if ((next - _playheadSeconds).abs() < 0.03 &&
         _isVideoPlaying == isPlaying) {
@@ -491,14 +498,15 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (selected?.kind == TimelineClipKind.pose && _playbackVideoClip == null) {
       return null;
     }
-    final clip =
-        _playbackVideoClip ??
-        (selected != null &&
-                selected.kind == TimelineClipKind.video &&
-                selected.playbackUrl.isNotEmpty &&
-                _clipCovers(selected, _playheadSeconds)
-            ? selected
-            : _videoClipAt(_playheadSeconds));
+    final playback = _playbackVideoClip;
+    final selectedCovers =
+        selected != null &&
+        selected.kind == TimelineClipKind.video &&
+        selected.playbackUrl.isNotEmpty &&
+        _clipCovers(selected, _playheadSeconds);
+    final clip = playback != null && _clipCovers(playback, _playheadSeconds)
+        ? playback
+        : (selectedCovers ? selected : _videoClipAt(_playheadSeconds));
     if (clip == null) {
       return null;
     }
@@ -1491,10 +1499,18 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didSeekToSeconds(double seconds) {
+    final wasPlaying = _wantsPlayback || _isVideoPlaying;
+    final previous = _playheadSeconds;
     _playheadSeconds = seconds.clamp(0, spanSeconds);
     _seekToken += 1;
     _ignoreClockUntil = DateTime.now().add(const Duration(milliseconds: 450));
-    _isVideoPlaying = false;
+    if ((_playheadSeconds - previous).abs() > 0.35) {
+      _seekAnchorSeconds = previous;
+    }
+    final covered = activeVideoBar != null;
+    _wantsPlayback = covered && wasPlaying;
+    _isVideoPlaying = covered && wasPlaying;
+    _playbackToken += 1;
     notifyListeners();
   }
 

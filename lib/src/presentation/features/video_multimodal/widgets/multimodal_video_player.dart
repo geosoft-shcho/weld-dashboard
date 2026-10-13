@@ -63,9 +63,8 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     }
     if (oldWidget.seekToken != widget.seekToken) {
       _leftTarget = false;
-      _seekTo(widget.seekToMs);
-    }
-    if (oldWidget.playbackToken != widget.playbackToken) {
+      _seekAndApply(widget.seekToken);
+    } else if (oldWidget.playbackToken != widget.playbackToken) {
       final playbackToken = widget.playbackToken;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || widget.playbackToken != playbackToken) {
@@ -259,6 +258,14 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       await controller.play();
     }
     _pullingFromEnd = false;
+  }
+
+  Future<void> _seekAndApply(int token) async {
+    await _seekTo(widget.seekToMs);
+    if (!mounted || widget.seekToken != token) {
+      return;
+    }
+    _applyPlayback();
   }
 
   Future<void> _seekTo(int milliseconds) async {

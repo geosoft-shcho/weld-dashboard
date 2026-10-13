@@ -893,6 +893,132 @@ void main() {
     },
   );
 
+  test('a timeline seek keeps the playing video on that time', () async {
+    const mediaUrl = 'http://media.example/9764.mp4';
+    final repository = _ScriptedTimelineRepository(
+      _timelineWithClip(
+        clipId: '9764',
+        playbackUrl: mediaUrl,
+        endNs: '390083999999',
+      ),
+    );
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+
+    viewModel.didTapTogglePlayback();
+    viewModel.didSeekToSeconds(10);
+
+    final bar = viewModel.activeVideoBar;
+    expect(viewModel.playheadSeconds, closeTo(10, 0.0001));
+    expect(viewModel.wantsPlayback, isTrue);
+    expect(bar?.startSeconds, closeTo(0, 0.0001));
+    expect(((viewModel.playheadSeconds - bar!.startSeconds) * 1000).round(), 10000);
+
+    viewModel.didReceiveVideoClock(
+      mediaUrl: mediaUrl,
+      localSeconds: 0,
+      durationSeconds: 392,
+      isPlaying: true,
+    );
+    expect(viewModel.playheadSeconds, closeTo(10, 0.0001));
+
+    viewModel.didReceiveVideoClock(
+      mediaUrl: mediaUrl,
+      localSeconds: 10,
+      durationSeconds: 392,
+      isPlaying: true,
+    );
+    expect(viewModel.playheadSeconds, closeTo(10, 0.0001));
+
+    viewModel.didReceiveVideoClock(
+      mediaUrl: mediaUrl,
+      localSeconds: 11,
+      durationSeconds: 392,
+      isPlaying: true,
+    );
+    expect(viewModel.playheadSeconds, closeTo(11, 0.0001));
+  });
+
+  test('a paused timeline seek stays paused', () async {
+    final repository = _ScriptedTimelineRepository(
+      _timelineWithClip(
+        clipId: '9764',
+        playbackUrl: 'http://media.example/9764.mp4',
+        endNs: '390083999999',
+      ),
+    );
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+
+    viewModel.didSeekToSeconds(10);
+
+    expect(viewModel.playheadSeconds, closeTo(10, 0.0001));
+    expect(viewModel.wantsPlayback, isFalse);
+    expect(viewModel.activeVideoBar?.mediaUrl, 'http://media.example/9764.mp4');
+  });
+
+  test('a seek outside every video moves only the playhead', () async {
+    const mediaUrl = 'http://media.example/9764.mp4';
+    final repository = _ScriptedTimelineRepository(
+      _timelineWithClip(
+        clipId: '9764',
+        playbackUrl: mediaUrl,
+        endNs: '390083999999',
+      ),
+    );
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+    viewModel.didTapTogglePlayback();
+
+    viewModel.didSeekToSeconds(390.084);
+
+    expect(viewModel.playheadSeconds, closeTo(390.084, 0.001));
+    expect(viewModel.activeVideoBar, isNull);
+    expect(viewModel.wantsPlayback, isFalse);
+
+    viewModel.didReceiveVideoClock(
+      mediaUrl: mediaUrl,
+      localSeconds: 0,
+      durationSeconds: 392,
+      isPlaying: true,
+    );
+    expect(viewModel.playheadSeconds, closeTo(390.084, 0.001));
+  });
+
+  test('a seek on a later clip uses that clip timeline start', () async {
+    const mediaUrl = 'http://media.example/later.mp4';
+    final repository = _ScriptedTimelineRepository(
+      _timelineWithClip(
+        clipId: 'later',
+        playbackUrl: mediaUrl,
+        startNs: '100000000000',
+        endNs: '130000000000',
+      ),
+    );
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+    viewModel.didSeekToSeconds(110);
+    viewModel.didTapTogglePlayback();
+    viewModel.didSeekToSeconds(120);
+
+    final bar = viewModel.activeVideoBar;
+    expect(viewModel.playheadSeconds, closeTo(120, 0.0001));
+    expect(viewModel.wantsPlayback, isTrue);
+    expect(bar?.startSeconds, closeTo(100, 0.0001));
+    expect(
+      ((viewModel.playheadSeconds - bar!.startSeconds) * 1000).round(),
+      20000,
+    );
+
+    viewModel.didReceiveVideoClock(
+      mediaUrl: mediaUrl,
+      localSeconds: 10,
+      durationSeconds: 30,
+      isPlaying: true,
+    );
+    expect(viewModel.playheadSeconds, closeTo(120, 0.0001));
+  });
+
   test(
     'a pose GetClip keeps pose selected and plays its target video',
     () async {
@@ -1262,6 +1388,7 @@ JobTimeline _timelineWithClip({
   required String clipId,
   required String playbackUrl,
   required String endNs,
+  String startNs = '0',
 }) {
   return JobTimeline(
     jobId: 'job-1',
@@ -1276,7 +1403,7 @@ JobTimeline _timelineWithClip({
             clipId: clipId,
             trackId: 'track-1',
             kind: TimelineClipKind.video,
-            startNs: '0',
+            startNs: startNs,
             endNs: endNs,
             assetId: '9',
             fileName: 'take.mp4',
