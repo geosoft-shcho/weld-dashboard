@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/timeline_board_helpers.dart';
+
 import 'package:connectrpc/connect.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -726,6 +728,40 @@ void main() {
     expect(firstRow.bottom, lessThanOrEqualTo(tagsBottom));
     final trackClip = tester.getRect(find.text('file-0.mp4'));
     expect((firstRow.top - trackClip.top).abs(), lessThan(16));
+  });
+
+  testWidgets('ruler seeks at 50 pixels per minute before and after scrolling', (
+    tester,
+  ) async {
+    final viewModel = _viewModel(
+      _ScriptedTimelineRepository(
+        _timelineWithClip(
+          clipId: '1',
+          playbackUrl: 'https://example.test/video.mp4',
+          endNs: '2700000000000',
+        ),
+      ),
+    );
+    await tester.runAsync(() => viewModel.loadAttachments());
+    await tester.pumpWidget(_board(viewModel));
+    final ruler = find.byWidgetPredicate(
+      (widget) => widget is CustomPaint && widget.painter is TimelineRulerPainter,
+    );
+    expect(viewModel.pixelsPerSecond * 60, 50);
+    expect(viewModel.pixelsPerSecond * 300, 250);
+    expect(viewModel.pixelsPerSecond * 400, closeTo(333.3333, 0.001));
+    await tester.tapAt(tester.getTopLeft(ruler) + const Offset(50, 5));
+    await tester.pump();
+    expect(viewModel.playheadSeconds, closeTo(60, 0.001));
+
+    final scroll = tester.widget<SingleChildScrollView>(
+      find.ancestor(of: ruler, matching: find.byType(SingleChildScrollView)).first,
+    );
+    scroll.controller!.jumpTo(100);
+    await tester.pump();
+    await tester.tapAt(tester.getTopLeft(ruler) + const Offset(150, 5));
+    await tester.pump();
+    expect(viewModel.playheadSeconds, closeTo(180, 0.001));
   });
 
   test('selecting a clip reads GetClip and keeps the latest response', () async {

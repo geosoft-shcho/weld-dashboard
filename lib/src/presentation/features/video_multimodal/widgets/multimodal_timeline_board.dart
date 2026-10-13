@@ -229,10 +229,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   }
 
   double _secondsAt(double localDx) {
-    final scrolled = _scrollController.hasClients
-        ? _scrollController.offset
-        : 0;
-    final seconds = (scrolled + localDx) / viewModel.pixelsPerSecond;
+    // 룰러와 트랙의 로컬 좌표에는 이미 가로 스크롤이 반영되어 있다.
+    final seconds = localDx / viewModel.pixelsPerSecond;
     return seconds.clamp(0, viewModel.spanSeconds);
   }
 
@@ -850,11 +848,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   Widget _ruler(double width) {
     final span = viewModel.spanSeconds;
-    final step = span > 60
-        ? 10.0
-        : span > 20
-        ? 5.0
-        : 2.0;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: (details) =>
@@ -864,7 +857,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         painter: TimelineRulerPainter(
           spanSeconds: span,
           pixelsPerSecond: viewModel.pixelsPerSecond,
-          stepSeconds: step,
         ),
       ),
     );

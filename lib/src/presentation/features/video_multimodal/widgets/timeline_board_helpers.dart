@@ -222,17 +222,29 @@ class TimelineClipEdit {
   }
 }
 
+/// 30fps 기준 시:분:초:프레임. 반올림된 프레임의 올림도 반영한다.
+String formatTimelineTimecode(double seconds) {
+  final totalFrames = (seconds * 30).round();
+  final totalSeconds = totalFrames ~/ 30;
+  return [
+    totalSeconds ~/ 3600,
+    (totalSeconds ~/ 60) % 60,
+    totalSeconds % 60,
+    totalFrames % 30,
+  ].map((part) => part.toString().padLeft(2, '0')).join(':');
+}
+
 /// 시간 눈금
 class TimelineRulerPainter extends CustomPainter {
   const TimelineRulerPainter({
     required this.spanSeconds,
     required this.pixelsPerSecond,
-    required this.stepSeconds,
   });
 
   final double spanSeconds;
   final double pixelsPerSecond;
-  final double stepSeconds;
+  static const int TICK_SECONDS = 60;
+  static const int LABEL_SECONDS = 300;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -243,13 +255,15 @@ class TimelineRulerPainter extends CustomPainter {
     final line = Paint()
       ..color = MultimodalStudioPalette.SAND_200
       ..strokeWidth = 1;
-    final steps = stepSeconds <= 0 ? 0 : (spanSeconds / stepSeconds).floor();
+    final steps = (spanSeconds / TICK_SECONDS).floor();
     for (var index = 0; index <= steps; index++) {
-      final second = index * stepSeconds;
+      final second = index * TICK_SECONDS;
       final x = second * pixelsPerSecond;
       canvas.drawLine(Offset(x, 12), Offset(x, size.height), line);
-      final total = second.round();
-      final label = '${total ~/ 60}:${(total % 60).toString().padLeft(2, '0')}';
+      if (second % LABEL_SECONDS != 0) {
+        continue;
+      }
+      final label = formatTimelineTimecode(second.toDouble());
       final painter = TextPainter(
         text: TextSpan(
           text: label,
@@ -268,7 +282,6 @@ class TimelineRulerPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant TimelineRulerPainter oldDelegate) {
     return oldDelegate.spanSeconds != spanSeconds ||
-        oldDelegate.pixelsPerSecond != pixelsPerSecond ||
-        oldDelegate.stepSeconds != stepSeconds;
+        oldDelegate.pixelsPerSecond != pixelsPerSecond;
   }
 }
