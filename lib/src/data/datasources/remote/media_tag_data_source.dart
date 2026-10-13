@@ -68,10 +68,12 @@ class MediaTagDataSource {
     return Uri.parse(baseUrl).resolve(path).toString();
   }
 
+  static const _DEFAULT_MEDIA_TAG_BASE_URL = 'https://tks.faivv.ai/api';
+
   static String _resolveBaseUrl(String? override) {
     final configured = override ?? dotenv.env['MEDIA_TAG_BASE_URL'];
     return configured == null || configured.trim().isEmpty
-        ? 'http://192.168.100.3:33210'
+        ? _DEFAULT_MEDIA_TAG_BASE_URL
         : configured.trim();
   }
 }
