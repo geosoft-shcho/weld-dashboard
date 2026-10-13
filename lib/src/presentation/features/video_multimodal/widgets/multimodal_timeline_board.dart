@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/job_timeline.dart';
@@ -17,6 +18,7 @@ class MultimodalTimelineBoard extends StatefulWidget {
 
 class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   static const double _OBJECT_ROW_HEIGHT = 28;
+  static const double _RULER_HEIGHT = 22;
   final ScrollController _scrollController = ScrollController();
   final ScrollController _objectScrollController = ScrollController();
   final ScrollController _trackScrollController = ScrollController();
@@ -784,61 +786,91 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
+  void _seekRuler(Offset localInViewport) {
+    if (localInViewport.dy < 0 || localInViewport.dy > _RULER_HEIGHT) {
+      return;
+    }
+    final scroll = _scrollController.hasClients
+        ? _scrollController.offset
+        : 0.0;
+    final contentX = localInViewport.dx + scroll;
+    final rawSeconds = contentX / viewModel.pixelsPerSecond;
+    final seconds = rawSeconds.clamp(0.0, viewModel.spanSeconds);
+    final before = viewModel.playheadSeconds;
+    viewModel.didSeekToSeconds(seconds);
+    if (!kDebugMode) {
+      return;
+    }
+    debugPrint(
+      '[RULER] x=${contentX.toStringAsFixed(1)} '
+      'scroll=${scroll.toStringAsFixed(1)} '
+      'raw=${rawSeconds.toStringAsFixed(3)}s '
+      'playhead ${before.toStringAsFixed(3)}s -> '
+      '${viewModel.playheadSeconds.toStringAsFixed(3)}s',
+    );
+  }
+
   Widget _tracks(List<TimelineBoardRow> rows) {
     final width = viewModel.trackWidth;
     return LayoutBuilder(
       builder: (context, constraints) {
-        return SingleChildScrollView(
-          controller: _scrollController,
-          scrollDirection: Axis.horizontal,
-          child: SizedBox(
-            width: width,
-            height: constraints.maxHeight,
-            child: Stack(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _ruler(width),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        key: const Key('timeline-track-rows'),
-                        controller: _trackScrollController,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            for (final row in rows) _track(row, width),
-                          ],
+        return Listener(
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: (event) => _seekRuler(event.localPosition),
+          child: SingleChildScrollView(
+            controller: _scrollController,
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: width,
+              height: constraints.maxHeight,
+              child: Stack(
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _ruler(width),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          key: const Key('timeline-track-rows'),
+                          controller: _trackScrollController,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final row in rows) _track(row, width),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Positioned(
+                    left: viewModel.playheadSeconds * viewModel.pixelsPerSecond,
+                    top: 0,
+                    bottom: 0,
+                    child: const IgnorePointer(
+                      child: SizedBox(
+                        width: 2,
+                        child: ColoredBox(
+                          color: MultimodalStudioPalette.DANGER,
                         ),
                       ),
                     ),
-                  ],
-                ),
-                Positioned(
-                  left: viewModel.playheadSeconds * viewModel.pixelsPerSecond,
-                  top: 0,
-                  bottom: 0,
-                  child: const IgnorePointer(
-                    child: SizedBox(
-                      width: 2,
-                      child: ColoredBox(color: MultimodalStudioPalette.DANGER),
-                    ),
                   ),
-                ),
-                for (final marker in viewModel.markerSeconds)
-                  Positioned(
-                    left: marker * viewModel.pixelsPerSecond,
-                    top: 0,
-                    child: GestureDetector(
-                      onTap: () => viewModel.didTapMarker(marker),
-                      child: const Icon(
-                        Icons.bookmark,
-                        size: 16,
-                        color: MultimodalStudioPalette.CANTELOUPE_400,
+                  for (final marker in viewModel.markerSeconds)
+                    Positioned(
+                      left: marker * viewModel.pixelsPerSecond,
+                      top: 0,
+                      child: GestureDetector(
+                        onTap: () => viewModel.didTapMarker(marker),
+                        child: const Icon(
+                          Icons.bookmark,
+                          size: 16,
+                          color: MultimodalStudioPalette.CANTELOUPE_400,
+                        ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
         );
@@ -848,16 +880,11 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   Widget _ruler(double width) {
     final span = viewModel.spanSeconds;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTapDown: (details) =>
-          viewModel.didSeekToSeconds(_secondsAt(details.localPosition.dx)),
-      child: CustomPaint(
-        size: Size(width, 22),
-        painter: TimelineRulerPainter(
-          spanSeconds: span,
-          pixelsPerSecond: viewModel.pixelsPerSecond,
-        ),
+    return CustomPaint(
+      size: Size(width, _RULER_HEIGHT),
+      painter: TimelineRulerPainter(
+        spanSeconds: span,
+        pixelsPerSecond: viewModel.pixelsPerSecond,
       ),
     );
   }
