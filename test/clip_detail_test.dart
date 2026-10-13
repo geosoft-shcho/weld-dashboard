@@ -7,6 +7,7 @@ import 'package:weld_dashboard/src/data/datasources/generated/mediatag/compose/v
     as compose_pb;
 import 'package:weld_dashboard/src/data/repositories/clip_detail_mapping.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_side_panel.dart';
 
 void main() {
   test('GetClip asks for the clip, asset, and target', () {
@@ -230,4 +231,134 @@ void main() {
     expect(missing.targetKind, ClipTargetKind.clip);
     expect(missing.targetId, isEmpty);
   });
+
+  test('video properties group the clip, file, and run', () {
+    final sections = groupClipDetailFields(_videoDetail().fields);
+    expect(sections.map((section) => section.title), [
+      '클립',
+      '파일 구간',
+      '클립 파일',
+      '만든 실행',
+      '대상 클립',
+      '대상 파일',
+    ]);
+    expect(_row(sections, '클립', '클립 번호'), '17226');
+    expect(_row(sections, '클립', '종류'), 'VIDEO');
+    expect(_row(sections, '클립', '타임라인 시작'), '0');
+    expect(_row(sections, '파일 구간', '파일 번호'), '9');
+    expect(_row(sections, '클립 파일', '파일 이름'), 'take.mp4');
+    expect(_row(sections, '클립 파일', '작업'), 'stt');
+    expect(_row(sections, '만든 실행', '대상'), '클립 9247');
+    expect(_row(sections, '대상 클립', '상태'), '없음');
+    expect(_row(sections, '대상 파일', '상태'), '없음');
+  });
+
+  test('pose properties name the pose file and the target video', () {
+    final sections = groupClipDetailFields(_poseDetail().fields);
+    expect(_row(sections, '클립 파일', '파일 이름'), 'pose.json');
+    expect(_row(sections, '대상 클립', '종류'), 'VIDEO');
+    expect(_row(sections, '대상 클립', '클립 번호'), '9247');
+    expect(_row(sections, '대상 파일', '파일 이름'), 'target.mp4');
+    expect(sections.any((section) => section.title == '관계'), isFalse);
+  });
+
+  test('a tag clip shows that it has no file', () {
+    final sections = groupClipDetailFields(
+      clipDetailFromResponse(
+        compose_pb.GetClipResponse(
+          clip: compose_pb.Clip(
+            clipId: Int64(11),
+            kind: compose_pb.ClipKind.CLIP_KIND_TAG,
+          ),
+        ),
+      ).fields,
+    );
+    expect(_row(sections, '파일 구간', '파일 번호'), '—');
+    expect(_row(sections, '클립 파일', '상태'), '가리키는 파일 없음');
+    expect(sections.any((section) => section.title == '관계'), isFalse);
+  });
+
+  test('a relation clip shows the two clip numbers', () {
+    final sections = groupClipDetailFields(
+      clipDetailFromResponse(
+        compose_pb.GetClipResponse(
+          clip: compose_pb.Clip(
+            clipId: Int64(12),
+            kind: compose_pb.ClipKind.CLIP_KIND_RELATION,
+            relation: compose_pb.ClipRelation(
+              fromClipId: Int64(1),
+              toClipId: Int64(2),
+            ),
+          ),
+        ),
+      ).fields,
+    );
+    expect(_row(sections, '관계', '시작 클립'), '1');
+    expect(_row(sections, '관계', '끝 클립'), '2');
+  });
+
+  test('an unknown field keeps its key under the matching group', () {
+    final sections = groupClipDetailFields(const [
+      ClipField(label: 'clipId', value: '1'),
+      ClipField(label: 'note', value: 'extra'),
+      ClipField(label: 'source.page', value: '2'),
+      ClipField(label: 'asset.provenance.confidence', value: '0.5'),
+    ]);
+    expect(sections.first.rows.map((row) => row.label), ['클립 번호', 'note']);
+    expect(_row(sections, '파일 구간', 'source.page'), '2');
+    expect(_row(sections, '클립 파일', '확신도'), '0.5');
+  });
+}
+
+ClipDetail _videoDetail() {
+  return clipDetailFromResponse(
+    compose_pb.GetClipResponse(
+      clip: compose_pb.Clip(
+        clipId: Int64(17226),
+        trackId: Int64(4),
+        kind: compose_pb.ClipKind.CLIP_KIND_VIDEO,
+        timelineStartNs: Int64.ZERO,
+        timelineEndNs: Int64.parseInt('390083999999'),
+        source: compose_pb.ClipSource(assetId: Int64(9)),
+        provenance: compose_pb.ClipProvenance(
+          targetKind: compose_pb.ClipTargetKind.CLIP_TARGET_KIND_CLIP,
+          targetId: Int64(9247),
+        ),
+      ),
+      asset: asset_pb.Asset(
+        assetId: Int64(9),
+        fileName: 'take.mp4',
+        provenance: asset_pb.Provenance(operation: 'stt'),
+      ),
+    ),
+  );
+}
+
+ClipDetail _poseDetail() {
+  return clipDetailFromResponse(
+    compose_pb.GetClipResponse(
+      clip: compose_pb.Clip(
+        clipId: Int64(17226),
+        kind: compose_pb.ClipKind.CLIP_KIND_POSE,
+      ),
+      asset: asset_pb.Asset(
+        assetId: Int64(30),
+        kind: asset_pb.AssetKind.ASSET_KIND_POSE,
+        fileName: 'pose.json',
+      ),
+      targetClip: compose_pb.Clip(
+        clipId: Int64(9247),
+        kind: compose_pb.ClipKind.CLIP_KIND_VIDEO,
+      ),
+      targetAsset: asset_pb.Asset(
+        assetId: Int64(20),
+        fileName: 'target.mp4',
+      ),
+    ),
+  );
+}
+
+String _row(List<ClipDetailSection> sections, String title, String label) {
+  final section = sections.firstWhere((section) => section.title == title);
+  return section.rows.firstWhere((row) => row.label == label).value;
 }
