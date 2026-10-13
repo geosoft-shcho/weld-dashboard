@@ -65,7 +65,11 @@ class MediaTagDataSource {
     if (parsed != null && parsed.hasScheme) {
       return path;
     }
-    return Uri.parse(baseUrl).resolve(path).toString();
+    final base = baseUrl.endsWith('/')
+        ? baseUrl.substring(0, baseUrl.length - 1)
+        : baseUrl;
+    final relative = path.startsWith('/') ? path : '/$path';
+    return '$base$relative';
   }
 
   static const _DEFAULT_MEDIA_TAG_BASE_URL = 'https://tks.faivv.ai/api';
