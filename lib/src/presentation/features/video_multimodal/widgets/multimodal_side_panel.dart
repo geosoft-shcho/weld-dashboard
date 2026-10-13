@@ -361,7 +361,7 @@ class _DataCell {
           Flexible(
             child: Text(
               text,
-              overflow: TextOverflow.ellipsis,
+              overflow: TextOverflow.visible,
               style: TextStyle(
                 color: tone,
                 fontSize: isHeader || this.isHeader ? 10 : 11,
@@ -410,12 +410,7 @@ class _AssetsBody extends StatelessWidget {
     return _PanelFrame(
       head: _head(),
       body: ListView(
-        children: [
-          const _SectionLabel('ASSETS'),
-          _assetTable(visible),
-          const _SectionLabel('LAYERS · 시퀀스'),
-          _layerTable(),
-        ],
+        children: [const _SectionLabel('ASSETS'), _assetTable(visible)],
       ),
       foot: const _FootNote('VIDEO/AUDIO 편집 금지 · 서버 트랙에 놓으면 클립이 생깁니다.'),
     );
@@ -500,40 +495,6 @@ class _AssetsBody extends StatelessWidget {
         ),
       ),
       child: row,
-    );
-  }
-
-  Widget _layerTable() {
-    final layers = viewModel.sampleLayers;
-    return ColoredBox(
-      color: MultimodalStudioPalette.PANEL_PAPER,
-      child: Column(
-        children: [
-          const _DataRow([
-            _DataCell('이름', isHeader: true, flex: 4),
-            _DataCell('유형', isHeader: true, flex: 3),
-            _DataCell('', isHeader: true, flex: 3),
-          ], isHeader: true),
-          if (layers.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Text(
-                '레이어가 없습니다.',
-                style: TextStyle(
-                  color: MultimodalStudioPalette.PANEL_MUTED,
-                  fontSize: 11,
-                ),
-              ),
-            )
-          else
-            for (final layer in layers)
-              _DataRow([
-                _DataCell(layer.displayName, flex: 4),
-                _DataCell(layer.kind, flex: 3),
-                const _DataCell('', flex: 3),
-              ]),
-        ],
-      ),
     );
   }
 
