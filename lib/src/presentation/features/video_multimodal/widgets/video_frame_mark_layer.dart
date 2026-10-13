@@ -1,8 +1,14 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 import '../video_overlay_frame.dart';
 import 'multimodal_studio_palette.dart';
+
+bool _posePaintLoggedEmpty = false;
+bool _posePaintLoggedMiss = false;
+Duration? _posePaintDrawnStart;
+String _posePaintFramesToken = '';
 
 Rect fittedVideoFrame(Size video, Size view) {
   if (video.width <= 0 ||
@@ -71,19 +77,95 @@ class _VideoOverlayPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final frame = fittedVideoFrame(videoSize, size);
     if (frame.isEmpty) {
+      _logPosePaint(drawn: null, view: Size.zero);
       return;
     }
     canvas.save();
     canvas.clipRect(frame);
+    VideoOverlayFrame? drawn;
     for (final overlay in frames) {
       if (!overlay.contains(position)) {
         continue;
       }
+      drawn = overlay;
       _paintBoxes(canvas, frame, overlay.boxes);
       _paintBones(canvas, frame, overlay);
       _paintPoints(canvas, frame, overlay.points);
     }
     canvas.restore();
+    _logPosePaint(drawn: drawn, view: frame.size);
+  }
+
+  void _logPosePaint({
+    required VideoOverlayFrame? drawn,
+    required Size view,
+  }) {
+    if (!kDebugMode || frames.isEmpty) {
+      return;
+    }
+    final token =
+        '${frames.length}:${frames.first.start.inMilliseconds}:'
+        '${frames.last.end.inMilliseconds}';
+    if (token != _posePaintFramesToken) {
+      _posePaintFramesToken = token;
+      _posePaintLoggedEmpty = false;
+      _posePaintLoggedMiss = false;
+      _posePaintDrawnStart = null;
+    }
+    if (view == Size.zero) {
+      if (_posePaintLoggedEmpty) {
+        return;
+      }
+      _posePaintLoggedEmpty = true;
+      debugPrint(
+        '[POSE] paint skipped: video frame is empty '
+        'video=${videoSize.width}x${videoSize.height} '
+        'frames=${frames.length}',
+      );
+      return;
+    }
+    if (drawn == null) {
+      if (_posePaintLoggedMiss) {
+        return;
+      }
+      _posePaintLoggedMiss = true;
+      final first = frames.first;
+      debugPrint(
+        '[POSE] paint missed: position=${position.inMilliseconds}ms '
+        'frames=${frames.length} '
+        'first=${first.start.inMilliseconds}-${first.end.inMilliseconds}ms '
+        'view=${view.width.round()}x${view.height.round()}',
+      );
+      return;
+    }
+    if (_posePaintDrawnStart == drawn.start) {
+      return;
+    }
+    _posePaintLoggedMiss = false;
+    _posePaintDrawnStart = drawn.start;
+    final linked = _linkedBones(drawn);
+    debugPrint(
+      '[POSE] paint: position=${position.inMilliseconds}ms '
+      'window=${drawn.start.inMilliseconds}-${drawn.end.inMilliseconds}ms '
+      'boxes=${drawn.boxes.length} points=${drawn.points.length} '
+      'bones=${linked.drawn}/${drawn.bones.length} skipped=${linked.skipped} '
+      'view=${view.width.round()}x${view.height.round()}',
+    );
+  }
+
+  ({int drawn, int skipped}) _linkedBones(VideoOverlayFrame overlay) {
+    var drawn = 0;
+    var skipped = 0;
+    for (final bone in overlay.bones) {
+      final start = _pointAt(overlay.points, bone.startIndex);
+      final end = _pointAt(overlay.points, bone.endIndex);
+      if (start == null || end == null) {
+        skipped += 1;
+      } else {
+        drawn += 1;
+      }
+    }
+    return (drawn: drawn, skipped: skipped);
   }
 
   @override

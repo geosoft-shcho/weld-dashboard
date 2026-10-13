@@ -954,10 +954,36 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     );
     _selectedPoseFrames = frames;
     final visibleFrames = activeVideoOverlayFrames;
+    final videoBar = activeVideoBar;
+    final localMs = videoBar == null
+        ? -1
+        : ((_playheadSeconds - videoBar.startSeconds) * 1000).round();
+    final position = Duration(milliseconds: localMs < 0 ? 0 : localMs);
+    var hits = 0;
+    var boxCount = 0;
+    var pointCount = 0;
+    var boneCount = 0;
+    for (final frame in visibleFrames) {
+      boxCount += frame.boxes.length;
+      pointCount += frame.points.length;
+      boneCount += frame.bones.length;
+      if (localMs >= 0 && frame.contains(position)) {
+        hits += 1;
+      }
+    }
+    final first = visibleFrames.isEmpty ? null : visibleFrames.first;
     debugPrint(
       '[POSE] overlay ready: clipId=${pose.clipId} '
       'mappedFrames=${visibleFrames.length} '
       'alignedToVideo=${!poseOverlapsVideo}',
+    );
+    debugPrint(
+      '[POSE] draw source: clipId=${pose.clipId} '
+      'boxes=$boxCount points=$pointCount bones=$boneCount '
+      'first=${first?.start.inMilliseconds ?? '-'}'
+      '-${first?.end.inMilliseconds ?? '-'}ms '
+      'playheadLocalMs=$localMs hitsAtPlayhead=$hits '
+      'videoBar=${videoBar != null}',
     );
   }
 
