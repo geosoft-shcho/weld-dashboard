@@ -353,7 +353,7 @@ class _InferencePickerDialogState extends State<_InferencePickerDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('추론 모델 선택'),
+      title: const Text('추론 모델/작업 도구 선택'),
       content: SizedBox(
         width: 420,
         child: _isLoading
