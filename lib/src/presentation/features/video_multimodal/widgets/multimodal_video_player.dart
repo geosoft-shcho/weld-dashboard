@@ -9,6 +9,7 @@ import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_caption.dart';
 import '../video_overlay_frame.dart';
+import '../video_playback_rate.dart';
 import 'multimodal_studio_palette.dart';
 import 'video_frame_mark_layer.dart';
 
@@ -49,6 +50,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   String _errorText = '';
   bool _leftTarget = false;
   bool _pullingFromEnd = false;
+  int _openGeneration = 0;
 
   @override
   void initState() {
@@ -86,11 +88,13 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
 
   @override
   void dispose() {
+    _openGeneration += 1;
     _release();
     super.dispose();
   }
 
   Future<void> _open() async {
+    final generation = ++_openGeneration;
     _release();
     setState(() => _errorText = '');
     final source = widget.mediaUrl;
@@ -100,27 +104,31 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
         : VideoPlayerController.asset(source);
     try {
       await videoController.initialize();
-      if (!mounted) {
-        await videoController.dispose();
-        return;
+    } catch (error) {
+      await videoController.dispose();
+      if (mounted && generation == _openGeneration) {
+        setState(() => _errorText = error.toString());
       }
-      final chewieController = _createChewie(videoController, widget.captions);
-      setState(() {
-        _videoController = videoController;
-        _chewieController = chewieController;
-      });
+      return;
+    }
+    if (!mounted || generation != _openGeneration) {
+      await videoController.dispose();
+      return;
+    }
+    final chewieController = _createChewie(videoController, widget.captions);
+    setState(() {
+      _videoController = videoController;
+      _chewieController = chewieController;
+    });
+    try {
       await _seekTo(widget.seekToMs);
-      if (!mounted) {
+      if (!mounted || _videoController != videoController) {
         return;
       }
       _watch(videoController);
       await _applyPlaybackRate(videoController);
     } catch (error) {
-      await videoController.dispose();
-      if (!mounted) {
-        return;
-      }
-      setState(() => _errorText = error.toString());
+      debugPrint('[VIDEO] playback setup failed: $error');
     }
   }
 
@@ -283,18 +291,35 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   }
 
   Future<void> _applyPlaybackRate(VideoPlayerController controller) async {
-    if (!controller.value.isInitialized) {
+    if (!controller.value.isInitialized || _videoController != controller) {
       return;
     }
-    final rate = widget.playbackRate;
-    if (rate <= 0 || rate.isNaN || rate.isInfinite) {
-      await controller.pause();
-      return;
+    final requestedRate = widget.playbackRate;
+    final rate = supportedVideoPlaybackRate(requestedRate);
+    if (rate != requestedRate) {
+      debugPrint(
+        '[VIDEO] unsupported playback rate: '
+        'url=${widget.mediaUrl} requested=$requestedRate applied=$rate',
+      );
     }
-    if ((controller.value.playbackSpeed - rate).abs() >= 0.01) {
-      await controller.setPlaybackSpeed(rate);
+    try {
+      if ((controller.value.playbackSpeed - rate).abs() >= 0.01) {
+        await controller.setPlaybackSpeed(rate);
+      }
+    } catch (error) {
+      debugPrint(
+        '[VIDEO] playback rate failed: '
+        'url=${widget.mediaUrl} requested=$requestedRate error=$error',
+      );
+      if ((controller.value.playbackSpeed - 1).abs() >= 0.01) {
+        try {
+          await controller.setPlaybackSpeed(1);
+        } catch (fallbackError) {
+          debugPrint('[VIDEO] playback rate fallback failed: $fallbackError');
+        }
+      }
     }
-    if (!mounted) {
+    if (!mounted || _videoController != controller) {
       return;
     }
     if (widget.wantsPlayback) {
