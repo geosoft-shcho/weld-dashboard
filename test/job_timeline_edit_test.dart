@@ -418,6 +418,10 @@ void main() {
     expect(repository.lastCreatedClipAssetId, 'asset-9');
     expect(repository.lastCreatedClipLabelValueId, isEmpty);
     expect(repository.lastCreatedClipDescription, isEmpty);
+    final notice = viewModel.takeCreatedClipNotice();
+    expect(notice?.kindLabel, '영상');
+    expect(notice?.body, 'take.mp4');
+    expect(viewModel.takeCreatedClipNotice(), isNull);
   });
 
   test('drops off a server track do not create a clip', () async {
@@ -457,6 +461,7 @@ void main() {
 
     expect(repository.createClipCount, 0);
     expect(viewModel.timelineHint, '구간이 너무 짧습니다.');
+    expect(viewModel.takeCreatedClipNotice(), isNull);
   });
 
   test('status choice sends a different status', () async {
@@ -619,6 +624,9 @@ void main() {
     expect(repository.lastCreatedClipStartNs, '0');
     expect(repository.lastCreatedClipEndNs, '30000000000');
     expect(viewModel.isRelationMode, isFalse);
+    final notice = viewModel.takeCreatedClipNotice();
+    expect(notice?.kindLabel, '관계');
+    expect(notice?.body, 'clip.mp4 ↔ take-b.mp4');
   });
 
   test('an existing relation track is reused', () async {
@@ -665,6 +673,7 @@ void main() {
     expect(repository.createClipCount, 0);
     expect(viewModel.isRelationMode, isTrue);
     expect(viewModel.relationPrompt, 'Relation 모드 — 두 번째 클립을 클릭하세요');
+    expect(viewModel.takeCreatedClipNotice(), isNull);
   });
 
   test('a closed relation interval does not write', () async {
@@ -686,6 +695,7 @@ void main() {
     expect(repository.createClipCount, 0);
     expect(viewModel.timelineHint, '구간이 너무 짧습니다.');
     expect(viewModel.isRelationMode, isTrue);
+    expect(viewModel.takeCreatedClipNotice(), isNull);
   });
 
   test('a clip outside the timeline does not write a relation', () async {
@@ -728,6 +738,71 @@ void main() {
     expect(find.text('Relation 모드 — 첫 번째 클립을 클릭하세요'), findsNothing);
     expect(viewModel.isRelationMode, isFalse);
     expect(repository.createClipCount, 0);
+  });
+
+  testWidgets('a created relation clip shows a kind dialog', (tester) async {
+    final repository = _ScriptedTimelineRepository(_twoClipTimeline());
+    final viewModel = _viewModel(repository);
+    await tester.runAsync(() => viewModel.loadAttachments());
+    repository.nextTimeline = _twoClipTimeline(
+      extraTracks: const [
+        TimelineTrack(
+          trackId: 'track-relation',
+          name: '관계',
+          order: 2,
+          clips: [],
+        ),
+      ],
+    );
+    await tester.pumpWidget(_board(viewModel));
+
+    await tester.tap(find.text('클립 관계'));
+    await tester.pump();
+    await tester.tap(find.text('clip.mp4'), warnIfMissed: false);
+    await tester.pump();
+    expect(find.text('관계 클립을 만들었습니다'), findsNothing);
+
+    await tester.tap(find.text('take-b.mp4'), warnIfMissed: false);
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('클립 생성'), findsOneWidget);
+    expect(find.text('관계 클립을 만들었습니다'), findsOneWidget);
+    expect(find.text('clip.mp4 ↔ take-b.mp4'), findsOneWidget);
+    await tester.tap(find.text('확인'));
+    await tester.pump();
+    expect(find.text('관계 클립을 만들었습니다'), findsNothing);
+  });
+
+  testWidgets('a created video clip shows a kind dialog', (tester) async {
+    final repository = _ScriptedTimelineRepository(_loadedTimeline());
+    final viewModel = _viewModel(
+      repository,
+      workDetail: _VideoAttachmentRepository(),
+    );
+    await tester.runAsync(() => viewModel.loadAttachments());
+    await tester.pumpWidget(_board(viewModel));
+
+    final target = tester.widget<DragTarget<String>>(
+      find.byType(DragTarget<String>),
+    );
+    target.onAcceptWithDetails!(
+      DragTargetDetails<String>(
+        data: '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}asset-9',
+        offset: Offset.zero,
+      ),
+    );
+    await tester.pump();
+    await tester.pump();
+
+    expect(find.text('클립 생성'), findsOneWidget);
+    expect(find.text('영상 클립을 만들었습니다'), findsOneWidget);
+    expect(find.text('take.mp4'), findsOneWidget);
+    await tester.tap(find.text('확인'));
+    await tester.pump();
+    expect(find.text('영상 클립을 만들었습니다'), findsNothing);
+    expect(repository.createClipCount, 1);
+    expect(repository.lastCreatedClipKind, TimelineClipKind.video);
   });
 
   testWidgets('row list scrolls under a fixed objects header', (tester) async {

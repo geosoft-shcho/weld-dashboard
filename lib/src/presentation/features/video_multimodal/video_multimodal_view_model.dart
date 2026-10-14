@@ -33,6 +33,13 @@ import 'video_subtitle_text.dart';
 
 enum VideoMultimodalSide { none, assets, properties, ask, labels }
 
+class CreatedClipNotice {
+  const CreatedClipNotice({required this.kindLabel, required this.body});
+
+  final String kindLabel;
+  final String body;
+}
+
 /// ListWorkAttachments 를 타임라인에 임시로 올려 둔 막대.
 /// start/end 는 서버 레이어가 아니므로 파일마다 고정 길이로 이어 붙인다.
 class TemporaryAttachmentBar {
@@ -213,6 +220,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _workName = '';
   String _assetsSearchQuery = '';
   String _timelineHint = '';
+  CreatedClipNotice? _createdClipNotice;
   String _selectedLabelValueId = '';
   bool _isLoadingLabels = false;
   String _labelMessage = '';
@@ -563,6 +571,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool isLaneVisible(String laneKey) => !_hiddenLaneKeys.contains(laneKey);
   String get assetsSearchQuery => _assetsSearchQuery;
   String get timelineHint => _timelineHint;
+
+  CreatedClipNotice? takeCreatedClipNotice() {
+    final notice = _createdClipNotice;
+    _createdClipNotice = null;
+    return notice;
+  }
   bool get hasTimelineHint => _timelineHint.isNotEmpty;
   String get selectedLabelValueId => _selectedLabelValueId;
   bool get isLoadingLabels => _isLoadingLabels;
@@ -1777,13 +1791,20 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    await createTimelineClip(
+    final kind = _clipKindForAttachment(attachment);
+    final didSave = await createTimelineClip(
       trackId: trackId,
-      kind: _clipKindForAttachment(attachment),
+      kind: kind,
       startNs: startNs,
       endNs: endNs,
       assetId: attachment.attachmentId,
     );
+    if (didSave) {
+      _createdClipNotice = _noticeForCreatedClip(
+        kind: kind,
+        detail: attachment.fileName,
+      );
+    }
   }
 
   Future<void> didDropAsset({
@@ -1791,6 +1812,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required String laneKey,
     required double startSeconds,
   }) {
+    _createdClipNotice = null;
     if (dragData.startsWith('media:')) {
       didRejectMediaDrop();
       return Future.value();
@@ -1841,6 +1863,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   Future<bool> didTapClipForRelation(String clipId) async {
+    _createdClipNotice = null;
     if (!_isRelationMode || clipId.isEmpty) {
       return false;
     }
@@ -1887,6 +1910,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (didSave) {
       _isRelationMode = false;
       _relationAnchorClipId = '';
+      _createdClipNotice = _noticeForCreatedClip(
+        kind: TimelineClipKind.relation,
+        detail: description,
+      );
       notifyListeners();
     }
     return true;
@@ -1960,6 +1987,18 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return null;
     }
     return attachmentId;
+  }
+
+  CreatedClipNotice _noticeForCreatedClip({
+    required TimelineClipKind kind,
+    required String detail,
+  }) {
+    final kindLabel = _kindLabel(kind);
+    final trimmed = detail.trim();
+    return CreatedClipNotice(
+      kindLabel: kindLabel,
+      body: trimmed.isEmpty ? kindLabel : trimmed,
+    );
   }
 
   TimelineClipKind _clipKindForAttachment(WorkAttachment attachment) {

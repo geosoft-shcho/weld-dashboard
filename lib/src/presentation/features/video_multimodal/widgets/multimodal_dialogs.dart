@@ -46,6 +46,39 @@ Future<void> showMultimodalPersistDialog(
   );
 }
 
+Future<void> showMultimodalCreatedClipDialog(
+  BuildContext context,
+  CreatedClipNotice notice,
+) {
+  return showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return WorkDetailMaterialScope(
+        child: AlertDialog(
+          title: const Text('클립 생성'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${notice.kindLabel} 클립을 만들었습니다',
+                style: const TextStyle(fontSize: 12),
+              ),
+              Text(notice.body, style: const TextStyle(fontSize: 12)),
+            ],
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('확인'),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
 Future<bool> showMultimodalLabelDeleteDialog(
   BuildContext context,
   String name,

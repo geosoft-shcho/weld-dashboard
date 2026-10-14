@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/job_timeline.dart';
 import '../video_multimodal_view_model.dart';
+import 'multimodal_dialogs.dart';
 import 'multimodal_studio_palette.dart';
 import 'timeline_board_helpers.dart';
 
@@ -914,7 +915,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       builder: (dropContext) {
         return DragTarget<String>(
           onAcceptWithDetails: (details) {
-            viewModel.didDropAsset(
+            _acceptDroppedAsset(
               dragData: details.data,
               laneKey: row.laneKey,
               startSeconds: _secondsInBox(dropContext, details.offset),
@@ -1134,10 +1135,30 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     ];
   }
 
+  Future<void> _acceptDroppedAsset({
+    required String dragData,
+    required String laneKey,
+    required double startSeconds,
+  }) async {
+    await viewModel.didDropAsset(
+      dragData: dragData,
+      laneKey: laneKey,
+      startSeconds: startSeconds,
+    );
+    await _showCreatedClipNotice();
+  }
+
+  Future<void> _showCreatedClipNotice() async {
+    final notice = viewModel.takeCreatedClipNotice();
+    if (notice == null || !mounted) {
+      return;
+    }
+    await showMultimodalCreatedClipDialog(context, notice);
+  }
+
   void _selectClip(TimelineBoardClip clip) {
     if (viewModel.isRelationMode && clip.clipId.isNotEmpty) {
-      viewModel.didTapClipForRelation(clip.clipId);
-      viewModel.didSeekToSeconds(clip.startSeconds);
+      _selectClipForRelation(clip);
       return;
     }
     if (clip.attachmentId.isNotEmpty) {
@@ -1145,6 +1166,12 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       return;
     }
     viewModel.didSelectSampleClip(clip.clipId);
+  }
+
+  Future<void> _selectClipForRelation(TimelineBoardClip clip) async {
+    await viewModel.didTapClipForRelation(clip.clipId);
+    viewModel.didSeekToSeconds(clip.startSeconds);
+    await _showCreatedClipNotice();
   }
 
   bool _isClipSelected(TimelineBoardClip clip) {
