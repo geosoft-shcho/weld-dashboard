@@ -4,6 +4,7 @@
 
 | 일자 | 수정자 | 수정 내용 |
 |---|---|---|
+| 2026-10-13 | geosoft-Server | 타임라인 편집·재생 쪽 변경을 모음("2026-10-13에 바뀐 것") — 같은 트랙 겹침 허용, 소스 구간 검사, `ClipSource.asset_duration_ns`·`asset_start_time_ns`, `Asset.properties.start_time_ns`, 포즈 검출이 없으면 클립 없음. 화면 쪽 기준은 `타임라인 그리기와 재생 안내.md`로 따로 정리해 함께 전달한다(2026-10-13 운영 적용) |
 | 2026-10-13 | geosoft-Server | `GetClip`에 `include_target` 추가 — 도구가 만든 클립의 실행 대상(`target_clip`·`target_asset`)을 한 번에 받는다(2026-10-13 운영 적용, 추가만) |
 | 2026-10-12 | geosoft-Server | `GetClip` 추가(클립 하나를 번호로, `include_assets`면 가리키는 Asset도), `ClipProvenance.target_kind`·`target_id` 추가 — 도구가 만든 클립만 읽어도 무엇을 대상으로 돌린 실행인지 알 수 있게(2026-10-12 운영 적용, 추가만) |
 | 2026-10-12 | geosoft-Server | `ClipSource.locator` 모양을 kind별로 정함 — `pdf`는 쪽 안의 박스를 받고, 서버가 모양을 검사한다(2026-10-12 운영 적용) |
@@ -40,6 +41,32 @@
 
 `faivv/`, `bytestream/`, `tacittag/`, `tacit/pdftotext/`는 서버 간 연동 계약이므로 프론트의
 일반 화면 연동 대상이 아니다.
+
+타임라인에 클립을 놓고, 그리고, 재생하는 방법은 `타임라인 그리기와 재생 안내.md`에 따로 정리했다(함께 전달).
+그 문서는 화면 구성(§9) → 한 작업으로 끝까지 따라가는 예시(§8) → 규칙(§1~§7, §10) 순으로 읽으면 빠르다.
+
+## 2026-10-13에 바뀐 것
+
+모두 2026-10-13에 운영 서버와 운영 DB에 적용했다. 칸 번호가 바뀌거나 없어진 것은 없다.
+
+| 무엇이 | 어떻게 | 화면이 할 일 |
+|---|---|---|
+| 같은 트랙의 클립 겹침 | **허용**. `CreateClip`·`UpdateClip`이 겹쳐도 받는다(전에는 `FAILED_PRECONDITION`) | 겹친 클립은 트랙 안에서 줄을 나눠 그린다. 겹침을 피하려고 트랙을 새로 만들 필요가 없다 |
+| 자동 배치 | 그대로. 서버가 놓는 클립(적재·도구 결과)은 겹치지 않게 옆 트랙에 놓인다 | 없음 |
+| 소스 구간 검사 | `source.start_ns`·`end_ns`가 `0 ≤ start ≤ end ≤ Asset 길이`를 벗어나면 `INVALID_ARGUMENT`. 끝이 100ms 이내로 넘으면 서버가 Asset 길이로 맞춘다 | 보내기 전에 한계를 지킨다. 응답의 `clip`으로 화면 값을 바꿔 끼운다(끝이 맞춰졌을 수 있다) |
+| `ClipSource.asset_duration_ns` | 새 칸(5), 읽기 전용. 소스 전체 길이 | 자를 수 있는 한계로 쓴다. `video.duration`은 쓰지 않는다 |
+| `ClipSource.asset_start_time_ns` | 새 칸(6), 읽기 전용. 파일에 적힌 첫 시각 | `video.currentTime = (asset_start_time_ns + Asset 축 위치) ÷ 1e9`. 비어 있으면 0 |
+| `Asset.properties.start_time_ns` | 영상·음성에 새 값. 위 칸의 원본 | 클립이 아닌 Asset을 바로 재생할 때 쓴다 |
+| 포즈 결과 | 검출된 사람이 없으면(`status: "empty"`) 결과 파일만 남기고 **클립을 만들지 않는다** | 실행이 성공했는데 포즈 클립이 없을 수 있다 |
+| `Delete*` 주석 | 지우는 방식(행을 실제로 지움)을 주석 첫 문장에 적었다. 동작은 그대로 | 없음 |
+
+**파일 첫 시각은 꼭 처리해야 한다.** 운영 DB의 영상 6,658개 가운데 3,843개(58%)가 첫 프레임 시각이 0이 아니다(5.0초~428.6초).
+처리하지 않으면 그 영상들이 엉뚱한 위치에서 재생되고 길이도 길게 나온다. 깊이 영상의 85~90%, 액션캠의 59%가 해당한다.
+
+**같은 값이 한 응답에 두 번 올 수 있다.** `GetTimeline(include_assets=true)`와 `GetClip(include_assets=true)`는 소스 길이와 파일 첫 시각을
+클립(`source.asset_duration_ns`·`asset_start_time_ns`)과 Asset(`duration_ns`·`properties.start_time_ns`) 양쪽에 싣는다.
+클립 쪽 값은 저장된 것이 아니라 읽을 때마다 Asset에서 가져오므로 서로 다를 수 없다. 재생·자르기 계산에는 클립 쪽을 쓰고,
+Asset은 해상도·fps·파일 주소(`content_url`)를 볼 때 쓴다.
 
 ## 접속 방법
 
@@ -187,7 +214,7 @@ mediatag v1은 작업·파일·타임라인·성적서·도구 역할별 서비�
   `parent_asset_id`(숫자 하나, JSON `parentAssetId`)가 생겼다. 부모가 없으면 0이다.
 - 작업에 첨부된 것이 표준화 파일이나 잘라 낸 PDF면 그 파일이 뿌리로 보인다. 그 원본은 작업 첨부에 없다.
 - 라벨은 한 그루의 트리다: `ListLabels`가 라벨 전부를 평평하게 주고 `parent_value_id`로 엮는다(0이면 맨 위 — 옛 어휘 `process_stage`·`speaker` 같은 분류가 맨 위 라벨이다). 라벨은 번호(`value_id`)로만 가리키고 이름은 겹쳐도 된다. 만들 때는 `CreateLabelValue`에 `name`과 (아래에 달려면) `parent_value_id`를 준다. `ListLabelVocabs`·`CreateLabelVocab`과 `vocab_key`(`LabelValue`·`LabelRef`·`CreateLabelValueRequest`)는 없앴다
-- `ClipProvenance.input_clip_ids`는 없앴다(저장한 적이 없는 칸이었다). 클립끼리 잇는 것은 **관계 클립**으로 한다 — `CreateClip`에 `kind = RELATION`, 구간(`timeline_start_ns`·`timeline_end_ns`), `relation`(`from_clip_id`·`to_clip_id`)을 보낸다. 관계 종류는 태그처럼 `label_value_id`(라벨 값, 선택)로 고른다. "이 구간에서 from이 to와 관련 있다"는 뜻이고, from 클립의 구간 전체면 그 값을 그대로 넣는다. `source`는 비운다. 두 클립은 같은 작업의 것이어야 한다. 다른 클립처럼 트랙에 놓이므로 같은 트랙에서는 구간이 겹칠 수 없다(관계용 트랙을 따로 두고, 겹치면 트랙을 하나 더 쓴다). 고치기·지우기는 `UpdateClip`(구간, `label_value_id`, 설명)·`DeleteClip`이고, 잇는 클립을 지우면 관계 클립도 지워진다. 관계 종류용 어휘는 따로 없다 — 라벨 어휘(`LabelService`)에 관계 종류용 어휘를 하나 만들어 쓴다(키 `relation`을 권한다 — 태그 화면은 그 트리를 빼고, 관계 화면은 그 트리만 보여 준다).
+- `ClipProvenance.input_clip_ids`는 없앴다(저장한 적이 없는 칸이었다). 클립끼리 잇는 것은 **관계 클립**으로 한다 — `CreateClip`에 `kind = RELATION`, 구간(`timeline_start_ns`·`timeline_end_ns`), `relation`(`from_clip_id`·`to_clip_id`)을 보낸다. 관계 종류는 태그처럼 `label_value_id`(라벨 값, 선택)로 고른다. "이 구간에서 from이 to와 관련 있다"는 뜻이고, from 클립의 구간 전체면 그 값을 그대로 넣는다. `source`는 비운다. 두 클립은 같은 작업의 것이어야 한다. 다른 클립처럼 트랙에 놓인다(관계용 트랙을 따로 두기를 권한다. 같은 트랙에서 구간이 겹쳐도 된다). 고치기·지우기는 `UpdateClip`(구간, `label_value_id`, 설명)·`DeleteClip`이고, 잇는 클립을 지우면 관계 클립도 지워진다. 관계 종류용 어휘는 따로 없다 — 라벨 어휘(`LabelService`)에 관계 종류용 어휘를 하나 만들어 쓴다(키 `relation`을 권한다 — 태그 화면은 그 트리를 빼고, 관계 화면은 그 트리만 보여 준다).
 
 ## 성적서 섹션: 표면처리·도장 검사
 
@@ -229,7 +256,8 @@ mediatag v1은 작업·파일·타임라인·성적서·도구 역할별 서비�
   `update_mask`에 넣는다. 화면에 보이지 않는 필드를 기본값으로 덮어쓰지 않는다.
 - `ChangeTimelineStatus`는 화면이 조회한 현재 상태를 `from_status`로 보낸다. `ABORTED`면 최신
   타임라인을 다시 조회한 뒤 사용자에게 충돌을 알린다.
-- 같은 트랙의 Clip 구간은 겹칠 수 없다. `FAILED_PRECONDITION`이면 저장을 성공으로 간주하지 않는다.
+- 같은 트랙의 Clip 구간은 겹쳐도 된다(2026-10-13부터). 소스 구간이 Asset 길이를 넘으면 `INVALID_ARGUMENT`다.
+- `UpdateClip`의 `source`는 통째로 바뀐다. 구간만 고쳐도 `asset_id`·`start_ns`·`end_ns`·`locator`를 모두 채워 보낸다(읽기 전용 두 칸은 빼도 된다).
 - Clip을 만들면 해당 Asset은 작업에 자동 첨부된다. 별도의 `AttachAsset`을 먼저 호출할 필요가 없다.
 - 삭제 RPC는 참조 중인 데이터에서 실패할 수 있다. 실패 사유를 숨기지 말고 서버 메시지를 표시한다.
 
