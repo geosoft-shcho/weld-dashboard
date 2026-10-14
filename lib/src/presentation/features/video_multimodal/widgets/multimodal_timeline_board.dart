@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/job_timeline.dart';
+import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_dialogs.dart';
 import 'multimodal_studio_palette.dart';
@@ -125,19 +126,21 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   Future<void> _confirmDeleteTrack() async {
     final didConfirm = await showDialog<bool>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          content: const Text('이 트랙의 클립도 함께 지워집니다.'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('취소'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('지우기'),
-            ),
-          ],
+      builder: (dialogContext) {
+        return WorkDetailMaterialScope(
+          child: AlertDialog(
+            content: const Text('이 트랙의 클립도 함께 지워집니다.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('취소'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('지우기'),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -151,19 +154,21 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     if (viewModel.isSelectedServerClip) {
       final didConfirm = await showDialog<bool>(
         context: context,
-        builder: (context) {
-          return AlertDialog(
-            content: const Text('이 클립을 삭제할까요?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('취소'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text('확인'),
-              ),
-            ],
+        builder: (dialogContext) {
+          return WorkDetailMaterialScope(
+            child: AlertDialog(
+              content: const Text('이 클립을 삭제할까요?'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, false),
+                  child: const Text('취소'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(dialogContext, true),
+                  child: const Text('확인'),
+                ),
+              ],
+            ),
           );
         },
       );
