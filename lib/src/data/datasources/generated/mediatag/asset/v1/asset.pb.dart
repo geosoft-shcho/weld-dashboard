@@ -172,6 +172,8 @@ class Asset extends $pb.GeneratedMessage {
   @$pb.TagNumber(6)
   void clearSizeBytes() => $_clearField(6);
 
+  /// kind별 실측값(해상도·fps·채널 등). 영상·음성에는 start_time_ns가 있다 — 파일에 적힌 첫 프레임·샘플의 시각(ns).
+  /// 잘라 낸 영상은 0이 아니어서 브라우저의 video.currentTime이 이 값부터 시작한다. 화면은 start_time_ns + Asset 축 위치로 찾아간다.
   @$pb.TagNumber(7)
   $0.Struct get properties => $_getN(6);
   @$pb.TagNumber(7)
@@ -1782,6 +1784,7 @@ class AssetServiceApi {
       _client.invoke<GetAssetResponse>(
           ctx, 'AssetService', 'GetAsset', request, GetAssetResponse());
 
+  /// 행과 저장된 파일을 실제로 지운다(되돌릴 수 없음).
   /// 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
   $async.Future<DeleteAssetResponse> deleteAsset(
           $pb.ClientContext? ctx, DeleteAssetRequest request) =>

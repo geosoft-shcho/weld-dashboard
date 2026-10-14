@@ -8,6 +8,7 @@ class WorkAttachment {
     required this.fileName,
     required this.note,
     required this.content,
+    this.durationNs = '',
   });
 
   final String attachmentId;
@@ -16,6 +17,7 @@ class WorkAttachment {
   final String fileName;
   final String note;
   final String content;
+  final String durationNs;
 
   bool get doesHaveSourcePath {
     final value = content.trim();

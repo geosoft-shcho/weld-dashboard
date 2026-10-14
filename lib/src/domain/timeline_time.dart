@@ -32,6 +32,19 @@ String nanosecondsFromSeconds(double seconds) {
   return total.toString();
 }
 
+String addNanoseconds(String startNanoseconds, String deltaNanoseconds) {
+  final start = BigInt.tryParse(startNanoseconds);
+  final delta = BigInt.tryParse(deltaNanoseconds);
+  if (start == null || delta == null) {
+    return '0';
+  }
+  final total = start + delta;
+  if (total.isNegative) {
+    return '0';
+  }
+  return total.toString();
+}
+
 bool isOpenNanosecondInterval(String startNanoseconds, String endNanoseconds) {
   final start = BigInt.tryParse(startNanoseconds);
   final end = BigInt.tryParse(endNanoseconds);

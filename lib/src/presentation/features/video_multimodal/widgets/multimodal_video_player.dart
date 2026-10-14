@@ -17,6 +17,7 @@ class MultimodalVideoPlayer extends StatefulWidget {
     super.key,
     required this.mediaUrl,
     required this.seekToMs,
+    required this.playbackRate,
     required this.seekToken,
     required this.playbackToken,
     required this.wantsPlayback,
@@ -27,6 +28,7 @@ class MultimodalVideoPlayer extends StatefulWidget {
 
   final String mediaUrl;
   final int seekToMs;
+  final double playbackRate;
   final int seekToken;
   final int playbackToken;
   final bool wantsPlayback;
@@ -64,13 +66,17 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     if (oldWidget.seekToken != widget.seekToken) {
       _leftTarget = false;
       _seekAndApply(widget.seekToken);
-    } else if (oldWidget.playbackToken != widget.playbackToken) {
+    } else if (oldWidget.playbackToken != widget.playbackToken ||
+        oldWidget.playbackRate != widget.playbackRate) {
       final playbackToken = widget.playbackToken;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || widget.playbackToken != playbackToken) {
           return;
         }
-        _applyPlayback();
+        final controller = _videoController;
+        if (controller != null) {
+          _applyPlaybackRate(controller);
+        }
       });
     }
     if (!_sameCaptions(oldWidget.captions, widget.captions)) {
@@ -108,9 +114,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
         return;
       }
       _watch(videoController);
-      if (widget.wantsPlayback) {
-        await videoController.play();
-      }
+      await _applyPlaybackRate(videoController);
     } catch (error) {
       await videoController.dispose();
       if (!mounted) {
@@ -265,7 +269,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     if (!mounted || widget.seekToken != token) {
       return;
     }
-    _applyPlayback();
+    await _applyPlaybackRate(_videoController!);
   }
 
   Future<void> _seekTo(int milliseconds) async {
@@ -278,15 +282,25 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     await controller.seekTo(Duration(milliseconds: clamped));
   }
 
-  void _applyPlayback() {
-    final controller = _videoController;
-    if (controller == null || !controller.value.isInitialized) {
+  Future<void> _applyPlaybackRate(VideoPlayerController controller) async {
+    if (!controller.value.isInitialized) {
+      return;
+    }
+    final rate = widget.playbackRate;
+    if (rate <= 0 || rate.isNaN || rate.isInfinite) {
+      await controller.pause();
+      return;
+    }
+    if ((controller.value.playbackSpeed - rate).abs() >= 0.01) {
+      await controller.setPlaybackSpeed(rate);
+    }
+    if (!mounted) {
       return;
     }
     if (widget.wantsPlayback) {
-      controller.play();
+      await controller.play();
     } else {
-      controller.pause();
+      await controller.pause();
     }
   }
 

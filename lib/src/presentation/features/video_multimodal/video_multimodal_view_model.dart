@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../domain/clip_file_position.dart';
 import '../../../domain/entities/ask_answer.dart';
 import '../../../domain/entities/job_timeline.dart';
 import '../../../domain/entities/label_vocab.dart';
@@ -170,6 +171,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const double MIN_TRACK_WIDTH = 640;
   static const double MIN_CLIP_WIDTH = 6;
   static const double MIN_REGION_SECONDS = 0.1;
+  static const double DEFAULT_TIMELESS_CLIP_SECONDS = 5;
   static const String ASSET_DRAG_PREFIX = 'asset:';
   static const String RELATION_TRACK_NAME = '관계';
 
@@ -504,19 +506,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   TemporaryAttachmentBar? get activeVideoBar {
-    final selected = _timelineClip(_selectedClipId);
-    if (selected?.kind == TimelineClipKind.pose && _playbackVideoClip == null) {
-      return null;
-    }
-    final playback = _playbackVideoClip;
-    final selectedCovers =
-        selected != null &&
-        selected.kind == TimelineClipKind.video &&
-        selected.playbackUrl.isNotEmpty &&
-        _clipCovers(selected, _playheadSeconds);
-    final clip = playback != null && _clipCovers(playback, _playheadSeconds)
-        ? playback
-        : (selectedCovers ? selected : _videoClipAt(_playheadSeconds));
+    final clip = _activeVideoClip();
     if (clip == null) {
       return null;
     }
@@ -577,6 +567,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _createdClipNotice = null;
     return notice;
   }
+
   bool get hasTimelineHint => _timelineHint.isNotEmpty;
   String get selectedLabelValueId => _selectedLabelValueId;
   bool get isLoadingLabels => _isLoadingLabels;
@@ -732,42 +723,19 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   void didReceiveVideoClock({
     required String mediaUrl,
     required double localSeconds,
-    required double durationSeconds,
     required bool isPlaying,
   }) {
-    final fittedChanged = _fitVideoDuration(mediaUrl, durationSeconds);
-    final selected = _selectedVideo(mediaUrl);
-    if (selected != null) {
-      final start = secondsFromNanoseconds(selected.startNanoseconds);
-      final end = secondsFromNanoseconds(selected.endNanoseconds);
-      if (_restsAtFileEnd(
-        localSeconds: localSeconds,
-        durationSeconds: durationSeconds,
-      )) {
-        if (fittedChanged) {
-          notifyListeners();
-        }
-        return;
-      }
-      if (start + localSeconds >= end) {
-        _stopVideoAt(end);
-        return;
-      }
-      _followClock(
-        startSeconds: start,
-        localSeconds: localSeconds,
+    final playing = _activeVideoClip();
+    if (playing != null && playing.playbackUrl == mediaUrl) {
+      _followFileClock(
+        clip: playing,
+        fileSeconds: localSeconds,
         isPlaying: isPlaying,
-        notifyWhenIgnored: fittedChanged,
       );
       return;
     }
     final timelineStart = _timelineVideoStart(mediaUrl);
     if (timelineStart != null) {
-      _followClock(
-        startSeconds: timelineStart,
-        localSeconds: localSeconds,
-        isPlaying: isPlaying,
-      );
       return;
     }
     TemporaryAttachmentBar? bar;
@@ -778,17 +746,42 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       }
     }
     if (bar == null) {
-      if (fittedChanged) {
-        notifyListeners();
-      }
       return;
     }
     _followClock(
       startSeconds: bar.startSeconds,
       localSeconds: localSeconds,
       isPlaying: isPlaying,
-      notifyWhenIgnored: fittedChanged,
     );
+  }
+
+  int fileSeekMilliseconds(TemporaryAttachmentBar video) {
+    final clip = _clipForBar(video);
+    final position = clip == null
+        ? null
+        : clipFilePositionAt(
+            clip: _playbackInput(clip),
+            playheadSeconds: _playheadSeconds,
+          );
+    final seconds =
+        position?.fileSeconds ?? (_playheadSeconds - video.startSeconds);
+    final milliseconds = (seconds * 1000).round();
+    if (milliseconds < 0) {
+      return 0;
+    }
+    return milliseconds;
+  }
+
+  double playbackRateFor(TemporaryAttachmentBar video) {
+    final clip = _clipForBar(video);
+    if (clip == null) {
+      return 1;
+    }
+    return clipFilePositionAt(
+          clip: _playbackInput(clip),
+          playheadSeconds: _playheadSeconds,
+        )?.rate ??
+        1;
   }
 
   void didSelectSampleClip(String clipId) {
@@ -915,9 +908,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _failPose(pose, '대상 영상의 시간 구간이 올바르지 않습니다.');
       return;
     }
+    final placed = _timelineClip(pose.targetClipId);
     final video = TimelineClip(
       clipId: pose.targetClipId,
-      trackId: '',
+      trackId: placed?.trackId ?? '',
       kind: TimelineClipKind.video,
       startNs: pose.targetTimelineStartNs,
       endNs: pose.targetTimelineEndNs,
@@ -926,6 +920,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       playbackUrl: pose.targetAssetContentUrl,
       description: '',
       showsToolBadge: false,
+      sourceStartNs: placed?.sourceStartNs ?? '',
+      sourceEndNs: placed?.sourceEndNs ?? '',
+      assetDurationNs: placed?.assetDurationNs ?? '',
+      assetStartTimeNs: placed?.assetStartTimeNs ?? '',
     );
 
     final poseOverlapsVideo = _intervalsOverlap(
@@ -1029,26 +1027,131 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     debugPrint('[POSE] clipId=${pose.clipId} failed: $message');
   }
 
-  TimelineClip? _selectedVideo(String mediaUrl) {
-    final clip = _playbackVideoClip ?? _timelineClip(_selectedClipId);
-    if (clip == null ||
-        clip.kind != TimelineClipKind.video ||
-        clip.playbackUrl != mediaUrl) {
+  TimelineClip? _activeVideoClip() {
+    final selected = _timelineClip(_selectedClipId);
+    if (selected?.kind == TimelineClipKind.pose) {
+      final playback = _playbackVideoClip;
+      if (playback != null && _clipCovers(playback, _playheadSeconds)) {
+        return playback;
+      }
       return null;
     }
-    return clip;
+    return _videoOnSelectedTrack(_playheadSeconds);
   }
 
-  bool _restsAtFileEnd({
-    required double localSeconds,
-    required double durationSeconds,
-  }) {
-    if (durationSeconds < 1) {
-      return false;
+  TimelineClip? _videoOnSelectedTrack(double seconds) {
+    return _coveringVideoOnTrack(_resolvedTrackId(seconds), seconds);
+  }
+
+  /// 고른 클립이 없으면 플레이헤드를 덮는 영상이 있는 가장 위 트랙이다.
+  String _resolvedTrackId(double seconds) {
+    final selected = _timelineClip(_selectedClipId);
+    if (selected != null && selected.trackId.isNotEmpty) {
+      return selected.trackId;
     }
-    final atEnd = localSeconds >= durationSeconds - 0.4;
-    final playheadBeforeEnd = _playheadSeconds < durationSeconds - 1;
-    return atEnd && playheadBeforeEnd;
+    for (final track in timelineTracks) {
+      if (_coveringVideoOnTrack(track.trackId, seconds) != null) {
+        return track.trackId;
+      }
+    }
+    return '';
+  }
+
+  TimelineClip? _coveringVideoOnTrack(String trackId, double seconds) {
+    if (trackId.isEmpty) {
+      return null;
+    }
+    final covering = <TimelineClip>[];
+    for (final clip in timelineClips) {
+      if (clip.trackId != trackId ||
+          clip.kind != TimelineClipKind.video ||
+          clip.playbackUrl.isEmpty ||
+          !_clipCovers(clip, seconds)) {
+        continue;
+      }
+      covering.add(clip);
+    }
+    if (covering.isEmpty) {
+      return null;
+    }
+    final selected = _timelineClip(_selectedClipId);
+    if (selected != null &&
+        covering.any((clip) => clip.clipId == selected.clipId)) {
+      return selected;
+    }
+    covering.sort((left, right) => _compareClipId(right, left));
+    return covering.first;
+  }
+
+  int _compareClipId(TimelineClip left, TimelineClip right) {
+    final leftId = BigInt.tryParse(left.clipId);
+    final rightId = BigInt.tryParse(right.clipId);
+    if (leftId != null && rightId != null) {
+      return leftId.compareTo(rightId);
+    }
+    return left.clipId.compareTo(right.clipId);
+  }
+
+  TimelineClip? _clipForBar(TemporaryAttachmentBar video) {
+    final playing = _activeVideoClip();
+    if (playing != null &&
+        (playing.clipId == video.attachmentId ||
+            playing.playbackUrl == video.mediaUrl)) {
+      return playing;
+    }
+    return _timelineClip(video.attachmentId);
+  }
+
+  ClipPlaybackInput _playbackInput(TimelineClip clip) {
+    return ClipPlaybackInput(
+      timelineStartNs: clip.startNs,
+      timelineEndNs: clip.endNs,
+      sourceStartNs: clip.sourceStartNs,
+      sourceEndNs: clip.sourceEndNs,
+      assetDurationNs: clip.assetDurationNs,
+      assetStartTimeNs: clip.assetStartTimeNs,
+    );
+  }
+
+  void _followFileClock({
+    required TimelineClip clip,
+    required double fileSeconds,
+    required bool isPlaying,
+  }) {
+    final input = _playbackInput(clip);
+    final expected = clipFilePositionAt(
+      clip: input,
+      playheadSeconds: _playheadSeconds,
+    );
+    final mapped = playheadSecondsFromFilePosition(
+      clip: input,
+      fileSeconds: fileSeconds,
+    );
+    if (expected == null || mapped == null) {
+      return;
+    }
+    final clockSettled = (fileSeconds - expected.fileSeconds).abs() <= 0.35;
+    final anchor = _seekAnchorSeconds;
+    final stillAtAnchor = anchor != null && (mapped - anchor).abs() <= 0.35;
+    if ((stillAtAnchor || DateTime.now().isBefore(_ignoreClockUntil)) &&
+        !clockSettled) {
+      return;
+    }
+    _seekAnchorSeconds = null;
+    _ignoreClockUntil = DateTime.fromMillisecondsSinceEpoch(0);
+    final end = secondsFromNanoseconds(clip.endNanoseconds);
+    if (mapped >= end) {
+      _stopVideoAt(end);
+      return;
+    }
+    final next = mapped.clamp(0.0, spanSeconds);
+    if ((next - _playheadSeconds).abs() < 0.03 &&
+        _isVideoPlaying == isPlaying) {
+      return;
+    }
+    _playheadSeconds = next;
+    _isVideoPlaying = isPlaying;
+    notifyListeners();
   }
 
   void _stopVideoAt(double endSeconds) {
@@ -1598,6 +1701,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     String description = '',
     String fromClipId = '',
     String toClipId = '',
+    String sourceStartNs = '',
+    String sourceEndNs = '',
+    String sourceLimitNs = '',
   }) {
     return _commitServerWrite(
       () => _createClipUseCase.execute(
@@ -1610,6 +1716,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         description: description,
         fromClipId: fromClipId,
         toClipId: toClipId,
+        sourceStartNs: sourceStartNs,
+        sourceEndNs: sourceEndNs,
+        sourceLimitNs: sourceLimitNs,
       ),
     );
   }
@@ -1784,8 +1893,37 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (!isServerTimelineTrack(trackId) || attachment.attachmentId.isEmpty) {
       return;
     }
+    if (startSeconds < 0) {
+      _timelineHint = '구간이 너무 짧습니다.';
+      notifyListeners();
+      return;
+    }
     final startNs = nanosecondsFromSeconds(startSeconds);
-    final endNs = nanosecondsFromSeconds(startSeconds + MIN_REGION_SECONDS);
+    final durationNs = attachment.durationNs.trim();
+    final hasDuration = durationNs.isNotEmpty && durationNs != '0';
+    final String endNs;
+    final String sourceStartNs;
+    final String sourceEndNs;
+    if (hasDuration) {
+      endNs = addNanoseconds(startNs, durationNs);
+      sourceStartNs = '0';
+      sourceEndNs = durationNs;
+      if (!sourceIntervalFitsAsset(
+        sourceStartNs: sourceStartNs,
+        sourceEndNs: sourceEndNs,
+        assetDurationNs: durationNs,
+      )) {
+        _timelineHint = '소스 구간이 올바르지 않습니다.';
+        notifyListeners();
+        return;
+      }
+    } else {
+      endNs = nanosecondsFromSeconds(
+        startSeconds + DEFAULT_TIMELESS_CLIP_SECONDS,
+      );
+      sourceStartNs = '';
+      sourceEndNs = '';
+    }
     if (!isOpenNanosecondInterval(startNs, endNs)) {
       _timelineHint = '구간이 너무 짧습니다.';
       notifyListeners();
@@ -1798,6 +1936,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       startNs: startNs,
       endNs: endNs,
       assetId: attachment.attachmentId,
+      sourceStartNs: sourceStartNs,
+      sourceEndNs: sourceEndNs,
+      sourceLimitNs: hasDuration ? durationNs : '',
     );
     if (didSave) {
       _createdClipNotice = _noticeForCreatedClip(
@@ -2210,44 +2351,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   void _clearNotice() {
     _noticeText = '';
-  }
-
-  bool _fitVideoDuration(String mediaUrl, double durationSeconds) {
-    if (durationSeconds <= 0) {
-      return false;
-    }
-    final videos = [
-      for (final bar in _bars)
-        if (bar.isVideo) bar,
-    ];
-    final index = videos.indexWhere((bar) => bar.mediaUrl == mediaUrl);
-    if (index < 0) {
-      return false;
-    }
-    final currentLength = videos[index].endSeconds - videos[index].startSeconds;
-    final stillProvisional =
-        (currentLength - PROVISIONAL_BAR_SECONDS).abs() < 0.25;
-    if (!stillProvisional || (currentLength - durationSeconds).abs() < 0.25) {
-      return false;
-    }
-    var cursor = videos.first.startSeconds;
-    final fitted = <TemporaryAttachmentBar>[];
-    for (var i = 0; i < videos.length; i++) {
-      final source = videos[i];
-      final length = i == index
-          ? durationSeconds
-          : source.endSeconds - source.startSeconds;
-      fitted.add(
-        source.copyWith(startSeconds: cursor, endSeconds: cursor + length),
-      );
-      cursor += length;
-    }
-    _bars = [
-      ...fitted,
-      for (final bar in _bars)
-        if (!bar.isVideo) bar,
-    ];
-    return true;
   }
 
   @override

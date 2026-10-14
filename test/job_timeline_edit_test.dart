@@ -89,11 +89,32 @@ void main() {
     expect(request.clip.hasProvenance(), isFalse);
     expect(request.clip.hasKind(), isTrue);
     expect(request.clip.source.assetId.toString(), '20');
+    expect(request.clip.source.hasAssetDurationNs(), isFalse);
+    expect(request.clip.source.hasAssetStartTimeNs(), isFalse);
     expect(request.clip.timelineEndNs.toString(), '1000000000');
     expect(
       request.clip.timelineStartNs.compareTo(request.clip.timelineEndNs),
       lessThan(0),
     );
+  });
+
+  test('create clip sends the source interval and omits read-only fields', () {
+    final request = buildCreateClipRequest(
+      trackId: '1',
+      kind: TimelineClipKind.video,
+      startNs: '10000000000',
+      endNs: '399295000000',
+      assetId: '20',
+      sourceStartNs: '0',
+      sourceEndNs: '389295000000',
+    );
+
+    expect(request.clip.source.startNs.toString(), '0');
+    expect(request.clip.source.endNs.toString(), '389295000000');
+    expect(request.clip.source.hasAssetDurationNs(), isFalse);
+    expect(request.clip.source.hasAssetStartTimeNs(), isFalse);
+    expect(request.clip.timelineStartNs.toString(), '10000000000');
+    expect(request.clip.timelineEndNs.toString(), '399295000000');
   });
 
   test('relation clip sends kind and the two clip ids', () {
@@ -144,6 +165,32 @@ void main() {
     );
     expect(repository.writeCount, 0);
   });
+
+  test(
+    'a source interval past the asset length is rejected before a write',
+    () async {
+      final repository = _ThrowingTimelineRepository();
+      expect(
+        () => CreateClipUseCase(repository).execute(
+          trackId: 'track-1',
+          kind: TimelineClipKind.video,
+          startNs: '0',
+          endNs: '1000000000',
+          sourceStartNs: '0',
+          sourceEndNs: '2000000000',
+          sourceLimitNs: '1000000000',
+        ),
+        throwsA(
+          isA<JobTimelineException>().having(
+            (error) => error.failure,
+            'failure',
+            JobTimelineFailure.invalidArgument,
+          ),
+        ),
+      );
+      expect(repository.writeCount, 0);
+    },
+  );
 
   test('a relation of the same clip is rejected before a write', () async {
     final repository = _ThrowingTimelineRepository();
@@ -407,7 +454,7 @@ void main() {
 
     final startNs = nanosecondsFromSeconds(1.5);
     final endNs = nanosecondsFromSeconds(
-      1.5 + VideoMultimodalViewModel.MIN_REGION_SECONDS,
+      1.5 + VideoMultimodalViewModel.DEFAULT_TIMELESS_CLIP_SECONDS,
     );
     expect(repository.createClipCount, 1);
     expect(repository.lastCreatedClipTrackId, 'track-video');
@@ -418,10 +465,37 @@ void main() {
     expect(repository.lastCreatedClipAssetId, 'asset-9');
     expect(repository.lastCreatedClipLabelValueId, isEmpty);
     expect(repository.lastCreatedClipDescription, isEmpty);
+    expect(repository.lastCreatedSourceStartNs, isEmpty);
+    expect(repository.lastCreatedSourceEndNs, isEmpty);
     final notice = viewModel.takeCreatedClipNotice();
     expect(notice?.kindLabel, '영상');
     expect(notice?.body, 'take.mp4');
     expect(viewModel.takeCreatedClipNotice(), isNull);
+  });
+
+  test('dropping an asset with a duration places the whole file', () async {
+    final repository = _ScriptedTimelineRepository(_loadedTimeline());
+    final viewModel = _viewModel(
+      repository,
+      workDetail: const _VideoAttachmentRepository(durationNs: '2000000000'),
+    );
+    await viewModel.loadAttachments();
+
+    await viewModel.didDropAsset(
+      dragData: '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}asset-9',
+      laneKey: 'track-video',
+      startSeconds: 1.5,
+    );
+
+    final startNs = nanosecondsFromSeconds(1.5);
+    expect(repository.createClipCount, 1);
+    expect(repository.lastCreatedClipStartNs, startNs);
+    expect(
+      repository.lastCreatedClipEndNs,
+      addNanoseconds(startNs, '2000000000'),
+    );
+    expect(repository.lastCreatedSourceStartNs, '0');
+    expect(repository.lastCreatedSourceEndNs, '2000000000');
   });
 
   test('drops off a server track do not create a clip', () async {
@@ -968,7 +1042,6 @@ void main() {
       viewModel.didReceiveVideoClock(
         mediaUrl: mediaUrl,
         localSeconds: 392,
-        durationSeconds: 392,
         isPlaying: false,
       );
       expect(viewModel.playheadSeconds, closeTo(0, 0.0001));
@@ -978,7 +1051,6 @@ void main() {
       viewModel.didReceiveVideoClock(
         mediaUrl: mediaUrl,
         localSeconds: 1,
-        durationSeconds: 392,
         isPlaying: true,
       );
       expect(viewModel.playheadSeconds, closeTo(1, 0.0001));
@@ -986,7 +1058,6 @@ void main() {
       viewModel.didReceiveVideoClock(
         mediaUrl: mediaUrl,
         localSeconds: 390.084,
-        durationSeconds: 392,
         isPlaying: true,
       );
       expect(viewModel.wantsPlayback, isFalse);
@@ -1014,12 +1085,14 @@ void main() {
     expect(viewModel.playheadSeconds, closeTo(10, 0.0001));
     expect(viewModel.wantsPlayback, isTrue);
     expect(bar?.startSeconds, closeTo(0, 0.0001));
-    expect(((viewModel.playheadSeconds - bar!.startSeconds) * 1000).round(), 10000);
+    expect(
+      ((viewModel.playheadSeconds - bar!.startSeconds) * 1000).round(),
+      10000,
+    );
 
     viewModel.didReceiveVideoClock(
       mediaUrl: mediaUrl,
       localSeconds: 0,
-      durationSeconds: 392,
       isPlaying: true,
     );
     expect(viewModel.playheadSeconds, closeTo(10, 0.0001));
@@ -1027,7 +1100,6 @@ void main() {
     viewModel.didReceiveVideoClock(
       mediaUrl: mediaUrl,
       localSeconds: 10,
-      durationSeconds: 392,
       isPlaying: true,
     );
     expect(viewModel.playheadSeconds, closeTo(10, 0.0001));
@@ -1035,7 +1107,6 @@ void main() {
     viewModel.didReceiveVideoClock(
       mediaUrl: mediaUrl,
       localSeconds: 11,
-      durationSeconds: 392,
       isPlaying: true,
     );
     expect(viewModel.playheadSeconds, closeTo(11, 0.0001));
@@ -1081,7 +1152,6 @@ void main() {
     viewModel.didReceiveVideoClock(
       mediaUrl: mediaUrl,
       localSeconds: 0,
-      durationSeconds: 392,
       isPlaying: true,
     );
     expect(viewModel.playheadSeconds, closeTo(390.084, 0.001));
@@ -1115,10 +1185,208 @@ void main() {
     viewModel.didReceiveVideoClock(
       mediaUrl: mediaUrl,
       localSeconds: 10,
-      durationSeconds: 30,
       isPlaying: true,
     );
     expect(viewModel.playheadSeconds, closeTo(120, 0.0001));
+  });
+
+  test('preview uses the selected track and the file start time', () async {
+    const depthUrl = 'http://media.example/depth.mp4';
+    const actionUrl = 'http://media.example/action.mp4';
+    final repository = _ScriptedTimelineRepository(
+      JobTimeline(
+        jobId: 'job-1',
+        name: '작업',
+        tracks: [
+          TimelineTrack(
+            trackId: 'depth',
+            name: '깊이',
+            order: 1,
+            clips: [
+              TimelineClip(
+                clipId: '101',
+                trackId: 'depth',
+                kind: TimelineClipKind.video,
+                startNs: '0',
+                endNs: '40000000000',
+                assetId: '1',
+                fileName: 'depth.mp4',
+                playbackUrl: depthUrl,
+                description: '',
+                showsToolBadge: false,
+                sourceStartNs: '0',
+                sourceEndNs: '40000000000',
+                assetDurationNs: '40000000000',
+                assetStartTimeNs: '428559000000',
+              ),
+            ],
+          ),
+          TimelineTrack(
+            trackId: 'action',
+            name: '액션',
+            order: 2,
+            clips: [
+              TimelineClip(
+                clipId: '103',
+                trackId: 'action',
+                kind: TimelineClipKind.video,
+                startNs: '25000000000',
+                endNs: '35000000000',
+                assetId: '3',
+                fileName: 'action.mp4',
+                playbackUrl: actionUrl,
+                description: '',
+                showsToolBadge: false,
+                sourceStartNs: '0',
+                sourceEndNs: '15000000000',
+                assetDurationNs: '15000000000',
+              ),
+              TimelineClip(
+                clipId: '104',
+                trackId: 'action',
+                kind: TimelineClipKind.video,
+                startNs: '40000000000',
+                endNs: '55000000000',
+                assetId: '4',
+                fileName: 'later.mp4',
+                playbackUrl: 'http://media.example/later.mp4',
+                description: '',
+                showsToolBadge: false,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+    viewModel.didSeekToSeconds(28);
+
+    expect(viewModel.activeVideoBar?.mediaUrl, depthUrl);
+    expect(viewModel.fileSeekMilliseconds(viewModel.activeVideoBar!), 456559);
+    expect(
+      viewModel.playbackRateFor(viewModel.activeVideoBar!),
+      closeTo(1, 0.0001),
+    );
+
+    viewModel.didSelectSampleClip('103');
+    await Future<void>.delayed(Duration.zero);
+    viewModel.didSeekToSeconds(28);
+
+    expect(viewModel.activeVideoBar?.mediaUrl, actionUrl);
+    expect(viewModel.fileSeekMilliseconds(viewModel.activeVideoBar!), 4500);
+    expect(
+      viewModel.playbackRateFor(viewModel.activeVideoBar!),
+      closeTo(1.5, 0.0001),
+    );
+
+    viewModel.didSelectSampleClip('101');
+    await Future<void>.delayed(Duration.zero);
+    viewModel.didSeekToSeconds(50);
+
+    expect(viewModel.activeVideoBar, isNull);
+  });
+
+  test('an unselected playhead uses the first covering video track', () async {
+    const laterUrl = 'http://media.example/later.mp4';
+    const smallUrl = 'http://media.example/small.mp4';
+    const largeUrl = 'http://media.example/large.mp4';
+    final repository = _ScriptedTimelineRepository(
+      JobTimeline(
+        jobId: 'job-1',
+        name: '작업',
+        tracks: [
+          TimelineTrack(
+            trackId: 'tag',
+            name: '태그',
+            order: 1,
+            clips: [
+              TimelineClip(
+                clipId: 'tag-1',
+                trackId: 'tag',
+                kind: TimelineClipKind.tag,
+                startNs: '0',
+                endNs: '100000000000',
+                assetId: '',
+                fileName: '',
+                playbackUrl: '',
+                description: '',
+                showsToolBadge: false,
+              ),
+            ],
+          ),
+          TimelineTrack(
+            trackId: 'later',
+            name: '나중',
+            order: 2,
+            clips: [
+              TimelineClip(
+                clipId: '102',
+                trackId: 'later',
+                kind: TimelineClipKind.video,
+                startNs: '20000000000',
+                endNs: '40000000000',
+                assetId: '2',
+                fileName: 'later.mp4',
+                playbackUrl: laterUrl,
+                description: '',
+                showsToolBadge: false,
+              ),
+            ],
+          ),
+          TimelineTrack(
+            trackId: 'action',
+            name: '액션',
+            order: 3,
+            clips: [
+              TimelineClip(
+                clipId: '103',
+                trackId: 'action',
+                kind: TimelineClipKind.video,
+                startNs: '0',
+                endNs: '30000000000',
+                assetId: '3',
+                fileName: 'small.mp4',
+                playbackUrl: smallUrl,
+                description: '',
+                showsToolBadge: false,
+              ),
+              TimelineClip(
+                clipId: '110',
+                trackId: 'action',
+                kind: TimelineClipKind.video,
+                startNs: '5000000000',
+                endNs: '15000000000',
+                assetId: '4',
+                fileName: 'large.mp4',
+                playbackUrl: largeUrl,
+                description: '',
+                showsToolBadge: false,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+
+    viewModel.didSeekToSeconds(10);
+    expect(viewModel.playheadSeconds, closeTo(10, 0.0001));
+    expect(viewModel.selectedClipId, isEmpty);
+    expect(viewModel.activeVideoBar?.mediaUrl, largeUrl);
+
+    viewModel.didSeekToSeconds(25);
+    expect(viewModel.activeVideoBar?.mediaUrl, laterUrl);
+
+    viewModel.didSeekToSeconds(50);
+    expect(viewModel.playheadSeconds, closeTo(50, 0.0001));
+    expect(viewModel.activeVideoBar, isNull);
+
+    viewModel.didSelectSampleClip('tag-1');
+    await Future<void>.delayed(Duration.zero);
+    viewModel.didSeekToSeconds(10);
+    expect(viewModel.activeVideoBar, isNull);
   });
 
   test(
@@ -1684,6 +1952,9 @@ class _IdleAskRepository implements AskRepository {
 }
 
 class _VideoAttachmentRepository implements WorkDetailRepository {
+  const _VideoAttachmentRepository({this.durationNs = ''});
+
+  final String durationNs;
   @override
   Future<String> loadProjectId({required String jobId}) async {
     return '';
@@ -1696,7 +1967,7 @@ class _VideoAttachmentRepository implements WorkDetailRepository {
 
   @override
   Future<List<WorkAttachment>> listAttachments({String jobId = ''}) async {
-    return const [
+    return [
       WorkAttachment(
         attachmentId: 'asset-9',
         jobId: 'job-1',
@@ -1704,6 +1975,7 @@ class _VideoAttachmentRepository implements WorkDetailRepository {
         fileName: 'take.mp4',
         note: '',
         content: '',
+        durationNs: durationNs,
       ),
     ];
   }
@@ -1778,6 +2050,8 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
     String description = '',
     String fromClipId = '',
     String toClipId = '',
+    String sourceStartNs = '',
+    String sourceEndNs = '',
   }) {
     writeCount += 1;
     throw StateError('unused');
@@ -1873,6 +2147,8 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
   String lastCreatedClipDescription = '';
   String lastCreatedFromClipId = '';
   String lastCreatedToClipId = '';
+  String lastCreatedSourceStartNs = '';
+  String lastCreatedSourceEndNs = '';
   String? lastStartNs;
   String? lastEndNs;
   String? lastTrackId;
@@ -1964,6 +2240,8 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
     String description = '',
     String fromClipId = '',
     String toClipId = '',
+    String sourceStartNs = '',
+    String sourceEndNs = '',
   }) async {
     createClipCount += 1;
     lastCreatedClipTrackId = trackId;
@@ -1975,6 +2253,8 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
     lastCreatedClipDescription = description;
     lastCreatedFromClipId = fromClipId;
     lastCreatedToClipId = toClipId;
+    lastCreatedSourceStartNs = sourceStartNs;
+    lastCreatedSourceEndNs = sourceEndNs;
     _throwFailure();
   }
 

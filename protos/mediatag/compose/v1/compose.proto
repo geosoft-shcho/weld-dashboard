@@ -18,6 +18,9 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-13  geosoft-Server: ClipSource.asset_duration_ns·asset_start_time_ns — 소스 전체 길이와 파일 첫 시각(읽기 전용)
+//   2026-10-13  geosoft-Server: 같은 트랙의 Clip이 겹칠 수 있음(겹침 금지 제약 삭제), 소스 구간이 Asset 길이 안인지 검사
+//   2026-10-13  geosoft-Server: Delete* 주석에 삭제 방식(행을 실제로 지움) 명시 — 삭제는 Delete 하나, 방식은 주석에
 //   2026-10-13  geosoft-Server: GetClip.include_target — 그 클립을 만든 실행의 대상(target_clip·target_asset)도 한 번에
 //   2026-10-12  geosoft-Server: ClipProvenance.target_kind·target_id — 그 클립을 만든 실행이 무엇을 대상으로 돌았는지(읽기 전용)
 //   2026-10-12  geosoft-Server: GetClip — 클립 하나를 번호로 읽는다(include_assets면 가리키는 Asset 메타도)
@@ -65,22 +68,23 @@ service MediaComposeService {
   rpc UpdateTimeline(UpdateTimelineRequest) returns (UpdateTimelineResponse);
   // 현재 상태가 from_status일 때만 바꾼다. 아니면 Aborted(다른 요청이 먼저 바꿈).
   rpc ChangeTimelineStatus(ChangeTimelineStatusRequest) returns (ChangeTimelineStatusResponse);
-  // 편집 초기화: 타임라인과 트랙·클립을 지운다(작업·첨부는 그대로).
+  // 편집 초기화: 타임라인과 트랙·클립의 행을 실제로 지운다(되돌릴 수 없음. 작업·첨부는 그대로).
   rpc DeleteTimeline(DeleteTimelineRequest) returns (DeleteTimelineResponse);
 
   rpc CreateTrack(CreateTrackRequest) returns (CreateTrackResponse);
   // name, order, visible
   rpc UpdateTrack(UpdateTrackRequest) returns (UpdateTrackResponse);
-  // 트랙의 클립도 함께 지워진다.
+  // 행을 실제로 지운다(되돌릴 수 없음). 트랙의 클립도 함께 지워진다.
   rpc DeleteTrack(DeleteTrackRequest) returns (DeleteTrackResponse);
 
-  // 같은 트랙 클립과 구간이 겹치면 FailedPrecondition. source.asset_id가 이 작업에
+  // 같은 트랙의 클립과 구간이 겹쳐도 된다. source 구간이 Asset 길이를 넘으면 InvalidArgument. source.asset_id가 이 작업에
   // 첨부되지 않았으면 같은 트랜잭션에서 작업 공용으로 첨부한다.
   rpc CreateClip(CreateClipRequest) returns (CreateClipResponse);
   // 클립 하나. include_assets를 주면 그 클립이 가리키는 Asset도. 없으면 NOT_FOUND.
   rpc GetClip(GetClipRequest) returns (GetClipResponse);
   // 오류 조건·자동 첨부는 CreateClip과 같다. 검수는 update_mask "provenance.reviewed".
   rpc UpdateClip(UpdateClipRequest) returns (UpdateClipResponse);
+  // 행을 실제로 지운다(되돌릴 수 없음).
   rpc DeleteClip(DeleteClipRequest) returns (DeleteClipResponse);
 
   // 클립 사이의 관계(릴레이션)도 클립이다: CreateClip에 kind = RELATION, relation(from_clip_id·to_clip_id), 구간을 준다.
@@ -162,7 +166,7 @@ message Clip {
   int64 clip_id = 1;       // 서버 발급
   int64 track_id = 2;      // 같은 작업의 트랙으로만 옮길 수 있다(다른 작업이면 INVALID_ARGUMENT)
   ClipKind kind = 3;
-  // 타임라인 위 구간 [start, end), 필수. 같은 트랙의 Clip끼리 겹치면 FAILED_PRECONDITION
+  // 타임라인 위 구간 [start, end), 필수. 같은 트랙의 Clip끼리 겹쳐도 된다(화면이 줄을 나눠 그린다). 자동 배치만 겹치지 않게 놓는다
   optional int64 timeline_start_ns = 4;
   optional int64 timeline_end_ns = 5;
   ClipSource source = 6;    // kind=tag면 비어 있음
@@ -187,7 +191,10 @@ message ClipRelation {
 // 가리키는 Asset과 그 안의 범위. start/end·locator가 모두 비면 Asset 전체.
 message ClipSource {
   int64 asset_id = 1;
-  optional int64 start_ns = 2; // Asset 자신의 시간축
+  // Asset 자신의 시간축(첫 프레임·첫 샘플이 0). 0 ≤ start_ns ≤ end_ns ≤ Asset.duration_ns여야 한다 — 어기면 InvalidArgument.
+  // 끝이 반올림만큼(100ms 이내) 넘으면 서버가 Asset 길이로 맞춘다. 길이를 모르는 Asset은 끝을 검사하지 않는다.
+  // 타임라인 구간과 길이가 달라도 된다 — 다르면 화면이 소스 구간을 타임라인 구간에 맞춰 보인다(배속 = 소스 길이 ÷ 클립 길이).
+  optional int64 start_ns = 2;
   optional int64 end_ns = 3;
   // kind별 위치(JSON, 모양은 kind가 정한다 — 다른 모양·다른 kind에 쓰면 InvalidArgument). 2D 좌표는 0~1 비율·좌상단
   // 원점, 쪽은 1부터.
@@ -197,6 +204,13 @@ message ClipSource {
   //   pointcloud: {"points": [[x,y,z], ...]}
   // 영상 속 영역은 locator가 아니라 REGION Clip으로 둔다.
   google.protobuf.Struct locator = 4;
+  // 아래 둘은 읽기 전용 — 서버가 가리키는 Asset에서 채운다(저장하지 않고, 요청에 넣어도 무시한다). Asset을 따로 찾지 않고도
+  // 재생 위치와 자를 수 있는 한계를 계산할 수 있게 한다.
+  // asset_duration_ns: 소스 전체 길이(Asset.duration_ns). start_ns·end_ns의 한계다. 시간이 없는 소스(이미지·PDF 등)는 비어 있다.
+  // asset_start_time_ns: 파일에 적힌 첫 시각(Asset.properties.start_time_ns). 영상·음성에만 있다. 브라우저에서는
+  //   video.currentTime = (asset_start_time_ns + Asset 축 위치) ÷ 1e9로 찾아간다. 비어 있으면 0으로 본다.
+  optional int64 asset_duration_ns = 5;
+  optional int64 asset_start_time_ns = 6;
 }
 
 message ClipProvenance {

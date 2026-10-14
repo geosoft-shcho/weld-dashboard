@@ -42,7 +42,7 @@ abstract final class MediaComposeService {
     mediatagcomposev1compose.ChangeTimelineStatusResponse.new,
   );
 
-  /// 편집 초기화: 타임라인과 트랙·클립을 지운다(작업·첨부는 그대로).
+  /// 편집 초기화: 타임라인과 트랙·클립의 행을 실제로 지운다(되돌릴 수 없음. 작업·첨부는 그대로).
   static const deleteTimeline = connect.Spec(
     '/$name/DeleteTimeline',
     connect.StreamType.unary,
@@ -65,7 +65,7 @@ abstract final class MediaComposeService {
     mediatagcomposev1compose.UpdateTrackResponse.new,
   );
 
-  /// 트랙의 클립도 함께 지워진다.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 트랙의 클립도 함께 지워진다.
   static const deleteTrack = connect.Spec(
     '/$name/DeleteTrack',
     connect.StreamType.unary,
@@ -73,7 +73,7 @@ abstract final class MediaComposeService {
     mediatagcomposev1compose.DeleteTrackResponse.new,
   );
 
-  /// 같은 트랙 클립과 구간이 겹치면 FailedPrecondition. source.asset_id가 이 작업에
+  /// 같은 트랙의 클립과 구간이 겹쳐도 된다. source 구간이 Asset 길이를 넘으면 InvalidArgument. source.asset_id가 이 작업에
   /// 첨부되지 않았으면 같은 트랜잭션에서 작업 공용으로 첨부한다.
   static const createClip = connect.Spec(
     '/$name/CreateClip',
@@ -98,6 +98,7 @@ abstract final class MediaComposeService {
     mediatagcomposev1compose.UpdateClipResponse.new,
   );
 
+  /// 행을 실제로 지운다(되돌릴 수 없음).
   static const deleteClip = connect.Spec(
     '/$name/DeleteClip',
     connect.StreamType.unary,

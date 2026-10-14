@@ -11,6 +11,8 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-13  geosoft-Server: properties.start_time_ns — 영상·음성 파일의 첫 시각
+//   2026-10-13  geosoft-Server: Delete* 주석에 삭제 방식(행을 실제로 지움) 명시 — 삭제는 Delete 하나, 방식은 주석에
 //   2026-10-08  geosoft-Server: ListUploadFormats — 화면 업로드(POST /assets)가 받는 자료 형식 표
 //   2026-10-07  geosoft-Server: equipment_id를 숫자(int64)로
 //   2026-10-07  geosoft-Server: 화면 업로드 주소(POST /assets) 안내 — RPC는 그대로
@@ -44,6 +46,7 @@ service AssetService {
   // Asset 목록(페이지·kind 필터·부모 필터). 작업별 목록은 ListJobAssets.
   rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
   rpc GetAsset(GetAssetRequest) returns (GetAssetResponse);
+  // 행과 저장된 파일을 실제로 지운다(되돌릴 수 없음).
   // 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
   rpc DeleteAsset(DeleteAssetRequest) returns (DeleteAssetResponse);
   // 내용(sha256)이 같은 Asset 묶음 목록. 중복은 등록을 막지 않고 여기서 확인해 사람이 정리한다.
@@ -86,7 +89,9 @@ message Asset {
   string sha256 = 4;         // 중복 제거 키 아님(같은 해시 여럿 가능)
   string mime_type = 5;
   int64 size_bytes = 6;
-  google.protobuf.Struct properties = 7; // kind별 실측값(재생 길이·해상도·fps·채널 등)
+  // kind별 실측값(해상도·fps·채널 등). 영상·음성에는 start_time_ns가 있다 — 파일에 적힌 첫 프레임·샘플의 시각(ns).
+  // 잘라 낸 영상은 0이 아니어서 브라우저의 video.currentTime이 이 값부터 시작한다. 화면은 start_time_ns + Asset 축 위치로 찾아간다.
+  google.protobuf.Struct properties = 7;
   int64 equipment_id = 8;    // 수집 장비. 0이면 모름
   google.protobuf.Timestamp collected_at = 9; // 적재 시각 = 저장소에 들어온 시각(촬영·기록 시각이 아님)
   google.protobuf.Timestamp recorded_at = 10; // 기록 시작 = 첫 샘플·프레임의 절대시각(선택). 파일 안 시각(t_ns·영상 PTS)은 여기서 0

@@ -66,6 +66,8 @@ compose_pb.CreateClipRequest buildCreateClipRequest({
   String description = '',
   String fromClipId = '',
   String toClipId = '',
+  String sourceStartNs = '',
+  String sourceEndNs = '',
 }) {
   final clip = compose_pb.Clip(
     trackId: protoId(trackId),
@@ -81,7 +83,14 @@ compose_pb.CreateClipRequest buildCreateClipRequest({
   } else {
     final sourceAssetId = protoIdOrNull(assetId);
     if (sourceAssetId != null) {
-      clip.source = compose_pb.ClipSource(assetId: sourceAssetId);
+      final source = compose_pb.ClipSource(assetId: sourceAssetId);
+      if (sourceStartNs.isNotEmpty) {
+        source.startNs = Int64.parseInt(sourceStartNs);
+      }
+      if (sourceEndNs.isNotEmpty) {
+        source.endNs = Int64.parseInt(sourceEndNs);
+      }
+      clip.source = source;
     }
   }
   final labelId = protoIdOrNull(labelValueId);

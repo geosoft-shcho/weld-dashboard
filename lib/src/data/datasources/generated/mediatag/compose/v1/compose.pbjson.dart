@@ -347,10 +347,30 @@ const ClipSource$json = {
       '6': '.google.protobuf.Struct',
       '10': 'locator'
     },
+    {
+      '1': 'asset_duration_ns',
+      '3': 5,
+      '4': 1,
+      '5': 3,
+      '9': 2,
+      '10': 'assetDurationNs',
+      '17': true
+    },
+    {
+      '1': 'asset_start_time_ns',
+      '3': 6,
+      '4': 1,
+      '5': 3,
+      '9': 3,
+      '10': 'assetStartTimeNs',
+      '17': true
+    },
   ],
   '8': [
     {'1': '_start_ns'},
     {'1': '_end_ns'},
+    {'1': '_asset_duration_ns'},
+    {'1': '_asset_start_time_ns'},
   ],
 };
 
@@ -358,8 +378,10 @@ const ClipSource$json = {
 final $typed_data.Uint8List clipSourceDescriptor = $convert.base64Decode(
     'CgpDbGlwU291cmNlEhkKCGFzc2V0X2lkGAEgASgDUgdhc3NldElkEh4KCHN0YXJ0X25zGAIgAS'
     'gDSABSB3N0YXJ0TnOIAQESGgoGZW5kX25zGAMgASgDSAFSBWVuZE5ziAEBEjEKB2xvY2F0b3IY'
-    'BCABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0Ugdsb2NhdG9yQgsKCV9zdGFydF9uc0IJCg'
-    'dfZW5kX25z');
+    'BCABKAsyFy5nb29nbGUucHJvdG9idWYuU3RydWN0Ugdsb2NhdG9yEi8KEWFzc2V0X2R1cmF0aW'
+    '9uX25zGAUgASgDSAJSD2Fzc2V0RHVyYXRpb25Oc4gBARIyChNhc3NldF9zdGFydF90aW1lX25z'
+    'GAYgASgDSANSEGFzc2V0U3RhcnRUaW1lTnOIAQFCCwoJX3N0YXJ0X25zQgkKB19lbmRfbnNCFA'
+    'oSX2Fzc2V0X2R1cmF0aW9uX25zQhYKFF9hc3NldF9zdGFydF90aW1lX25z');
 
 @$core.Deprecated('Use clipProvenanceDescriptor instead')
 const ClipProvenance$json = {

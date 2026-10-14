@@ -608,6 +608,8 @@ class _CountingTimelineRepository implements JobTimelineRepository {
     String description = '',
     String fromClipId = '',
     String toClipId = '',
+    String sourceStartNs = '',
+    String sourceEndNs = '',
   }) async {
     createClipCount += 1;
   }

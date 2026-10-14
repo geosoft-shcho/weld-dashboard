@@ -31,6 +31,8 @@ abstract class JobTimelineRepository {
     String description,
     String fromClipId,
     String toClipId,
+    String sourceStartNs,
+    String sourceEndNs,
   });
 
   Future<void> updateClip({

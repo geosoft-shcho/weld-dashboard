@@ -158,6 +158,8 @@ class _FakeTimelineRepository implements JobTimelineRepository {
     String description = '',
     String fromClipId = '',
     String toClipId = '',
+    String sourceStartNs = '',
+    String sourceEndNs = '',
   }) async {}
 
   @override

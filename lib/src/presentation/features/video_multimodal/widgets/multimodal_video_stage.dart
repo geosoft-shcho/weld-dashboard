@@ -26,17 +26,16 @@ class MultimodalVideoStage extends StatelessWidget {
         color: AppTheme.SURFACE,
         child: Center(
           child: Text(
-            '재생 머리가 영상 막대 안에 있으면 그 파일을 재생합니다. ${viewModel.playheadLabel}',
+            '고른 트랙에서 이 시각을 덮는 영상이 없습니다. ${viewModel.playheadLabel}',
             style: theme.typography.caption,
           ),
         ),
       );
     }
-    final localMs = ((viewModel.playheadSeconds - video.startSeconds) * 1000)
-        .round();
     return _player(
       mediaUrl: video.mediaUrl,
-      seekToMs: localMs,
+      seekToMs: viewModel.fileSeekMilliseconds(video),
+      playbackRate: viewModel.playbackRateFor(video),
       captions: viewModel.activeVideoCaptions,
       frames: viewModel.activeVideoOverlayFrames,
     );
@@ -45,6 +44,7 @@ class MultimodalVideoStage extends StatelessWidget {
   Widget _player({
     required String mediaUrl,
     required int seekToMs,
+    required double playbackRate,
     required List<VideoCaption> captions,
     required List<VideoOverlayFrame> frames,
   }) {
@@ -54,6 +54,7 @@ class MultimodalVideoStage extends StatelessWidget {
         key: ValueKey(mediaUrl),
         mediaUrl: mediaUrl,
         seekToMs: seekToMs,
+        playbackRate: playbackRate,
         seekToken: viewModel.seekToken,
         playbackToken: viewModel.playbackToken,
         wantsPlayback: viewModel.wantsPlayback,
@@ -63,7 +64,6 @@ class MultimodalVideoStage extends StatelessWidget {
           viewModel.didReceiveVideoClock(
             mediaUrl: mediaUrl,
             localSeconds: clock.position.inMilliseconds / 1000,
-            durationSeconds: clock.duration.inMilliseconds / 1000,
             isPlaying: clock.isPlaying,
           );
         },

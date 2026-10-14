@@ -80,7 +80,7 @@ extension type MediaComposeServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 편집 초기화: 타임라인과 트랙·클립을 지운다(작업·첨부는 그대로).
+  /// 편집 초기화: 타임라인과 트랙·클립의 행을 실제로 지운다(되돌릴 수 없음. 작업·첨부는 그대로).
   Future<mediatagcomposev1compose.DeleteTimelineResponse> deleteTimeline(
     mediatagcomposev1compose.DeleteTimelineRequest input, {
     connect.Headers? headers,
@@ -133,7 +133,7 @@ extension type MediaComposeServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 트랙의 클립도 함께 지워진다.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 트랙의 클립도 함께 지워진다.
   Future<mediatagcomposev1compose.DeleteTrackResponse> deleteTrack(
     mediatagcomposev1compose.DeleteTrackRequest input, {
     connect.Headers? headers,
@@ -151,7 +151,7 @@ extension type MediaComposeServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 같은 트랙 클립과 구간이 겹치면 FailedPrecondition. source.asset_id가 이 작업에
+  /// 같은 트랙의 클립과 구간이 겹쳐도 된다. source 구간이 Asset 길이를 넘으면 InvalidArgument. source.asset_id가 이 작업에
   /// 첨부되지 않았으면 같은 트랜잭션에서 작업 공용으로 첨부한다.
   Future<mediatagcomposev1compose.CreateClipResponse> createClip(
     mediatagcomposev1compose.CreateClipRequest input, {
@@ -206,6 +206,7 @@ extension type MediaComposeServiceClient (connect.Transport _transport) {
     );
   }
 
+  /// 행을 실제로 지운다(되돌릴 수 없음).
   Future<mediatagcomposev1compose.DeleteClipResponse> deleteClip(
     mediatagcomposev1compose.DeleteClipRequest input, {
     connect.Headers? headers,

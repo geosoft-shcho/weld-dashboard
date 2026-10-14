@@ -606,6 +606,8 @@ class _QuietTimelineRepository implements JobTimelineRepository {
     String description = '',
     String fromClipId = '',
     String toClipId = '',
+    String sourceStartNs = '',
+    String sourceEndNs = '',
   }) async {}
 
   @override

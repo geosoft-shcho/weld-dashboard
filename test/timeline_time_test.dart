@@ -73,6 +73,8 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
     String description = '',
     String fromClipId = '',
     String toClipId = '',
+    String sourceStartNs = '',
+    String sourceEndNs = '',
   }) {
     throw StateError('unused');
   }

@@ -29,6 +29,10 @@ class TimelineClip {
     required this.description,
     required this.showsToolBadge,
     this.labelValueId = '',
+    this.sourceStartNs = '',
+    this.sourceEndNs = '',
+    this.assetDurationNs = '',
+    this.assetStartTimeNs = '',
   });
 
   final String clipId;
@@ -42,6 +46,10 @@ class TimelineClip {
   final String description;
   final bool showsToolBadge;
   final String labelValueId;
+  final String sourceStartNs;
+  final String sourceEndNs;
+  final String assetDurationNs;
+  final String assetStartTimeNs;
 
   String get startNanoseconds => startNs;
   String get endNanoseconds => endNs;

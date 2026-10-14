@@ -19,7 +19,6 @@ class MultimodalTimelineBoard extends StatefulWidget {
 }
 
 class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
-  static const double _OBJECT_ROW_HEIGHT = 28;
   static const double _RULER_HEIGHT = 22;
   final ScrollController _scrollController = ScrollController();
   final ScrollController _objectScrollController = ScrollController();
@@ -211,10 +210,17 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     final rowIndex = rows.indexWhere(
       (row) => row.clips.any((clip) => clip.clipId == viewModel.selectedClipId),
     );
+    if (rowIndex < 0) {
+      return;
+    }
+    var rowTop = 0.0;
+    for (var index = 0; index < rowIndex; index++) {
+      rowTop += rows[index].height;
+    }
     final position = _objectScrollController.position;
-    final offset = revealOffsetForObjectRow(
-      rowIndex: rowIndex,
-      rowExtent: _OBJECT_ROW_HEIGHT,
+    final offset = revealOffsetForPlacedRow(
+      rowTop: rowTop,
+      rowExtent: rows[rowIndex].height,
       pixels: position.pixels,
       viewport: position.viewportDimension,
       maxScrollExtent: position.maxScrollExtent,
@@ -668,7 +674,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     String identity = '',
   }) {
     return Container(
-      height: _OBJECT_ROW_HEIGHT,
+      height: row.height,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       color: isSelected ? MultimodalStudioPalette.GRAPE_100 : null,
       child: Row(
@@ -901,7 +907,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       onTapDown: (details) =>
           viewModel.didSeekToSeconds(_secondsAt(details.localPosition.dx)),
       child: Container(
-        height: 28,
+        height: row.height,
         width: width,
         color: MultimodalStudioPalette.SAND_0,
         child: Stack(
@@ -955,7 +961,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     }
     return Positioned(
       left: left,
-      top: 4,
+      top: 4 + clip.laneIndex * TIMELINE_TRACK_LANE_HEIGHT,
       width: width,
       height: 20,
       child: GestureDetector(
@@ -983,7 +989,9 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 6),
                 child: Text(
-                  clip.text,
+                  clip.rateLabel.isEmpty
+                      ? clip.text
+                      : '${clip.text} ${clip.rateLabel}',
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     color: clip.foreground,
@@ -1120,7 +1128,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       for (final fraction in fractions)
         Positioned(
           left: left + width * fraction,
-          top: 8,
+          top: 8 + clip.laneIndex * TIMELINE_TRACK_LANE_HEIGHT,
           child: GestureDetector(
             onTap: () => viewModel.didSeekToSeconds(
               clip.startSeconds +

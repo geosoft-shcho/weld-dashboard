@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../../../../domain/clip_file_position.dart';
 import '../../../../domain/entities/job_timeline.dart';
 import '../../../../domain/timeline_time.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_studio_palette.dart';
+
+const double TIMELINE_TRACK_LANE_HEIGHT = 28;
 
 class TimelineBoardRow {
   const TimelineBoardRow({
@@ -12,6 +15,7 @@ class TimelineBoardRow {
     required this.labelColor,
     required this.showsAiBadge,
     required this.clips,
+    required this.laneCount,
   });
 
   final String laneKey;
@@ -19,6 +23,9 @@ class TimelineBoardRow {
   final Color labelColor;
   final bool showsAiBadge;
   final List<TimelineBoardClip> clips;
+  final int laneCount;
+
+  double get height => TIMELINE_TRACK_LANE_HEIGHT * laneCount;
 }
 
 class TimelineBoardClip {
@@ -33,6 +40,8 @@ class TimelineBoardClip {
     required this.border,
     this.showsPoseDots = false,
     this.hasLabel = false,
+    this.laneIndex = 0,
+    this.rateLabel = '',
   });
 
   final String clipId;
@@ -45,6 +54,8 @@ class TimelineBoardClip {
   final Color border;
   final bool showsPoseDots;
   final bool hasLabel;
+  final int laneIndex;
+  final String rateLabel;
 }
 
 /// 클립 또는 막대 식별자
@@ -74,6 +85,89 @@ double? revealOffsetForObjectRow({
   return top.clamp(0.0, maxScrollExtent);
 }
 
+double? revealOffsetForPlacedRow({
+  required double rowTop,
+  required double rowExtent,
+  required double pixels,
+  required double viewport,
+  required double maxScrollExtent,
+}) {
+  if (rowTop < 0 || rowExtent <= 0 || viewport <= 0) {
+    return null;
+  }
+  final bottom = rowTop + rowExtent;
+  if (rowTop >= pixels && bottom <= pixels + viewport) {
+    return null;
+  }
+  return rowTop.clamp(0.0, maxScrollExtent);
+}
+
+/// 같은 트랙에서 겹친 클립의 줄. 맞닿는 `[start, end)`는 겹침이 아니다.
+Map<String, int> assignClipLanes(List<TimelineClip> clips) {
+  final ordered = [...clips]..sort(_compareClipOrder);
+  final laneEndNs = <BigInt>[];
+  final lanes = <String, int>{};
+  for (final clip in ordered) {
+    final start = BigInt.tryParse(clip.startNs) ?? BigInt.zero;
+    final end = BigInt.tryParse(clip.endNs) ?? start;
+    var lane = -1;
+    for (var index = 0; index < laneEndNs.length; index++) {
+      if (laneEndNs[index] <= start) {
+        lane = index;
+        break;
+      }
+    }
+    if (lane < 0) {
+      lane = laneEndNs.length;
+      laneEndNs.add(end);
+    } else {
+      laneEndNs[lane] = end;
+    }
+    lanes[clip.clipId] = lane;
+  }
+  return lanes;
+}
+
+int _compareClipOrder(TimelineClip left, TimelineClip right) {
+  final start = (BigInt.tryParse(left.startNs) ?? BigInt.zero).compareTo(
+    BigInt.tryParse(right.startNs) ?? BigInt.zero,
+  );
+  if (start != 0) {
+    return start;
+  }
+  final leftId = BigInt.tryParse(left.clipId);
+  final rightId = BigInt.tryParse(right.clipId);
+  if (leftId != null && rightId != null && leftId != rightId) {
+    return leftId.compareTo(rightId);
+  }
+  return left.clipId.compareTo(right.clipId);
+}
+
+int _laneCount(Map<String, int> lanes) {
+  var count = 1;
+  for (final lane in lanes.values) {
+    if (lane + 1 > count) {
+      count = lane + 1;
+    }
+  }
+  return count;
+}
+
+String _rateLabel(TimelineClip clip) {
+  final position = clipFilePositionAt(
+    clip: ClipPlaybackInput(
+      timelineStartNs: clip.startNs,
+      timelineEndNs: clip.endNs,
+      sourceStartNs: clip.sourceStartNs,
+      sourceEndNs: clip.sourceEndNs,
+      assetDurationNs: clip.assetDurationNs,
+      assetStartTimeNs: clip.assetStartTimeNs,
+    ),
+    playheadSeconds: secondsFromNanoseconds(clip.startNs),
+  );
+  return position?.rateLabel ?? '';
+}
+
 /// 레인 생성
 List<TimelineBoardRow> buildTimelineBoardRows(
   VideoMultimodalViewModel viewModel,
@@ -84,12 +178,14 @@ List<TimelineBoardRow> buildTimelineBoardRows(
       continue;
     }
     final clips = track.clips;
+    final lanes = assignClipLanes(clips);
     rows.add(
       TimelineBoardRow(
         laneKey: track.trackId,
         label: track.name.trim().isEmpty ? '트랙' : track.name.trim(),
         labelColor: MultimodalStudioPalette.SAND_700,
         showsAiBadge: clips.any((clip) => clip.showsToolMark),
+        laneCount: _laneCount(lanes),
         clips: [
           for (final clip in clips)
             TimelineBoardClip(
@@ -109,6 +205,8 @@ List<TimelineBoardRow> buildTimelineBoardRows(
                   : MultimodalStudioPalette.PLUM_500,
               showsPoseDots: clip.kind == TimelineClipKind.pose,
               hasLabel: clip.labelValueId.isNotEmpty,
+              laneIndex: lanes[clip.clipId] ?? 0,
+              rateLabel: _rateLabel(clip),
             ),
         ],
       ),

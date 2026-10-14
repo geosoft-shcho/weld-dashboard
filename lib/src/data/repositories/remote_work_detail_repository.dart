@@ -69,6 +69,7 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
           fileName: asset.fileName,
           note: '',
           content: _mediaTag.resolveContentUrl(asset.contentUrl),
+          durationNs: asset.hasDurationNs() ? asset.durationNs.toString() : '',
         ),
       );
     }

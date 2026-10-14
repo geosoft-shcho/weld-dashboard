@@ -502,6 +502,8 @@ class _IdleTimeline implements JobTimelineRepository {
     String description = '',
     String fromClipId = '',
     String toClipId = '',
+    String sourceStartNs = '',
+    String sourceEndNs = '',
   }) async {}
 
   @override

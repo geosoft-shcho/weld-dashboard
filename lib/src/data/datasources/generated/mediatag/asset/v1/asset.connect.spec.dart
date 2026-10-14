@@ -34,6 +34,7 @@ abstract final class AssetService {
     mediatagassetv1asset.GetAssetResponse.new,
   );
 
+  /// 행과 저장된 파일을 실제로 지운다(되돌릴 수 없음).
   /// 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
   static const deleteAsset = connect.Spec(
     '/$name/DeleteAsset',

@@ -166,9 +166,7 @@ void main() {
 
   test('a relation clip keeps its kind and has no playback url', () {
     final response = compose_pb.GetTimelineResponse(
-      tracks: [
-        compose_pb.Track(trackId: Int64(3), name: '관계', order: 1),
-      ],
+      tracks: [compose_pb.Track(trackId: Int64(3), name: '관계', order: 1)],
       clips: [
         compose_pb.Clip(
           clipId: Int64(12),
@@ -193,5 +191,44 @@ void main() {
     expect(clip.kind, TimelineClipKind.relation);
     expect(clip.playbackUrl, isEmpty);
     expect(clip.assetId, isEmpty);
+  });
+
+  test('keeps the source interval and the read-only file times', () {
+    final response = compose_pb.GetTimelineResponse(
+      tracks: [compose_pb.Track(trackId: Int64(1), name: '영상', order: 1)],
+      clips: [
+        compose_pb.Clip(
+          clipId: Int64(10),
+          trackId: Int64(1),
+          kind: compose_pb.ClipKind.CLIP_KIND_VIDEO,
+          timelineStartNs: Int64.ZERO,
+          timelineEndNs: Int64(40000000000),
+          source: compose_pb.ClipSource(
+            assetId: Int64(20),
+            startNs: Int64.ZERO,
+            endNs: Int64(40000000000),
+            assetDurationNs: Int64(40000000000),
+            assetStartTimeNs: Int64(428559000000),
+          ),
+        ),
+      ],
+      assets: [
+        asset_pb.Asset(
+          assetId: Int64(20),
+          fileName: 'depth.mp4',
+          contentUrl: '/files/depth.mp4',
+        ),
+      ],
+    );
+
+    final clip = jobTimelineFromResponse(
+      response,
+      resolveContentUrl: (contentUrl) => contentUrl,
+    ).tracks.single.clips.single;
+
+    expect(clip.sourceStartNs, '0');
+    expect(clip.sourceEndNs, '40000000000');
+    expect(clip.assetDurationNs, '40000000000');
+    expect(clip.assetStartTimeNs, '428559000000');
   });
 }

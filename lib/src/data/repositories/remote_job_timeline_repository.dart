@@ -132,6 +132,8 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
     String description = '',
     String fromClipId = '',
     String toClipId = '',
+    String sourceStartNs = '',
+    String sourceEndNs = '',
   }) {
     return _write(
       emptyMessage: '클립을 만들지 못했습니다.',
@@ -146,6 +148,8 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
           description: description,
           fromClipId: fromClipId,
           toClipId: toClipId,
+          sourceStartNs: sourceStartNs,
+          sourceEndNs: sourceEndNs,
         ),
       ),
     );
@@ -414,6 +418,18 @@ TimelineClip? _clipFrom(
     playbackUrl: contentUrl.isEmpty ? '' : resolveContentUrl(contentUrl),
     description: clip.description,
     labelValueId: idText(clip.labelValueId),
+    sourceStartNs: clip.hasSource() && clip.source.hasStartNs()
+        ? clip.source.startNs.toString()
+        : '',
+    sourceEndNs: clip.hasSource() && clip.source.hasEndNs()
+        ? clip.source.endNs.toString()
+        : '',
+    assetDurationNs: clip.hasSource() && clip.source.hasAssetDurationNs()
+        ? clip.source.assetDurationNs.toString()
+        : '',
+    assetStartTimeNs: clip.hasSource() && clip.source.hasAssetStartTimeNs()
+        ? clip.source.assetStartTimeNs.toString()
+        : '',
     showsToolBadge:
         provenance != null &&
         (idText(provenance.runId).isNotEmpty ||

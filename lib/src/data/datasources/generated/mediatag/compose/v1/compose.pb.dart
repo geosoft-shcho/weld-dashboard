@@ -477,7 +477,7 @@ class Clip extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   void clearKind() => $_clearField(3);
 
-  /// 타임라인 위 구간 [start, end), 필수. 같은 트랙의 Clip끼리 겹치면 FAILED_PRECONDITION
+  /// 타임라인 위 구간 [start, end), 필수. 같은 트랙의 Clip끼리 겹쳐도 된다(화면이 줄을 나눠 그린다). 자동 배치만 겹치지 않게 놓는다
   @$pb.TagNumber(4)
   $fixnum.Int64 get timelineStartNs => $_getI64(3);
   @$pb.TagNumber(4)
@@ -661,12 +661,16 @@ class ClipSource extends $pb.GeneratedMessage {
     $fixnum.Int64? startNs,
     $fixnum.Int64? endNs,
     $1.Struct? locator,
+    $fixnum.Int64? assetDurationNs,
+    $fixnum.Int64? assetStartTimeNs,
   }) {
     final result = create();
     if (assetId != null) result.assetId = assetId;
     if (startNs != null) result.startNs = startNs;
     if (endNs != null) result.endNs = endNs;
     if (locator != null) result.locator = locator;
+    if (assetDurationNs != null) result.assetDurationNs = assetDurationNs;
+    if (assetStartTimeNs != null) result.assetStartTimeNs = assetStartTimeNs;
     return result;
   }
 
@@ -689,6 +693,8 @@ class ClipSource extends $pb.GeneratedMessage {
     ..aInt64(3, _omitFieldNames ? '' : 'endNs')
     ..aOM<$1.Struct>(4, _omitFieldNames ? '' : 'locator',
         subBuilder: $1.Struct.create)
+    ..aInt64(5, _omitFieldNames ? '' : 'assetDurationNs')
+    ..aInt64(6, _omitFieldNames ? '' : 'assetStartTimeNs')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -719,6 +725,9 @@ class ClipSource extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearAssetId() => $_clearField(1);
 
+  /// Asset 자신의 시간축(첫 프레임·첫 샘플이 0). 0 ≤ start_ns ≤ end_ns ≤ Asset.duration_ns여야 한다 — 어기면 InvalidArgument.
+  /// 끝이 반올림만큼(100ms 이내) 넘으면 서버가 Asset 길이로 맞춘다. 길이를 모르는 Asset은 끝을 검사하지 않는다.
+  /// 타임라인 구간과 길이가 달라도 된다 — 다르면 화면이 소스 구간을 타임라인 구간에 맞춰 보인다(배속 = 소스 길이 ÷ 클립 길이).
   @$pb.TagNumber(2)
   $fixnum.Int64 get startNs => $_getI64(1);
   @$pb.TagNumber(2)
@@ -754,6 +763,29 @@ class ClipSource extends $pb.GeneratedMessage {
   void clearLocator() => $_clearField(4);
   @$pb.TagNumber(4)
   $1.Struct ensureLocator() => $_ensure(3);
+
+  /// 아래 둘은 읽기 전용 — 서버가 가리키는 Asset에서 채운다(저장하지 않고, 요청에 넣어도 무시한다). Asset을 따로 찾지 않고도
+  /// 재생 위치와 자를 수 있는 한계를 계산할 수 있게 한다.
+  /// asset_duration_ns: 소스 전체 길이(Asset.duration_ns). start_ns·end_ns의 한계다. 시간이 없는 소스(이미지·PDF 등)는 비어 있다.
+  /// asset_start_time_ns: 파일에 적힌 첫 시각(Asset.properties.start_time_ns). 영상·음성에만 있다. 브라우저에서는
+  ///   video.currentTime = (asset_start_time_ns + Asset 축 위치) ÷ 1e9로 찾아간다. 비어 있으면 0으로 본다.
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get assetDurationNs => $_getI64(4);
+  @$pb.TagNumber(5)
+  set assetDurationNs($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasAssetDurationNs() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearAssetDurationNs() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get assetStartTimeNs => $_getI64(5);
+  @$pb.TagNumber(6)
+  set assetStartTimeNs($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasAssetStartTimeNs() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearAssetStartTimeNs() => $_clearField(6);
 }
 
 class ClipProvenance extends $pb.GeneratedMessage {
@@ -3055,7 +3087,7 @@ class MediaComposeServiceApi {
       _client.invoke<ChangeTimelineStatusResponse>(ctx, 'MediaComposeService',
           'ChangeTimelineStatus', request, ChangeTimelineStatusResponse());
 
-  /// 편집 초기화: 타임라인과 트랙·클립을 지운다(작업·첨부는 그대로).
+  /// 편집 초기화: 타임라인과 트랙·클립의 행을 실제로 지운다(되돌릴 수 없음. 작업·첨부는 그대로).
   $async.Future<DeleteTimelineResponse> deleteTimeline(
           $pb.ClientContext? ctx, DeleteTimelineRequest request) =>
       _client.invoke<DeleteTimelineResponse>(ctx, 'MediaComposeService',
@@ -3071,13 +3103,13 @@ class MediaComposeServiceApi {
       _client.invoke<UpdateTrackResponse>(ctx, 'MediaComposeService',
           'UpdateTrack', request, UpdateTrackResponse());
 
-  /// 트랙의 클립도 함께 지워진다.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 트랙의 클립도 함께 지워진다.
   $async.Future<DeleteTrackResponse> deleteTrack(
           $pb.ClientContext? ctx, DeleteTrackRequest request) =>
       _client.invoke<DeleteTrackResponse>(ctx, 'MediaComposeService',
           'DeleteTrack', request, DeleteTrackResponse());
 
-  /// 같은 트랙 클립과 구간이 겹치면 FailedPrecondition. source.asset_id가 이 작업에
+  /// 같은 트랙의 클립과 구간이 겹쳐도 된다. source 구간이 Asset 길이를 넘으면 InvalidArgument. source.asset_id가 이 작업에
   /// 첨부되지 않았으면 같은 트랜잭션에서 작업 공용으로 첨부한다.
   $async.Future<CreateClipResponse> createClip(
           $pb.ClientContext? ctx, CreateClipRequest request) =>
@@ -3095,6 +3127,8 @@ class MediaComposeServiceApi {
           $pb.ClientContext? ctx, UpdateClipRequest request) =>
       _client.invoke<UpdateClipResponse>(ctx, 'MediaComposeService',
           'UpdateClip', request, UpdateClipResponse());
+
+  /// 행을 실제로 지운다(되돌릴 수 없음).
   $async.Future<DeleteClipResponse> deleteClip(
           $pb.ClientContext? ctx, DeleteClipRequest request) =>
       _client.invoke<DeleteClipResponse>(ctx, 'MediaComposeService',
