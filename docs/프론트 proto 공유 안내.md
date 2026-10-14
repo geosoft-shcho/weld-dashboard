@@ -4,6 +4,7 @@
 
 | 일자 | 수정자 | 수정 내용 |
 |---|---|---|
+| 2026-10-14 | geosoft-Server | 도구 쪽 변경을 모음("2026-10-14에 바뀐 것") — `ToolRun.progress_percent`·`estimated_remaining_seconds`가 welding-pose·torch-pose에서도 채워짐, `Tool.description`(한글 설명) 추가, 가짜 도구 정리와 도구 번호 변경(asset-postprocess 16→9, Qwen3-VL-32B 13→10). 2026-10-14 운영 적용 |
 | 2026-10-13 | geosoft-Server | 타임라인 편집·재생 쪽 변경을 모음("2026-10-13에 바뀐 것") — 같은 트랙 겹침 허용, 소스 구간 검사, `ClipSource.asset_duration_ns`·`asset_start_time_ns`, `Asset.properties.start_time_ns`, 포즈 검출이 없으면 클립 없음. 화면 쪽 기준은 `타임라인 그리기와 재생 안내.md`로 따로 정리해 함께 전달한다(2026-10-13 운영 적용) |
 | 2026-10-13 | geosoft-Server | `GetClip`에 `include_target` 추가 — 도구가 만든 클립의 실행 대상(`target_clip`·`target_asset`)을 한 번에 받는다(2026-10-13 운영 적용, 추가만) |
 | 2026-10-12 | geosoft-Server | `GetClip` 추가(클립 하나를 번호로, `include_assets`면 가리키는 Asset도), `ClipProvenance.target_kind`·`target_id` 추가 — 도구가 만든 클립만 읽어도 무엇을 대상으로 돌린 실행인지 알 수 있게(2026-10-12 운영 적용, 추가만) |
@@ -44,6 +45,18 @@
 
 타임라인에 클립을 놓고, 그리고, 재생하는 방법은 `타임라인 그리기와 재생 안내.md`에 따로 정리했다(함께 전달).
 그 문서는 화면 구성(§9) → 한 작업으로 끝까지 따라가는 예시(§8) → 규칙(§1~§7, §10) 순으로 읽으면 빠르다.
+
+## 2026-10-14에 바뀐 것
+
+모두 2026-10-14 14:20에 운영 서버와 운영 DB에 적용했다. 칸은 추가만 있고 바뀌거나 없어진 것은 없다. **도구 번호는 바뀌었다.**
+
+| 무엇이 | 어떻게 | 화면이 할 일 |
+|---|---|---|
+| 실행 진행률 | `ToolRun.progress_percent`(0~100)·`estimated_remaining_seconds`(남은 초)가 welding-pose·torch-pose 실행에서도 채워진다(전에는 늘 0). 서버가 2초마다 도구에 처리 프레임 수를 물어 갱신한다 | 실행 중(`RUNNING`)일 때 진행 막대와 남은 시간을 보여 준다. 남은 시간 0은 "알 수 없음" |
+| `GetRun(wait_for_terminal)` | 그대로. 끝나거나 상한(기본 30초)이 될 때까지 붙잡고 있다가 응답한다 | 진행률을 더 자주 보이려면 `wait_for_terminal=false`로 몇 초마다 부른다. 서버 재시작 때 대기 연결이 끊길 수 있으니(502 등) 1~2초 뒤 다시 부른다 |
+| `Tool.description` | 새 칸(12). 무엇을 하는 도구인지 한글 설명. `CreateTool`·`UpdateTool`(`update_mask`에 `description`)로 고칠 수 있다 | 도구 목록·실행 화면에서 `name` 옆이나 아래에 보여 준다 |
+| 도구 번호 | 개발용 가짜 도구 4개(구간 임베딩·Pose Bridge·용접선 검출·게이트웨이 STT)를 지우고 번호를 당겼다. **asset-postprocess 16 → 9, Qwen3-VL-32B 13 → 10**. 1~8은 그대로 | 도구 번호를 코드에 적어 두었다면 바꾼다. 목록은 `ListTools(include_disabled=true)`로 받는다 |
+| 포즈 실행 시간 | 그대로. 클립을 대상으로 돌려도 도구에는 영상 파일 전체를 보낸다(결과를 놓을 때만 클립 구간을 쓴다) | 앞부분이 잘린 클립이면 클립 길이보다 오래 걸릴 수 있다 |
 
 ## 2026-10-13에 바뀐 것
 
