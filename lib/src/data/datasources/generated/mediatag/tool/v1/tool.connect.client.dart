@@ -64,7 +64,7 @@ extension type ToolServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 실행 이력이 있으면 FailedPrecondition — 대신 enabled=false로 끈다.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 실행 이력이 있으면 FailedPrecondition — 대신 enabled=false로 끈다.
   Future<mediatagtoolv1tool.DeleteToolResponse> deleteTool(
     mediatagtoolv1tool.DeleteToolRequest input, {
     connect.Headers? headers,

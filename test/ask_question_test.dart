@@ -572,7 +572,9 @@ class _IdleLabelRepository implements LabelRepository {
 
 class _IdleToolRunRepository implements ToolRunRepository {
   @override
-  Future<List<InferenceTool>> listEnabledTools() async => const [];
+  Future<List<InferenceTool>> listEnabledTools({
+    bool includeDisabled = false,
+  }) async => const [];
 
   @override
   Future<List<ToolRunSnapshot>> listJobRuns({required String jobId}) async {

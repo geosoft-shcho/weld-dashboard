@@ -13,14 +13,17 @@ class RemoteToolRunRepository implements ToolRunRepository {
   final MediaTagDataSource _mediaTag;
 
   @override
-  Future<List<InferenceTool>> listEnabledTools() {
+  Future<List<InferenceTool>> listEnabledTools({bool includeDisabled = false}) {
     return _call(
       emptyMessage: '도구 목록을 불러오지 못했습니다.',
       call: () async {
         final response = await _mediaTag.toolService.listTools(
-          tool_pb.ListToolsRequest(),
+          tool_pb.ListToolsRequest(includeDisabled: includeDisabled),
         );
-        return enabledInferenceTools(response.tools);
+        return enabledInferenceTools(
+          response.tools,
+          onDemandOnly: !includeDisabled,
+        );
       },
     );
   }

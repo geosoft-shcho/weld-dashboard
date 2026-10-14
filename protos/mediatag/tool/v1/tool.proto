@@ -12,6 +12,8 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-14  geosoft-Server: Tool.description — 도구가 무엇을 하는지 사람이 읽는 설명(한글)
+//   2026-10-13  geosoft-Server: Delete* 주석에 삭제 방식(행을 실제로 지움) 명시 — 삭제는 Delete 하나, 방식은 주석에
 //   2026-10-08  geosoft-Server: ListTools는 켜진 도구만(include_disabled로 전부), UpdateTool은 update_mask에 든 칸만 고침
 //   2026-10-07  geosoft-Server: tool_id·run_id·output_asset_ids를 숫자(int64)로. 대상은 target_id(글자) 대신 RunTarget(job_id·asset_id·clip_id 중 하나)
 //   2026-09-29  geosoft-Server: tacit-tag tacittag.inference.v2(common·model_registry·
@@ -46,7 +48,7 @@ service ToolService {
   // 고칠 수 있는 칸: name, endpoint, remote_model_name, tool_version, pattern, payload_kind, supported_input_kinds, unit,
   // dispatch, enabled.
   rpc UpdateTool(UpdateToolRequest) returns (UpdateToolResponse);
-  // 실행 이력이 있으면 FailedPrecondition — 대신 enabled=false로 끈다.
+  // 행을 실제로 지운다(되돌릴 수 없음). 실행 이력이 있으면 FailedPrecondition — 대신 enabled=false로 끈다.
   rpc DeleteTool(DeleteToolRequest) returns (DeleteToolResponse);
 
   // 도구 하나를 대상 하나에 돌려 달라고 요청한다. 실행 한 건을 만들어 대기열에 넣고 바로 돌려준다(status = QUEUED) —
@@ -109,6 +111,7 @@ message Tool {
   ToolUnit unit = 9;
   ToolDispatch dispatch = 10;
   bool enabled = 11;
+  string description = 12;      // 사람이 읽는 설명(한글). 무엇을 하는 도구인지 화면에 보여 준다
 }
 
 message ToolRun {

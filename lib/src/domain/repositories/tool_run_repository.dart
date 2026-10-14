@@ -1,7 +1,7 @@
 import '../entities/tool_run.dart';
 
 abstract class ToolRunRepository {
-  Future<List<InferenceTool>> listEnabledTools();
+  Future<List<InferenceTool>> listEnabledTools({bool includeDisabled = false});
 
   Future<List<ToolRunSnapshot>> listJobRuns({required String jobId});
 

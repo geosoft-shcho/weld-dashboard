@@ -6,8 +6,8 @@ class ToolRunUseCase {
 
   final ToolRunRepository _repository;
 
-  Future<List<InferenceTool>> listEnabledTools() {
-    return _repository.listEnabledTools();
+  Future<List<InferenceTool>> listEnabledTools({bool includeDisabled = false}) {
+    return _repository.listEnabledTools(includeDisabled: includeDisabled);
   }
 
   Future<List<ToolRunSnapshot>> listJobRuns({required String jobId}) {

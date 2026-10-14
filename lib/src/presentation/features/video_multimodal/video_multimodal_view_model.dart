@@ -161,6 +161,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required this._askQuestionUseCase,
     required this._loadJobProjectIdUseCase,
     required this.jobId,
+    this.toolRunPoll = const Duration(seconds: 2),
   });
 
   static const double MIN_TIMELINE_HEIGHT = 320;
@@ -192,6 +193,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final AskQuestionUseCase _askQuestionUseCase;
   final LoadJobProjectIdUseCase _loadJobProjectIdUseCase;
   final String jobId;
+  final Duration toolRunPoll;
 
   double _playheadSeconds = 0;
   int _seekToken = 0;
@@ -239,6 +241,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   double _inferenceOffsetY = 24;
   String _inferenceModelName = '';
   String _inferenceMessage = '';
+  double _inferenceProgressPercent = 0;
+  int _inferenceRemainingSeconds = 0;
   String _activeRunId = '';
   int _toolRunEpoch = 0;
   bool _isClosed = false;
@@ -598,6 +602,24 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   double get inferenceOffsetY => _inferenceOffsetY;
   String get inferenceModelName => _inferenceModelName;
   String get inferenceMessage => _inferenceMessage;
+  double get inferenceProgressValue {
+    final ratio = _inferenceProgressPercent / 100;
+    if (ratio < 0) {
+      return 0;
+    }
+    if (ratio > 1) {
+      return 1;
+    }
+    return ratio;
+  }
+
+  String get inferenceRemainingLabel {
+    if (_inferenceRemainingSeconds <= 0) {
+      return '알 수 없음';
+    }
+    return '남은 시간 $_inferenceRemainingSeconds초';
+  }
+
   bool get canCancelInference =>
       _activeRunId.isNotEmpty &&
       (_inferencePhase == InferencePanelPhase.queued ||
@@ -1453,13 +1475,22 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   Future<void> didStartInference({
     required String toolId,
     required String toolName,
+    bool isSpeechToText = false,
   }) async {
     final epoch = ++_toolRunEpoch;
     _activeRunId = '';
     _inferenceModelName = toolName;
     _inferenceMessage = '';
-    _inferencePhase = InferencePanelPhase.queued;
+    _inferenceProgressPercent = 0;
+    _inferenceRemainingSeconds = 0;
     _isInferenceMinimized = false;
+    if (isSpeechToText && _isDepthVideo(_selectedTargetFileName())) {
+      _inferencePhase = InferencePanelPhase.failed;
+      _inferenceMessage = '깊이 영상에는 소리가 없어 STT를 실행할 수 없습니다.';
+      notifyListeners();
+      return;
+    }
+    _inferencePhase = InferencePanelPhase.queued;
     notifyListeners();
     try {
       final run = await _toolRunUseCase.start(
@@ -2412,7 +2443,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     }
     var toolName = '도구 실행';
     try {
-      final tools = await _toolRunUseCase.listEnabledTools();
+      final tools = await _toolRunUseCase.listEnabledTools(
+        includeDisabled: true,
+      );
       for (final tool in tools) {
         if (tool.toolId == active.toolId && tool.name.isNotEmpty) {
           toolName = tool.name;
@@ -2433,6 +2466,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   void _rememberOpenRun(ToolRunSnapshot run) {
     _activeRunId = run.runId;
     _inferenceMessage = '';
+    _inferenceProgressPercent = run.progressPercent;
+    _inferenceRemainingSeconds = run.estimatedRemainingSeconds;
     _inferencePhase = run.status == ToolRunStatus.running
         ? InferencePanelPhase.running
         : InferencePanelPhase.queued;
@@ -2440,6 +2475,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   Future<void> _followToolRun(int epoch) async {
+    var didRetry = false;
     while (epoch == _toolRunEpoch && !_isClosed) {
       final runId = _activeRunId;
       if (runId.isEmpty) {
@@ -2447,11 +2483,13 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       }
       try {
         final run = await _toolRunUseCase.getRun(runId: runId);
+        didRetry = false;
         if (epoch != _toolRunEpoch || _isClosed) {
           return;
         }
         if (run.isInProgress) {
           _rememberOpenRun(run);
+          await Future<void>.delayed(toolRunPoll);
           continue;
         }
         await _finishToolRun(run, epoch);
@@ -2460,12 +2498,37 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         if (epoch != _toolRunEpoch || _isClosed) {
           return;
         }
+        if (!didRetry) {
+          didRetry = true;
+          await Future<void>.delayed(toolRunPoll);
+          continue;
+        }
         _inferencePhase = InferencePanelPhase.failed;
         _inferenceMessage = error.message;
         notifyListeners();
         return;
       }
     }
+  }
+
+  String _selectedTargetFileName() {
+    if (isSelectedServerClip) {
+      return _timelineClip(_selectedClipId)?.fileName ?? '';
+    }
+    for (final attachment in _attachments) {
+      if (attachment.attachmentId == _selectedAttachmentId) {
+        return attachment.fileName;
+      }
+    }
+    return '';
+  }
+
+  bool _isDepthVideo(String fileName) {
+    final parts = fileName.trim().toLowerCase().split('/');
+    if (parts.isEmpty) {
+      return false;
+    }
+    return parts.last.startsWith('depth_');
   }
 
   Future<void> _finishToolRun(ToolRunSnapshot run, int epoch) async {

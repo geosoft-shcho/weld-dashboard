@@ -141,6 +141,7 @@ const Tool$json = {
       '10': 'dispatch'
     },
     {'1': 'enabled', '3': 11, '4': 1, '5': 8, '10': 'enabled'},
+    {'1': 'description', '3': 12, '4': 1, '5': 9, '10': 'description'},
   ],
 };
 
@@ -154,7 +155,8 @@ final $typed_data.Uint8List toolDescriptor = $convert.base64Decode(
     'ADKA4yHC5tZWRpYXRhZy5hc3NldC52MS5Bc3NldEtpbmRSE3N1cHBvcnRlZElucHV0S2luZHMS'
     'LgoEdW5pdBgJIAEoDjIaLm1lZGlhdGFnLnRvb2wudjEuVG9vbFVuaXRSBHVuaXQSOgoIZGlzcG'
     'F0Y2gYCiABKA4yHi5tZWRpYXRhZy50b29sLnYxLlRvb2xEaXNwYXRjaFIIZGlzcGF0Y2gSGAoH'
-    'ZW5hYmxlZBgLIAEoCFIHZW5hYmxlZA==');
+    'ZW5hYmxlZBgLIAEoCFIHZW5hYmxlZBIgCgtkZXNjcmlwdGlvbhgMIAEoCVILZGVzY3JpcHRpb2'
+    '4=');
 
 @$core.Deprecated('Use toolRunDescriptor instead')
 const ToolRun$json = {

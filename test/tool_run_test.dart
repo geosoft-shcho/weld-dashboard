@@ -1,7 +1,8 @@
 import 'dart:async';
 
 import 'package:fixnum/fixnum.dart';
-import 'package:flutter/material.dart';
+import 'package:fluent_ui/fluent_ui.dart' as fluent;
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/data/datasources/generated/mediatag/asset/v1/asset.pbenum.dart';
 import 'package:weld_dashboard/src/data/datasources/generated/mediatag/tool/v1/tool.pb.dart';
@@ -74,7 +75,7 @@ void main() {
     expect(listed.target.jobId.toString(), '128');
 
     final read = buildGetRunRequest('9');
-    expect(read.waitForTerminal, isTrue);
+    expect(read.waitForTerminal, isFalse);
     expect(read.runId.toString(), '9');
 
     expect(
@@ -89,11 +90,29 @@ void main() {
 
   test('enabled tools omit disabled rows and queued is in progress', () {
     final tools = enabledInferenceTools([
-      Tool(toolId: Int64(7), name: 'pose', enabled: true),
+      Tool(
+        toolId: Int64(7),
+        name: 'pose',
+        enabled: true,
+        dispatch: ToolDispatch.TOOL_DISPATCH_ON_DEMAND,
+      ),
+      Tool(
+        toolId: Int64(9),
+        name: 'asset-postprocess',
+        toolVersion: '1',
+        enabled: true,
+        dispatch: ToolDispatch.TOOL_DISPATCH_MANDATORY,
+        description:
+            '업로드 후처리. 올린 파일의 속성·길이를 채우고 성적서 처리·센서/포즈 표준화 뒤 타임라인에 놓는다(mediatag 내장)',
+      ),
       Tool(toolId: Int64(8), name: 'off', enabled: false),
       Tool(toolId: Int64.ZERO, name: 'missing', enabled: true),
     ]);
-    expect(tools.map((tool) => tool.name), ['pose']);
+    expect(tools.map((tool) => tool.name), ['pose', 'asset-postprocess']);
+    expect(
+      tools.last.description,
+      '업로드 후처리. 올린 파일의 속성·길이를 채우고 성적서 처리·센서/포즈 표준화 뒤 타임라인에 놓는다(mediatag 내장)',
+    );
 
     final stt = enabledInferenceTools([
       Tool(
@@ -107,9 +126,12 @@ void main() {
         supportedInputKinds: [AssetKind.ASSET_KIND_VIDEO],
         unit: ToolUnit.TOOL_UNIT_SECOND,
         dispatch: ToolDispatch.TOOL_DISPATCH_ON_DEMAND,
+        description: '음성에서 대사를 글자로 옮긴다',
         enabled: true,
       ),
     ]);
+    expect(stt.single.description, '음성에서 대사를 글자로 옮긴다');
+    expect(stt.single.isSpeechToText, isTrue);
     expect(
       stt.single.summary,
       'id 1 · endpoint http://192.168.100.3:38901\n'
@@ -126,6 +148,18 @@ void main() {
     );
     expect(queued.status, ToolRunStatus.queued);
     expect(queued.isInProgress, isTrue);
+
+    final running = toolRunSnapshotFrom(
+      ToolRun(
+        runId: Int64(4),
+        toolId: Int64(7),
+        status: RunStatus.RUN_STATUS_RUNNING,
+        progressPercent: 40,
+        estimatedRemainingSeconds: 0,
+      ),
+    );
+    expect(running.progressPercent, 40);
+    expect(running.estimatedRemainingSeconds, 0);
   });
 
   test('start prefers a clip, then a file, then the job', () async {
@@ -158,10 +192,10 @@ void main() {
     addTearDown(viewModel.dispose);
 
     await tester.pumpWidget(
-      MaterialApp(
+      fluent.FluentApp(
         home: Builder(
           builder: (context) {
-            return TextButton(
+            return fluent.Button(
               onPressed: () =>
                   showMultimodalInferencePicker(context, viewModel),
               child: const Text('열기'),
@@ -175,9 +209,13 @@ void main() {
     await tester.pump();
 
     expect(find.text('pose'), findsOneWidget);
-    expect(find.text('id 7 · pattern push · input video'), findsOneWidget);
+    expect(find.text('id'), findsNothing);
+    expect(find.text('pattern'), findsNothing);
+    expect(find.text('input'), findsOneWidget);
+    expect(find.text('video'), findsOneWidget);
     expect(find.text('pose-sample'), findsNothing);
     expect(find.text('실행'), findsOneWidget);
+    await tester.pump(const Duration(milliseconds: 150));
   });
 
   testWidgets('run starts the tool chosen in the list', (tester) async {
@@ -190,10 +228,10 @@ void main() {
     addTearDown(viewModel.dispose);
 
     await tester.pumpWidget(
-      MaterialApp(
+      fluent.FluentApp(
         home: Builder(
           builder: (context) {
-            return TextButton(
+            return fluent.Button(
               onPressed: () =>
                   showMultimodalInferencePicker(context, viewModel),
               child: const Text('열기'),
@@ -206,9 +244,9 @@ void main() {
     await tester.pump();
     await tester.pump();
 
-    FilledButton runButton() {
-      return tester.widget<FilledButton>(
-        find.widgetWithText(FilledButton, '실행'),
+    fluent.FilledButton runButton() {
+      return tester.widget<fluent.FilledButton>(
+        find.widgetWithText(fluent.FilledButton, '실행'),
       );
     }
 
@@ -217,13 +255,14 @@ void main() {
     await tester.tap(find.text('bbox'));
     await tester.pump();
     expect(viewModel.inferenceModelName, isEmpty);
-    expect(find.text('추론 모델 선택'), findsOneWidget);
+    expect(find.text('추론 모델/작업 도구 선택'), findsOneWidget);
 
     await tester.tap(find.text('실행'));
     await tester.pump();
     expect(viewModel.inferenceModelName, 'bbox');
     expect(tools.startedTargetId, '128');
-    expect(find.text('추론 모델 선택'), findsNothing);
+    expect(find.text('추론 모델/작업 도구 선택'), findsNothing);
+    await tester.pump(const Duration(milliseconds: 150));
   });
 
   test('opening the page restores a queued run', () async {
@@ -275,6 +314,27 @@ void main() {
 
     expect(tools.startedKind, ToolRunTargetKind.asset);
     expect(tools.startedTargetId, '20');
+  });
+
+  test('speech to text does not start on a depth video', () async {
+    final tools = _ScriptedToolRuns();
+    final viewModel = _viewModel(
+      tools,
+      workDetail: _FileWorkDetailRepository(fileName: 'depth_front_view.mp4'),
+    );
+    addTearDown(viewModel.dispose);
+
+    await viewModel.loadAttachments();
+    viewModel.didTapBar('20');
+    await viewModel.didStartInference(
+      toolId: '1',
+      toolName: 'STT',
+      isSpeechToText: true,
+    );
+
+    expect(tools.startedTargetId, isEmpty);
+    expect(viewModel.inferencePhase, InferencePanelPhase.failed);
+    expect(viewModel.inferenceMessage, '깊이 영상에는 소리가 없어 STT를 실행할 수 없습니다.');
   });
 
   test('StartRun stays queued until GetRun reports success', () async {
@@ -396,6 +456,7 @@ VideoMultimodalViewModel _viewModel(
       workDetail ?? _EmptyWorkDetailRepository(),
     ),
     jobId: '128',
+    toolRunPoll: Duration.zero,
   );
 }
 
@@ -410,7 +471,9 @@ class _ScriptedToolRuns implements ToolRunRepository {
   int getCount = 0;
 
   @override
-  Future<List<InferenceTool>> listEnabledTools() async => tools;
+  Future<List<InferenceTool>> listEnabledTools({
+    bool includeDisabled = false,
+  }) async => tools;
 
   @override
   Future<List<ToolRunSnapshot>> listJobRuns({required String jobId}) async {
@@ -509,6 +572,10 @@ class _EmptyWorkDetailRepository implements WorkDetailRepository {
 }
 
 class _FileWorkDetailRepository implements WorkDetailRepository {
+  _FileWorkDetailRepository({this.fileName = 'take.mp4'});
+
+  final String fileName;
+
   @override
   Future<String> loadProjectId({required String jobId}) async {
     return '';
@@ -521,12 +588,12 @@ class _FileWorkDetailRepository implements WorkDetailRepository {
 
   @override
   Future<List<WorkAttachment>> listAttachments({String jobId = ''}) async {
-    return const [
+    return [
       WorkAttachment(
         attachmentId: '20',
         jobId: '128',
         fileType: WorkAttachmentType.video,
-        fileName: 'take.mp4',
+        fileName: fileName,
         note: '',
         content: '',
       ),

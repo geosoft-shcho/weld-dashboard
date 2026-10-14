@@ -102,18 +102,25 @@ class MultimodalInferencePanel extends StatelessWidget {
                               const SizedBox(height: 8),
                               Text(viewModel.inferenceMessage),
                             ],
-                            if (isBusy) ...[
+                            if (phase == InferencePanelPhase.running) ...[
+                              const SizedBox(height: 8),
+                              LinearProgressIndicator(
+                                value: viewModel.inferenceProgressValue,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(viewModel.inferenceRemainingLabel),
+                            ] else if (isBusy) ...[
                               const SizedBox(height: 8),
                               const LinearProgressIndicator(),
-                              if (viewModel.canCancelInference)
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: TextButton(
-                                    onPressed: viewModel.didCancelInference,
-                                    child: const Text('취소'),
-                                  ),
-                                ),
                             ],
+                            if (isBusy && viewModel.canCancelInference)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: viewModel.didCancelInference,
+                                  child: const Text('취소'),
+                                ),
+                              ),
                           ],
                         ),
                       ),

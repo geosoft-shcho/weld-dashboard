@@ -1,3 +1,4 @@
+import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/tool_run.dart';
@@ -284,8 +285,6 @@ class _InferencePickerDialog extends StatefulWidget {
 }
 
 class _InferencePickerDialogState extends State<_InferencePickerDialog> {
-  static const double SUMMARY_FONT_SIZE = 10;
-
   List<InferenceTool> _tools = const [];
   String _selectedToolId = '';
   bool _isLoading = true;
@@ -346,46 +345,49 @@ class _InferencePickerDialogState extends State<_InferencePickerDialog> {
     widget.viewModel.didStartInference(
       toolId: selected.toolId,
       toolName: toolName,
+      isSpeechToText: selected.isSpeechToText,
     );
     Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
+    return fluent.ContentDialog(
       title: const Text('추론 모델/작업 도구 선택'),
+      constraints: const BoxConstraints(maxWidth: 480, maxHeight: 640),
       content: SizedBox(
-        width: 420,
+        width: 440,
         child: _isLoading
             ? const SizedBox(
                 height: 80,
-                child: Center(child: CircularProgressIndicator()),
+                child: Center(child: fluent.ProgressRing()),
               )
             : ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 420),
+                constraints: const BoxConstraints(maxHeight: 360),
                 child: SingleChildScrollView(
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      if (_message.isNotEmpty) Text(_message),
+                      if (_message.isNotEmpty)
+                        fluent.InfoBar(
+                          title: Text(
+                            _message == '사용할 수 있는 도구가 없습니다.' ? '안내' : '조회 실패',
+                          ),
+                          content: Text(_message),
+                          severity: _message == '사용할 수 있는 도구가 없습니다.'
+                              ? fluent.InfoBarSeverity.info
+                              : fluent.InfoBarSeverity.error,
+                        ),
                       for (final tool in _tools)
-                        ListTile(
-                          visualDensity: VisualDensity.compact,
+                        fluent.ListTile.selectable(
                           selected: tool.toolId == _selectedToolId,
+                          selectionMode: fluent.ListTileSelectionMode.single,
                           title: Text(
                             tool.name.isEmpty ? tool.toolId : tool.name,
                           ),
-                          subtitle: tool.summary.isEmpty
-                              ? null
-                              : Text(
-                                  tool.summary,
-                                  style: const TextStyle(
-                                    fontSize: SUMMARY_FONT_SIZE,
-                                    height: 1.35,
-                                  ),
-                                ),
-                          onTap: () => _select(tool),
+                          subtitle: _toolDetail(context, tool),
+                          onPressed: () => _select(tool),
                         ),
                     ],
                   ),
@@ -393,17 +395,78 @@ class _InferencePickerDialogState extends State<_InferencePickerDialog> {
               ),
       ),
       actions: [
-        TextButton(
+        fluent.Button(
           onPressed: () => Navigator.pop(context),
           child: const Text('취소'),
         ),
-        FilledButton(
+        fluent.FilledButton(
           onPressed: _selectedToolId.isEmpty ? null : _startSelected,
           child: const Text('실행'),
         ),
       ],
     );
   }
+
+  Widget? _toolDetail(BuildContext context, InferenceTool tool) {
+    final description = tool.description.trim();
+    final facts = _toolFacts(tool.summary);
+    if (description.isEmpty && facts.isEmpty) {
+      return null;
+    }
+    final theme = fluent.FluentTheme.of(context);
+    final body = (theme.typography.body ?? const TextStyle()).copyWith(
+      fontSize: 11,
+      height: 1.45,
+    );
+    final labelStyle = (theme.typography.caption ?? const TextStyle()).copyWith(
+      color: theme.resources.textFillColorSecondary,
+    );
+    final valueStyle = theme.typography.caption ?? const TextStyle();
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (description.isNotEmpty) Text(description, style: body),
+          if (description.isNotEmpty && facts.isNotEmpty)
+            const SizedBox(height: 8),
+          for (final fact in facts)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  SizedBox(width: 72, child: Text(fact.$1, style: labelStyle)),
+                  Expanded(child: Text(fact.$2, style: valueStyle)),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+const _HIDDEN_TOOL_FACT_LABELS = {'id', 'model', 'pattern', 'unit', 'dispatch'};
+
+List<(String, String)> _toolFacts(String summary) {
+  final facts = <(String, String)>[];
+  for (final line in summary.split('\n')) {
+    for (final part in line.split('·')) {
+      final text = part.trim();
+      if (text.isEmpty) {
+        continue;
+      }
+      final split = text.indexOf(' ');
+      final label = split <= 0 ? text : text.substring(0, split);
+      if (_HIDDEN_TOOL_FACT_LABELS.contains(label)) {
+        continue;
+      }
+      final value = split <= 0 ? '' : text.substring(split + 1).trim();
+      facts.add((label, value));
+    }
+  }
+  return facts;
 }
 
 class _RenameLabelDialog extends StatefulWidget {

@@ -38,6 +38,7 @@ class Tool extends $pb.GeneratedMessage {
     ToolUnit? unit,
     ToolDispatch? dispatch,
     $core.bool? enabled,
+    $core.String? description,
   }) {
     final result = create();
     if (toolId != null) result.toolId = toolId;
@@ -52,6 +53,7 @@ class Tool extends $pb.GeneratedMessage {
     if (unit != null) result.unit = unit;
     if (dispatch != null) result.dispatch = dispatch;
     if (enabled != null) result.enabled = enabled;
+    if (description != null) result.description = description;
     return result;
   }
 
@@ -93,6 +95,7 @@ class Tool extends $pb.GeneratedMessage {
         valueOf: ToolDispatch.valueOf,
         enumValues: ToolDispatch.values)
     ..aOB(11, _omitFieldNames ? '' : 'enabled')
+    ..aOS(12, _omitFieldNames ? '' : 'description')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -206,6 +209,15 @@ class Tool extends $pb.GeneratedMessage {
   $core.bool hasEnabled() => $_has(10);
   @$pb.TagNumber(11)
   void clearEnabled() => $_clearField(11);
+
+  @$pb.TagNumber(12)
+  $core.String get description => $_getSZ(11);
+  @$pb.TagNumber(12)
+  set description($core.String value) => $_setString(11, value);
+  @$pb.TagNumber(12)
+  $core.bool hasDescription() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearDescription() => $_clearField(12);
 }
 
 class ToolRun extends $pb.GeneratedMessage {
@@ -1550,7 +1562,7 @@ class ToolServiceApi {
       _client.invoke<UpdateToolResponse>(
           ctx, 'ToolService', 'UpdateTool', request, UpdateToolResponse());
 
-  /// 실행 이력이 있으면 FailedPrecondition — 대신 enabled=false로 끈다.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 실행 이력이 있으면 FailedPrecondition — 대신 enabled=false로 끈다.
   $async.Future<DeleteToolResponse> deleteTool(
           $pb.ClientContext? ctx, DeleteToolRequest request) =>
       _client.invoke<DeleteToolResponse>(

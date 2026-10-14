@@ -48,7 +48,7 @@ tool_pb.GetRunRequest buildGetRunRequest(String runId) {
   if (id == null) {
     throw const ToolRunException('실행을 찾지 못했습니다.');
   }
-  return tool_pb.GetRunRequest(runId: id, waitForTerminal: true);
+  return tool_pb.GetRunRequest(runId: id, waitForTerminal: false);
 }
 
 tool_pb.CancelRunRequest buildCancelRunRequest(String runId) {
@@ -164,25 +164,34 @@ String _assetKindLabel(AssetKind kind) {
   return '';
 }
 
-List<InferenceTool> enabledInferenceTools(Iterable<tool_pb.Tool> tools) {
-  final enabled = <InferenceTool>[];
+List<InferenceTool> enabledInferenceTools(
+  Iterable<tool_pb.Tool> tools, {
+  bool onDemandOnly = true,
+}) {
+  final listed = <InferenceTool>[];
   for (final tool in tools) {
-    if (!tool.enabled) {
+    final dispatch = tool.dispatch;
+    final isMenuDispatch =
+        dispatch == tool_pb.ToolDispatch.TOOL_DISPATCH_ON_DEMAND ||
+        dispatch == tool_pb.ToolDispatch.TOOL_DISPATCH_MANDATORY;
+    if (onDemandOnly && (!tool.enabled || !isMenuDispatch)) {
       continue;
     }
     final toolId = idText(tool.toolId);
     if (toolId.isEmpty) {
       continue;
     }
-    enabled.add(
+    listed.add(
       InferenceTool(
         toolId: toolId,
         name: tool.name,
         summary: inferenceToolSummary(tool),
+        description: tool.description.trim(),
+        isSpeechToText: tool.payloadKind.trim().toLowerCase() == 'stt',
       ),
     );
   }
-  return enabled;
+  return listed;
 }
 
 ToolRunSnapshot toolRunSnapshotFrom(tool_pb.ToolRun run) {
@@ -191,6 +200,8 @@ ToolRunSnapshot toolRunSnapshotFrom(tool_pb.ToolRun run) {
     toolId: idText(run.toolId),
     status: _statusFrom(run.status),
     errorMessage: run.errorMessage,
+    progressPercent: run.progressPercent,
+    estimatedRemainingSeconds: run.estimatedRemainingSeconds,
   );
 }
 

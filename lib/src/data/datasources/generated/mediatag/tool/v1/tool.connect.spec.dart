@@ -36,7 +36,7 @@ abstract final class ToolService {
     mediatagtoolv1tool.UpdateToolResponse.new,
   );
 
-  /// 실행 이력이 있으면 FailedPrecondition — 대신 enabled=false로 끈다.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 실행 이력이 있으면 FailedPrecondition — 대신 enabled=false로 끈다.
   static const deleteTool = connect.Spec(
     '/$name/DeleteTool',
     connect.StreamType.unary,
