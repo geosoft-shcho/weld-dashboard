@@ -5,12 +5,18 @@ import 'package:provider/provider.dart';
 import '../../../core/di/locator.dart';
 import '../camera_recording_view_model.dart';
 
-Future<void> showCameraRecordingDialog(BuildContext context) {
+Future<void> showCameraRecordingDialog(
+  BuildContext context, {
+  required String jobId,
+  required Future<void> Function() onUploaded,
+}) {
   return showDialog<void>(
     context: context,
     builder: (dialogContext) {
       return ChangeNotifierProvider(
-        create: (_) => locator<CameraRecordingViewModel>()..prepare(),
+        create: (_) => locator<CameraRecordingViewModel>(
+          param1: CameraRecordingArgs(jobId: jobId, onUploaded: onUploaded),
+        )..prepare(),
         child: const CameraRecordingDialog(),
       );
     },
@@ -53,6 +59,8 @@ class CameraRecordingDialog extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+          if (viewModel.isUploading) const ProgressBar(),
+          if (viewModel.isUploading) const SizedBox(height: 12),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -76,6 +84,14 @@ class CameraRecordingDialog extends StatelessWidget {
                     ? viewModel.didTapSaveAudio
                     : null,
                 child: const Text('음성 저장'),
+              ),
+              FilledButton(
+                onPressed: viewModel.canUpload ? viewModel.didTapUpload : null,
+                child: Text(
+                  viewModel.videoUploaded && viewModel.audioUploaded
+                      ? '업로드 완료'
+                      : '녹화 파일 업로드',
+                ),
               ),
               if (viewModel.canRetry)
                 Button(

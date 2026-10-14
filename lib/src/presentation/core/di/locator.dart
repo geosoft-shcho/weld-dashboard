@@ -1,6 +1,8 @@
 import 'package:get_it/get_it.dart';
 
 import '../../../data/repositories/browser_camera_recording_repository.dart';
+import '../../../data/repositories/remote_asset_upload_repository.dart';
+import '../../../domain/repositories/asset_upload_repository.dart';
 import '../../../domain/repositories/camera_recording_repository.dart';
 import '../../../domain/use_cases/download_camera_recording_file_use_case.dart';
 import '../../../domain/use_cases/prepare_camera_recording_use_case.dart';
@@ -8,6 +10,7 @@ import '../../../domain/use_cases/read_camera_preview_handle_use_case.dart';
 import '../../../domain/use_cases/release_camera_recording_use_case.dart';
 import '../../../domain/use_cases/start_camera_recording_use_case.dart';
 import '../../../domain/use_cases/stop_camera_recording_use_case.dart';
+import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../../data/repositories/remote_ask_repository.dart';
 import '../../../data/repositories/remote_catalog_repository.dart';
@@ -88,6 +91,10 @@ final locator = GetIt.instance;
 
 void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => MediaTagDataSource());
+  locator.registerLazySingleton<AssetUploadRepository>(
+    () => RemoteAssetUploadRepository(locator()),
+  );
+  locator.registerFactory(() => UploadAssetUseCase(locator()));
   locator.registerLazySingleton<CatalogRepository>(
     () => RemoteCatalogRepository(),
   );
@@ -139,7 +146,11 @@ void setupLocator({required bool pdfrxReady}) {
   );
   locator.registerFactory(() => AskQuestionUseCase(locator()));
   locator.registerFactory(() => LoadJobProjectIdUseCase(locator()));
-  locator.registerFactory(() {
+  locator.registerFactoryParam<
+    CameraRecordingViewModel,
+    CameraRecordingArgs,
+    void
+  >((args, _) {
     final CameraRecordingRepository repository =
         BrowserCameraRecordingRepository();
     return CameraRecordingViewModel(
@@ -153,6 +164,10 @@ void setupLocator({required bool pdfrxReady}) {
       readCameraPreviewHandleUseCase: ReadCameraPreviewHandleUseCase(
         repository,
       ),
+      uploadAssetUseCase: locator(),
+      toolRunUseCase: locator(),
+      jobId: args.jobId,
+      onUploaded: args.onUploaded,
     );
   });
   locator.registerFactoryParam<VideoMultimodalViewModel, String, void>(

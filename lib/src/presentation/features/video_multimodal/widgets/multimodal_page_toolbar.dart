@@ -137,7 +137,11 @@ class MultimodalPageToolbar extends StatelessWidget {
                         icon: FluentIcons.video,
                         label: '녹화',
                         enabled: !locked,
-                        onPressed: () => showCameraRecordingDialog(context),
+                        onPressed: () => showCameraRecordingDialog(
+                          context,
+                          jobId: viewModel.jobId,
+                          onUploaded: viewModel.loadAttachments,
+                        ),
                       ),
                     ],
                   ),
