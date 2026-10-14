@@ -731,7 +731,10 @@ class _PropertiesBody extends StatelessWidget {
           else if (viewModel.isClipDetailLoading)
             const Padding(
               padding: EdgeInsets.all(12),
-              child: fluent.ProgressRing(),
+              child: SizedBox(
+                width: double.infinity,
+                child: fluent.ProgressBar(strokeWidth: 2),
+              ),
             )
           else
             ..._clipDetailChildren(),
