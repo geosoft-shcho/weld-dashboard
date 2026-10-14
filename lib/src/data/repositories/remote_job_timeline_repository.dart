@@ -130,8 +130,8 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
     String assetId = '',
     String labelValueId = '',
     String description = '',
-    bool omitsKind = false,
-    List<String> inputClipIds = const [],
+    String fromClipId = '',
+    String toClipId = '',
   }) {
     return _write(
       emptyMessage: '클립을 만들지 못했습니다.',
@@ -144,8 +144,8 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
           assetId: assetId,
           labelValueId: labelValueId,
           description: description,
-          omitsKind: omitsKind,
-          inputClipIds: inputClipIds,
+          fromClipId: fromClipId,
+          toClipId: toClipId,
         ),
       ),
     );
@@ -446,7 +446,7 @@ TimelineClipKind _kindFrom(ClipKind kind) {
     case ClipKind.CLIP_KIND_REGION:
       return TimelineClipKind.region;
     case ClipKind.CLIP_KIND_RELATION:
-      return TimelineClipKind.unspecified;
+      return TimelineClipKind.relation;
     case ClipKind.CLIP_KIND_UNSPECIFIED:
       return TimelineClipKind.unspecified;
   }

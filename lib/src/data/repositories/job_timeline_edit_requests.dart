@@ -64,20 +64,25 @@ compose_pb.CreateClipRequest buildCreateClipRequest({
   String assetId = '',
   String labelValueId = '',
   String description = '',
-  bool omitsKind = false,
-  List<String> inputClipIds = const [],
+  String fromClipId = '',
+  String toClipId = '',
 }) {
   final clip = compose_pb.Clip(
     trackId: protoId(trackId),
     timelineStartNs: Int64.parseInt(startNs),
     timelineEndNs: Int64.parseInt(endNs),
+    kind: protoClipKindFrom(kind),
   );
-  if (!omitsKind) {
-    clip.kind = protoClipKindFrom(kind);
-  }
-  final sourceAssetId = protoIdOrNull(assetId);
-  if (sourceAssetId != null) {
-    clip.source = compose_pb.ClipSource(assetId: sourceAssetId);
+  if (kind == TimelineClipKind.relation) {
+    clip.relation = compose_pb.ClipRelation(
+      fromClipId: protoId(fromClipId),
+      toClipId: protoId(toClipId),
+    );
+  } else {
+    final sourceAssetId = protoIdOrNull(assetId);
+    if (sourceAssetId != null) {
+      clip.source = compose_pb.ClipSource(assetId: sourceAssetId);
+    }
   }
   final labelId = protoIdOrNull(labelValueId);
   if (labelId != null) {
@@ -233,6 +238,8 @@ ClipKind protoClipKindFrom(TimelineClipKind kind) {
       return ClipKind.CLIP_KIND_TAG;
     case TimelineClipKind.region:
       return ClipKind.CLIP_KIND_REGION;
+    case TimelineClipKind.relation:
+      return ClipKind.CLIP_KIND_RELATION;
     case TimelineClipKind.unspecified:
       return ClipKind.CLIP_KIND_UNSPECIFIED;
   }

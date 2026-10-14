@@ -458,6 +458,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         return '태그';
       case TimelineClipKind.region:
         return '영역';
+      case TimelineClipKind.relation:
+        return '관계';
       case TimelineClipKind.unspecified:
         return '클립';
     }
@@ -1580,8 +1582,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     String assetId = '',
     String labelValueId = '',
     String description = '',
-    bool omitsKind = false,
-    List<String> inputClipIds = const [],
+    String fromClipId = '',
+    String toClipId = '',
   }) {
     return _commitServerWrite(
       () => _createClipUseCase.execute(
@@ -1592,8 +1594,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         assetId: assetId,
         labelValueId: labelValueId,
         description: description,
-        omitsKind: omitsKind,
-        inputClipIds: inputClipIds,
+        fromClipId: fromClipId,
+        toClipId: toClipId,
       ),
     );
   }
@@ -1872,14 +1874,15 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (trackId == null) {
       return true;
     }
+    final description = '${labelForClip(anchor)} ↔ ${labelForClip(clip)}';
     final didSave = await createTimelineClip(
       trackId: trackId,
-      kind: TimelineClipKind.unspecified,
-      omitsKind: true,
+      kind: TimelineClipKind.relation,
       startNs: startNs,
       endNs: endNs,
-      description: '${labelForClip(anchor)} ↔ ${labelForClip(clip)}',
-      inputClipIds: [anchor.clipId, clip.clipId],
+      description: description,
+      fromClipId: anchor.clipId,
+      toClipId: clip.clipId,
     );
     if (didSave) {
       _isRelationMode = false;

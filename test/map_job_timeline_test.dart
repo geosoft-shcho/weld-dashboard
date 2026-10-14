@@ -163,4 +163,35 @@ void main() {
     expect(timeline.overlays.last.kind, TimelineOverlayKind.subtitle);
     expect(timeline.overlays.last.contentUrl, 'http://host/files/caption.vtt');
   });
+
+  test('a relation clip keeps its kind and has no playback url', () {
+    final response = compose_pb.GetTimelineResponse(
+      tracks: [
+        compose_pb.Track(trackId: Int64(3), name: '관계', order: 1),
+      ],
+      clips: [
+        compose_pb.Clip(
+          clipId: Int64(12),
+          trackId: Int64(3),
+          kind: compose_pb.ClipKind.CLIP_KIND_RELATION,
+          timelineStartNs: Int64.ZERO,
+          timelineEndNs: Int64(1000000000),
+          relation: compose_pb.ClipRelation(
+            fromClipId: Int64(1),
+            toClipId: Int64(2),
+          ),
+        ),
+      ],
+    );
+
+    final timeline = jobTimelineFromResponse(
+      response,
+      resolveContentUrl: (contentUrl) => 'http://host$contentUrl',
+    );
+
+    final clip = timeline.tracks.single.clips.single;
+    expect(clip.kind, TimelineClipKind.relation);
+    expect(clip.playbackUrl, isEmpty);
+    expect(clip.assetId, isEmpty);
+  });
 }

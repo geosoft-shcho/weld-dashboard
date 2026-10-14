@@ -604,8 +604,8 @@ class _QuietTimelineRepository implements JobTimelineRepository {
     String assetId = '',
     String labelValueId = '',
     String description = '',
-    bool omitsKind = false,
-    List<String> inputClipIds = const [],
+    String fromClipId = '',
+    String toClipId = '',
   }) async {}
 
   @override

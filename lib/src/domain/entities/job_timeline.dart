@@ -13,6 +13,7 @@ enum TimelineClipKind {
   file,
   tag,
   region,
+  relation,
 }
 
 class TimelineClip {

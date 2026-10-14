@@ -128,6 +128,7 @@ Color timelineKindBackground(TimelineClipKind kind) {
       return MultimodalStudioPalette.GRAPE_0;
     case TimelineClipKind.tag:
     case TimelineClipKind.region:
+    case TimelineClipKind.relation:
       return MultimodalStudioPalette.PLUM_100;
     case TimelineClipKind.image:
     case TimelineClipKind.pdf:
@@ -150,6 +151,7 @@ Color timelineKindForeground(TimelineClipKind kind) {
       return MultimodalStudioPalette.KALE_300;
     case TimelineClipKind.tag:
     case TimelineClipKind.region:
+    case TimelineClipKind.relation:
       return MultimodalStudioPalette.PLUM_400;
     case TimelineClipKind.image:
     case TimelineClipKind.pdf:

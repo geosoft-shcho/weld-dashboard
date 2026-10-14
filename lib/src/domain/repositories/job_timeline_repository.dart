@@ -29,8 +29,8 @@ abstract class JobTimelineRepository {
     String assetId,
     String labelValueId,
     String description,
-    bool omitsKind,
-    List<String> inputClipIds,
+    String fromClipId,
+    String toClipId,
   });
 
   Future<void> updateClip({

@@ -96,21 +96,24 @@ void main() {
     );
   });
 
-  test('relation clip omits kind and keeps only input clip ids', () {
+  test('relation clip sends kind and the two clip ids', () {
     final request = buildCreateClipRequest(
       trackId: '3',
-      kind: TimelineClipKind.unspecified,
+      kind: TimelineClipKind.relation,
       startNs: '0',
       endNs: '1000000000',
       description: 'clip.mp4 ↔ take-b.mp4',
-      omitsKind: true,
-      inputClipIds: const ['1', '2'],
+      fromClipId: '1',
+      toClipId: '2',
     );
 
-    expect(request.clip.hasKind(), isFalse);
+    expect(request.clip.kind.name, 'CLIP_KIND_RELATION');
+    expect(request.clip.relation.fromClipId.toString(), '1');
+    expect(request.clip.relation.toClipId.toString(), '2');
     expect(request.clip.hasSource(), isFalse);
     expect(request.clip.hasLabelValueId(), isFalse);
     expect(request.clip.hasProvenance(), isFalse);
+    expect(request.clip.hasClipId(), isFalse);
     expect(request.clip.description, 'clip.mp4 ↔ take-b.mp4');
   });
 
@@ -130,6 +133,28 @@ void main() {
         kind: TimelineClipKind.video,
         startNs: '5',
         endNs: '5',
+      ),
+      throwsA(
+        isA<JobTimelineException>().having(
+          (error) => error.failure,
+          'failure',
+          JobTimelineFailure.invalidArgument,
+        ),
+      ),
+    );
+    expect(repository.writeCount, 0);
+  });
+
+  test('a relation of the same clip is rejected before a write', () async {
+    final repository = _ThrowingTimelineRepository();
+    expect(
+      () => CreateClipUseCase(repository).execute(
+        trackId: 'track-1',
+        kind: TimelineClipKind.relation,
+        startNs: '0',
+        endNs: '1000000000',
+        fromClipId: '1',
+        toClipId: '1',
       ),
       throwsA(
         isA<JobTimelineException>().having(
@@ -585,8 +610,9 @@ void main() {
     expect(repository.lastCreatedTrackIsVisible, isNull);
     expect(repository.createClipCount, 1);
     expect(repository.lastCreatedClipTrackId, 'track-relation');
-    expect(repository.lastCreatedClipOmitsKind, isTrue);
-    expect(repository.lastCreatedClipInputClipIds, ['clip-1', 'clip-2']);
+    expect(repository.lastCreatedClipKind, TimelineClipKind.relation);
+    expect(repository.lastCreatedFromClipId, 'clip-1');
+    expect(repository.lastCreatedToClipId, 'clip-2');
     expect(repository.lastCreatedClipAssetId, isEmpty);
     expect(repository.lastCreatedClipLabelValueId, isEmpty);
     expect(repository.lastCreatedClipDescription, 'clip.mp4 ↔ take-b.mp4');
@@ -623,7 +649,8 @@ void main() {
     expect(repository.createTrackCount, 0);
     expect(repository.createClipCount, 1);
     expect(repository.lastCreatedClipTrackId, 'track-earlier');
-    expect(repository.lastCreatedClipInputClipIds, ['clip-2', 'clip-1']);
+    expect(repository.lastCreatedFromClipId, 'clip-2');
+    expect(repository.lastCreatedToClipId, 'clip-1');
   });
 
   test('the same clip twice does not write a relation', () async {
@@ -1674,8 +1701,8 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
     String assetId = '',
     String labelValueId = '',
     String description = '',
-    bool omitsKind = false,
-    List<String> inputClipIds = const [],
+    String fromClipId = '',
+    String toClipId = '',
   }) {
     writeCount += 1;
     throw StateError('unused');
@@ -1769,8 +1796,8 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
   String? lastCreatedClipAssetId;
   String lastCreatedClipLabelValueId = '';
   String lastCreatedClipDescription = '';
-  bool lastCreatedClipOmitsKind = false;
-  List<String> lastCreatedClipInputClipIds = const [];
+  String lastCreatedFromClipId = '';
+  String lastCreatedToClipId = '';
   String? lastStartNs;
   String? lastEndNs;
   String? lastTrackId;
@@ -1860,8 +1887,8 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
     String assetId = '',
     String labelValueId = '',
     String description = '',
-    bool omitsKind = false,
-    List<String> inputClipIds = const [],
+    String fromClipId = '',
+    String toClipId = '',
   }) async {
     createClipCount += 1;
     lastCreatedClipTrackId = trackId;
@@ -1871,8 +1898,8 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
     lastCreatedClipAssetId = assetId;
     lastCreatedClipLabelValueId = labelValueId;
     lastCreatedClipDescription = description;
-    lastCreatedClipOmitsKind = omitsKind;
-    lastCreatedClipInputClipIds = inputClipIds;
+    lastCreatedFromClipId = fromClipId;
+    lastCreatedToClipId = toClipId;
     _throwFailure();
   }
 

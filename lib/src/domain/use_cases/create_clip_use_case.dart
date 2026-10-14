@@ -15,8 +15,8 @@ class CreateClipUseCase {
     String assetId = '',
     String labelValueId = '',
     String description = '',
-    bool omitsKind = false,
-    List<String> inputClipIds = const [],
+    String fromClipId = '',
+    String toClipId = '',
   }) {
     if (trackId.isEmpty || !isOpenNanosecondInterval(startNs, endNs)) {
       throw const JobTimelineException(
@@ -24,15 +24,22 @@ class CreateClipUseCase {
         failure: JobTimelineFailure.invalidArgument,
       );
     }
-    if (!omitsKind && kind == TimelineClipKind.unspecified) {
+    if (kind == TimelineClipKind.unspecified) {
       throw const JobTimelineException(
         '클립 구간이 올바르지 않습니다.',
         failure: JobTimelineFailure.invalidArgument,
       );
     }
-    if (!omitsKind && kind == TimelineClipKind.tag && labelValueId.isEmpty) {
+    if (kind == TimelineClipKind.tag && labelValueId.isEmpty) {
       throw const JobTimelineException(
         '태그 클립에는 라벨이 필요합니다.',
+        failure: JobTimelineFailure.invalidArgument,
+      );
+    }
+    if (kind == TimelineClipKind.relation &&
+        (fromClipId.isEmpty || toClipId.isEmpty || fromClipId == toClipId)) {
+      throw const JobTimelineException(
+        '관계 클립에는 서로 다른 두 클립이 필요합니다.',
         failure: JobTimelineFailure.invalidArgument,
       );
     }
@@ -44,8 +51,8 @@ class CreateClipUseCase {
       assetId: assetId,
       labelValueId: labelValueId,
       description: description,
-      omitsKind: omitsKind,
-      inputClipIds: inputClipIds,
+      fromClipId: fromClipId,
+      toClipId: toClipId,
     );
   }
 }
