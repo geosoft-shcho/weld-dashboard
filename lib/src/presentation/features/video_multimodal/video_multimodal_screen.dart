@@ -5,6 +5,7 @@ import '../../core/di/locator.dart';
 import '../../core/themes/app_theme.dart';
 import '../../navigation/app_coordinator.dart';
 import 'video_multimodal_view_model.dart';
+import 'widgets/camera_recording_dialog.dart';
 import 'widgets/multimodal_inference_panel.dart';
 import 'widgets/multimodal_page_toolbar.dart';
 import 'widgets/multimodal_side_panel.dart';
@@ -97,6 +98,20 @@ class _VideoMultimodalBody extends StatelessWidget {
                       ],
                     ),
                     MultimodalInferencePanel(viewModel: viewModel),
+                    if (viewModel.isCameraRecordingOpen)
+                      Positioned(
+                        left: viewModel.cameraRecordingOffsetX,
+                        top: viewModel.cameraRecordingOffsetY,
+                        child: CameraRecordingOverlay(
+                          jobId: viewModel.jobId,
+                          onUploaded: viewModel.loadAttachments,
+                          onClose: viewModel.didCloseCameraRecording,
+                          isMinimized: viewModel.isCameraRecordingMinimized,
+                          onMove: viewModel.didMoveCameraRecording,
+                          onToggleMinimized:
+                              viewModel.didToggleCameraRecordingMinimized,
+                        ),
+                      ),
                   ],
                 ),
               ),

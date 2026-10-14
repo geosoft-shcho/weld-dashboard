@@ -2,7 +2,6 @@ import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../core/themes/app_theme.dart';
 import '../video_multimodal_view_model.dart';
-import 'camera_recording_dialog.dart';
 import 'multimodal_dialogs.dart';
 
 /// S01 상단 툴바 배치. 버튼 묶음만 맞추고, 라벨링 페이지의 저장·추론은 호출하지 않는다.
@@ -137,11 +136,7 @@ class MultimodalPageToolbar extends StatelessWidget {
                         icon: FluentIcons.video,
                         label: '녹화',
                         enabled: !locked,
-                        onPressed: () => showCameraRecordingDialog(
-                          context,
-                          jobId: viewModel.jobId,
-                          onUploaded: viewModel.loadAttachments,
-                        ),
+                        onPressed: viewModel.didOpenCameraRecording,
                       ),
                     ],
                   ),

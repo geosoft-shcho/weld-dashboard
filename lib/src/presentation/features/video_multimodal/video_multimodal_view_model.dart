@@ -236,6 +236,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   DateTime _ignoreClockUntil = DateTime.fromMillisecondsSinceEpoch(0);
   double? _seekAnchorSeconds;
   InferencePanelPhase _inferencePhase = InferencePanelPhase.hidden;
+  bool _isCameraRecordingOpen = false;
+  bool _isCameraRecordingMinimized = false;
+  double _cameraRecordingOffsetX = 24;
+  double _cameraRecordingOffsetY = 24;
   bool _isInferenceMinimized = false;
   double _inferenceOffsetX = 24;
   double _inferenceOffsetY = 24;
@@ -597,6 +601,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _clipDetail?.fields ?? const <ClipField>[];
   InferencePanelPhase get inferencePhase => _inferencePhase;
   bool get isInferenceVisible => _inferencePhase != InferencePanelPhase.hidden;
+  bool get isCameraRecordingOpen => _isCameraRecordingOpen;
+  bool get isCameraRecordingMinimized => _isCameraRecordingMinimized;
+  double get cameraRecordingOffsetX => _cameraRecordingOffsetX;
+  double get cameraRecordingOffsetY => _cameraRecordingOffsetY;
   bool get isInferenceMinimized => _isInferenceMinimized;
   double get inferenceOffsetX => _inferenceOffsetX;
   double get inferenceOffsetY => _inferenceOffsetY;
@@ -1548,6 +1556,34 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _inferenceMessage = error.message;
       notifyListeners();
     }
+  }
+
+  void didOpenCameraRecording() {
+    if (_isCameraRecordingOpen) {
+      return;
+    }
+    _isCameraRecordingOpen = true;
+    _isCameraRecordingMinimized = false;
+    notifyListeners();
+  }
+
+  void didCloseCameraRecording() {
+    if (!_isCameraRecordingOpen) {
+      return;
+    }
+    _isCameraRecordingOpen = false;
+    notifyListeners();
+  }
+
+  void didMoveCameraRecording(double dx, double dy) {
+    _cameraRecordingOffsetX = (_cameraRecordingOffsetX + dx).clamp(0, 1200);
+    _cameraRecordingOffsetY = (_cameraRecordingOffsetY + dy).clamp(0, 800);
+    notifyListeners();
+  }
+
+  void didToggleCameraRecordingMinimized() {
+    _isCameraRecordingMinimized = !_isCameraRecordingMinimized;
+    notifyListeners();
   }
 
   void didCloseInference() {
