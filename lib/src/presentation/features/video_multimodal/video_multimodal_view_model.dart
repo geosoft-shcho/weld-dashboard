@@ -201,6 +201,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool _isLaneMenuOpen = false;
   bool _isLoading = false;
   bool _isSavingTimeline = false;
+  int? _vectorSaveTrackCount;
   bool _hasError = false;
   String _errorMessage = '';
   final List<double> _markerSeconds = [];
@@ -601,6 +602,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _clipDetail?.fields ?? const <ClipField>[];
   InferencePanelPhase get inferencePhase => _inferencePhase;
   bool get isInferenceVisible => _inferencePhase != InferencePanelPhase.hidden;
+  int? get vectorSaveNoticeTrackCount => _vectorSaveTrackCount;
   bool get isCameraRecordingOpen => _isCameraRecordingOpen;
   bool get isCameraRecordingMinimized => _isCameraRecordingMinimized;
   double get cameraRecordingOffsetX => _cameraRecordingOffsetX;
@@ -1713,6 +1715,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     }
     final didSave = await _commitServerWrite(
       () => _deleteClipUseCase.execute(clipId: clipId),
+      changedTrackCount: _changedClipTrackCount(clipId),
     );
     if (didSave) {
       _selectedClipId = '';
@@ -1733,6 +1736,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         order: order,
         isVisible: isVisible,
       ),
+      changedTrackCount: 1,
     );
   }
 
@@ -1749,12 +1753,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         order: order,
         isVisible: isVisible,
       ),
+      changedTrackCount: 1,
     );
   }
 
   Future<void> deleteTimelineTrack(String trackId) {
     return _commitServerWrite(
       () => _deleteTrackUseCase.execute(trackId: trackId),
+      changedTrackCount: 1,
     );
   }
 
@@ -1787,6 +1793,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         sourceEndNs: sourceEndNs,
         sourceLimitNs: sourceLimitNs,
       ),
+      changedTrackCount: 1,
     );
   }
 
@@ -1846,6 +1853,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         description: nextDescription,
         isReviewed: isReviewed,
       ),
+      changedTrackCount: _changedClipTrackCount(
+        clipId,
+        nextTrackId: nextTrackId,
+      ),
     );
   }
 
@@ -1871,6 +1882,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         name: changedName,
         description: changedDescription,
       ),
+      changedTrackCount: _changedTimelineTrackCount(),
     );
     if (didSave) {
       return null;
@@ -1881,6 +1893,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   Future<String?> didDeleteTimeline() async {
     final didDelete = await _commitServerWrite(
       () => _deleteTimelineUseCase.execute(jobId: jobId),
+      changedTrackCount: _changedTimelineTrackCount(),
     );
     if (!didDelete) {
       return _writeFailureMessage('타임라인을 지우지 못했습니다.');
@@ -1907,6 +1920,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         fromStatus: _timeline.status,
         toStatus: toStatus,
       ),
+      changedTrackCount: _changedTimelineTrackCount(),
     );
   }
 
@@ -1944,6 +1958,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     }
     final didSave = await _commitServerWrite(
       () => _deleteTrackUseCase.execute(trackId: track.trackId),
+      changedTrackCount: 1,
     );
     if (didSave) {
       _selectedClipId = '';
@@ -2245,7 +2260,37 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     await updateTimelineClip(clipId: clipId, startNs: startNs, endNs: endNs);
   }
 
-  Future<bool> _commitServerWrite(Future<void> Function() write) async {
+  void didDismissVectorSaveNotice() {
+    if (_vectorSaveTrackCount == null) {
+      return;
+    }
+    _vectorSaveTrackCount = null;
+    notifyListeners();
+  }
+
+  int _changedTimelineTrackCount() {
+    final count = _timeline.tracks.length;
+    if (count < 1) {
+      return 1;
+    }
+    return count;
+  }
+
+  int _changedClipTrackCount(String clipId, {String? nextTrackId}) {
+    final clip = _timelineClip(clipId);
+    if (clip == null) {
+      return 1;
+    }
+    if (nextTrackId == null || nextTrackId == clip.trackId) {
+      return 1;
+    }
+    return 2;
+  }
+
+  Future<bool> _commitServerWrite(
+    Future<void> Function() write, {
+    required int changedTrackCount,
+  }) async {
     if (_isSavingTimeline || jobId.isEmpty) {
       return false;
     }
@@ -2262,6 +2307,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         return false;
       }
       didSave = await _replaceTimelineFromServer(clearHint: true);
+      if (didSave) {
+        _vectorSaveTrackCount = changedTrackCount < 1 ? 1 : changedTrackCount;
+      }
       return didSave;
     } finally {
       _isSavingTimeline = false;

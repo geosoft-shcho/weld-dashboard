@@ -11,6 +11,7 @@ import 'widgets/multimodal_page_toolbar.dart';
 import 'widgets/multimodal_side_panel.dart';
 import 'widgets/multimodal_timeline_board.dart';
 import 'widgets/multimodal_video_stage.dart';
+import 'widgets/vector_db_saved_dialog.dart';
 
 class VideoMultimodalScreen extends StatelessWidget {
   const VideoMultimodalScreen({super.key, required this.jobId});
@@ -42,6 +43,7 @@ class _VideoMultimodalBody extends StatelessWidget {
           content: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              _VectorSaveNoticeListener(viewModel: viewModel),
               MultimodalPageToolbar(
                 viewModel: viewModel,
                 title: viewModel.pageTitle,
@@ -120,5 +122,65 @@ class _VideoMultimodalBody extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _VectorSaveNoticeListener extends StatefulWidget {
+  const _VectorSaveNoticeListener({required this.viewModel});
+
+  final VideoMultimodalViewModel viewModel;
+
+  @override
+  State<_VectorSaveNoticeListener> createState() =>
+      _VectorSaveNoticeListenerState();
+}
+
+class _VectorSaveNoticeListenerState extends State<_VectorSaveNoticeListener> {
+  bool _isOpen = false;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.viewModel.addListener(_onViewModelChanged);
+  }
+
+  @override
+  void didUpdateWidget(_VectorSaveNoticeListener oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.viewModel == widget.viewModel) {
+      return;
+    }
+    oldWidget.viewModel.removeListener(_onViewModelChanged);
+    widget.viewModel.addListener(_onViewModelChanged);
+  }
+
+  @override
+  void dispose() {
+    widget.viewModel.removeListener(_onViewModelChanged);
+    super.dispose();
+  }
+
+  void _onViewModelChanged() {
+    final trackCount = widget.viewModel.vectorSaveNoticeTrackCount;
+    if (trackCount == null || _isOpen) {
+      return;
+    }
+    _isOpen = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) {
+        return;
+      }
+      await showVectorDbSavedDialog(context, changedTrackCount: trackCount);
+      if (!mounted) {
+        return;
+      }
+      widget.viewModel.didDismissVectorSaveNotice();
+      _isOpen = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox.shrink();
   }
 }
