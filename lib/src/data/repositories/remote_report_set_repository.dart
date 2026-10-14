@@ -3,6 +3,7 @@ import 'package:connectrpc/connect.dart';
 import '../../domain/entities/report_set.dart';
 import '../../domain/repositories/report_set_repository.dart';
 import '../datasources/generated/google/protobuf/struct.pb.dart';
+import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
 import '../datasources/generated/mediatag/report/v1/report.pb.dart'
     as report_pb;
 import '../datasources/generated/mediatag/report/v1/report.pbenum.dart';
@@ -37,24 +38,24 @@ class RemoteReportSetRepository implements ReportSetRepository {
     if (reportSetId.isEmpty) {
       throw const ReportSetNotFoundException();
     }
+    final response = await _loadSet(reportSetId);
+    final set = response.reportSet;
+    final summary = _summaryFrom(set);
+    return ReportSetDetail(
+      summary: summary,
+      sections: [
+        for (final section in response.sections)
+          _sectionFrom(section, summary.pageStart),
+      ],
+      reviews: [for (final review in response.reviews) _reviewFrom(review)],
+      pdfUrl: await _resolveSplitPdfUrl(set),
+    );
+  }
+
+  Future<report_pb.GetReportSetResponse> _loadSet(String reportSetId) async {
     try {
-      final response = await _mediaTag.reportService.getReportSet(
+      return await _mediaTag.reportService.getReportSet(
         report_pb.GetReportSetRequest(reportSetId: protoId(reportSetId)),
-      );
-      final set = response.reportSet;
-      final summary = _summaryFrom(set);
-      return ReportSetDetail(
-        summary: summary,
-        sections: [
-          for (final section in response.sections)
-            _sectionFrom(section, summary.pageStart),
-        ],
-        reviews: [for (final review in response.reviews) _reviewFrom(review)],
-        pdfUrl: idText(set.splitAssetId).isEmpty
-            ? ''
-            : _mediaTag.resolveContentUrl(
-                '/assets/${idText(set.splitAssetId)}/content',
-              ),
       );
     } on ConnectException catch (error) {
       if (error.code == Code.notFound) {
@@ -62,6 +63,16 @@ class RemoteReportSetRepository implements ReportSetRepository {
       }
       rethrow;
     }
+  }
+
+  Future<String> _resolveSplitPdfUrl(report_pb.ReportSet set) async {
+    if (idText(set.splitAssetId).isEmpty) {
+      return '';
+    }
+    final response = await _mediaTag.assetService.getAsset(
+      asset_pb.GetAssetRequest(assetId: set.splitAssetId),
+    );
+    return _mediaTag.resolveContentUrl(response.asset.contentUrl);
   }
 
   ReportSetSummary _summaryFrom(report_pb.ReportSet set) {
