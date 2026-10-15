@@ -852,7 +852,7 @@ class _AskBodyState extends State<_AskBody> {
                   _AskMessage(
                     turn: turn,
                     playheadSeconds: playheadSeconds,
-                    onCitation: viewModel.didTapCitation,
+                    viewModel: viewModel,
                   ),
                 if (viewModel.isAsking) const _AskPending(),
               ],
@@ -899,12 +899,12 @@ class _AskMessage extends StatelessWidget {
   const _AskMessage({
     required this.turn,
     required this.playheadSeconds,
-    required this.onCitation,
+    required this.viewModel,
   });
 
   final AskTurn turn;
   final double playheadSeconds;
-  final ValueChanged<AskCitation> onCitation;
+  final VideoMultimodalViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
@@ -930,14 +930,14 @@ class _AskMessage extends StatelessWidget {
             ),
           ),
           for (var index = 0; index < turn.citations.length; index++)
-            _AskCitationButton(
+            _AskCitationCard(
               index: index,
               citation: turn.citations[index],
               isSelected: _isCitationAtPlayhead(
                 playheadSeconds,
                 turn.citations[index],
               ),
-              onPressed: () => onCitation(turn.citations[index]),
+              viewModel: viewModel,
             ),
         ],
       ),
@@ -946,6 +946,109 @@ class _AskMessage extends StatelessWidget {
       return Align(alignment: Alignment.centerRight, child: bubble);
     }
     return SizedBox(width: double.infinity, child: bubble);
+  }
+}
+
+class _AskCitationCard extends StatefulWidget {
+  const _AskCitationCard({
+    required this.index,
+    required this.citation,
+    required this.isSelected,
+    required this.viewModel,
+  });
+
+  final int index;
+  final AskCitation citation;
+  final bool isSelected;
+  final VideoMultimodalViewModel viewModel;
+
+  @override
+  State<_AskCitationCard> createState() => _AskCitationCardState();
+}
+
+class _AskCitationCardState extends State<_AskCitationCard> {
+  final TextEditingController _comment = TextEditingController();
+
+  @override
+  void dispose() {
+    _comment.dispose();
+    super.dispose();
+  }
+
+  Future<void> _registerComment(AskCitation citation) async {
+    final saved = await widget.viewModel.didCommentCitation(
+      citation,
+      _comment.text,
+    );
+    if (saved && mounted) {
+      _comment.clear();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final citation = widget.citation;
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _AskCitationButton(
+            index: widget.index,
+            citation: citation,
+            isSelected: widget.isSelected,
+            onPressed: () => widget.viewModel.didTapCitation(citation),
+          ),
+          Row(
+            children: [
+              IconButton(
+                tooltip: '좋아요',
+                visualDensity: VisualDensity.compact,
+                onPressed: () => widget.viewModel.didLikeCitation(citation),
+                icon: const Icon(
+                  fluent.FluentIcons.like,
+                  size: 16,
+                  color: MultimodalStudioPalette.PANEL_INK,
+                ),
+              ),
+              IconButton(
+                tooltip: '싫어요',
+                visualDensity: VisualDensity.compact,
+                onPressed: () => widget.viewModel.didDislikeCitation(citation),
+                icon: const Icon(
+                  fluent.FluentIcons.dislike,
+                  size: 16,
+                  color: MultimodalStudioPalette.PANEL_INK,
+                ),
+              ),
+              Expanded(
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: TextField(
+                          controller: _comment,
+                          style: _fieldTextStyle,
+                          cursorColor: MultimodalStudioPalette.PANEL_ACCENT,
+                          decoration: _fieldDecoration('코멘트를 입력하세요'),
+                          onSubmitted: (_) => _registerComment(citation),
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      _AccentButton(
+                        label: '등록',
+                        onPressed: () => _registerComment(citation),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -966,42 +1069,39 @@ class _AskCitationButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final range =
         '${_citationClock(citation.startSeconds)}–${_citationClock(citation.endSeconds)}';
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          foregroundColor: MultimodalStudioPalette.PANEL_INK,
-          backgroundColor: isSelected
-              ? MultimodalStudioPalette.PANEL_ACCENT_FILL
-              : MultimodalStudioPalette.PANEL_PAGE,
-          alignment: Alignment.centerLeft,
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          minimumSize: const Size.fromHeight(36),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-          side: BorderSide(
-            color: isSelected
-                ? MultimodalStudioPalette.PANEL_ACCENT
-                : MultimodalStudioPalette.PANEL_LINE,
+    return TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: MultimodalStudioPalette.PANEL_INK,
+        backgroundColor: isSelected
+            ? MultimodalStudioPalette.PANEL_ACCENT_FILL
+            : MultimodalStudioPalette.PANEL_PAGE,
+        alignment: Alignment.centerLeft,
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        minimumSize: const Size.fromHeight(36),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        side: BorderSide(
+          color: isSelected
+              ? MultimodalStudioPalette.PANEL_ACCENT
+              : MultimodalStudioPalette.PANEL_LINE,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '${index + 1}. ${_citationTitle(citation.text)}',
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
           ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${index + 1}. ${_citationTitle(citation.text)}',
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+          Text(
+            range,
+            style: const TextStyle(
+              fontSize: 11,
+              color: MultimodalStudioPalette.PANEL_MUTED,
             ),
-            Text(
-              range,
-              style: const TextStyle(
-                fontSize: 11,
-                color: MultimodalStudioPalette.PANEL_MUTED,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
