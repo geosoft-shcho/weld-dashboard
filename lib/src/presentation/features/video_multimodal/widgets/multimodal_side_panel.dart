@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
 
 import '../../../core/themes/app_theme.dart';
+import '../../../../domain/timeline_time.dart';
 import '../../../../domain/entities/ask_answer.dart';
 import '../../../../domain/entities/job_timeline.dart';
 import '../../../../domain/entities/label_vocab.dart';
@@ -500,16 +501,14 @@ class _AssetsBody extends StatelessWidget {
   }
 
   String _durationLabel(WorkAttachment attachment) {
-    for (final bar in viewModel.visibleBars) {
-      if (bar.attachmentId != attachment.attachmentId) {
-        continue;
-      }
-      final whole = (bar.endSeconds - bar.startSeconds).floor();
-      final minutes = whole ~/ 60;
-      final seconds = (whole % 60).toString().padLeft(2, '0');
-      return '$minutes:$seconds';
+    final seconds = secondsFromNanoseconds(attachment.durationNs);
+    if (seconds <= 0) {
+      return '—';
     }
-    return '—';
+    final whole = seconds.floor();
+    final minutes = whole ~/ 60;
+    final remain = (whole % 60).toString().padLeft(2, '0');
+    return '$minutes:$remain';
   }
 }
 
