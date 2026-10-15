@@ -168,6 +168,7 @@ void setupLocator({required bool pdfrxReady}) {
       toolRunUseCase: locator(),
       jobId: args.jobId,
       onUploaded: args.onUploaded,
+      onRecordingPlaced: args.onRecordingPlaced,
     );
   });
   locator.registerFactoryParam<VideoMultimodalViewModel, String, void>(

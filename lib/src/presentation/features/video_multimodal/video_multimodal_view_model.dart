@@ -178,6 +178,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const String LIKE_TRACK_NAME = '좋아요';
   static const String DISLIKE_TRACK_NAME = '싫어요';
   static const String COMMENT_TRACK_NAME = '코멘트';
+  static const String RECORDING_VIDEO_TRACK_NAME = '녹화 영상';
+  static const String RECORDING_AUDIO_TRACK_NAME = '녹화 음성';
 
   final ListHistoryWorkAttachmentsUseCase _listHistoryWorkAttachmentsUseCase;
   final GetJobTimelineUseCase _getJobTimelineUseCase;
@@ -1354,7 +1356,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (labelValueId == null) {
       return false;
     }
-    final trackId = await _citationFeedbackTrackId(trackName);
+    final trackId = await _ensureTrackId(trackName);
     if (trackId == null) {
       return false;
     }
@@ -1426,7 +1428,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return null;
   }
 
-  Future<String?> _citationFeedbackTrackId(String name) async {
+  Future<String?> _ensureTrackId(String name) async {
     final existing = _trackIdByName(name);
     if (existing != null) {
       return existing;
@@ -2113,6 +2115,90 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _dropClipDetail();
       notifyListeners();
     }
+  }
+
+  Future<void> didPlaceUploadedRecording({
+    required String assetId,
+    required bool isVideo,
+  }) async {
+    if (assetId.isEmpty) {
+      return;
+    }
+    final didReload = await _replaceTimelineFromServer(clearHint: false);
+    if (!didReload || _hasAssetClip(assetId)) {
+      return;
+    }
+    try {
+      _attachments = await _listHistoryWorkAttachmentsUseCase.execute(
+        jobId: jobId,
+      );
+    } catch (_) {
+      // 첨부 길이를 모르면 5초 클립으로 놓는다.
+    }
+    if (_isClosed) {
+      return;
+    }
+    final trackName = isVideo
+        ? RECORDING_VIDEO_TRACK_NAME
+        : RECORDING_AUDIO_TRACK_NAME;
+    final trackId = await _ensureTrackId(trackName);
+    if (trackId == null) {
+      return;
+    }
+    final attachment = _attachmentById(assetId);
+    final durationNs = attachment?.durationNs.trim() ?? '';
+    final hasDuration = durationNs.isNotEmpty && durationNs != '0';
+    final startSeconds = _playheadSeconds < 0 ? 0.0 : _playheadSeconds;
+    final startNs = nanosecondsFromSeconds(startSeconds);
+    final String endNs;
+    final String sourceStartNs;
+    final String sourceEndNs;
+    if (hasDuration) {
+      endNs = addNanoseconds(startNs, durationNs);
+      sourceStartNs = '0';
+      sourceEndNs = durationNs;
+      if (!sourceIntervalFitsAsset(
+        sourceStartNs: sourceStartNs,
+        sourceEndNs: sourceEndNs,
+        assetDurationNs: durationNs,
+      )) {
+        _timelineHint = '소스 구간이 올바르지 않습니다.';
+        notifyListeners();
+        return;
+      }
+    } else {
+      endNs = nanosecondsFromSeconds(
+        startSeconds + DEFAULT_TIMELESS_CLIP_SECONDS,
+      );
+      sourceStartNs = '';
+      sourceEndNs = '';
+    }
+    if (!isOpenNanosecondInterval(startNs, endNs)) {
+      _timelineHint = '구간이 너무 짧습니다.';
+      notifyListeners();
+      return;
+    }
+    await createTimelineClip(
+      trackId: trackId,
+      kind: isVideo ? TimelineClipKind.video : TimelineClipKind.audio,
+      startNs: startNs,
+      endNs: endNs,
+      assetId: assetId,
+      sourceStartNs: sourceStartNs,
+      sourceEndNs: sourceEndNs,
+      sourceLimitNs: hasDuration ? durationNs : '',
+    );
+  }
+
+  bool _hasAssetClip(String assetId) {
+    for (final track in _timeline.tracks) {
+      for (final clip in track.clips) {
+        if (clip.assetId == assetId) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   Future<void> didCreateTimelineClipOnTrack({

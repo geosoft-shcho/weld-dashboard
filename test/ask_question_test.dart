@@ -400,6 +400,56 @@ void main() {
     expect(timeline.clips, isEmpty);
   });
 
+  test('an uploaded video without a clip gets a recording track', () async {
+    final timeline = _RecordingTimeline(
+      const JobTimeline(jobId: '128', name: '작업', tracks: []),
+    );
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timelineRepository: timeline,
+    );
+
+    await viewModel.didPlaceUploadedRecording(assetId: '55', isVideo: true);
+
+    expect(timeline.trackNames, ['녹화 영상']);
+    expect(timeline.clips, hasLength(1));
+    expect(timeline.clips.single.kind, TimelineClipKind.video);
+    expect(timeline.clips.single.assetId, '55');
+    expect(timeline.clips.single.startNs, '0');
+    expect(timeline.clips.single.endNs, '5000000000');
+  });
+
+  test(
+    'an uploaded asset already on the timeline is not placed again',
+    () async {
+      final timeline = _RecordingTimeline(
+        JobTimeline(
+          jobId: '128',
+          name: '작업',
+          tracks: [
+            TimelineTrack(
+              trackId: 'track-1',
+              name: '서버',
+              order: 0,
+              clips: [_clip(clipId: 'clip-1', assetId: '55')],
+            ),
+          ],
+        ),
+      );
+      final viewModel = _viewModel(
+        _ScriptedAsk(),
+        projectId: '42',
+        timelineRepository: timeline,
+      );
+
+      await viewModel.didPlaceUploadedRecording(assetId: '55', isVideo: true);
+
+      expect(timeline.trackNames, isEmpty);
+      expect(timeline.clips, isEmpty);
+    },
+  );
+
   test('an object row outside the list scrolls to that row', () {
     expect(
       revealOffsetForObjectRow(
@@ -439,6 +489,7 @@ TimelineClip _clip({
   String playbackUrl = 'http://media.example/video.mp4',
   TimelineClipKind kind = TimelineClipKind.video,
   double endSeconds = 4000,
+  String assetId = '1',
 }) {
   return TimelineClip(
     clipId: clipId,
@@ -446,7 +497,7 @@ TimelineClip _clip({
     kind: kind,
     startNs: '0',
     endNs: '${(endSeconds * 1000000000).round()}',
-    assetId: '1',
+    assetId: assetId,
     fileName: 'video.mp4',
     playbackUrl: playbackUrl,
     description: '',
@@ -623,6 +674,7 @@ class _SavedClip {
   const _SavedClip({
     required this.trackId,
     required this.kind,
+    required this.assetId,
     required this.labelValueId,
     required this.startNs,
     required this.endNs,
@@ -631,6 +683,7 @@ class _SavedClip {
 
   final String trackId;
   final TimelineClipKind kind;
+  final String assetId;
   final String labelValueId;
   final String startNs;
   final String endNs;
@@ -692,6 +745,7 @@ class _RecordingTimeline extends _IdleTimeline {
       _SavedClip(
         trackId: trackId,
         kind: kind,
+        assetId: assetId,
         labelValueId: labelValueId,
         startNs: startNs,
         endNs: endNs,

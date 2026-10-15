@@ -10,6 +10,7 @@ class CameraRecordingOverlay extends StatelessWidget {
     super.key,
     required this.jobId,
     required this.onUploaded,
+    required this.onRecordingPlaced,
     required this.onClose,
     required this.isMinimized,
     required this.onMove,
@@ -21,6 +22,8 @@ class CameraRecordingOverlay extends StatelessWidget {
 
   final String jobId;
   final Future<void> Function() onUploaded;
+  final Future<void> Function({required String assetId, required bool isVideo})
+  onRecordingPlaced;
   final VoidCallback onClose;
   final bool isMinimized;
   final void Function(double dx, double dy) onMove;
@@ -30,7 +33,11 @@ class CameraRecordingOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => locator<CameraRecordingViewModel>(
-        param1: CameraRecordingArgs(jobId: jobId, onUploaded: onUploaded),
+        param1: CameraRecordingArgs(
+          jobId: jobId,
+          onUploaded: onUploaded,
+          onRecordingPlaced: onRecordingPlaced,
+        ),
       )..prepare(),
       child: _CameraRecordingCard(
         onClose: onClose,

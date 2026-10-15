@@ -107,6 +107,8 @@ class _VideoMultimodalBody extends StatelessWidget {
                         child: CameraRecordingOverlay(
                           jobId: viewModel.jobId,
                           onUploaded: viewModel.loadAttachments,
+                          onRecordingPlaced:
+                              viewModel.didPlaceUploadedRecording,
                           onClose: viewModel.didCloseCameraRecording,
                           isMinimized: viewModel.isCameraRecordingMinimized,
                           onMove: viewModel.didMoveCameraRecording,

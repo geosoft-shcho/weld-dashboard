@@ -19,10 +19,16 @@ import '../../../domain/use_cases/upload_asset_use_case.dart';
 enum CameraRecordingPhase { preparing, ready, recording, stopped, failed }
 
 class CameraRecordingArgs {
-  const CameraRecordingArgs({required this.jobId, required this.onUploaded});
+  const CameraRecordingArgs({
+    required this.jobId,
+    required this.onUploaded,
+    required this.onRecordingPlaced,
+  });
 
   final String jobId;
   final Future<void> Function() onUploaded;
+  final Future<void> Function({required String assetId, required bool isVideo})
+  onRecordingPlaced;
 }
 
 class CameraRecordingViewModel extends ChangeNotifier {
@@ -37,6 +43,7 @@ class CameraRecordingViewModel extends ChangeNotifier {
     required this._toolRunUseCase,
     required this.jobId,
     required this.onUploaded,
+    required this.onRecordingPlaced,
   });
 
   final PrepareCameraRecordingUseCase _prepareCameraRecordingUseCase;
@@ -49,6 +56,8 @@ class CameraRecordingViewModel extends ChangeNotifier {
   final ToolRunUseCase _toolRunUseCase;
   final String jobId;
   final Future<void> Function() onUploaded;
+  final Future<void> Function({required String assetId, required bool isVideo})
+  onRecordingPlaced;
 
   CameraRecordingPhase phase = CameraRecordingPhase.preparing;
   String noticeText = '';
@@ -178,7 +187,7 @@ class CameraRecordingViewModel extends ChangeNotifier {
     final errors = <String>[];
     final warnings = <String>[];
     if (!videoUploaded) {
-      await _uploadFile(
+      final assetId = await _uploadFile(
         label: '영상',
         file: value.video,
         recordedAt: value.recordedAt,
@@ -186,15 +195,27 @@ class CameraRecordingViewModel extends ChangeNotifier {
         errors: errors,
         warnings: warnings,
       );
+      await _placeUploaded(
+        assetId: assetId,
+        isVideo: true,
+        label: '영상',
+        errors: errors,
+      );
     }
     if (!audioUploaded) {
-      await _uploadFile(
+      final assetId = await _uploadFile(
         label: '음성',
         file: value.audio,
         recordedAt: value.recordedAt,
         onSuccess: () => audioUploaded = true,
         errors: errors,
         warnings: warnings,
+      );
+      await _placeUploaded(
+        assetId: assetId,
+        isVideo: false,
+        label: '음성',
+        errors: errors,
       );
     }
     if (_isDisposed) {
@@ -222,7 +243,7 @@ class CameraRecordingViewModel extends ChangeNotifier {
     _publish();
   }
 
-  Future<void> _uploadFile({
+  Future<String?> _uploadFile({
     required String label,
     required CameraRecordingFile file,
     required DateTime recordedAt,
@@ -241,8 +262,26 @@ class CameraRecordingViewModel extends ChangeNotifier {
       onSuccess();
       warnings.addAll(result.warnings.map((warning) => '$label: $warning'));
       await _waitForPostprocess(result.runId);
+      return result.assetId;
     } catch (error) {
       errors.add('$label 업로드 실패: ${_message(error)}');
+      return null;
+    }
+  }
+
+  Future<void> _placeUploaded({
+    required String? assetId,
+    required bool isVideo,
+    required String label,
+    required List<String> errors,
+  }) async {
+    if (assetId == null || assetId.isEmpty || _isDisposed) {
+      return;
+    }
+    try {
+      await onRecordingPlaced(assetId: assetId, isVideo: isVideo);
+    } catch (error) {
+      errors.add('$label 타임라인 배치 실패: ${_message(error)}');
     }
   }
 
