@@ -273,11 +273,15 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   }
 
   Future<void> _seekAndApply(int token) async {
+    final controller = _videoController;
     await _seekTo(widget.seekToMs);
-    if (!mounted || widget.seekToken != token) {
+    if (!mounted ||
+        widget.seekToken != token ||
+        controller == null ||
+        _videoController != controller) {
       return;
     }
-    await _applyPlaybackRate(_videoController!);
+    await _applyPlaybackRate(controller);
   }
 
   Future<void> _seekTo(int milliseconds) async {

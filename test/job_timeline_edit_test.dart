@@ -1661,6 +1661,124 @@ void main() {
     expect(viewModel.activeVideoBar?.attachmentId, 'video-1');
     expect(viewModel.activeVideoOverlayFrames, isEmpty);
   });
+
+  test('an overlapping pose is not drawn on another video', () async {
+    const poseUrl = 'http://media.example/pose.json';
+    const frontUrl = 'http://media.example/front.mp4';
+    const targetUrl = 'http://media.example/back.mp4';
+    final repository = _ScriptedTimelineRepository(
+      JobTimeline(
+        jobId: 'job-1',
+        name: '작업',
+        overlays: [
+          TimelineOverlay(
+            assetId: '30',
+            kind: TimelineOverlayKind.pose,
+            contentUrl: poseUrl,
+            timelineStartNs: '0',
+            timelineEndNs: '40000000000',
+            sourceStartNs: '0',
+            sourceEndNs: '40000000000',
+          ),
+        ],
+        tracks: [
+          TimelineTrack(
+            trackId: 'front',
+            name: '앞',
+            order: 1,
+            clips: [
+              TimelineClip(
+                clipId: '3065',
+                trackId: 'front',
+                kind: TimelineClipKind.video,
+                startNs: '0',
+                endNs: '40000000000',
+                assetId: '11',
+                fileName: 'depth_front_view.mp4',
+                playbackUrl: frontUrl,
+                description: '',
+                showsToolBadge: false,
+              ),
+            ],
+          ),
+          TimelineTrack(
+            trackId: 'back',
+            name: '뒤',
+            order: 2,
+            clips: [
+              TimelineClip(
+                clipId: '9764',
+                trackId: 'back',
+                kind: TimelineClipKind.video,
+                startNs: '0',
+                endNs: '40000000000',
+                assetId: '12',
+                fileName: 'depth_back_color.mp4',
+                playbackUrl: targetUrl,
+                description: '',
+                showsToolBadge: false,
+              ),
+            ],
+          ),
+          const TimelineTrack(
+            trackId: 'pose',
+            name: '포즈',
+            order: 3,
+            clips: [
+              TimelineClip(
+                clipId: '17364',
+                trackId: 'pose',
+                kind: TimelineClipKind.pose,
+                startNs: '0',
+                endNs: '40000000000',
+                assetId: '30',
+                fileName: 'run204.json',
+                playbackUrl: '',
+                description: '',
+                showsToolBadge: true,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    repository.contentByUrl[poseUrl] = _poseBody(time: 1);
+    repository.clipDetailsById['17364'] = const ClipDetail(
+      clipId: '17364',
+      fields: [],
+      hasAsset: true,
+      isPose: true,
+      timelineStartNs: '0',
+      timelineEndNs: '40000000000',
+      sourceStartNs: '0',
+      sourceEndNs: '40000000000',
+      assetId: '30',
+      assetContentUrl: poseUrl,
+      targetKind: ClipTargetKind.clip,
+      targetId: '9764',
+      hasTargetClip: true,
+      targetClipId: '9764',
+      targetClipKind: 'VIDEO',
+      targetTimelineStartNs: '0',
+      targetTimelineEndNs: '40000000000',
+      hasTargetAsset: true,
+      targetAssetId: '12',
+      targetAssetFileName: 'depth_back_color.mp4',
+      targetAssetContentUrl: targetUrl,
+    );
+    final viewModel = _viewModel(repository);
+    await viewModel.loadAttachments();
+
+    expect(viewModel.activeVideoBar?.attachmentId, '3065');
+    expect(viewModel.activeVideoOverlayFrames, isEmpty);
+
+    viewModel.didSelectSampleClip('17364');
+    await Future<void>.delayed(Duration.zero);
+
+    expect(viewModel.activeVideoBar?.attachmentId, '9764');
+    expect(viewModel.activeVideoBar?.mediaUrl, targetUrl);
+    expect(viewModel.activeVideoOverlayFrames, hasLength(1));
+  });
 }
 
 Widget _board(VideoMultimodalViewModel viewModel) {

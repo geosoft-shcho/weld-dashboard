@@ -352,27 +352,21 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   List<VideoOverlayFrame> get activeVideoOverlayFrames {
     final video = activeVideoBar;
-    if (video == null) {
-      return const [];
-    }
-    final selected = _timelineClip(_selectedClipId);
+    final playback = _playbackVideoClip;
     final poseOverlay = _selectedPoseOverlay;
-    if (selected?.kind == TimelineClipKind.pose) {
-      if (poseOverlay == null) {
-        return const [];
-      }
-      return framesOnVideo(
-        videoStartSeconds: video.startSeconds,
-        videoEndSeconds: video.endSeconds,
-        overlays: [poseOverlay],
-        framesByAssetId: {poseOverlay.assetId: _selectedPoseFrames},
-      );
+    final selected = _timelineClip(_selectedClipId);
+    if (video == null ||
+        playback == null ||
+        poseOverlay == null ||
+        selected?.kind != TimelineClipKind.pose ||
+        video.attachmentId != playback.clipId) {
+      return const [];
     }
     return framesOnVideo(
       videoStartSeconds: video.startSeconds,
       videoEndSeconds: video.endSeconds,
-      overlays: _timeline.overlays,
-      framesByAssetId: _framesByAssetId,
+      overlays: [poseOverlay],
+      framesByAssetId: {poseOverlay.assetId: _selectedPoseFrames},
     );
   }
 
