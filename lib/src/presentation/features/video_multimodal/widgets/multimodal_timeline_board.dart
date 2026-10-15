@@ -393,7 +393,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                 onPressed: canEditTrack ? _confirmDeleteTrack : null,
               ),
             ),
-            _statusMenu(),
+            // 임시 메뉴 비활성화
+            // _statusMenu(),
           ],
         ),
       ),
