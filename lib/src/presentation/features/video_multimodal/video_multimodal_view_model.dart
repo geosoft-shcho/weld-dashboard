@@ -175,6 +175,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const double DEFAULT_TIMELESS_CLIP_SECONDS = 5;
   static const String ASSET_DRAG_PREFIX = 'asset:';
   static const String RELATION_TRACK_NAME = '관계';
+  static const String LIKE_TRACK_NAME = '좋아요';
+  static const String DISLIKE_TRACK_NAME = '싫어요';
+  static const String COMMENT_TRACK_NAME = '코멘트';
 
   final ListHistoryWorkAttachmentsUseCase _listHistoryWorkAttachmentsUseCase;
   final GetJobTimelineUseCase _getJobTimelineUseCase;
@@ -1297,6 +1300,151 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _wantsPlayback = true;
     _playbackToken += 1;
     notifyListeners();
+  }
+
+  Future<bool> didLikeCitation(AskCitation citation) {
+    return _saveCitationFeedback(
+      citation: citation,
+      trackName: LIKE_TRACK_NAME,
+      description: _citationFeedbackText(citation, LIKE_TRACK_NAME),
+    );
+  }
+
+  Future<bool> didDislikeCitation(AskCitation citation) {
+    return _saveCitationFeedback(
+      citation: citation,
+      trackName: DISLIKE_TRACK_NAME,
+      description: _citationFeedbackText(citation, DISLIKE_TRACK_NAME),
+    );
+  }
+
+  Future<bool> didCommentCitation(AskCitation citation, String comment) {
+    final text = comment.trim();
+    if (text.isEmpty) {
+      return Future.value(false);
+    }
+    return _saveCitationFeedback(
+      citation: citation,
+      trackName: COMMENT_TRACK_NAME,
+      description: text,
+    );
+  }
+
+  String _citationFeedbackText(AskCitation citation, String fallback) {
+    final text = citation.text.trim();
+    if (text.isEmpty) {
+      return fallback;
+    }
+    return text;
+  }
+
+  Future<bool> _saveCitationFeedback({
+    required AskCitation citation,
+    required String trackName,
+    required String description,
+  }) async {
+    final startNs = nanosecondsFromSeconds(citation.startSeconds);
+    final endNs = nanosecondsFromSeconds(citation.endSeconds);
+    if (!isOpenNanosecondInterval(startNs, endNs)) {
+      _timelineHint = '구간이 너무 짧습니다.';
+      notifyListeners();
+      return false;
+    }
+    final labelValueId = await _citationFeedbackLabelId(trackName);
+    if (labelValueId == null) {
+      return false;
+    }
+    final trackId = await _citationFeedbackTrackId(trackName);
+    if (trackId == null) {
+      return false;
+    }
+    return createTimelineClip(
+      trackId: trackId,
+      kind: TimelineClipKind.tag,
+      startNs: startNs,
+      endNs: endNs,
+      labelValueId: labelValueId,
+      description: description,
+    );
+  }
+
+  Future<String?> _citationFeedbackLabelId(String name) async {
+    final cached = _labelIdByName(name);
+    if (cached != null) {
+      return cached;
+    }
+    try {
+      final roots = await _labelUseCase.listLabels();
+      if (_isClosed) {
+        return null;
+      }
+      _labelRoots = roots;
+      final listed = _labelIdByName(name);
+      if (listed != null) {
+        return listed;
+      }
+      final node = await _labelUseCase.createValue(name: name);
+      if (_isClosed) {
+        return null;
+      }
+      _labelRoots = insertLabelNode(_labelRoots, node);
+      if (node.valueId.isEmpty) {
+        return null;
+      }
+      return node.valueId;
+    } on LabelException catch (error) {
+      if (_isClosed) {
+        return null;
+      }
+      _timelineHint = error.message;
+      notifyListeners();
+      return null;
+    } catch (error) {
+      if (_isClosed) {
+        return null;
+      }
+      _timelineHint = error.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
+  String? _labelIdByName(String name) {
+    return _labelIdIn(_labelRoots, name);
+  }
+
+  String? _labelIdIn(List<LabelNode> nodes, String name) {
+    for (final node in nodes) {
+      if (node.name.trim() == name && node.valueId.isNotEmpty) {
+        return node.valueId;
+      }
+      final child = _labelIdIn(node.children, name);
+      if (child != null) {
+        return child;
+      }
+    }
+    return null;
+  }
+
+  Future<String?> _citationFeedbackTrackId(String name) async {
+    final existing = _trackIdByName(name);
+    if (existing != null) {
+      return existing;
+    }
+    final didCreate = await createTimelineTrack(name: name);
+    if (!didCreate) {
+      return null;
+    }
+    return _trackIdByName(name);
+  }
+
+  String? _trackIdByName(String name) {
+    for (final track in _timeline.tracks) {
+      if (track.name.trim() == name && track.trackId.isNotEmpty) {
+        return track.trackId;
+      }
+    }
+    return null;
   }
 
   void _logCitationClipMatch(AskCitation citation) {

@@ -325,6 +325,81 @@ void main() {
     expect(button.height, field.height);
   });
 
+  test('a citation like reuses one track and one label', () async {
+    final timeline = _RecordingTimeline(
+      const JobTimeline(jobId: '128', name: '작업', tracks: []),
+    );
+    final labels = _RecordingLabels();
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timelineRepository: timeline,
+      labelRepository: labels,
+    );
+    const citation = AskCitation(
+      startSeconds: 15.52,
+      endSeconds: 23.44,
+      text: '용접 장면',
+    );
+    viewModel.didSelectLabelValue('7');
+
+    expect(await viewModel.didLikeCitation(citation), isTrue);
+    expect(await viewModel.didLikeCitation(citation), isTrue);
+
+    expect(labels.created, ['좋아요']);
+    expect(timeline.trackNames, ['좋아요']);
+    expect(timeline.clips, hasLength(2));
+    expect(timeline.clips.first.kind, TimelineClipKind.tag);
+    expect(timeline.clips.first.labelValueId, 'label-1');
+    expect(timeline.clips.first.description, '용접 장면');
+    expect(timeline.clips.first.startNs, isNot(timeline.clips.first.endNs));
+  });
+
+  test('a citation like uses an existing label of the same name', () async {
+    final timeline = _RecordingTimeline(
+      const JobTimeline(jobId: '128', name: '작업', tracks: []),
+    );
+    final labels = _RecordingLabels(const [
+      LabelNode(valueId: '9', name: '좋아요'),
+    ]);
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timelineRepository: timeline,
+      labelRepository: labels,
+    );
+
+    expect(
+      await viewModel.didLikeCitation(
+        const AskCitation(startSeconds: 1, endSeconds: 2, text: '용접'),
+      ),
+      isTrue,
+    );
+    expect(labels.created, isEmpty);
+    expect(timeline.clips.single.labelValueId, '9');
+  });
+
+  test('an empty citation comment does not create a clip', () async {
+    final timeline = _RecordingTimeline(
+      const JobTimeline(jobId: '128', name: '작업', tracks: []),
+    );
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timelineRepository: timeline,
+    );
+
+    expect(
+      await viewModel.didCommentCitation(
+        const AskCitation(startSeconds: 1, endSeconds: 2),
+        '   ',
+      ),
+      isFalse,
+    );
+    expect(timeline.trackNames, isEmpty);
+    expect(timeline.clips, isEmpty);
+  });
+
   test('an object row outside the list scrolls to that row', () {
     expect(
       revealOffsetForObjectRow(
@@ -383,28 +458,28 @@ VideoMultimodalViewModel _viewModel(
   _ScriptedAsk asks, {
   required String projectId,
   JobTimeline timeline = JobTimeline.empty,
+  JobTimelineRepository? timelineRepository,
+  LabelRepository? labelRepository,
 }) {
-  final timelineRepository = _IdleTimeline(timeline);
+  final repository = timelineRepository ?? _IdleTimeline(timeline);
   final workDetail = _ProjectWorkDetail(projectId);
   return VideoMultimodalViewModel(
     listHistoryWorkAttachmentsUseCase: ListHistoryWorkAttachmentsUseCase(
       workDetail,
     ),
-    getJobTimelineUseCase: GetJobTimelineUseCase(timelineRepository),
-    getClipUseCase: GetClipUseCase(timelineRepository),
-    createTrackUseCase: CreateTrackUseCase(timelineRepository),
-    updateTrackUseCase: UpdateTrackUseCase(timelineRepository),
-    deleteTrackUseCase: DeleteTrackUseCase(timelineRepository),
-    createClipUseCase: CreateClipUseCase(timelineRepository),
-    updateClipUseCase: UpdateClipUseCase(timelineRepository),
-    deleteClipUseCase: DeleteClipUseCase(timelineRepository),
-    changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(
-      timelineRepository,
-    ),
-    updateTimelineUseCase: UpdateTimelineUseCase(timelineRepository),
-    deleteTimelineUseCase: DeleteTimelineUseCase(timelineRepository),
+    getJobTimelineUseCase: GetJobTimelineUseCase(repository),
+    getClipUseCase: GetClipUseCase(repository),
+    createTrackUseCase: CreateTrackUseCase(repository),
+    updateTrackUseCase: UpdateTrackUseCase(repository),
+    deleteTrackUseCase: DeleteTrackUseCase(repository),
+    createClipUseCase: CreateClipUseCase(repository),
+    updateClipUseCase: UpdateClipUseCase(repository),
+    deleteClipUseCase: DeleteClipUseCase(repository),
+    changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(repository),
+    updateTimelineUseCase: UpdateTimelineUseCase(repository),
+    deleteTimelineUseCase: DeleteTimelineUseCase(repository),
     toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
-    labelUseCase: LabelUseCase(_IdleLabelRepository()),
+    labelUseCase: LabelUseCase(labelRepository ?? _IdleLabelRepository()),
     askQuestionUseCase: AskQuestionUseCase(asks),
     loadJobProjectIdUseCase: LoadJobProjectIdUseCase(workDetail),
     jobId: '128',
@@ -541,6 +616,130 @@ class _IdleTimeline implements JobTimelineRepository {
   @override
   Future<String> readContent({required String url}) async {
     return '';
+  }
+}
+
+class _SavedClip {
+  const _SavedClip({
+    required this.trackId,
+    required this.kind,
+    required this.labelValueId,
+    required this.startNs,
+    required this.endNs,
+    required this.description,
+  });
+
+  final String trackId;
+  final TimelineClipKind kind;
+  final String labelValueId;
+  final String startNs;
+  final String endNs;
+  final String description;
+}
+
+class _RecordingTimeline extends _IdleTimeline {
+  _RecordingTimeline(JobTimeline timeline) : super(timeline) {
+    current = timeline;
+  }
+
+  late JobTimeline current;
+  final trackNames = <String>[];
+  final clips = <_SavedClip>[];
+
+  @override
+  Future<JobTimeline> getTimeline({required String jobId}) async {
+    return current;
+  }
+
+  @override
+  Future<void> createTrack({
+    required String jobId,
+    required String name,
+    int? order,
+    bool? isVisible,
+  }) async {
+    trackNames.add(name);
+    current = JobTimeline(
+      jobId: current.jobId,
+      name: current.name,
+      tracks: [
+        ...current.tracks,
+        TimelineTrack(
+          trackId: 'track-${trackNames.length}',
+          name: name,
+          order: current.tracks.length,
+          clips: const [],
+        ),
+      ],
+    );
+  }
+
+  @override
+  Future<void> createClip({
+    required String trackId,
+    required TimelineClipKind kind,
+    required String startNs,
+    required String endNs,
+    String assetId = '',
+    String labelValueId = '',
+    String description = '',
+    String fromClipId = '',
+    String toClipId = '',
+    String sourceStartNs = '',
+    String sourceEndNs = '',
+  }) async {
+    clips.add(
+      _SavedClip(
+        trackId: trackId,
+        kind: kind,
+        labelValueId: labelValueId,
+        startNs: startNs,
+        endNs: endNs,
+        description: description,
+      ),
+    );
+  }
+}
+
+class _RecordingLabels implements LabelRepository {
+  _RecordingLabels([List<LabelNode> nodes = const []]) {
+    this.nodes.addAll(nodes);
+  }
+
+  final nodes = <LabelNode>[];
+  final created = <String>[];
+
+  @override
+  Future<List<LabelNode>> listLabels() async {
+    return List.of(nodes);
+  }
+
+  @override
+  Future<LabelNode> createValue({
+    required String name,
+    String parentValueId = '',
+  }) async {
+    created.add(name);
+    final node = LabelNode(
+      valueId: 'label-${created.length}',
+      name: name,
+      parentValueId: parentValueId,
+    );
+    nodes.add(node);
+    return node;
+  }
+
+  @override
+  Future<LabelNode> renameValue({
+    required String valueId,
+    required String name,
+  }) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<void> deprecateValue({required String valueId}) {
+    throw StateError('unused');
   }
 }
 
