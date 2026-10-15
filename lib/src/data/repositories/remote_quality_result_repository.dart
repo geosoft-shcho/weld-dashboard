@@ -64,9 +64,16 @@ class RemoteQualityResultRepository implements QualityResultRepository {
 
   QualityJointRow _jointFrom(report_pb.JointQuality joint) {
     final hasUt = joint.hasUt();
+    final jobIds = <String>[];
+    for (final jobId in joint.jobIds) {
+      final text = idText(jobId);
+      if (text.isNotEmpty) {
+        jobIds.add(text);
+      }
+    }
     return QualityJointRow(
       jointNo: joint.jointNo,
-      jobIds: List<String>.from(joint.jobIds),
+      jobIds: jobIds,
       hasUt: hasUt,
       utIndication: hasUt ? joint.ut.indication : '',
       utResult: hasUt ? joint.ut.result : '',
