@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 
 import '../../../core/di/locator.dart';
 import '../camera_recording_view_model.dart';
+import 'vector_db_saved_dialog.dart';
 
 class CameraRecordingOverlay extends StatelessWidget {
   const CameraRecordingOverlay({
@@ -11,6 +12,7 @@ class CameraRecordingOverlay extends StatelessWidget {
     required this.jobId,
     required this.onUploaded,
     required this.onRecordingPlaced,
+    this.onUploadCompleted,
     required this.onClose,
     required this.isMinimized,
     required this.onMove,
@@ -24,6 +26,7 @@ class CameraRecordingOverlay extends StatelessWidget {
   final Future<void> Function() onUploaded;
   final Future<void> Function({required String assetId, required bool isVideo})
   onRecordingPlaced;
+  final Future<void> Function()? onUploadCompleted;
   final VoidCallback onClose;
   final bool isMinimized;
   final void Function(double dx, double dy) onMove;
@@ -37,6 +40,7 @@ class CameraRecordingOverlay extends StatelessWidget {
           jobId: jobId,
           onUploaded: onUploaded,
           onRecordingPlaced: onRecordingPlaced,
+          onUploadCompleted: onUploadCompleted,
         ),
       )..prepare(),
       child: _CameraRecordingCard(
@@ -45,6 +49,88 @@ class CameraRecordingOverlay extends StatelessWidget {
         onMove: onMove,
         onToggleMinimized: onToggleMinimized,
       ),
+    );
+  }
+}
+
+class CameraRecordingScope extends StatefulWidget {
+  const CameraRecordingScope({
+    super.key,
+    required this.jobId,
+    required this.builder,
+  });
+
+  final String jobId;
+  final Widget Function(BuildContext context, Widget recordButton) builder;
+
+  @override
+  State<CameraRecordingScope> createState() => _CameraRecordingScopeState();
+}
+
+class _CameraRecordingScopeState extends State<CameraRecordingScope> {
+  static const double _START_X = 24;
+  static const double _START_Y = 24;
+
+  bool _isOpen = false;
+  bool _isMinimized = false;
+  double _offsetX = _START_X;
+  double _offsetY = _START_Y;
+
+  void _open() {
+    setState(() {
+      _isOpen = true;
+      _isMinimized = false;
+    });
+  }
+
+  Future<void> _showVectorSaved() async {
+    if (!mounted) {
+      return;
+    }
+    await showVectorDbSavedDialog(context, changedTrackCount: 1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        widget.builder(
+          context,
+          Button(
+            onPressed: _isOpen ? null : _open,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(FluentIcons.video, size: 16),
+                SizedBox(width: 8),
+                Text('녹화'),
+              ],
+            ),
+          ),
+        ),
+        if (_isOpen)
+          Positioned(
+            left: _offsetX,
+            top: _offsetY,
+            child: CameraRecordingOverlay(
+              jobId: widget.jobId,
+              onUploaded: () async {},
+              onRecordingPlaced:
+                  ({required String assetId, required bool isVideo}) async {},
+              onUploadCompleted: _showVectorSaved,
+              onClose: () => setState(() => _isOpen = false),
+              isMinimized: _isMinimized,
+              onMove: (dx, dy) {
+                setState(() {
+                  _offsetX = (_offsetX + dx).clamp(0, 1200);
+                  _offsetY = (_offsetY + dy).clamp(0, 800);
+                });
+              },
+              onToggleMinimized: () =>
+                  setState(() => _isMinimized = !_isMinimized),
+            ),
+          ),
+      ],
     );
   }
 }

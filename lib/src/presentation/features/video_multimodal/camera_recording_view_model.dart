@@ -23,12 +23,14 @@ class CameraRecordingArgs {
     required this.jobId,
     required this.onUploaded,
     required this.onRecordingPlaced,
+    this.onUploadCompleted,
   });
 
   final String jobId;
   final Future<void> Function() onUploaded;
   final Future<void> Function({required String assetId, required bool isVideo})
   onRecordingPlaced;
+  final Future<void> Function()? onUploadCompleted;
 }
 
 class CameraRecordingViewModel extends ChangeNotifier {
@@ -44,6 +46,7 @@ class CameraRecordingViewModel extends ChangeNotifier {
     required this.jobId,
     required this.onUploaded,
     required this.onRecordingPlaced,
+    this.onUploadCompleted,
   });
 
   final PrepareCameraRecordingUseCase _prepareCameraRecordingUseCase;
@@ -58,6 +61,7 @@ class CameraRecordingViewModel extends ChangeNotifier {
   final Future<void> Function() onUploaded;
   final Future<void> Function({required String assetId, required bool isVideo})
   onRecordingPlaced;
+  final Future<void> Function()? onUploadCompleted;
 
   CameraRecordingPhase phase = CameraRecordingPhase.preparing;
   String noticeText = '';
@@ -233,7 +237,8 @@ class CameraRecordingViewModel extends ChangeNotifier {
       return;
     }
     final details = [...errors, ...warnings];
-    if (errors.isEmpty && videoUploaded && audioUploaded) {
+    final didFinish = errors.isEmpty && videoUploaded && audioUploaded;
+    if (didFinish) {
       noticeText = ['영상과 음성 업로드가 완료되었습니다.', ...warnings].join(' ');
       isNoticeError = false;
     } else {
@@ -241,6 +246,9 @@ class CameraRecordingViewModel extends ChangeNotifier {
       isNoticeError = errors.isNotEmpty;
     }
     _publish();
+    if (didFinish && !_isDisposed) {
+      await onUploadCompleted?.call();
+    }
   }
 
   Future<String?> _uploadFile({

@@ -11,6 +11,7 @@ import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/waveform_channel_charts.dart';
 import '../../navigation/app_coordinator.dart';
+import '../video_multimodal/widgets/camera_recording_dialog.dart';
 import 'pass_profile_args.dart';
 import 'pass_profile_view_model.dart';
 import 'widgets/pass_compare_summary.dart';
@@ -161,23 +162,28 @@ class _PassProfileReady extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: const [
-        // Text(
-        //   '전류·전압·속도 파형 시계열, 명장 · 작업자 · 로봇 중첩 비교',
-        //   style: TextStyle(color: AppTheme.STATUS_OFF),
-        // ),
-        // SizedBox(height: 12),
-        _PassContextSection(),
-        SizedBox(height: 12),
-        _PassTabsSection(),
-        SizedBox(height: 12),
-        _NormalizeCombo(),
-        SizedBox(height: 12),
-        _PassLegendSection(),
-        SizedBox(height: 8),
-        _PassChartPane(),
-      ],
+    final jobId = context.select<PassProfileViewModel, String>(
+      (viewModel) => viewModel.jobId,
+    );
+    return CameraRecordingScope(
+      jobId: jobId,
+      builder: (context, recordButton) {
+        return ListView(
+          children: [
+            Align(alignment: Alignment.centerRight, child: recordButton),
+            const SizedBox(height: 12),
+            const _PassContextSection(),
+            const SizedBox(height: 12),
+            const _PassTabsSection(),
+            const SizedBox(height: 12),
+            const _NormalizeCombo(),
+            const SizedBox(height: 12),
+            const _PassLegendSection(),
+            const SizedBox(height: 8),
+            const _PassChartPane(),
+          ],
+        );
+      },
     );
   }
 }

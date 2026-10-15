@@ -13,6 +13,7 @@ import '../../navigation/app_coordinator.dart';
 import '../pass_profile/widgets/pass_context_bar.dart';
 import '../pass_profile/widgets/pass_legend_toolbar.dart';
 import '../pass_profile/widgets/pass_tabs_bar.dart';
+import '../video_multimodal/widgets/camera_recording_dialog.dart';
 import 'quality_issue_args.dart';
 import 'quality_issue_view_model.dart';
 import 'widgets/quality_results_tables.dart';
@@ -180,27 +181,32 @@ class _QualityIssueReady extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: const [
-        // Text(
-        //   '페이퍼 기반 품질 결과와 해당 구간 용접 파형 연결 조회',
-        //   style: TextStyle(color: AppTheme.STATUS_OFF),
-        // ),
-        // SizedBox(height: 12),
-        _QualityContextSection(),
-        SizedBox(height: 12),
-        _QualityTabsSection(),
-        SizedBox(height: 12),
-        _QualityComparisonJob(),
-        SizedBox(height: 12),
-        _QualityLegendSection(),
-        SizedBox(height: 12),
-        _QualityContentProgress(),
-        _QualityContentError(),
-        _QualityMediaAndCharts(),
-        SizedBox(height: 16),
-        _QualityResultsSection(),
-      ],
+    final jobId = context.select<QualityIssueViewModel, String>(
+      (viewModel) => viewModel.jobId,
+    );
+    return CameraRecordingScope(
+      jobId: jobId,
+      builder: (context, recordButton) {
+        return ListView(
+          children: [
+            Align(alignment: Alignment.centerRight, child: recordButton),
+            const SizedBox(height: 12),
+            const _QualityContextSection(),
+            const SizedBox(height: 12),
+            const _QualityTabsSection(),
+            const SizedBox(height: 12),
+            const _QualityComparisonJob(),
+            const SizedBox(height: 12),
+            const _QualityLegendSection(),
+            const SizedBox(height: 12),
+            const _QualityContentProgress(),
+            const _QualityContentError(),
+            const _QualityMediaAndCharts(),
+            const SizedBox(height: 16),
+            const _QualityResultsSection(),
+          ],
+        );
+      },
     );
   }
 }
