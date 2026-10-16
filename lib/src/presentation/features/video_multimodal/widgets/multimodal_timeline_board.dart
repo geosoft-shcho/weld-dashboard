@@ -20,8 +20,9 @@ class MultimodalTimelineBoard extends StatefulWidget {
 
 class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   static const double _RULER_HEIGHT = 22;
+  static const double _EDIT_TOOL_HEIGHT = 28;
   final ScrollController _scrollController = ScrollController();
-  final ScrollController _objectScrollController = ScrollController();
+  final ScrollController _trackLabelScrollController = ScrollController();
   final ScrollController _trackScrollController = ScrollController();
   final TextEditingController _newTrackNameController = TextEditingController();
   final TextEditingController _trackNameController = TextEditingController();
@@ -39,8 +40,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     super.initState();
     _trackedPlayhead = widget.viewModel.playheadSeconds;
     _trackedClipId = widget.viewModel.selectedClipId;
-    _objectScrollController.addListener(_syncTrackRowsToObjects);
-    _trackScrollController.addListener(_syncObjectRowsToTracks);
+    _trackLabelScrollController.addListener(_syncTrackLanesFromLabels);
+    _trackScrollController.addListener(_syncTrackLabelsFromLanes);
     _syncSelectedTrackName();
   }
 
@@ -55,7 +56,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     if (clipChanged && viewModel.selectedClipId.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) {
-          _revealSelectedObjectRow();
+          _revealSelectedTrackLabel();
         }
       });
     }
@@ -67,24 +68,24 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   @override
   void dispose() {
-    _objectScrollController.removeListener(_syncTrackRowsToObjects);
-    _trackScrollController.removeListener(_syncObjectRowsToTracks);
+    _trackLabelScrollController.removeListener(_syncTrackLanesFromLabels);
+    _trackScrollController.removeListener(_syncTrackLabelsFromLanes);
     _newTrackNameController.dispose();
     _trackNameController.dispose();
     _scrollController.dispose();
-    _objectScrollController.dispose();
+    _trackLabelScrollController.dispose();
     _trackScrollController.dispose();
     super.dispose();
   }
 
   bool _isSyncingRowScroll = false;
 
-  void _syncTrackRowsToObjects() {
-    _alignRowScroll(_objectScrollController, _trackScrollController);
+  void _syncTrackLanesFromLabels() {
+    _alignRowScroll(_trackLabelScrollController, _trackScrollController);
   }
 
-  void _syncObjectRowsToTracks() {
-    _alignRowScroll(_trackScrollController, _objectScrollController);
+  void _syncTrackLabelsFromLanes() {
+    _alignRowScroll(_trackScrollController, _trackLabelScrollController);
   }
 
   void _alignRowScroll(ScrollController source, ScrollController target) {
@@ -202,8 +203,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     _scrollController.jumpTo(target);
   }
 
-  void _revealSelectedObjectRow() {
-    if (!_objectScrollController.hasClients) {
+  void _revealSelectedTrackLabel() {
+    if (!_trackLabelScrollController.hasClients) {
       return;
     }
     final rows = buildTimelineBoardRows(viewModel);
@@ -217,7 +218,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     for (var index = 0; index < rowIndex; index++) {
       rowTop += rows[index].height;
     }
-    final position = _objectScrollController.position;
+    final position = _trackLabelScrollController.position;
     final offset = revealOffsetForPlacedRow(
       rowTop: rowTop,
       rowExtent: rows[rowIndex].height,
@@ -228,7 +229,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     if (offset == null) {
       return;
     }
-    _objectScrollController.jumpTo(offset);
+    _trackLabelScrollController.jumpTo(offset);
   }
 
   double _secondsInBox(BuildContext dropContext, Offset global) {
@@ -301,7 +302,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _objects(rows),
+              _trackLabels(rows),
               Expanded(child: _tracks(rows)),
             ],
           ),
@@ -407,26 +408,30 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     required String hint,
     bool enabled = true,
   }) {
-    return SizedBox(
-      width: 128,
-      height: 28,
+    return Container(
+      width: 180,
+      height: _EDIT_TOOL_HEIGHT,
+      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: MultimodalStudioPalette.SAND_300),
+        borderRadius: BorderRadius.circular(3),
+      ),
       child: TextField(
         key: key,
         controller: controller,
         enabled: enabled,
-        style: const TextStyle(fontSize: 11),
+        cursorHeight: 14,
+        style: const TextStyle(fontSize: 11, height: 1.2),
         decoration: InputDecoration(
-          isDense: true,
+          isCollapsed: true,
+          border: InputBorder.none,
           hintText: hint,
           hintStyle: const TextStyle(
             fontSize: 11,
+            height: 1.2,
             color: MultimodalStudioPalette.SAND_600,
           ),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 6,
-            vertical: 6,
-          ),
-          border: const OutlineInputBorder(),
         ),
       ),
     );
@@ -495,29 +500,32 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     required VoidCallback? onPressed,
     bool selected = false,
   }) {
-    return TextButton(
-      onPressed: onPressed,
-      style: TextButton.styleFrom(
-        foregroundColor: selected
-            ? MultimodalStudioPalette.GRAPE_500
-            : MultimodalStudioPalette.SAND_900,
-        backgroundColor: selected
-            ? MultimodalStudioPalette.GRAPE_100
-            : Colors.transparent,
-        disabledForegroundColor: MultimodalStudioPalette.SAND_600,
-        side: BorderSide(
-          color: selected
+    return SizedBox(
+      height: _EDIT_TOOL_HEIGHT,
+      child: TextButton(
+        onPressed: onPressed,
+        style: TextButton.styleFrom(
+          foregroundColor: selected
               ? MultimodalStudioPalette.GRAPE_500
-              : MultimodalStudioPalette.SAND_300,
+              : MultimodalStudioPalette.SAND_900,
+          backgroundColor: selected
+              ? MultimodalStudioPalette.GRAPE_100
+              : Colors.transparent,
+          disabledForegroundColor: MultimodalStudioPalette.SAND_600,
+          side: BorderSide(
+            color: selected
+                ? MultimodalStudioPalette.GRAPE_500
+                : MultimodalStudioPalette.SAND_300,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          minimumSize: const Size(0, _EDIT_TOOL_HEIGHT),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          visualDensity: VisualDensity.compact,
+          textStyle: const TextStyle(fontSize: 11, height: 1.2),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
         ),
-        visualDensity: VisualDensity.compact,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        minimumSize: Size.zero,
-        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-        textStyle: const TextStyle(fontSize: 11),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
+        child: Text(label),
       ),
-      child: Text(label),
     );
   }
 
@@ -599,9 +607,43 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _objects(List<TimelineBoardRow> rows) {
+  static const TextStyle _TRACK_LABEL_STYLE = TextStyle(
+    fontSize: 11,
+    fontWeight: FontWeight.w500,
+  );
+  static const TextStyle _TRACK_IDENTITY_STYLE = TextStyle(
+    color: MultimodalStudioPalette.SAND_600,
+    fontSize: 9,
+  );
+  // 좌우 패딩 + 색 상자 + AI 배지 + clip id 여유
+  static const double _TRACK_LABEL_SIDE = 122;
+
+  double _labelTextWidth(String text) {
+    final painter = TextPainter(
+      text: TextSpan(text: text, style: _TRACK_LABEL_STYLE),
+      maxLines: 1,
+      textDirection: TextDirection.ltr,
+      textScaler: MediaQuery.textScalerOf(context),
+    )..layout();
+    final width = painter.width;
+    painter.dispose();
+    return width;
+  }
+
+  double _trackLabelsWidth(List<TimelineBoardRow> rows) {
+    var widest = _labelTextWidth('트랙 (${viewModel.timelineTracks.length})');
+    for (final row in rows) {
+      final width = _labelTextWidth(row.label);
+      if (width > widest) {
+        widest = width;
+      }
+    }
+    return widest + _TRACK_LABEL_SIDE;
+  }
+
+  Widget _trackLabels(List<TimelineBoardRow> rows) {
     return Container(
-      width: 200,
+      width: _trackLabelsWidth(rows),
       decoration: const BoxDecoration(
         color: MultimodalStudioPalette.SAND_200,
         border: Border(
@@ -611,15 +653,15 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(
+          SizedBox(
             height: 22,
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Objects & Tags',
-                  style: TextStyle(
+                  '트랙 (${viewModel.timelineTracks.length})',
+                  style: const TextStyle(
                     color: MultimodalStudioPalette.SAND_600,
                     fontSize: 11,
                   ),
@@ -629,11 +671,11 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           ),
           Expanded(
             child: SingleChildScrollView(
-              key: const Key('timeline-object-rows'),
-              controller: _objectScrollController,
+              key: const Key('timeline-track-labels'),
+              controller: _trackLabelScrollController,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [for (final row in rows) _objectRow(row)],
+                children: [for (final row in rows) _trackLabelRow(row)],
               ),
             ),
           ),
@@ -642,9 +684,9 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _objectRow(TimelineBoardRow row) {
+  Widget _trackLabelRow(TimelineBoardRow row) {
     if (row.clips.isEmpty) {
-      return _objectLabel(
+      return _trackLabel(
         row,
         swatch: MultimodalStudioPalette.SAND_200,
         border: MultimodalStudioPalette.SAND_900,
@@ -655,7 +697,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     final identity = row.clips.length == 1 ? row.clips.first.clipId : '';
     return GestureDetector(
       onTap: () => _selectClip(clip),
-      child: _objectLabel(
+      child: _trackLabel(
         row,
         swatch: clip.background,
         border: clip.border == Colors.transparent
@@ -667,7 +709,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _objectLabel(
+  Widget _trackLabel(
     TimelineBoardRow row, {
     required Color swatch,
     required Color border,
@@ -707,31 +749,25 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                 ),
               ),
             ),
-          Expanded(
-            child: Text(
-              row.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: row.labelColor,
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
+          Text(
+            row.label,
+            maxLines: 1,
+            softWrap: false,
+            style: _TRACK_LABEL_STYLE.copyWith(color: row.labelColor),
           ),
-          if (identity.isNotEmpty)
+          if (identity.isNotEmpty) ...[
+            const SizedBox(width: 4),
             Flexible(
               child: Text(
                 identity,
                 maxLines: 1,
+                softWrap: false,
                 overflow: TextOverflow.ellipsis,
                 textAlign: TextAlign.end,
-                style: const TextStyle(
-                  color: MultimodalStudioPalette.SAND_600,
-                  fontSize: 9,
-                ),
+                style: _TRACK_IDENTITY_STYLE,
               ),
             ),
+          ],
         ],
       ),
     );

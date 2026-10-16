@@ -879,7 +879,7 @@ void main() {
     expect(repository.lastCreatedClipKind, TimelineClipKind.video);
   });
 
-  testWidgets('row list scrolls under a fixed objects header', (tester) async {
+  testWidgets('row list scrolls under a fixed track labels header', (tester) async {
     final repository = _ScriptedTimelineRepository(_manyTrackTimeline());
     final viewModel = _viewModel(repository);
     await tester.runAsync(() => viewModel.loadAttachments());
@@ -888,18 +888,18 @@ void main() {
     await tester.pumpWidget(_board(viewModel));
     await tester.pump();
 
-    expect(find.text('Objects & Tags'), findsOneWidget);
-    final tagsBottom = tester.getRect(find.text('Objects & Tags')).bottom;
+    expect(find.text('트랙 (24)'), findsOneWidget);
+    final tagsBottom = tester.getRect(find.text('트랙 (24)')).bottom;
     final before = tester.getRect(find.text('트랙 0'));
     expect(before.top, greaterThan(tagsBottom));
 
     await tester.drag(
-      find.byKey(const Key('timeline-object-rows')),
+      find.byKey(const Key('timeline-track-labels')),
       const Offset(0, -420),
     );
     await tester.pump();
 
-    expect(find.text('Objects & Tags'), findsOneWidget);
+    expect(find.text('트랙 (24)'), findsOneWidget);
     final firstRow = tester.getRect(find.text('트랙 0'));
     expect(firstRow.bottom, lessThanOrEqualTo(tagsBottom));
     final trackClip = tester.getRect(find.text('file-0.mp4'));
