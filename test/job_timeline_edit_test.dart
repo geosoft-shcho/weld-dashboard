@@ -907,7 +907,7 @@ void main() {
   });
 
   testWidgets(
-    'ruler seeks at 50 pixels per minute before and after scrolling',
+    'ruler seeks at 600 pixels per minute before and after scrolling',
     (tester) async {
       final viewModel = _viewModel(
         _ScriptedTimelineRepository(
@@ -924,23 +924,23 @@ void main() {
         (widget) =>
             widget is CustomPaint && widget.painter is TimelineRulerPainter,
       );
-      expect(viewModel.pixelsPerSecond * 60, 50);
-      expect(viewModel.pixelsPerSecond * 300, 250);
-      expect(viewModel.pixelsPerSecond * 400, closeTo(333.3333, 0.001));
-      await tester.tapAt(tester.getTopLeft(ruler) + const Offset(50, 5));
+      expect(viewModel.pixelsPerSecond * 60, 600);
+      expect(viewModel.pixelsPerSecond * 300, 3000);
+      expect(viewModel.pixelsPerSecond * 400, 4000);
+      await tester.tapAt(tester.getTopLeft(ruler) + const Offset(400, 5));
       await tester.pump();
-      expect(viewModel.playheadSeconds, closeTo(60, 0.001));
+      expect(viewModel.playheadSeconds, closeTo(40, 0.001));
 
       final scroll = tester.widget<SingleChildScrollView>(
         find
             .ancestor(of: ruler, matching: find.byType(SingleChildScrollView))
             .first,
       );
-      scroll.controller!.jumpTo(100);
+      scroll.controller!.jumpTo(600);
       await tester.pump();
-      await tester.tapAt(tester.getTopLeft(ruler) + const Offset(150, 5));
+      await tester.tapAt(tester.getTopLeft(ruler) + const Offset(1000, 5));
       await tester.pump();
-      expect(viewModel.playheadSeconds, closeTo(180, 0.001));
+      expect(viewModel.playheadSeconds, closeTo(100, 0.001));
     },
   );
 

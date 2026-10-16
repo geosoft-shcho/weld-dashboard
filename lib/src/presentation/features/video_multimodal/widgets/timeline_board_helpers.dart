@@ -334,7 +334,7 @@ String formatTimelineTimecode(double seconds) {
   ].map((part) => part.toString().padLeft(2, '0')).join(':');
 }
 
-/// 시간 눈금
+/// 시간 눈금. 1초마다 작은 눈금, 1분마다 큰 눈금과 시각 숫자.
 class TimelineRulerPainter extends CustomPainter {
   const TimelineRulerPainter({
     required this.spanSeconds,
@@ -343,8 +343,10 @@ class TimelineRulerPainter extends CustomPainter {
 
   final double spanSeconds;
   final double pixelsPerSecond;
-  static const int TICK_SECONDS = 60;
-  static const int LABEL_SECONDS = 300;
+
+  static const int MINUTE_SECONDS = 60;
+  static const double MINOR_TICK_TOP = 16;
+  static const double MAJOR_TICK_TOP = 8;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -352,31 +354,40 @@ class TimelineRulerPainter extends CustomPainter {
       Offset.zero & size,
       Paint()..color = MultimodalStudioPalette.SAND_0,
     );
-    final line = Paint()
-      ..color = MultimodalStudioPalette.SAND_200
+    final minor = Paint()
+      ..color = MultimodalStudioPalette.SAND_300
       ..strokeWidth = 1;
-    final steps = (spanSeconds / TICK_SECONDS).floor();
-    for (var index = 0; index <= steps; index++) {
-      final second = index * TICK_SECONDS;
+    final major = Paint()
+      ..color = MultimodalStudioPalette.SAND_600
+      ..strokeWidth = 1;
+
+    for (var second = 0; second <= spanSeconds.floor(); second++) {
       final x = second * pixelsPerSecond;
-      canvas.drawLine(Offset(x, 12), Offset(x, size.height), line);
-      if (second % LABEL_SECONDS != 0) {
-        continue;
+      final isMinute = second % MINUTE_SECONDS == 0;
+      canvas.drawLine(
+        Offset(x, isMinute ? MAJOR_TICK_TOP : MINOR_TICK_TOP),
+        Offset(x, size.height),
+        isMinute ? major : minor,
+      );
+      if (isMinute) {
+        _paintLabel(canvas, x, second.toDouble());
       }
-      final label = formatTimelineTimecode(second.toDouble());
-      final painter = TextPainter(
-        text: TextSpan(
-          text: label,
-          style: const TextStyle(
-            color: MultimodalStudioPalette.SAND_600,
-            fontSize: 10,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      painter.paint(canvas, Offset(x + 3, 0));
-      painter.dispose();
     }
+  }
+
+  void _paintLabel(Canvas canvas, double x, double second) {
+    final painter = TextPainter(
+      text: TextSpan(
+        text: formatTimelineTimecode(second),
+        style: const TextStyle(
+          color: MultimodalStudioPalette.SAND_600,
+          fontSize: 10,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    painter.paint(canvas, Offset(x + 3, 0));
+    painter.dispose();
   }
 
   @override

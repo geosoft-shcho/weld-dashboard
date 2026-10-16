@@ -166,7 +166,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   static const double MIN_TIMELINE_HEIGHT = 320;
   static const double SIDE_WIDTH = 320;
-  static const double DEFAULT_PIXELS_PER_SECOND = 50 / 60;
+  static const double DEFAULT_PIXELS_PER_SECOND = 10;
   static const double EMPTY_SPAN_SECONDS = 60;
   static const double PROVISIONAL_BAR_SECONDS = 10;
   static const double MIN_TRACK_WIDTH = 640;
