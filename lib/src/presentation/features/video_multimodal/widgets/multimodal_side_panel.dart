@@ -829,12 +829,14 @@ class _AskBodyState extends State<_AskBody> {
     final playheadSeconds = viewModel.playheadSeconds;
     return _PanelFrame(
       head: _PanelHead(title: '영상 질의', onClose: widget.onClose),
-      body: turns.isEmpty
+      body: viewModel.isLoadingAskHistory
+          ? const _AskHistoryLoading()
+          : turns.isEmpty
           ? const Center(
               child: Padding(
                 padding: EdgeInsets.all(20),
                 child: Text(
-                  'STT 전사를 바탕으로 영상 구간을 질문해 보세요.\n예: 용접 장면',
+                  '영상을 바탕으로 질문해 보세요.\n예: 용접 장면',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: MultimodalStudioPalette.PANEL_MUTED,
@@ -917,34 +919,127 @@ class _AskMessage extends StatelessWidget {
             : MultimodalStudioPalette.PANEL_PAPER,
         border: Border.all(color: MultimodalStudioPalette.PANEL_LINE),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            turn.text,
-            style: const TextStyle(
-              fontSize: 13,
-              height: 1.45,
-              color: MultimodalStudioPalette.PANEL_INK,
-            ),
-          ),
-          for (var index = 0; index < turn.citations.length; index++)
-            _AskCitationCard(
-              index: index,
-              citation: turn.citations[index],
-              isSelected: _isCitationAtPlayhead(
-                playheadSeconds,
-                turn.citations[index],
+      child: turn.isUser
+          ? Text(
+              turn.text,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.45,
+                color: MultimodalStudioPalette.PANEL_INK,
               ),
-              viewModel: viewModel,
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _AskAnswerBody(text: turn.text),
+                if (turn.citations.isNotEmpty)
+                  _AskCitationsBlock(
+                    citations: turn.citations,
+                    playheadSeconds: playheadSeconds,
+                    viewModel: viewModel,
+                  ),
+              ],
             ),
-        ],
-      ),
     );
     if (turn.isUser) {
       return Align(alignment: Alignment.centerRight, child: bubble);
     }
     return SizedBox(width: double.infinity, child: bubble);
+  }
+}
+
+class _AskAnswerBody extends StatelessWidget {
+  const _AskAnswerBody({required this.text});
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: MultimodalStudioPalette.PANEL_ACCENT_FILL,
+        border: Border.all(color: MultimodalStudioPalette.PANEL_LINE),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              '답변',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: MultimodalStudioPalette.PANEL_MUTED,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              text,
+              style: const TextStyle(
+                fontSize: 13,
+                height: 1.45,
+                color: MultimodalStudioPalette.PANEL_INK,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AskCitationsBlock extends StatelessWidget {
+  const _AskCitationsBlock({
+    required this.citations,
+    required this.playheadSeconds,
+    required this.viewModel,
+  });
+
+  final List<AskCitation> citations;
+  final double playheadSeconds;
+  final VideoMultimodalViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: MultimodalStudioPalette.PANEL_PAGE,
+          border: Border.all(color: MultimodalStudioPalette.PANEL_LINE),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                '근거',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: MultimodalStudioPalette.PANEL_MUTED,
+                ),
+              ),
+              const SizedBox(height: 6),
+              for (var index = 0; index < citations.length; index++) ...[
+                if (index > 0) const SizedBox(height: 6),
+                _AskCitationCard(
+                  index: index,
+                  citation: citations[index],
+                  isSelected: _isCitationAtPlayhead(
+                    playheadSeconds,
+                    citations[index],
+                  ),
+                  viewModel: viewModel,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 
@@ -987,66 +1082,63 @@ class _AskCitationCardState extends State<_AskCitationCard> {
   @override
   Widget build(BuildContext context) {
     final citation = widget.citation;
-    return Padding(
-      padding: const EdgeInsets.only(top: 6),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _AskCitationButton(
-            index: widget.index,
-            citation: citation,
-            isSelected: widget.isSelected,
-            onPressed: () => widget.viewModel.didTapCitation(citation),
-          ),
-          Row(
-            children: [
-              IconButton(
-                tooltip: '좋아요',
-                visualDensity: VisualDensity.compact,
-                onPressed: () => widget.viewModel.didLikeCitation(citation),
-                icon: const Icon(
-                  fluent.FluentIcons.like,
-                  size: 16,
-                  color: MultimodalStudioPalette.PANEL_INK,
-                ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _AskCitationButton(
+          index: widget.index,
+          citation: citation,
+          isSelected: widget.isSelected,
+          onPressed: () => widget.viewModel.didTapCitation(citation),
+        ),
+        Row(
+          children: [
+            IconButton(
+              tooltip: '좋아요',
+              visualDensity: VisualDensity.compact,
+              onPressed: () => widget.viewModel.didLikeCitation(citation),
+              icon: const Icon(
+                fluent.FluentIcons.like,
+                size: 16,
+                color: MultimodalStudioPalette.PANEL_INK,
               ),
-              IconButton(
-                tooltip: '싫어요',
-                visualDensity: VisualDensity.compact,
-                onPressed: () => widget.viewModel.didDislikeCitation(citation),
-                icon: const Icon(
-                  fluent.FluentIcons.dislike,
-                  size: 16,
-                  color: MultimodalStudioPalette.PANEL_INK,
-                ),
+            ),
+            IconButton(
+              tooltip: '싫어요',
+              visualDensity: VisualDensity.compact,
+              onPressed: () => widget.viewModel.didDislikeCitation(citation),
+              icon: const Icon(
+                fluent.FluentIcons.dislike,
+                size: 16,
+                color: MultimodalStudioPalette.PANEL_INK,
               ),
-              Expanded(
-                child: IntrinsicHeight(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _comment,
-                          style: _fieldTextStyle,
-                          cursorColor: MultimodalStudioPalette.PANEL_ACCENT,
-                          decoration: _fieldDecoration('코멘트를 입력하세요'),
-                          onSubmitted: (_) => _registerComment(citation),
-                        ),
+            ),
+            Expanded(
+              child: IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _comment,
+                        style: _fieldTextStyle,
+                        cursorColor: MultimodalStudioPalette.PANEL_ACCENT,
+                        decoration: _fieldDecoration('코멘트를 입력하세요'),
+                        onSubmitted: (_) => _registerComment(citation),
                       ),
-                      const SizedBox(width: 4),
-                      _AccentButton(
-                        label: '등록',
-                        onPressed: () => _registerComment(citation),
-                      ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 4),
+                    _AccentButton(
+                      label: '등록',
+                      onPressed: () => _registerComment(citation),
+                    ),
+                  ],
                 ),
               ),
-            ],
-          ),
-        ],
-      ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
@@ -1106,6 +1198,21 @@ class _AskCitationButton extends StatelessWidget {
   }
 }
 
+class _AskHistoryLoading extends StatelessWidget {
+  const _AskHistoryLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Align(
+      alignment: Alignment.topCenter,
+      child: SizedBox(
+        width: double.infinity,
+        child: fluent.ProgressBar(strokeWidth: 2),
+      ),
+    );
+  }
+}
+
 class _AskPending extends StatelessWidget {
   const _AskPending();
 
@@ -1113,13 +1220,24 @@ class _AskPending extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.only(bottom: 8),
-      child: Text(
-        '답변을 찾는 중입니다.',
-        style: TextStyle(
-          fontSize: 12,
-          height: 1.4,
-          color: MultimodalStudioPalette.PANEL_MUTED,
-        ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: double.infinity,
+            child: fluent.ProgressBar(strokeWidth: 2),
+          ),
+          SizedBox(height: 8),
+          Text(
+            '답변을 찾는 중입니다.',
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.4,
+              color: MultimodalStudioPalette.PANEL_MUTED,
+            ),
+          ),
+        ],
       ),
     );
   }
