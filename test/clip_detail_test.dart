@@ -7,7 +7,7 @@ import 'package:weld_dashboard/src/data/datasources/generated/mediatag/compose/v
     as compose_pb;
 import 'package:weld_dashboard/src/data/repositories/clip_detail_mapping.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
-import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_side_panel.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/clip_detail_sections.dart';
 
 void main() {
   test('GetClip asks for the clip, asset, and target', () {
