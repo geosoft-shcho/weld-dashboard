@@ -9,8 +9,10 @@ import '../../../domain/entities/label_vocab.dart';
 import '../../../domain/entities/tool_run.dart';
 import '../../../domain/entities/work_attachment.dart';
 import '../../../domain/entities/work_attachment_type.dart';
+import '../../../domain/repositories/ask_session_store.dart';
 import '../../../domain/timeline_time.dart';
 import '../../../domain/use_cases/ask_question_use_case.dart';
+import '../../../domain/use_cases/get_session_history_use_case.dart';
 import '../../../domain/use_cases/change_timeline_status_use_case.dart';
 import '../../../domain/use_cases/create_clip_use_case.dart';
 import '../../../domain/use_cases/create_track_use_case.dart';
@@ -159,6 +161,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required this._toolRunUseCase,
     required this._labelUseCase,
     required this._askQuestionUseCase,
+    required this._getSessionHistoryUseCase,
+    required this._askSessionStore,
     required this._loadJobProjectIdUseCase,
     required this.jobId,
     this.toolRunPoll = const Duration(seconds: 2),
@@ -196,6 +200,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final ToolRunUseCase _toolRunUseCase;
   final LabelUseCase _labelUseCase;
   final AskQuestionUseCase _askQuestionUseCase;
+  final GetSessionHistoryUseCase _getSessionHistoryUseCase;
+  final AskSessionStore _askSessionStore;
   final LoadJobProjectIdUseCase _loadJobProjectIdUseCase;
   final String jobId;
   final Duration toolRunPoll;
@@ -260,6 +266,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _askSessionId = '';
   String _projectId = '';
   bool _isAsking = false;
+  bool _isLoadingAskHistory = false;
   int _overlayEpoch = 0;
   final Map<String, List<VideoOverlayFrame>> _framesByAssetId = {};
   final Map<String, List<VideoCaption>> _cuesByAssetId = {};
@@ -635,6 +642,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
           _inferencePhase == InferencePanelPhase.running);
   List<AskTurn> get askTurns => List.unmodifiable(_askTurns);
   bool get isAsking => _isAsking;
+  bool get isLoadingAskHistory => _isLoadingAskHistory;
   List<LabelNode> get labelRoots => List.unmodifiable(_labelRoots);
   List<SampleLayerSummary> get sampleLayers => List.unmodifiable(_sampleLayers);
 
@@ -1242,6 +1250,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       }
       if (answer.sessionId.isNotEmpty) {
         _askSessionId = answer.sessionId;
+        await _askSessionStore.writeSessionId(
+          jobId: jobId,
+          sessionId: answer.sessionId,
+        );
       }
       final answerText = answer.answer.trim();
       _askTurns.add(
@@ -1794,8 +1806,75 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _toggleSide(VideoMultimodalSide.properties);
   }
 
-  void didTapToggleAsk() {
+  Future<void> didTapToggleAsk() async {
+    final willOpen = _side != VideoMultimodalSide.ask;
     _toggleSide(VideoMultimodalSide.ask);
+    if (willOpen) {
+      await _restoreAskSessionId();
+      await _loadAskHistory();
+    }
+  }
+
+  Future<void> _restoreAskSessionId() async {
+    if (_askSessionId.isNotEmpty || jobId.isEmpty || _isClosed) {
+      return;
+    }
+    final saved = await _askSessionStore.readSessionId(jobId: jobId);
+    if (_isClosed || saved.isEmpty) {
+      return;
+    }
+    _askSessionId = saved;
+  }
+
+  Future<void> _loadAskHistory() async {
+    if (_askSessionId.isEmpty || _isLoadingAskHistory || _isAsking || _isClosed) {
+      return;
+    }
+    _isLoadingAskHistory = true;
+    notifyListeners();
+    try {
+      final history = await _getSessionHistoryUseCase.execute(
+        sessionId: _askSessionId,
+      );
+      if (_isClosed) {
+        return;
+      }
+      if (history.sessionId.isNotEmpty) {
+        _askSessionId = history.sessionId;
+        await _askSessionStore.writeSessionId(
+          jobId: jobId,
+          sessionId: history.sessionId,
+        );
+      }
+      _askTurns
+        ..clear()
+        ..addAll([
+          for (final message in history.messages)
+            AskTurn(
+              isUser: message.isUser,
+              text: message.text.trim().isEmpty && !message.isUser
+                  ? '답변이 없습니다.'
+                  : message.text,
+              citations: message.citations,
+            ),
+        ]);
+    } on AskException {
+      await _clearAskSession();
+    } catch (_) {
+      await _clearAskSession();
+    } finally {
+      _isLoadingAskHistory = false;
+      if (!_isClosed) {
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> _clearAskSession() async {
+    _askSessionId = '';
+    if (jobId.isNotEmpty) {
+      await _askSessionStore.clearSessionId(jobId: jobId);
+    }
   }
 
   void didTapToggleLabels() {

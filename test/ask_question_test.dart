@@ -15,6 +15,8 @@ import 'package:weld_dashboard/src/domain/repositories/label_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/tool_run_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/work_detail_repository.dart';
 import 'package:weld_dashboard/src/domain/use_cases/ask_question_use_case.dart';
+import 'package:weld_dashboard/src/domain/repositories/ask_session_store.dart';
+import 'package:weld_dashboard/src/domain/use_cases/get_session_history_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/change_timeline_status_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_track_use_case.dart';
@@ -67,6 +69,31 @@ void main() {
     expect(answer.citations, hasLength(2));
     expect(answer.citations.first.startSeconds, 15.52);
     expect(answer.citations.first.endSeconds, 23.44);
+  });
+
+  test('session history maps user and assistant turns', () {
+    final history = askSessionHistoryFrom(
+      rag_pb.GetSessionHistoryResponse(
+        sessionId: 's1',
+        projectId: '42',
+        messages: [
+          rag_pb.ChatMessage(role: 'user', content: '용접 장면'),
+          rag_pb.ChatMessage(
+            role: 'assistant',
+            content: '15초에 있습니다.',
+            citations: [rag_pb.Citation(startSec: 15.5, endSec: 20)],
+          ),
+          rag_pb.ChatMessage(role: 'system', content: '무시'),
+        ],
+      ),
+    );
+    expect(history.sessionId, 's1');
+    expect(history.messages, hasLength(2));
+    expect(history.messages.first.isUser, isTrue);
+    expect(history.messages.first.text, '용접 장면');
+    expect(history.messages.last.isUser, isFalse);
+    expect(history.messages.last.text, '15초에 있습니다.');
+    expect(history.messages.last.citations.single.startSeconds, 15.5);
   });
 
   test('ask answer keeps the citation time and segment', () {
@@ -156,6 +183,79 @@ void main() {
     asks.next = const AskAnswer(answer: '이어서 답합니다.', sessionId: 's1');
     await viewModel.didSendAsk('이어서');
     expect(asks.calls.last.sessionId, 's1');
+  });
+
+  test('opening ask reloads the session history', () async {
+    final asks = _ScriptedAsk();
+    final viewModel = _viewModel(asks, projectId: '42');
+    await viewModel.didSendAsk('용접 장면');
+    expect(viewModel.askTurns, hasLength(2));
+
+    asks.history = const AskSessionHistory(
+      sessionId: 's1',
+      messages: [
+        AskHistoryMessage(isUser: true, text: '지난 질문'),
+        AskHistoryMessage(
+          isUser: false,
+          text: '지난 답변',
+          citations: [AskCitation(startSeconds: 10, endSeconds: 12)],
+        ),
+      ],
+    );
+    await viewModel.didTapToggleAsk();
+    expect(asks.historyCalls, ['s1']);
+    expect(viewModel.askTurns, hasLength(2));
+    expect(viewModel.askTurns.first.text, '지난 질문');
+    expect(viewModel.askTurns.last.text, '지난 답변');
+    expect(viewModel.askTurns.last.citations.single.startSeconds, 10);
+    expect(viewModel.isLoadingAskHistory, isFalse);
+  });
+
+  test('ask response session id is stored by job', () async {
+    final asks = _ScriptedAsk();
+    final store = _MemoryAskSessionStore();
+    final viewModel = _viewModel(
+      asks,
+      projectId: '42',
+      askSessionStore: store,
+    );
+    await viewModel.didSendAsk('용접 장면');
+    expect(store.values['128'], 's1');
+  });
+
+  test('a stored session is restored and history is loaded', () async {
+    final asks = _ScriptedAsk();
+    final store = _MemoryAskSessionStore()..values['128'] = 's1';
+    asks.history = const AskSessionHistory(
+      sessionId: 's1',
+      messages: [
+        AskHistoryMessage(isUser: true, text: '저장된 질문'),
+        AskHistoryMessage(isUser: false, text: '저장된 답변'),
+      ],
+    );
+    final viewModel = _viewModel(
+      asks,
+      projectId: '42',
+      askSessionStore: store,
+    );
+    await viewModel.didTapToggleAsk();
+    expect(asks.historyCalls, ['s1']);
+    expect(viewModel.askTurns.first.text, '저장된 질문');
+    expect(viewModel.askTurns.last.text, '저장된 답변');
+  });
+
+  test('failed history clears the stored session', () async {
+    final asks = _ScriptedAsk();
+    final store = _MemoryAskSessionStore()..values['128'] = 's1';
+    asks.error = const AskException('세션이 없습니다.');
+    final viewModel = _viewModel(
+      asks,
+      projectId: '42',
+      askSessionStore: store,
+    );
+    await viewModel.didTapToggleAsk();
+    expect(store.values.containsKey('128'), isFalse);
+    expect(viewModel.askTurns, isEmpty);
   });
 
   test('a missing project id does not call AskQuestion', () async {
@@ -306,7 +406,7 @@ void main() {
     final viewModel = _viewModel(_ScriptedAsk(), projectId: '42');
     addTearDown(viewModel.dispose);
     await viewModel.loadAttachments();
-    viewModel.didTapToggleAsk();
+    await viewModel.didTapToggleAsk();
 
     await tester.pumpWidget(
       MaterialApp(
@@ -323,6 +423,61 @@ void main() {
     final field = tester.getSize(find.byType(TextField));
     final button = tester.getSize(find.widgetWithText(TextButton, '전송'));
     expect(button.height, field.height);
+  });
+
+  testWidgets('assistant answer shows a citations block labeled 근거', (
+    tester,
+  ) async {
+    final asks = _ScriptedAsk();
+    final viewModel = _viewModel(asks, projectId: '42');
+    addTearDown(viewModel.dispose);
+    await viewModel.loadAttachments();
+    await viewModel.didTapToggleAsk();
+    await viewModel.didSendAsk('용접 장면');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ListenableBuilder(
+          listenable: viewModel,
+          builder: (context, _) {
+            return MultimodalSidePanel(viewModel: viewModel, onClose: () {});
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('답변'), findsOneWidget);
+    expect(find.text('15초에 있습니다.'), findsOneWidget);
+    expect(find.text('근거'), findsOneWidget);
+  });
+
+  testWidgets('assistant answer without citations hides the 근거 block', (
+    tester,
+  ) async {
+    final asks = _ScriptedAsk()
+      ..next = const AskAnswer(answer: '답만 있습니다.', sessionId: 's1');
+    final viewModel = _viewModel(asks, projectId: '42');
+    addTearDown(viewModel.dispose);
+    await viewModel.loadAttachments();
+    await viewModel.didTapToggleAsk();
+    await viewModel.didSendAsk('질문');
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: ListenableBuilder(
+          listenable: viewModel,
+          builder: (context, _) {
+            return MultimodalSidePanel(viewModel: viewModel, onClose: () {});
+          },
+        ),
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text('답변'), findsOneWidget);
+    expect(find.text('답만 있습니다.'), findsOneWidget);
+    expect(find.text('근거'), findsNothing);
   });
 
   test('a citation like reuses one track and one label', () async {
@@ -511,6 +666,7 @@ VideoMultimodalViewModel _viewModel(
   JobTimeline timeline = JobTimeline.empty,
   JobTimelineRepository? timelineRepository,
   LabelRepository? labelRepository,
+  AskSessionStore? askSessionStore,
 }) {
   final repository = timelineRepository ?? _IdleTimeline(timeline);
   final workDetail = _ProjectWorkDetail(projectId);
@@ -532,6 +688,8 @@ VideoMultimodalViewModel _viewModel(
     toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
     labelUseCase: LabelUseCase(labelRepository ?? _IdleLabelRepository()),
     askQuestionUseCase: AskQuestionUseCase(asks),
+    getSessionHistoryUseCase: GetSessionHistoryUseCase(asks),
+    askSessionStore: askSessionStore ?? _MemoryAskSessionStore(),
     loadJobProjectIdUseCase: LoadJobProjectIdUseCase(workDetail),
     jobId: '128',
   );
@@ -540,11 +698,13 @@ VideoMultimodalViewModel _viewModel(
 class _ScriptedAsk implements AskRepository {
   final List<({String projectId, String question, String sessionId})> calls =
       [];
+  final List<String> historyCalls = [];
   AskAnswer next = const AskAnswer(
     answer: '15초에 있습니다.',
     sessionId: 's1',
     citations: [AskCitation(startSeconds: 15.52, endSeconds: 23.44)],
   );
+  AskSessionHistory history = const AskSessionHistory(sessionId: 's1');
   AskException? error;
 
   @override
@@ -559,6 +719,16 @@ class _ScriptedAsk implements AskRepository {
       throw failure;
     }
     return next;
+  }
+
+  @override
+  Future<AskSessionHistory> getSessionHistory({required String sessionId}) async {
+    historyCalls.add(sessionId);
+    final failure = error;
+    if (failure != null) {
+      throw failure;
+    }
+    return history;
   }
 }
 
@@ -851,5 +1021,33 @@ class _IdleToolRunRepository implements ToolRunRepository {
   @override
   Future<ToolRunSnapshot> cancelRun({required String runId}) {
     throw StateError('unused');
+  }
+}
+
+
+class _MemoryAskSessionStore implements AskSessionStore {
+  final Map<String, String> values = {};
+
+  @override
+  Future<String> readSessionId({required String jobId}) async {
+    return values[jobId.trim()] ?? '';
+  }
+
+  @override
+  Future<void> writeSessionId({
+    required String jobId,
+    required String sessionId,
+  }) async {
+    final id = jobId.trim();
+    final session = sessionId.trim();
+    if (id.isEmpty || session.isEmpty) {
+      return;
+    }
+    values[id] = session;
+  }
+
+  @override
+  Future<void> clearSessionId({required String jobId}) async {
+    values.remove(jobId.trim());
   }
 }

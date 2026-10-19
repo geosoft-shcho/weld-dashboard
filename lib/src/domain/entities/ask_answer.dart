@@ -24,6 +24,28 @@ class AskAnswer {
   final List<AskCitation> citations;
 }
 
+class AskHistoryMessage {
+  const AskHistoryMessage({
+    required this.isUser,
+    required this.text,
+    this.citations = const [],
+  });
+
+  final bool isUser;
+  final String text;
+  final List<AskCitation> citations;
+}
+
+class AskSessionHistory {
+  const AskSessionHistory({
+    required this.sessionId,
+    this.messages = const [],
+  });
+
+  final String sessionId;
+  final List<AskHistoryMessage> messages;
+}
+
 class AskException implements Exception {
   const AskException(this.message);
 

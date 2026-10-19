@@ -12,6 +12,7 @@ import '../../../domain/use_cases/start_camera_recording_use_case.dart';
 import '../../../domain/use_cases/stop_camera_recording_use_case.dart';
 import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../data/datasources/remote/media_tag_data_source.dart';
+import '../../../data/repositories/browser_ask_session_store.dart';
 import '../../../data/repositories/remote_ask_repository.dart';
 import '../../../data/repositories/remote_catalog_repository.dart';
 import '../../../data/repositories/remote_collection_catalog_repository.dart';
@@ -25,6 +26,7 @@ import '../../../data/repositories/remote_tool_run_repository.dart';
 import '../../../data/repositories/remote_work_detail_repository.dart';
 import '../../../data/repositories/remote_work_history_repository.dart';
 import '../../../domain/repositories/ask_repository.dart';
+import '../../../domain/repositories/ask_session_store.dart';
 import '../../../domain/repositories/catalog_repository.dart';
 import '../../../domain/repositories/collection_catalog_repository.dart';
 import '../../../domain/repositories/pass_waveform_repository.dart';
@@ -37,6 +39,7 @@ import '../../../domain/repositories/tool_run_repository.dart';
 import '../../../domain/repositories/work_detail_repository.dart';
 import '../../../domain/repositories/work_history_repository.dart';
 import '../../../domain/use_cases/ask_question_use_case.dart';
+import '../../../domain/use_cases/get_session_history_use_case.dart';
 import '../../../domain/use_cases/list_collected_nodes_use_case.dart';
 import '../../../domain/use_cases/load_job_project_id_use_case.dart';
 import '../../../domain/use_cases/get_report_set_use_case.dart';
@@ -144,7 +147,11 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton<AskRepository>(
     () => RemoteAskRepository(locator()),
   );
+  locator.registerLazySingleton<AskSessionStore>(
+    () => BrowserAskSessionStore(),
+  );
   locator.registerFactory(() => AskQuestionUseCase(locator()));
+  locator.registerFactory(() => GetSessionHistoryUseCase(locator()));
   locator.registerFactory(() => LoadJobProjectIdUseCase(locator()));
   locator.registerFactoryParam<
     CameraRecordingViewModel,
@@ -189,6 +196,8 @@ void setupLocator({required bool pdfrxReady}) {
       toolRunUseCase: locator(),
       labelUseCase: locator(),
       askQuestionUseCase: locator(),
+      getSessionHistoryUseCase: locator(),
+      askSessionStore: locator(),
       loadJobProjectIdUseCase: locator(),
       jobId: jobId,
     ),

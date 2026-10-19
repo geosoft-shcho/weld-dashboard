@@ -28,6 +28,16 @@ class RemoteAskRepository implements AskRepository {
     });
   }
 
+  @override
+  Future<AskSessionHistory> getSessionHistory({required String sessionId}) {
+    return _call(() async {
+      final response = await _mediaTag.ragService.getSessionHistory(
+        buildGetSessionHistoryRequest(sessionId: sessionId),
+      );
+      return askSessionHistoryFrom(response);
+    });
+  }
+
   Future<T> _call<T>(Future<T> Function() call) async {
     try {
       return await call();

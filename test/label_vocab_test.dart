@@ -26,6 +26,8 @@ import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.da
 import 'package:weld_dashboard/src/domain/entities/ask_answer.dart';
 import 'package:weld_dashboard/src/domain/repositories/ask_repository.dart';
 import 'package:weld_dashboard/src/domain/use_cases/ask_question_use_case.dart';
+import 'package:weld_dashboard/src/domain/repositories/ask_session_store.dart';
+import 'package:weld_dashboard/src/domain/use_cases/get_session_history_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
@@ -420,6 +422,8 @@ VideoMultimodalViewModel _viewModel(
     toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
     labelUseCase: LabelUseCase(labels),
     askQuestionUseCase: AskQuestionUseCase(_IdleAskRepository()),
+    getSessionHistoryUseCase: GetSessionHistoryUseCase(_IdleAskRepository()),
+    askSessionStore: _MemoryAskSessionStore(),
     loadJobProjectIdUseCase: LoadJobProjectIdUseCase(
       _EmptyWorkDetailRepository(),
     ),
@@ -509,6 +513,11 @@ class _IdleAskRepository implements AskRepository {
     String sessionId = '',
   }) {
     throw StateError('unused');
+  }
+
+  @override
+  Future<AskSessionHistory> getSessionHistory({required String sessionId}) async {
+    return const AskSessionHistory(sessionId: '');
   }
 }
 
@@ -662,4 +671,32 @@ class _CountingTimelineRepository implements JobTimelineRepository {
 
   @override
   Future<String> readContent({required String url}) async => '';
+}
+
+
+class _MemoryAskSessionStore implements AskSessionStore {
+  final Map<String, String> values = {};
+
+  @override
+  Future<String> readSessionId({required String jobId}) async {
+    return values[jobId.trim()] ?? '';
+  }
+
+  @override
+  Future<void> writeSessionId({
+    required String jobId,
+    required String sessionId,
+  }) async {
+    final id = jobId.trim();
+    final session = sessionId.trim();
+    if (id.isEmpty || session.isEmpty) {
+      return;
+    }
+    values[id] = session;
+  }
+
+  @override
+  Future<void> clearSessionId({required String jobId}) async {
+    values.remove(jobId.trim());
+  }
 }

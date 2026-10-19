@@ -6,4 +6,6 @@ abstract class AskRepository {
     required String question,
     String sessionId = '',
   });
+
+  Future<AskSessionHistory> getSessionHistory({required String sessionId});
 }
