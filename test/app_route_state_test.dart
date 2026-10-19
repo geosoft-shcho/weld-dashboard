@@ -55,6 +55,33 @@ void main() {
       expect(parsed?.toLocation().contains('file'), isFalse);
     });
 
+    test('encodes lookup panes', () {
+      expect(
+        const AppRouteState(pane: AppPane.projects).toLocation(),
+        '/projects',
+      );
+      expect(
+        const AppRouteState(pane: AppPane.workers).toLocation(),
+        '/workers',
+      );
+      expect(
+        const AppRouteState(pane: AppPane.equipment).toLocation(),
+        '/equipment',
+      );
+      expect(
+        const AppRouteState(pane: AppPane.assets).toLocation(),
+        '/assets',
+      );
+      expect(
+        AppRouteState.tryParse(Uri.parse('/projects'))?.pane,
+        AppPane.projects,
+      );
+      expect(
+        AppRouteState.tryParse(Uri.parse('/assets'))?.pane,
+        AppPane.assets,
+      );
+    });
+
     test('unknown path returns null', () {
       expect(AppRouteState.tryParse(Uri.parse('/unknown')), isNull);
     });

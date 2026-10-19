@@ -401,6 +401,8 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
               ],
             ),
           ),
+          const SizedBox(width: 8),
+          const Button(onPressed: null, child: Text('새 작업')),
         ],
       ),
     );

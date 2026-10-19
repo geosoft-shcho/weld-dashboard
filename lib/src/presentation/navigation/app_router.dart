@@ -38,6 +38,16 @@ GoRouter createAppRouter({
                 const NoTransitionPage<void>(child: SizedBox.shrink()),
           ),
           GoRoute(
+            path: AppRouteState.projectsPath,
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
+          ),
+          GoRoute(
+            path: AppRouteState.workersPath,
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
+          ),
+          GoRoute(
             path: AppRouteState.historyPath,
             pageBuilder: (context, state) =>
                 const NoTransitionPage<void>(child: SizedBox.shrink()),
@@ -65,6 +75,16 @@ GoRouter createAppRouter({
                     const NoTransitionPage<void>(child: SizedBox.shrink()),
               ),
             ],
+          ),
+          GoRoute(
+            path: AppRouteState.equipmentPath,
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
+          ),
+          GoRoute(
+            path: AppRouteState.assetsPath,
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
           ),
           GoRoute(
             path: AppRouteState.passPath,

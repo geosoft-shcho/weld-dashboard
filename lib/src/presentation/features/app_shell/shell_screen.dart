@@ -2,12 +2,16 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+import '../../features/asset_lookup/asset_lookup_screen.dart';
 import '../../features/collection_monitoring/collection_monitoring_screen.dart';
+import '../../features/equipment_lookup/equipment_lookup_screen.dart';
 import '../../features/pass_profile/pass_profile_screen.dart';
+import '../../features/project_lookup/project_lookup_screen.dart';
 import '../../features/quality_issue/quality_issue_screen.dart';
 import '../../features/video_multimodal/video_multimodal_screen.dart';
 import '../../features/work_detail/work_detail_screen.dart';
 import '../../features/work_history/work_history_screen.dart';
+import '../../features/worker_lookup/worker_lookup_screen.dart';
 import '../../navigation/app_coordinator.dart';
 import 'shell_view_model.dart';
 import 'widgets/shell_title_leading.dart';
@@ -88,9 +92,29 @@ class _ShellScreenState extends State<ShellScreen> {
                 body: const CollectionMonitoringScreen(),
               ),
               PaneItem(
+                icon: const Icon(FluentIcons.city_next),
+                title: const Text('공사 조회'),
+                body: const ProjectLookupScreen(),
+              ),
+              PaneItem(
+                icon: const Icon(FluentIcons.contact),
+                title: const Text('작업자 조회'),
+                body: const WorkerLookupScreen(),
+              ),
+              PaneItem(
                 icon: const Icon(FluentIcons.history),
-                title: const Text('작업 이력 조회'),
+                title: const Text('작업 조회'),
                 body: _workHistoryBody(nav),
+              ),
+              PaneItem(
+                icon: const Icon(FluentIcons.camera),
+                title: const Text('장비 조회'),
+                body: const EquipmentLookupScreen(),
+              ),
+              PaneItem(
+                icon: const Icon(FluentIcons.folder_open),
+                title: const Text('에셋 조회'),
+                body: const AssetLookupScreen(),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.line_chart),

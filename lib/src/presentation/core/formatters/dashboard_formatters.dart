@@ -1,3 +1,5 @@
+import '../../../domain/entities/worker_kind.dart';
+
 class DashboardFormatters {
   static String count(int value) {
     final digits = value.abs().toString();
@@ -30,19 +32,19 @@ class DashboardFormatters {
     return '${value.year}-$month-$day';
   }
 
+  static String workerKindLabel(WorkerKind kind) => kind.label;
+
+  /// 하위 호환. 새 코드는 [workerKindLabel]을 쓴다.
   static String masterRole(bool? isMaster) {
     if (isMaster == null) {
-      return '모름';
+      return WorkerKind.unknown.label;
     }
-    if (isMaster) {
-      return '명장';
-    }
-    return '작업자';
+    return isMaster ? WorkerKind.master.label : WorkerKind.general.label;
   }
 
   static String unitNo(String value) {
     if (value == '00') {
-      return '0호기';
+      return '구분 없음';
     }
     final number = int.tryParse(value);
     if (number == null) {
@@ -65,6 +67,40 @@ class DashboardFormatters {
 
   static String snapshot(DateTime value) {
     return dateTime(value);
+  }
+
+  static String byteSize(int bytes) {
+    if (bytes < 0) {
+      return '—';
+    }
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    var size = bytes.toDouble();
+    var unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+    if (unitIndex == 0) {
+      return '$bytes B';
+    }
+    final digits = size >= 10 ? 0 : 1;
+    return '${size.toStringAsFixed(digits)} ${units[unitIndex]}';
+  }
+
+  static String durationFromNs(int? durationNs) {
+    if (durationNs == null || durationNs <= 0) {
+      return '—';
+    }
+    final totalSeconds = durationNs ~/ 1000000000;
+    final hours = totalSeconds ~/ 3600;
+    final minutes = (totalSeconds % 3600) ~/ 60;
+    final seconds = totalSeconds % 60;
+    final minuteText = minutes.toString().padLeft(2, '0');
+    final secondText = seconds.toString().padLeft(2, '0');
+    if (hours > 0) {
+      return '$hours:$minuteText:$secondText';
+    }
+    return '$minutes:$secondText';
   }
 
   static String clockTime(DateTime value) {

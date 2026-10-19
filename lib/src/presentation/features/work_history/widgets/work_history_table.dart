@@ -7,7 +7,6 @@ import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../navigation/app_coordinator.dart';
 import '../work_history_view_model.dart';
-import 'work_history_command_bar.dart';
 
 class WorkHistoryTable extends StatefulWidget {
   const WorkHistoryTable({
@@ -82,7 +81,7 @@ class _WorkHistoryTableState extends State<WorkHistoryTable> {
     }
     if (board.totalCount == 0) {
       return InfoBar(
-        title: const Text('조건에 맞는 작업 이력이 없습니다'),
+        title: const Text('조건에 맞는 작업이 없습니다'),
         action: Button(
           onPressed: viewModel.didTapReset,
           child: const Text('필터 초기화'),
@@ -134,16 +133,13 @@ class _HeaderRow extends StatelessWidget {
         child: Row(
           children: [
             _Cell('공통키', flex: 16, isHeader: true),
-            _Cell('공사', flex: 14, isHeader: true),
             _Cell('품목', flex: 16, isHeader: true),
             _Cell('이음부', flex: 14, isHeader: true),
-            _Cell('성적서', flex: 8, isHeader: true),
             _Cell('작업자', flex: 10, isHeader: true),
-            _Cell('구분', flex: 8, isHeader: true),
             _Cell('작업일시', flex: 14, isHeader: true),
-            _Cell('장비', flex: 12, isHeader: true),
-            _Cell('패스 수', flex: 6, isHeader: true),
+            _Cell('패스', flex: 6, isHeader: true),
             _Cell('첨부', flex: 6, isHeader: true),
+            _Cell('성적서', flex: 8, isHeader: true),
             _Cell('', flex: 16, isHeader: true),
           ],
         ),
@@ -179,7 +175,7 @@ class _DataRow extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                flex: 124,
+                flex: 90,
                 child: HoverButton(
                   onPressed: () => viewModel.didSelectRow(item.jobId),
                   builder: (context, states) {
@@ -191,28 +187,13 @@ class _DataRow extends StatelessWidget {
                       child: Row(
                         children: [
                           _Cell(item.commonKey, flex: 16),
-                          _Cell(item.projectNo, flex: 14),
-                          _Cell(
-                            [
-                              workHistoryUnitLabel(item.unitNo),
-                              item.itemName.isEmpty
-                                  ? item.itemCode
-                                  : item.itemName,
-                            ].join('\n'),
-                            flex: 16,
-                          ),
+                          _Cell(_itemCell(item), flex: 16),
                           _Cell(item.jointNo, flex: 14),
-                          _Cell(item.hasReport ? '있음' : '없음', flex: 8),
                           _Cell(item.workerName, flex: 10),
-                          _Cell(
-                            DashboardFormatters.masterRole(item.isMaster),
-                            flex: 8,
-                          ),
                           _Cell(
                             DashboardFormatters.dateTime(item.workedAt),
                             flex: 14,
                           ),
-                          _Cell(item.equipmentName, flex: 12),
                           _Cell('${item.passCount}', flex: 6),
                           _Cell(
                             item.doesHaveAttachments
@@ -220,6 +201,7 @@ class _DataRow extends StatelessWidget {
                                 : '—',
                             flex: 6,
                           ),
+                          _Cell(item.hasReport ? '있음' : '—', flex: 8),
                         ],
                       ),
                     );
@@ -323,6 +305,15 @@ class _DataRow extends StatelessWidget {
       },
     );
   }
+}
+
+String _itemCell(WorkHistoryItem item) {
+  final unit = DashboardFormatters.unitNo(item.unitNo);
+  final name = item.itemName.isEmpty ? item.itemCode : item.itemName;
+  if (name.isEmpty) {
+    return unit;
+  }
+  return '$unit\n$name';
 }
 
 class _Footer extends StatelessWidget {

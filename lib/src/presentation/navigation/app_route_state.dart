@@ -1,6 +1,6 @@
 import 'app_coordinator.dart';
 
-enum AppPane { collection, history, pass, quality }
+enum AppPane { collection, projects, workers, history, equipment, assets, pass, quality }
 
 /// Parsed dashboard location. Shell UI still reads [AppCoordinator]; this only
 /// maps path ↔ coordinator fields for browser history.
@@ -27,7 +27,11 @@ class AppRouteState {
   final bool qualityViaDetail;
 
   static const String collectionPath = '/collection';
+  static const String projectsPath = '/projects';
+  static const String workersPath = '/workers';
   static const String historyPath = '/history';
+  static const String equipmentPath = '/equipment';
+  static const String assetsPath = '/assets';
   static const String passPath = '/pass';
   static const String qualityPath = '/quality';
 
@@ -35,6 +39,14 @@ class AppRouteState {
     switch (pane) {
       case AppPane.collection:
         return collectionPath;
+      case AppPane.projects:
+        return projectsPath;
+      case AppPane.workers:
+        return workersPath;
+      case AppPane.equipment:
+        return equipmentPath;
+      case AppPane.assets:
+        return assetsPath;
       case AppPane.pass:
         return _locationWithQuery(passPath, {
           if (commonKey.isNotEmpty) 'commonKey': commonKey,
@@ -87,6 +99,18 @@ class AppRouteState {
     }
     if (path == collectionPath) {
       return const AppRouteState(pane: AppPane.collection);
+    }
+    if (path == projectsPath) {
+      return const AppRouteState(pane: AppPane.projects);
+    }
+    if (path == workersPath) {
+      return const AppRouteState(pane: AppPane.workers);
+    }
+    if (path == equipmentPath) {
+      return const AppRouteState(pane: AppPane.equipment);
+    }
+    if (path == assetsPath) {
+      return const AppRouteState(pane: AppPane.assets);
     }
     if (path == passPath) {
       return AppRouteState(

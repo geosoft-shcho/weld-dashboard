@@ -1,7 +1,18 @@
 import 'package:get_it/get_it.dart';
 
 import '../../../data/repositories/browser_camera_recording_repository.dart';
-import '../../../data/repositories/remote_asset_upload_repository.dart';
+import '../../../data/repositories/remote_asset_lookup_repository.dart';
+import '../../../data/repositories/remote_equipment_lookup_repository.dart';
+import '../../../domain/repositories/asset_lookup_repository.dart';
+import '../../../domain/repositories/equipment_lookup_repository.dart';
+import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
+import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
+import '../../../domain/use_cases/list_job_asset_lookup_use_case.dart';
+import '../../../domain/use_cases/list_job_passes_use_case.dart';
+import '../../features/asset_lookup/asset_lookup_view_model.dart';
+import '../../features/equipment_lookup/equipment_lookup_view_model.dart';
+import '../../features/project_lookup/project_lookup_view_model.dart';
+import '../../features/worker_lookup/worker_lookup_view_model.dart';
 import '../../../domain/repositories/asset_upload_repository.dart';
 import '../../../domain/repositories/camera_recording_repository.dart';
 import '../../../domain/use_cases/download_camera_recording_file_use_case.dart';
@@ -14,6 +25,7 @@ import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../../data/repositories/browser_ask_session_store.dart';
 import '../../../data/repositories/remote_ask_repository.dart';
+import '../../../data/repositories/remote_asset_upload_repository.dart';
 import '../../../data/repositories/remote_catalog_repository.dart';
 import '../../../data/repositories/remote_collection_catalog_repository.dart';
 import '../../../data/repositories/remote_pass_waveform_repository.dart';
@@ -115,6 +127,34 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => LoadWorkHistoryCatalogUseCase(locator()));
   locator.registerLazySingleton(() => LoadWorkHistoryMastersUseCase(locator()));
   locator.registerLazySingleton(() => ListWorkHistoryPageUseCase(locator()));
+  locator.registerLazySingleton<EquipmentLookupRepository>(
+    () => RemoteEquipmentLookupRepository(locator()),
+  );
+  locator.registerLazySingleton(() => ListEquipmentLookupUseCase(locator()));
+  locator.registerLazySingleton<AssetLookupRepository>(
+    () => RemoteAssetLookupRepository(locator()),
+  );
+  locator.registerLazySingleton(() => ListAssetLookupPageUseCase(locator()));
+  locator.registerLazySingleton(() => ListJobAssetLookupUseCase(locator()));
+  locator.registerLazySingleton(() => ListJobPassesUseCase(locator()));
+  locator.registerFactory(
+    () => ProjectLookupViewModel(loadWorkHistoryMastersUseCase: locator()),
+  );
+  locator.registerFactory(
+    () => WorkerLookupViewModel(loadWorkHistoryMastersUseCase: locator()),
+  );
+  locator.registerFactory(
+    () => EquipmentLookupViewModel(loadWorkHistoryMastersUseCase: locator()),
+  );
+  locator.registerFactory(
+    () => AssetLookupViewModel(
+      listAssetLookupPageUseCase: locator(),
+      listJobAssetLookupUseCase: locator(),
+      listJobPassesUseCase: locator(),
+      listEquipmentLookupUseCase: locator(),
+      listWorkHistoryPageUseCase: locator(),
+    ),
+  );
   locator.registerFactory(() => QueryWorkHistoryUseCase());
   locator.registerLazySingleton<WorkDetailRepository>(
     () => RemoteWorkDetailRepository(locator<MediaTagDataSource>()),

@@ -17,9 +17,13 @@ enum _RouteWriteMode { go, push, replace, pop, none }
 
 class AppCoordinator extends ChangeNotifier {
   static const int COLLECTION_PANE_INDEX = 0;
-  static const int WORK_HISTORY_PANE_INDEX = 1;
-  static const int PASS_PROFILE_PANE_INDEX = 2;
-  static const int QUALITY_ISSUE_PANE_INDEX = 3;
+  static const int PROJECT_LOOKUP_PANE_INDEX = 1;
+  static const int WORKER_LOOKUP_PANE_INDEX = 2;
+  static const int WORK_HISTORY_PANE_INDEX = 3;
+  static const int EQUIPMENT_LOOKUP_PANE_INDEX = 4;
+  static const int ASSET_LOOKUP_PANE_INDEX = 5;
+  static const int PASS_PROFILE_PANE_INDEX = 6;
+  static const int QUALITY_ISSUE_PANE_INDEX = 7;
 
   AppNavigationPort? _navigation;
   bool _isApplyingRoute = false;
@@ -81,6 +85,14 @@ class AppCoordinator extends ChangeNotifier {
         return '품질 이슈 연계';
       case WORK_HISTORY_PANE_INDEX:
         return _workHistoryPageTitle;
+      case PROJECT_LOOKUP_PANE_INDEX:
+        return '공사 조회';
+      case WORKER_LOOKUP_PANE_INDEX:
+        return '작업자 조회';
+      case EQUIPMENT_LOOKUP_PANE_INDEX:
+        return '장비 조회';
+      case ASSET_LOOKUP_PANE_INDEX:
+        return '에셋 조회';
       case COLLECTION_PANE_INDEX:
       default:
         return '수집 모니터링';
@@ -90,7 +102,7 @@ class AppCoordinator extends ChangeNotifier {
   String get _workHistoryPageTitle {
     switch (_workHistoryStack) {
       case WorkHistoryStack.list:
-        return '작업 이력 조회';
+        return '작업 조회';
       case WorkHistoryStack.detail:
         if (_jobId.isEmpty) {
           return '작업 상세';
@@ -518,6 +530,14 @@ class AppCoordinator extends ChangeNotifier {
           linkId: _linkId,
           qualityViaDetail: viaDetail,
         );
+      case PROJECT_LOOKUP_PANE_INDEX:
+        return const AppRouteState(pane: AppPane.projects);
+      case WORKER_LOOKUP_PANE_INDEX:
+        return const AppRouteState(pane: AppPane.workers);
+      case EQUIPMENT_LOOKUP_PANE_INDEX:
+        return const AppRouteState(pane: AppPane.equipment);
+      case ASSET_LOOKUP_PANE_INDEX:
+        return const AppRouteState(pane: AppPane.assets);
       case COLLECTION_PANE_INDEX:
       default:
         return const AppRouteState(pane: AppPane.collection);
@@ -576,6 +596,14 @@ class AppCoordinator extends ChangeNotifier {
                 state.linkId == _linkId &&
                 state.qualityViaDetail == viaDetail;
         }
+      case AppPane.projects:
+        return _selectedPaneIndex == PROJECT_LOOKUP_PANE_INDEX;
+      case AppPane.workers:
+        return _selectedPaneIndex == WORKER_LOOKUP_PANE_INDEX;
+      case AppPane.equipment:
+        return _selectedPaneIndex == EQUIPMENT_LOOKUP_PANE_INDEX;
+      case AppPane.assets:
+        return _selectedPaneIndex == ASSET_LOOKUP_PANE_INDEX;
     }
   }
 
@@ -615,6 +643,18 @@ class AppCoordinator extends ChangeNotifier {
           state.stack,
           qualityViaDetail: state.qualityViaDetail,
         );
+      case AppPane.projects:
+        _selectedPaneIndex = PROJECT_LOOKUP_PANE_INDEX;
+        _resetWorkHistoryToList();
+      case AppPane.workers:
+        _selectedPaneIndex = WORKER_LOOKUP_PANE_INDEX;
+        _resetWorkHistoryToList();
+      case AppPane.equipment:
+        _selectedPaneIndex = EQUIPMENT_LOOKUP_PANE_INDEX;
+        _resetWorkHistoryToList();
+      case AppPane.assets:
+        _selectedPaneIndex = ASSET_LOOKUP_PANE_INDEX;
+        _resetWorkHistoryToList();
     }
   }
 

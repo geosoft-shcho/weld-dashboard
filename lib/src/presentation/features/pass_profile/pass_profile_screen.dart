@@ -234,7 +234,9 @@ class _NormalizeCombo extends StatelessWidget {
     final selectedJobId = viewModel.selectedComparisonJobId;
     final jobs = viewModel.comparisonJobs;
     final knownIds = {for (final job in jobs) job.jobId};
-    final comparisonValue = knownIds.contains(selectedJobId) ? selectedJobId : '';
+    final comparisonValue = knownIds.contains(selectedJobId)
+        ? selectedJobId
+        : '';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -304,13 +306,14 @@ String _comparisonKey(PassProfileViewModel viewModel) {
   return [
     viewModel.selectedComparisonJobId,
     viewModel.comparisonError,
-    for (final job in viewModel.comparisonJobs) '${job.jobId}|${job.isMaster}',
+    for (final job in viewModel.comparisonJobs)
+      '${job.jobId}|${job.workerKind}',
   ].join('\u001f');
 }
 
 String _comparisonJobLabel(ComparisonJobCandidate job) {
   final worker = job.workerName.isEmpty ? '작업자 없음' : job.workerName;
-  final role = DashboardFormatters.masterRole(job.isMaster);
+  final role = DashboardFormatters.workerKindLabel(job.workerKind);
   final title = job.jobKey.isEmpty ? '작업' : job.jobKey;
   return '$title · $worker · $role · ${DashboardFormatters.dateTime(job.startedAt)} · ${job.passCount}패스';
 }
@@ -442,7 +445,7 @@ String _contextKey(PassJointContext? data) {
     data.itemCode,
     data.itemName,
     data.workerName,
-    '${data.isMaster}',
+    '${data.workerKind}',
     data.equipmentName,
   ].join('\u001f');
 }

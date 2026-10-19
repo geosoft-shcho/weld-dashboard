@@ -87,15 +87,6 @@ class _WorkHistoryBody extends StatelessWidget {
                 severity: InfoBarSeverity.warning,
               ),
             ),
-          if (viewModel.doesHaveInvalidDateRange)
-            const Padding(
-              padding: EdgeInsets.only(bottom: 8),
-              child: InfoBar(
-                title: Text('기간 오류'),
-                content: Text('시작일이 종료일보다 늦습니다. 조회 시 결과가 비어 있을 수 있습니다.'),
-                severity: InfoBarSeverity.error,
-              ),
-            ),
           WorkHistoryCommandBar(viewModel: viewModel, board: board),
           const SizedBox(height: 12),
           WorkHistoryFilterChips(viewModel: viewModel, board: board),

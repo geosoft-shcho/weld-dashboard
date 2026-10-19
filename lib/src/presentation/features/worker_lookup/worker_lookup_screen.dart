@@ -1,0 +1,110 @@
+import 'package:fluent_ui/fluent_ui.dart';
+import 'package:provider/provider.dart';
+
+import '../../../domain/entities/worker_kind.dart';
+import '../../core/di/locator.dart';
+import '../../core/widgets/catalog_lookup_table.dart';
+import '../../core/widgets/lookup_search_field.dart';
+import 'worker_lookup_view_model.dart';
+
+class WorkerLookupScreen extends StatelessWidget {
+  const WorkerLookupScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return ChangeNotifierProvider(
+      create: (_) => locator<WorkerLookupViewModel>()..load(),
+      child: const _WorkerLookupBody(),
+    );
+  }
+}
+
+class _WorkerLookupBody extends StatelessWidget {
+  const _WorkerLookupBody();
+
+  @override
+  Widget build(BuildContext context) {
+    final viewModel = context.watch<WorkerLookupViewModel>();
+    return ScaffoldPage(
+      padding: EdgeInsets.zero,
+      content: Padding(
+        padding: const EdgeInsets.all(16),
+        child: _content(viewModel),
+      ),
+    );
+  }
+
+  Widget _content(WorkerLookupViewModel viewModel) {
+    if (viewModel.isLoading && viewModel.visibleWorkers.isEmpty) {
+      return const Center(child: ProgressRing());
+    }
+    if (viewModel.hasError) {
+      return InfoBar(
+        title: const Text('조회 실패'),
+        content: Text(viewModel.errorMessage),
+        action: Button(onPressed: viewModel.load, child: const Text('재시도')),
+        severity: InfoBarSeverity.error,
+      );
+    }
+    return CatalogLookupFrame(
+      actionLabel: '새 작업자',
+      filters: [
+        InfoLabel(
+          label: '검색',
+          child: SizedBox(
+            width: 220,
+            child: LookupSearchField(
+              value: viewModel.queryText,
+              hintText: '이름 · 사번 · 비고',
+              onChanged: viewModel.didChangeQueryText,
+            ),
+          ),
+        ),
+        InfoLabel(
+          label: '종류',
+          child: ComboBox<WorkerKindFilter>(
+            value: viewModel.kind,
+            items: const [
+              ComboBoxItem(value: WorkerKindFilter.all, child: Text('전체')),
+              ComboBoxItem(value: WorkerKindFilter.master, child: Text('명장')),
+              ComboBoxItem(value: WorkerKindFilter.general, child: Text('일반')),
+              ComboBoxItem(value: WorkerKindFilter.robot, child: Text('로봇')),
+              ComboBoxItem(value: WorkerKindFilter.unknown, child: Text('모름')),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                viewModel.didSelectKind(value);
+              }
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(bottom: 4),
+          child: Checkbox(
+            checked: viewModel.includeInactive,
+            content: const Text('숨긴 작업자도'),
+            onChanged: (value) {
+              if (value != null) {
+                viewModel.didToggleIncludeInactive(value);
+              }
+            },
+          ),
+        ),
+      ],
+      body: CatalogLookupTable(
+        headers: const ['이름', '사번', '종류', '작업'],
+        columnFlexes: const [16, 12, 10, 8],
+        emptyTitle: '조건에 맞는 작업자가 없습니다',
+        rows: [
+          for (final worker in viewModel.visibleWorkers)
+            [
+              workerNameCell(worker),
+              worker.employeeNo.isEmpty ? '—' : worker.employeeNo,
+              worker.workerKind.label,
+              '${worker.jobCount}건',
+            ],
+        ],
+      ),
+    );
+  }
+}
