@@ -238,6 +238,7 @@ class ToolRun extends $pb.GeneratedMessage {
     $core.int? attemptCount,
     $core.Iterable<$fixnum.Int64>? outputAssetIds,
     RunTarget? target,
+    $0.Timestamp? startedAt,
   }) {
     final result = create();
     if (runId != null) result.runId = runId;
@@ -257,6 +258,7 @@ class ToolRun extends $pb.GeneratedMessage {
     if (attemptCount != null) result.attemptCount = attemptCount;
     if (outputAssetIds != null) result.outputAssetIds.addAll(outputAssetIds);
     if (target != null) result.target = target;
+    if (startedAt != null) result.startedAt = startedAt;
     return result;
   }
 
@@ -304,6 +306,8 @@ class ToolRun extends $pb.GeneratedMessage {
         16, _omitFieldNames ? '' : 'outputAssetIds', $pb.PbFieldType.K6)
     ..aOM<RunTarget>(17, _omitFieldNames ? '' : 'target',
         subBuilder: RunTarget.create)
+    ..aOM<$0.Timestamp>(18, _omitFieldNames ? '' : 'startedAt',
+        subBuilder: $0.Timestamp.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -470,6 +474,19 @@ class ToolRun extends $pb.GeneratedMessage {
   void clearTarget() => $_clearField(17);
   @$pb.TagNumber(17)
   RunTarget ensureTarget() => $_ensure(15);
+
+  /// RUNNING일 때 돌기 시작한 시각(저장하지 않음). 내장 도구는 워커가 꺼낸 시각, 외부 도구는 진행 신호를 처음 받은 시각이라
+  /// 진행 신호를 안 주는 외부 도구(STT)는 비어 있다 — 그때는 updated_at을 본다.
+  @$pb.TagNumber(18)
+  $0.Timestamp get startedAt => $_getN(16);
+  @$pb.TagNumber(18)
+  set startedAt($0.Timestamp value) => $_setField(18, value);
+  @$pb.TagNumber(18)
+  $core.bool hasStartedAt() => $_has(16);
+  @$pb.TagNumber(18)
+  void clearStartedAt() => $_clearField(18);
+  @$pb.TagNumber(18)
+  $0.Timestamp ensureStartedAt() => $_ensure(16);
 }
 
 enum RunTarget_Target { jobId, assetId, clipId, notSet }
@@ -1422,6 +1439,111 @@ class ListRunsResponse extends $pb.GeneratedMessage {
   $pb.PbList<ToolRun> get runs => $_getList(0);
 }
 
+class GetQueueRequest extends $pb.GeneratedMessage {
+  factory GetQueueRequest() => create();
+
+  GetQueueRequest._();
+
+  factory GetQueueRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetQueueRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetQueueRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
+      createEmptyInstance: create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetQueueRequest clone() => GetQueueRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetQueueRequest copyWith(void Function(GetQueueRequest) updates) =>
+      super.copyWith((message) => updates(message as GetQueueRequest))
+          as GetQueueRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetQueueRequest create() => GetQueueRequest._();
+  @$core.override
+  GetQueueRequest createEmptyInstance() => create();
+  static $pb.PbList<GetQueueRequest> createRepeated() =>
+      $pb.PbList<GetQueueRequest>();
+  @$core.pragma('dart2js:noInline')
+  static GetQueueRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetQueueRequest>(create);
+  static GetQueueRequest? _defaultInstance;
+}
+
+class GetQueueResponse extends $pb.GeneratedMessage {
+  factory GetQueueResponse({
+    $core.Iterable<ToolRun>? runs,
+    $core.int? localWorkers,
+  }) {
+    final result = create();
+    if (runs != null) result.runs.addAll(runs);
+    if (localWorkers != null) result.localWorkers = localWorkers;
+    return result;
+  }
+
+  GetQueueResponse._();
+
+  factory GetQueueResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetQueueResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetQueueResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.tool.v1'),
+      createEmptyInstance: create)
+    ..pc<ToolRun>(1, _omitFieldNames ? '' : 'runs', $pb.PbFieldType.PM,
+        subBuilder: ToolRun.create)
+    ..a<$core.int>(2, _omitFieldNames ? '' : 'localWorkers', $pb.PbFieldType.O3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetQueueResponse clone() => GetQueueResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetQueueResponse copyWith(void Function(GetQueueResponse) updates) =>
+      super.copyWith((message) => updates(message as GetQueueResponse))
+          as GetQueueResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetQueueResponse create() => GetQueueResponse._();
+  @$core.override
+  GetQueueResponse createEmptyInstance() => create();
+  static $pb.PbList<GetQueueResponse> createRepeated() =>
+      $pb.PbList<GetQueueResponse>();
+  @$core.pragma('dart2js:noInline')
+  static GetQueueResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetQueueResponse>(create);
+  static GetQueueResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<ToolRun> get runs => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $core.int get localWorkers => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set localWorkers($core.int value) => $_setSignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasLocalWorkers() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearLocalWorkers() => $_clearField(2);
+}
+
 class CancelRunRequest extends $pb.GeneratedMessage {
   factory CancelRunRequest({
     $fixnum.Int64? runId,
@@ -1573,8 +1695,15 @@ class ToolServiceApi {
   ///   tool_id: 돌릴 도구(ListTools). target: 무엇에 돌릴지 — asset_id·clip_id·job_id 중 하나.
   ///   trigger: MANUAL(사람이 한 건을 돌림 — 대상은 Asset 하나 또는 Clip 하나), AUTO_TAGGING(작업의 타임라인 전체 — 대상은 작업).
   ///            ASSET_UPLOADED는 보내지 않는다 — 파일을 올릴 때 서버가 스스로 만드는 후처리 실행의 표시다(보내면 InvalidArgument).
-  /// 내장 도구(audio-extract·asset-postprocess)는 서버 안 워커가, 외부 도구(STT·포즈)는 서버가 그 도구의 서버에 보내 실행한다.
-  /// 어느 쪽이든 부르는 방법은 같다.
+  /// 내장 도구(audio-extract·asset-postprocess·pdf-to-text)는 서버 안 워커가, 외부 도구(STT·포즈)는 서버가 그 도구의
+  /// 서버에 보내 실행한다. 어느 쪽이든 부르는 방법은 같다.
+  ///   MANUAL 대상: pdf-to-text는 PDF 클립(원본 PDF를 추출 — 이미 성적서 세트가 있으면 already_exists),
+  ///   audio-extract는 영상 Asset 또는 영상 클립(클립이면 원본 전체에서 뽑은 소리를 그 클립과 같은 구간에 오디오 클립으로 놓는다).
+  ///   STT를 클립에 돌리면 그 클립 구간만 인식하고, 문장마다의 자막 클립을 그 클립이 있는 작업에만 그 클립 위치 기준으로
+  ///   놓는다(클립을 옮겨 놓았어도 겹친다). Asset에 돌리면 그 파일이 붙은 작업마다 촬영 시각 기준으로 놓는다.
+  ///   포즈도 같다 — 클립에 돌리면 결과 클립 하나를 그 클립과 같은 자리에 놓는다.
+  /// 돌릴 수 없는 실행은 기록만 남기고 바로 FAILED로 돌려준다: 처리할 서버가 연결되지 않은 도구면 error_code = not_connected,
+  /// 소리 없는 영상에 faster-whisper STT면 invalid_target(stt-fast 등 다른 STT는 그대로 보낸다).
   $async.Future<StartRunResponse> startRun(
           $pb.ClientContext? ctx, StartRunRequest request) =>
       _client.invoke<StartRunResponse>(
@@ -1593,6 +1722,15 @@ class ToolServiceApi {
           $pb.ClientContext? ctx, CancelRunRequest request) =>
       _client.invoke<CancelRunResponse>(
           ctx, 'ToolService', 'CancelRun', request, CancelRunResponse());
+
+  /// 서버 전체 대기열 — 기다리는(QUEUED)·도는(RUNNING) 실행 전부와 내장 도구 워커 수. 큐 모니터링 화면용으로 짧게 폴링한다.
+  /// 대기열: 내장 도구 하나(asset-postprocess·audio-extract·pdf-to-text, 서버 안 워커 local_workers개가 동시에 돎)와 외부 도구
+  /// 서버(endpoint)마다 하나(STT·포즈, 서버마다 한 건씩 보냄). 모두 오래된 것부터 꺼내지만 서버마다 따로라, 바쁜 서버를 기다리는
+  /// 실행보다 뒤에 들어온 다른 서버의 실행이 먼저 시작할 수 있다. 끝난 실행은 ListRuns로 본다.
+  $async.Future<GetQueueResponse> getQueue(
+          $pb.ClientContext? ctx, GetQueueRequest request) =>
+      _client.invoke<GetQueueResponse>(
+          ctx, 'ToolService', 'GetQueue', request, GetQueueResponse());
 }
 
 const $core.bool _omitFieldNames =

@@ -37,6 +37,8 @@ abstract class ToolServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $3.ListRunsRequest request);
   $async.Future<$3.CancelRunResponse> cancelRun(
       $pb.ServerContext ctx, $3.CancelRunRequest request);
+  $async.Future<$3.GetQueueResponse> getQueue(
+      $pb.ServerContext ctx, $3.GetQueueRequest request);
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
@@ -56,6 +58,8 @@ abstract class ToolServiceBase extends $pb.GeneratedService {
         return $3.ListRunsRequest();
       case 'CancelRun':
         return $3.CancelRunRequest();
+      case 'GetQueue':
+        return $3.GetQueueRequest();
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }
@@ -80,6 +84,8 @@ abstract class ToolServiceBase extends $pb.GeneratedService {
         return listRuns(ctx, request as $3.ListRunsRequest);
       case 'CancelRun':
         return cancelRun(ctx, request as $3.CancelRunRequest);
+      case 'GetQueue':
+        return getQueue(ctx, request as $3.GetQueueRequest);
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }

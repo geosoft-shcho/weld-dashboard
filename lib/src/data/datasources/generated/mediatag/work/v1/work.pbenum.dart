@@ -14,6 +14,61 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
+/// 작업자 종류. 명장/일반 구분은 비교·학습 데이터의 핵심이고, 로봇 용접도 작업자로 둔다.
+class WorkerType extends $pb.ProtobufEnum {
+  static const WorkerType WORKER_TYPE_UNSPECIFIED =
+      WorkerType._(0, _omitEnumNames ? '' : 'WORKER_TYPE_UNSPECIFIED');
+  static const WorkerType WORKER_TYPE_MASTER =
+      WorkerType._(1, _omitEnumNames ? '' : 'WORKER_TYPE_MASTER');
+  static const WorkerType WORKER_TYPE_GENERAL =
+      WorkerType._(2, _omitEnumNames ? '' : 'WORKER_TYPE_GENERAL');
+  static const WorkerType WORKER_TYPE_ROBOT =
+      WorkerType._(3, _omitEnumNames ? '' : 'WORKER_TYPE_ROBOT');
+
+  static const $core.List<WorkerType> values = <WorkerType>[
+    WORKER_TYPE_UNSPECIFIED,
+    WORKER_TYPE_MASTER,
+    WORKER_TYPE_GENERAL,
+    WORKER_TYPE_ROBOT,
+  ];
+
+  static final $core.List<WorkerType?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
+  static WorkerType? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const WorkerType._(super.value, super.name);
+}
+
+/// 패스 종류. 층간온도 등 패스에서 잰 값은 이 칸이 아니라 수치 태그(라벨 측정 항목 > interpass_temp)로 둔다.
+class PassType extends $pb.ProtobufEnum {
+  static const PassType PASS_TYPE_UNSPECIFIED =
+      PassType._(0, _omitEnumNames ? '' : 'PASS_TYPE_UNSPECIFIED');
+  static const PassType PASS_TYPE_ROOT =
+      PassType._(1, _omitEnumNames ? '' : 'PASS_TYPE_ROOT');
+  static const PassType PASS_TYPE_HOT =
+      PassType._(2, _omitEnumNames ? '' : 'PASS_TYPE_HOT');
+  static const PassType PASS_TYPE_FILL =
+      PassType._(3, _omitEnumNames ? '' : 'PASS_TYPE_FILL');
+  static const PassType PASS_TYPE_CAP =
+      PassType._(4, _omitEnumNames ? '' : 'PASS_TYPE_CAP');
+
+  static const $core.List<PassType> values = <PassType>[
+    PASS_TYPE_UNSPECIFIED,
+    PASS_TYPE_ROOT,
+    PASS_TYPE_HOT,
+    PASS_TYPE_FILL,
+    PASS_TYPE_CAP,
+  ];
+
+  static final $core.List<PassType?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 4);
+  static PassType? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const PassType._(super.value, super.name);
+}
+
 class CollectionView extends $pb.ProtobufEnum {
   static const CollectionView COLLECTION_VIEW_UNSPECIFIED =
       CollectionView._(0, _omitEnumNames ? '' : 'COLLECTION_VIEW_UNSPECIFIED');

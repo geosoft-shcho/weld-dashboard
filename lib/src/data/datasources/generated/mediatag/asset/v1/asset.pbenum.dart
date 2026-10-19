@@ -61,5 +61,29 @@ class AssetKind extends $pb.ProtobufEnum {
   const AssetKind._(super.value, super.name);
 }
 
+class DuplicateDecision extends $pb.ProtobufEnum {
+  static const DuplicateDecision DUPLICATE_DECISION_UNSPECIFIED =
+      DuplicateDecision._(
+          0, _omitEnumNames ? '' : 'DUPLICATE_DECISION_UNSPECIFIED');
+  static const DuplicateDecision DUPLICATE_DECISION_MERGED =
+      DuplicateDecision._(1, _omitEnumNames ? '' : 'DUPLICATE_DECISION_MERGED');
+  static const DuplicateDecision DUPLICATE_DECISION_KEEP_SEPARATE =
+      DuplicateDecision._(
+          2, _omitEnumNames ? '' : 'DUPLICATE_DECISION_KEEP_SEPARATE');
+
+  static const $core.List<DuplicateDecision> values = <DuplicateDecision>[
+    DUPLICATE_DECISION_UNSPECIFIED,
+    DUPLICATE_DECISION_MERGED,
+    DUPLICATE_DECISION_KEEP_SEPARATE,
+  ];
+
+  static final $core.List<DuplicateDecision?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static DuplicateDecision? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const DuplicateDecision._(super.value, super.name);
+}
+
 const $core.bool _omitEnumNames =
     $core.bool.fromEnvironment('protobuf.omit_enum_names');

@@ -15,6 +15,12 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-19  geosoft-Server: 작업자 종류 WorkerType(명장·일반·로봇)이 is_master·master_only를 대신함, Worker.team 삭제(깨지는 변경)
+//   2026-10-19  geosoft-Server: Worker.employee_no·description·inactive, Equipment.description·inactive, ListWorkers·ListEquipment
+//                include_inactive
+//   2026-10-19  geosoft-Server: DeleteProjectItem, ListJobsRequest.asset_id, ListJobFilters 개수(job_count·*_counts)
+//   2026-10-19  geosoft-Server: 패스 종류 Pass.pass_type(ROOT·HOT·FILL·CAP) — pass_no만으로는 Fill·Cap을 못 가른다
+//   2026-10-13  geosoft-Server: Delete* 주석에 삭제 방식(행을 실제로 지움) 명시 — 삭제는 Delete 하나, 방식은 주석에
 //   2026-10-08  geosoft-Server: 품목 이름은 배정 줄의 값 — UpdateJob 마스크에서 item_name을 빼고 UpdateProjectItem 추가.
 //                CreateJob은 이미 배정된 품목이면 item_name을 안 줘도 된다
 //   2026-10-08  geosoft-Server: 품목 기준정보 — CreateProjectItems(공사·호기에 품목 배정), ListItems(쓰인 품목), Job.project_item_id.
@@ -65,25 +71,29 @@ service WorkService {
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
   // 공사를 만든다. project.project_no는 필수이고 발급 후 불변. 같은 번호가 있으면 AlreadyExists.
   rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse);
+  // 숨긴(inactive) 작업자는 빠진다 — include_inactive면 전부.
   rpc ListWorkers(ListWorkersRequest) returns (ListWorkersResponse);
-  // 작업자를 만든다. worker.worker_name 필수.
+  // 작업자를 만든다. worker.worker_name 필수. employee_no가 겹치면 AlreadyExists.
   rpc CreateWorker(CreateWorkerRequest) returns (CreateWorkerResponse);
-  // update_mask: worker_name, team, is_master
+  // update_mask: worker_name, worker_type, employee_no, description, inactive. employee_no가 겹치면 AlreadyExists.
   rpc UpdateWorker(UpdateWorkerRequest) returns (UpdateWorkerResponse);
-  // 작업을 맡은 작업자는 FailedPrecondition.
+  // 행을 실제로 지운다(되돌릴 수 없음). 작업을 맡은 작업자는 FailedPrecondition.
   rpc DeleteWorker(DeleteWorkerRequest) returns (DeleteWorkerResponse);
-  rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse);
+  // 숨긴(inactive) 장비는 빠진다 — include_inactive면 전부.
+  rpc ListEquipment(각) returns (ListEquipmentResponse);
   // 장비를 만든다. equipment.equipment_name 필수. equipment_code가 겹치면 AlreadyExists.
   rpc CreateEquipment(CreateEquipmentRequest) returns (CreateEquipmentResponse);
-  // update_mask: equipment_name, line_name, equipment_code
+  // update_mask: equipment_name, line_name, equipment_code, description, inactive
   rpc UpdateEquipment(UpdateEquipmentRequest) returns (UpdateEquipmentResponse);
-  // 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
+  // 행을 실제로 지운다(되돌릴 수 없음). 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
   rpc DeleteEquipment(DeleteEquipmentRequest) returns (DeleteEquipmentResponse);
   // 공사의 호기에 품목을 배정한다(묶음). 작업을 만들기 전에 품목을 미리 등록할 때 쓴다. 이미 있는 배정은 그대로 두고
   // (이름도 안 바꾼다) 그 줄을 돌려준다. project_id·unit_no·item_code·item_name 필수, 없는 공사면 InvalidArgument.
   rpc CreateProjectItems(CreateProjectItemsRequest) returns (CreateProjectItemsResponse);
   // 배정 줄의 품목 이름을 고친다(item.project_item_id·item_name 필수). 그 배정을 가리키는 작업 모두의 item_name이 바뀐다.
   rpc UpdateProjectItem(UpdateProjectItemRequest) returns (UpdateProjectItemResponse);
+  // 배정 줄을 실제로 지운다(되돌릴 수 없음). 그 배정을 쓰는 작업이 있으면 FailedPrecondition, 없는 번호면 NotFound.
+  rpc DeleteProjectItem(DeleteProjectItemRequest) returns (DeleteProjectItemResponse);
   // 배정에 쓰인 품목(코드·이름)을 중복 없이. 품목을 넣을 때 이름을 다시 고르는 추천 목록으로 쓴다.
   rpc ListItems(ListItemsRequest) returns (ListItemsResponse);
   // 작업 목록(ListJobs) 필터의 드롭다운 값을 한 번에: 공사(호기·품목 포함)·작업자·장비.
@@ -92,7 +102,7 @@ service WorkService {
   rpc ListJobs(ListJobsRequest) returns (ListJobsResponse);
   // 공사 이름·현장·발주처를 고친다(update_mask: project_name, site_name, customer). 공사 번호는 못 바꾼다.
   rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse);
-  // 작업이 하나라도 있는 공사는 FailedPrecondition.
+  // 행을 실제로 지운다(되돌릴 수 없음). 작업이 하나라도 있는 공사는 FailedPrecondition.
   rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse);
   // 작업을 만든다. 필수: job.project_no(또는 project_id)·unit_no·item_code(공백 없이, 정규화된 값 — '05'·'TFPB')·joint_no·started_at, 그리고 item_name(이미 배정된 품목이면 안 줘도 되고, 줘도 저장된 이름을 따른다).
   // job_id·job_key·common_key는 서버가 정하고 보낸 값은 무시한다. 공사·작업자가 없으면 InvalidArgument.
@@ -101,13 +111,13 @@ service WorkService {
   // 작업을 고친다(update_mask에 든 칸만). job_id는 그대로이고, 공사·호기·품목·이음부·시작 시각이 바뀌면 common_key·job_key를
   // 다시 만든다 — 성적서는 품목(common_key)에 붙어 있어 바뀐 품목의 성적서를 보게 된다. 필수 칸은 비울 수 없다.
   rpc UpdateJob(UpdateJobRequest) returns (UpdateJobResponse);
-  // 작업과 그 패스를 지운다. 첨부·타임라인·매칭된 성적서 세트가 있으면 FailedPrecondition(먼저 떼거나 지운다).
+  // 작업과 그 패스의 행을 실제로 지운다(되돌릴 수 없음). 첨부·타임라인·매칭된 성적서 세트가 있으면 FailedPrecondition(먼저 떼거나 지운다).
   rpc DeleteJob(DeleteJobRequest) returns (DeleteJobResponse);
   // 패스를 만든다. pass.job_id·pass_no(1 이상)는 필수. 같은 번호의 패스가 있으면 AlreadyExists.
   rpc CreatePass(CreatePassRequest) returns (CreatePassResponse);
-  // 패스를 고친다(update_mask: pass_no, started_at, ended_at).
+  // 패스를 고친다(update_mask: pass_no, pass_type, started_at, ended_at).
   rpc UpdatePass(UpdatePassRequest) returns (UpdatePassResponse);
-  // 패스를 지운다. 그 패스에 붙어 있던 첨부는 작업 공용이 된다.
+  // 패스 행을 실제로 지운다(되돌릴 수 없음). 그 패스에 붙어 있던 첨부는 작업 공용이 된다.
   rpc DeletePass(DeletePassRequest) returns (DeletePassResponse);
   // 작업 + 패스 + 작업자 + 쓰인 장비
   rpc GetJob(GetJobRequest) returns (GetJobResponse);
@@ -129,13 +139,23 @@ message Project {
   int64 project_id = 5;    // 시스템이 매기는 번호
 }
 
-// 작업자. 명장/대조군 구분은 비교·학습 데이터의 핵심.
+// 작업자 종류. 명장/일반 구분은 비교·학습 데이터의 핵심이고, 로봇 용접도 작업자로 둔다.
+enum WorkerType {
+  WORKER_TYPE_UNSPECIFIED = 0; // 모름
+  WORKER_TYPE_MASTER = 1;      // 명장
+  WORKER_TYPE_GENERAL = 2;     // 일반(명장 아닌 사람)
+  WORKER_TYPE_ROBOT = 3;       // 로봇
+}
+
+// 작업자.
 message Worker {
   int64 worker_id = 1;         // 시스템이 매기는 번호
   string worker_name = 2;
-  string team = 3;
-  optional bool is_master = 4; // 없으면 모름
-  reserved 5; // 옛 worker_code
+  reserved 3, 4, 5; // 옛 team·is_master(→ worker_type)·worker_code
+  string employee_no = 6;      // 사번. 없어도 되고, 있으면 유일 — 이름이 같은 사람을 가른다
+  string description = 7;      // 비고(경력·자격·주 공정 등 자유 글)
+  bool inactive = 8;           // 숨김(그만둔 사람). 고르는 목록(ListWorkers)에서만 빠지고 맡은 작업에는 그대로 보인다
+  WorkerType worker_type = 9;
 }
 
 // 수집 장비(카메라·마이크·센서·용접기 패널 등).
@@ -144,6 +164,8 @@ message Equipment {
   string equipment_name = 2;
   string line_name = 3;
   string equipment_code = 4;   // 사람이 정한 값('DEMO-DEPTH-FRONT'). 적재기가 이 값으로 장비를 찾는다. 없어도 되고, 있으면 유일
+  string description = 5;      // 비고
+  bool inactive = 6;           // 숨김(안 쓰는 장비). 고르는 목록(ListEquipment)에서만 빠진다
 }
 
 // 작업 1회 = 이력 1건 = 타임라인 1개.
@@ -209,6 +231,12 @@ message UpdateProjectItemResponse {
   ItemAssignment item = 1;
 }
 
+message DeleteProjectItemRequest {
+  int64 project_item_id = 1;
+}
+
+message DeleteProjectItemResponse {}
+
 message ListItemsRequest {
   int64 project_id = 1; // 그 공사에서 쓴 품목. 0이면 전체 공사
 }
@@ -217,19 +245,30 @@ message ListItemsResponse {
   repeated Item items = 1; // item_code, item_name 오름차순
 }
 
+// 패스 종류. 층간온도 등 패스에서 잰 값은 이 칸이 아니라 수치 태그(라벨 측정 항목 > interpass_temp)로 둔다.
+enum PassType {
+  PASS_TYPE_UNSPECIFIED = 0; // 모름
+  PASS_TYPE_ROOT = 1;        // 초층(Root Pass)
+  PASS_TYPE_HOT = 2;         // Hot Pass
+  PASS_TYPE_FILL = 3;        // 채움(Fill Pass)
+  PASS_TYPE_CAP = 4;         // 덮개(Cap Pass)
+}
+
 message Pass {
   int64 pass_id = 1;       // 시스템이 매기는 번호
   int64 job_id = 2;
   int32 pass_no = 3;       // 1 = 초층(root)
   google.protobuf.Timestamp started_at = 4;
   google.protobuf.Timestamp ended_at = 5;
+  PassType pass_type = 6;  // 비우면 모름. pass_no와 따로 정한다(1패스가 늘 ROOT라도 2패스부터는 HOT·FILL·CAP이 작업마다 다르다)
 }
 
 // 목록 한 행. 이름·개수는 조인·집계한 표시용 값이다.
 message JobSummary {
   Job job = 1;
   string worker_name = 2;
-  optional bool is_master = 3;
+  reserved 3; // 옛 is_master
+  WorkerType worker_type = 8;
   repeated string equipment_names = 4; // 첨부 Asset의 장비(중복 제거). 작업엔 장비가 여러 대
   int32 pass_count = 5;
   int32 attachment_count = 6;          // job_asset 행 수
@@ -260,7 +299,7 @@ message CreateWorkerResponse {
 
 message UpdateWorkerRequest {
   Worker worker = 1;                       // worker.worker_id 필수
-  google.protobuf.FieldMask update_mask = 2; // worker_name, team, is_master
+  google.protobuf.FieldMask update_mask = 2; // worker_name, worker_type, employee_no, description, inactive
 }
 
 message UpdateWorkerResponse {
@@ -283,7 +322,7 @@ message CreateEquipmentResponse {
 
 message UpdateEquipmentRequest {
   Equipment equipment = 1;                 // equipment.equipment_id 필수
-  google.protobuf.FieldMask update_mask = 2; // equipment_name, line_name, equipment_code
+  google.protobuf.FieldMask update_mask = 2; // equipment_name, line_name, equipment_code, description, inactive
 }
 
 message UpdateEquipmentResponse {
@@ -350,7 +389,7 @@ message CreatePassResponse {
 
 message UpdatePassRequest {
   Pass pass = 1;                           // pass.pass_id 필수
-  google.protobuf.FieldMask update_mask = 2; // pass_no, started_at, ended_at
+  google.protobuf.FieldMask update_mask = 2; // pass_no, pass_type, started_at, ended_at
 }
 
 message UpdatePassResponse {
@@ -368,14 +407,19 @@ message ListJobFiltersRequest {}
 // 드롭다운 값. 고른 값은 ListJobs의 project_no·unit_no·item_code·worker_id·equipment_id에 넣는다.
 message ListJobFiltersResponse {
   repeated ProjectFilter projects = 1; // project_no 오름차순
-  repeated Worker workers = 2;         // ListWorkers와 같은 목록
-  repeated Equipment equipment = 3;    // ListEquipment와 같은 목록
+  repeated Worker workers = 2;         // 숨긴 것도 포함(지난 작업을 찾을 때도 쓰므로) — inactive로 구분
+  repeated Equipment equipment = 3;    // 숨긴 것도 포함 — inactive로 구분
+  // 개수 — ListJobs(같은 조건)의 total_count와 같다. 0인 것은 빠진다.
+  map<int64, int32> worker_job_counts = 4;      // worker_id → 맡은 작업 수
+  map<int64, int32> equipment_job_counts = 5;   // equipment_id → 그 장비의 Asset이 첨부된 작업 수
+  map<int64, int32> equipment_asset_counts = 6; // equipment_id → 기록한 Asset 수. 0이 아니면 장비를 못 지운다
 }
 
 // 공사 하나와 그 공사에 배정된 호기·품목(tacit.project_item). 작업이 없는 호기·품목도 나온다.
 message ProjectFilter {
   Project project = 1;
   repeated ProjectUnit units = 2;  // unit_no 오름차순
+  int32 job_count = 3;             // 그 공사의 작업 수
 }
 
 // 품목은 호기 아래에 묶는다 — 호기마다 품목이 다르다(TP129 1호기엔 LD-D가 없음).
@@ -400,13 +444,17 @@ message ProjectJoint {
   repeated int32 pass_nos = 2;     // 오름차순(1 = 초층). 고른 값은 ListJobs의 pass_no에
 }
 
-message ListWorkersRequest {}
+message ListWorkersRequest {
+  bool include_inactive = 1; // 숨긴 작업자도
+}
 
 message ListWorkersResponse {
   repeated Worker workers = 1;
 }
 
-message ListEquipmentRequest {}
+message 각 {
+  bool include_inactive = 1; // 숨긴 장비도
+}
 
 message ListEquipmentResponse {
   repeated Equipment equipment = 1;
@@ -422,8 +470,10 @@ message ListJobsRequest {
   string joint_no = 12;             // 이음부 번호 완전 일치('DGT-ELA-01'). 품목 안에서만 유일하므로 보통 item_code와 함께
   int32 pass_no = 13;        // 그 패스가 있는 작업만(1 = 초층). 0이면 거르지 않는다
   int64 worker_id = 4;
-  bool master_only = 5;      // 명장(worker.is_master) 작업만 — s3 비교 대상 고르기
+  reserved 5; // 옛 master_only
+  WorkerType worker_type = 16; // 그 종류의 작업자가 맡은 작업만(MASTER = 명장 작업 — s3 비교 대상 고르기). UNSPECIFIED면 거르지 않는다
   int64 equipment_id = 6;   // 그 장비의 Asset이 첨부된 작업
+  int64 asset_id = 15;      // 그 Asset이 직접 첨부(job_asset)된 작업. 부모만 붙은 파생은 찾지 않는다
   google.protobuf.Timestamp started_from = 7; // started_at >= from
   google.protobuf.Timestamp started_to = 8;   // started_at < to
   int32 page_size = 9;       // 기본 50, 최대 200
@@ -536,7 +586,7 @@ message GetPassWaveformRequest {
   // 이름이 통일되는 채널은 통일 이름(current_a 등)·파일 원본 이름(전류_A 등) 어느 쪽으로 적어도 된다.
   repeated string channels = 2;
   int32 max_points = 3;         // 시리즈당 점 상한(화면용 줄이기). 0이면 서버 기본값
-  // 비교할 패스. 화면이 비교 작업(지금은 명장 작업을 직접 고름 — ListJobs master_only, 추천 알고리즘이 생기면
+  // 비교할 패스. 화면이 비교 작업(지금은 명장 작업을 직접 고름 — ListJobs worker_type = MASTER, 추천 알고리즘이 생기면
   // 그 결과)의 패스 목록(GetJob의 passes)에서 고른다. ListJobs의 pass_no로 찾은 작업도 GetJob으로 패스의 pass_id를 받는다. 패스 수가 작업마다 다르니 처음↔처음, 끝↔끝, 가운데는 같은
   // pass_no로 짝짓는 것을 권한다.
   int64 comparison_pass_id = 4;
@@ -566,7 +616,8 @@ message PassWaveform {
   int64 pass_id = 2;
   int32 pass_no = 3;
   string worker_name = 4;
-  optional bool is_master = 5;
+  reserved 5; // 옛 is_master
+  WorkerType worker_type = 7;
   repeated WaveformSeries series = 6; // 파일(장비)마다 하나 — 샘플 시각이 파일마다 다르다
 }
 

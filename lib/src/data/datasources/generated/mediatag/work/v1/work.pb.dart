@@ -129,19 +129,23 @@ class Project extends $pb.GeneratedMessage {
   void clearProjectId() => $_clearField(5);
 }
 
-/// 작업자. 명장/대조군 구분은 비교·학습 데이터의 핵심.
+/// 작업자.
 class Worker extends $pb.GeneratedMessage {
   factory Worker({
     $fixnum.Int64? workerId,
     $core.String? workerName,
-    $core.String? team,
-    $core.bool? isMaster,
+    $core.String? employeeNo,
+    $core.String? description,
+    $core.bool? inactive,
+    WorkerType? workerType,
   }) {
     final result = create();
     if (workerId != null) result.workerId = workerId;
     if (workerName != null) result.workerName = workerName;
-    if (team != null) result.team = team;
-    if (isMaster != null) result.isMaster = isMaster;
+    if (employeeNo != null) result.employeeNo = employeeNo;
+    if (description != null) result.description = description;
+    if (inactive != null) result.inactive = inactive;
+    if (workerType != null) result.workerType = workerType;
     return result;
   }
 
@@ -161,8 +165,13 @@ class Worker extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'workerId')
     ..aOS(2, _omitFieldNames ? '' : 'workerName')
-    ..aOS(3, _omitFieldNames ? '' : 'team')
-    ..aOB(4, _omitFieldNames ? '' : 'isMaster')
+    ..aOS(6, _omitFieldNames ? '' : 'employeeNo')
+    ..aOS(7, _omitFieldNames ? '' : 'description')
+    ..aOB(8, _omitFieldNames ? '' : 'inactive')
+    ..e<WorkerType>(9, _omitFieldNames ? '' : 'workerType', $pb.PbFieldType.OE,
+        defaultOrMaker: WorkerType.WORKER_TYPE_UNSPECIFIED,
+        valueOf: WorkerType.valueOf,
+        enumValues: WorkerType.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -202,23 +211,41 @@ class Worker extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearWorkerName() => $_clearField(2);
 
-  @$pb.TagNumber(3)
-  $core.String get team => $_getSZ(2);
-  @$pb.TagNumber(3)
-  set team($core.String value) => $_setString(2, value);
-  @$pb.TagNumber(3)
-  $core.bool hasTeam() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearTeam() => $_clearField(3);
+  @$pb.TagNumber(6)
+  $core.String get employeeNo => $_getSZ(2);
+  @$pb.TagNumber(6)
+  set employeeNo($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(6)
+  $core.bool hasEmployeeNo() => $_has(2);
+  @$pb.TagNumber(6)
+  void clearEmployeeNo() => $_clearField(6);
 
-  @$pb.TagNumber(4)
-  $core.bool get isMaster => $_getBF(3);
-  @$pb.TagNumber(4)
-  set isMaster($core.bool value) => $_setBool(3, value);
-  @$pb.TagNumber(4)
-  $core.bool hasIsMaster() => $_has(3);
-  @$pb.TagNumber(4)
-  void clearIsMaster() => $_clearField(4);
+  @$pb.TagNumber(7)
+  $core.String get description => $_getSZ(3);
+  @$pb.TagNumber(7)
+  set description($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(7)
+  $core.bool hasDescription() => $_has(3);
+  @$pb.TagNumber(7)
+  void clearDescription() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.bool get inactive => $_getBF(4);
+  @$pb.TagNumber(8)
+  set inactive($core.bool value) => $_setBool(4, value);
+  @$pb.TagNumber(8)
+  $core.bool hasInactive() => $_has(4);
+  @$pb.TagNumber(8)
+  void clearInactive() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  WorkerType get workerType => $_getN(5);
+  @$pb.TagNumber(9)
+  set workerType(WorkerType value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasWorkerType() => $_has(5);
+  @$pb.TagNumber(9)
+  void clearWorkerType() => $_clearField(9);
 }
 
 /// 수집 장비(카메라·마이크·센서·용접기 패널 등).
@@ -228,12 +255,16 @@ class Equipment extends $pb.GeneratedMessage {
     $core.String? equipmentName,
     $core.String? lineName,
     $core.String? equipmentCode,
+    $core.String? description,
+    $core.bool? inactive,
   }) {
     final result = create();
     if (equipmentId != null) result.equipmentId = equipmentId;
     if (equipmentName != null) result.equipmentName = equipmentName;
     if (lineName != null) result.lineName = lineName;
     if (equipmentCode != null) result.equipmentCode = equipmentCode;
+    if (description != null) result.description = description;
+    if (inactive != null) result.inactive = inactive;
     return result;
   }
 
@@ -255,6 +286,8 @@ class Equipment extends $pb.GeneratedMessage {
     ..aOS(2, _omitFieldNames ? '' : 'equipmentName')
     ..aOS(3, _omitFieldNames ? '' : 'lineName')
     ..aOS(4, _omitFieldNames ? '' : 'equipmentCode')
+    ..aOS(5, _omitFieldNames ? '' : 'description')
+    ..aOB(6, _omitFieldNames ? '' : 'inactive')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -311,6 +344,24 @@ class Equipment extends $pb.GeneratedMessage {
   $core.bool hasEquipmentCode() => $_has(3);
   @$pb.TagNumber(4)
   void clearEquipmentCode() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get description => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set description($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasDescription() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearDescription() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.bool get inactive => $_getBF(5);
+  @$pb.TagNumber(6)
+  set inactive($core.bool value) => $_setBool(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasInactive() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearInactive() => $_clearField(6);
 }
 
 /// 작업 1회 = 이력 1건 = 타임라인 1개.
@@ -1019,6 +1070,108 @@ class UpdateProjectItemResponse extends $pb.GeneratedMessage {
   ItemAssignment ensureItem() => $_ensure(0);
 }
 
+class DeleteProjectItemRequest extends $pb.GeneratedMessage {
+  factory DeleteProjectItemRequest({
+    $fixnum.Int64? projectItemId,
+  }) {
+    final result = create();
+    if (projectItemId != null) result.projectItemId = projectItemId;
+    return result;
+  }
+
+  DeleteProjectItemRequest._();
+
+  factory DeleteProjectItemRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DeleteProjectItemRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DeleteProjectItemRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'projectItemId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteProjectItemRequest clone() =>
+      DeleteProjectItemRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteProjectItemRequest copyWith(
+          void Function(DeleteProjectItemRequest) updates) =>
+      super.copyWith((message) => updates(message as DeleteProjectItemRequest))
+          as DeleteProjectItemRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DeleteProjectItemRequest create() => DeleteProjectItemRequest._();
+  @$core.override
+  DeleteProjectItemRequest createEmptyInstance() => create();
+  static $pb.PbList<DeleteProjectItemRequest> createRepeated() =>
+      $pb.PbList<DeleteProjectItemRequest>();
+  @$core.pragma('dart2js:noInline')
+  static DeleteProjectItemRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DeleteProjectItemRequest>(create);
+  static DeleteProjectItemRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get projectItemId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set projectItemId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasProjectItemId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearProjectItemId() => $_clearField(1);
+}
+
+class DeleteProjectItemResponse extends $pb.GeneratedMessage {
+  factory DeleteProjectItemResponse() => create();
+
+  DeleteProjectItemResponse._();
+
+  factory DeleteProjectItemResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DeleteProjectItemResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DeleteProjectItemResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteProjectItemResponse clone() =>
+      DeleteProjectItemResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteProjectItemResponse copyWith(
+          void Function(DeleteProjectItemResponse) updates) =>
+      super.copyWith((message) => updates(message as DeleteProjectItemResponse))
+          as DeleteProjectItemResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DeleteProjectItemResponse create() => DeleteProjectItemResponse._();
+  @$core.override
+  DeleteProjectItemResponse createEmptyInstance() => create();
+  static $pb.PbList<DeleteProjectItemResponse> createRepeated() =>
+      $pb.PbList<DeleteProjectItemResponse>();
+  @$core.pragma('dart2js:noInline')
+  static DeleteProjectItemResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DeleteProjectItemResponse>(create);
+  static DeleteProjectItemResponse? _defaultInstance;
+}
+
 class ListItemsRequest extends $pb.GeneratedMessage {
   factory ListItemsRequest({
     $fixnum.Int64? projectId,
@@ -1135,6 +1288,7 @@ class Pass extends $pb.GeneratedMessage {
     $core.int? passNo,
     $0.Timestamp? startedAt,
     $0.Timestamp? endedAt,
+    PassType? passType,
   }) {
     final result = create();
     if (passId != null) result.passId = passId;
@@ -1142,6 +1296,7 @@ class Pass extends $pb.GeneratedMessage {
     if (passNo != null) result.passNo = passNo;
     if (startedAt != null) result.startedAt = startedAt;
     if (endedAt != null) result.endedAt = endedAt;
+    if (passType != null) result.passType = passType;
     return result;
   }
 
@@ -1166,6 +1321,10 @@ class Pass extends $pb.GeneratedMessage {
         subBuilder: $0.Timestamp.create)
     ..aOM<$0.Timestamp>(5, _omitFieldNames ? '' : 'endedAt',
         subBuilder: $0.Timestamp.create)
+    ..e<PassType>(6, _omitFieldNames ? '' : 'passType', $pb.PbFieldType.OE,
+        defaultOrMaker: PassType.PASS_TYPE_UNSPECIFIED,
+        valueOf: PassType.valueOf,
+        enumValues: PassType.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1235,6 +1394,15 @@ class Pass extends $pb.GeneratedMessage {
   void clearEndedAt() => $_clearField(5);
   @$pb.TagNumber(5)
   $0.Timestamp ensureEndedAt() => $_ensure(4);
+
+  @$pb.TagNumber(6)
+  PassType get passType => $_getN(5);
+  @$pb.TagNumber(6)
+  set passType(PassType value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasPassType() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearPassType() => $_clearField(6);
 }
 
 /// 목록 한 행. 이름·개수는 조인·집계한 표시용 값이다.
@@ -1242,20 +1410,20 @@ class JobSummary extends $pb.GeneratedMessage {
   factory JobSummary({
     Job? job,
     $core.String? workerName,
-    $core.bool? isMaster,
     $core.Iterable<$core.String>? equipmentNames,
     $core.int? passCount,
     $core.int? attachmentCount,
     $core.bool? hasReport,
+    WorkerType? workerType,
   }) {
     final result = create();
     if (job != null) result.job = job;
     if (workerName != null) result.workerName = workerName;
-    if (isMaster != null) result.isMaster = isMaster;
     if (equipmentNames != null) result.equipmentNames.addAll(equipmentNames);
     if (passCount != null) result.passCount = passCount;
     if (attachmentCount != null) result.attachmentCount = attachmentCount;
     if (hasReport != null) result.hasReport = hasReport;
+    if (workerType != null) result.workerType = workerType;
     return result;
   }
 
@@ -1275,12 +1443,15 @@ class JobSummary extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOM<Job>(1, _omitFieldNames ? '' : 'job', subBuilder: Job.create)
     ..aOS(2, _omitFieldNames ? '' : 'workerName')
-    ..aOB(3, _omitFieldNames ? '' : 'isMaster')
     ..pPS(4, _omitFieldNames ? '' : 'equipmentNames')
     ..a<$core.int>(5, _omitFieldNames ? '' : 'passCount', $pb.PbFieldType.O3)
     ..a<$core.int>(
         6, _omitFieldNames ? '' : 'attachmentCount', $pb.PbFieldType.O3)
     ..aOB(7, _omitFieldNames ? '' : 'hasReport')
+    ..e<WorkerType>(8, _omitFieldNames ? '' : 'workerType', $pb.PbFieldType.OE,
+        defaultOrMaker: WorkerType.WORKER_TYPE_UNSPECIFIED,
+        valueOf: WorkerType.valueOf,
+        enumValues: WorkerType.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1322,44 +1493,44 @@ class JobSummary extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearWorkerName() => $_clearField(2);
 
-  @$pb.TagNumber(3)
-  $core.bool get isMaster => $_getBF(2);
-  @$pb.TagNumber(3)
-  set isMaster($core.bool value) => $_setBool(2, value);
-  @$pb.TagNumber(3)
-  $core.bool hasIsMaster() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearIsMaster() => $_clearField(3);
-
   @$pb.TagNumber(4)
-  $pb.PbList<$core.String> get equipmentNames => $_getList(3);
+  $pb.PbList<$core.String> get equipmentNames => $_getList(2);
 
   @$pb.TagNumber(5)
-  $core.int get passCount => $_getIZ(4);
+  $core.int get passCount => $_getIZ(3);
   @$pb.TagNumber(5)
-  set passCount($core.int value) => $_setSignedInt32(4, value);
+  set passCount($core.int value) => $_setSignedInt32(3, value);
   @$pb.TagNumber(5)
-  $core.bool hasPassCount() => $_has(4);
+  $core.bool hasPassCount() => $_has(3);
   @$pb.TagNumber(5)
   void clearPassCount() => $_clearField(5);
 
   @$pb.TagNumber(6)
-  $core.int get attachmentCount => $_getIZ(5);
+  $core.int get attachmentCount => $_getIZ(4);
   @$pb.TagNumber(6)
-  set attachmentCount($core.int value) => $_setSignedInt32(5, value);
+  set attachmentCount($core.int value) => $_setSignedInt32(4, value);
   @$pb.TagNumber(6)
-  $core.bool hasAttachmentCount() => $_has(5);
+  $core.bool hasAttachmentCount() => $_has(4);
   @$pb.TagNumber(6)
   void clearAttachmentCount() => $_clearField(6);
 
   @$pb.TagNumber(7)
-  $core.bool get hasReport => $_getBF(6);
+  $core.bool get hasReport => $_getBF(5);
   @$pb.TagNumber(7)
-  set hasReport($core.bool value) => $_setBool(6, value);
+  set hasReport($core.bool value) => $_setBool(5, value);
   @$pb.TagNumber(7)
-  $core.bool hasHasReport() => $_has(6);
+  $core.bool hasHasReport() => $_has(5);
   @$pb.TagNumber(7)
   void clearHasReport() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  WorkerType get workerType => $_getN(6);
+  @$pb.TagNumber(8)
+  set workerType(WorkerType value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasWorkerType() => $_has(6);
+  @$pb.TagNumber(8)
+  void clearWorkerType() => $_clearField(8);
 }
 
 class ListProjectsRequest extends $pb.GeneratedMessage {
@@ -3311,11 +3482,22 @@ class ListJobFiltersResponse extends $pb.GeneratedMessage {
     $core.Iterable<ProjectFilter>? projects,
     $core.Iterable<Worker>? workers,
     $core.Iterable<Equipment>? equipment,
+    $core.Iterable<$core.MapEntry<$fixnum.Int64, $core.int>>? workerJobCounts,
+    $core.Iterable<$core.MapEntry<$fixnum.Int64, $core.int>>?
+        equipmentJobCounts,
+    $core.Iterable<$core.MapEntry<$fixnum.Int64, $core.int>>?
+        equipmentAssetCounts,
   }) {
     final result = create();
     if (projects != null) result.projects.addAll(projects);
     if (workers != null) result.workers.addAll(workers);
     if (equipment != null) result.equipment.addAll(equipment);
+    if (workerJobCounts != null)
+      result.workerJobCounts.addEntries(workerJobCounts);
+    if (equipmentJobCounts != null)
+      result.equipmentJobCounts.addEntries(equipmentJobCounts);
+    if (equipmentAssetCounts != null)
+      result.equipmentAssetCounts.addEntries(equipmentAssetCounts);
     return result;
   }
 
@@ -3340,6 +3522,23 @@ class ListJobFiltersResponse extends $pb.GeneratedMessage {
         subBuilder: Worker.create)
     ..pc<Equipment>(3, _omitFieldNames ? '' : 'equipment', $pb.PbFieldType.PM,
         subBuilder: Equipment.create)
+    ..m<$fixnum.Int64, $core.int>(4, _omitFieldNames ? '' : 'workerJobCounts',
+        entryClassName: 'ListJobFiltersResponse.WorkerJobCountsEntry',
+        keyFieldType: $pb.PbFieldType.O6,
+        valueFieldType: $pb.PbFieldType.O3,
+        packageName: const $pb.PackageName('mediatag.work.v1'))
+    ..m<$fixnum.Int64, $core.int>(
+        5, _omitFieldNames ? '' : 'equipmentJobCounts',
+        entryClassName: 'ListJobFiltersResponse.EquipmentJobCountsEntry',
+        keyFieldType: $pb.PbFieldType.O6,
+        valueFieldType: $pb.PbFieldType.O3,
+        packageName: const $pb.PackageName('mediatag.work.v1'))
+    ..m<$fixnum.Int64, $core.int>(
+        6, _omitFieldNames ? '' : 'equipmentAssetCounts',
+        entryClassName: 'ListJobFiltersResponse.EquipmentAssetCountsEntry',
+        keyFieldType: $pb.PbFieldType.O6,
+        valueFieldType: $pb.PbFieldType.O3,
+        packageName: const $pb.PackageName('mediatag.work.v1'))
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3373,6 +3572,16 @@ class ListJobFiltersResponse extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(3)
   $pb.PbList<Equipment> get equipment => $_getList(2);
+
+  /// 개수 — ListJobs(같은 조건)의 total_count와 같다. 0인 것은 빠진다.
+  @$pb.TagNumber(4)
+  $pb.PbMap<$fixnum.Int64, $core.int> get workerJobCounts => $_getMap(3);
+
+  @$pb.TagNumber(5)
+  $pb.PbMap<$fixnum.Int64, $core.int> get equipmentJobCounts => $_getMap(4);
+
+  @$pb.TagNumber(6)
+  $pb.PbMap<$fixnum.Int64, $core.int> get equipmentAssetCounts => $_getMap(5);
 }
 
 /// 공사 하나와 그 공사에 배정된 호기·품목(tacit.project_item). 작업이 없는 호기·품목도 나온다.
@@ -3380,10 +3589,12 @@ class ProjectFilter extends $pb.GeneratedMessage {
   factory ProjectFilter({
     Project? project,
     $core.Iterable<ProjectUnit>? units,
+    $core.int? jobCount,
   }) {
     final result = create();
     if (project != null) result.project = project;
     if (units != null) result.units.addAll(units);
+    if (jobCount != null) result.jobCount = jobCount;
     return result;
   }
 
@@ -3405,6 +3616,7 @@ class ProjectFilter extends $pb.GeneratedMessage {
         subBuilder: Project.create)
     ..pc<ProjectUnit>(2, _omitFieldNames ? '' : 'units', $pb.PbFieldType.PM,
         subBuilder: ProjectUnit.create)
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'jobCount', $pb.PbFieldType.O3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3441,6 +3653,15 @@ class ProjectFilter extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(2)
   $pb.PbList<ProjectUnit> get units => $_getList(1);
+
+  @$pb.TagNumber(3)
+  $core.int get jobCount => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set jobCount($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasJobCount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearJobCount() => $_clearField(3);
 }
 
 /// 품목은 호기 아래에 묶는다 — 호기마다 품목이 다르다(TP129 1호기엔 LD-D가 없음).
@@ -3672,7 +3893,13 @@ class ProjectJoint extends $pb.GeneratedMessage {
 }
 
 class ListWorkersRequest extends $pb.GeneratedMessage {
-  factory ListWorkersRequest() => create();
+  factory ListWorkersRequest({
+    $core.bool? includeInactive,
+  }) {
+    final result = create();
+    if (includeInactive != null) result.includeInactive = includeInactive;
+    return result;
+  }
 
   ListWorkersRequest._();
 
@@ -3688,6 +3915,7 @@ class ListWorkersRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
       createEmptyInstance: create)
+    ..aOB(1, _omitFieldNames ? '' : 'includeInactive')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3710,6 +3938,15 @@ class ListWorkersRequest extends $pb.GeneratedMessage {
   static ListWorkersRequest getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<ListWorkersRequest>(create);
   static ListWorkersRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.bool get includeInactive => $_getBF(0);
+  @$pb.TagNumber(1)
+  set includeInactive($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasIncludeInactive() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearIncludeInactive() => $_clearField(1);
 }
 
 class ListWorkersResponse extends $pb.GeneratedMessage {
@@ -3765,7 +4002,13 @@ class ListWorkersResponse extends $pb.GeneratedMessage {
 }
 
 class ListEquipmentRequest extends $pb.GeneratedMessage {
-  factory ListEquipmentRequest() => create();
+  factory ListEquipmentRequest({
+    $core.bool? includeInactive,
+  }) {
+    final result = create();
+    if (includeInactive != null) result.includeInactive = includeInactive;
+    return result;
+  }
 
   ListEquipmentRequest._();
 
@@ -3781,6 +4024,7 @@ class ListEquipmentRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
       createEmptyInstance: create)
+    ..aOB(1, _omitFieldNames ? '' : 'includeInactive')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3804,6 +4048,15 @@ class ListEquipmentRequest extends $pb.GeneratedMessage {
   static ListEquipmentRequest getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<ListEquipmentRequest>(create);
   static ListEquipmentRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.bool get includeInactive => $_getBF(0);
+  @$pb.TagNumber(1)
+  set includeInactive($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasIncludeInactive() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearIncludeInactive() => $_clearField(1);
 }
 
 class ListEquipmentResponse extends $pb.GeneratedMessage {
@@ -3867,7 +4120,6 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     $core.String? commonKey,
     $core.String? itemCode,
     $fixnum.Int64? workerId,
-    $core.bool? masterOnly,
     $fixnum.Int64? equipmentId,
     $0.Timestamp? startedFrom,
     $0.Timestamp? startedTo,
@@ -3877,13 +4129,14 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     $core.String? jointNo,
     $core.int? passNo,
     $fixnum.Int64? projectId,
+    $fixnum.Int64? assetId,
+    WorkerType? workerType,
   }) {
     final result = create();
     if (projectNo != null) result.projectNo = projectNo;
     if (commonKey != null) result.commonKey = commonKey;
     if (itemCode != null) result.itemCode = itemCode;
     if (workerId != null) result.workerId = workerId;
-    if (masterOnly != null) result.masterOnly = masterOnly;
     if (equipmentId != null) result.equipmentId = equipmentId;
     if (startedFrom != null) result.startedFrom = startedFrom;
     if (startedTo != null) result.startedTo = startedTo;
@@ -3893,6 +4146,8 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     if (jointNo != null) result.jointNo = jointNo;
     if (passNo != null) result.passNo = passNo;
     if (projectId != null) result.projectId = projectId;
+    if (assetId != null) result.assetId = assetId;
+    if (workerType != null) result.workerType = workerType;
     return result;
   }
 
@@ -3914,7 +4169,6 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     ..aOS(2, _omitFieldNames ? '' : 'commonKey')
     ..aOS(3, _omitFieldNames ? '' : 'itemCode')
     ..aInt64(4, _omitFieldNames ? '' : 'workerId')
-    ..aOB(5, _omitFieldNames ? '' : 'masterOnly')
     ..aInt64(6, _omitFieldNames ? '' : 'equipmentId')
     ..aOM<$0.Timestamp>(7, _omitFieldNames ? '' : 'startedFrom',
         subBuilder: $0.Timestamp.create)
@@ -3926,6 +4180,11 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     ..aOS(12, _omitFieldNames ? '' : 'jointNo')
     ..a<$core.int>(13, _omitFieldNames ? '' : 'passNo', $pb.PbFieldType.O3)
     ..aInt64(14, _omitFieldNames ? '' : 'projectId')
+    ..aInt64(15, _omitFieldNames ? '' : 'assetId')
+    ..e<WorkerType>(16, _omitFieldNames ? '' : 'workerType', $pb.PbFieldType.OE,
+        defaultOrMaker: WorkerType.WORKER_TYPE_UNSPECIFIED,
+        valueOf: WorkerType.valueOf,
+        enumValues: WorkerType.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3985,99 +4244,108 @@ class ListJobsRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   void clearWorkerId() => $_clearField(4);
 
-  @$pb.TagNumber(5)
-  $core.bool get masterOnly => $_getBF(4);
-  @$pb.TagNumber(5)
-  set masterOnly($core.bool value) => $_setBool(4, value);
-  @$pb.TagNumber(5)
-  $core.bool hasMasterOnly() => $_has(4);
-  @$pb.TagNumber(5)
-  void clearMasterOnly() => $_clearField(5);
-
   @$pb.TagNumber(6)
-  $fixnum.Int64 get equipmentId => $_getI64(5);
+  $fixnum.Int64 get equipmentId => $_getI64(4);
   @$pb.TagNumber(6)
-  set equipmentId($fixnum.Int64 value) => $_setInt64(5, value);
+  set equipmentId($fixnum.Int64 value) => $_setInt64(4, value);
   @$pb.TagNumber(6)
-  $core.bool hasEquipmentId() => $_has(5);
+  $core.bool hasEquipmentId() => $_has(4);
   @$pb.TagNumber(6)
   void clearEquipmentId() => $_clearField(6);
 
   @$pb.TagNumber(7)
-  $0.Timestamp get startedFrom => $_getN(6);
+  $0.Timestamp get startedFrom => $_getN(5);
   @$pb.TagNumber(7)
   set startedFrom($0.Timestamp value) => $_setField(7, value);
   @$pb.TagNumber(7)
-  $core.bool hasStartedFrom() => $_has(6);
+  $core.bool hasStartedFrom() => $_has(5);
   @$pb.TagNumber(7)
   void clearStartedFrom() => $_clearField(7);
   @$pb.TagNumber(7)
-  $0.Timestamp ensureStartedFrom() => $_ensure(6);
+  $0.Timestamp ensureStartedFrom() => $_ensure(5);
 
   @$pb.TagNumber(8)
-  $0.Timestamp get startedTo => $_getN(7);
+  $0.Timestamp get startedTo => $_getN(6);
   @$pb.TagNumber(8)
   set startedTo($0.Timestamp value) => $_setField(8, value);
   @$pb.TagNumber(8)
-  $core.bool hasStartedTo() => $_has(7);
+  $core.bool hasStartedTo() => $_has(6);
   @$pb.TagNumber(8)
   void clearStartedTo() => $_clearField(8);
   @$pb.TagNumber(8)
-  $0.Timestamp ensureStartedTo() => $_ensure(7);
+  $0.Timestamp ensureStartedTo() => $_ensure(6);
 
   @$pb.TagNumber(9)
-  $core.int get pageSize => $_getIZ(8);
+  $core.int get pageSize => $_getIZ(7);
   @$pb.TagNumber(9)
-  set pageSize($core.int value) => $_setSignedInt32(8, value);
+  set pageSize($core.int value) => $_setSignedInt32(7, value);
   @$pb.TagNumber(9)
-  $core.bool hasPageSize() => $_has(8);
+  $core.bool hasPageSize() => $_has(7);
   @$pb.TagNumber(9)
   void clearPageSize() => $_clearField(9);
 
   @$pb.TagNumber(10)
-  $core.String get pageToken => $_getSZ(9);
+  $core.String get pageToken => $_getSZ(8);
   @$pb.TagNumber(10)
-  set pageToken($core.String value) => $_setString(9, value);
+  set pageToken($core.String value) => $_setString(8, value);
   @$pb.TagNumber(10)
-  $core.bool hasPageToken() => $_has(9);
+  $core.bool hasPageToken() => $_has(8);
   @$pb.TagNumber(10)
   void clearPageToken() => $_clearField(10);
 
   @$pb.TagNumber(11)
-  $core.String get unitNo => $_getSZ(10);
+  $core.String get unitNo => $_getSZ(9);
   @$pb.TagNumber(11)
-  set unitNo($core.String value) => $_setString(10, value);
+  set unitNo($core.String value) => $_setString(9, value);
   @$pb.TagNumber(11)
-  $core.bool hasUnitNo() => $_has(10);
+  $core.bool hasUnitNo() => $_has(9);
   @$pb.TagNumber(11)
   void clearUnitNo() => $_clearField(11);
 
   @$pb.TagNumber(12)
-  $core.String get jointNo => $_getSZ(11);
+  $core.String get jointNo => $_getSZ(10);
   @$pb.TagNumber(12)
-  set jointNo($core.String value) => $_setString(11, value);
+  set jointNo($core.String value) => $_setString(10, value);
   @$pb.TagNumber(12)
-  $core.bool hasJointNo() => $_has(11);
+  $core.bool hasJointNo() => $_has(10);
   @$pb.TagNumber(12)
   void clearJointNo() => $_clearField(12);
 
   @$pb.TagNumber(13)
-  $core.int get passNo => $_getIZ(12);
+  $core.int get passNo => $_getIZ(11);
   @$pb.TagNumber(13)
-  set passNo($core.int value) => $_setSignedInt32(12, value);
+  set passNo($core.int value) => $_setSignedInt32(11, value);
   @$pb.TagNumber(13)
-  $core.bool hasPassNo() => $_has(12);
+  $core.bool hasPassNo() => $_has(11);
   @$pb.TagNumber(13)
   void clearPassNo() => $_clearField(13);
 
   @$pb.TagNumber(14)
-  $fixnum.Int64 get projectId => $_getI64(13);
+  $fixnum.Int64 get projectId => $_getI64(12);
   @$pb.TagNumber(14)
-  set projectId($fixnum.Int64 value) => $_setInt64(13, value);
+  set projectId($fixnum.Int64 value) => $_setInt64(12, value);
   @$pb.TagNumber(14)
-  $core.bool hasProjectId() => $_has(13);
+  $core.bool hasProjectId() => $_has(12);
   @$pb.TagNumber(14)
   void clearProjectId() => $_clearField(14);
+
+  @$pb.TagNumber(15)
+  $fixnum.Int64 get assetId => $_getI64(13);
+  @$pb.TagNumber(15)
+  set assetId($fixnum.Int64 value) => $_setInt64(13, value);
+  @$pb.TagNumber(15)
+  $core.bool hasAssetId() => $_has(13);
+  @$pb.TagNumber(15)
+  void clearAssetId() => $_clearField(15);
+
+  @$pb.TagNumber(16)
+  WorkerType get workerType => $_getN(14);
+  @$pb.TagNumber(16)
+  set workerType(WorkerType value) => $_setField(16, value);
+  @$pb.TagNumber(16)
+  $core.bool hasWorkerType() => $_has(14);
+  @$pb.TagNumber(16)
+  void clearWorkerType() => $_clearField(16);
 }
 
 class ListJobsResponse extends $pb.GeneratedMessage {
@@ -4989,7 +5257,7 @@ class GetPassWaveformRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   void clearMaxPoints() => $_clearField(3);
 
-  /// 비교할 패스. 화면이 비교 작업(지금은 명장 작업을 직접 고름 — ListJobs master_only, 추천 알고리즘이 생기면
+  /// 비교할 패스. 화면이 비교 작업(지금은 명장 작업을 직접 고름 — ListJobs worker_type = MASTER, 추천 알고리즘이 생기면
   /// 그 결과)의 패스 목록(GetJob의 passes)에서 고른다. ListJobs의 pass_no로 찾은 작업도 GetJob으로 패스의 pass_id를 받는다. 패스 수가 작업마다 다르니 처음↔처음, 끝↔끝, 가운데는 같은
   /// pass_no로 짝짓는 것을 권한다.
   @$pb.TagNumber(4)
@@ -5094,16 +5362,16 @@ class PassWaveform extends $pb.GeneratedMessage {
     $fixnum.Int64? passId,
     $core.int? passNo,
     $core.String? workerName,
-    $core.bool? isMaster,
     $core.Iterable<WaveformSeries>? series,
+    WorkerType? workerType,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
     if (passId != null) result.passId = passId;
     if (passNo != null) result.passNo = passNo;
     if (workerName != null) result.workerName = workerName;
-    if (isMaster != null) result.isMaster = isMaster;
     if (series != null) result.series.addAll(series);
+    if (workerType != null) result.workerType = workerType;
     return result;
   }
 
@@ -5125,9 +5393,12 @@ class PassWaveform extends $pb.GeneratedMessage {
     ..aInt64(2, _omitFieldNames ? '' : 'passId')
     ..a<$core.int>(3, _omitFieldNames ? '' : 'passNo', $pb.PbFieldType.O3)
     ..aOS(4, _omitFieldNames ? '' : 'workerName')
-    ..aOB(5, _omitFieldNames ? '' : 'isMaster')
     ..pc<WaveformSeries>(6, _omitFieldNames ? '' : 'series', $pb.PbFieldType.PM,
         subBuilder: WaveformSeries.create)
+    ..e<WorkerType>(7, _omitFieldNames ? '' : 'workerType', $pb.PbFieldType.OE,
+        defaultOrMaker: WorkerType.WORKER_TYPE_UNSPECIFIED,
+        valueOf: WorkerType.valueOf,
+        enumValues: WorkerType.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -5187,17 +5458,17 @@ class PassWaveform extends $pb.GeneratedMessage {
   @$pb.TagNumber(4)
   void clearWorkerName() => $_clearField(4);
 
-  @$pb.TagNumber(5)
-  $core.bool get isMaster => $_getBF(4);
-  @$pb.TagNumber(5)
-  set isMaster($core.bool value) => $_setBool(4, value);
-  @$pb.TagNumber(5)
-  $core.bool hasIsMaster() => $_has(4);
-  @$pb.TagNumber(5)
-  void clearIsMaster() => $_clearField(5);
-
   @$pb.TagNumber(6)
-  $pb.PbList<WaveformSeries> get series => $_getList(5);
+  $pb.PbList<WaveformSeries> get series => $_getList(4);
+
+  @$pb.TagNumber(7)
+  WorkerType get workerType => $_getN(5);
+  @$pb.TagNumber(7)
+  set workerType(WorkerType value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasWorkerType() => $_has(5);
+  @$pb.TagNumber(7)
+  void clearWorkerType() => $_clearField(7);
 }
 
 /// 표준화 CSV 한 파일에서 자른 구간. 두 작업을 겹쳐 보도록 시각은 패스 시작 기준 오프셋이다.
@@ -5376,28 +5647,32 @@ class WorkServiceApi {
           $pb.ClientContext? ctx, CreateProjectRequest request) =>
       _client.invoke<CreateProjectResponse>(ctx, 'WorkService', 'CreateProject',
           request, CreateProjectResponse());
+
+  /// 숨긴(inactive) 작업자는 빠진다 — include_inactive면 전부.
   $async.Future<ListWorkersResponse> listWorkers(
           $pb.ClientContext? ctx, ListWorkersRequest request) =>
       _client.invoke<ListWorkersResponse>(
           ctx, 'WorkService', 'ListWorkers', request, ListWorkersResponse());
 
-  /// 작업자를 만든다. worker.worker_name 필수.
+  /// 작업자를 만든다. worker.worker_name 필수. employee_no가 겹치면 AlreadyExists.
   $async.Future<CreateWorkerResponse> createWorker(
           $pb.ClientContext? ctx, CreateWorkerRequest request) =>
       _client.invoke<CreateWorkerResponse>(
           ctx, 'WorkService', 'CreateWorker', request, CreateWorkerResponse());
 
-  /// update_mask: worker_name, team, is_master
+  /// update_mask: worker_name, worker_type, employee_no, description, inactive. employee_no가 겹치면 AlreadyExists.
   $async.Future<UpdateWorkerResponse> updateWorker(
           $pb.ClientContext? ctx, UpdateWorkerRequest request) =>
       _client.invoke<UpdateWorkerResponse>(
           ctx, 'WorkService', 'UpdateWorker', request, UpdateWorkerResponse());
 
-  /// 작업을 맡은 작업자는 FailedPrecondition.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 작업을 맡은 작업자는 FailedPrecondition.
   $async.Future<DeleteWorkerResponse> deleteWorker(
           $pb.ClientContext? ctx, DeleteWorkerRequest request) =>
       _client.invoke<DeleteWorkerResponse>(
           ctx, 'WorkService', 'DeleteWorker', request, DeleteWorkerResponse());
+
+  /// 숨긴(inactive) 장비는 빠진다 — include_inactive면 전부.
   $async.Future<ListEquipmentResponse> listEquipment(
           $pb.ClientContext? ctx, ListEquipmentRequest request) =>
       _client.invoke<ListEquipmentResponse>(ctx, 'WorkService', 'ListEquipment',
@@ -5409,13 +5684,13 @@ class WorkServiceApi {
       _client.invoke<CreateEquipmentResponse>(ctx, 'WorkService',
           'CreateEquipment', request, CreateEquipmentResponse());
 
-  /// update_mask: equipment_name, line_name, equipment_code
+  /// update_mask: equipment_name, line_name, equipment_code, description, inactive
   $async.Future<UpdateEquipmentResponse> updateEquipment(
           $pb.ClientContext? ctx, UpdateEquipmentRequest request) =>
       _client.invoke<UpdateEquipmentResponse>(ctx, 'WorkService',
           'UpdateEquipment', request, UpdateEquipmentResponse());
 
-  /// 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
   $async.Future<DeleteEquipmentResponse> deleteEquipment(
           $pb.ClientContext? ctx, DeleteEquipmentRequest request) =>
       _client.invoke<DeleteEquipmentResponse>(ctx, 'WorkService',
@@ -5433,6 +5708,12 @@ class WorkServiceApi {
           $pb.ClientContext? ctx, UpdateProjectItemRequest request) =>
       _client.invoke<UpdateProjectItemResponse>(ctx, 'WorkService',
           'UpdateProjectItem', request, UpdateProjectItemResponse());
+
+  /// 배정 줄을 실제로 지운다(되돌릴 수 없음). 그 배정을 쓰는 작업이 있으면 FailedPrecondition, 없는 번호면 NotFound.
+  $async.Future<DeleteProjectItemResponse> deleteProjectItem(
+          $pb.ClientContext? ctx, DeleteProjectItemRequest request) =>
+      _client.invoke<DeleteProjectItemResponse>(ctx, 'WorkService',
+          'DeleteProjectItem', request, DeleteProjectItemResponse());
 
   /// 배정에 쓰인 품목(코드·이름)을 중복 없이. 품목을 넣을 때 이름을 다시 고르는 추천 목록으로 쓴다.
   $async.Future<ListItemsResponse> listItems(
@@ -5458,7 +5739,7 @@ class WorkServiceApi {
       _client.invoke<UpdateProjectResponse>(ctx, 'WorkService', 'UpdateProject',
           request, UpdateProjectResponse());
 
-  /// 작업이 하나라도 있는 공사는 FailedPrecondition.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 작업이 하나라도 있는 공사는 FailedPrecondition.
   $async.Future<DeleteProjectResponse> deleteProject(
           $pb.ClientContext? ctx, DeleteProjectRequest request) =>
       _client.invoke<DeleteProjectResponse>(ctx, 'WorkService', 'DeleteProject',
@@ -5479,7 +5760,7 @@ class WorkServiceApi {
       _client.invoke<UpdateJobResponse>(
           ctx, 'WorkService', 'UpdateJob', request, UpdateJobResponse());
 
-  /// 작업과 그 패스를 지운다. 첨부·타임라인·매칭된 성적서 세트가 있으면 FailedPrecondition(먼저 떼거나 지운다).
+  /// 작업과 그 패스의 행을 실제로 지운다(되돌릴 수 없음). 첨부·타임라인·매칭된 성적서 세트가 있으면 FailedPrecondition(먼저 떼거나 지운다).
   $async.Future<DeleteJobResponse> deleteJob(
           $pb.ClientContext? ctx, DeleteJobRequest request) =>
       _client.invoke<DeleteJobResponse>(
@@ -5491,13 +5772,13 @@ class WorkServiceApi {
       _client.invoke<CreatePassResponse>(
           ctx, 'WorkService', 'CreatePass', request, CreatePassResponse());
 
-  /// 패스를 고친다(update_mask: pass_no, started_at, ended_at).
+  /// 패스를 고친다(update_mask: pass_no, pass_type, started_at, ended_at).
   $async.Future<UpdatePassResponse> updatePass(
           $pb.ClientContext? ctx, UpdatePassRequest request) =>
       _client.invoke<UpdatePassResponse>(
           ctx, 'WorkService', 'UpdatePass', request, UpdatePassResponse());
 
-  /// 패스를 지운다. 그 패스에 붙어 있던 첨부는 작업 공용이 된다.
+  /// 패스 행을 실제로 지운다(되돌릴 수 없음). 그 패스에 붙어 있던 첨부는 작업 공용이 된다.
   $async.Future<DeletePassResponse> deletePass(
           $pb.ClientContext? ctx, DeletePassRequest request) =>
       _client.invoke<DeletePassResponse>(

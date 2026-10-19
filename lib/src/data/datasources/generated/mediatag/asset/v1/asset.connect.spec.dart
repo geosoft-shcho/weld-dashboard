@@ -44,11 +44,34 @@ abstract final class AssetService {
   );
 
   /// 내용(sha256)이 같은 Asset 묶음 목록. 중복은 등록을 막지 않고 여기서 확인해 사람이 정리한다.
+  /// 묶음마다 합칠 수 있는지(mergeable)를 서버가 판정한다 — 화면이 같은 조건을 따로 들고 있지 않게.
+  /// 기본은 사본마다 기록 시각이 다른 묶음(예시 사본)과 정리한 묶음을 뺀다. 정리한 묶음이라도 그 뒤 새 사본이 들어오면 다시 뜬다.
   static const listDuplicateAssets = connect.Spec(
     '/$name/ListDuplicateAssets',
     connect.StreamType.unary,
     mediatagassetv1asset.ListDuplicateAssetsRequest.new,
     mediatagassetv1asset.ListDuplicateAssetsResponse.new,
+  );
+
+  /// 중복 묶음을 "그대로 둔다"고 기록한다(합치지 않음). 같은 sha256의 결정이 있으면 덮어쓴다.
+  /// member_asset_ids가 지금 묶음의 사본과 다르면(그사이 새 사본이 들어왔거나 지워졌으면) FailedPrecondition — 다시 보고 결정한다.
+  /// 묶음이 없으면(사본이 하나 이하) NotFound, keep_asset_id가 사본이 아니면 InvalidArgument.
+  static const resolveDuplicateGroup = connect.Spec(
+    '/$name/ResolveDuplicateGroup',
+    connect.StreamType.unary,
+    mediatagassetv1asset.ResolveDuplicateGroupRequest.new,
+    mediatagassetv1asset.ResolveDuplicateGroupResponse.new,
+  );
+
+  /// 같은 내용의 사본 여럿을 하나(keep)로 합친다. 첨부·클립·파생·성적서·도구 실행 참조를 keep으로 옮기고 사본 행을 지운다.
+  /// 사본의 파일도 지운다(되돌릴 수 없음). dry_run이면 바꾸지 않고 옮겨질 수만 센다.
+  /// 합칠 조건(ListDuplicateAssets의 mergeable과 같은 판정)이 안 맞으면 FailedPrecondition, 없는 번호면 NotFound.
+  /// 성공하면 묶음의 결정이 MERGED(기준 keep)가 된다 — 같은 내용이 또 들어오면 그 사본만 새로 뜬다.
+  static const mergeAssets = connect.Spec(
+    '/$name/MergeAssets',
+    connect.StreamType.unary,
+    mediatagassetv1asset.MergeAssetsRequest.new,
+    mediatagassetv1asset.MergeAssetsResponse.new,
   );
 
   /// 화면 업로드(POST /assets, multipart)가 받는 자료 형식. 서버는 파일 내용으로 종류를 정한다 — 확장자는 파일 선택 창에

@@ -12,6 +12,8 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-19  geosoft-Server: 외부 도구는 서버(endpoint)마다 한 건씩 보내고 순번도 서버별, 소식 없는 실행은 timeout
+//   2026-10-19  geosoft-Server: GetQueue(서버 전체 대기열·워커 수), ToolRun.queue_position·queue_length를 실제로 채움, ToolRun.started_at
 //   2026-10-14  geosoft-Server: Tool.description — 도구가 무엇을 하는지 사람이 읽는 설명(한글)
 //   2026-10-13  geosoft-Server: Delete* 주석에 삭제 방식(행을 실제로 지움) 명시 — 삭제는 Delete 하나, 방식은 주석에
 //   2026-10-08  geosoft-Server: ListTools는 켜진 도구만(include_disabled로 전부), UpdateTool은 update_mask에 든 칸만 고침
@@ -27,6 +29,8 @@
 //                InferenceRunService → ToolService 하나, model_id → tool_id) — 음성 추출·pdf-to-text
 //                같은 AI가 아닌 처리도 같은 틀로 등록·실행·기록하므로
 //   2026-09-30  geosoft-Server: MANUAL 대상에 Asset(ast_) 추가, ToolRun.output_asset_ids, 내장 도구 즉시 실행
+//   2026-10-15  geosoft-Server: 돌릴 수 없는 실행은 바로 FAILED(not_connected, 소리 없는 영상에 faster-whisper STT는
+//                invalid_target), pdf-to-text는 PDF 클립에, audio-extract는 영상 클립에도 MANUAL로 돌림
 // ============================================================================
 
 syntax = "proto3";
@@ -56,13 +60,25 @@ service ToolService {
   //   tool_id: 돌릴 도구(ListTools). target: 무엇에 돌릴지 — asset_id·clip_id·job_id 중 하나.
   //   trigger: MANUAL(사람이 한 건을 돌림 — 대상은 Asset 하나 또는 Clip 하나), AUTO_TAGGING(작업의 타임라인 전체 — 대상은 작업).
   //            ASSET_UPLOADED는 보내지 않는다 — 파일을 올릴 때 서버가 스스로 만드는 후처리 실행의 표시다(보내면 InvalidArgument).
-  // 내장 도구(audio-extract·asset-postprocess)는 서버 안 워커가, 외부 도구(STT·포즈)는 서버가 그 도구의 서버에 보내 실행한다.
-  // 어느 쪽이든 부르는 방법은 같다.
+  // 내장 도구(audio-extract·asset-postprocess·pdf-to-text)는 서버 안 워커가, 외부 도구(STT·포즈)는 서버가 그 도구의
+  // 서버에 보내 실행한다. 어느 쪽이든 부르는 방법은 같다.
+  //   MANUAL 대상: pdf-to-text는 PDF 클립(원본 PDF를 추출 — 이미 성적서 세트가 있으면 already_exists),
+  //   audio-extract는 영상 Asset 또는 영상 클립(클립이면 원본 전체에서 뽑은 소리를 그 클립과 같은 구간에 오디오 클립으로 놓는다).
+  //   STT를 클립에 돌리면 그 클립 구간만 인식하고, 문장마다의 자막 클립을 그 클립이 있는 작업에만 그 클립 위치 기준으로
+  //   놓는다(클립을 옮겨 놓았어도 겹친다). Asset에 돌리면 그 파일이 붙은 작업마다 촬영 시각 기준으로 놓는다.
+  //   포즈도 같다 — 클립에 돌리면 결과 클립 하나를 그 클립과 같은 자리에 놓는다.
+  // 돌릴 수 없는 실행은 기록만 남기고 바로 FAILED로 돌려준다: 처리할 서버가 연결되지 않은 도구면 error_code = not_connected,
+  // 소리 없는 영상에 faster-whisper STT면 invalid_target(stt-fast 등 다른 STT는 그대로 보낸다).
   rpc StartRun(StartRunRequest) returns (StartRunResponse);
   rpc GetRun(GetRunRequest) returns (GetRunResponse);
   // 화면 재진입 시 진행 중 실행 복구용. 짧은 폴링으로 주기 호출한다.
   rpc ListRuns(ListRunsRequest) returns (ListRunsResponse);
   rpc CancelRun(CancelRunRequest) returns (CancelRunResponse);
+  // 서버 전체 대기열 — 기다리는(QUEUED)·도는(RUNNING) 실행 전부와 내장 도구 워커 수. 큐 모니터링 화면용으로 짧게 폴링한다.
+  // 대기열: 내장 도구 하나(asset-postprocess·audio-extract·pdf-to-text, 서버 안 워커 local_workers개가 동시에 돎)와 외부 도구
+  // 서버(endpoint)마다 하나(STT·포즈, 서버마다 한 건씩 보냄). 모두 오래된 것부터 꺼내지만 서버마다 따로라, 바쁜 서버를 기다리는
+  // 실행보다 뒤에 들어온 다른 서버의 실행이 먼저 시작할 수 있다. 끝난 실행은 ListRuns로 본다.
+  rpc GetQueue(GetQueueRequest) returns (GetQueueResponse);
 }
 
 enum ToolPattern {
@@ -126,14 +142,17 @@ message ToolRun {
   google.protobuf.Timestamp created_at = 9;
   google.protobuf.Timestamp updated_at = 10;
   // 아래는 저장하지 않는 실행 중 파생 값(tacit-tag 설계-23 §7.1)
-  int32 queue_position = 11;    // 같은 호스트 대기열 순번(1부터). QUEUED가 아니면 0
-  int32 queue_length = 12;
+  int32 queue_position = 11;    // 같은 대기열(내장 도구, 또는 같은 외부 도구 서버) 순번(1부터). QUEUED가 아니면 0
+  int32 queue_length = 12;      // 그 대기열에서 기다리는 수(자신 포함). QUEUED가 아니면 0
   double progress_percent = 13; // 0~100. 진행 신호가 없으면 0
   int32 estimated_remaining_seconds = 14; // 0이면 미제공
   int32 attempt_count = 15;     // 디스패치 재시도 누적
   // 이 실행이 만든 파생 Asset(provenance.run_id로 찾는다, 저장하지 않음)
   repeated int64 output_asset_ids = 16;
   RunTarget target = 17;        // 대상이 지워진 실행은 비어 있다
+  // RUNNING일 때 돌기 시작한 시각(저장하지 않음). 내장 도구는 워커가 꺼낸 시각, 외부 도구는 진행 신호를 처음 받은 시각이라
+  // 진행 신호를 안 주는 외부 도구(STT)는 비어 있다 — 그때는 updated_at을 본다.
+  google.protobuf.Timestamp started_at = 18;
 }
 
 // 도구를 돌리는 대상. 셋 중 하나만 채운다.
@@ -205,6 +224,13 @@ message ListRunsRequest {
 
 message ListRunsResponse {
   repeated ToolRun runs = 1; // 생성 순
+}
+
+message GetQueueRequest {}
+
+message GetQueueResponse {
+  repeated ToolRun runs = 1; // QUEUED·RUNNING 실행, 오래된 것부터. 기다린 시간 = 지금 − created_at
+  int32 local_workers = 2;   // 내장 도구를 동시에 돌리는 워커 수(MEDIATAG_RUN_WORKERS). 내장 도구 RUNNING이 이만큼이면 나머지는 기다린다
 }
 
 message CancelRunRequest {

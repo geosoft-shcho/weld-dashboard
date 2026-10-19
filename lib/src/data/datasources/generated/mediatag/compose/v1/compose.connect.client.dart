@@ -263,8 +263,9 @@ extension type LabelServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// name·deprecated·description만 바꿀 수 있다. 이름을 바꿔도 Clip은 value_id로
-  /// 가리키므로 따로 갱신할 게 없다.
+  /// name·deprecated·description·code·unit만 바꿀 수 있다. 이름을 바꿔도 Clip은 value_id로
+  /// 가리키므로 따로 갱신할 게 없다. code는 비어 있을 때만 채울 수 있고(정한 뒤에는 못 바꾼다 — 내보낸 데이터의 열·값 이름이다),
+  /// unit은 그 라벨을 쓰는 클립이 있으면 FailedPrecondition(이미 넣은 값의 뜻이 바뀐다).
   Future<mediatagcomposev1compose.UpdateLabelValueResponse> updateLabelValue(
     mediatagcomposev1compose.UpdateLabelValueRequest input, {
     connect.Headers? headers,

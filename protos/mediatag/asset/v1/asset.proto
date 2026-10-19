@@ -11,6 +11,9 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-19  geosoft-Server: MergeAssets — 중복 사본을 기준 하나로 합치기(dry_run으로 미리 셈)
+//   2026-10-19  geosoft-Server: 중복 정리 — ListDuplicateAssets 판정(mergeable·reason)·결정·사본별 참조 수, ResolveDuplicateGroup
+//   2026-10-19  geosoft-Server: ListAssetsRequest file_name·equipment_id·unattached_only, Asset.display(종류별 표시 줄)
 //   2026-10-13  geosoft-Server: properties.start_time_ns — 영상·음성 파일의 첫 시각
 //   2026-10-13  geosoft-Server: Delete* 주석에 삭제 방식(행을 실제로 지움) 명시 — 삭제는 Delete 하나, 방식은 주석에
 //   2026-10-08  geosoft-Server: ListUploadFormats — 화면 업로드(POST /assets)가 받는 자료 형식 표
@@ -50,7 +53,18 @@ service AssetService {
   // 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
   rpc DeleteAsset(DeleteAssetRequest) returns (DeleteAssetResponse);
   // 내용(sha256)이 같은 Asset 묶음 목록. 중복은 등록을 막지 않고 여기서 확인해 사람이 정리한다.
+  // 묶음마다 합칠 수 있는지(mergeable)를 서버가 판정한다 — 화면이 같은 조건을 따로 들고 있지 않게.
+  // 기본은 사본마다 기록 시각이 다른 묶음(예시 사본)과 정리한 묶음을 뺀다. 정리한 묶음이라도 그 뒤 새 사본이 들어오면 다시 뜬다.
   rpc ListDuplicateAssets(ListDuplicateAssetsRequest) returns (ListDuplicateAssetsResponse);
+  // 중복 묶음을 "그대로 둔다"고 기록한다(합치지 않음). 같은 sha256의 결정이 있으면 덮어쓴다.
+  // member_asset_ids가 지금 묶음의 사본과 다르면(그사이 새 사본이 들어왔거나 지워졌으면) FailedPrecondition — 다시 보고 결정한다.
+  // 묶음이 없으면(사본이 하나 이하) NotFound, keep_asset_id가 사본이 아니면 InvalidArgument.
+  rpc ResolveDuplicateGroup(ResolveDuplicateGroupRequest) returns (ResolveDuplicateGroupResponse);
+  // 같은 내용의 사본 여럿을 하나(keep)로 합친다. 첨부·클립·파생·성적서·도구 실행 참조를 keep으로 옮기고 사본 행을 지운다.
+  // 사본의 파일도 지운다(되돌릴 수 없음). dry_run이면 바꾸지 않고 옮겨질 수만 센다.
+  // 합칠 조건(ListDuplicateAssets의 mergeable과 같은 판정)이 안 맞으면 FailedPrecondition, 없는 번호면 NotFound.
+  // 성공하면 묶음의 결정이 MERGED(기준 keep)가 된다 — 같은 내용이 또 들어오면 그 사본만 새로 뜬다.
+  rpc MergeAssets(MergeAssetsRequest) returns (MergeAssetsResponse);
   // 화면 업로드(POST /assets, multipart)가 받는 자료 형식. 서버는 파일 내용으로 종류를 정한다 — 확장자는 파일 선택 창에
   // 쓸 안내 값이다. 표에 없는 파일도 올릴 수 있고(종류 미지정으로 등록만), 실행 파일은 거절한다.
   rpc ListUploadFormats(ListUploadFormatsRequest) returns (ListUploadFormatsResponse);
@@ -100,6 +114,13 @@ message Asset {
   string content_url = 12;   // 응답 전용: /files/<storage_path>. 저장하지 말 것 — 저장은 asset_id로(저장 방식이 바뀌면 경로도 바뀐다)
   string source_path = 13;   // 일괄 적재한 원본 위치. 화면 업로드면 빈값
   int32 child_count = 15;    // 응답 전용: 이 Asset으로 만든 파생(자식) 수. 0보다 크면 ListAssets(parent_asset_id)로 펼친다
+  // 응답 전용: 화면에 보일 정보(라벨·값) — 순서대로 그린다. 값이 없는 줄은 빠진다. 기계가 읽을 값은 properties.
+  repeated DisplayField display = 16;
+}
+
+message DisplayField {
+  string label = 1; // '해상도'
+  string value = 2; // '896 × 504'
 }
 
 // 생성 경위. run_id·tool_id·tool_version은 셋 다 있거나 셋 다 없다(엔티티.md §6.2).
@@ -127,6 +148,9 @@ message ListAssetsRequest {
   string page_token = 2; // 비어 있으면 첫 페이지
   AssetKind kind = 3;    // UNSPECIFIED면 전체
   int64 parent_asset_id = 4; // 설정하면 그 Asset의 자식(그걸로 만든 파생)만 — 에셋 트리를 한 단계 펼칠 때
+  string file_name = 5;      // 파일 이름 부분 일치(대소문자 무시)
+  int64 equipment_id = 6;    // 그 장비가 기록한 것
+  bool unattached_only = 7;  // 어느 작업에도 첨부(job_asset)되지 않은 것 — 작업 미지정
 }
 
 message ListAssetsResponse {
@@ -151,6 +175,8 @@ message DeleteAssetResponse {}
 message ListDuplicateAssetsRequest {
   int32 page_size = 1;   // 묶음 수 기준. 기본 50, 최대 200
   string page_token = 2;
+  bool include_time_shifted = 3; // 사본마다 기록 시각이 다른 묶음도(기본은 뺀다 — 예시 공사의 시각만 옮긴 사본)
+  bool include_resolved = 4;     // 정리한 뒤 새 사본이 없는 묶음도
 }
 
 message ListDuplicateAssetsResponse {
@@ -162,6 +188,61 @@ message ListDuplicateAssetsResponse {
 message DuplicateGroup {
   string sha256 = 1;
   repeated Asset assets = 2; // collected_at 순
+  // 합칠 수 있는가: sha256·종류·기록 시각이 같고, 장비가 같거나 한쪽이 비고, 만든 경위(부모·만든 방법·매개변수)가 같고,
+  // 파생이나 성적서 세트가 걸린 사본이 하나 이하일 때(그 사본을 남긴다).
+  bool mergeable = 3;
+  string reason = 4;                    // 못 합치면 이유: "기록 시각이 다름", "만든 경위가 다름" 등
+  DuplicateResolution resolution = 5;   // 정리한 적이 있으면
+  repeated int64 new_asset_ids = 6;     // 결정 뒤에 들어온 사본(이것 때문에 다시 뜬 것)
+  repeated DuplicateMember members = 7; // assets와 같은 순서 + 사본마다 참조 수 — 비교 화면 · 기준 고르기(참조가 가장 많은 것)
+}
+
+message DuplicateMember {
+  Asset asset = 1;
+  MergeCounts refs = 2;          // 이 사본을 가리키는 참조 수(합치면 기준으로 옮겨질 것)
+  repeated int64 job_ids = 3;    // 첨부된 작업
+}
+
+message MergeCounts {
+  int32 attachments = 1;  // job_asset
+  int32 clips = 2;        // 이 사본을 소스로 쓰는 클립
+  int32 children = 3;     // 파생 자식
+  int32 report_refs = 4;  // 성적서 세트 · 문서
+  int32 tool_runs = 5;    // 이 사본을 대상으로 한 도구 실행
+}
+
+enum DuplicateDecision {
+  DUPLICATE_DECISION_UNSPECIFIED = 0;
+  DUPLICATE_DECISION_MERGED = 1;        // 기준 하나로 합침
+  DUPLICATE_DECISION_KEEP_SEPARATE = 2; // 중복이 아니라고 보고 그대로 둠
+}
+
+message DuplicateResolution {
+  DuplicateDecision decision = 1;
+  int64 keep_asset_id = 2;                     // 합친 기준(그대로 두기면 화면에서 고른 기준, 0이면 없음)
+  google.protobuf.Timestamp decided_at = 3;
+}
+
+message ResolveDuplicateGroupRequest {
+  string sha256 = 1;
+  repeated int64 member_asset_ids = 2; // 화면이 본 사본들(순서 무관)
+  int64 keep_asset_id = 3;             // 선택
+}
+
+message ResolveDuplicateGroupResponse {}
+
+message MergeAssetsRequest {
+  int64 keep_asset_id = 1;
+  repeated int64 merge_asset_ids = 2; // 지울 사본(keep과 sha256이 같아야 한다)
+  bool dry_run = 3;                   // true면 바꾸지 않고 옮겨질 참조만 센다
+}
+
+message MergeAssetsResponse {
+  Asset asset = 1;                    // 남은 에셋(dry_run이면 지금 모습)
+  MergeCounts moved = 2;              // keep으로 옮긴(옮겨질) 참조 수
+  repeated int64 deleted_asset_ids = 3;
+  // 같은 작업에 keep과 사본이 다 붙어 있는데 패스가 다르면 keep 쪽 패스를 따르고 여기 적는다.
+  repeated string warnings = 4;
 }
 
 message JobAsset {

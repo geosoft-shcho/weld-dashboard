@@ -45,6 +45,8 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $4.CreateProjectItemsRequest request);
   $async.Future<$4.UpdateProjectItemResponse> updateProjectItem(
       $pb.ServerContext ctx, $4.UpdateProjectItemRequest request);
+  $async.Future<$4.DeleteProjectItemResponse> deleteProjectItem(
+      $pb.ServerContext ctx, $4.DeleteProjectItemRequest request);
   $async.Future<$4.ListItemsResponse> listItems(
       $pb.ServerContext ctx, $4.ListItemsRequest request);
   $async.Future<$4.ListJobFiltersResponse> listJobFilters(
@@ -100,6 +102,8 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
         return $4.CreateProjectItemsRequest();
       case 'UpdateProjectItem':
         return $4.UpdateProjectItemRequest();
+      case 'DeleteProjectItem':
+        return $4.DeleteProjectItemRequest();
       case 'ListItems':
         return $4.ListItemsRequest();
       case 'ListJobFilters':
@@ -160,6 +164,8 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
         return createProjectItems(ctx, request as $4.CreateProjectItemsRequest);
       case 'UpdateProjectItem':
         return updateProjectItem(ctx, request as $4.UpdateProjectItemRequest);
+      case 'DeleteProjectItem':
+        return deleteProjectItem(ctx, request as $4.DeleteProjectItemRequest);
       case 'ListItems':
         return listItems(ctx, request as $4.ListItemsRequest);
       case 'ListJobFilters':

@@ -31,6 +31,10 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $2.DeleteAssetRequest request);
   $async.Future<$2.ListDuplicateAssetsResponse> listDuplicateAssets(
       $pb.ServerContext ctx, $2.ListDuplicateAssetsRequest request);
+  $async.Future<$2.ResolveDuplicateGroupResponse> resolveDuplicateGroup(
+      $pb.ServerContext ctx, $2.ResolveDuplicateGroupRequest request);
+  $async.Future<$2.MergeAssetsResponse> mergeAssets(
+      $pb.ServerContext ctx, $2.MergeAssetsRequest request);
   $async.Future<$2.ListUploadFormatsResponse> listUploadFormats(
       $pb.ServerContext ctx, $2.ListUploadFormatsRequest request);
   $async.Future<$2.ListJobAssetsResponse> listJobAssets(
@@ -52,6 +56,10 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
         return $2.DeleteAssetRequest();
       case 'ListDuplicateAssets':
         return $2.ListDuplicateAssetsRequest();
+      case 'ResolveDuplicateGroup':
+        return $2.ResolveDuplicateGroupRequest();
+      case 'MergeAssets':
+        return $2.MergeAssetsRequest();
       case 'ListUploadFormats':
         return $2.ListUploadFormatsRequest();
       case 'ListJobAssets':
@@ -80,6 +88,11 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
       case 'ListDuplicateAssets':
         return listDuplicateAssets(
             ctx, request as $2.ListDuplicateAssetsRequest);
+      case 'ResolveDuplicateGroup':
+        return resolveDuplicateGroup(
+            ctx, request as $2.ResolveDuplicateGroupRequest);
+      case 'MergeAssets':
+        return mergeAssets(ctx, request as $2.MergeAssetsRequest);
       case 'ListUploadFormats':
         return listUploadFormats(ctx, request as $2.ListUploadFormatsRequest);
       case 'ListJobAssets':

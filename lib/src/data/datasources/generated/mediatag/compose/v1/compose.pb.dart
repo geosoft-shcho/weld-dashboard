@@ -375,6 +375,7 @@ class Clip extends $pb.GeneratedMessage {
     $0.Timestamp? createdAt,
     $0.Timestamp? updatedAt,
     ClipRelation? relation,
+    $core.double? value,
   }) {
     final result = create();
     if (clipId != null) result.clipId = clipId;
@@ -390,6 +391,7 @@ class Clip extends $pb.GeneratedMessage {
     if (createdAt != null) result.createdAt = createdAt;
     if (updatedAt != null) result.updatedAt = updatedAt;
     if (relation != null) result.relation = relation;
+    if (value != null) result.value = value;
     return result;
   }
 
@@ -429,6 +431,7 @@ class Clip extends $pb.GeneratedMessage {
         subBuilder: $0.Timestamp.create)
     ..aOM<ClipRelation>(13, _omitFieldNames ? '' : 'relation',
         subBuilder: ClipRelation.create)
+    ..a<$core.double>(14, _omitFieldNames ? '' : 'value', $pb.PbFieldType.OD)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -477,7 +480,7 @@ class Clip extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   void clearKind() => $_clearField(3);
 
-  /// 타임라인 위 구간 [start, end), 필수. 같은 트랙의 Clip끼리 겹쳐도 된다(화면이 줄을 나눠 그린다). 자동 배치만 겹치지 않게 놓는다
+  /// 타임라인 위 구간 [start, end), 필수. kind=tag만 start = end(시점 — 그 순간의 판단·이벤트·측정 표시)를 허용한다. 같은 트랙의 Clip끼리 겹쳐도 된다(화면이 줄을 나눠 그린다). 자동 배치만 겹치지 않게 놓는다
   @$pb.TagNumber(4)
   $fixnum.Int64 get timelineStartNs => $_getI64(3);
   @$pb.TagNumber(4)
@@ -579,6 +582,17 @@ class Clip extends $pb.GeneratedMessage {
   void clearRelation() => $_clearField(13);
   @$pb.TagNumber(13)
   ClipRelation ensureRelation() => $_ensure(12);
+
+  /// 수치. kind=tag만 — 라벨에 unit이 있으면(측정 항목) 필수, 없으면 선택(점수·지표). 단위는 라벨의 unit을 따른다
+  /// (예: 라벨 Gap[mm] + 4.2 → 4.2 mm). 그 밖의 kind에 넣으면 InvalidArgument
+  @$pb.TagNumber(14)
+  $core.double get value => $_getN(13);
+  @$pb.TagNumber(14)
+  set value($core.double value) => $_setDouble(13, value);
+  @$pb.TagNumber(14)
+  $core.bool hasValue() => $_has(13);
+  @$pb.TagNumber(14)
+  void clearValue() => $_clearField(14);
 }
 
 /// 관계 클립이 잇는 두 클립. "이 구간(timeline_start_ns~end_ns)에서 from이 to와 관련 있다"는 뜻이다 — 구간은 관계 클립이
@@ -2392,7 +2406,7 @@ class UpdateClipRequest extends $pb.GeneratedMessage {
   Clip ensureClip() => $_ensure(0);
 
   /// track_id, timeline_start_ns, timeline_end_ns, source, label_value_id, description,
-  /// provenance.reviewed
+  /// value, provenance.reviewed
   @$pb.TagNumber(2)
   $3.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
@@ -2570,6 +2584,8 @@ class LabelValue extends $pb.GeneratedMessage {
     $core.bool? deprecated,
     $core.String? description,
     $fixnum.Int64? parentValueId,
+    $core.String? code,
+    $core.String? unit,
   }) {
     final result = create();
     if (valueId != null) result.valueId = valueId;
@@ -2577,6 +2593,8 @@ class LabelValue extends $pb.GeneratedMessage {
     if (deprecated != null) result.deprecated = deprecated;
     if (description != null) result.description = description;
     if (parentValueId != null) result.parentValueId = parentValueId;
+    if (code != null) result.code = code;
+    if (unit != null) result.unit = unit;
     return result;
   }
 
@@ -2599,6 +2617,8 @@ class LabelValue extends $pb.GeneratedMessage {
     ..aOB(4, _omitFieldNames ? '' : 'deprecated')
     ..aOS(5, _omitFieldNames ? '' : 'description')
     ..aInt64(6, _omitFieldNames ? '' : 'parentValueId')
+    ..aOS(7, _omitFieldNames ? '' : 'code')
+    ..aOS(8, _omitFieldNames ? '' : 'unit')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2664,6 +2684,27 @@ class LabelValue extends $pb.GeneratedMessage {
   $core.bool hasParentValueId() => $_has(4);
   @$pb.TagNumber(6)
   void clearParentValueId() => $_clearField(6);
+
+  /// 기계가 쓰는 이름(NORMAL·Heat_Control·back_bead_height). 내보낸 데이터의 열·값 이름이 된다 — 화면에는 name을 보인다.
+  /// 영문·숫자·밑줄, 같은 부모 아래에서 유일(겹치면 AlreadyExists). 비어 있어도 되지만 내보내기 대상 라벨은 채워 둔다
+  @$pb.TagNumber(7)
+  $core.String get code => $_getSZ(5);
+  @$pb.TagNumber(7)
+  set code($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(7)
+  $core.bool hasCode() => $_has(5);
+  @$pb.TagNumber(7)
+  void clearCode() => $_clearField(7);
+
+  /// 측정 항목 라벨의 단위(mm·°C·A·V·rpm·deg·s). 있으면 이 라벨을 쓰는 태그는 value가 필수다. 판단 라벨과 단위 없는 지표는 비워 둔다
+  @$pb.TagNumber(8)
+  $core.String get unit => $_getSZ(6);
+  @$pb.TagNumber(8)
+  set unit($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(8)
+  $core.bool hasUnit() => $_has(6);
+  @$pb.TagNumber(8)
+  void clearUnit() => $_clearField(8);
 }
 
 class ListLabelsRequest extends $pb.GeneratedMessage {
@@ -2780,11 +2821,15 @@ class CreateLabelValueRequest extends $pb.GeneratedMessage {
     $core.String? name,
     $core.String? description,
     $fixnum.Int64? parentValueId,
+    $core.String? code,
+    $core.String? unit,
   }) {
     final result = create();
     if (name != null) result.name = name;
     if (description != null) result.description = description;
     if (parentValueId != null) result.parentValueId = parentValueId;
+    if (code != null) result.code = code;
+    if (unit != null) result.unit = unit;
     return result;
   }
 
@@ -2805,6 +2850,8 @@ class CreateLabelValueRequest extends $pb.GeneratedMessage {
     ..aOS(2, _omitFieldNames ? '' : 'name')
     ..aOS(3, _omitFieldNames ? '' : 'description')
     ..aInt64(4, _omitFieldNames ? '' : 'parentValueId')
+    ..aOS(5, _omitFieldNames ? '' : 'code')
+    ..aOS(6, _omitFieldNames ? '' : 'unit')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2856,6 +2903,24 @@ class CreateLabelValueRequest extends $pb.GeneratedMessage {
   $core.bool hasParentValueId() => $_has(2);
   @$pb.TagNumber(4)
   void clearParentValueId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get code => $_getSZ(3);
+  @$pb.TagNumber(5)
+  set code($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(5)
+  $core.bool hasCode() => $_has(3);
+  @$pb.TagNumber(5)
+  void clearCode() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get unit => $_getSZ(4);
+  @$pb.TagNumber(6)
+  set unit($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(6)
+  $core.bool hasUnit() => $_has(4);
+  @$pb.TagNumber(6)
+  void clearUnit() => $_clearField(6);
 }
 
 class CreateLabelValueResponse extends $pb.GeneratedMessage {
@@ -3154,8 +3219,9 @@ class LabelServiceApi {
       _client.invoke<CreateLabelValueResponse>(ctx, 'LabelService',
           'CreateLabelValue', request, CreateLabelValueResponse());
 
-  /// name·deprecated·description만 바꿀 수 있다. 이름을 바꿔도 Clip은 value_id로
-  /// 가리키므로 따로 갱신할 게 없다.
+  /// name·deprecated·description·code·unit만 바꿀 수 있다. 이름을 바꿔도 Clip은 value_id로
+  /// 가리키므로 따로 갱신할 게 없다. code는 비어 있을 때만 채울 수 있고(정한 뒤에는 못 바꾼다 — 내보낸 데이터의 열·값 이름이다),
+  /// unit은 그 라벨을 쓰는 클립이 있으면 FailedPrecondition(이미 넣은 값의 뜻이 바뀐다).
   $async.Future<UpdateLabelValueResponse> updateLabelValue(
           $pb.ClientContext? ctx, UpdateLabelValueRequest request) =>
       _client.invoke<UpdateLabelValueResponse>(ctx, 'LabelService',

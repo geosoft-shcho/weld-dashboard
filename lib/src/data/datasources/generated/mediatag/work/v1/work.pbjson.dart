@@ -19,6 +19,41 @@ import '../../../google/protobuf/struct.pbjson.dart' as $3;
 import '../../../google/protobuf/timestamp.pbjson.dart' as $0;
 import '../../asset/v1/asset.pbjson.dart' as $2;
 
+@$core.Deprecated('Use workerTypeDescriptor instead')
+const WorkerType$json = {
+  '1': 'WorkerType',
+  '2': [
+    {'1': 'WORKER_TYPE_UNSPECIFIED', '2': 0},
+    {'1': 'WORKER_TYPE_MASTER', '2': 1},
+    {'1': 'WORKER_TYPE_GENERAL', '2': 2},
+    {'1': 'WORKER_TYPE_ROBOT', '2': 3},
+  ],
+};
+
+/// Descriptor for `WorkerType`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List workerTypeDescriptor = $convert.base64Decode(
+    'CgpXb3JrZXJUeXBlEhsKF1dPUktFUl9UWVBFX1VOU1BFQ0lGSUVEEAASFgoSV09SS0VSX1RZUE'
+    'VfTUFTVEVSEAESFwoTV09SS0VSX1RZUEVfR0VORVJBTBACEhUKEVdPUktFUl9UWVBFX1JPQk9U'
+    'EAM=');
+
+@$core.Deprecated('Use passTypeDescriptor instead')
+const PassType$json = {
+  '1': 'PassType',
+  '2': [
+    {'1': 'PASS_TYPE_UNSPECIFIED', '2': 0},
+    {'1': 'PASS_TYPE_ROOT', '2': 1},
+    {'1': 'PASS_TYPE_HOT', '2': 2},
+    {'1': 'PASS_TYPE_FILL', '2': 3},
+    {'1': 'PASS_TYPE_CAP', '2': 4},
+  ],
+};
+
+/// Descriptor for `PassType`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List passTypeDescriptor = $convert.base64Decode(
+    'CghQYXNzVHlwZRIZChVQQVNTX1RZUEVfVU5TUEVDSUZJRUQQABISCg5QQVNTX1RZUEVfUk9PVB'
+    'ABEhEKDVBBU1NfVFlQRV9IT1QQAhISCg5QQVNTX1RZUEVfRklMTBADEhEKDVBBU1NfVFlQRV9D'
+    'QVAQBA==');
+
 @$core.Deprecated('Use collectionViewDescriptor instead')
 const CollectionView$json = {
   '1': 'CollectionView',
@@ -108,21 +143,21 @@ const Worker$json = {
   '2': [
     {'1': 'worker_id', '3': 1, '4': 1, '5': 3, '10': 'workerId'},
     {'1': 'worker_name', '3': 2, '4': 1, '5': 9, '10': 'workerName'},
-    {'1': 'team', '3': 3, '4': 1, '5': 9, '10': 'team'},
+    {'1': 'employee_no', '3': 6, '4': 1, '5': 9, '10': 'employeeNo'},
+    {'1': 'description', '3': 7, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'inactive', '3': 8, '4': 1, '5': 8, '10': 'inactive'},
     {
-      '1': 'is_master',
-      '3': 4,
+      '1': 'worker_type',
+      '3': 9,
       '4': 1,
-      '5': 8,
-      '9': 0,
-      '10': 'isMaster',
-      '17': true
+      '5': 14,
+      '6': '.mediatag.work.v1.WorkerType',
+      '10': 'workerType'
     },
   ],
-  '8': [
-    {'1': '_is_master'},
-  ],
   '9': [
+    {'1': 3, '2': 4},
+    {'1': 4, '2': 5},
     {'1': 5, '2': 6},
   ],
 };
@@ -130,8 +165,10 @@ const Worker$json = {
 /// Descriptor for `Worker`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List workerDescriptor = $convert.base64Decode(
     'CgZXb3JrZXISGwoJd29ya2VyX2lkGAEgASgDUgh3b3JrZXJJZBIfCgt3b3JrZXJfbmFtZRgCIA'
-    'EoCVIKd29ya2VyTmFtZRISCgR0ZWFtGAMgASgJUgR0ZWFtEiAKCWlzX21hc3RlchgEIAEoCEgA'
-    'Ughpc01hc3RlcogBAUIMCgpfaXNfbWFzdGVySgQIBRAG');
+    'EoCVIKd29ya2VyTmFtZRIfCgtlbXBsb3llZV9ubxgGIAEoCVIKZW1wbG95ZWVObxIgCgtkZXNj'
+    'cmlwdGlvbhgHIAEoCVILZGVzY3JpcHRpb24SGgoIaW5hY3RpdmUYCCABKAhSCGluYWN0aXZlEj'
+    '0KC3dvcmtlcl90eXBlGAkgASgOMhwubWVkaWF0YWcud29yay52MS5Xb3JrZXJUeXBlUgp3b3Jr'
+    'ZXJUeXBlSgQIAxAESgQIBBAFSgQIBRAG');
 
 @$core.Deprecated('Use equipmentDescriptor instead')
 const Equipment$json = {
@@ -141,6 +178,8 @@ const Equipment$json = {
     {'1': 'equipment_name', '3': 2, '4': 1, '5': 9, '10': 'equipmentName'},
     {'1': 'line_name', '3': 3, '4': 1, '5': 9, '10': 'lineName'},
     {'1': 'equipment_code', '3': 4, '4': 1, '5': 9, '10': 'equipmentCode'},
+    {'1': 'description', '3': 5, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'inactive', '3': 6, '4': 1, '5': 8, '10': 'inactive'},
   ],
 };
 
@@ -148,7 +187,8 @@ const Equipment$json = {
 final $typed_data.Uint8List equipmentDescriptor = $convert.base64Decode(
     'CglFcXVpcG1lbnQSIQoMZXF1aXBtZW50X2lkGAEgASgDUgtlcXVpcG1lbnRJZBIlCg5lcXVpcG'
     '1lbnRfbmFtZRgCIAEoCVINZXF1aXBtZW50TmFtZRIbCglsaW5lX25hbWUYAyABKAlSCGxpbmVO'
-    'YW1lEiUKDmVxdWlwbWVudF9jb2RlGAQgASgJUg1lcXVpcG1lbnRDb2Rl');
+    'YW1lEiUKDmVxdWlwbWVudF9jb2RlGAQgASgJUg1lcXVpcG1lbnRDb2RlEiAKC2Rlc2NyaXB0aW'
+    '9uGAUgASgJUgtkZXNjcmlwdGlvbhIaCghpbmFjdGl2ZRgGIAEoCFIIaW5hY3RpdmU=');
 
 @$core.Deprecated('Use jobDescriptor instead')
 const Job$json = {
@@ -347,6 +387,29 @@ final $typed_data.Uint8List updateProjectItemResponseDescriptor =
         'ChlVcGRhdGVQcm9qZWN0SXRlbVJlc3BvbnNlEjQKBGl0ZW0YASABKAsyIC5tZWRpYXRhZy53b3'
         'JrLnYxLkl0ZW1Bc3NpZ25tZW50UgRpdGVt');
 
+@$core.Deprecated('Use deleteProjectItemRequestDescriptor instead')
+const DeleteProjectItemRequest$json = {
+  '1': 'DeleteProjectItemRequest',
+  '2': [
+    {'1': 'project_item_id', '3': 1, '4': 1, '5': 3, '10': 'projectItemId'},
+  ],
+};
+
+/// Descriptor for `DeleteProjectItemRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List deleteProjectItemRequestDescriptor =
+    $convert.base64Decode(
+        'ChhEZWxldGVQcm9qZWN0SXRlbVJlcXVlc3QSJgoPcHJvamVjdF9pdGVtX2lkGAEgASgDUg1wcm'
+        '9qZWN0SXRlbUlk');
+
+@$core.Deprecated('Use deleteProjectItemResponseDescriptor instead')
+const DeleteProjectItemResponse$json = {
+  '1': 'DeleteProjectItemResponse',
+};
+
+/// Descriptor for `DeleteProjectItemResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List deleteProjectItemResponseDescriptor =
+    $convert.base64Decode('ChlEZWxldGVQcm9qZWN0SXRlbVJlc3BvbnNl');
+
 @$core.Deprecated('Use listItemsRequestDescriptor instead')
 const ListItemsRequest$json = {
   '1': 'ListItemsRequest',
@@ -402,6 +465,14 @@ const Pass$json = {
       '6': '.google.protobuf.Timestamp',
       '10': 'endedAt'
     },
+    {
+      '1': 'pass_type',
+      '3': 6,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.work.v1.PassType',
+      '10': 'passType'
+    },
   ],
 };
 
@@ -410,7 +481,8 @@ final $typed_data.Uint8List passDescriptor = $convert.base64Decode(
     'CgRQYXNzEhcKB3Bhc3NfaWQYASABKANSBnBhc3NJZBIVCgZqb2JfaWQYAiABKANSBWpvYklkEh'
     'cKB3Bhc3Nfbm8YAyABKAVSBnBhc3NObxI5CgpzdGFydGVkX2F0GAQgASgLMhouZ29vZ2xlLnBy'
     'b3RvYnVmLlRpbWVzdGFtcFIJc3RhcnRlZEF0EjUKCGVuZGVkX2F0GAUgASgLMhouZ29vZ2xlLn'
-    'Byb3RvYnVmLlRpbWVzdGFtcFIHZW5kZWRBdA==');
+    'Byb3RvYnVmLlRpbWVzdGFtcFIHZW5kZWRBdBI3CglwYXNzX3R5cGUYBiABKA4yGi5tZWRpYXRh'
+    'Zy53b3JrLnYxLlBhc3NUeXBlUghwYXNzVHlwZQ==');
 
 @$core.Deprecated('Use jobSummaryDescriptor instead')
 const JobSummary$json = {
@@ -426,32 +498,31 @@ const JobSummary$json = {
     },
     {'1': 'worker_name', '3': 2, '4': 1, '5': 9, '10': 'workerName'},
     {
-      '1': 'is_master',
-      '3': 3,
+      '1': 'worker_type',
+      '3': 8,
       '4': 1,
-      '5': 8,
-      '9': 0,
-      '10': 'isMaster',
-      '17': true
+      '5': 14,
+      '6': '.mediatag.work.v1.WorkerType',
+      '10': 'workerType'
     },
     {'1': 'equipment_names', '3': 4, '4': 3, '5': 9, '10': 'equipmentNames'},
     {'1': 'pass_count', '3': 5, '4': 1, '5': 5, '10': 'passCount'},
     {'1': 'attachment_count', '3': 6, '4': 1, '5': 5, '10': 'attachmentCount'},
     {'1': 'has_report', '3': 7, '4': 1, '5': 8, '10': 'hasReport'},
   ],
-  '8': [
-    {'1': '_is_master'},
+  '9': [
+    {'1': 3, '2': 4},
   ],
 };
 
 /// Descriptor for `JobSummary`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List jobSummaryDescriptor = $convert.base64Decode(
     'CgpKb2JTdW1tYXJ5EicKA2pvYhgBIAEoCzIVLm1lZGlhdGFnLndvcmsudjEuSm9iUgNqb2ISHw'
-    'oLd29ya2VyX25hbWUYAiABKAlSCndvcmtlck5hbWUSIAoJaXNfbWFzdGVyGAMgASgISABSCGlz'
-    'TWFzdGVyiAEBEicKD2VxdWlwbWVudF9uYW1lcxgEIAMoCVIOZXF1aXBtZW50TmFtZXMSHQoKcG'
-    'Fzc19jb3VudBgFIAEoBVIJcGFzc0NvdW50EikKEGF0dGFjaG1lbnRfY291bnQYBiABKAVSD2F0'
-    'dGFjaG1lbnRDb3VudBIdCgpoYXNfcmVwb3J0GAcgASgIUgloYXNSZXBvcnRCDAoKX2lzX21hc3'
-    'Rlcg==');
+    'oLd29ya2VyX25hbWUYAiABKAlSCndvcmtlck5hbWUSPQoLd29ya2VyX3R5cGUYCCABKA4yHC5t'
+    'ZWRpYXRhZy53b3JrLnYxLldvcmtlclR5cGVSCndvcmtlclR5cGUSJwoPZXF1aXBtZW50X25hbW'
+    'VzGAQgAygJUg5lcXVpcG1lbnROYW1lcxIdCgpwYXNzX2NvdW50GAUgASgFUglwYXNzQ291bnQS'
+    'KQoQYXR0YWNobWVudF9jb3VudBgGIAEoBVIPYXR0YWNobWVudENvdW50Eh0KCmhhc19yZXBvcn'
+    'QYByABKAhSCWhhc1JlcG9ydEoECAMQBA==');
 
 @$core.Deprecated('Use listProjectsRequestDescriptor instead')
 const ListProjectsRequest$json = {
@@ -1093,7 +1164,66 @@ const ListJobFiltersResponse$json = {
       '6': '.mediatag.work.v1.Equipment',
       '10': 'equipment'
     },
+    {
+      '1': 'worker_job_counts',
+      '3': 4,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.ListJobFiltersResponse.WorkerJobCountsEntry',
+      '10': 'workerJobCounts'
+    },
+    {
+      '1': 'equipment_job_counts',
+      '3': 5,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.ListJobFiltersResponse.EquipmentJobCountsEntry',
+      '10': 'equipmentJobCounts'
+    },
+    {
+      '1': 'equipment_asset_counts',
+      '3': 6,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.ListJobFiltersResponse.EquipmentAssetCountsEntry',
+      '10': 'equipmentAssetCounts'
+    },
   ],
+  '3': [
+    ListJobFiltersResponse_WorkerJobCountsEntry$json,
+    ListJobFiltersResponse_EquipmentJobCountsEntry$json,
+    ListJobFiltersResponse_EquipmentAssetCountsEntry$json
+  ],
+};
+
+@$core.Deprecated('Use listJobFiltersResponseDescriptor instead')
+const ListJobFiltersResponse_WorkerJobCountsEntry$json = {
+  '1': 'WorkerJobCountsEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 3, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 5, '10': 'value'},
+  ],
+  '7': {'7': true},
+};
+
+@$core.Deprecated('Use listJobFiltersResponseDescriptor instead')
+const ListJobFiltersResponse_EquipmentJobCountsEntry$json = {
+  '1': 'EquipmentJobCountsEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 3, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 5, '10': 'value'},
+  ],
+  '7': {'7': true},
+};
+
+@$core.Deprecated('Use listJobFiltersResponseDescriptor instead')
+const ListJobFiltersResponse_EquipmentAssetCountsEntry$json = {
+  '1': 'EquipmentAssetCountsEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 3, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 5, '10': 'value'},
+  ],
+  '7': {'7': true},
 };
 
 /// Descriptor for `ListJobFiltersResponse`. Decode as a `google.protobuf.DescriptorProto`.
@@ -1101,7 +1231,17 @@ final $typed_data.Uint8List listJobFiltersResponseDescriptor = $convert.base64De
     'ChZMaXN0Sm9iRmlsdGVyc1Jlc3BvbnNlEjsKCHByb2plY3RzGAEgAygLMh8ubWVkaWF0YWcud2'
     '9yay52MS5Qcm9qZWN0RmlsdGVyUghwcm9qZWN0cxIyCgd3b3JrZXJzGAIgAygLMhgubWVkaWF0'
     'YWcud29yay52MS5Xb3JrZXJSB3dvcmtlcnMSOQoJZXF1aXBtZW50GAMgAygLMhsubWVkaWF0YW'
-    'cud29yay52MS5FcXVpcG1lbnRSCWVxdWlwbWVudA==');
+    'cud29yay52MS5FcXVpcG1lbnRSCWVxdWlwbWVudBJpChF3b3JrZXJfam9iX2NvdW50cxgEIAMo'
+    'CzI9Lm1lZGlhdGFnLndvcmsudjEuTGlzdEpvYkZpbHRlcnNSZXNwb25zZS5Xb3JrZXJKb2JDb3'
+    'VudHNFbnRyeVIPd29ya2VySm9iQ291bnRzEnIKFGVxdWlwbWVudF9qb2JfY291bnRzGAUgAygL'
+    'MkAubWVkaWF0YWcud29yay52MS5MaXN0Sm9iRmlsdGVyc1Jlc3BvbnNlLkVxdWlwbWVudEpvYk'
+    'NvdW50c0VudHJ5UhJlcXVpcG1lbnRKb2JDb3VudHMSeAoWZXF1aXBtZW50X2Fzc2V0X2NvdW50'
+    'cxgGIAMoCzJCLm1lZGlhdGFnLndvcmsudjEuTGlzdEpvYkZpbHRlcnNSZXNwb25zZS5FcXVpcG'
+    '1lbnRBc3NldENvdW50c0VudHJ5UhRlcXVpcG1lbnRBc3NldENvdW50cxpCChRXb3JrZXJKb2JD'
+    'b3VudHNFbnRyeRIQCgNrZXkYASABKANSA2tleRIUCgV2YWx1ZRgCIAEoBVIFdmFsdWU6AjgBGk'
+    'UKF0VxdWlwbWVudEpvYkNvdW50c0VudHJ5EhAKA2tleRgBIAEoA1IDa2V5EhQKBXZhbHVlGAIg'
+    'ASgFUgV2YWx1ZToCOAEaRwoZRXF1aXBtZW50QXNzZXRDb3VudHNFbnRyeRIQCgNrZXkYASABKA'
+    'NSA2tleRIUCgV2YWx1ZRgCIAEoBVIFdmFsdWU6AjgB');
 
 @$core.Deprecated('Use projectFilterDescriptor instead')
 const ProjectFilter$json = {
@@ -1123,6 +1263,7 @@ const ProjectFilter$json = {
       '6': '.mediatag.work.v1.ProjectUnit',
       '10': 'units'
     },
+    {'1': 'job_count', '3': 3, '4': 1, '5': 5, '10': 'jobCount'},
   ],
 };
 
@@ -1130,7 +1271,7 @@ const ProjectFilter$json = {
 final $typed_data.Uint8List projectFilterDescriptor = $convert.base64Decode(
     'Cg1Qcm9qZWN0RmlsdGVyEjMKB3Byb2plY3QYASABKAsyGS5tZWRpYXRhZy53b3JrLnYxLlByb2'
     'plY3RSB3Byb2plY3QSMwoFdW5pdHMYAiADKAsyHS5tZWRpYXRhZy53b3JrLnYxLlByb2plY3RV'
-    'bml0UgV1bml0cw==');
+    'bml0UgV1bml0cxIbCglqb2JfY291bnQYAyABKAVSCGpvYkNvdW50');
 
 @$core.Deprecated('Use projectUnitDescriptor instead')
 const ProjectUnit$json = {
@@ -1198,11 +1339,15 @@ final $typed_data.Uint8List projectJointDescriptor = $convert.base64Decode(
 @$core.Deprecated('Use listWorkersRequestDescriptor instead')
 const ListWorkersRequest$json = {
   '1': 'ListWorkersRequest',
+  '2': [
+    {'1': 'include_inactive', '3': 1, '4': 1, '5': 8, '10': 'includeInactive'},
+  ],
 };
 
 /// Descriptor for `ListWorkersRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List listWorkersRequestDescriptor =
-    $convert.base64Decode('ChJMaXN0V29ya2Vyc1JlcXVlc3Q=');
+final $typed_data.Uint8List listWorkersRequestDescriptor = $convert.base64Decode(
+    'ChJMaXN0V29ya2Vyc1JlcXVlc3QSKQoQaW5jbHVkZV9pbmFjdGl2ZRgBIAEoCFIPaW5jbHVkZU'
+    'luYWN0aXZl');
 
 @$core.Deprecated('Use listWorkersResponseDescriptor instead')
 const ListWorkersResponse$json = {
@@ -1227,11 +1372,15 @@ final $typed_data.Uint8List listWorkersResponseDescriptor = $convert.base64Decod
 @$core.Deprecated('Use listEquipmentRequestDescriptor instead')
 const ListEquipmentRequest$json = {
   '1': 'ListEquipmentRequest',
+  '2': [
+    {'1': 'include_inactive', '3': 1, '4': 1, '5': 8, '10': 'includeInactive'},
+  ],
 };
 
 /// Descriptor for `ListEquipmentRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List listEquipmentRequestDescriptor =
-    $convert.base64Decode('ChRMaXN0RXF1aXBtZW50UmVxdWVzdA==');
+final $typed_data.Uint8List listEquipmentRequestDescriptor = $convert.base64Decode(
+    'ChRMaXN0RXF1aXBtZW50UmVxdWVzdBIpChBpbmNsdWRlX2luYWN0aXZlGAEgASgIUg9pbmNsdW'
+    'RlSW5hY3RpdmU=');
 
 @$core.Deprecated('Use listEquipmentResponseDescriptor instead')
 const ListEquipmentResponse$json = {
@@ -1265,8 +1414,16 @@ const ListJobsRequest$json = {
     {'1': 'joint_no', '3': 12, '4': 1, '5': 9, '10': 'jointNo'},
     {'1': 'pass_no', '3': 13, '4': 1, '5': 5, '10': 'passNo'},
     {'1': 'worker_id', '3': 4, '4': 1, '5': 3, '10': 'workerId'},
-    {'1': 'master_only', '3': 5, '4': 1, '5': 8, '10': 'masterOnly'},
+    {
+      '1': 'worker_type',
+      '3': 16,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.work.v1.WorkerType',
+      '10': 'workerType'
+    },
     {'1': 'equipment_id', '3': 6, '4': 1, '5': 3, '10': 'equipmentId'},
+    {'1': 'asset_id', '3': 15, '4': 1, '5': 3, '10': 'assetId'},
     {
       '1': 'started_from',
       '3': 7,
@@ -1286,6 +1443,9 @@ const ListJobsRequest$json = {
     {'1': 'page_size', '3': 9, '4': 1, '5': 5, '10': 'pageSize'},
     {'1': 'page_token', '3': 10, '4': 1, '5': 9, '10': 'pageToken'},
   ],
+  '9': [
+    {'1': 5, '2': 6},
+  ],
 };
 
 /// Descriptor for `ListJobsRequest`. Decode as a `google.protobuf.DescriptorProto`.
@@ -1294,11 +1454,13 @@ final $typed_data.Uint8List listJobsRequestDescriptor = $convert.base64Decode(
     'plY3RfaWQYDiABKANSCXByb2plY3RJZBIdCgpjb21tb25fa2V5GAIgASgJUgljb21tb25LZXkS'
     'GwoJaXRlbV9jb2RlGAMgASgJUghpdGVtQ29kZRIXCgd1bml0X25vGAsgASgJUgZ1bml0Tm8SGQ'
     'oIam9pbnRfbm8YDCABKAlSB2pvaW50Tm8SFwoHcGFzc19ubxgNIAEoBVIGcGFzc05vEhsKCXdv'
-    'cmtlcl9pZBgEIAEoA1IId29ya2VySWQSHwoLbWFzdGVyX29ubHkYBSABKAhSCm1hc3Rlck9ubH'
-    'kSIQoMZXF1aXBtZW50X2lkGAYgASgDUgtlcXVpcG1lbnRJZBI9CgxzdGFydGVkX2Zyb20YByAB'
-    'KAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wUgtzdGFydGVkRnJvbRI5CgpzdGFydGVkX3'
-    'RvGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcFIJc3RhcnRlZFRvEhsKCXBhZ2Vf'
-    'c2l6ZRgJIAEoBVIIcGFnZVNpemUSHQoKcGFnZV90b2tlbhgKIAEoCVIJcGFnZVRva2Vu');
+    'cmtlcl9pZBgEIAEoA1IId29ya2VySWQSPQoLd29ya2VyX3R5cGUYECABKA4yHC5tZWRpYXRhZy'
+    '53b3JrLnYxLldvcmtlclR5cGVSCndvcmtlclR5cGUSIQoMZXF1aXBtZW50X2lkGAYgASgDUgtl'
+    'cXVpcG1lbnRJZBIZCghhc3NldF9pZBgPIAEoA1IHYXNzZXRJZBI9CgxzdGFydGVkX2Zyb20YBy'
+    'ABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wUgtzdGFydGVkRnJvbRI5CgpzdGFydGVk'
+    'X3RvGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcFIJc3RhcnRlZFRvEhsKCXBhZ2'
+    'Vfc2l6ZRgJIAEoBVIIcGFnZVNpemUSHQoKcGFnZV90b2tlbhgKIAEoCVIJcGFnZVRva2VuSgQI'
+    'BRAG');
 
 @$core.Deprecated('Use listJobsResponseDescriptor instead')
 const ListJobsResponse$json = {
@@ -1674,13 +1836,12 @@ const PassWaveform$json = {
     {'1': 'pass_no', '3': 3, '4': 1, '5': 5, '10': 'passNo'},
     {'1': 'worker_name', '3': 4, '4': 1, '5': 9, '10': 'workerName'},
     {
-      '1': 'is_master',
-      '3': 5,
+      '1': 'worker_type',
+      '3': 7,
       '4': 1,
-      '5': 8,
-      '9': 0,
-      '10': 'isMaster',
-      '17': true
+      '5': 14,
+      '6': '.mediatag.work.v1.WorkerType',
+      '10': 'workerType'
     },
     {
       '1': 'series',
@@ -1691,8 +1852,8 @@ const PassWaveform$json = {
       '10': 'series'
     },
   ],
-  '8': [
-    {'1': '_is_master'},
+  '9': [
+    {'1': 5, '2': 6},
   ],
 };
 
@@ -1700,9 +1861,9 @@ const PassWaveform$json = {
 final $typed_data.Uint8List passWaveformDescriptor = $convert.base64Decode(
     'CgxQYXNzV2F2ZWZvcm0SFQoGam9iX2lkGAEgASgDUgVqb2JJZBIXCgdwYXNzX2lkGAIgASgDUg'
     'ZwYXNzSWQSFwoHcGFzc19ubxgDIAEoBVIGcGFzc05vEh8KC3dvcmtlcl9uYW1lGAQgASgJUgp3'
-    'b3JrZXJOYW1lEiAKCWlzX21hc3RlchgFIAEoCEgAUghpc01hc3RlcogBARI4CgZzZXJpZXMYBi'
-    'ADKAsyIC5tZWRpYXRhZy53b3JrLnYxLldhdmVmb3JtU2VyaWVzUgZzZXJpZXNCDAoKX2lzX21h'
-    'c3Rlcg==');
+    'b3JrZXJOYW1lEj0KC3dvcmtlcl90eXBlGAcgASgOMhwubWVkaWF0YWcud29yay52MS5Xb3JrZX'
+    'JUeXBlUgp3b3JrZXJUeXBlEjgKBnNlcmllcxgGIAMoCzIgLm1lZGlhdGFnLndvcmsudjEuV2F2'
+    'ZWZvcm1TZXJpZXNSBnNlcmllc0oECAUQBg==');
 
 @$core.Deprecated('Use waveformSeriesDescriptor instead')
 const WaveformSeries$json = {
@@ -1806,6 +1967,11 @@ const $core.Map<$core.String, $core.dynamic> WorkServiceBase$json = {
       '1': 'UpdateProjectItem',
       '2': '.mediatag.work.v1.UpdateProjectItemRequest',
       '3': '.mediatag.work.v1.UpdateProjectItemResponse'
+    },
+    {
+      '1': 'DeleteProjectItem',
+      '2': '.mediatag.work.v1.DeleteProjectItemRequest',
+      '3': '.mediatag.work.v1.DeleteProjectItemResponse'
     },
     {
       '1': 'ListItems',
@@ -1913,6 +2079,8 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
       CreateProjectItemsResponse$json,
   '.mediatag.work.v1.UpdateProjectItemRequest': UpdateProjectItemRequest$json,
   '.mediatag.work.v1.UpdateProjectItemResponse': UpdateProjectItemResponse$json,
+  '.mediatag.work.v1.DeleteProjectItemRequest': DeleteProjectItemRequest$json,
+  '.mediatag.work.v1.DeleteProjectItemResponse': DeleteProjectItemResponse$json,
   '.mediatag.work.v1.ListItemsRequest': ListItemsRequest$json,
   '.mediatag.work.v1.ListItemsResponse': ListItemsResponse$json,
   '.mediatag.work.v1.Item': Item$json,
@@ -1922,6 +2090,12 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.work.v1.ProjectUnit': ProjectUnit$json,
   '.mediatag.work.v1.ProjectItem': ProjectItem$json,
   '.mediatag.work.v1.ProjectJoint': ProjectJoint$json,
+  '.mediatag.work.v1.ListJobFiltersResponse.WorkerJobCountsEntry':
+      ListJobFiltersResponse_WorkerJobCountsEntry$json,
+  '.mediatag.work.v1.ListJobFiltersResponse.EquipmentJobCountsEntry':
+      ListJobFiltersResponse_EquipmentJobCountsEntry$json,
+  '.mediatag.work.v1.ListJobFiltersResponse.EquipmentAssetCountsEntry':
+      ListJobFiltersResponse_EquipmentAssetCountsEntry$json,
   '.mediatag.work.v1.ListJobsRequest': ListJobsRequest$json,
   '.google.protobuf.Timestamp': $0.Timestamp$json,
   '.mediatag.work.v1.ListJobsResponse': ListJobsResponse$json,
@@ -1959,6 +2133,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.google.protobuf.Value': $3.Value$json,
   '.google.protobuf.ListValue': $3.ListValue$json,
   '.mediatag.asset.v1.Provenance': $2.Provenance$json,
+  '.mediatag.asset.v1.DisplayField': $2.DisplayField$json,
   '.mediatag.work.v1.GetPassWaveformRequest': GetPassWaveformRequest$json,
   '.mediatag.work.v1.GetPassWaveformResponse': GetPassWaveformResponse$json,
   '.mediatag.work.v1.PassWaveform': PassWaveform$json,
@@ -1989,28 +2164,30 @@ final $typed_data.Uint8List workServiceDescriptor = $convert.base64Decode(
     'ZWF0ZVByb2plY3RJdGVtcxIrLm1lZGlhdGFnLndvcmsudjEuQ3JlYXRlUHJvamVjdEl0ZW1zUm'
     'VxdWVzdBosLm1lZGlhdGFnLndvcmsudjEuQ3JlYXRlUHJvamVjdEl0ZW1zUmVzcG9uc2USbAoR'
     'VXBkYXRlUHJvamVjdEl0ZW0SKi5tZWRpYXRhZy53b3JrLnYxLlVwZGF0ZVByb2plY3RJdGVtUm'
-    'VxdWVzdBorLm1lZGlhdGFnLndvcmsudjEuVXBkYXRlUHJvamVjdEl0ZW1SZXNwb25zZRJUCglM'
-    'aXN0SXRlbXMSIi5tZWRpYXRhZy53b3JrLnYxLkxpc3RJdGVtc1JlcXVlc3QaIy5tZWRpYXRhZy'
-    '53b3JrLnYxLkxpc3RJdGVtc1Jlc3BvbnNlEmMKDkxpc3RKb2JGaWx0ZXJzEicubWVkaWF0YWcu'
-    'd29yay52MS5MaXN0Sm9iRmlsdGVyc1JlcXVlc3QaKC5tZWRpYXRhZy53b3JrLnYxLkxpc3RKb2'
-    'JGaWx0ZXJzUmVzcG9uc2USUQoITGlzdEpvYnMSIS5tZWRpYXRhZy53b3JrLnYxLkxpc3RKb2Jz'
-    'UmVxdWVzdBoiLm1lZGlhdGFnLndvcmsudjEuTGlzdEpvYnNSZXNwb25zZRJgCg1VcGRhdGVQcm'
-    '9qZWN0EiYubWVkaWF0YWcud29yay52MS5VcGRhdGVQcm9qZWN0UmVxdWVzdBonLm1lZGlhdGFn'
-    'LndvcmsudjEuVXBkYXRlUHJvamVjdFJlc3BvbnNlEmAKDURlbGV0ZVByb2plY3QSJi5tZWRpYX'
-    'RhZy53b3JrLnYxLkRlbGV0ZVByb2plY3RSZXF1ZXN0GicubWVkaWF0YWcud29yay52MS5EZWxl'
-    'dGVQcm9qZWN0UmVzcG9uc2USVAoJQ3JlYXRlSm9iEiIubWVkaWF0YWcud29yay52MS5DcmVhdG'
-    'VKb2JSZXF1ZXN0GiMubWVkaWF0YWcud29yay52MS5DcmVhdGVKb2JSZXNwb25zZRJUCglVcGRh'
-    'dGVKb2ISIi5tZWRpYXRhZy53b3JrLnYxLlVwZGF0ZUpvYlJlcXVlc3QaIy5tZWRpYXRhZy53b3'
-    'JrLnYxLlVwZGF0ZUpvYlJlc3BvbnNlElQKCURlbGV0ZUpvYhIiLm1lZGlhdGFnLndvcmsudjEu'
-    'RGVsZXRlSm9iUmVxdWVzdBojLm1lZGlhdGFnLndvcmsudjEuRGVsZXRlSm9iUmVzcG9uc2USVw'
-    'oKQ3JlYXRlUGFzcxIjLm1lZGlhdGFnLndvcmsudjEuQ3JlYXRlUGFzc1JlcXVlc3QaJC5tZWRp'
-    'YXRhZy53b3JrLnYxLkNyZWF0ZVBhc3NSZXNwb25zZRJXCgpVcGRhdGVQYXNzEiMubWVkaWF0YW'
-    'cud29yay52MS5VcGRhdGVQYXNzUmVxdWVzdBokLm1lZGlhdGFnLndvcmsudjEuVXBkYXRlUGFz'
-    'c1Jlc3BvbnNlElcKCkRlbGV0ZVBhc3MSIy5tZWRpYXRhZy53b3JrLnYxLkRlbGV0ZVBhc3NSZX'
-    'F1ZXN0GiQubWVkaWF0YWcud29yay52MS5EZWxldGVQYXNzUmVzcG9uc2USSwoGR2V0Sm9iEh8u'
-    'bWVkaWF0YWcud29yay52MS5HZXRKb2JSZXF1ZXN0GiAubWVkaWF0YWcud29yay52MS5HZXRKb2'
-    'JSZXNwb25zZRJyChNMaXN0Q29sbGVjdGlvbk5vZGVzEiwubWVkaWF0YWcud29yay52MS5MaXN0'
-    'Q29sbGVjdGlvbk5vZGVzUmVxdWVzdBotLm1lZGlhdGFnLndvcmsudjEuTGlzdENvbGxlY3Rpb2'
-    '5Ob2Rlc1Jlc3BvbnNlEmYKD0dldFBhc3NXYXZlZm9ybRIoLm1lZGlhdGFnLndvcmsudjEuR2V0'
-    'UGFzc1dhdmVmb3JtUmVxdWVzdBopLm1lZGlhdGFnLndvcmsudjEuR2V0UGFzc1dhdmVmb3JtUm'
-    'VzcG9uc2U=');
+    'VxdWVzdBorLm1lZGlhdGFnLndvcmsudjEuVXBkYXRlUHJvamVjdEl0ZW1SZXNwb25zZRJsChFE'
+    'ZWxldGVQcm9qZWN0SXRlbRIqLm1lZGlhdGFnLndvcmsudjEuRGVsZXRlUHJvamVjdEl0ZW1SZX'
+    'F1ZXN0GisubWVkaWF0YWcud29yay52MS5EZWxldGVQcm9qZWN0SXRlbVJlc3BvbnNlElQKCUxp'
+    'c3RJdGVtcxIiLm1lZGlhdGFnLndvcmsudjEuTGlzdEl0ZW1zUmVxdWVzdBojLm1lZGlhdGFnLn'
+    'dvcmsudjEuTGlzdEl0ZW1zUmVzcG9uc2USYwoOTGlzdEpvYkZpbHRlcnMSJy5tZWRpYXRhZy53'
+    'b3JrLnYxLkxpc3RKb2JGaWx0ZXJzUmVxdWVzdBooLm1lZGlhdGFnLndvcmsudjEuTGlzdEpvYk'
+    'ZpbHRlcnNSZXNwb25zZRJRCghMaXN0Sm9icxIhLm1lZGlhdGFnLndvcmsudjEuTGlzdEpvYnNS'
+    'ZXF1ZXN0GiIubWVkaWF0YWcud29yay52MS5MaXN0Sm9ic1Jlc3BvbnNlEmAKDVVwZGF0ZVByb2'
+    'plY3QSJi5tZWRpYXRhZy53b3JrLnYxLlVwZGF0ZVByb2plY3RSZXF1ZXN0GicubWVkaWF0YWcu'
+    'd29yay52MS5VcGRhdGVQcm9qZWN0UmVzcG9uc2USYAoNRGVsZXRlUHJvamVjdBImLm1lZGlhdG'
+    'FnLndvcmsudjEuRGVsZXRlUHJvamVjdFJlcXVlc3QaJy5tZWRpYXRhZy53b3JrLnYxLkRlbGV0'
+    'ZVByb2plY3RSZXNwb25zZRJUCglDcmVhdGVKb2ISIi5tZWRpYXRhZy53b3JrLnYxLkNyZWF0ZU'
+    'pvYlJlcXVlc3QaIy5tZWRpYXRhZy53b3JrLnYxLkNyZWF0ZUpvYlJlc3BvbnNlElQKCVVwZGF0'
+    'ZUpvYhIiLm1lZGlhdGFnLndvcmsudjEuVXBkYXRlSm9iUmVxdWVzdBojLm1lZGlhdGFnLndvcm'
+    'sudjEuVXBkYXRlSm9iUmVzcG9uc2USVAoJRGVsZXRlSm9iEiIubWVkaWF0YWcud29yay52MS5E'
+    'ZWxldGVKb2JSZXF1ZXN0GiMubWVkaWF0YWcud29yay52MS5EZWxldGVKb2JSZXNwb25zZRJXCg'
+    'pDcmVhdGVQYXNzEiMubWVkaWF0YWcud29yay52MS5DcmVhdGVQYXNzUmVxdWVzdBokLm1lZGlh'
+    'dGFnLndvcmsudjEuQ3JlYXRlUGFzc1Jlc3BvbnNlElcKClVwZGF0ZVBhc3MSIy5tZWRpYXRhZy'
+    '53b3JrLnYxLlVwZGF0ZVBhc3NSZXF1ZXN0GiQubWVkaWF0YWcud29yay52MS5VcGRhdGVQYXNz'
+    'UmVzcG9uc2USVwoKRGVsZXRlUGFzcxIjLm1lZGlhdGFnLndvcmsudjEuRGVsZXRlUGFzc1JlcX'
+    'Vlc3QaJC5tZWRpYXRhZy53b3JrLnYxLkRlbGV0ZVBhc3NSZXNwb25zZRJLCgZHZXRKb2ISHy5t'
+    'ZWRpYXRhZy53b3JrLnYxLkdldEpvYlJlcXVlc3QaIC5tZWRpYXRhZy53b3JrLnYxLkdldEpvYl'
+    'Jlc3BvbnNlEnIKE0xpc3RDb2xsZWN0aW9uTm9kZXMSLC5tZWRpYXRhZy53b3JrLnYxLkxpc3RD'
+    'b2xsZWN0aW9uTm9kZXNSZXF1ZXN0Gi0ubWVkaWF0YWcud29yay52MS5MaXN0Q29sbGVjdGlvbk'
+    '5vZGVzUmVzcG9uc2USZgoPR2V0UGFzc1dhdmVmb3JtEigubWVkaWF0YWcud29yay52MS5HZXRQ'
+    'YXNzV2F2ZWZvcm1SZXF1ZXN0GikubWVkaWF0YWcud29yay52MS5HZXRQYXNzV2F2ZWZvcm1SZX'
+    'Nwb25zZQ==');

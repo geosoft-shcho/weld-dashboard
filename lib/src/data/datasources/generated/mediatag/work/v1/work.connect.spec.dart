@@ -26,6 +26,7 @@ abstract final class WorkService {
     mediatagworkv1work.CreateProjectResponse.new,
   );
 
+  /// 숨긴(inactive) 작업자는 빠진다 — include_inactive면 전부.
   static const listWorkers = connect.Spec(
     '/$name/ListWorkers',
     connect.StreamType.unary,
@@ -33,7 +34,7 @@ abstract final class WorkService {
     mediatagworkv1work.ListWorkersResponse.new,
   );
 
-  /// 작업자를 만든다. worker.worker_name 필수.
+  /// 작업자를 만든다. worker.worker_name 필수. employee_no가 겹치면 AlreadyExists.
   static const createWorker = connect.Spec(
     '/$name/CreateWorker',
     connect.StreamType.unary,
@@ -41,7 +42,7 @@ abstract final class WorkService {
     mediatagworkv1work.CreateWorkerResponse.new,
   );
 
-  /// update_mask: worker_name, team, is_master
+  /// update_mask: worker_name, worker_type, employee_no, description, inactive. employee_no가 겹치면 AlreadyExists.
   static const updateWorker = connect.Spec(
     '/$name/UpdateWorker',
     connect.StreamType.unary,
@@ -49,7 +50,7 @@ abstract final class WorkService {
     mediatagworkv1work.UpdateWorkerResponse.new,
   );
 
-  /// 작업을 맡은 작업자는 FailedPrecondition.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 작업을 맡은 작업자는 FailedPrecondition.
   static const deleteWorker = connect.Spec(
     '/$name/DeleteWorker',
     connect.StreamType.unary,
@@ -57,6 +58,7 @@ abstract final class WorkService {
     mediatagworkv1work.DeleteWorkerResponse.new,
   );
 
+  /// 숨긴(inactive) 장비는 빠진다 — include_inactive면 전부.
   static const listEquipment = connect.Spec(
     '/$name/ListEquipment',
     connect.StreamType.unary,
@@ -72,7 +74,7 @@ abstract final class WorkService {
     mediatagworkv1work.CreateEquipmentResponse.new,
   );
 
-  /// update_mask: equipment_name, line_name, equipment_code
+  /// update_mask: equipment_name, line_name, equipment_code, description, inactive
   static const updateEquipment = connect.Spec(
     '/$name/UpdateEquipment',
     connect.StreamType.unary,
@@ -80,7 +82,7 @@ abstract final class WorkService {
     mediatagworkv1work.UpdateEquipmentResponse.new,
   );
 
-  /// 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
   static const deleteEquipment = connect.Spec(
     '/$name/DeleteEquipment',
     connect.StreamType.unary,
@@ -103,6 +105,14 @@ abstract final class WorkService {
     connect.StreamType.unary,
     mediatagworkv1work.UpdateProjectItemRequest.new,
     mediatagworkv1work.UpdateProjectItemResponse.new,
+  );
+
+  /// 배정 줄을 실제로 지운다(되돌릴 수 없음). 그 배정을 쓰는 작업이 있으면 FailedPrecondition, 없는 번호면 NotFound.
+  static const deleteProjectItem = connect.Spec(
+    '/$name/DeleteProjectItem',
+    connect.StreamType.unary,
+    mediatagworkv1work.DeleteProjectItemRequest.new,
+    mediatagworkv1work.DeleteProjectItemResponse.new,
   );
 
   /// 배정에 쓰인 품목(코드·이름)을 중복 없이. 품목을 넣을 때 이름을 다시 고르는 추천 목록으로 쓴다.
@@ -137,7 +147,7 @@ abstract final class WorkService {
     mediatagworkv1work.UpdateProjectResponse.new,
   );
 
-  /// 작업이 하나라도 있는 공사는 FailedPrecondition.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 작업이 하나라도 있는 공사는 FailedPrecondition.
   static const deleteProject = connect.Spec(
     '/$name/DeleteProject',
     connect.StreamType.unary,
@@ -164,7 +174,7 @@ abstract final class WorkService {
     mediatagworkv1work.UpdateJobResponse.new,
   );
 
-  /// 작업과 그 패스를 지운다. 첨부·타임라인·매칭된 성적서 세트가 있으면 FailedPrecondition(먼저 떼거나 지운다).
+  /// 작업과 그 패스의 행을 실제로 지운다(되돌릴 수 없음). 첨부·타임라인·매칭된 성적서 세트가 있으면 FailedPrecondition(먼저 떼거나 지운다).
   static const deleteJob = connect.Spec(
     '/$name/DeleteJob',
     connect.StreamType.unary,
@@ -180,7 +190,7 @@ abstract final class WorkService {
     mediatagworkv1work.CreatePassResponse.new,
   );
 
-  /// 패스를 고친다(update_mask: pass_no, started_at, ended_at).
+  /// 패스를 고친다(update_mask: pass_no, pass_type, started_at, ended_at).
   static const updatePass = connect.Spec(
     '/$name/UpdatePass',
     connect.StreamType.unary,
@@ -188,7 +198,7 @@ abstract final class WorkService {
     mediatagworkv1work.UpdatePassResponse.new,
   );
 
-  /// 패스를 지운다. 그 패스에 붙어 있던 첨부는 작업 공용이 된다.
+  /// 패스 행을 실제로 지운다(되돌릴 수 없음). 그 패스에 붙어 있던 첨부는 작업 공용이 된다.
   static const deletePass = connect.Spec(
     '/$name/DeletePass',
     connect.StreamType.unary,

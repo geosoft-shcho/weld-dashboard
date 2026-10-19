@@ -287,10 +287,12 @@ const Clip$json = {
       '6': '.mediatag.compose.v1.ClipRelation',
       '10': 'relation'
     },
+    {'1': 'value', '3': 14, '4': 1, '5': 1, '9': 2, '10': 'value', '17': true},
   ],
   '8': [
     {'1': '_timeline_start_ns'},
     {'1': '_timeline_end_ns'},
+    {'1': '_value'},
   ],
 };
 
@@ -307,8 +309,9 @@ final $typed_data.Uint8List clipDescriptor = $convert.base64Decode(
     'ZXN0YW1wUgplbWJlZGRlZEF0EjkKCmNyZWF0ZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idW'
     'YuVGltZXN0YW1wUgljcmVhdGVkQXQSOQoKdXBkYXRlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90'
     'b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdBI9CghyZWxhdGlvbhgNIAEoCzIhLm1lZGlhdGFnLm'
-    'NvbXBvc2UudjEuQ2xpcFJlbGF0aW9uUghyZWxhdGlvbkIUChJfdGltZWxpbmVfc3RhcnRfbnNC'
-    'EgoQX3RpbWVsaW5lX2VuZF9ucw==');
+    'NvbXBvc2UudjEuQ2xpcFJlbGF0aW9uUghyZWxhdGlvbhIZCgV2YWx1ZRgOIAEoAUgCUgV2YWx1'
+    'ZYgBAUIUChJfdGltZWxpbmVfc3RhcnRfbnNCEgoQX3RpbWVsaW5lX2VuZF9uc0IICgZfdmFsdW'
+    'U=');
 
 @$core.Deprecated('Use clipRelationDescriptor instead')
 const ClipRelation$json = {
@@ -978,6 +981,8 @@ const LabelValue$json = {
     {'1': 'deprecated', '3': 4, '4': 1, '5': 8, '10': 'deprecated'},
     {'1': 'description', '3': 5, '4': 1, '5': 9, '10': 'description'},
     {'1': 'parent_value_id', '3': 6, '4': 1, '5': 3, '10': 'parentValueId'},
+    {'1': 'code', '3': 7, '4': 1, '5': 9, '10': 'code'},
+    {'1': 'unit', '3': 8, '4': 1, '5': 9, '10': 'unit'},
   ],
   '9': [
     {'1': 2, '2': 3},
@@ -989,8 +994,8 @@ const LabelValue$json = {
 final $typed_data.Uint8List labelValueDescriptor = $convert.base64Decode(
     'CgpMYWJlbFZhbHVlEhkKCHZhbHVlX2lkGAEgASgDUgd2YWx1ZUlkEhIKBG5hbWUYAyABKAlSBG'
     '5hbWUSHgoKZGVwcmVjYXRlZBgEIAEoCFIKZGVwcmVjYXRlZBIgCgtkZXNjcmlwdGlvbhgFIAEo'
-    'CVILZGVzY3JpcHRpb24SJgoPcGFyZW50X3ZhbHVlX2lkGAYgASgDUg1wYXJlbnRWYWx1ZUlkSg'
-    'QIAhADUgl2b2NhYl9rZXk=');
+    'CVILZGVzY3JpcHRpb24SJgoPcGFyZW50X3ZhbHVlX2lkGAYgASgDUg1wYXJlbnRWYWx1ZUlkEh'
+    'IKBGNvZGUYByABKAlSBGNvZGUSEgoEdW5pdBgIIAEoCVIEdW5pdEoECAIQA1IJdm9jYWJfa2V5');
 
 @$core.Deprecated('Use listLabelsRequestDescriptor instead')
 const ListLabelsRequest$json = {
@@ -1038,6 +1043,8 @@ const CreateLabelValueRequest$json = {
     {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
     {'1': 'description', '3': 3, '4': 1, '5': 9, '10': 'description'},
     {'1': 'parent_value_id', '3': 4, '4': 1, '5': 3, '10': 'parentValueId'},
+    {'1': 'code', '3': 5, '4': 1, '5': 9, '10': 'code'},
+    {'1': 'unit', '3': 6, '4': 1, '5': 9, '10': 'unit'},
   ],
   '9': [
     {'1': 1, '2': 2},
@@ -1049,7 +1056,8 @@ const CreateLabelValueRequest$json = {
 final $typed_data.Uint8List createLabelValueRequestDescriptor = $convert.base64Decode(
     'ChdDcmVhdGVMYWJlbFZhbHVlUmVxdWVzdBISCgRuYW1lGAIgASgJUgRuYW1lEiAKC2Rlc2NyaX'
     'B0aW9uGAMgASgJUgtkZXNjcmlwdGlvbhImCg9wYXJlbnRfdmFsdWVfaWQYBCABKANSDXBhcmVu'
-    'dFZhbHVlSWRKBAgBEAJSCXZvY2FiX2tleQ==');
+    'dFZhbHVlSWQSEgoEY29kZRgFIAEoCVIEY29kZRISCgR1bml0GAYgASgJUgR1bml0SgQIARACUg'
+    'l2b2NhYl9rZXk=');
 
 @$core.Deprecated('Use createLabelValueResponseDescriptor instead')
 const CreateLabelValueResponse$json = {
@@ -1207,6 +1215,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.compose.v1.ClipRelation': ClipRelation$json,
   '.mediatag.asset.v1.Asset': $2.Asset$json,
   '.mediatag.asset.v1.Provenance': $2.Provenance$json,
+  '.mediatag.asset.v1.DisplayField': $2.DisplayField$json,
   '.mediatag.compose.v1.ListTimelinesRequest': ListTimelinesRequest$json,
   '.mediatag.compose.v1.ListTimelinesResponse': ListTimelinesResponse$json,
   '.mediatag.compose.v1.UpdateTimelineRequest': UpdateTimelineRequest$json,

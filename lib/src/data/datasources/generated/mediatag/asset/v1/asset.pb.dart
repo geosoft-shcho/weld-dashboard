@@ -41,6 +41,7 @@ class Asset extends $pb.GeneratedMessage {
     $core.String? sourcePath,
     $fixnum.Int64? durationNs,
     $core.int? childCount,
+    $core.Iterable<DisplayField>? display,
   }) {
     final result = create();
     if (assetId != null) result.assetId = assetId;
@@ -58,6 +59,7 @@ class Asset extends $pb.GeneratedMessage {
     if (sourcePath != null) result.sourcePath = sourcePath;
     if (durationNs != null) result.durationNs = durationNs;
     if (childCount != null) result.childCount = childCount;
+    if (display != null) result.display.addAll(display);
     return result;
   }
 
@@ -97,6 +99,8 @@ class Asset extends $pb.GeneratedMessage {
     ..aOS(13, _omitFieldNames ? '' : 'sourcePath')
     ..aInt64(14, _omitFieldNames ? '' : 'durationNs')
     ..a<$core.int>(15, _omitFieldNames ? '' : 'childCount', $pb.PbFieldType.O3)
+    ..pc<DisplayField>(16, _omitFieldNames ? '' : 'display', $pb.PbFieldType.PM,
+        subBuilder: DisplayField.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -262,6 +266,79 @@ class Asset extends $pb.GeneratedMessage {
   $core.bool hasChildCount() => $_has(14);
   @$pb.TagNumber(15)
   void clearChildCount() => $_clearField(15);
+
+  /// 응답 전용: 화면에 보일 정보(라벨·값) — 순서대로 그린다. 값이 없는 줄은 빠진다. 기계가 읽을 값은 properties.
+  @$pb.TagNumber(16)
+  $pb.PbList<DisplayField> get display => $_getList(15);
+}
+
+class DisplayField extends $pb.GeneratedMessage {
+  factory DisplayField({
+    $core.String? label,
+    $core.String? value,
+  }) {
+    final result = create();
+    if (label != null) result.label = label;
+    if (value != null) result.value = value;
+    return result;
+  }
+
+  DisplayField._();
+
+  factory DisplayField.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DisplayField.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DisplayField',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'label')
+    ..aOS(2, _omitFieldNames ? '' : 'value')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DisplayField clone() => DisplayField()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DisplayField copyWith(void Function(DisplayField) updates) =>
+      super.copyWith((message) => updates(message as DisplayField))
+          as DisplayField;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DisplayField create() => DisplayField._();
+  @$core.override
+  DisplayField createEmptyInstance() => create();
+  static $pb.PbList<DisplayField> createRepeated() =>
+      $pb.PbList<DisplayField>();
+  @$core.pragma('dart2js:noInline')
+  static DisplayField getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DisplayField>(create);
+  static DisplayField? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get label => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set label($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasLabel() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearLabel() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get value => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set value($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasValue() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearValue() => $_clearField(2);
 }
 
 /// 생성 경위. run_id·tool_id·tool_version은 셋 다 있거나 셋 다 없다(엔티티.md §6.2).
@@ -513,12 +590,18 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     $core.String? pageToken,
     AssetKind? kind,
     $fixnum.Int64? parentAssetId,
+    $core.String? fileName,
+    $fixnum.Int64? equipmentId,
+    $core.bool? unattachedOnly,
   }) {
     final result = create();
     if (pageSize != null) result.pageSize = pageSize;
     if (pageToken != null) result.pageToken = pageToken;
     if (kind != null) result.kind = kind;
     if (parentAssetId != null) result.parentAssetId = parentAssetId;
+    if (fileName != null) result.fileName = fileName;
+    if (equipmentId != null) result.equipmentId = equipmentId;
+    if (unattachedOnly != null) result.unattachedOnly = unattachedOnly;
     return result;
   }
 
@@ -543,6 +626,9 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
         valueOf: AssetKind.valueOf,
         enumValues: AssetKind.values)
     ..aInt64(4, _omitFieldNames ? '' : 'parentAssetId')
+    ..aOS(5, _omitFieldNames ? '' : 'fileName')
+    ..aInt64(6, _omitFieldNames ? '' : 'equipmentId')
+    ..aOB(7, _omitFieldNames ? '' : 'unattachedOnly')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -601,6 +687,33 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
   $core.bool hasParentAssetId() => $_has(3);
   @$pb.TagNumber(4)
   void clearParentAssetId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get fileName => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set fileName($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasFileName() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearFileName() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get equipmentId => $_getI64(5);
+  @$pb.TagNumber(6)
+  set equipmentId($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasEquipmentId() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearEquipmentId() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.bool get unattachedOnly => $_getBF(6);
+  @$pb.TagNumber(7)
+  set unattachedOnly($core.bool value) => $_setBool(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasUnattachedOnly() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearUnattachedOnly() => $_clearField(7);
 }
 
 class ListAssetsResponse extends $pb.GeneratedMessage {
@@ -885,10 +998,15 @@ class ListDuplicateAssetsRequest extends $pb.GeneratedMessage {
   factory ListDuplicateAssetsRequest({
     $core.int? pageSize,
     $core.String? pageToken,
+    $core.bool? includeTimeShifted,
+    $core.bool? includeResolved,
   }) {
     final result = create();
     if (pageSize != null) result.pageSize = pageSize;
     if (pageToken != null) result.pageToken = pageToken;
+    if (includeTimeShifted != null)
+      result.includeTimeShifted = includeTimeShifted;
+    if (includeResolved != null) result.includeResolved = includeResolved;
     return result;
   }
 
@@ -908,6 +1026,8 @@ class ListDuplicateAssetsRequest extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..a<$core.int>(1, _omitFieldNames ? '' : 'pageSize', $pb.PbFieldType.O3)
     ..aOS(2, _omitFieldNames ? '' : 'pageToken')
+    ..aOB(3, _omitFieldNames ? '' : 'includeTimeShifted')
+    ..aOB(4, _omitFieldNames ? '' : 'includeResolved')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -951,6 +1071,24 @@ class ListDuplicateAssetsRequest extends $pb.GeneratedMessage {
   $core.bool hasPageToken() => $_has(1);
   @$pb.TagNumber(2)
   void clearPageToken() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.bool get includeTimeShifted => $_getBF(2);
+  @$pb.TagNumber(3)
+  set includeTimeShifted($core.bool value) => $_setBool(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasIncludeTimeShifted() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearIncludeTimeShifted() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.bool get includeResolved => $_getBF(3);
+  @$pb.TagNumber(4)
+  set includeResolved($core.bool value) => $_setBool(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasIncludeResolved() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearIncludeResolved() => $_clearField(4);
 }
 
 class ListDuplicateAssetsResponse extends $pb.GeneratedMessage {
@@ -1026,10 +1164,20 @@ class DuplicateGroup extends $pb.GeneratedMessage {
   factory DuplicateGroup({
     $core.String? sha256,
     $core.Iterable<Asset>? assets,
+    $core.bool? mergeable,
+    $core.String? reason,
+    DuplicateResolution? resolution,
+    $core.Iterable<$fixnum.Int64>? newAssetIds,
+    $core.Iterable<DuplicateMember>? members,
   }) {
     final result = create();
     if (sha256 != null) result.sha256 = sha256;
     if (assets != null) result.assets.addAll(assets);
+    if (mergeable != null) result.mergeable = mergeable;
+    if (reason != null) result.reason = reason;
+    if (resolution != null) result.resolution = resolution;
+    if (newAssetIds != null) result.newAssetIds.addAll(newAssetIds);
+    if (members != null) result.members.addAll(members);
     return result;
   }
 
@@ -1050,6 +1198,15 @@ class DuplicateGroup extends $pb.GeneratedMessage {
     ..aOS(1, _omitFieldNames ? '' : 'sha256')
     ..pc<Asset>(2, _omitFieldNames ? '' : 'assets', $pb.PbFieldType.PM,
         subBuilder: Asset.create)
+    ..aOB(3, _omitFieldNames ? '' : 'mergeable')
+    ..aOS(4, _omitFieldNames ? '' : 'reason')
+    ..aOM<DuplicateResolution>(5, _omitFieldNames ? '' : 'resolution',
+        subBuilder: DuplicateResolution.create)
+    ..p<$fixnum.Int64>(
+        6, _omitFieldNames ? '' : 'newAssetIds', $pb.PbFieldType.K6)
+    ..pc<DuplicateMember>(
+        7, _omitFieldNames ? '' : 'members', $pb.PbFieldType.PM,
+        subBuilder: DuplicateMember.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1084,6 +1241,604 @@ class DuplicateGroup extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(2)
   $pb.PbList<Asset> get assets => $_getList(1);
+
+  /// 합칠 수 있는가: sha256·종류·기록 시각이 같고, 장비가 같거나 한쪽이 비고, 만든 경위(부모·만든 방법·매개변수)가 같고,
+  /// 파생이나 성적서 세트가 걸린 사본이 하나 이하일 때(그 사본을 남긴다).
+  @$pb.TagNumber(3)
+  $core.bool get mergeable => $_getBF(2);
+  @$pb.TagNumber(3)
+  set mergeable($core.bool value) => $_setBool(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasMergeable() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearMergeable() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get reason => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set reason($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasReason() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearReason() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  DuplicateResolution get resolution => $_getN(4);
+  @$pb.TagNumber(5)
+  set resolution(DuplicateResolution value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasResolution() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearResolution() => $_clearField(5);
+  @$pb.TagNumber(5)
+  DuplicateResolution ensureResolution() => $_ensure(4);
+
+  @$pb.TagNumber(6)
+  $pb.PbList<$fixnum.Int64> get newAssetIds => $_getList(5);
+
+  @$pb.TagNumber(7)
+  $pb.PbList<DuplicateMember> get members => $_getList(6);
+}
+
+class DuplicateMember extends $pb.GeneratedMessage {
+  factory DuplicateMember({
+    Asset? asset,
+    MergeCounts? refs,
+    $core.Iterable<$fixnum.Int64>? jobIds,
+  }) {
+    final result = create();
+    if (asset != null) result.asset = asset;
+    if (refs != null) result.refs = refs;
+    if (jobIds != null) result.jobIds.addAll(jobIds);
+    return result;
+  }
+
+  DuplicateMember._();
+
+  factory DuplicateMember.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DuplicateMember.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DuplicateMember',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aOM<Asset>(1, _omitFieldNames ? '' : 'asset', subBuilder: Asset.create)
+    ..aOM<MergeCounts>(2, _omitFieldNames ? '' : 'refs',
+        subBuilder: MergeCounts.create)
+    ..p<$fixnum.Int64>(3, _omitFieldNames ? '' : 'jobIds', $pb.PbFieldType.K6)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DuplicateMember clone() => DuplicateMember()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DuplicateMember copyWith(void Function(DuplicateMember) updates) =>
+      super.copyWith((message) => updates(message as DuplicateMember))
+          as DuplicateMember;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DuplicateMember create() => DuplicateMember._();
+  @$core.override
+  DuplicateMember createEmptyInstance() => create();
+  static $pb.PbList<DuplicateMember> createRepeated() =>
+      $pb.PbList<DuplicateMember>();
+  @$core.pragma('dart2js:noInline')
+  static DuplicateMember getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DuplicateMember>(create);
+  static DuplicateMember? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Asset get asset => $_getN(0);
+  @$pb.TagNumber(1)
+  set asset(Asset value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAsset() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAsset() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Asset ensureAsset() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  MergeCounts get refs => $_getN(1);
+  @$pb.TagNumber(2)
+  set refs(MergeCounts value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasRefs() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearRefs() => $_clearField(2);
+  @$pb.TagNumber(2)
+  MergeCounts ensureRefs() => $_ensure(1);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<$fixnum.Int64> get jobIds => $_getList(2);
+}
+
+class MergeCounts extends $pb.GeneratedMessage {
+  factory MergeCounts({
+    $core.int? attachments,
+    $core.int? clips,
+    $core.int? children,
+    $core.int? reportRefs,
+    $core.int? toolRuns,
+  }) {
+    final result = create();
+    if (attachments != null) result.attachments = attachments;
+    if (clips != null) result.clips = clips;
+    if (children != null) result.children = children;
+    if (reportRefs != null) result.reportRefs = reportRefs;
+    if (toolRuns != null) result.toolRuns = toolRuns;
+    return result;
+  }
+
+  MergeCounts._();
+
+  factory MergeCounts.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory MergeCounts.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'MergeCounts',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..a<$core.int>(1, _omitFieldNames ? '' : 'attachments', $pb.PbFieldType.O3)
+    ..a<$core.int>(2, _omitFieldNames ? '' : 'clips', $pb.PbFieldType.O3)
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'children', $pb.PbFieldType.O3)
+    ..a<$core.int>(4, _omitFieldNames ? '' : 'reportRefs', $pb.PbFieldType.O3)
+    ..a<$core.int>(5, _omitFieldNames ? '' : 'toolRuns', $pb.PbFieldType.O3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MergeCounts clone() => MergeCounts()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MergeCounts copyWith(void Function(MergeCounts) updates) =>
+      super.copyWith((message) => updates(message as MergeCounts))
+          as MergeCounts;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static MergeCounts create() => MergeCounts._();
+  @$core.override
+  MergeCounts createEmptyInstance() => create();
+  static $pb.PbList<MergeCounts> createRepeated() => $pb.PbList<MergeCounts>();
+  @$core.pragma('dart2js:noInline')
+  static MergeCounts getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<MergeCounts>(create);
+  static MergeCounts? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.int get attachments => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set attachments($core.int value) => $_setSignedInt32(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAttachments() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAttachments() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.int get clips => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set clips($core.int value) => $_setSignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasClips() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearClips() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get children => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set children($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasChildren() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearChildren() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.int get reportRefs => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set reportRefs($core.int value) => $_setSignedInt32(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasReportRefs() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearReportRefs() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.int get toolRuns => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set toolRuns($core.int value) => $_setSignedInt32(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasToolRuns() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearToolRuns() => $_clearField(5);
+}
+
+class DuplicateResolution extends $pb.GeneratedMessage {
+  factory DuplicateResolution({
+    DuplicateDecision? decision,
+    $fixnum.Int64? keepAssetId,
+    $1.Timestamp? decidedAt,
+  }) {
+    final result = create();
+    if (decision != null) result.decision = decision;
+    if (keepAssetId != null) result.keepAssetId = keepAssetId;
+    if (decidedAt != null) result.decidedAt = decidedAt;
+    return result;
+  }
+
+  DuplicateResolution._();
+
+  factory DuplicateResolution.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DuplicateResolution.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DuplicateResolution',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..e<DuplicateDecision>(
+        1, _omitFieldNames ? '' : 'decision', $pb.PbFieldType.OE,
+        defaultOrMaker: DuplicateDecision.DUPLICATE_DECISION_UNSPECIFIED,
+        valueOf: DuplicateDecision.valueOf,
+        enumValues: DuplicateDecision.values)
+    ..aInt64(2, _omitFieldNames ? '' : 'keepAssetId')
+    ..aOM<$1.Timestamp>(3, _omitFieldNames ? '' : 'decidedAt',
+        subBuilder: $1.Timestamp.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DuplicateResolution clone() => DuplicateResolution()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DuplicateResolution copyWith(void Function(DuplicateResolution) updates) =>
+      super.copyWith((message) => updates(message as DuplicateResolution))
+          as DuplicateResolution;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DuplicateResolution create() => DuplicateResolution._();
+  @$core.override
+  DuplicateResolution createEmptyInstance() => create();
+  static $pb.PbList<DuplicateResolution> createRepeated() =>
+      $pb.PbList<DuplicateResolution>();
+  @$core.pragma('dart2js:noInline')
+  static DuplicateResolution getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DuplicateResolution>(create);
+  static DuplicateResolution? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  DuplicateDecision get decision => $_getN(0);
+  @$pb.TagNumber(1)
+  set decision(DuplicateDecision value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDecision() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDecision() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get keepAssetId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set keepAssetId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasKeepAssetId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearKeepAssetId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $1.Timestamp get decidedAt => $_getN(2);
+  @$pb.TagNumber(3)
+  set decidedAt($1.Timestamp value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDecidedAt() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDecidedAt() => $_clearField(3);
+  @$pb.TagNumber(3)
+  $1.Timestamp ensureDecidedAt() => $_ensure(2);
+}
+
+class ResolveDuplicateGroupRequest extends $pb.GeneratedMessage {
+  factory ResolveDuplicateGroupRequest({
+    $core.String? sha256,
+    $core.Iterable<$fixnum.Int64>? memberAssetIds,
+    $fixnum.Int64? keepAssetId,
+  }) {
+    final result = create();
+    if (sha256 != null) result.sha256 = sha256;
+    if (memberAssetIds != null) result.memberAssetIds.addAll(memberAssetIds);
+    if (keepAssetId != null) result.keepAssetId = keepAssetId;
+    return result;
+  }
+
+  ResolveDuplicateGroupRequest._();
+
+  factory ResolveDuplicateGroupRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ResolveDuplicateGroupRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ResolveDuplicateGroupRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'sha256')
+    ..p<$fixnum.Int64>(
+        2, _omitFieldNames ? '' : 'memberAssetIds', $pb.PbFieldType.K6)
+    ..aInt64(3, _omitFieldNames ? '' : 'keepAssetId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResolveDuplicateGroupRequest clone() =>
+      ResolveDuplicateGroupRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResolveDuplicateGroupRequest copyWith(
+          void Function(ResolveDuplicateGroupRequest) updates) =>
+      super.copyWith(
+              (message) => updates(message as ResolveDuplicateGroupRequest))
+          as ResolveDuplicateGroupRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ResolveDuplicateGroupRequest create() =>
+      ResolveDuplicateGroupRequest._();
+  @$core.override
+  ResolveDuplicateGroupRequest createEmptyInstance() => create();
+  static $pb.PbList<ResolveDuplicateGroupRequest> createRepeated() =>
+      $pb.PbList<ResolveDuplicateGroupRequest>();
+  @$core.pragma('dart2js:noInline')
+  static ResolveDuplicateGroupRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ResolveDuplicateGroupRequest>(create);
+  static ResolveDuplicateGroupRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get sha256 => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set sha256($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasSha256() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearSha256() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$fixnum.Int64> get memberAssetIds => $_getList(1);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get keepAssetId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set keepAssetId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasKeepAssetId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearKeepAssetId() => $_clearField(3);
+}
+
+class ResolveDuplicateGroupResponse extends $pb.GeneratedMessage {
+  factory ResolveDuplicateGroupResponse() => create();
+
+  ResolveDuplicateGroupResponse._();
+
+  factory ResolveDuplicateGroupResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ResolveDuplicateGroupResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ResolveDuplicateGroupResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResolveDuplicateGroupResponse clone() =>
+      ResolveDuplicateGroupResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ResolveDuplicateGroupResponse copyWith(
+          void Function(ResolveDuplicateGroupResponse) updates) =>
+      super.copyWith(
+              (message) => updates(message as ResolveDuplicateGroupResponse))
+          as ResolveDuplicateGroupResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ResolveDuplicateGroupResponse create() =>
+      ResolveDuplicateGroupResponse._();
+  @$core.override
+  ResolveDuplicateGroupResponse createEmptyInstance() => create();
+  static $pb.PbList<ResolveDuplicateGroupResponse> createRepeated() =>
+      $pb.PbList<ResolveDuplicateGroupResponse>();
+  @$core.pragma('dart2js:noInline')
+  static ResolveDuplicateGroupResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ResolveDuplicateGroupResponse>(create);
+  static ResolveDuplicateGroupResponse? _defaultInstance;
+}
+
+class MergeAssetsRequest extends $pb.GeneratedMessage {
+  factory MergeAssetsRequest({
+    $fixnum.Int64? keepAssetId,
+    $core.Iterable<$fixnum.Int64>? mergeAssetIds,
+    $core.bool? dryRun,
+  }) {
+    final result = create();
+    if (keepAssetId != null) result.keepAssetId = keepAssetId;
+    if (mergeAssetIds != null) result.mergeAssetIds.addAll(mergeAssetIds);
+    if (dryRun != null) result.dryRun = dryRun;
+    return result;
+  }
+
+  MergeAssetsRequest._();
+
+  factory MergeAssetsRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory MergeAssetsRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'MergeAssetsRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'keepAssetId')
+    ..p<$fixnum.Int64>(
+        2, _omitFieldNames ? '' : 'mergeAssetIds', $pb.PbFieldType.K6)
+    ..aOB(3, _omitFieldNames ? '' : 'dryRun')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MergeAssetsRequest clone() => MergeAssetsRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MergeAssetsRequest copyWith(void Function(MergeAssetsRequest) updates) =>
+      super.copyWith((message) => updates(message as MergeAssetsRequest))
+          as MergeAssetsRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static MergeAssetsRequest create() => MergeAssetsRequest._();
+  @$core.override
+  MergeAssetsRequest createEmptyInstance() => create();
+  static $pb.PbList<MergeAssetsRequest> createRepeated() =>
+      $pb.PbList<MergeAssetsRequest>();
+  @$core.pragma('dart2js:noInline')
+  static MergeAssetsRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<MergeAssetsRequest>(create);
+  static MergeAssetsRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get keepAssetId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set keepAssetId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasKeepAssetId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearKeepAssetId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $pb.PbList<$fixnum.Int64> get mergeAssetIds => $_getList(1);
+
+  @$pb.TagNumber(3)
+  $core.bool get dryRun => $_getBF(2);
+  @$pb.TagNumber(3)
+  set dryRun($core.bool value) => $_setBool(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasDryRun() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearDryRun() => $_clearField(3);
+}
+
+class MergeAssetsResponse extends $pb.GeneratedMessage {
+  factory MergeAssetsResponse({
+    Asset? asset,
+    MergeCounts? moved,
+    $core.Iterable<$fixnum.Int64>? deletedAssetIds,
+    $core.Iterable<$core.String>? warnings,
+  }) {
+    final result = create();
+    if (asset != null) result.asset = asset;
+    if (moved != null) result.moved = moved;
+    if (deletedAssetIds != null) result.deletedAssetIds.addAll(deletedAssetIds);
+    if (warnings != null) result.warnings.addAll(warnings);
+    return result;
+  }
+
+  MergeAssetsResponse._();
+
+  factory MergeAssetsResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory MergeAssetsResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'MergeAssetsResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aOM<Asset>(1, _omitFieldNames ? '' : 'asset', subBuilder: Asset.create)
+    ..aOM<MergeCounts>(2, _omitFieldNames ? '' : 'moved',
+        subBuilder: MergeCounts.create)
+    ..p<$fixnum.Int64>(
+        3, _omitFieldNames ? '' : 'deletedAssetIds', $pb.PbFieldType.K6)
+    ..pPS(4, _omitFieldNames ? '' : 'warnings')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MergeAssetsResponse clone() => MergeAssetsResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  MergeAssetsResponse copyWith(void Function(MergeAssetsResponse) updates) =>
+      super.copyWith((message) => updates(message as MergeAssetsResponse))
+          as MergeAssetsResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static MergeAssetsResponse create() => MergeAssetsResponse._();
+  @$core.override
+  MergeAssetsResponse createEmptyInstance() => create();
+  static $pb.PbList<MergeAssetsResponse> createRepeated() =>
+      $pb.PbList<MergeAssetsResponse>();
+  @$core.pragma('dart2js:noInline')
+  static MergeAssetsResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<MergeAssetsResponse>(create);
+  static MergeAssetsResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Asset get asset => $_getN(0);
+  @$pb.TagNumber(1)
+  set asset(Asset value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAsset() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAsset() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Asset ensureAsset() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  MergeCounts get moved => $_getN(1);
+  @$pb.TagNumber(2)
+  set moved(MergeCounts value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasMoved() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearMoved() => $_clearField(2);
+  @$pb.TagNumber(2)
+  MergeCounts ensureMoved() => $_ensure(1);
+
+  @$pb.TagNumber(3)
+  $pb.PbList<$fixnum.Int64> get deletedAssetIds => $_getList(2);
+
+  /// 같은 작업에 keep과 사본이 다 붙어 있는데 패스가 다르면 keep 쪽 패스를 따르고 여기 적는다.
+  @$pb.TagNumber(4)
+  $pb.PbList<$core.String> get warnings => $_getList(3);
 }
 
 class JobAsset extends $pb.GeneratedMessage {
@@ -1792,10 +2547,29 @@ class AssetServiceApi {
           ctx, 'AssetService', 'DeleteAsset', request, DeleteAssetResponse());
 
   /// 내용(sha256)이 같은 Asset 묶음 목록. 중복은 등록을 막지 않고 여기서 확인해 사람이 정리한다.
+  /// 묶음마다 합칠 수 있는지(mergeable)를 서버가 판정한다 — 화면이 같은 조건을 따로 들고 있지 않게.
+  /// 기본은 사본마다 기록 시각이 다른 묶음(예시 사본)과 정리한 묶음을 뺀다. 정리한 묶음이라도 그 뒤 새 사본이 들어오면 다시 뜬다.
   $async.Future<ListDuplicateAssetsResponse> listDuplicateAssets(
           $pb.ClientContext? ctx, ListDuplicateAssetsRequest request) =>
       _client.invoke<ListDuplicateAssetsResponse>(ctx, 'AssetService',
           'ListDuplicateAssets', request, ListDuplicateAssetsResponse());
+
+  /// 중복 묶음을 "그대로 둔다"고 기록한다(합치지 않음). 같은 sha256의 결정이 있으면 덮어쓴다.
+  /// member_asset_ids가 지금 묶음의 사본과 다르면(그사이 새 사본이 들어왔거나 지워졌으면) FailedPrecondition — 다시 보고 결정한다.
+  /// 묶음이 없으면(사본이 하나 이하) NotFound, keep_asset_id가 사본이 아니면 InvalidArgument.
+  $async.Future<ResolveDuplicateGroupResponse> resolveDuplicateGroup(
+          $pb.ClientContext? ctx, ResolveDuplicateGroupRequest request) =>
+      _client.invoke<ResolveDuplicateGroupResponse>(ctx, 'AssetService',
+          'ResolveDuplicateGroup', request, ResolveDuplicateGroupResponse());
+
+  /// 같은 내용의 사본 여럿을 하나(keep)로 합친다. 첨부·클립·파생·성적서·도구 실행 참조를 keep으로 옮기고 사본 행을 지운다.
+  /// 사본의 파일도 지운다(되돌릴 수 없음). dry_run이면 바꾸지 않고 옮겨질 수만 센다.
+  /// 합칠 조건(ListDuplicateAssets의 mergeable과 같은 판정)이 안 맞으면 FailedPrecondition, 없는 번호면 NotFound.
+  /// 성공하면 묶음의 결정이 MERGED(기준 keep)가 된다 — 같은 내용이 또 들어오면 그 사본만 새로 뜬다.
+  $async.Future<MergeAssetsResponse> mergeAssets(
+          $pb.ClientContext? ctx, MergeAssetsRequest request) =>
+      _client.invoke<MergeAssetsResponse>(
+          ctx, 'AssetService', 'MergeAssets', request, MergeAssetsResponse());
 
   /// 화면 업로드(POST /assets, multipart)가 받는 자료 형식. 서버는 파일 내용으로 종류를 정한다 — 확장자는 파일 선택 창에
   /// 쓸 안내 값이다. 표에 없는 파일도 올릴 수 있고(종류 미지정으로 등록만), 실행 파일은 거절한다.

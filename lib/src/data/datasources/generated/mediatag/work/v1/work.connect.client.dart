@@ -44,6 +44,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
+  /// 숨긴(inactive) 작업자는 빠진다 — include_inactive면 전부.
   Future<mediatagworkv1work.ListWorkersResponse> listWorkers(
     mediatagworkv1work.ListWorkersRequest input, {
     connect.Headers? headers,
@@ -61,7 +62,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 작업자를 만든다. worker.worker_name 필수.
+  /// 작업자를 만든다. worker.worker_name 필수. employee_no가 겹치면 AlreadyExists.
   Future<mediatagworkv1work.CreateWorkerResponse> createWorker(
     mediatagworkv1work.CreateWorkerRequest input, {
     connect.Headers? headers,
@@ -79,7 +80,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// update_mask: worker_name, team, is_master
+  /// update_mask: worker_name, worker_type, employee_no, description, inactive. employee_no가 겹치면 AlreadyExists.
   Future<mediatagworkv1work.UpdateWorkerResponse> updateWorker(
     mediatagworkv1work.UpdateWorkerRequest input, {
     connect.Headers? headers,
@@ -97,7 +98,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 작업을 맡은 작업자는 FailedPrecondition.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 작업을 맡은 작업자는 FailedPrecondition.
   Future<mediatagworkv1work.DeleteWorkerResponse> deleteWorker(
     mediatagworkv1work.DeleteWorkerRequest input, {
     connect.Headers? headers,
@@ -115,6 +116,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
+  /// 숨긴(inactive) 장비는 빠진다 — include_inactive면 전부.
   Future<mediatagworkv1work.ListEquipmentResponse> listEquipment(
     mediatagworkv1work.ListEquipmentRequest input, {
     connect.Headers? headers,
@@ -150,7 +152,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// update_mask: equipment_name, line_name, equipment_code
+  /// update_mask: equipment_name, line_name, equipment_code, description, inactive
   Future<mediatagworkv1work.UpdateEquipmentResponse> updateEquipment(
     mediatagworkv1work.UpdateEquipmentRequest input, {
     connect.Headers? headers,
@@ -168,7 +170,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
   Future<mediatagworkv1work.DeleteEquipmentResponse> deleteEquipment(
     mediatagworkv1work.DeleteEquipmentRequest input, {
     connect.Headers? headers,
@@ -215,6 +217,24 @@ extension type WorkServiceClient (connect.Transport _transport) {
   }) {
     return connect.Client(_transport).unary(
       specs.WorkService.updateProjectItem,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
+  /// 배정 줄을 실제로 지운다(되돌릴 수 없음). 그 배정을 쓰는 작업이 있으면 FailedPrecondition, 없는 번호면 NotFound.
+  Future<mediatagworkv1work.DeleteProjectItemResponse> deleteProjectItem(
+    mediatagworkv1work.DeleteProjectItemRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.WorkService.deleteProjectItem,
       input,
       signal: signal,
       headers: headers,
@@ -295,7 +315,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 작업이 하나라도 있는 공사는 FailedPrecondition.
+  /// 행을 실제로 지운다(되돌릴 수 없음). 작업이 하나라도 있는 공사는 FailedPrecondition.
   Future<mediatagworkv1work.DeleteProjectResponse> deleteProject(
     mediatagworkv1work.DeleteProjectRequest input, {
     connect.Headers? headers,
@@ -352,7 +372,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 작업과 그 패스를 지운다. 첨부·타임라인·매칭된 성적서 세트가 있으면 FailedPrecondition(먼저 떼거나 지운다).
+  /// 작업과 그 패스의 행을 실제로 지운다(되돌릴 수 없음). 첨부·타임라인·매칭된 성적서 세트가 있으면 FailedPrecondition(먼저 떼거나 지운다).
   Future<mediatagworkv1work.DeleteJobResponse> deleteJob(
     mediatagworkv1work.DeleteJobRequest input, {
     connect.Headers? headers,
@@ -388,7 +408,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 패스를 고친다(update_mask: pass_no, started_at, ended_at).
+  /// 패스를 고친다(update_mask: pass_no, pass_type, started_at, ended_at).
   Future<mediatagworkv1work.UpdatePassResponse> updatePass(
     mediatagworkv1work.UpdatePassRequest input, {
     connect.Headers? headers,
@@ -406,7 +426,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// 패스를 지운다. 그 패스에 붙어 있던 첨부는 작업 공용이 된다.
+  /// 패스 행을 실제로 지운다(되돌릴 수 없음). 그 패스에 붙어 있던 첨부는 작업 공용이 된다.
   Future<mediatagworkv1work.DeletePassResponse> deletePass(
     mediatagworkv1work.DeletePassRequest input, {
     connect.Headers? headers,
