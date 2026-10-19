@@ -10,6 +10,7 @@ import '../datasources/generated/google/protobuf/timestamp.pb.dart';
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/media_tag_data_source.dart';
 import 'proto_id.dart';
+import 'worker_kind_mapper.dart';
 
 class RemoteWorkHistoryRepository implements WorkHistoryRepository {
   RemoteWorkHistoryRepository(this._mediaTag);
@@ -28,8 +29,12 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       projects: [
         for (final project in filters.projects)
           WorkHistoryProjectFilter(
+            projectId: idText(project.project.projectId),
             projectNo: project.project.projectNo,
             projectName: project.project.projectName,
+            siteName: project.project.siteName,
+            customer: project.project.customer,
+            jobCount: project.jobCount,
             units: [
               for (final unit in project.units)
                 WorkHistoryUnitFilter(
@@ -39,6 +44,7 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
                     for (final item in unit.items)
                       WorkHistoryItemFilter(
                         itemCode: item.itemCode,
+                        itemName: item.itemName,
                         jointNos: item.jointNos,
                         joints: [
                           for (final joint in item.joints)
@@ -55,7 +61,15 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       ],
       workers: [
         for (final item in filters.workers)
-          Worker(workerId: idText(item.workerId), workerName: item.workerName),
+          Worker(
+            workerId: idText(item.workerId),
+            workerName: item.workerName,
+            workerKind: workerKindFromProto(item.workerType),
+            employeeNo: item.employeeNo,
+            description: item.description,
+            isInactive: item.inactive,
+            jobCount: filters.workerJobCounts[item.workerId] ?? 0,
+          ),
       ],
       equipments: [
         for (final item in filters.equipment)
@@ -64,6 +78,9 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
             equipmentName: item.equipmentName,
             equipmentCode: item.equipmentCode,
             lineName: item.lineName,
+            description: item.description,
+            isInactive: item.inactive,
+            jobCount: filters.equipmentJobCounts[item.equipmentId] ?? 0,
           ),
       ],
     );
@@ -102,8 +119,8 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
 
   Future<WorkHistoryPage> _listAll(WorkHistoryQuery query) async {
     final items = <WorkHistoryItem>[];
-    var pageToken = '';
     var totalCount = 0;
+    var pageToken = '';
     while (true) {
       final response = await _mediaTag.workService.listJobs(
         _request(query, pageSize: _maxPageSize, pageToken: pageToken),
@@ -183,7 +200,7 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       hasReport: summary.hasReport,
       workerId: idText(job.workerId),
       workerName: summary.workerName,
-      isMaster: summary.hasIsMaster() ? summary.isMaster : null,
+      workerKind: workerKindFromProto(summary.workerType),
       equipmentId: '',
       equipmentName: summary.equipmentNames.join(', '),
       workedAt: job.hasStartedAt()

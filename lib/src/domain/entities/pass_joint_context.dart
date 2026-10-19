@@ -1,3 +1,5 @@
+import 'worker_kind.dart';
+
 class PassJointContext {
   const PassJointContext({
     required this.commonKey,
@@ -7,7 +9,7 @@ class PassJointContext {
     required this.itemName,
     this.jointNo = '',
     required this.workerName,
-    this.isMaster,
+    this.workerKind = WorkerKind.unknown,
     required this.equipmentName,
   });
 
@@ -18,6 +20,6 @@ class PassJointContext {
   final String itemName;
   final String jointNo;
   final String workerName;
-  final bool? isMaster;
+  final WorkerKind workerKind;
   final String equipmentName;
 }

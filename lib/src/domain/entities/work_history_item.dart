@@ -1,3 +1,5 @@
+import 'worker_kind.dart';
+
 class WorkHistoryItem {
   const WorkHistoryItem({
     required this.jobId,
@@ -11,7 +13,7 @@ class WorkHistoryItem {
     this.hasReport = false,
     required this.workerId,
     required this.workerName,
-    this.isMaster,
+    this.workerKind = WorkerKind.unknown,
     required this.equipmentId,
     required this.equipmentName,
     required this.workedAt,
@@ -30,7 +32,7 @@ class WorkHistoryItem {
   final bool hasReport;
   final String workerId;
   final String workerName;
-  final bool? isMaster;
+  final WorkerKind workerKind;
   final String equipmentId;
   final String equipmentName;
   final DateTime? workedAt;

@@ -1,9 +1,11 @@
+import 'worker_kind.dart';
+
 class ComparisonJobCandidate {
   const ComparisonJobCandidate({
     required this.jobId,
     this.jobKey = '',
     required this.workerName,
-    this.isMaster,
+    this.workerKind = WorkerKind.unknown,
     required this.startedAt,
     required this.passCount,
   });
@@ -11,7 +13,7 @@ class ComparisonJobCandidate {
   final String jobId;
   final String jobKey;
   final String workerName;
-  final bool? isMaster;
+  final WorkerKind workerKind;
   final DateTime? startedAt;
   final int passCount;
 }

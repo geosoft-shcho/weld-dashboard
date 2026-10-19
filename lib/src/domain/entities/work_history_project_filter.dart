@@ -10,11 +10,13 @@ class WorkHistoryItemFilter {
     required this.itemCode,
     required this.jointNos,
     this.joints = const [],
+    this.itemName = '',
   });
 
   final String itemCode;
   final List<String> jointNos;
   final List<WorkHistoryJointFilter> joints;
+  final String itemName;
 }
 
 class WorkHistoryUnitFilter {
@@ -34,9 +36,17 @@ class WorkHistoryProjectFilter {
     required this.projectNo,
     required this.projectName,
     required this.units,
+    this.projectId = '',
+    this.siteName = '',
+    this.customer = '',
+    this.jobCount = 0,
   });
 
+  final String projectId;
   final String projectNo;
   final String projectName;
+  final String siteName;
+  final String customer;
   final List<WorkHistoryUnitFilter> units;
+  final int jobCount;
 }

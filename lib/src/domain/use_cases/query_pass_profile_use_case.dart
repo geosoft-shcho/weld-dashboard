@@ -162,7 +162,7 @@ class QueryPassProfileUseCase {
       itemName: match.itemName,
       jointNo: match.jointNo,
       workerName: match.workerName,
-      isMaster: match.isMaster,
+      workerKind: match.workerKind,
       equipmentName: match.equipmentName,
     );
   }

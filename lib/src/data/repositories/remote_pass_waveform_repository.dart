@@ -9,10 +9,12 @@ import '../../domain/entities/waveform_row.dart';
 import '../../domain/entities/weld_pass.dart';
 import '../../domain/entities/work_history_item.dart';
 import '../../domain/entities/worker.dart';
+import '../../domain/entities/worker_kind.dart';
 import '../../domain/repositories/pass_waveform_repository.dart';
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/media_tag_data_source.dart';
 import 'proto_id.dart';
+import 'worker_kind_mapper.dart';
 
 class RemotePassWaveformRepository implements PassWaveformRepository {
   RemotePassWaveformRepository(this._mediaTag);
@@ -88,6 +90,10 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
               Worker(
                 workerId: idText(worker.workerId),
                 workerName: worker.workerName,
+                workerKind: workerKindFromProto(worker.workerType),
+                employeeNo: worker.employeeNo,
+                description: worker.description,
+                isInactive: worker.inactive,
               ),
             ],
       context: _contextFrom(response),
@@ -129,7 +135,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
         projectNo: projectNo,
         itemCode: itemCode,
         unitNo: unitNo,
-        masterOnly: true,
+        workerType: work_pb.WorkerType.WORKER_TYPE_MASTER,
         pageSize: COMPARISON_PAGE_SIZE,
         pageToken: pageToken,
       ),
@@ -145,7 +151,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
           jobId: candidateId,
           jobKey: summary.job.jobKey,
           workerName: summary.workerName,
-          isMaster: summary.hasIsMaster() ? summary.isMaster : null,
+          workerKind: workerKindFromProto(summary.workerType),
           startedAt: summary.job.hasStartedAt()
               ? summary.job.startedAt.toDateTime().toLocal()
               : null,
@@ -305,8 +311,11 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     work_pb.PassWaveform waveform, {
     required bool isComparison,
   }) {
-    if (waveform.hasIsMaster()) {
-      return waveform.isMaster ? SeriesRole.master : SeriesRole.beginner;
+    if (waveform.workerType == work_pb.WorkerType.WORKER_TYPE_MASTER) {
+      return SeriesRole.master;
+    }
+    if (waveform.workerType != work_pb.WorkerType.WORKER_TYPE_UNSPECIFIED) {
+      return SeriesRole.beginner;
     }
     return isComparison ? SeriesRole.master : SeriesRole.beginner;
   }
@@ -409,9 +418,9 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
       jointNo: job.jointNo,
       workerId: idText(job.workerId),
       workerName: response.hasWorker() ? response.worker.workerName : '',
-      isMaster: response.hasWorker() && response.worker.hasIsMaster()
-          ? response.worker.isMaster
-          : null,
+      workerKind: response.hasWorker()
+          ? workerKindFromProto(response.worker.workerType)
+          : WorkerKind.unknown,
       equipmentId: response.equipment.length == 1
           ? idText(response.equipment.first.equipmentId)
           : '',
@@ -438,9 +447,9 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
       itemName: job.itemName,
       jointNo: job.jointNo,
       workerName: response.hasWorker() ? response.worker.workerName : '',
-      isMaster: response.hasWorker() && response.worker.hasIsMaster()
-          ? response.worker.isMaster
-          : null,
+      workerKind: response.hasWorker()
+          ? workerKindFromProto(response.worker.workerType)
+          : WorkerKind.unknown,
       equipmentName: equipmentNames.join(', '),
     );
   }

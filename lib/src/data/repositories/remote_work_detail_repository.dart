@@ -2,11 +2,13 @@ import '../../domain/entities/work_attachment.dart';
 import '../../domain/entities/work_attachment_type.dart';
 import '../../domain/entities/work_detail_catalog.dart';
 import '../../domain/entities/work_history_item.dart';
+import '../../domain/entities/worker_kind.dart';
 import '../../domain/repositories/work_detail_repository.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/media_tag_data_source.dart';
 import 'proto_id.dart';
+import 'worker_kind_mapper.dart';
 
 class RemoteWorkDetailRepository implements WorkDetailRepository {
   RemoteWorkDetailRepository(this._mediaTag);
@@ -96,9 +98,9 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
       jointNo: job.jointNo,
       workerId: idText(job.workerId),
       workerName: response.hasWorker() ? response.worker.workerName : '',
-      isMaster: response.hasWorker() && response.worker.hasIsMaster()
-          ? response.worker.isMaster
-          : null,
+      workerKind: response.hasWorker()
+          ? workerKindFromProto(response.worker.workerType)
+          : WorkerKind.unknown,
       equipmentId: response.equipment.length == 1
           ? idText(response.equipment.first.equipmentId)
           : '',
