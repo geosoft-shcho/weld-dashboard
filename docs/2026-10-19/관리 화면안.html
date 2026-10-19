@@ -1,0 +1,865 @@
+<title>공사 관리 화면안</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* 레이아웃: 용접 수집 대시보드(tks.faivv.ai)와 같은 껍데기 — 위 제목줄, 왼쪽 아이콘 줄, 필터 패널 + 표.
+   첫 화면은 뷰포트 높이에 맞춘 예시 화면(안에서만 스크롤), 그 아래로 탭별 규칙·RPC 정리. 대시보드가 어두운 화면이라 어두운 한 가지 테마로 둔다 */
+:root{
+  --bg:#17181b; --bar:#1c1d20; --panel:#25272b; --panel2:#2c2f34; --line:#373a40; --fg:#e6e8eb; --muted:#9aa0a8;
+  --btn:#c9d8ee; --btn-fg:#1b2a40; --accent:#8fb4e3; --ok:#5fb37c; --warn:#d6a24a; --danger:#e07a70; --row:#2a2d32;
+  --sans:"IBM Plex Sans KR",system-ui,sans-serif; --mono:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important} /* .ov{display:grid} 같은 규칙이 hidden을 이기지 않게 — 게시 껍데기에 기대지 않는다 */
+html,body{background:var(--bg);color:var(--fg)}
+body{font:13px/1.5 var(--sans)}
+.app{display:grid;grid-template-columns:48px minmax(0,1fr);grid-template-rows:46px auto;height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));min-height:600px}
+.top{grid-column:1/-1;display:flex;align-items:center;gap:14px;padding-inline:16px;background:var(--bar);border-bottom:1px solid var(--line)}
+.top h1{font-size:15px;font-weight:600;margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top .upd{margin-left:auto;color:var(--muted);font-size:12px;white-space:nowrap}
+.rail{background:var(--bar);border-right:1px solid var(--line);display:flex;flex-direction:column;align-items:center;gap:6px;padding-top:10px}
+.rail i{width:28px;height:28px;border-radius:5px;display:grid;place-items:center;color:var(--muted);font-style:normal;font-size:14px}
+.rail i.on{background:var(--panel2);color:var(--fg);box-shadow:-10px 0 0 -7px var(--fg)}
+.work{min-width:0;min-height:0;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto;gap:10px;padding:10px 16px 12px}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--line)}
+.tabs button{border:0;border-radius:0;background:none;color:var(--muted);padding:7px 16px;border-bottom:2px solid transparent;margin-bottom:-1px;font-size:14px}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--fg);font-weight:500}
+.filters{background:var(--panel);border-radius:4px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end}
+.filters label{display:grid;gap:3px;font-size:12px;color:var(--fg)}
+.filters .sp{margin-left:auto;display:flex;gap:6px}
+.split{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(320px,1fr);gap:10px;min-height:0}
+.split.p{grid-template-columns:minmax(0,1fr) minmax(360px,1.1fr)}
+.box{background:var(--panel);border-radius:4px;min-width:0;min-height:0;display:flex;flex-direction:column}
+.bh{display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.bh h2{font-size:13px;margin:0;font-weight:600}
+.bh .r{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+.scroll{overflow:auto;min-height:0;flex:1}
+.pad{padding:12px;display:grid;gap:12px;align-content:start;grid-auto-rows:max-content}
+button{font:inherit;cursor:pointer;border-radius:4px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);padding:4px 11px;white-space:nowrap}
+button:hover{border-color:var(--muted)}
+button.pri{background:var(--btn);border-color:var(--btn);color:var(--btn-fg);font-weight:500}
+button.dg{color:var(--danger)}
+button.dg.solid{background:var(--danger);border-color:var(--danger);color:var(--bg)}
+button.lk{border:0;background:none;color:var(--accent);padding:1px 4px}
+button:disabled{opacity:.4;cursor:not-allowed}
+:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input,select{font:inherit;color:var(--fg);background:var(--panel2);border:1px solid var(--line);border-radius:3px;padding:4px 8px;min-width:0}
+input[readonly]{color:var(--muted);background:var(--bar)}
+input.code{font-family:var(--mono);text-transform:uppercase}
+input.bad,select.bad{border-color:var(--danger)}
+select{min-width:120px}
+table{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}
+th{position:sticky;top:0;background:var(--panel2);font-size:12px;font-weight:600;text-align:left;padding:7px 10px;white-space:nowrap;z-index:1}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody.pick tr{cursor:pointer}
+tbody.pick tr:hover{background:var(--row)}
+tbody.pick tr.sel{background:var(--row);box-shadow:inset 3px 0 0 var(--accent)}
+.mono{font-family:var(--mono);font-size:12px}
+.mut{color:var(--muted)}
+.sm{font-size:12px}
+.chip{display:inline-block;font-size:11px;padding:0 7px;border-radius:9px;background:var(--panel2);color:var(--muted);white-space:nowrap;border:1px solid var(--line)}
+.chip.w{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+.chip.o{color:var(--ok);border-color:color-mix(in srgb,var(--ok) 40%,transparent)}
+.chip.a{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 40%,transparent)}
+.f{display:grid;gap:3px;font-size:12px;color:var(--muted)}
+.f b{color:var(--fg);font-weight:500}
+.f .req{color:var(--danger)}
+.g2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.kv{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px 14px}
+.kv div{min-width:0;overflow-wrap:anywhere}
+.kv .mut{font-size:11px}
+.err{color:var(--danger);font-size:12px}
+.hint{color:var(--muted);font-size:11px}
+.note{border-radius:3px;padding:7px 10px;font-size:12px;border:1px solid var(--line)}
+.note.w{color:var(--warn);border-color:color-mix(in srgb,var(--warn) 40%,transparent)}
+.note.d{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 40%,transparent)}
+.sub{display:flex;gap:2px;border-bottom:1px solid var(--line);padding-inline:12px}
+.sub button{border:0;border-radius:0;background:none;color:var(--muted);padding:6px 10px;border-bottom:2px solid transparent;margin-bottom:-1px}
+.sub button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.unit{border:1px solid var(--line);border-radius:3px}
+.unit>summary{list-style:none;cursor:pointer;padding:6px 10px;display:flex;gap:8px;font-weight:500}
+.unit>summary::-webkit-details-marker{display:none}
+.unit>summary::before{content:"▸";color:var(--muted)}
+.unit[open]>summary::before{content:"▾"}
+.unit>summary span:first-of-type{flex:1}
+.irow{display:grid;grid-template-columns:60px 90px minmax(0,1fr) auto;gap:6px;align-items:center;padding:4px 10px;border-top:1px solid var(--line)}
+.irow.new{background:var(--panel2)}
+.irow.hit{box-shadow:inset 3px 0 0 var(--warn)}
+.prow{display:grid;grid-template-columns:60px minmax(0,1fr) minmax(0,1fr) 24px;gap:6px;align-items:center;padding:4px 10px;border-top:1px solid var(--line)}
+.prow:first-child{border-top:0}
+.prow.new{background:var(--panel2)}
+.chip.nw{color:var(--btn-fg);background:var(--btn);border-color:var(--btn)}
+.cmp th{position:static;background:none;color:var(--muted);font-weight:500;width:110px}
+.cmp td{font-size:12px;overflow-wrap:anywhere;min-width:150px}
+.cmp td.df{color:var(--warn);background:color-mix(in srgb,var(--warn) 10%,transparent)}
+.cmp thead td{font-weight:600}
+.cmp tr.keep td.k{box-shadow:inset 0 2px 0 var(--accent)}
+.pv{background:var(--bar);border:1px solid var(--line);border-radius:3px;display:grid;place-items:center;position:relative;color:var(--muted);overflow:hidden;font-size:11px;min-height:64px}
+.pv .play{font-size:22px;color:var(--fg);opacity:.8}
+.pv .pvl{position:absolute;left:6px;bottom:4px;font-family:var(--mono);font-size:10.5px}
+.pv svg{width:100%;height:100%;display:block}
+.dl{display:grid;grid-template-columns:max-content minmax(0,1fr);gap:4px 14px;font-size:12px}
+.dl dt{color:var(--muted)}.dl dd{margin:0;overflow-wrap:anywhere}
+.chk,.filters label.chk{display:flex;gap:6px;align-items:center;font-size:12px}
+.log{height:96px;overflow:auto;background:var(--panel);border-radius:4px;font:11.5px/1.45 var(--mono);padding:6px 12px;display:grid;gap:4px;align-content:start}
+.log .h{font-family:var(--sans);font-size:12px;font-weight:600;display:flex;gap:8px;position:sticky;top:-6px;background:var(--panel);padding-block:2px}
+.log div.e{white-space:pre-wrap;word-break:break-all;border-left:2px solid var(--line);padding-left:8px}
+.log .m{color:var(--accent)}
+.log .x{color:var(--danger)}
+.tree{display:inline-block;width:16px;color:var(--muted)}
+.child td:first-child{padding-left:28px}
+.ov{position:fixed;inset:0;background:color-mix(in srgb,#000 55%,transparent);display:grid;place-items:center;padding:16px;z-index:5}
+.dlg{background:var(--panel);border:1px solid var(--line);border-radius:6px;max-width:460px;width:100%;padding:16px;display:grid;gap:10px;max-height:90vh;overflow:auto}
+.dlg.wide{max-width:640px}
+.dlg h3{margin:0;font-size:15px}
+.acts{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.steps{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.steps span+span::before{content:"→";color:var(--muted);margin-right:4px}
+/* 아래: 규칙·RPC */
+.doc{padding:28px 16px 48px;max-width:1180px;margin:0 auto;display:grid;gap:20px}
+.doc h2{font-size:16px;margin:0;text-wrap:balance}
+.doc h3{font-size:14px;margin:0}
+.doc section{display:grid;gap:10px}
+.doc ul{margin:0;padding-left:18px;display:grid;gap:4px;max-width:90ch;color:var(--muted)}
+.doc ul b{color:var(--fg);font-weight:500}
+.doc .tw{overflow-x:auto;background:var(--panel);border-radius:4px}
+.doc td{vertical-align:top}
+.doc th{position:static}
+.rpc{font:12px var(--mono);color:var(--accent);white-space:nowrap}
+.doc pre{background:var(--panel);border-radius:4px;padding:10px 12px;overflow-x:auto;font:12px/1.5 var(--mono);margin:0}
+@media (max-width:900px){
+  .app{height:auto;grid-template-rows:46px auto}
+  .split,.split.p{grid-template-columns:minmax(0,1fr)}
+  .box{max-height:70vh}
+  .rail{display:none}.app{grid-template-columns:minmax(0,1fr)}
+}
+@media (prefers-reduced-motion:no-preference){button,tbody.pick tr{transition:background .1s,border-color .1s}}
+</style>
+
+<div class="app">
+  <div class="top"><span class="mut" aria-hidden="true">☰</span><h1>용접 수집 대시보드 : <span id="ttl">공사 관리</span></h1><span class="upd">화면안 · 예시 데이터(운영 DB 일부) · 서버와 연결 안 됨 · 2026-10-19</span></div>
+  <nav class="rail" aria-label="메뉴(예시)"><i title="수집 모니터링">▤</i><i title="작업 이력 조회">◷</i><i title="파형 비교">↗</i><i title="성적서">▣</i><i class="on" title="관리">⚙</i></nav>
+
+  <main class="work">
+    <div class="tabs" role="tablist">
+      <button role="tab" data-tab="project" aria-selected="true">공사</button>
+      <button role="tab" data-tab="job" aria-selected="false">작업</button>
+      <button role="tab" data-tab="asset" aria-selected="false">에셋</button>
+      <button role="tab" data-tab="worker" aria-selected="false">작업자</button>
+      <button role="tab" data-tab="equipment" aria-selected="false">장비</button>
+    </div>
+    <div id="filters"></div>
+    <div id="screen" style="min-height:0;display:grid"></div>
+    <div class="log" id="log"><div class="h">보낼 요청 <span class="mut" style="font-weight:400">버튼을 누르면 서버에 보낼 요청이 여기 남습니다</span><button class="lk" id="clr" style="margin-left:auto">지우기</button></div></div>
+  </main>
+</div>
+
+<div class="doc" id="doc"></div>
+
+<div class="ov" id="ov" hidden><div class="dlg" role="dialog" aria-modal="true" id="dlg"></div></div>
+
+<script>
+// 시각은 'YYYY-MM-DDTHH:MM:SS.mmm'(KST)로 맞춰 둔다 — 글자 비교가 곧 시각 비교
+const T=v=>!v?'':v.length===16?v+':00.000':v.length===19?v+'.000':v.slice(0,23);
+/* ===== 예시 데이터: 운영 DB에서 가져온 일부(2026-10-14) ===== */
+const IT={CB:'CONNECTION BEAM','LD-A':'LEG DIAGONAL "A"','LD-B':'LEG DIAGONAL "B"','LD-C':'LEG DIAGONAL "C"','LD-D':'LEG DIAGONAL "D"','LD-E':'LEG DIAGONAL "E"','LD-F':'LEG DIAGONAL "F"'};
+let nid=10000; const id=()=>nid++;
+const mk=(units,codes)=>units.flatMap(u=>codes(u).map(c=>({id:id(),unit:u,code:c,name:IT[c]})));
+const S=['CB','LD-A','LD-B','LD-C','LD-E','LD-F'],F=['LD-A','LD-B','LD-C','LD-D','LD-E','LD-F'];
+const projects=[
+  {id:1,no:'DEMO',name:'데모 셀 용접 데이터셋',site:'',customer:'',jobs:6,items:[['P600','600 파이프'],['P900','900 파이프'],['P1050','1050 파이프']].map(([c,n])=>({id:id(),unit:'00',code:c,name:n}))},
+  {id:6,no:'EX005',name:'컨테이너크레인 3차 예시 공사(예시)',site:'부산 1공장(예시)',customer:'예시 발주처',jobs:23,items:mk(['01'],()=>S)},
+  {id:7,no:'EX006',name:'야드 크레인 구조물 예시 공사(예시)',site:'목포 공장(예시)',customer:'예시 발주처',jobs:23,items:mk(['01'],()=>S)},
+  {id:8,no:'TP129',name:'동원글로벌터미널부산 컨테이너크레인 제작설치 공사',site:'',customer:'HD현대삼호',jobs:106,items:mk(['01','02','03','04','05'],u=>u==='01'?S:u==='03'?['CB',...F]:F)},
+  {id:9,no:'EX007',name:'신규 공사 예시(작업 없음)',site:'',customer:'',jobs:0,items:[]},
+];
+// 작업 수(jobs) · 에셋 수(assets)는 운영 DB 값(2026-10-15). 화면에선 ListJobFilters의 개수(가이드 §5.9) — 행마다 부르지 않는다
+// 종류(worker_type)는 운영 DB 값(2026-10-19 이관 18: is_master true → 명장, false → 일반, 빈 값 → 모름). 사번 · 비고 · 숨김은 예시
+const workers=[[1,'김명장(예시)','master',83,'S-1001','경력 25년 · 배관 용접'],[2,'이명장(예시)','master',81,'S-1002',''],[3,'박용접(예시)','general',89,'S-2031',''],[4,'최용접(예시)','general',19,'',''],[5,'정용접(예시)','general',88,'S-2040',''],[6,'한신입(예시)','',18,'',''],[7,'용접 로봇 1호(예시)','robot',0,'','셀 2 · 6축 암'],[8,'퇴사자(예시)','general',0,'S-1990','2026-06 퇴사',true]].map(([i,n,t,j,e,d,h])=>({id:i,name:n,type:t,jobs:j,emp:e,desc:d,hidden:!!h}));
+const equipment=[[1,'용접사 헬멧 액션캠','DEMO-ACTIONCAM',271,1228],[2,'뒤 깊이카메라(RealSense D555)','DEMO-DEPTH-BACK',271,6339],[3,'앞 깊이카메라(RealSense D555)','DEMO-DEPTH-FRONT',274,6516],[4,'용접기 패널 촬영 카메라','DEMO-PANEL',271,968]].map(([i,n,c,j,a])=>({id:i,name:n,code:c,line:'데모 셀',jobs:j,assets:a,desc:'',hidden:false}));
+// 시각은 KST 글자로 둔다(보낼 때 +09:00)
+const J=(i,code,joint,s,e,w,np,na,key,rep=true,tl=false)=>({id:i,projectId:7,unit:'01',code,joint,start:s,end:e,worker:w,name:'',np,na,key,rep,tl,passes:[]});
+const jobs=[
+  J(388,'LD-C','DGT-ELC-01','2026-10-30T08:16:00','2026-10-30T09:04:14.100',2,2,31,'JOB-EX006_01-LD-C-ELC01-20261030_9846',true,true),
+  J(386,'CB','DGT-QRA-02','2026-10-29T09:25:44','2026-10-29T10:43:03',2,3,79,'JOB-EX006_01-CB-QRA02-20261029_55F8'),
+  J(385,'CB','DGT-QRA-01','2026-10-28T15:49:06','2026-10-29T09:07:43',2,4,100,'JOB-EX006_01-CB-QRA01-20261028_E11C'),
+  J(383,'CB','DGT-QLA-02','2026-10-28T13:02:00','2026-10-28T15:29:06',2,4,97,'JOB-EX006_01-CB-QLA02-20261028_86BB'),
+  J(381,'LD-F','DGT-ERF-01','2026-10-28T09:39:29','2026-10-28T10:06:54',5,2,39,'JOB-EX006_01-LD-F-ERF01-20261028_BB57'),
+  J(380,'LD-F','DGT-ELF-01','2026-10-28T08:07:00','2026-10-28T09:27:29',5,3,57,'JOB-EX006_01-LD-F-ELF01-20261028_AE97'),
+  J(379,'LD-E','DGT-ERE-02','2026-10-27T16:10:50','2026-10-27T16:38:15',5,2,39,'JOB-EX006_01-LD-E-ERE02-20261027_8EF2'),
+  J(378,'LD-E','DGT-ERE-01','2026-10-27T14:42:21','2026-10-27T15:34:58',5,2,38,'JOB-EX006_01-LD-E-ERE01-20261027_A9FF'),
+];
+jobs.forEach(j=>{j.start=T(j.start);j.end=T(j.end)});
+jobs[0].passes=[{id:818,no:1,s:'2026-10-30T08:16:00',e:'2026-10-30T08:29:16'},{id:819,no:2,s:'2026-10-30T08:48:26',e:'2026-10-30T09:04:14.100'}];
+jobs[0].passes.forEach(x=>{x.s=T(x.s);x.e=T(x.e)});
+const K={VIDEO:'영상',AUDIO:'음성',IMAGE:'이미지',DOCUMENT:'문서',POSE:'포즈',SUBTITLE:'자막',TIMESERIES:'센서',POINTCLOUD:'깊이 원본',OCR_JSON:'글자 인식',REGION:'영역'};
+const A=(i,kind,file,size,pass,eq,dur,extra={})=>({id:i,kind,file,size,pass,eq,dur,children:[],parent:0,...extra});
+const assets=[
+  A(101,'DOCUMENT','1호기.pdf',20323776,0,0,null,{report:true,unattached:true}),
+  A(2302,'DOCUMENT','1호기_p17-23.pdf',3240850,0,0,null,{report:true,parent:101,prov:{operation:'pdf_split',run:0,tool:'report-split'}}),
+  A(18285,'VIDEO','20260915_133744_skeleton2d_overlay.mp4',54777163,818,3,817.815),
+  A(20477,'POSE','ast_devcmb_ec0c4e9a01185cdbcad0446c_run176.json',9174862,818,3,389.782,{parent:18285,prov:{operation:'pose',run:176,tool:'welding-pose 1.0.0'}}),
+  A(4594,'VIDEO','20260915_133740_skeleton2d_overlay.mp4',75059286,818,2,822.073),
+  A(17689,'VIDEO','depth_front_color.mp4',118684587,818,3,392.62),
+  A(18669,'POINTCLOUD','depth_front_raw16.mkv',2354104327,818,3,386.26),
+  A(2932,'TIMESERIES','imu_front.csv',22383443,818,3,817.84),
+  A(11147,'TIMESERIES','panel_30fps.csv',728229,818,4,986.77),
+  A(2717,'POSE','20260915_133744_keypoints2d.csv',8340490,818,3,817.82),
+  A(7623,'VIDEO','actioncam_01-10.mp4',531246205,819,1,176.2),
+  A(10493,'TIMESERIES','panel_30fps.csv',779607,819,4,948.1),
+  A(9505,'TIMESERIES','signals_30fps.csv',1070861,819,0,948.1),
+  A(30001,'VIDEO','IMG_2041.mov',88412300,0,1,62.4,{unattached:true}),
+  ...[[19690,'1호기_p17-17_fitup.pdf',458853,[[1320,'fitup_insp_report_v1_p17.json',8479],[1321,'fitup_insp_report_v1_p17_LQC.png',243973],[1322,'fitup_insp_report_v1_p17_HSHI_QM.png',246268],[1323,'fitup_insp_report_v1_p17_감독원.png',272162]]],
+    [19691,'1호기_p18-18_welding.pdf',463115,[[1448,'welding_insp_report_v1_p18.json',9042],[1449,'welding_insp_report_v1_p18_LQC.png',227562]]],
+    [19692,'1호기_p19-19_dimensional.pdf',428825,[[1291,'dimension_insp_checklist_v1_p19.json',12319],[1292,'dimension_insp_checklist_v1_p19_SKETCH.png',1056798]]],
+    [19693,'1호기_p20-20_pressure.pdf',477593,[[1372,'pressure_test_report_v1_p20.json',9826],[1374,'pressure_test_report_v1_p20_Curave_of_Pressure_시험절차.png',499942]]],
+    [19694,'1호기_p21-23_ndt.pdf',1415513,[[1409,'ultrasonic_testing_report_v1_p21.json',23034],[1341,'magnetic_particle_testing_report_v1_p23.json',25354],[1411,'ultrasonic_testing_report_v1_p21_Check_point_diagrams.png',880019]]]]
+   .flatMap(([i,f,sz,kids])=>[A(i,'DOCUMENT',f,sz,0,0,null,{unattached:true,parent:2302,prov:{operation:'pdf_split',run:0,tool:'report-split'}}),
+     ...kids.map(([k,kf,ks])=>A(k,kf.endsWith('.json')?'OCR_JSON':'IMAGE',kf,ks,0,0,null,{unattached:true,parent:i,prov:{operation:kf.endsWith('.json')?'text_extraction':'image_crop',run:0,tool:'pdf-to-text'}}))]),
+  A(30002,'SUBTITLE','actioncam_01-10_stt.json',423,0,1,null,{parent:7623,unattached:true,prov:{operation:'stt',run:0,tool:'stt(예시)'}}),
+];
+// 운영 DB의 실제 properties(2026-10-14). 2302 · 20477은 비어 있다 — 비어 있어도 화면이 깨지지 않아야 한다
+const PROPS={101:{pages:45},18285:{fps:29.986,codec:'h264',width:896,height:504,pixel_format:'yuv420p',start_time_ns:0},4594:{fps:30.001,codec:'h264',width:896,height:504,pixel_format:'yuv420p',start_time_ns:0},
+  17689:{fps:29.9858,codec:'h264',width:896,height:504,pixel_format:'yuv420p',start_time_ns:425201002000},18669:{fps:30,unit:'mm',codec:'ffv1',pixel:'gray16le',width:896,height:504,pixel_format:'gray16le'},
+  7623:{fps:30,codec:'h264',width:3840,height:2160,channels:1,audio_codec:'aac',pixel_format:'yuvj420p',start_time_ns:0,sample_rate_hz:32000},
+  2932:{format:'csv',channels:['acc_x','acc_y','acc_z','gyro_x','gyro_y','gyro_z'],time_source:'depth_session_filename',column_count:7,sample_rate_hz:200,time_accuracy_s:1},
+  11147:{format:'csv',channels:['전류_A','와이어송급속도_m_min','전압_V'],time_source:'panel_epoch',column_count:4,sample_rate_hz:30},10493:{format:'csv',channels:['전류_A','와이어송급속도_m_min','전압_V'],time_source:'panel_epoch',column_count:4,sample_rate_hz:30},
+  9505:{format:'csv',channels:['frame','current_A','wire_speed_mpm','voltage_V','rpm','deg_per_s','pipe_angle_deg'],time_source:'t_abs',column_count:8,sample_rate_hz:30},
+  2717:{format:'csv',channels:['frame','nose_u','nose_v','nose_conf','l_eye_u','l_eye_v','l_eye_conf','…(52개)'],time_source:'t_abs',column_count:53,sample_rate_hz:30}};
+assets.forEach(a=>a.props=PROPS[a.id]||{});
+assets.forEach(a=>{if(a.parent)assets.find(p=>p.id===a.parent).children.push(a.id)});
+// 중복 묶음: 운영 DB의 실제 묶음 4개(2026-10-14). 목업이라 판정을 여기서 계산 — 실제 화면은 서버가 준 mergeable · reason을 그대로 쓴다
+const D=(id,file,o={})=>({id,file,props:{},kind:'DOCUMENT',size:0,eq:0,rec:'',dur:null,src:'',parent:0,op:'',params:'',jobs:[],clips:0,children:0,sets:0,...o});
+const dups=[
+  {sha:'cd61878900b5b0e2…',items:[D(1108,'01M0C7QZHKXA78AEMQ08S3SCB5_용접종류 및 특징.hwp',{props:{time_source:'synthetic'},size:15872,src:'tacit-tag:objects/cd618789…',jobs:[197]}),D(1130,'01M0C7VYY065EZN6NT08S18WJD_용접종류 및 특징.hwp',{props:{time_source:'synthetic'},size:15872,src:'tacit-tag:objects/cd618789…',jobs:[208]})]},
+  {sha:'8586968719…',items:[102,4255,6011,7578,14158].map(i=>D(i,'2호기.pdf',{props:{pages:48},size:21655068,src:i===102?'google_drive/FIT UP - WELDING 검사 및 NDT리포트외/2호기.pdf':'',sets:6}))},
+  {sha:'0d9afe7fec92…',items:[D(1265,'paint_inspection_report_v1.1_p2_Maker.png',{kind:'IMAGE',size:60746,parent:1263,op:'image_crop',params:'page 2 · Maker'}),D(1548,'paint_inspection_report_v1.1_p46_Maker.png',{kind:'IMAGE',size:60746,parent:102,op:'image_crop',params:'page 46 · Maker'})]},
+  {sha:'488b79236d…',more:45,items:[[170,'2026-09-16T15:15:16.541','2026/09/20260930-181340_1050_pipe1_pass4/…'],[2734,'2026-09-17T11:22:44.541','devseed/…'],[2917,'2026-09-01T14:39:23.541','devseed/…'],[3499,'2026-10-29T08:46:53.541','devseed/…']].map(([i,r,sp])=>D(i,'depth_front_color.mp4',{kind:'VIDEO',props:{fps:9.1706,codec:'h264',width:896,height:504,pixel_format:'yuv420p',start_time_ns:54521994000},size:362477359,eq:3,rec:r,src:sp,jobs:['?'],clips:null}))},
+];
+// 합칠 수 있나: sha256 · 종류 · 기록 시각 · 장비 · 만든 경위가 같고, 성적서 세트 · 파생이 둘 이상의 사본에 있지 않을 것
+function verdict(g){const it=g.items,uniq=f=>new Set(it.map(f)).size>1,r=[];
+  if(uniq(x=>x.kind))r.push('종류가 다름');
+  if(uniq(x=>x.rec))r.push('기록 시각이 다름');
+  if(new Set(it.map(x=>x.eq).filter(Boolean)).size>1)r.push('장비가 다름');
+  if(uniq(x=>x.parent?x.parent+'|'+x.op+'|'+x.params:''))r.push('만든 경위가 다름'); // 부모 없는 들여오기 기록은 원본으로 본다
+  if(it.filter(x=>x.sets||x.children).length>1)r.push('파생이나 성적서 세트가 여러 사본에 있음');
+  return r}
+const refs=x=>(x.jobs.length)+(x.clips||0)+x.children+x.sets;
+// 작업 388의 첨부(나머지 작업은 개수만 있다)
+const attach={388:assets.filter(a=>!a.unattached).map(a=>({asset:a.id,pass:a.pass}))};
+const FORMATS=[['video','영상','mp4 mkv mov','VIDEO',true,'properties duration timeline'],['depth_raw','깊이 원본','mkv','POINTCLOUD',true,'properties duration'],['audio','음성','wav mp3 m4a','AUDIO',true,'properties duration timeline'],['panel','패널 센서','xlsx csv','TIMESERIES',true,'properties normalize timeline'],['imu','IMU 센서','csv','TIMESERIES',true,'properties normalize timeline'],['rpm','회전수','csv','TIMESERIES',true,'properties normalize timeline'],['signals','통합 신호','csv','TIMESERIES',true,'properties normalize timeline'],['pose','포즈·스켈레톤','csv','POSE',true,'properties normalize timeline'],['image','이미지','jpg jpeg png','IMAGE',false,'properties'],['document','문서·성적서','pdf','DOCUMENT',false,'properties report']];
+const STEP={properties:'파일 속성',duration:'길이',normalize:'표준화',timeline:'타임라인 배치',report:'글자 인식·성적서'};
+
+/* ===== 공통 ===== */
+const $=s=>document.querySelector(s),esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const P=i=>projects.find(p=>p.id===i),W=i=>workers.find(w=>w.id===i),E=i=>equipment.find(e=>e.id===i),AS=i=>assets.find(a=>a.id===i);
+const normUnit=u=>{u=String(u).trim();return /^\d$/.test(u)?'0'+u:u},normCode=c=>String(c).replace(/\s+/g,'').toUpperCase();
+const fmtT=s=>s?s.replace('T',' ').replace(/\.000$/,''):'—',iso=s=>s?T(s)+'+09:00':'';
+const fmtB=b=>b>=1e9?(b/1e9).toFixed(2)+' GB':b>=1e6?(b/1e6).toFixed(1)+' MB':(b/1e3).toFixed(0)+' KB';
+const fmtD=d=>d==null?'—':d>=60?Math.floor(d/60)+'분 '+Math.round(d%60)+'초':d.toFixed(1)+'초';
+const opt=(v,l,s)=>`<option value="${esc(v)}" ${String(v)===String(s)?'selected':''}>${esc(l)}</option>`;
+let logN=0;
+function log(m,body,note){const el=$('#log'),d=document.createElement('div');d.className='e';
+  d.innerHTML=`<span class="m">${m}</span> ${esc(JSON.stringify(body))}${note?` <span class="x">→ ${esc(note)}</span>`:''}`;el.querySelector('.h').after(d)}
+function dialog(html,ok,wide){$('#dlg').className='dlg'+(wide?' wide':'');$('#dlg').innerHTML=html;$('#ov').hidden=false;
+  ($('#dlg input:not([readonly]),#dlg select')||$('#dlg [data-x]'))?.focus();
+  $('#dlg').onclick=e=>{if(e.target.closest('[data-x]'))$('#ov').hidden=true;if(e.target.closest('[data-ok]')&&ok&&ok()!==false)$('#ov').hidden=true}}
+const close=()=>$('#ov').hidden=true;
+const known=()=>{const m=new Map();projects.forEach(p=>p.items.forEach(i=>m.set(i.code+'|'+i.name,i)));return `<datalist id="known">${[...m.values()].map(i=>`<option value="${esc(i.name)}">${esc(i.code)}</option>`).join('')}</datalist>`};
+let tab='project';
+// 공사 · 작업자 · 장비는 몇 건뿐이라 목록을 다 받아 화면에서 거른다(서버 필터 없음). 여러 칸 부분 일치, 대소문자 무시
+const has=(q,...v)=>{q=String(q||'').trim().toLowerCase();return !q||v.some(x=>String(x??'').toLowerCase().includes(q))};
+const st={project:{sel:7,mode:'view',draft:null,q:'',empty:false},worker:{q:'',kind:'',hidden:false,sel:1,mode:'view'},equipment:{q:'',line:'',hidden:false,sel:1,mode:'view',codeOpen:false},job:{proj:7,unit:'',code:'',worker:'',sel:388,sub:'info'},asset:{kind:'',q:'',eq:'',un:false,job:'',pass:'',sel:18285,open:{18285:true},dup:false,shifted:false,showRes:false,g:'cd618789',keep:{},cur:{},pv:'tab'}};
+
+/* ===== 공사 ===== */
+function projFilters(){const s=st.project;return `<div class="filters"><label>검색<input id="pf-q" type="search" value="${esc(s.q)}" placeholder="공사 번호 · 이름 · 현장 · 발주처 · 품목" style="width:300px"></label>
+  <label class="chk" style="align-self:end;padding-bottom:5px"><input type="checkbox" id="pf-empty" ${s.empty?'checked':''}> 작업 없는 공사만</label>
+  <span class="hint" style="align-self:center"><span class="rpc">ListJobFilters</span>로 받은 목록을 화면에서 거름 — 서버 필터 없음</span></div>`}
+const projHit=(p,q)=>has(q,p.no,p.name,p.site,p.customer,...p.items.flatMap(i=>[i.code,i.name]));
+function projScreen(){
+  const s=st.project,p=P(s.sel),shown=projects.filter(q=>projHit(q,s.q)&&(!s.empty||!q.jobs));
+  const list=`<div class="box"><div class="bh"><h2>공사</h2><span class="mut sm">${shown.length===projects.length?projects.length+'건':shown.length+' / '+projects.length+'건'}</span><div class="r"><button class="pri" data-a="p-new">+ 새 공사</button></div></div>
+  <div class="scroll"><table><thead><tr><th>공사 번호</th><th>이름</th><th>현장 · 발주처</th><th>호기 · 품목</th><th>작업</th></tr></thead><tbody class="pick">
+  ${shown.length?'':'<tr><td colspan="5" class="mut">조건에 맞는 공사가 없습니다</td></tr>'}${shown.map(q=>`<tr tabindex="0" data-p="${q.id}" class="${q.id===s.sel&&s.mode!=='new'?'sel':''}"><td class="mono">${esc(q.no)}</td><td>${esc(q.name)}</td>
+  <td class="mut">${esc([q.site,q.customer].filter(Boolean).join(' · ')||'—')}</td><td><span class="chip">${new Set(q.items.map(i=>i.unit)).size}호기 · ${q.items.length}품목</span></td>
+  <td><span class="chip ${q.jobs?'w':''}">${q.jobs}건</span></td></tr>`).join('')}</tbody></table></div></div>`;
+  return `<div class="split p">${list}<div class="box">${s.mode==='new'?projNew():p?projDetail(p):'<div class="pad mut">공사를 고르세요</div>'}</div></div>${known()}`;
+}
+const rowsHtml=(items,ed,q)=>items.map(i=>i.id&&!i.k?`<div class="irow${q&&has(q,i.code,i.name)?' hit':''}"><span class="mono">${esc(i.unit)}</span><span class="mono">${esc(i.code)}</span><span>${esc(i.name)}</span>${ed?`<span><button class="lk" data-a="p-gojobs" data-u="${esc(i.unit)}" data-c="${esc(i.code)}">작업 →</button><button class="lk" data-a="p-rename" data-i="${i.id}">이름 수정</button><button class="lk dg" data-a="p-idel" data-i="${i.id}">지우기</button></span>`:'<span></span>'}</div>`
+  :`<div class="irow new" data-k="${i.k}"><input class="code" placeholder="05" value="${esc(i.unit)}" data-f="unit" aria-label="호기"><input class="code" placeholder="LD-A" value="${esc(i.code)}" data-f="code" aria-label="품목 코드"><input list="known" placeholder="품목 이름" value="${esc(i.name)}" data-f="name" aria-label="품목 이름"><button class="lk dg" data-a="p-rowdel" data-k="${i.k}" aria-label="줄 빼기">✕</button></div>`).join('');
+function projNew(){const d=st.project.draft;return `<div class="bh"><h2>새 공사</h2><span class="rpc">CreateProject → CreateProjectItems</span></div>
+  <form class="scroll pad" id="f-pnew">
+  <label class="f"><b>공사 번호 <span class="req">*</span></b><input id="pn-no" class="code" placeholder="TP130" value="${esc(d.no)}" autocomplete="off"><span class="hint">만든 뒤에는 고칠 수 없습니다. PDF DB·CARO의 공사 번호와 같게 넣으세요.</span><span class="err" id="pn-err"></span></label>
+  <div class="g2"><label class="f"><b>공사 이름</b><input id="pn-name" value="${esc(d.name)}"></label><label class="f"><b>현장</b><input id="pn-site" value="${esc(d.site)}"></label><label class="f"><b>발주처</b><input id="pn-cust" value="${esc(d.customer)}"></label></div>
+  <div><b>호기 · 품목 배정</b> <span class="hint">선택. 나중에 넣어도 됩니다.</span></div>
+  <div class="unit">${rowsHtml(d.items)}<div class="irow" style="grid-template-columns:1fr"><button type="button" class="lk" data-a="p-addrow" style="justify-self:start">+ 줄 추가</button></div></div>
+  <span class="err" id="pi-err"></span>
+  <div class="acts"><button type="button" data-a="p-cancel">취소</button><button class="pri">만들기</button></div></form>`}
+function projDetail(p){const s=st.project,ed=s.mode==='edit',g={};p.items.forEach(i=>(g[i.unit]??=[]).push(i));const units=Object.keys(g).sort();
+  return `<div class="bh"><h2 class="mono">${esc(p.no)}</h2><span class="mut sm">id ${p.id}</span><div class="r">${ed?'':`<button data-a="p-edit">기본 정보 수정</button><button class="dg" data-a="p-del">지우기</button>`}</div></div>
+  <div class="scroll pad">
+  ${ed?`<form id="f-pedit" style="display:grid;gap:10px"><div class="g2"><label class="f"><b>공사 번호</b><input readonly value="${esc(p.no)}"></label><label class="f"><b>공사 이름</b><input id="pe-name" value="${esc(p.name)}"></label><label class="f"><b>현장</b><input id="pe-site" value="${esc(p.site)}"></label><label class="f"><b>발주처</b><input id="pe-cust" value="${esc(p.customer)}"></label></div>
+    <div class="acts"><button type="button" data-a="p-cancel">취소</button><button class="pri">저장</button></div></form>`
+  :`<div class="kv"><div><div class="mut">공사 이름</div>${esc(p.name)||'—'}</div><div><div class="mut">현장</div>${esc(p.site)||'—'}</div><div><div class="mut">발주처</div>${esc(p.customer)||'—'}</div><div><div class="mut">작업</div>${p.jobs}건 <button class="lk" data-a="p-gojobs">작업 탭에서 보기 →</button></div></div>`}
+  <div style="display:flex;align-items:center;gap:8px"><b>호기 · 품목 배정</b><span class="rpc">CreateProjectItems · UpdateProjectItem</span>${s.q.trim()&&p.items.some(i=>has(s.q,i.code,i.name))?'<span class="hint">검색어에 걸린 품목은 노란 줄</span>':''}</div>
+  ${units.map((u,n)=>`<details class="unit" ${n===0||p.items.length<=12?'open':''}><summary><span>${u==='00'?'호기 구분 없음 (00)':Number(u)+'호기 ('+u+')'}</span><span class="mut sm">${g[u].length}품목</span></summary>${rowsHtml(g[u].sort((a,b)=>a.code.localeCompare(b.code)),true,s.q.trim())}
+    <div class="irow" style="grid-template-columns:1fr"><button class="lk" data-a="p-addto" data-u="${u}" style="justify-self:start">+ ${u}에 품목 추가</button></div></details>`).join('')||'<div class="mut">배정된 품목이 없습니다. 첫 품목을 넣으면 호기도 생깁니다.</div>'}
+  ${s.draft?.pending?.length?`<div class="unit">${rowsHtml(s.draft.pending)}</div><span class="err" id="pi-err"></span><div class="acts"><button data-a="p-cancel">취소</button><button class="pri" data-a="p-pendsave">배정 저장 (${s.draft.pending.length}줄)</button></div>`:''}
+  <button class="lk" data-a="p-addto" data-u="" style="justify-self:start">+ 호기 추가 (첫 품목과 함께)</button></div>`}
+let rk=0;
+function readRows(rows){document.querySelectorAll('.irow.new').forEach(r=>{const it=rows.find(x=>String(x.k)===r.dataset.k);if(it)r.querySelectorAll('input').forEach(i=>it[i.dataset.f]=i.value)})}
+function checkRows(rows){for(const r of rows){r.unit=normUnit(r.unit);r.code=normCode(r.code);r.name=r.name.trim();if(!r.unit||!r.code||!r.name)return '호기 · 품목 코드 · 이름을 모두 넣어야 합니다.'}
+  const k=rows.map(r=>r.unit+'|'+r.code);return new Set(k).size!==k.length?'같은 호기 · 품목 코드가 두 줄 있습니다.':''}
+function assign(p,rows){return rows.map(r=>p.items.find(i=>i.unit===r.unit&&i.code===r.code)||(p.items.push({id:id(),unit:r.unit,code:r.code,name:r.name}),p.items.at(-1)))}
+
+/* ===== 작업 ===== */
+function jobList(){const s=st.job;return jobs.filter(j=>(!s.proj||j.projectId==s.proj)&&(!s.unit||j.unit===s.unit)&&(!s.code||j.code===s.code)&&(!s.worker||j.worker==s.worker)).sort((a,b)=>b.start.localeCompare(a.start))}
+function jobFilters(){const s=st.job,p=P(+s.proj),units=p?[...new Set(p.items.map(i=>i.unit))].sort():[],codes=p?[...new Set(p.items.filter(i=>!s.unit||i.unit===s.unit).map(i=>i.code))].sort():[];
+  return `<div class="filters"><label>공사<select id="jf-proj">${opt('','전체',s.proj)}${projects.map(q=>opt(q.id,q.no,s.proj)).join('')}</select></label>
+  <label>호기<select id="jf-unit" ${p?'':'disabled'}>${opt('','전체',s.unit)}${units.map(u=>opt(u,u==='00'?'구분 없음':Number(u)+'호기',s.unit)).join('')}</select></label>
+  <label>품목<select id="jf-code" ${p?'':'disabled'}>${opt('','전체',s.code)}${codes.map(c=>opt(c,c,s.code)).join('')}</select></label>
+  <label>작업자<select id="jf-worker">${opt('','전체',s.worker)}${workers.map(w=>opt(w.id,w.name,s.worker)).join('')}</select></label>
+  <span class="hint" style="align-self:center">값은 <span class="rpc">ListJobFilters</span> · 목록은 <span class="rpc">ListJobs</span></span>
+  <div class="sp"><button class="pri" data-a="j-new">+ 새 작업</button></div></div>`}
+function jobScreen(){const s=st.job,list=jobList(),j=jobs.find(x=>x.id===s.sel);
+  const tbl=`<div class="box"><div class="bh"><h2>작업</h2><span class="mut sm">검색 결과 ${list.length}건</span></div><div class="scroll"><table><thead><tr><th>공통키</th><th>품목</th><th>이음부</th><th>작업자</th><th>작업일시</th><th>패스</th><th>첨부</th><th>성적서</th></tr></thead><tbody class="pick">
+  ${list.map(x=>{const p=P(x.projectId),it=p.items.find(i=>i.unit===x.unit&&i.code===x.code);return `<tr tabindex="0" data-j="${x.id}" class="${x.id===s.sel?'sel':''}"><td class="mono">${esc(p.no)}_${esc(x.unit)}-${esc(x.code)}</td>
+  <td class="sm">${Number(x.unit)}호기<br>${esc(it?.name)}</td><td class="mono">${esc(x.joint)}</td><td>${esc(W(x.worker)?.name)}</td><td class="mono">${fmtT(x.start)}</td><td>${x.passes.length||x.np}</td><td>${x.na}건</td><td>${x.rep?'있음':'—'}</td></tr>`}).join('')||'<tr><td colspan="8" class="mut">조건에 맞는 작업이 없습니다</td></tr>'}</tbody></table></div></div>`;
+  return `<div class="split">${tbl}<div class="box">${j?jobDetail(j):'<div class="pad mut">작업을 고르세요</div>'}</div></div>`}
+function jobDetail(j){const s=st.job,p=P(j.projectId);
+  const tabs=[['info','기본 정보'],['pass','패스 '+j.passes.length],['att','첨부 '+j.na]].map(([k,l])=>`<button data-a="j-sub" data-s="${k}" aria-selected="${s.sub===k}">${l}</button>`).join('');
+  let body='';
+  if(s.sub==='info')body=`<form id="f-jedit" class="pad"><div class="mono sm mut" style="overflow-wrap:anywhere">${esc(j.key)}</div>
+    <div class="g2"><label class="f"><b>공사</b><select id="je-proj">${projects.map(q=>opt(q.id,q.no,j.projectId)).join('')}</select></label>
+    <label class="f"><b>호기</b><input id="je-unit" class="code" value="${esc(j.unit)}"></label><label class="f"><b>품목 코드</b><input id="je-code" class="code" value="${esc(j.code)}"></label>
+    <label class="f"><b>이음부</b><input id="je-joint" class="code" value="${esc(j.joint)}"></label>
+    <label class="f"><b>시작</b><input id="je-s" type="datetime-local" step="0.001" value="${j.start}"></label><label class="f"><b>종료</b><input id="je-e" type="datetime-local" step="0.001" value="${j.end}"></label>
+    <label class="f"><b>작업자</b><select id="je-w">${opt('','미지정',j.worker)}${workers.filter(w=>!w.hidden||w.id===j.worker).map(w=>opt(w.id,w.name+' · '+WL[w.type],j.worker)).join('')}</select></label>
+    <label class="f"><b>작업 이름</b><input id="je-name" value="${esc(j.name)}" placeholder="없어도 됨"></label></div>
+    <span class="hint">공사 · 호기 · 품목 · 이음부 · 시작을 바꾸면 공통키와 작업 키가 다시 만들어집니다. 품목 이름은 공사 탭에서 고칩니다.</span><span class="err" id="je-err"></span>
+    <div class="acts"><button type="button" class="dg" data-a="j-del">작업 지우기</button><button class="pri">저장</button></div></form>`;
+  if(s.sub==='pass')body=`<div class="pad"><table><thead><tr><th>패스</th><th>시작</th><th>종료</th><th></th></tr></thead><tbody>
+    ${j.passes.map(x=>`<tr><td>${x.no}${x.no===1?' <span class="mut sm">초층</span>':''}</td><td class="mono">${fmtT(x.s)}</td><td class="mono">${fmtT(x.e)}</td><td style="text-align:right"><button class="lk" data-a="j-goassets" data-p="${x.id}">에셋 →</button><button class="lk" data-a="j-pedit" data-x="${x.id}">수정</button><button class="lk dg" data-a="j-pdel" data-x="${x.id}">지우기</button></td></tr>`).join('')||`<tr><td colspan="4" class="mut">${j.np?`예시 데이터는 작업 388에만 패스가 있습니다(이 작업은 ${j.np}개)`:'패스가 없습니다'}</td></tr>`}</tbody></table>
+    <div class="hint">작업 구간(${fmtT(j.start)} ~ ${fmtT(j.end).slice(11)}) 안이어야 하고 서로 겹칠 수 없습니다. 끝과 시작이 맞닿는 건 됩니다.</div>
+    <div class="acts"><button class="pri" data-a="j-padd">+ 패스 추가</button></div></div>`;
+  if(s.sub==='att'){const at=attach[j.id];body=`<div class="bh"><span class="rpc">ListJobAssets</span><div class="r"><button class="pri" data-a="a-upload" data-j="${j.id}">+ 이 작업에 올리기</button><button data-a="j-attach">에셋 붙이기</button><button data-a="j-goassets">에셋 탭에서 보기 →</button></div></div>
+    <div class="scroll"><table><thead><tr><th>번호</th><th>종류</th><th>파일</th><th>패스</th><th></th></tr></thead><tbody>
+    ${at?at.map(x=>{const a=AS(x.asset);return `<tr><td class="mono">${a.id}</td><td>${K[a.kind]}</td><td class="sm" style="overflow-wrap:anywhere">${esc(a.file)}</td><td><select class="at-pass" data-x="${a.id}" aria-label="${a.id} 패스" style="min-width:0">${opt(0,'공용',x.pass)}${j.passes.map(q=>opt(q.id,q.no+'패스',x.pass)).join('')}</select></td><td><button class="lk dg" data-a="j-detach" data-x="${a.id}">떼기</button></td></tr>`}).join(''):`<tr><td colspan="5" class="mut">예시 데이터는 작업 388에만 첨부 목록이 있습니다</td></tr>`}</tbody></table></div>`}
+  return `<div class="bh"><h2 class="mono">${esc(p.no)}_${esc(j.unit)}-${esc(j.code)} · ${esc(j.joint)}</h2><span class="mut sm">job ${j.id}</span></div><div class="sub" role="tablist">${tabs}</div><div class="scroll" style="display:flex;flex-direction:column">${body}</div>`}
+const overlap=(ps,s,e,skip)=>ps.find(p=>p.id!==skip&&p.s&&p.e&&s<p.e&&p.s<e);
+function passDialog(j,x){dialog(`<h3>${x?x.no+'패스 수정':'패스 추가'}</h3><div class="g2"><label class="f"><b>패스 번호 *</b><input id="pd-no" type="number" min="1" value="${x?x.no:(Math.max(0,...j.passes.map(p=>p.no))+1)}"></label>
+  <label class="f"><b>시작</b><input id="pd-s" type="datetime-local" step="0.001" value="${x?.s||''}"></label><label class="f"><b>종료</b><input id="pd-e" type="datetime-local" step="0.001" value="${x?.e||''}"></label></div>
+  <span class="hint">작업 구간 ${fmtT(j.start)} ~ ${fmtT(j.end)}. 시각은 비워 둘 수 있지만 그러면 패스별 타임라인 · 파형을 못 엽니다.</span><span class="err" id="pd-err"></span>
+  <div class="acts"><button data-x>취소</button><button class="pri" data-ok>${x?'저장':'추가'}</button></div>`,()=>{
+  const no=+$('#pd-no').value,s=T($('#pd-s').value),e=T($('#pd-e').value),er=m=>{$('#pd-err').textContent=m;return false};
+  if(!(no>=1))return er('패스 번호는 1 이상입니다.');
+  if(j.passes.some(p=>p.no===no&&p.id!==x?.id)){log(x?'UpdatePass':'CreatePass',{pass:{job_id:j.id,pass_no:no}},'AlreadyExists');return er(no+'패스가 이미 있습니다.')}
+  if(s&&e&&e<s)return er('종료가 시작보다 앞섭니다.');
+  if((s&&(s<j.start||(j.end&&s>j.end)))||(e&&(e<j.start||(j.end&&e>j.end)))){log(x?'UpdatePass':'CreatePass',{pass:{pass_no:no,started_at:iso(s),ended_at:iso(e)}},'InvalidArgument (작업 구간 밖)');return er('패스는 작업 구간 안에 있어야 합니다.')}
+  const o=s&&e&&overlap(j.passes,s,e,x?.id);if(o){log(x?'UpdatePass':'CreatePass',{pass:{pass_no:no,started_at:iso(s),ended_at:iso(e)}},'FailedPrecondition (겹침)');return er(o.no+'패스와 시간이 겹칩니다.')}
+  if(x){const mask=[];if(x.no!==no)mask.push('pass_no');if(x.s!==s)mask.push('started_at');if(x.e!==e)mask.push('ended_at');Object.assign(x,{no,s,e});
+    if(mask.length)log('UpdatePass',{pass:{pass_id:x.id,pass_no:no,started_at:iso(s),ended_at:iso(e)},update_mask:{paths:mask}})}
+  else{const n={id:id(),no,s,e};j.passes.push(n);j.passes.sort((a,b)=>a.no-b.no);log('CreatePass',{pass:{job_id:j.id,pass_no:no,started_at:iso(s),ended_at:iso(e)}})}
+  render()})}
+function jobNewDialog(){const pid=+st.job.proj||7;dialog(`<h3>새 작업</h3><span class="rpc">CreateJob</span>
+  <div class="g2"><label class="f"><b>공사 *</b><select id="jn-proj">${projects.map(q=>opt(q.id,q.no,pid)).join('')}</select></label>
+  <label class="f"><b>호기 · 품목 *</b><select id="jn-item"></select></label>
+  <label class="f"><b>이음부 *</b><input id="jn-joint" class="code" placeholder="DGT-ELC-02"></label>
+  <label class="f"><b>작업자</b><select id="jn-w">${opt('','미지정','')}${workers.filter(w=>!w.hidden).map(w=>opt(w.id,w.name+' · '+WL[w.type],'')).join('')}</select></label>
+  <label class="f"><b>시작 *</b><input id="jn-s" type="datetime-local" step="0.001"></label><label class="f"><b>종료</b><input id="jn-e" type="datetime-local" step="0.001"></label></div>
+  <div id="jn-newitem" class="g2" hidden><label class="f"><b>호기</b><input id="jn-u" class="code" placeholder="01"></label><label class="f"><b>품목 코드</b><input id="jn-c" class="code" placeholder="LD-D"></label><label class="f"><b>품목 이름 *</b><input id="jn-n" list="known" placeholder="새 배정이면 필수"></label></div>
+  <div><b>패스</b> <span class="hint">선택. 작업 구간 안, 서로 겹치지 않게. 시각을 비우면 번호만 만듭니다.</span></div>
+  <div class="unit"><div class="prow mut sm"><span>패스</span><span>시작</span><span>종료</span><span></span></div><div id="jn-passes"></div>
+    <div class="irow" style="grid-template-columns:1fr"><button type="button" class="lk" id="jn-padd" style="justify-self:start">+ 패스 추가</button></div></div>
+  <span class="err" id="jn-err"></span><div class="acts"><button data-x>취소</button><button class="pri" data-ok>만들기</button></div>${known()}`,()=>{
+  const p=P(+$('#jn-proj').value),v=$('#jn-item').value,joint=normCode($('#jn-joint').value),s=T($('#jn-s').value),e=T($('#jn-e').value),er=m=>{$('#jn-err').textContent=m;return false};
+  let unit,code,name;if(v==='new'){unit=normUnit($('#jn-u').value);code=normCode($('#jn-c').value);name=$('#jn-n').value.trim();if(!unit||!code||!name)return er('새 배정이면 호기 · 품목 코드 · 이름이 필요합니다.')}else{[unit,code]=v.split('|')}
+  if(!joint||!s)return er('이음부와 시작은 필수입니다.');if(e&&e<s)return er('종료가 시작보다 앞섭니다.');
+  readP();const nos=prs.map(r=>+r.no);if(nos.some(n=>!(n>=1)))return er('패스 번호는 1 이상입니다.');if(new Set(nos).size!==nos.length)return er('패스 번호가 겹칩니다.');
+  for(const r of prs){if(r.s&&r.e&&r.e<r.s)return er(r.no+'패스: 종료가 시작보다 앞섭니다.');
+    if((r.s&&(r.s<s||(e&&r.s>e)))||(r.e&&(r.e<s||(e&&r.e>e))))return er(r.no+'패스가 작업 구간 밖입니다.');
+    const o=prs.find(q=>q!==r&&q.s&&q.e&&r.s&&r.e&&r.s<q.e&&q.s<r.e);if(o)return er(`${r.no}패스와 ${o.no}패스의 시간이 겹칩니다.`)}
+  const np=prs.length,req={job:{project_id:p.id,unit_no:unit,item_code:code,joint_no:joint,started_at:iso(s),...(e&&{ended_at:iso(e)}),...($('#jn-w').value&&{worker_id:+$('#jn-w').value}),...(name&&{item_name:name})},...(np&&{passes:prs.map(r=>({pass_no:+r.no,...(r.s&&{started_at:iso(r.s)}),...(r.e&&{ended_at:iso(r.e)})}))})};
+  if(!p.items.find(i=>i.unit===unit&&i.code===code))p.items.push({id:id(),unit,code,name});
+  const d=s.slice(0,10).replace(/-/g,''),j={id:id(),projectId:p.id,unit,code,joint,start:s,end:e,worker:+$('#jn-w').value||0,name:'',np:0,na:0,rep:false,tl:false,
+    key:`JOB-${p.no}_${unit}-${code}-${joint.replace(/^DGT-/,'').replace(/-/g,'')}-${d}_${Math.random().toString(16).slice(2,6).toUpperCase()}`,passes:prs.map(r=>({id:id(),no:+r.no,s:r.s,e:r.e})).sort((a,b)=>a.no-b.no)};
+  jobs.push(j);p.jobs++;log('CreateJob',req,'job_key · common_key는 서버가 만든다');Object.assign(st.job,{proj:p.id,unit:'',code:'',worker:'',sel:j.id,sub:'info'});render()},true);
+  const fill=()=>{const p=P(+$('#jn-proj').value);$('#jn-item').innerHTML=p.items.slice().sort((a,b)=>(a.unit+a.code).localeCompare(b.unit+b.code)).map(i=>opt(i.unit+'|'+i.code,`${i.unit} · ${i.code} ${i.name}`,'')).join('')+opt('new','+ 새 배정',null);$('#jn-newitem').hidden=$('#jn-item').value!=='new'};
+  fill();$('#jn-proj').onchange=fill;$('#jn-item').onchange=()=>$('#jn-newitem').hidden=$('#jn-item').value!=='new';
+  // 패스 줄: 품목 배정 줄과 같은 방식. 새 줄은 다음 번호, 시작 = 앞 줄의 종료
+  let prs=[{k:1,no:1,s:'',e:''}],pk=1;
+  const readP=()=>document.querySelectorAll('#jn-passes .prow').forEach(r=>{const x=prs.find(q=>q.k==r.dataset.k);r.querySelectorAll('input').forEach(i=>x[i.dataset.f]=i.dataset.f==='no'?i.value:T(i.value))});
+  const drawP=()=>{$('#jn-passes').innerHTML=prs.map(r=>`<div class="prow new" data-k="${r.k}"><input type="number" min="1" value="${r.no}" data-f="no" aria-label="패스 번호"><input type="datetime-local" step="0.001" value="${r.s}" data-f="s" aria-label="시작"><input type="datetime-local" step="0.001" value="${r.e}" data-f="e" aria-label="종료"><button type="button" class="lk dg" data-pk="${r.k}" aria-label="줄 빼기">✕</button></div>`).join('')||'<div class="prow mut sm">패스 없이 만듭니다</div>'};
+  drawP();
+  $('#jn-s').onchange=()=>{readP();if(prs[0]&&!prs[0].s){prs[0].s=T($('#jn-s').value);drawP()}};
+  $('#jn-padd').onclick=()=>{readP();const l=prs.at(-1);prs.push({k:++pk,no:(l?+l.no:0)+1,s:l?.e||'',e:''});drawP()};
+  $('#jn-passes').onclick=ev=>{const k=ev.target.dataset.pk;if(k){readP();prs=prs.filter(r=>r.k!=k);drawP()}}}
+
+/* ===== 에셋 ===== */
+function assetFilters(){const s=st.asset;
+  if(s.dup)return `<div class="filters"><button data-a="a-dup">← 에셋 목록</button><label class="chk"><input type="checkbox" id="af-shift" ${s.shifted?'checked':''}> 기록 시각이 다른 사본도 보기 <span class="mono mut">include_time_shifted</span> <span class="chip nw">10-19 추가</span></label>
+  <span class="hint" style="align-self:center"><span class="rpc">ListDuplicateAssets</span> → 묶음 고르기 → 비교 · 남길 것 고르기 → <span class="rpc">MergeAssets</span>(dry_run → 실행) <span class="chip nw">10-19 추가</span></span></div>`;
+  return `<div class="filters"><label>종류<select id="af-kind">${opt('','전체',s.kind)}${Object.entries(K).map(([k,l])=>opt(k,l,s.kind)).join('')}</select></label>
+  <label><span>파일 이름 <span class="chip nw">10-19 추가</span></span><input id="af-q" value="${esc(s.q)}" placeholder="부분 일치"></label>
+  <label><span>장비 <span class="chip nw">10-19 추가</span></span><select id="af-eq">${opt('','전체',s.eq)}${equipment.map(e=>opt(e.id,e.name,s.eq)).join('')}</select></label>
+  <label>작업<select id="af-job" style="max-width:260px">${opt('','전체',s.job)}${jobs.map(x=>opt(x.id,P(x.projectId).no+'_'+x.unit+'-'+x.code+' · '+x.joint+' · '+x.start.slice(5,10),s.job)).join('')}</select></label>
+  <label>패스<select id="af-pass" ${s.job?'':'disabled'}>${opt('','전체',s.pass)}${opt('0','작업 공용',s.pass)}${(jobs.find(x=>x.id==s.job)?.passes||[]).map(x=>opt(x.id,x.no+'패스',s.pass)).join('')}</select></label>
+  <label class="chk" style="align-self:end;padding-bottom:5px"><input type="checkbox" id="af-un" ${s.un?'checked':''} ${s.job?'disabled':''}> 작업 미지정만 <span class="chip nw">10-19 추가</span></label>
+  <span class="hint" style="align-self:center">${s.job?'<span class="rpc">ListJobAssets</span>(job_id · pass_id) 한 번에 받고 종류 · 이름 · 장비는 화면에서 거름. 실제 작업 칸은 공사 → 호기 → 품목 → 이음부 → 작업 순으로 좁힘':'<span class="rpc">ListAssets</span>(kind · file_name · equipment_id · unattached_only)'}</span>
+  <div class="sp"><button data-a="a-dup">중복 보기</button><button class="pri" data-a="a-upload">+ 올리기</button></div></div>`}
+function assetScreen(){const s=st.asset;if(s.dup)return dupScreen();const q=s.q.toLowerCase(),fil=a=>(!s.kind||a.kind===s.kind)&&(!q||a.file.toLowerCase().includes(q))&&(!s.eq||a.eq==s.eq)&&(!s.un||a.unattached);
+  // 작업 필터: ListJobAssets는 계층 없는 목록 → 부모가 같은 목록에 있으면 그 아래로, 없으면 맨 위 줄(부모는 링크로)
+  const jm=!!s.job,ja=jm?(attach[s.job]||[]).filter(x=>s.pass===''||x.pass==s.pass):[],jset=new Set(ja.map(x=>x.asset).filter(i=>fil({...AS(i),unattached:false}))),jpass=Object.fromEntries(ja.map(x=>[x.asset,x.pass]));
+  const top=jm?[...jset].map(AS).filter(x=>!jset.has(x.parent)):assets.filter(a=>(s.kind||q||s.eq||s.un)?fil(a):!a.parent),a=AS(s.sel);
+  const jj=jm&&jobs.find(x=>x.id==s.job),pl=id=>{const v=jpass[id];return v?jj.passes.find(x=>x.id===v)?.no+'패스':'공용'};
+  const row=(x,dep)=>`<tr tabindex="0" data-as="${x.id}" class="${x.id===s.sel?'sel':''} "><td class="mono" style="padding-left:${10+dep*18}px">${x.children.length?`<button class="lk tree" data-a="a-tog" data-x="${x.id}" aria-label="파생 펼치기">${s.open[x.id]?'▾':'▸'}</button>`:'<span class="tree"></span>'}${x.id}</td>
+    <td>${K[x.kind]}</td><td class="sm" style="overflow-wrap:anywhere">${esc(x.file)}</td><td class="sm">${esc(E(x.eq)?.name||'—')}</td><td class="mono">${fmtB(x.size)}</td><td class="mono">${fmtD(x.dur)}</td>
+    <td>${jm&&!jset.has(x.id)?'<span class="chip w">첨부 안 된 파생</span>':jm?`<span class="chip">${pl(x.id)}</span>`:x.unattached?'<span class="chip w">작업 미지정</span>':'<span class="chip">첨부</span>'}${x.children.length?` <span class="chip a">파생 ${x.children.length}</span>`:''}${jm&&x.parent&&!jset.has(x.parent)&&jset.has(x.id)?` <button class="lk sm" data-a="a-go" data-x="${x.parent}">원본 ${x.parent} · ${esc(AS(x.parent)?.file)} (이 작업에 첨부 안 됨)</button>`:''}</td></tr>`;
+  const tree=(x,dep)=>row(x,dep)+(s.open[x.id]?x.children.map(c=>tree(AS(c),dep+1)).join(''):'');
+  const tbl=`<div class="box"><div class="bh"><h2>에셋</h2><span class="mut sm">${jm?jset.size+'건 · 작업 '+s.job+(s.pass===''?'':' · '+(s.pass==='0'?'공용':jj.passes.find(x=>x.id==s.pass)?.no+'패스'))+' · 한 번에':top.length+'건 · 50개씩 더 불러오기'}</span></div><div class="scroll"><table><thead><tr><th>번호</th><th>종류</th><th>파일</th><th>장비</th><th>크기</th><th>길이</th><th>상태</th></tr></thead><tbody class="pick">
+  ${top.map(x=>tree(x,0)).join('')||`<tr><td colspan="7" class="mut">${jm&&!attach[s.job]?'예시 데이터는 작업 388에만 첨부 목록이 있습니다':'조건에 맞는 에셋이 없습니다'}</td></tr>`}</tbody></table></div></div>`;
+  return `<div class="split">${tbl}<div class="box">${a?assetDetail(a):'<div class="pad mut">에셋을 고르세요</div>'}</div></div>`}
+function assetDetail(a){const jobsOf=Object.entries(attach).filter(([,l])=>l.some(x=>x.asset===a.id)).map(([j])=>+j);
+  return `<div class="bh"><h2>${K[a.kind]} <span class="mono">${a.id}</span></h2><span class="rpc">GetAsset</span><div class="r"><button class="dg" data-a="a-del">지우기</button></div></div>
+  <div class="scroll pad"><div style="overflow-wrap:anywhere;font-weight:500">${esc(a.file)}</div>
+  ${preview(a)}
+  <div style="display:flex;gap:8px;align-items:center"><b>정보</b><span class="mono mut sm">Asset.display</span><span class="chip nw">10-19 추가</span><span class="hint">서버가 준 라벨 · 값 그대로</span></div>
+  <dl class="dl"><dt>장비</dt><dd>${esc(E(a.eq)?.name||'모름')}</dd>${display(a).map(([l,v])=>`<dt>${esc(l)}</dt><dd>${esc(v)}</dd>`).join('')}<dt>파생</dt><dd>${a.children.length}개</dd></dl>
+  <details><summary class="hint" style="cursor:pointer">원래 properties 보기</summary><pre class="mono sm" style="white-space:pre-wrap;margin:6px 0 0">${esc(JSON.stringify(a.props||{},null,1))}</pre></details>
+  ${a.prov?`<div class="note"><b>만든 경위</b> · ${esc(a.prov.operation)} · 실행 ${a.prov.run} · ${esc(a.prov.tool)}<br><span class="mut">부모</span> <button class="lk" data-a="a-go" data-x="${a.parent}">${a.parent} ${esc(AS(a.parent)?.file)}</button></div>`:'<div class="hint">원본 업로드(만든 경위 없음)</div>'}
+  <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>붙은 작업</b><span class="rpc">ListJobs(asset_id)</span><span class="chip nw">10-19 추가</span>${a.unattached?'<button data-a="j-attach" data-as="'+a.id+'" style="margin-left:auto">작업에 붙이기</button>':''}</div>
+  ${jobsOf.length?`<table><thead><tr><th>공통키</th><th>이음부</th><th>작업일시</th><th>패스</th></tr></thead><tbody class="pick">${jobsOf.map(i=>{const x=jobs.find(q=>q.id===i);const at=attach[i].find(q=>q.asset===a.id);
+    return `<tr tabindex="0" data-a="a-gojob" data-x="${i}"><td class="mono">${esc(P(x.projectId).no)}_${x.unit}-${esc(x.code)}</td><td class="mono">${esc(x.joint)}</td><td class="mono">${fmtT(x.start)}</td><td>${at.pass?x.passes.find(p=>p.id===at.pass)?.no+'패스':'공용'}</td></tr>`}).join('')}</tbody></table>`:'<div class="mut">작업 미지정</div>'}
+  ${a.report?'<div class="note w">성적서 원본입니다. 세트가 쓰는 동안 지울 수 없습니다.</div>':''}
+  ${['VIDEO','AUDIO','TIMESERIES','POSE'].includes(a.kind)?'<div class="hint">후처리를 다시 돌리려면 도구 탭에서 asset-postprocess를 이 에셋으로 실행합니다(StartRun).</div>':''}</div>`}
+// 서버가 줄 표시 목록(제안: Asset.display, 라벨 · 값 순서대로). 화면은 kind별 키를 몰라도 이 목록을 그대로 그린다
+const TSRC={synthetic:'임의(이관 자료)',panel_epoch:'패널 절대시각',t_abs:'t_abs 열',depth_session_filename:'깊이 녹화 파일 이름'};
+function display(a){const p=a.props||{},f=[],add=(l,v)=>{if(v!=null&&v!==''&&v!==false)f.push([l,String(v)])};
+  if(a.kind==='VIDEO'){add('해상도',p.width&&p.width+' × '+p.height);add('프레임',p.fps&&(+p.fps).toFixed(2)+' fps');add('코덱',p.codec&&p.codec+' · '+p.pixel_format);add('길이',a.dur!=null&&fmtD(a.dur));
+    add('첫 프레임 시각',p.start_time_ns!=null&&(p.start_time_ns/1e9).toFixed(3)+'초');if(p.width)add('소리',p.audio_codec?`${p.audio_codec} · ${p.channels}채널 · ${p.sample_rate_hz/1000} kHz`:'없음')}
+  if(a.kind==='AUDIO'){add('코덱',p.codec);add('채널',p.channels);add('샘플',p.sample_rate_hz&&p.sample_rate_hz/1000+' kHz');add('길이',a.dur!=null&&fmtD(a.dur))}
+  if(a.kind==='TIMESERIES'||a.kind==='POSE'){add('형식',p.format);add('채널',p.channels&&p.channels.length+'개 · '+p.channels.slice(0,4).join(', ')+(p.channels.length>4?' …':''));add('샘플',p.sample_rate_hz&&p.sample_rate_hz+' Hz');add('길이',a.dur!=null&&fmtD(a.dur));add('시간 기준',TSRC[p.time_source]||p.time_source);add('시각 정확도',p.time_accuracy_s!=null&&'±'+p.time_accuracy_s+'초')}
+  if(a.kind==='POINTCLOUD'){add('해상도',p.width&&p.width+' × '+p.height);add('프레임',p.fps&&p.fps+' fps');add('코덱',p.codec&&p.codec+' · '+p.pixel);add('깊이 단위',p.unit);add('길이',a.dur!=null&&fmtD(a.dur))}
+  if(a.kind==='DOCUMENT'){add('쪽 수',p.pages&&p.pages+'쪽');add('성적서 세트',a.sets||(a.report?'있음':''));add('시간 기준',TSRC[p.time_source])}
+  add('크기',fmtB(a.size));return f}
+// 미리 보기는 화면 몫(kind + content_url). 여기 그림은 자리 표시 — 실제는 video · img · PDF 첫 쪽 · 파형
+function preview(a,sm){const p=a.props||{},h=sm?72:150,st=`style="height:${h}px"`;let sv='';
+  const wave=(n,k)=>{let d='';for(let i=0;i<=60;i++){const y=50+Math.sin(i/(4+k)+k)*18*Math.cos(i/(11+k))+((i*7+k*13)%9-4);d+=(i?'L':'M')+(i*5)+','+y.toFixed(1)}return d};
+  switch(a.kind){
+  case 'VIDEO':return `<div class="pv" ${st}><span class="play">▶</span><span class="pvl">${p.width?p.width+'×'+p.height:''} ${fmtD(a.dur)}</span></div>`;
+  case 'AUDIO':return `<div class="pv" ${st}><svg viewBox="0 0 300 100" preserveAspectRatio="none"><path d="${wave(1,1)}" fill="none" stroke="currentColor"/></svg><span class="pvl">▶ 소리</span></div>`;
+  case 'TIMESERIES':sv=(p.channels||['?']).slice(0,3).map((c,k)=>`<path d="${wave(1,k+1)}" fill="none" stroke="${['var(--accent)','var(--ok)','var(--warn)'][k]}" stroke-width="1.2" transform="translate(0,${(k-1)*14})"/>`).join('');
+    return `<div class="pv" ${st}><svg viewBox="0 0 300 100" preserveAspectRatio="none">${sv}</svg><span class="pvl">${(p.channels||[]).slice(0,3).join(' · ')||'채널 정보 없음'}</span></div>`;
+  case 'POSE':return `<div class="pv" ${st}><svg viewBox="0 0 100 100"><g stroke="currentColor" stroke-width="2" fill="none"><circle cx="50" cy="18" r="7"/><path d="M50 25 L50 58 M50 34 L33 48 L28 62 M50 34 L67 46 L74 58 M50 58 L40 82 M50 58 L60 82"/></g></svg><span class="pvl">${p.channels?'관절 프레임':'좌표 JSON'}</span></div>`;
+  case 'IMAGE':return `<div class="pv" ${st}><span>이미지</span><span class="pvl">${esc(a.file.split('_').slice(-1)[0])}</span></div>`;
+  case 'DOCUMENT':if(!/\.pdf$/i.test(a.file))return `<div class="pv" ${st}><span style="text-align:center;padding:6px">${esc(a.file.split('.').pop().toUpperCase())} — 브라우저 미리 보기 없음<br>내려받아 열기</span></div>`;
+    return `<div class="pv" ${st}><span>PDF 1쪽</span><span class="pvl">${p.pages?'1 / '+p.pages+'쪽':'쪽 수 없음'}</span></div>`;
+  case 'POINTCLOUD':return `<div class="pv" ${st}><span style="text-align:center;padding:6px">16비트 깊이 — 브라우저 재생 불가<br>같은 녹화의 컬러 영상으로 확인</span></div>`;
+  default:return `<div class="pv" ${st}><span>미리 보기 없음</span></div>`}}
+// 중복 묶음 정리: 합치기(기준 하나로) 또는 그대로 두기(중복 아님). 결정은 sha256과 그때의 사본 번호로 남긴다(제안: tacit.asset_duplicate_decision)
+const res={};   // sha → {decision:'merged'|'keep_separate', keep, members:[ids], at}
+const newIds=g=>{const r=res[g.sha];return r?g.items.map(x=>x.id).filter(i=>!r.members.includes(i)):[]};
+const shown=g=>{const r=res[g.sha];if(!r)return g.items.length>1;return newIds(g).length>0};   // 정리한 묶음은 새 사본이 들어올 때만 다시 뜬다
+function dupScreen(){const s=st.asset,gs=dups.filter(g=>(s.shifted||new Set(g.items.map(x=>x.rec)).size===1)&&(s.showRes?(g.items.length>1||res[g.sha]):shown(g)));
+  const g=gs.find(x=>x.sha.startsWith(s.g))||gs[0];
+  const tag=x=>{const r=res[x.sha],n=newIds(x).length;if(r&&n)return `<span class="chip w">새 사본 ${n}</span>`;if(r)return `<span class="chip">${r.decision==='merged'?'합침':'그대로 둠'}</span>`;return verdict(x).length?'<span class="chip w">못 합침</span>':'<span class="chip o">합칠 수 있음</span>'};
+  const list=`<div class="box"><div class="bh"><h2>중복 묶음</h2><span class="mut sm">${gs.length}묶음</span><label class="chk r"><input type="checkbox" id="af-res" ${s.showRes?'checked':''}> 정리한 묶음도 보기</label></div><div class="scroll"><table><thead><tr><th>sha256</th><th>파일</th><th>사본</th><th>상태</th></tr></thead><tbody class="pick">
+  ${gs.map(x=>`<tr tabindex="0" data-a="a-dupg" data-x="${x.sha.slice(0,8)}" class="${x===g?'sel':''}"><td class="mono">${x.sha.slice(0,10)}…</td><td class="sm">${esc(x.items[0].file)}</td><td>${x.items.length}${x.more?' 외 '+x.more:''}</td><td>${tag(x)}</td></tr>`).join('')||'<tr><td colspan="4" class="mut">정리할 묶음이 없습니다</td></tr>'}</tbody></table>
+  <div class="pad hint">운영 DB: 묶음 416 · 남는 사본 17,362. 그중 394묶음은 기록 시각만 다른 예시 사본이라 기본 목록에서 뺀다. 정리한 묶음은 같은 내용의 파일이 새로 들어오면 “새 사본”으로 다시 뜬다.</div></div></div>`;
+  return `<div class="split" style="grid-template-columns:minmax(380px,1fr) minmax(0,1.6fr)">${list}<div class="box">${g?dupCompare(g):'<div class="pad mut">정리할 중복이 없습니다</div>'}</div></div>`}
+const keepOf=g=>st.asset.keep[g.sha]??res[g.sha]?.keep??[...g.items].sort((a,b)=>refs(b)-refs(a)||a.id-b.id)[0].id;
+function dupCompare(g){const s=st.asset,v=verdict(g),it=g.items,keep=keepOf(g),r=res[g.sha],nw=newIds(g),cur=it.find(x=>x.id===s.cur[g.sha])||it.find(x=>x.id===keep);
+  const labels=[...new Set(it.flatMap(x=>display(x).map(d=>d[0])))].filter(l=>!['크기','성적서 세트','길이'].includes(l)),dv=(x,l)=>(display(x).find(d=>d[0]===l)||[,'—'])[1];
+  const rows=[['파일 이름',x=>esc(x.file),x=>x.file],['종류',x=>K[x.kind],x=>x.kind],['크기',x=>fmtB(x.size)+` <span class="mut">(${x.size.toLocaleString()} B)</span>`,x=>x.size],
+    ...labels.map(l=>[l,x=>esc(dv(x,l)),x=>dv(x,l)]),
+    ['기록 시각',x=>x.rec?fmtT(x.rec):'—',x=>x.rec],['장비',x=>esc(E(x.eq)?.name||'—'),x=>x.eq],['원본 위치',x=>esc(x.src||'— (화면 · 예시 복사)'),x=>x.src],
+    ['만든 경위',x=>x.op?`${esc(x.op)} · 부모 ${x.parent}<br><span class="mut">${esc(x.params)}</span>`:'원본',x=>x.parent+x.op+x.params],
+    ['붙은 작업',x=>x.jobs.length?x.jobs.map(j=>'작업 '+j).join(', '):'—',x=>null],['클립',x=>x.clips==null?'—':x.clips,x=>null],['파생',x=>x.children,x=>null],['성적서 세트',x=>x.sets,x=>null]];
+  const head=x=>`${x.id}${x.id===keep?' <span class="chip a">기준</span>':''}${nw.includes(x.id)?' <span class="chip w">새로 들어옴</span>':''}`;
+  // 미리 보기: 하나씩(사본을 바꿔 가며 크게) / 나란히
+  const pv=s.pv==='side'?`<div style="display:grid;grid-template-columns:repeat(${Math.min(it.length,4)},minmax(140px,1fr));gap:8px">${it.map(x=>`<div style="display:grid;gap:4px"><span class="mono sm">${head(x)}</span>${preview(x)}</div>`).join('')}</div>`
+    :`<div class="sub" role="tablist" style="padding:0">${it.map(x=>`<button data-a="a-cur" data-x="${x.id}" aria-selected="${x===cur}">${head(x)}</button>`).join('')}</div>
+     <div style="display:grid;grid-template-columns:28px minmax(0,1fr) 28px;gap:6px;align-items:center"><button class="lk" data-a="a-step" data-x="-1" aria-label="앞 사본">◀</button>${preview(cur)}<button class="lk" data-a="a-step" data-x="1" aria-label="다음 사본">▶</button></div>
+     <div class="hint">${esc(cur.file)} · <span class="mono">content_url</span>로 실제 파일을 연다</div>`;
+  const tbl=`<table class="cmp"><thead><tr><th></th>${it.map(x=>`<td class="mono">${head(x)}</td>`).join('')}</tr></thead><tbody>
+    ${rows.map(([l,f,k])=>{const df=k(it[0])!==null&&new Set(it.map(k)).size>1;return `<tr><th>${l}</th>${it.map(x=>`<td class="${df?'df':''}">${f(x)}</td>`).join('')}</tr>`}).join('')}
+    <tr><th>기준</th>${it.map(x=>`<td><label class="chk"><input type="radio" name="keep" data-a="a-keep" data-x="${x.id}" ${x.id===keep?'checked':''} ${v.length?'disabled':''}> 기준으로</label></td>`).join('')}</tr></tbody></table>`;
+  const was=r?`<div class="note ${nw.length?'w':''}"><b>${r.decision==='merged'?r.keep+'(으)로 합친 묶음':'그대로 두기로 한 묶음'}</b> · ${fmtT(r.at)}${nw.length?`<br>그 뒤로 같은 내용이 새로 들어왔습니다: 에셋 ${nw.join(', ')}. ${r.decision==='merged'?'기준 '+r.keep+'에 바로 합치거나 그대로 둘 수 있습니다.':'다시 판단하세요.'}`:''}</div>`:'';
+  return `<div class="bh"><h2>비교 <span class="mono mut">sha256 ${esc(g.sha)}</span></h2><div class="r"><button data-a="a-pv" aria-pressed="${s.pv!=='side'}" ${s.pv!=='side'?'class="pri"':''}>하나씩</button><button data-a="a-pv" aria-pressed="${s.pv==='side'}" ${s.pv==='side'?'class="pri"':''}>나란히</button></div></div>
+  <div class="scroll pad">${was}${pv}
+  <div class="hint">sha256이 같으면 바이트까지 같은 파일이지만, 사본을 바꿔 가며 실제 파일을 열어 확인할 수 있다. 합칠지는 아래 줄(시각 · 만든 경위 · 세트)로 판단한다. 다른 칸은 노란색.</div>
+  <div style="overflow-x:auto">${tbl}</div>
+  ${v.length?`<div class="note w"><b>합칠 수 없습니다</b><br>${v.map(esc).join('<br>')}</div>`:'<div class="note" style="color:var(--ok)"><b>합칠 수 있습니다</b> — 내용 · 종류 · 시각 · 장비 · 만든 경위가 같고, 세트 · 파생이 한쪽에만 있습니다.</div>'}
+  <div class="acts">${r&&!nw.length?'':`<button data-a="a-sep">그대로 두기 (다시 안 뜸)</button>${v.length?'':`<button class="dg solid" data-a="a-merge">기준 ${keep}(으)로 합치기</button>`}`}${r?`<button class="lk" data-a="a-newcopy" title="예시: 같은 내용의 파일을 하나 더 올린 것처럼">예시: 같은 파일이 또 들어오면</button>`:''}</div></div>`}
+function uploadDialog(jobId){const j=jobs.find(x=>x.id===+jobId);dialog(`<h3>에셋 올리기</h3><span class="rpc">POST /assets (multipart: metadata → file)</span>
+  <label class="f"><b>파일 *</b><input id="up-file" type="file"><span class="hint" id="up-kind">종류는 서버가 내용으로 정합니다. 표시는 확장자로 짐작한 안내입니다(ListUploadFormats).</span></label>
+  <div class="g2"><label class="f"><b>작업</b><select id="up-job">${opt('','작업 미지정',jobId||'')}${jobs.map(x=>opt(x.id,x.id+' · '+P(x.projectId).no+'_'+x.unit+'-'+x.code+' '+x.joint,jobId||'')).join('')}</select></label>
+  <label class="f"><b>패스</b><select id="up-pass"></select></label>
+  <label class="f"><b>장비</b><select id="up-eq">${opt('','모름','')}${equipment.map(e=>opt(e.id,e.name,'')).join('')}</select></label>
+  <label class="f"><b>시간 0의 시각 <span class="req" id="up-req" hidden>*</span></b><input id="up-t0" type="datetime-local" step="0.001"><span class="hint">영상은 첫 프레임, IMU는 깊이 녹화 시작, 회전수는 구간 시작</span></label></div>
+  <div id="up-steps" class="steps sm"></div><span class="err" id="up-err"></span>
+  <div class="acts"><button data-x>취소</button><button class="pri" data-ok>올리기</button></div>`,()=>{
+  const f=$('#up-file').files[0],er=m=>{$('#up-err').textContent=m;return false};if(!f)return er('파일을 고르세요.');const fm=guess(f.name);
+  if(fm?.[4]&&!T($('#up-t0').value)){$('#up-t0').classList.add('bad');return er('시간 자료는 시간 0의 시각이 필요합니다(없으면 400).')}
+  const md={...($('#up-job').value&&{jobId:+$('#up-job').value}),...($('#up-pass').value&&{passId:+$('#up-pass').value}),...($('#up-eq').value&&{equipmentId:+$('#up-eq').value}),...(T($('#up-t0').value)&&{timeOrigin:iso(T($('#up-t0').value))})};
+  const a={id:id(),kind:fm?.[3]||'DOCUMENT',file:f.name,size:f.size,pass:md.passId||0,eq:md.equipmentId||0,dur:null,children:[],parent:0,unattached:!md.jobId};assets.unshift(a);
+  if(md.jobId){(attach[md.jobId]??=[]).push({asset:a.id,pass:a.pass});const jj=jobs.find(x=>x.id===md.jobId);jj.na++}
+  const same=assets.find(x=>x!==a&&x.file===f.name&&x.size===f.size);log('POST /assets',{metadata:md,file:f.name},`201 · asset ${a.id} · runId(asset-postprocess) → GetRun으로 진행 확인`+(same?` · warnings: "같은 내용의 에셋 ${same.id}가 이미 있음", duplicateOf:[${same.id}]`:''));st.asset.sel=a.id;render()},true);
+  const fillPass=()=>{const jj=jobs.find(x=>x.id===+$('#up-job').value);$('#up-pass').innerHTML=opt('','작업 공용','')+(jj?jj.passes.map(p=>opt(p.id,p.no+'패스','')).join(''):'');$('#up-pass').disabled=!jj};
+  fillPass();$('#up-job').onchange=fillPass;
+  $('#up-file').onchange=()=>{const f=$('#up-file').files[0],fm=f&&guess(f.name);$('#up-kind').textContent=fm?`짐작: ${fm[1]} — 서버가 내용으로 최종 판별합니다`:'표에 없는 형식 — 종류 없이 등록만 됩니다(실행 파일은 거절)';
+    $('#up-req').hidden=!fm?.[4];$('#up-steps').innerHTML=fm?'<span class="mut">올린 뒤 후처리:</span> '+fm[5].split(' ').map(s=>`<span>${STEP[s]}</span>`).join(''):''}}
+const guess=n=>{const x=n.split('.').pop().toLowerCase();return FORMATS.find(f=>f[2].split(' ').includes(x))};
+
+/* ===== 작업자 ===== */
+// 종류: WORKER_TYPE_MASTER · GENERAL · ROBOT · UNSPECIFIED(모름). 화면 값은 소문자(master · general · robot · '')
+const WL={master:'명장',general:'일반',robot:'로봇','':'모름'},WC={master:'o',general:'',robot:'a','':'w'};
+const WT=t=>t?'WORKER_TYPE_'+t.toUpperCase():'WORKER_TYPE_UNSPECIFIED';
+function workerFilters(){const s=st.worker;return `<div class="filters"><label>검색<input id="wf-q" type="search" value="${esc(s.q)}" placeholder="이름 · 사번 · 비고" style="width:220px"></label>
+  <label>종류<select id="wf-kind">${opt('','전체',s.kind)}${['master','general','robot'].map(t=>opt(t,WL[t],s.kind)).join('')}${opt('u','모름',s.kind)}</select></label>
+  <label class="chk" style="align-self:end;padding-bottom:5px"><input type="checkbox" id="wf-hidden" ${s.hidden?'checked':''}> 숨긴 작업자도</label>
+  <span class="hint" style="align-self:center"><span class="rpc">ListWorkers(include_inactive)</span>로 받은 목록을 화면에서 거름</span>
+  <div class="sp"><button class="pri" data-a="w-new">+ 새 작업자</button></div></div>`}
+function workerScreen(){const s=st.worker,shown=workers.filter(w=>has(s.q,w.name,w.emp,w.desc)&&(!s.kind||(s.kind==='u'?!w.type:w.type===s.kind))&&(s.hidden||!w.hidden)),w=W(s.sel);
+  const all=workers.filter(w=>s.hidden||!w.hidden).length;
+  const list=`<div class="box"><div class="bh"><h2>작업자</h2><span class="mut sm">${shown.length===all?all+'명':shown.length+' / '+all+'명'}</span></div>
+  <div class="scroll"><table><thead><tr><th>이름</th><th>사번</th><th>종류</th><th>작업</th></tr></thead><tbody class="pick">
+  ${shown.map(x=>`<tr tabindex="0" data-w="${x.id}" class="${x.id===s.sel&&s.mode!=='new'?'sel':''}" ${x.hidden?'style="opacity:.55"':''}><td>${esc(x.name)}${x.hidden?' <span class="chip">숨김</span>':''}</td><td class="mono mut">${esc(x.emp||'—')}</td><td><span class="chip ${WC[x.type]}">${WL[x.type]}</span></td><td><span class="chip ${x.jobs?'w':''}">${x.jobs}건</span></td></tr>`).join('')||'<tr><td colspan="4" class="mut">조건에 맞는 작업자가 없습니다</td></tr>'}</tbody></table></div></div>`;
+  return `<div class="split p">${list}<div class="box">${s.mode==='new'?workerForm():w?workerDetail(w):'<div class="pad mut">작업자를 고르세요</div>'}</div></div>`}
+function workerForm(w){const v=w||{name:'',type:'',emp:'',desc:'',hidden:false};return `<form id="f-w" class="pad" data-id="${w?w.id:''}">
+  <div class="g2"><label class="f"><b>이름 <span class="req">*</span></b><input id="wk-name" value="${esc(v.name)}" autocomplete="off"></label>
+  <label class="f"><b>종류</b><select id="wk-t">${['master','general','robot'].map(t=>opt(t,WL[t],v.type)).join('')}${opt('','모름',v.type)}</select></label>
+  <label class="f"><b>사번</b><input id="wk-emp" class="code" value="${esc(v.emp)}" placeholder="비워도 됨 · 있으면 겹칠 수 없음" autocomplete="off"><span class="err" id="wk-eerr"></span></label>
+  <label class="f"><b>숨김</b><span class="chk"><input type="checkbox" id="wk-hid" ${v.hidden?'checked':''}> 고르는 목록에서 뺌(그만둔 사람)</span></label></div>
+  <label class="f"><b>비고</b><textarea id="wk-desc" rows="2" placeholder="경력 · 자격 · 주 공정 등">${esc(v.desc)}</textarea></label>
+  <span class="hint">종류의 명장은 파형 비교의 “명장만”(ListJobs worker_type = MASTER)에 쓰입니다. 모름으로 두면 비교 대상에서 빠집니다.</span><span class="err" id="wk-err"></span>
+  <div class="acts"><button type="button" data-a="w-cancel">취소</button><button class="pri">${w?'저장':'만들기'}</button></div></form>`}
+function workerDetail(w){const s=st.worker,mine=jobs.filter(j=>j.worker===w.id);
+  return `<div class="bh"><h2>${esc(w.name)}</h2><span class="mut sm">id ${w.id}</span><div class="r">${s.mode==='edit'?'':'<button data-a="w-edit">고치기</button><button class="dg" data-a="w-del">지우기</button>'}</div></div>
+  <div class="scroll pad">${s.mode==='edit'?workerForm(w):`<div class="kv"><div><div class="mut">종류</div><span class="chip ${WC[w.type]}">${WL[w.type]}</span></div><div><div class="mut">사번</div><span class="mono">${esc(w.emp)||'—'}</span></div><div><div class="mut">맡은 작업</div>${w.jobs}건</div><div><div class="mut">숨김</div>${w.hidden?'숨김 — 고르는 목록에서 빠짐':'아니오'}</div></div>
+  ${w.desc?`<div><div class="mut">비고</div>${esc(w.desc)}</div>`:''}
+  <div class="hint">${w.type==='master'?'파형 비교의 명장 목록에 들어갑니다.':'파형 비교의 명장 목록에는 안 들어갑니다.'}</div>`}
+  <div style="display:flex;gap:8px;align-items:center"><b>맡은 작업</b><span class="rpc">ListJobs(worker_id)</span></div>
+  ${mine.length?`<table><thead><tr><th>공통키</th><th>이음부</th><th>작업일시</th></tr></thead><tbody class="pick">${mine.map(x=>`<tr tabindex="0" data-a="w-gojob" data-x="${x.id}"><td class="mono">${esc(P(x.projectId).no)}_${x.unit}-${esc(x.code)}</td><td class="mono">${esc(x.joint)}</td><td class="mono">${fmtT(x.start)}</td></tr>`).join('')}</tbody></table>
+    ${w.jobs>mine.length?`<div class="hint">예시 데이터는 EX006 작업 일부만 있습니다(실제 ${w.jobs}건). 행을 누르면 작업 탭으로 갑니다.</div>`:''}`:`<div class="mut">${w.jobs?`예시 데이터에는 이 작업자의 작업이 없습니다(실제 ${w.jobs}건)`:'맡은 작업이 없습니다'}</div>`}</div>`}
+
+/* ===== 장비 ===== */
+const lines=()=>[...new Set(equipment.map(e=>e.line).filter(Boolean))].sort();
+function equipFilters(){const s=st.equipment;return `<div class="filters"><label>검색<input id="ef-q" type="search" value="${esc(s.q)}" placeholder="코드 · 이름 · 라인" style="width:240px"></label>
+  <label>라인<select id="ef-line">${opt('','전체',s.line)}${lines().map(t=>opt(t,t,s.line)).join('')}</select></label>
+  <label class="chk" style="align-self:end;padding-bottom:5px"><input type="checkbox" id="ef-hidden" ${s.hidden?'checked':''}> 숨긴 장비도</label>
+  <span class="hint" style="align-self:center"><span class="rpc">ListEquipment(include_inactive)</span>로 받은 목록을 화면에서 거름</span>
+  <div class="sp"><button class="pri" data-a="e-new">+ 새 장비</button></div></div>`}
+const eqAssets=e=>assets.filter(a=>a.eq===e.id),eqJobs=e=>jobs.filter(j=>(attach[j.id]||[]).some(x=>AS(x.asset)?.eq===e.id));
+function equipScreen(){const s=st.equipment,shown=equipment.filter(e=>has(s.q,e.code,e.name,e.line,e.desc)&&(!s.line||e.line===s.line)&&(s.hidden||!e.hidden)),e=E(s.sel);
+  const list=`<div class="box"><div class="bh"><h2>장비</h2><span class="mut sm">${shown.length===equipment.length?equipment.length+'대':shown.length+' / '+equipment.length+'대'}</span></div>
+  <div class="scroll"><table><thead><tr><th>장비 코드</th><th>이름</th><th>라인</th><th>쓰인 작업</th></tr></thead><tbody class="pick">
+  ${shown.map(x=>`<tr tabindex="0" data-e="${x.id}" class="${x.id===s.sel&&s.mode!=='new'?'sel':''}" ${x.hidden?'style="opacity:.55"':''}><td class="mono">${esc(x.code||'—')}</td><td>${esc(x.name)}${x.hidden?' <span class="chip">숨김</span>':''}</td><td class="mut">${esc(x.line||'—')}</td><td><span class="chip">${x.jobs}건</span></td></tr>`).join('')||'<tr><td colspan="4" class="mut">조건에 맞는 장비가 없습니다</td></tr>'}</tbody></table></div></div>`;
+  return `<div class="split p">${list}<div class="box">${s.mode==='new'?equipForm():e?equipDetail(e):'<div class="pad mut">장비를 고르세요</div>'}</div></div><datalist id="lines">${lines().map(t=>`<option value="${esc(t)}">`).join('')}</datalist>`}
+function equipForm(e){const v=e||{name:'',line:'',code:'',desc:'',hidden:false},open=!e||st.equipment.codeOpen;return `<form id="f-e" class="pad" data-id="${e?e.id:''}">
+  <div class="g2"><label class="f"><b>이름 <span class="req">*</span></b><input id="eq-name" value="${esc(v.name)}" autocomplete="off"></label>
+  <label class="f"><b>라인</b><input id="eq-line" list="lines" value="${esc(v.line)}" placeholder="비워도 됨"></label>
+  <label class="f"><b>장비 코드</b><input id="eq-code" class="code" value="${esc(v.code)}" ${open?'':'readonly'} placeholder="DEMO-PANEL" autocomplete="off">${e&&!open?'<button type="button" class="lk" data-a="e-code" style="justify-self:start">코드 바꾸기</button>':''}<span class="err" id="eq-cerr"></span></label>
+  <label class="f"><b>숨김</b><span class="chk"><input type="checkbox" id="eq-hid" ${v.hidden?'checked':''}> 고르는 목록에서 뺌(안 쓰는 장비)</span></label></div>
+  <label class="f"><b>비고</b><textarea id="eq-desc" rows="2" placeholder="설치 위치 · 설정 등">${esc(v.desc)}</textarea></label>
+  <span class="hint">코드는 적재기가 장비를 찾는 값입니다. 비우면 적재기가 이 장비를 못 찾고, 손으로만 고를 수 있습니다. 공백 없이 대문자로 보냅니다.</span>${e&&open?'<div class="note w">코드를 바꾸면 적재 설정의 코드도 함께 바꿔야 합니다. 안 바꾸면 다음 적재 때 옛 코드로 장비가 새로 생깁니다.</div>':''}
+  <span class="err" id="eq-err"></span><div class="acts"><button type="button" data-a="e-cancel">취소</button><button class="pri">${e?'저장':'만들기'}</button></div></form>`}
+function equipDetail(e){const s=st.equipment,as=eqAssets(e),js=eqJobs(e);
+  return `<div class="bh"><h2>${esc(e.name)}</h2><span class="mut sm">id ${e.id}</span><div class="r">${s.mode==='edit'?'':'<button data-a="e-edit">고치기</button><button class="dg" data-a="e-del">지우기</button>'}</div></div>
+  <div class="scroll pad">${s.mode==='edit'?equipForm(e):`<div class="kv"><div><div class="mut">장비 코드</div><span class="mono">${esc(e.code)||'—'}</span></div><div><div class="mut">라인</div>${esc(e.line)||'—'}</div><div><div class="mut">쓰인 작업</div>${e.jobs}건</div><div><div class="mut">숨김</div>${e.hidden?'숨김 — 고르는 목록에서 빠짐':'아니오'}</div></div>${e.desc?`<div><div class="mut">비고</div>${esc(e.desc)}</div>`:''}`}
+  <div style="display:flex;gap:8px;align-items:center"><b>쓰인 작업</b><span class="rpc">ListJobs(equipment_id)</span></div>
+  ${js.length?`<table><thead><tr><th>공통키</th><th>이음부</th><th>작업일시</th></tr></thead><tbody class="pick">${js.map(x=>`<tr tabindex="0" data-a="e-gojob" data-x="${x.id}"><td class="mono">${esc(P(x.projectId).no)}_${x.unit}-${esc(x.code)}</td><td class="mono">${esc(x.joint)}</td><td class="mono">${fmtT(x.start)}</td></tr>`).join('')}</tbody></table>`:'<div class="mut">예시 데이터에 없음</div>'}
+  ${e.jobs>js.length?`<div class="hint">예시 데이터는 작업 388의 첨부만 있습니다(실제 ${e.jobs}건).</div>`:''}
+  <div style="display:flex;gap:8px;align-items:center"><b>기록한 에셋</b><span class="rpc">ListAssets(equipment_id)</span><span class="chip nw">10-19 추가</span></div>
+  ${as.length?`<table><thead><tr><th>번호</th><th>종류</th><th>파일</th></tr></thead><tbody class="pick">${as.map(a=>`<tr tabindex="0" data-a="e-goasset" data-x="${a.id}"><td class="mono">${a.id}</td><td>${K[a.kind]}</td><td class="sm" style="overflow-wrap:anywhere">${esc(a.file)}</td></tr>`).join('')}</tbody></table>`:'<div class="mut">기록한 에셋이 없습니다</div>'}
+  ${e.assets>as.length?`<div class="hint">예시 데이터는 일부만 있습니다(운영 DB ${e.assets.toLocaleString()}건). 50개씩 더 불러옵니다.</div>`:''}</div>`}
+
+/* ===== 아래 문서: 규칙 · RPC ===== */
+const DOC={
+project:{rules:['<b>공사 번호는 만든 뒤 고칠 수 없습니다.</b> PDF DB · CARO와 같은 값입니다. 겹치면 <span class="rpc">AlreadyExists</span>.',
+ '<b>호기만 따로 만들 수 없습니다.</b> 호기는 품목 배정 줄에만 있어서 호기 추가는 첫 품목을 넣는 것과 같습니다.',
+ '호기 <span class="mono">5</span>는 서버가 <span class="mono">05</span>로 맞춥니다. 품목 코드는 공백 없이 대문자로 보냅니다.',
+ '이미 있는 배정을 다시 보내면 그대로 두고 저장된 이름을 돌려줍니다. 이름은 <span class="rpc">UpdateProjectItem</span>으로 바꿉니다.',
+ '<b>품목 이름을 고치면 그 배정을 쓰는 모든 작업의 품목 이름이 바뀝니다.</b>',
+ '<b>저장된 배정은 [지우기]</b>(<span class="rpc">DeleteProjectItem</span>, 10-19 추가). 그 품목의 작업이 있으면 <span class="rpc">FailedPrecondition</span>. 호기의 마지막 품목을 지우면 호기도 사라집니다.',
+ '작업이 있는 공사는 지울 수 없습니다(<span class="rpc">FailedPrecondition</span>). 지우면 배정도 함께 지워집니다.'],
+ rpcs:[['목록 · 배정 보기','ListJobFilters','없음','공사 → 호기 → 품목(project_item_id, 이름). 작업 수는 ProjectFilter.job_count(10-19 추가, 가이드 §5.9). 탭끼리 같이 쓰고 30초 지나면 다시 받음'],
+ ['새 공사','CreateProject','project_no* · project_name · site_name · customer','응답의 project_id로 배정 저장'],
+ ['배정 추가','CreateProjectItems','project_id, 줄마다 unit_no · item_code · item_name','묶음 한 번. 이미 있으면 저장된 이름으로 돌아옴'],
+ ['품목 이름 추천','ListItems','project_id(0이면 전체)','이름 칸 자동 완성'],
+ ['품목 이름 수정','UpdateProjectItem','project_item_id · item_name','그 배정의 작업 모두에 반영'],
+ ['기본 정보 수정','UpdateProject','project_id + 바뀐 칸, update_mask','mask: project_name · site_name · customer'],
+ ['지우기','DeleteProject','project_id','작업 있으면 FailedPrecondition'],
+ ['배정 지우기','DeleteProjectItem','project_item_id','작업이 쓰면 FailedPrecondition, 없는 번호는 NotFound. 10-19 추가(가이드 §5.1)'],
+ ['작업 보기 → 작업 탭','ListJobs','project_id (배정 줄에서면 + unit_no · item_code)','작업 탭 필터를 채워 연다. 서버 수정 없음']]},
+job:{rules:['<b>필수: 공사 · 호기 · 품목 코드 · 이음부 · 시작.</b> 새 배정이면 품목 이름도 필수입니다. 작업자 · 종료 · 작업 이름 등은 나중에 채워도 됩니다.',
+ '<b>시각은 밀리초까지 넣습니다</b>(입력칸 step=0.001). 서버는 Timestamp(나노초)로 받고 DB는 마이크로초까지 저장하므로 ms는 그대로 남습니다. 보낼 때 <span class="mono">2026-10-30T08:29:16.250+09:00</span> 꼴.',
+ '<b>새 작업 창에서 패스를 줄로 함께 넣습니다</b>(공사 만들 때 품목 줄을 넣는 것과 같음). 첫 줄은 1패스이고 시작이 작업 시작으로 채워집니다. “+ 패스 추가”는 다음 번호에 앞 패스의 종료를 시작으로 넣습니다. 화면에서 구간 · 겹침을 먼저 검사하고 한 번의 CreateJob으로 보냅니다.',
+ '<b>호기 · 품목 코드는 작업 만들기에서 서버가 정규화하지 않습니다.</b> <span class="mono">ListJobFilters</span>가 준 값을 고르게 하거나 화면에서 맞춰 보냅니다(5 → 05, 공백 제거 · 대문자).',
+ '<span class="mono">job_id</span>는 바뀌지 않습니다. 공사 · 호기 · 품목 · 이음부 · 시작을 고치면 공통키와 작업 키가 다시 만들어지니 응답의 Job으로 화면을 갱신합니다.',
+ '품목을 바꾸면 그 작업은 새 품목의 성적서를 봅니다. 옛 품목의 잘라 낸 PDF 첨부는 남으니 필요하면 뗍니다.',
+ '<b>패스는 작업 구간 안</b>(<span class="rpc">InvalidArgument</span>), <b>서로 겹치면 안 됨</b>(<span class="rpc">FailedPrecondition</span>). 끝과 시작이 맞닿는 건 됩니다. 시각이 빈 패스는 겹침 검사를 하지 않습니다.',
+ '작업 구간을 줄여 패스가 밖으로 나가면 <span class="rpc">InvalidArgument</span>. 패스를 먼저 고칩니다.',
+ '패스를 지우면 그 패스의 첨부는 작업 공용이 됩니다.',
+ '<b>작업 지우기</b>는 첨부 · 타임라인 · 직접 매칭한 성적서 세트가 있으면 <span class="rpc">FailedPrecondition</span>. 먼저 떼거나 지웁니다. 패스는 함께 지워집니다.',
+ '같은 품목 · 이음부 · 날짜로 두 번 만들면 작업이 둘 생깁니다(재작업).'],
+ rpcs:[['필터 값','ListJobFilters','없음','공사(호기 · 품목 · 이음부 · 패스) · 작업자 · 장비'],
+ ['첨부 패스 바꾸기','AttachAsset','job_id · asset_id · pass_id(0 = 공용)','이미 붙어 있으면 pass_id만 고침(upsert). 다른 작업의 패스면 InvalidArgument. 서버 수정 없음'],
+ ['에셋 보기 → 에셋 탭','ListJobAssets','job_id (패스 줄에서면 + pass_id)','에셋 탭 작업 · 패스 필터를 채워 연다. 서버 수정 없음'],
+ ['목록','ListJobs','project_id · unit_no · item_code · worker_id · page_size …','행마다 작업자 이름 · 패스 수 · 첨부 수 · 성적서 여부'],
+ ['상세','GetJob','job_id','작업 + 패스 + 작업자 + 장비'],
+ ['새 작업(패스 포함)','CreateJob','job(project_id · unit_no · item_code · joint_no · started_at …), passes[pass_no · started_at · ended_at]','패스는 줄마다 번호 · 시작 · 종료. 하나라도 틀리면 작업도 안 만들어짐. 응답 passes에 pass_id'],
+ ['기본 정보 수정','UpdateJob','job.job_id + update_mask','item_name은 못 고침(InvalidArgument)'],
+ ['지우기','DeleteJob','job_id','첨부 · 타임라인 · 성적서 세트 있으면 FailedPrecondition'],
+ ['패스 추가 · 수정 · 지우기','CreatePass · UpdatePass · DeletePass','pass(job_id · pass_no · started_at · ended_at)','같은 번호 AlreadyExists'],
+ ['첨부 목록','ListJobAssets','job_id, pass_id(선택)','pass_id 없으면 전체, 0이면 공용만'],
+ ['붙이기 · 떼기','AttachAsset · DetachAsset','job_id · asset_id · pass_id','이미 붙어 있으면 pass_id만 고침. 클립 · 세트가 쓰면 떼기 FailedPrecondition']]},
+asset:{rules:['<b>metadata 파트가 file보다 먼저</b> 와야 합니다(FormData에 넣는 순서).',
+ '<b>종류는 서버가 파일 내용으로 정합니다.</b> 확장자는 파일 선택 창 안내용입니다. 표에 없는 파일은 종류 없이 등록만 되고, 실행 파일은 400.',
+ '<b>시간 자료(영상 · 음성 · 깊이 원본 · 센서 · 포즈)는 timeOrigin이 필수</b>입니다. 그 파일의 시간 0이 가리키는 절대 시각(RFC 3339).',
+ '<b>센서 · 포즈의 프로필은 고르지 않습니다.</b> 서버가 머리행의 시간 열로 정합니다(<span class="mono">절대시각_epoch</span> · <span class="mono">bag_time_ns</span> · <span class="mono">구간초</span> · <span class="mono">t_abs</span>). 넷 다 없으면 종류 없이 등록만 되고 후처리가 안 걸립니다(<span class="mono">asset.kind</span> 빔, <span class="mono">runId</span> 없음) — 화면은 “시간 열을 못 찾아 등록만 됨”과 지원하는 열을 보입니다.',
+ 'jobId 없이 올리면 작업 미지정 에셋이 됩니다. 나중에 작업 탭의 “에셋 붙이기”(<span class="rpc">AttachAsset</span>)로 붙입니다.',
+ '올리면 후처리(asset-postprocess)가 큐에 들어갑니다. 응답의 runId로 <span class="rpc">GetRun</span>을 불러 진행을 보고, 끝나면 타임라인을 다시 불러옵니다.',
+ '<b>첨부와 배치는 다릅니다.</b> 첨부는 “이 작업의 자료” 표시이고, 타임라인 배치는 후처리나 CreateClip이 합니다.',
+ '<b>지우기는 되돌릴 수 없습니다.</b> 첨부 · 파생 부모 · 성적서 원본이면 <span class="rpc">FailedPrecondition</span>.',
+ '같은 파일을 다시 올리면 새 에셋이 됩니다. 중복은 <span class="rpc">ListDuplicateAssets</span>로 찾아 사람이 정리합니다.',
+ '끊기면 처음부터 다시 올립니다(이어받기 없음). 한도는 ListUploadFormats의 max_bytes(기본 8GiB), 넘으면 413.',
+ '상세의 <b>붙은 작업</b>은 <span class="rpc">ListJobs(asset_id)</span>(10-19 추가)로 읽습니다. 직접 첨부된 작업만 나옵니다.',
+ '<b>중복:</b> sha256이 같아도 같은 에셋은 아닙니다. <b>합칠 수 있는 것</b> = sha256 · 종류 · 기록 시각 · 장비(한쪽이 비면 같다고 봄) · 만든 경위(부모 · 작업 · 매개변수)가 같고, 성적서 세트 · 파생이 둘 이상의 사본에 있지 않은 것. 못 합치면 이유를 보여 줍니다.',
+ '<b>에셋 정보는 서버가 준 표시 목록(<span class="mono">Asset.display</span>, 10-19 추가)을 그대로 그립니다.</b> 종류마다 속성 키가 다르고(영상: 해상도 · fps · 코덱 · 첫 프레임 시각 · 소리 / 센서 · 포즈: 채널 · 샘플 Hz · 시간 기준 / 깊이: 해상도 · 단위 / 문서: 쪽 수) 빠진 값도 있어, 화면이 키를 해석하지 않게 합니다. 원래 <span class="mono">properties</span>는 접어 둡니다.',
+ '<b>미리 보기는 화면이 kind로 고릅니다</b>: 영상 · 음성은 플레이어, 이미지는 그림, 문서는 PDF 첫 쪽, 센서는 앞 채널 몇 개의 파형, 포즈는 관절 그림, 깊이 원본은 재생 불가 안내. 파일은 <span class="mono">content_url</span>로 엽니다.',
+ '<b>비교 화면:</b> 사본을 열로 놓고 파일 이름 · 크기 · 기록 시각 · 장비 · 원본 위치 · 만든 경위 · 붙은 작업 · 클립 · 파생 · 성적서 세트를 줄로 비교, 다른 칸은 강조. 남길 것은 기본으로 참조가 가장 많은 것(같으면 번호가 작은 것).',
+ '<b>미리 보기는 사본을 바꿔 가며</b>(하나씩: 탭 · ◀ ▶로 크게) <b>또는 나란히</b> 봅니다. 각 사본의 실제 파일을 content_url로 엽니다.',
+ '<b>정리는 둘 중 하나:</b> ① 기준을 고르고 <b>합치기</b> — 확인 창에 <span class="rpc">MergeAssets(dry_run)</span> 결과(옮겨질 첨부 · 클립 · 파생 · 성적서 수)를 보여 주고 확인하면 실행. ② <b>그대로 두기</b>(<span class="rpc">ResolveDuplicateGroup</span>, 10-19 추가) — 중복이 아니라고 기록해 목록에서 뺍니다.',
+ '<b>정리한 묶음에 같은 내용이 또 들어오면 다시 뜹니다.</b> 서버는 결정 때의 사본 번호를 기억해, 그 밖의 사본이 생기면 “새 사본”으로 표시합니다. 합친 묶음이면 기준 번호를 함께 주어 바로 그 기준에 합칠 수 있습니다. 올릴 때 응답 warnings · duplicateOf에도 기준 번호가 옵니다.',
+ '기록 시각만 다른 사본(예시 데이터 394묶음)은 기본 목록에서 빠집니다(<span class="mono">include_time_shifted</span>로 볼 수 있음).',
+ '올린 파일과 같은 내용이 있으면 응답 <span class="mono">warnings</span>와 <span class="mono">duplicateOf</span>로 알려 줍니다. 등록은 막지 않습니다.',
+ '<b>작업 필터</b>를 고르면 <span class="rpc">ListAssets</span> 대신 <span class="rpc">ListJobAssets(job_id, pass_id)</span>를 부릅니다(서버 수정 없음). 작업 하나의 첨부는 많아야 수백 건이라 한 번에 받고 종류 · 이름 · 장비는 화면에서 거릅니다. 작업 미지정만은 끕니다. 작업 칸은 공사 → 호기 → 품목 → 이음부 → 작업 순으로 좁힙니다.',
+ '<b>작업 필터에서도 계층을 봅니다</b> — 받은 목록은 계층이 없어 화면이 짭니다. ① 부모가 같은 목록에 있으면 그 아래로(포즈 · STT). ② 부모가 없으면 맨 위 줄로 두고 “원본 n(이 작업에 첨부 안 됨)” 링크(잘라 낸 PDF · 표준화본 — 부모는 어느 작업에도 안 붙어 있다). ③ <span class="mono">child_count</span>가 목록 안 자식 수보다 크면 펼칠 때 <span class="rpc">ListAssets(parent_asset_id)</span>로 받아 이미 있는 행은 빼고 “첨부 안 된 파생”으로 보입니다.'],
+ rpcs:[['목록','ListAssets','page_size · page_token · kind · parent_asset_id','파생은 child_count > 0일 때 parent_asset_id로 펼침'],
+ ['상세','GetAsset','asset_id','목록의 행(Asset)을 그대로 쓰고, 링크로 들어와 목록에 없을 때만 부름'],
+ ['표시 목록 (10-19 추가)','GetAsset · ListAssets','—','Asset.display: [{label, value}] 순서대로. 서버가 kind별로 만든다'],
+ ['올리기','POST /assets','multipart: metadata{jobId, passId, equipmentId, timeOrigin} → file','201 {asset, runId, warnings}'],
+ ['받는 형식','ListUploadFormats','없음','확장자 · timeOrigin 필요 여부 · 후처리 단계 · max_bytes'],
+ ['후처리 진행','GetRun','run_id, wait_for_terminal','실패 시 StartRun(asset-postprocess, 그 에셋)'],
+ ['지우기','DeleteAsset','asset_id','첨부 · 파생 부모 · 성적서 원본이면 FailedPrecondition'],
+ ['중복','ListDuplicateAssets','page_size · page_token','같은 sha256 묶음. members에 사본마다 참조 수(refs) · 붙은 작업(job_ids)'],
+ ['검색 필터 (10-19 추가)','ListAssets','file_name · equipment_id · unattached_only','가이드 §5.3'],
+ ['붙은 작업 (10-19 추가)','ListJobs','asset_id','직접 첨부된 작업. 가이드 §5.2'],
+ ['작업 필터','ListJobAssets','job_id, pass_id(선택, 0 = 공용)','한 번에 받음. 계층은 parent_asset_id · child_count로 화면이 짠다'],
+ ['중복 판정 (10-19 추가)','ListDuplicateAssets','include_time_shifted','묶음마다 mergeable · reason. 가이드 §5.4'],
+ ['합치기 (10-19 추가)','MergeAssets','keep_asset_id · merge_asset_ids · dry_run','moved(첨부 · 클립 · 파생 · 성적서 · 실행) · deleted_asset_ids. 가이드 §5.5'],
+ ['그대로 두기','ResolveDuplicateGroup','sha256 · member_asset_ids · keep_asset_id(선택)','결정 KEEP_SEPARATE 기록. 본 사본이 지금과 다르면 FailedPrecondition. 새 사본이 들어오면 묶음이 다시 뜬다. 가이드 §5.4'],
+ ['정리한 묶음 (10-19 추가)','ListDuplicateAssets','include_resolved','묶음마다 resolution(결정 · 기준 · 일시) · new_asset_ids'] ]},
+worker:{rules:['<b>목록은 화면에서 거릅니다.</b> 작업자가 몇 명뿐이라(운영 DB 8명) <span class="rpc">ListWorkers(include_inactive = true)</span>로 다 받아 이름 · 사번 · 비고 · 종류로 거릅니다. 수백 명이 넘으면 그때 서버 필터를 더합니다.',
+ '<b>종류는 넷입니다</b> — 명장(<span class="mono">WORKER_TYPE_MASTER</span>) · 일반(<span class="mono">GENERAL</span>) · 로봇(<span class="mono">ROBOT</span>) · 모름(<span class="mono">UNSPECIFIED</span>). 모름으로 바꿀 때는 update_mask에 worker_type을 넣고 UNSPECIFIED를 보냅니다.',
+ '명장은 파형 비교의 “명장만”(<span class="mono">ListJobs.worker_type = MASTER</span>)이 씁니다.',
+ '<b>사번</b>은 비워도 되고, 있으면 겹칠 수 없습니다(<span class="rpc">AlreadyExists</span>). 이름이 같은 사람을 가르는 값입니다.',
+ '<b>숨김</b>(<span class="mono">inactive</span>)은 그만둔 사람용입니다. 작업 탭 등 <b>고르는 목록에서만</b> 빠지고(ListWorkers 기본), 맡은 작업에는 그대로 보입니다. 이 탭은 “숨긴 작업자도”를 켜면 함께 보입니다.',
+ '이름을 고치면 그 작업자의 모든 작업에 바뀐 이름이 보입니다(작업은 번호로 가리킴).',
+ '같은 이름을 서버는 막지 않습니다. 만들 때 화면이 한 번 알립니다.',
+ '<b>맡은 작업이 있으면 지울 수 없습니다</b>(<span class="rpc">FailedPrecondition</span>). 화면은 작업 수로 먼저 막습니다 — 그만둔 사람은 지우지 말고 숨깁니다.',
+ '작업자 없는 작업은 이 탭에 안 보입니다. ListJobs에 “작업자 미지정” 필터는 없습니다.',
+ '팀(team)은 2026-10-19에 없앴습니다. 필요한 내용은 비고에 적습니다.'],
+ rpcs:[['목록','ListWorkers','include_inactive','이 탭은 true(숨긴 것도). 고르는 목록은 기본(숨긴 것 뺌)'],
+ ['작업 수','ListJobFilters','없음','worker_job_counts(10-19 추가). 행마다 부르지 않음'],
+ ['새 작업자','CreateWorker','worker{worker_name* · worker_type · employee_no · description · inactive}','사번이 겹치면 AlreadyExists'],
+ ['고치기','UpdateWorker','worker.worker_id + 바뀐 칸, update_mask','mask: worker_name · worker_type · employee_no · description · inactive'],
+ ['맡은 작업','ListJobs','worker_id','작업 표 그대로'],
+ ['지우기','DeleteWorker','worker_id','작업이 있으면 FailedPrecondition']]},
+equipment:{rules:['<b>목록은 화면에서 거릅니다.</b> 장비가 몇 대뿐이라(운영 DB 4대) <span class="rpc">ListEquipment(include_inactive = true)</span>로 다 받아 코드 · 이름 · 라인 · 비고로 거릅니다.',
+ '<b>숨김</b>(<span class="mono">inactive</span>)은 안 쓰는 장비용입니다. 올리기 창 등 고르는 목록(ListEquipment 기본)에서만 빠지고, 기록한 에셋에는 그대로 보입니다. 에셋이 있어 못 지우는 장비는 숨깁니다.',
+ '<b>장비 코드는 적재기가 장비를 찾는 열쇠입니다.</b> 적재기는 코드로 장비를 찾고, 없으면 그 코드로 장비를 새로 만듭니다. 코드를 바꾸면 다음 적재 때 같은 장비가 둘이 되므로, 코드 칸은 [코드 바꾸기]를 눌러야 열립니다.',
+ '코드는 비워도 됩니다(손으로만 고르는 장비). 있으면 유일해야 하고, 겹치면 <span class="rpc">AlreadyExists</span>. 공백 없이 대문자로 보냅니다.',
+ '<b>기록한 에셋이 있으면 지울 수 없습니다</b>(<span class="rpc">FailedPrecondition</span>). 화면은 <span class="mono">equipment_asset_counts</span>가 0일 때만 [지우기]를 엽니다. 운영 DB의 4대는 모두 에셋이 있습니다.',
+ '에셋 수는 <span class="mono">ListJobFilters.equipment_asset_counts</span>(가이드 §5.9)로 받습니다. 장비마다 따로 부르지 않습니다.'],
+ rpcs:[['목록','ListEquipment','include_inactive','이 탭은 true(숨긴 것도). 고르는 목록은 기본(숨긴 것 뺌)'],
+ ['쓰인 작업 · 에셋 수','ListJobFilters','없음','equipment_job_counts · equipment_asset_counts(10-19 추가)'],
+ ['새 장비','CreateEquipment','equipment{equipment_name* · line_name · equipment_code · description · inactive}','코드가 겹치면 AlreadyExists'],
+ ['고치기','UpdateEquipment','equipment.equipment_id + 바뀐 칸, update_mask','mask: equipment_name · line_name · equipment_code · description · inactive'],
+ ['기록한 에셋','ListAssets','equipment_id · page_size','가이드 §5.3(10-19 추가). 지우기 전 확인에도 씀'],
+ ['지우기','DeleteEquipment','equipment_id','기록한 에셋이 있으면 FailedPrecondition']]}};
+const NM={project:'공사',job:'작업',asset:'에셋',worker:'작업자',equipment:'장비'};
+function renderDoc(){const d=DOC[tab],n=NM[tab];
+  $('#doc').innerHTML=`<section><h2>${n} 화면 규칙</h2><ul>${d.rules.map(r=>`<li>${r}</li>`).join('')}</ul></section>
+  <section><h2>${n} 화면 RPC</h2><div class="tw"><table><thead><tr><th>화면 동작</th><th>RPC</th><th>보낼 값</th><th>주의</th></tr></thead><tbody>
+  ${d.rpcs.map(r=>`<tr><td>${r[0]}</td><td class="rpc">${r[1]}</td><td class="mono" style="font-size:11.5px">${esc(r[2])}</td><td class="mut">${esc(r[3])}</td></tr>`).join('')}</tbody></table></div></section>
+  ${tab==='asset'?`<section><h3>올리기 예(브라우저)</h3><pre>const form = new FormData();
+form.append("metadata", JSON.stringify({ jobId, passId, equipmentId, timeOrigin: "2026-09-16T13:38:53+09:00" }));
+form.append("file", file);   // metadata 다음에
+const { asset, runId, warnings } = await (await fetch(\`\${base}/assets\`, { method: "POST", body: form })).json();</pre></section>`:''}
+  <p class="hint">기준: mediatag <span class="mono">work/v1/work.proto</span> · <span class="mono">asset/v1/asset.proto</span>, docs/설계/관리 화면 구성과 서버 추가 안내.md (2026-10-19 — §5.1~§5.5 · §5.7 · §5.9 · §5.10 구현됨, 운영 적용)</p>`}
+
+/* ===== 그리기 · 이벤트 ===== */
+const VIEW={project:[projFilters,projScreen],job:[jobFilters,jobScreen],asset:[assetFilters,assetScreen],worker:[workerFilters,workerScreen],equipment:[equipFilters,equipScreen]};
+// 다시 그려도 스크롤은 그대로: 같은 탭이면 목록(첫 스크롤 칸)을, 고른 항목까지 같으면 상세도 되살린다
+let lastKey='';
+function render(){$('#ttl').textContent=NM[tab]+' 관리';
+  document.querySelectorAll('[data-tab]').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===tab));
+  const key=tab+'|'+(st[tab]?.sel??'')+'|'+(st.asset.dup&&tab==='asset'),sc=[...document.querySelectorAll('#screen .scroll')].map(e=>e.scrollTop),sameTab=lastKey.split('|')[0]===tab&&lastKey.split('|')[2]===key.split('|')[2];
+  $('#filters').innerHTML=VIEW[tab][0]();$('#screen').innerHTML=VIEW[tab][1]();
+  if(sameTab)document.querySelectorAll('#screen .scroll').forEach((e,i)=>{if(i===0||key===lastKey)e.scrollTop=sc[i]||0});
+  lastKey=key;renderDoc()}
+function showTab(t){tab=VIEW[t]?t:'project';try{history.replaceState(null,'','#'+tab)}catch{}render()}
+
+document.addEventListener('click',e=>{const t=e.target,b=t.closest('[data-a]'),a=b?.dataset.a,sp=st.project,sj=st.job,sa=st.asset;
+  if(t.dataset.tab)return showTab(t.dataset.tab);
+  if(t.id==='clr'){$('#log').querySelectorAll('.e').forEach(x=>x.remove());return}
+  // 펼치기: 처음 펼칠 때만 부르고 결과는 부모별로 들고 있는다(접었다 펴면 안 부름). 작업 필터에선 목록에 없는 자식이 있을 때만
+  if(a==='a-tog'){const x=+b.dataset.x,c=AS(x).children,fk=(sa.job||'')+'|'+x;sa.open[x]=!sa.open[x];sa.fetched??=new Set();
+    if(sa.open[x]&&!sa.fetched.has(fk)){sa.fetched.add(fk);
+      if(!sa.job)log('ListAssets',{parent_asset_id:x,page_size:50},`자식 ${c.length}개 · 처음 펼칠 때 한 번, 50개 넘으면 부모 아래 [더 보기]`);
+      else{const ids=new Set((attach[sa.job]||[]).map(q=>q.asset)),ex=c.filter(i=>!ids.has(i));
+        if(ex.length)log('ListAssets',{parent_asset_id:x,page_size:50},`child_count ${c.length} > 목록 안 자식 ${c.length-ex.length} → 첨부 안 된 파생 ${ex.length}개만 더함(이미 있는 행은 뺌)`)}}
+    return render()}
+  const tr=t.closest('tr[data-p],tr[data-j],tr[data-as],tr[data-w],tr[data-e]');
+  if(tr&&!b){if(tr.dataset.w)Object.assign(st.worker,{sel:+tr.dataset.w,mode:'view'});if(tr.dataset.e)Object.assign(st.equipment,{sel:+tr.dataset.e,mode:'view',codeOpen:false});if(tr.dataset.p){sp.sel=+tr.dataset.p;sp.mode='view';sp.draft=null}if(tr.dataset.j){sj.sel=+tr.dataset.j}if(tr.dataset.as)sa.sel=+tr.dataset.as;return render()}
+  if(!a)return;
+  const p=P(sp.sel),j=jobs.find(x=>x.id===sj.sel),as=AS(sa.sel),sw=st.worker,se=st.equipment,w=W(sw.sel),eq=E(se.sel);
+  ({'p-new':()=>{sp.mode='new';sp.draft={no:'',name:'',site:'',customer:'',items:[]};render();$('#pn-no').focus()},
+  'p-cancel':()=>{sp.mode='view';sp.draft=null;render()},
+  'p-edit':()=>{sp.mode='edit';render();$('#pe-name').focus()},
+  'p-addrow':()=>{const d=sp.draft;readRows(d.items);Object.assign(d,{no:$('#pn-no').value,name:$('#pn-name').value,site:$('#pn-site').value,customer:$('#pn-cust').value});d.items.push({k:++rk,unit:d.items.at(-1)?.unit??'',code:'',name:''});render()},
+  'p-addto':()=>{sp.draft??={};sp.draft.pending??=[];readRows(sp.draft.pending);sp.draft.pending.push({k:++rk,unit:b.dataset.u,code:'',name:''});render()},
+  'p-rowdel':()=>{const l=sp.mode==='new'?sp.draft.items:sp.draft.pending;readRows(l);l.splice(l.findIndex(x=>String(x.k)===b.dataset.k),1);render()},
+  'p-pendsave':()=>{const l=sp.draft.pending;readRows(l);const er=checkRows(l);if(er){$('#pi-err').textContent=er;return}
+    const got=assign(p,l),kept=got.filter((g,i)=>g.name!==l[i].name).length;log('CreateProjectItems',{project_id:p.id,items:l.map(r=>({unit_no:r.unit,item_code:r.code,item_name:r.name}))},kept?`이미 있던 ${kept}줄은 저장된 이름으로 돌아옴`:'');sp.draft=null;render()},
+  'p-rename':()=>{const it=p.items.find(i=>i.id===+b.dataset.i);dialog(`<h3>품목 이름 수정</h3><div class="mono">${esc(p.no)} · ${it.unit} · ${esc(it.code)}</div><label class="f"><b>새 이름</b><input id="rn" list="known" value="${esc(it.name)}"></label><div class="note w">이 배정을 쓰는 작업 모두의 품목 이름이 바뀝니다.</div><div class="acts"><button data-x>취소</button><button class="pri" data-ok>바꾸기</button></div>${known()}`,
+    ()=>{const v=$('#rn').value.trim();if(!v)return false;if(v!==it.name){it.name=v;log('UpdateProjectItem',{item:{project_item_id:it.id,item_name:v}})}render()})},
+  'p-idel':()=>{const it=p.items.find(i=>i.id===+b.dataset.i),n=jobs.filter(x=>x.projectId===p.id&&x.unit===it.unit&&x.code===it.code).length,unk=!n&&p.id!==7&&p.jobs>0;
+    if(n||unk){log('DeleteProjectItem',{project_item_id:it.id},'FailedPrecondition (작업이 쓰는 품목) (10-19 추가)');return dialog(`<h3>${it.unit} · ${esc(it.code)}를 지울 수 없습니다</h3><div class="note d">${n?'이 품목의 작업이 '+n+'건 있습니다':'이 품목을 쓰는 작업이 있습니다(예시: 작업 데이터는 EX006에만 있음)'}. 작업을 다른 품목으로 옮기거나 지운 뒤 다시 시도하세요.</div><div class="acts"><button data-x>닫기</button></div>`)}
+    dialog(`<h3>${esc(p.no)} · ${it.unit} · ${esc(it.code)} 배정을 지울까요?</h3><div class="note d">되돌릴 수 없습니다.${p.items.filter(i=>i.unit===it.unit).length===1?' 이 호기의 마지막 품목이라 호기도 목록에서 사라집니다.':''}</div><div class="acts"><button data-x>취소</button><button class="dg solid" data-ok>지우기</button></div>`,
+    ()=>{p.items.splice(p.items.indexOf(it),1);log('DeleteProjectItem',{project_item_id:it.id},'');render()})},
+  'p-del':()=>{if(p.jobs){log('DeleteProject',{project_id:p.id},'FailedPrecondition (작업이 있음) — 화면에서 미리 막는다');return dialog(`<h3>${esc(p.no)}를 지울 수 없습니다</h3><div class="note d">작업이 ${p.jobs}건 있습니다. 작업을 다른 공사로 옮기거나 지운 뒤 다시 시도하세요.</div><div class="acts"><button data-x>닫기</button></div>`)}
+    dialog(`<h3>${esc(p.no)}를 지울까요?</h3><div class="note d">되돌릴 수 없습니다. 배정된 품목 ${p.items.length}줄도 함께 지워집니다.</div><label class="f"><b>확인을 위해 공사 번호를 입력하세요</b><input id="cf" class="code" autocomplete="off"></label><div class="acts"><button data-x>취소</button><button class="dg solid" data-ok>지우기</button></div>`,
+    ()=>{if(normCode($('#cf').value)!==p.no){$('#cf').classList.add('bad');return false}projects.splice(projects.indexOf(p),1);log('DeleteProject',{project_id:p.id});sp.sel=projects[0]?.id;render()})},
+  'w-new':()=>{sw.mode='new';render();$('#wk-name').focus()},
+  'w-edit':()=>{sw.mode='edit';render();$('#wk-name').focus()},
+  'w-cancel':()=>{sw.mode='view';sw.dupOk=false;render()},
+  'w-gojob':()=>{Object.assign(sj,{proj:'',unit:'',code:'',worker:String(w.id),sel:+b.dataset.x,sub:'info'});showTab('job')},
+  'w-del':()=>{if(w.jobs){log('DeleteWorker',{worker_id:w.id},'FailedPrecondition (작업을 맡음) — 화면에서 미리 막는다');return dialog(`<h3>${esc(w.name)}을(를) 지울 수 없습니다</h3><div class="note d">맡은 작업이 ${w.jobs}건 있습니다. 작업 탭에서 작업자를 바꾸거나 작업을 지운 뒤 다시 시도하세요.</div><div class="acts"><button data-x>닫기</button></div>`)}
+    dialog(`<h3>${esc(w.name)}을(를) 지울까요?</h3><div class="note d">되돌릴 수 없습니다.</div><div class="acts"><button data-x>취소</button><button class="dg solid" data-ok>지우기</button></div>`,
+    ()=>{workers.splice(workers.indexOf(w),1);log('DeleteWorker',{worker_id:w.id});sw.sel=workers[0]?.id;render()})},
+  'e-new':()=>{se.mode='new';render();$('#eq-name').focus()},
+  'e-edit':()=>{se.mode='edit';se.codeOpen=false;render();$('#eq-name').focus()},
+  'e-cancel':()=>{se.mode='view';se.codeOpen=false;render()},
+  'e-code':()=>dialog(`<h3>장비 코드를 바꿀까요?</h3><div class="note w">적재기는 장비를 코드(<span class="mono">${esc(eq.code)}</span>)로 찾습니다. 적재 설정의 코드를 함께 바꾸지 않으면 다음 적재 때 옛 코드로 장비가 새로 생겨 같은 장비가 둘이 됩니다.</div><div class="acts"><button data-x>취소</button><button class="pri" data-ok>코드 칸 열기</button></div>`,
+    ()=>{const keep={name:$('#eq-name').value,line:$('#eq-line').value};se.codeOpen=true;render();$('#eq-name').value=keep.name;$('#eq-line').value=keep.line;$('#eq-code').focus()}),
+  'e-gojob':()=>{Object.assign(sj,{proj:'',unit:'',code:'',worker:'',sel:+b.dataset.x,sub:'att'});showTab('job')},
+  'e-goasset':()=>{Object.assign(sa,{sel:+b.dataset.x,dup:false,kind:'',q:'',eq:String(eq.id),un:false});showTab('asset')},
+  'e-del':()=>{const n=eqAssets(eq).length||eq.assets;if(n){log('ListAssets',{equipment_id:eq.id,page_size:1},'에셋 있음 → [지우기] 막음 (10-19 추가)');return dialog(`<h3>${esc(eq.name)}을(를) 지울 수 없습니다</h3><div class="note d">이 장비로 기록한 에셋이 있습니다${eq.assets?`(운영 DB ${eq.assets.toLocaleString()}건)`:''}. 에셋을 지우거나 다른 장비로 옮긴 뒤 다시 시도하세요.</div><div class="acts"><button data-x>닫기</button></div>`)}
+    dialog(`<h3>${esc(eq.name)}을(를) 지울까요?</h3><div class="note d">되돌릴 수 없습니다.${eq.code?` 적재 설정에 코드 <span class="mono">${esc(eq.code)}</span>가 남아 있으면 다음 적재 때 다시 생깁니다.`:''}</div><div class="acts"><button data-x>취소</button><button class="dg solid" data-ok>지우기</button></div>`,
+    ()=>{equipment.splice(equipment.indexOf(eq),1);log('DeleteEquipment',{equipment_id:eq.id});se.sel=equipment[0]?.id;render()})},
+  'j-new':jobNewDialog,
+  'j-sub':()=>{sj.sub=b.dataset.s;render()},
+  'j-padd':()=>passDialog(j),
+  'j-pedit':()=>passDialog(j,j.passes.find(x=>x.id===+b.dataset.x)),
+  'j-pdel':()=>{const x=j.passes.find(q=>q.id===+b.dataset.x);dialog(`<h3>${x.no}패스를 지울까요?</h3><div class="note w">되돌릴 수 없습니다. 이 패스에 붙은 첨부는 작업 공용이 됩니다.</div><div class="acts"><button data-x>취소</button><button class="dg solid" data-ok>지우기</button></div>`,
+    ()=>{j.passes.splice(j.passes.indexOf(x),1);(attach[j.id]||[]).forEach(q=>{if(q.pass===x.id)q.pass=0});log('DeletePass',{pass_id:x.id});render()})},
+  'j-del':()=>{const why=[j.na&&`첨부 ${j.na}건`,j.tl&&'타임라인',j.rep&&'성적서 세트'].filter(Boolean);
+    if(why.length){log('DeleteJob',{job_id:j.id},'FailedPrecondition ('+why.join(' · ')+')');return dialog(`<h3>이 작업은 지울 수 없습니다</h3><div class="note d">${why.join(' · ')}이(가) 있습니다. 첨부를 떼고 타임라인을 지운 뒤 다시 시도하세요.</div><div class="acts"><button data-x>닫기</button></div>`)}
+    dialog(`<h3>작업 ${j.id}를 지울까요?</h3><div class="note d">되돌릴 수 없습니다. 패스 ${j.passes.length}개도 함께 지워집니다.</div><div class="acts"><button data-x>취소</button><button class="dg solid" data-ok>지우기</button></div>`,
+    ()=>{jobs.splice(jobs.indexOf(j),1);P(j.projectId).jobs--;log('DeleteJob',{job_id:j.id});sj.sel=jobList()[0]?.id;render()})},
+  'j-detach':()=>{const x=+b.dataset.x,l=attach[j.id];if(x===2302||x===18285){log('DetachAsset',{job_id:j.id,asset_id:x},'FailedPrecondition ('+(x===2302?'성적서 세트가 씀':'클립이 씀')+')');return dialog(`<h3>뗄 수 없습니다</h3><div class="note d">${x===2302?'성적서 세트가 쓰는 첨부입니다.':'타임라인 클립이 쓰는 첨부입니다. 클립을 먼저 지우세요.'}</div><div class="acts"><button data-x>닫기</button></div>`)}
+    l.splice(l.findIndex(q=>q.asset===x),1);j.na--;log('DetachAsset',{job_id:j.id,asset_id:x});render()},
+  'j-attach':()=>{const pre=b.dataset.as||'';dialog(`<h3>에셋 붙이기</h3><span class="rpc">AttachAsset</span><div class="g2"><label class="f"><b>에셋 번호 *</b><input id="at-a" type="number" value="${pre}"></label>
+    <label class="f"><b>작업 *</b><select id="at-j">${jobs.map(x=>opt(x.id,x.id+' · '+x.joint,tab==='job'?sj.sel:388)).join('')}</select></label><label class="f"><b>패스</b><select id="at-p"></select></label></div>
+    <span class="hint">이미 붙어 있으면 패스만 고칩니다. 타임라인에는 놓지 않습니다.</span><span class="err" id="at-err"></span><div class="acts"><button data-x>취소</button><button class="pri" data-ok>붙이기</button></div>`,()=>{
+    const aid=+$('#at-a').value,jj=jobs.find(x=>x.id===+$('#at-j').value),pid=+$('#at-p').value||0;if(!AS(aid)){$('#at-err').textContent='없는 에셋입니다.';return false}
+    const l=attach[jj.id]??=[],ex=l.find(q=>q.asset===aid);if(ex)ex.pass=pid;else{l.push({asset:aid,pass:pid});jj.na++}AS(aid).unattached=false;
+    log('AttachAsset',{job_id:jj.id,asset_id:aid,pass_id:pid},ex?'이미 붙어 있어 pass_id만 고침':'');render()});
+    const fp=()=>{const jj=jobs.find(x=>x.id===+$('#at-j').value);$('#at-p').innerHTML=opt('','작업 공용','')+jj.passes.map(q=>opt(q.id,q.no+'패스','')).join('')};fp();$('#at-j').onchange=fp},
+  'a-upload':()=>uploadDialog(b.dataset.j),
+  // 탭 이동은 필터를 함께 넘긴다(공사 → 그 공사의 작업, 작업 → 그 작업의 에셋). 고른 항목이 목록에 없으면 첫 행
+  'p-gojobs':()=>{const u=b.dataset.u||'',c=b.dataset.c||'';Object.assign(sj,{proj:p.id,unit:u,code:c,worker:'',sub:'info'});const l=jobList();if(!l.some(x=>x.id===sj.sel))sj.sel=l[0]?.id;
+    log('ListJobs',{project_id:p.id,...(u&&{unit_no:u}),...(c&&{item_code:c})},`공사 탭에서 옴 → #/admin/job?project_id=${p.id}${u?'&unit_no='+u:''}${c?'&item_code='+c:''}`);showTab('job')},
+  'j-goassets':()=>{const ps=b.dataset.p??'',l=(attach[j.id]||[]).filter(x=>ps===''||x.pass==ps);Object.assign(sa,{job:String(j.id),pass:ps,kind:'',q:'',eq:'',un:false,dup:false});if(l.length&&!l.some(x=>x.asset===sa.sel))sa.sel=l[0].asset;
+    log('ListJobAssets',{job_id:j.id,...(ps!==''&&{pass_id:+ps})},`작업 탭에서 옴 → #/admin/asset?job_id=${j.id}${ps!==''?'&pass_id='+ps:''}`);showTab('asset')},
+  'a-go':()=>{sa.sel=+b.dataset.x;render()},
+  'a-gojob':()=>{Object.assign(sj,{proj:7,unit:'',code:'',worker:'',sel:+b.dataset.x,sub:'att'});showTab('job')},
+  'a-dup':()=>{sa.dup=!sa.dup;sa.dry=null;if(sa.dup)log('ListDuplicateAssets',{page_size:50,include_time_shifted:sa.shifted,include_resolved:sa.showRes});render()},
+  'a-dupg':()=>{sa.g=b.dataset.x;sa.dry=null;render()},
+  'a-keep':()=>{const g=dups.find(x=>x.sha.startsWith(sa.g))||dups[0];sa.keep[g.sha]=+b.dataset.x;sa.dry=null;render()},
+  'a-cur':()=>{const g=dups.find(x=>x.sha.startsWith(sa.g))||dups[0];sa.cur[g.sha]=+b.dataset.x;render()},
+  'a-step':()=>{const g=dups.find(x=>x.sha.startsWith(sa.g))||dups[0],ids=g.items.map(x=>x.id),c=sa.cur[g.sha]??keepOf(g);sa.cur[g.sha]=ids[(ids.indexOf(c)+ +b.dataset.x+ids.length)%ids.length];render()},
+  'a-pv':()=>{sa.pv=sa.pv==='side'?'tab':'side';render()},
+  'a-merge':()=>{const g=dups.find(x=>x.sha.startsWith(sa.g)),it=g.items,k=keepOf(g),K0=it.find(x=>x.id===k),m=it.filter(x=>x!==K0);
+    const c={attachments:m.reduce((n,x)=>n+x.jobs.length,0),clips:m.reduce((n,x)=>n+(x.clips||0),0),children:m.reduce((n,x)=>n+x.children,0),report_refs:m.reduce((n,x)=>n+x.sets,0),tool_runs:0};
+    log('MergeAssets',{keep_asset_id:k,merge_asset_ids:m.map(x=>x.id),dry_run:true},'moved: '+JSON.stringify(c)+' (10-19 추가)');
+    dialog(`<h3>${m.map(x=>x.id).join(', ')}을(를) 기준 ${k}에 합칠까요?</h3><div class="note">첨부 ${c.attachments} · 클립 ${c.clips} · 파생 ${c.children} · 성적서 참조 ${c.report_refs} · 도구 실행 ${c.tool_runs}이(가) ${k}(으)로 옮겨집니다. <span class="mono mut">dry_run 결과</span></div>
+      <div class="note d">사본 행과 파일이 지워집니다. 되돌릴 수 없습니다.</div><div class="acts"><button data-x>취소</button><button class="dg solid" data-ok>합치기</button></div>`,
+    ()=>{m.forEach(x=>x.jobs.forEach(j=>{if(!K0.jobs.includes(j))K0.jobs.push(j)}));g.items=[K0];res[g.sha]={decision:'merged',keep:k,members:[k],at:new Date(Date.now()+9*36e5).toISOString().slice(0,19)};
+      log('MergeAssets',{keep_asset_id:k,merge_asset_ids:m.map(x=>x.id)},'deleted_asset_ids: ['+m.map(x=>x.id)+'] · 결정 기록(merged) (10-19 추가)');render()})},
+  'a-sep':()=>{const g=dups.find(x=>x.sha.startsWith(sa.g))||dups[0];dialog(`<h3>이 묶음을 그대로 둘까요?</h3><div class="note">중복 목록에서 빠집니다. 지금 사본 ${g.items.length}개(${g.items.map(x=>x.id).join(', ')})를 기록해 두고, 같은 내용의 파일이 새로 들어오면 다시 뜹니다. “정리한 묶음도 보기”로 언제든 다시 볼 수 있습니다.</div><div class="acts"><button data-x>취소</button><button class="pri" data-ok>그대로 두기</button></div>`,
+    ()=>{res[g.sha]={decision:'keep_separate',keep:keepOf(g),members:g.items.map(x=>x.id),at:new Date(Date.now()+9*36e5).toISOString().slice(0,19)};log('ResolveDuplicateGroup',{sha256:g.sha,member_asset_ids:res[g.sha].members,keep_asset_id:res[g.sha].keep},'본 사본이 지금과 다르면 FailedPrecondition');render()})},
+  'a-newcopy':()=>{const g=dups.find(x=>x.sha.startsWith(sa.g)),b0=g.items[0],n={...b0,id:id(),jobs:[],sets:0,children:0,clips:0,src:'',file:b0.file};g.items.push(n);
+    log('POST /assets',{metadata:{},file:n.file},`201 · asset ${n.id} · warnings: "같은 내용의 에셋 ${res[g.sha].keep}가 있음 — ${res[g.sha].decision==='merged'?'합친 묶음의 기준':'그대로 두기로 한 묶음'}", duplicateOf:[${res[g.sha].keep}]`);sa.g=g.sha.slice(0,8);render()},
+  'a-del':()=>{const why=[as.children.length&&'파생의 부모',!as.unattached&&'작업 첨부',as.report&&'성적서 원본'].filter(Boolean);
+    if(why.length){log('DeleteAsset',{asset_id:as.id},'FailedPrecondition ('+why.join(' · ')+')');return dialog(`<h3>이 에셋은 지울 수 없습니다</h3><div class="note d">${why.join(' · ')}입니다. 먼저 떼거나 파생을 지우세요.</div><div class="acts"><button data-x>닫기</button></div>`)}
+    dialog(`<h3>에셋 ${as.id}를 지울까요?</h3><div class="note d">행과 저장된 파일이 지워집니다. 되돌릴 수 없습니다.</div><div class="acts"><button data-x>취소</button><button class="dg solid" data-ok>지우기</button></div>`,
+    ()=>{assets.splice(assets.indexOf(as),1);if(as.parent)AS(as.parent).children=AS(as.parent).children.filter(c=>c!==as.id);log('DeleteAsset',{asset_id:as.id});sa.sel=assets[0]?.id;render()})},
+  }[a]||(()=>{}))();
+});
+document.addEventListener('change',e=>{const t=e.target,sj=st.job;
+  // 첨부의 패스 바꾸기 = 같은 작업 · 에셋으로 AttachAsset 다시(이미 붙어 있으면 pass_id만 고침). 0 = 작업 공용
+  if(t.matches('.at-pass')){const x=attach[sj.sel].find(q=>q.asset===+t.dataset.x);x.pass=+t.value;log('AttachAsset',{job_id:sj.sel,asset_id:x.asset,pass_id:x.pass},'이미 붙어 있어 pass_id만 고침');render()}
+  if(t.id==='jf-proj'){Object.assign(sj,{proj:t.value,unit:'',code:''});render()}
+  if(t.id==='jf-unit'){sj.unit=t.value;sj.code='';render()}
+  if(t.id==='jf-code'){sj.code=t.value;render()}
+  if(t.id==='jf-worker'){sj.worker=t.value;render()}
+  if(t.id==='pf-empty'){st.project.empty=t.checked;render()}
+  if(t.id==='wf-kind'){st.worker.kind=t.value;render()}
+  if(t.id==='wf-hidden'){st.worker.hidden=t.checked;log('ListWorkers',{include_inactive:t.checked});render()}
+  if(t.id==='ef-hidden'){st.equipment.hidden=t.checked;log('ListEquipment',{include_inactive:t.checked});render()}
+  if(t.id==='ef-line'){st.equipment.line=t.value;render()}
+  if(t.id==='af-kind'){st.asset.kind=t.value;render()}
+  if(t.id==='af-q'){st.asset.q=t.value.trim();render()}
+  if(t.id==='af-eq'){st.asset.eq=t.value;render()}
+  if(t.id==='af-un'){st.asset.un=t.checked;render()}
+  if(t.id==='af-job'){Object.assign(st.asset,{job:t.value,pass:'',un:false,open:{}});if(t.value)log('ListJobAssets',{job_id:+t.value});render()}
+  if(t.id==='af-pass'){st.asset.pass=t.value;log('ListJobAssets',{job_id:+st.asset.job,...(t.value!==''&&{pass_id:+t.value})},t.value==='0'?'pass_id 0 = 작업 공용만':'');render()}
+  if(t.id==='af-res'){st.asset.showRes=t.checked;log('ListDuplicateAssets',{page_size:50,include_resolved:t.checked});render()}
+  if(t.id==='af-shift'){st.asset.shifted=t.checked;log('ListDuplicateAssets',{page_size:50,include_time_shifted:t.checked});render()}
+});
+// 검색 칸은 칠 때마다 표만 다시 그린다(필터 패널을 다시 그리면 입력 칸 포커스가 빠진다)
+document.addEventListener('input',e=>{const k={'pf-q':'project','wf-q':'worker','ef-q':'equipment'}[e.target.id];if(k){st[k].q=e.target.value;$('#screen').innerHTML=VIEW[k][1]()}});
+document.addEventListener('submit',e=>{e.preventDefault();const sp=st.project,f=e.target.id;
+  if(f==='f-w'){const sw=st.worker,old=W(+e.target.dataset.id),v={worker_name:$('#wk-name').value.trim(),worker_type:$('#wk-t').value,employee_no:$('#wk-emp').value.trim(),description:$('#wk-desc').value.trim(),inactive:$('#wk-hid').checked},er=m=>$('#wk-err').textContent=m;
+    if(!v.worker_name){$('#wk-name').classList.add('bad');return er('이름을 넣으세요.')}
+    const send=x=>({...x,...('worker_type' in x&&{worker_type:WT(x.worker_type)})});
+    if(v.employee_no&&workers.some(x=>x!==old&&x.emp===v.employee_no)){$('#wk-eerr').textContent=v.employee_no+'는 이미 있는 사번입니다.';log(old?'UpdateWorker':'CreateWorker',{worker:{employee_no:v.employee_no}},'AlreadyExists');return}
+    if(!old){if(!sw.dupOk&&workers.some(x=>x.name===v.worker_name)){sw.dupOk=true;return er('같은 이름의 작업자가 있습니다. 다른 사람이면 [만들기]를 한 번 더 누르세요(사번으로 가를 수 있습니다).')}
+      const n={id:id(),name:v.worker_name,type:v.worker_type,emp:v.employee_no,desc:v.description,hidden:v.inactive,jobs:0};workers.push(n);log('CreateWorker',{worker:send(v)});Object.assign(sw,{sel:n.id,mode:'view',dupOk:false});return render()}
+    const ov={worker_name:old.name,worker_type:old.type,employee_no:old.emp||'',description:old.desc||'',inactive:old.hidden},m=Object.keys(v).filter(k=>v[k]!==ov[k]);if(!m.length)return er('바뀐 칸이 없습니다.');
+    Object.assign(old,{name:v.worker_name,type:v.worker_type,emp:v.employee_no,desc:v.description,hidden:v.inactive});log('UpdateWorker',{worker:send({worker_id:old.id,...Object.fromEntries(m.map(k=>[k,v[k]]))}),update_mask:{paths:m}},m.includes('worker_type')&&!v.worker_type?'WORKER_TYPE_UNSPECIFIED → 모름':'');sw.mode='view';return render()}
+  if(f==='f-e'){const se=st.equipment,old=E(+e.target.dataset.id),v={equipment_name:$('#eq-name').value.trim(),line_name:$('#eq-line').value.trim(),equipment_code:normCode($('#eq-code').value),description:$('#eq-desc').value.trim(),inactive:$('#eq-hid').checked},er=m=>$('#eq-err').textContent=m;
+    if(!v.equipment_name){$('#eq-name').classList.add('bad');return er('이름을 넣으세요.')}
+    if(v.equipment_code&&equipment.some(x=>x!==old&&x.code===v.equipment_code)){$('#eq-cerr').textContent=v.equipment_code+'는 이미 있는 장비 코드입니다.';log(old?'UpdateEquipment':'CreateEquipment',{equipment:{equipment_code:v.equipment_code}},'AlreadyExists');return}
+    if(!old){const n={id:id(),name:v.equipment_name,line:v.line_name,code:v.equipment_code,desc:v.description,hidden:v.inactive,jobs:0,assets:0};equipment.push(n);log('CreateEquipment',{equipment:v});Object.assign(se,{sel:n.id,mode:'view'});return render()}
+    const ov={equipment_name:old.name,line_name:old.line||'',equipment_code:old.code||'',description:old.desc||'',inactive:old.hidden},m=Object.keys(v).filter(k=>v[k]!==ov[k]);if(!m.length)return er('바뀐 칸이 없습니다.');
+    Object.assign(old,{name:v.equipment_name,line:v.line_name,code:v.equipment_code,desc:v.description,hidden:v.inactive});log('UpdateEquipment',{equipment:{equipment_id:old.id,...Object.fromEntries(m.map(k=>[k,v[k]]))},update_mask:{paths:m}},m.includes('equipment_code')?'코드가 바뀜 — 적재 설정도 바꿀 것':'');Object.assign(se,{mode:'view',codeOpen:false});return render()}
+  if(f==='f-pnew'){const d=sp.draft;readRows(d.items);const no=normCode($('#pn-no').value),err=$('#pn-err');err.textContent='';
+    if(!no){err.textContent='공사 번호를 넣으세요.';return}
+    if(projects.some(p=>p.no===no)){err.textContent=no+'는 이미 있는 공사 번호입니다.';log('CreateProject',{project:{project_no:no}},'AlreadyExists');return}
+    const er=d.items.length?checkRows(d.items):'';if(er){$('#pi-err').textContent=er;return}
+    const p={id:id(),no,name:$('#pn-name').value.trim(),site:$('#pn-site').value.trim(),customer:$('#pn-cust').value.trim(),jobs:0,items:[]};projects.push(p);
+    log('CreateProject',{project:{project_no:p.no,project_name:p.name,site_name:p.site,customer:p.customer}});
+    if(d.items.length){assign(p,d.items);log('CreateProjectItems',{project_id:p.id,items:d.items.map(r=>({unit_no:r.unit,item_code:r.code,item_name:r.name}))},'project_id는 CreateProject 응답 값')}
+    Object.assign(sp,{sel:p.id,mode:'view',draft:null});render()}
+  if(f==='f-pedit'){const p=P(sp.sel),nv={project_name:$('#pe-name').value.trim(),site_name:$('#pe-site').value.trim(),customer:$('#pe-cust').value.trim()},old={project_name:p.name,site_name:p.site,customer:p.customer},m=Object.keys(nv).filter(k=>nv[k]!==old[k]);
+    if(m.length){Object.assign(p,{name:nv.project_name,site:nv.site_name,customer:nv.customer});log('UpdateProject',{project:{project_id:p.id,...Object.fromEntries(m.map(k=>[k,nv[k]]))},update_mask:{paths:m}})}
+    sp.mode='view';render()}
+  if(f==='f-jedit'){const j=jobs.find(x=>x.id===st.job.sel),v={project_id:+$('#je-proj').value,unit_no:normUnit($('#je-unit').value),item_code:normCode($('#je-code').value),joint_no:normCode($('#je-joint').value),started_at:T($('#je-s').value),ended_at:T($('#je-e').value),worker_id:+$('#je-w').value||0,job_name:$('#je-name').value.trim()};
+    const old={project_id:j.projectId,unit_no:j.unit,item_code:j.code,joint_no:j.joint,started_at:j.start,ended_at:j.end,worker_id:j.worker,job_name:j.name},er=m=>$('#je-err').textContent=m;
+    if(!v.unit_no||!v.item_code||!v.joint_no||!v.started_at)return er('필수 칸은 비울 수 없습니다.');if(v.ended_at&&v.ended_at<v.started_at)return er('종료가 시작보다 앞섭니다.');
+    const out=j.passes.find(p=>(p.s&&p.s<v.started_at)||(p.e&&v.ended_at&&p.e>v.ended_at));if(out){log('UpdateJob',{job:{job_id:j.id}},'InvalidArgument (패스가 구간 밖)');return er(out.no+'패스가 작업 구간 밖으로 나갑니다. 패스를 먼저 고치세요.')}
+    const m=Object.keys(v).filter(k=>v[k]!==old[k]);if(!m.length)return er('바뀐 칸이 없습니다.');
+    const keyCh=m.some(k=>['project_id','unit_no','item_code','joint_no','started_at'].includes(k)),P2=P(v.project_id);
+    if(!P2.items.find(i=>i.unit===v.unit_no&&i.code===v.item_code))P2.items.push({id:id(),unit:v.unit_no,code:v.item_code,name:'(이름 없음 — 공사 탭에서)'});
+    Object.assign(j,{projectId:v.project_id,unit:v.unit_no,code:v.item_code,joint:v.joint_no,start:v.started_at,end:v.ended_at,worker:v.worker_id,name:v.job_name});
+    if(keyCh)j.key=`JOB-${P2.no}_${j.unit}-${j.code}-${j.joint.replace(/^DGT-/,'').replace(/-/g,'')}-${j.start.slice(0,10).replace(/-/g,'')}_${Math.random().toString(16).slice(2,6).toUpperCase()}`;
+    const body=Object.fromEntries(m.map(k=>[k,k.endsWith('_at')?iso(v[k]):v[k]]));log('UpdateJob',{job:{job_id:j.id,...body},update_mask:{paths:m}},keyCh?'공통키 · 작업 키가 다시 만들어짐 → 응답 Job으로 갱신':'');render()}
+});
+document.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.matches('tr[tabindex]'))e.target.click();if(e.key==='Escape'&&!$('#ov').hidden)close()});
+showTab(location.hash.slice(1));
+</script>
