@@ -100,6 +100,15 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
                     ),
                     CommandBarWidgetItem(
                       child: SizedBox(
+                        width: 120,
+                        child: InfoLabel(
+                          label: '막대 단위',
+                          child: _buildSegmentUnitComboBox(),
+                        ),
+                      ),
+                    ),
+                    CommandBarWidgetItem(
+                      child: SizedBox(
                         width: 160,
                         child: InfoLabel(
                           label: '장비',
@@ -144,15 +153,6 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
                         child: InfoLabel(
                           label: '작업',
                           child: _buildLevelComboBox(CollectedNodeLevel.job),
-                        ),
-                      ),
-                    ),
-                    CommandBarWidgetItem(
-                      child: SizedBox(
-                        width: 120,
-                        child: InfoLabel(
-                          label: '패스',
-                          child: _buildLevelComboBox(CollectedNodeLevel.pass),
                         ),
                       ),
                     ),
@@ -319,6 +319,26 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
           widget.viewModel.didSelectTimeBasis(value);
         }
       },
+    );
+  }
+
+  Widget _buildSegmentUnitComboBox() {
+    final isWorkBasis =
+        widget.viewModel.timeBasis == CollectedTimeBasis.work;
+    return ComboBox<CollectedSegmentUnit>(
+      isExpanded: true,
+      value: widget.viewModel.segmentUnit,
+      items: const [
+        ComboBoxItem(value: CollectedSegmentUnit.job, child: Text('작업')),
+        ComboBoxItem(value: CollectedSegmentUnit.pass, child: Text('패스')),
+      ],
+      onChanged: isWorkBasis
+          ? (value) {
+              if (value != null) {
+                widget.viewModel.didSelectSegmentUnit(value);
+              }
+            }
+          : null,
     );
   }
 

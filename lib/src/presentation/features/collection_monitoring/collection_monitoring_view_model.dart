@@ -25,6 +25,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   CollectionBoardQuery _query = CollectionBoardQuery.initial();
   CollectedNodeView _view = CollectedNodeView.equipment;
   CollectedTimeBasis _basis = CollectedTimeBasis.work;
+  CollectedSegmentUnit _segmentUnit = CollectedSegmentUnit.job;
   final List<CollectedNode> _ancestors = [];
   final Map<String, List<CollectedNode>> _nodesByParentKey = {};
   List<CollectedNode> _nodes = const [];
@@ -61,6 +62,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
 
   CollectedNodeView get collectedView => _view;
   CollectedTimeBasis get timeBasis => _basis;
+  CollectedSegmentUnit get segmentUnit => _segmentUnit;
   List<CollectedNode> get ancestors => List.unmodifiable(_ancestors);
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
@@ -86,6 +88,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
         startOffsetNs: offsets.$1,
         endOffsetNs: offsets.$2,
         basis: _basis,
+        segmentUnit: _segmentUnit,
       );
       if (version != _loadVersion) {
         return;
@@ -142,6 +145,15 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       return;
     }
     _basis = basis;
+    loadBoard();
+  }
+
+  void didSelectSegmentUnit(CollectedSegmentUnit segmentUnit) {
+    if (_segmentUnit == segmentUnit) {
+      return;
+    }
+    _segmentUnit = segmentUnit;
+    _nodesByParentKey.clear();
     loadBoard();
   }
 
@@ -434,7 +446,6 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
         CollectedNodeLevel.project,
         CollectedNodeLevel.item,
         CollectedNodeLevel.job,
-        CollectedNodeLevel.pass,
       ];
     }
     return const [
@@ -442,7 +453,6 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       CollectedNodeLevel.project,
       CollectedNodeLevel.item,
       CollectedNodeLevel.job,
-      CollectedNodeLevel.pass,
     ];
   }
 

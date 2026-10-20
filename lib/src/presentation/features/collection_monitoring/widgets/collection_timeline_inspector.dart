@@ -47,7 +47,10 @@ class CollectionTimelineInspector extends StatelessWidget {
       if (path.workerId.isNotEmpty) ('작업자', path.workerId),
       if (path.projectNo.isNotEmpty) ('공사', path.projectNo),
       if (path.jobId.isNotEmpty) ('작업', path.jobId),
-      if (path.passId.isNotEmpty) ('패스', path.passId),
+      if (path.passId.isNotEmpty)
+        ('패스', path.passId)
+      else if (path.jobId.isNotEmpty && node.contentUrl.isNotEmpty)
+        ('패스', '작업 공용'),
       ('하위', node.hasChildren ? '있음' : '없음'),
       ('시작', DashboardFormatters.dateTime(node.startedAt)),
       ('종료', DashboardFormatters.dateTime(node.endedAt)),
@@ -82,7 +85,6 @@ class CollectionTimelineInspector extends StatelessWidget {
       CollectedNodeLevel.project => '공사',
       CollectedNodeLevel.item => '품목',
       CollectedNodeLevel.job => '작업',
-      CollectedNodeLevel.pass => '패스',
       CollectedNodeLevel.unspecified => '미지정',
     };
   }

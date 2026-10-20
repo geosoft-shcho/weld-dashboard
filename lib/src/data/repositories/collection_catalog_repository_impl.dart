@@ -62,6 +62,7 @@ class CollectionCatalogRepositoryImpl implements CollectionCatalogRepository {
     int? startOffsetNs,
     int? endOffsetNs,
     CollectedTimeBasis basis = CollectedTimeBasis.work,
+    CollectedSegmentUnit segmentUnit = CollectedSegmentUnit.job,
   }) async {
     return const [];
   }

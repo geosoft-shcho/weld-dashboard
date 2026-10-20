@@ -18,7 +18,7 @@ class PresentCollectionNodesUseCase {
     final rows = [for (final node in nodes) _rowFrom(node)];
     final events = query.doesHaveInvalidTimeRange
         ? const <CollectionEvent>[]
-        : [for (final node in nodes) ?_eventFrom(node, query)];
+        : [for (final node in nodes) ..._eventsFrom(node, query)];
     final kpi = _kpiFrom(rows);
     final shownRows = _applyCard(rows, query.selectedKpiCard);
     final shownEvents = _applyCardToEvents(events, shownRows);
@@ -94,12 +94,10 @@ class PresentCollectionNodesUseCase {
     );
   }
 
-  CollectionEvent? _eventFrom(CollectedNode node, CollectionBoardQuery query) {
-    final startedAt = node.startedAt;
-    final endedAt = node.endedAt;
-    if (startedAt == null || endedAt == null || !endedAt.isAfter(startedAt)) {
-      return null;
-    }
+  List<CollectionEvent> _eventsFrom(
+    CollectedNode node,
+    CollectionBoardQuery query,
+  ) {
     final windowStart = DateTime(
       query.selectedDate.year,
       query.selectedDate.month,
@@ -111,30 +109,49 @@ class PresentCollectionNodesUseCase {
       query.selectedDate.month,
       query.selectedDate.day,
     ).add(Duration(minutes: endMinutes));
-    final visibleStart = startedAt.isBefore(windowStart)
-        ? windowStart
-        : startedAt;
-    final visibleEnd = endedAt.isAfter(windowEnd) ? windowEnd : endedAt;
-    if (!visibleStart.isBefore(visibleEnd)) {
-      return null;
-    }
+    final ranges = node.segments.isNotEmpty
+        ? node.segments
+        : [
+            CollectedTimeRange(
+              startedAt: node.startedAt,
+              endedAt: node.endedAt,
+            ),
+          ];
+    final events = <CollectionEvent>[];
     final assetCount = node.assetCount ?? 0;
-    return CollectionEvent(
-      eventId: node.nodeKey,
-      equipmentId: node.nodeKey,
-      equipmentName: node.label.isEmpty ? '미지정' : node.label,
-      lineName: '',
-      eventAt: visibleStart,
-      durationSec: visibleEnd.difference(visibleStart).inSeconds,
-      connectionStatus: assetCount > 0
-          ? ConnectionStatus.connected
-          : ConnectionStatus.disconnected,
-      receivedCount: assetCount,
-      windowLabel: _windowLabel(node),
-      lossRatePercent: null,
-      timeSyncStatus: TimeSyncStatus.synced,
-      clockOffsetMs: null,
-    );
+    for (var index = 0; index < ranges.length; index++) {
+      final startedAt = ranges[index].startedAt;
+      final endedAt = ranges[index].endedAt;
+      if (startedAt == null || endedAt == null || !endedAt.isAfter(startedAt)) {
+        continue;
+      }
+      final visibleStart = startedAt.isBefore(windowStart)
+          ? windowStart
+          : startedAt;
+      final visibleEnd = endedAt.isAfter(windowEnd) ? windowEnd : endedAt;
+      if (!visibleStart.isBefore(visibleEnd)) {
+        continue;
+      }
+      events.add(
+        CollectionEvent(
+          eventId: '${node.nodeKey}/$index',
+          equipmentId: node.nodeKey,
+          equipmentName: node.label.isEmpty ? '미지정' : node.label,
+          lineName: '',
+          eventAt: visibleStart,
+          durationSec: visibleEnd.difference(visibleStart).inSeconds,
+          connectionStatus: assetCount > 0
+              ? ConnectionStatus.connected
+              : ConnectionStatus.disconnected,
+          receivedCount: assetCount,
+          windowLabel: _windowLabel(node),
+          lossRatePercent: null,
+          timeSyncStatus: TimeSyncStatus.synced,
+          clockOffsetMs: null,
+        ),
+      );
+    }
+    return events;
   }
 
   List<CollectionBoardRow> _applyCard(
@@ -208,7 +225,6 @@ class PresentCollectionNodesUseCase {
       CollectedNodeLevel.project => '공사',
       CollectedNodeLevel.item => '품목',
       CollectedNodeLevel.job => '작업',
-      CollectedNodeLevel.pass => '패스',
       CollectedNodeLevel.unspecified => '수집',
     };
   }

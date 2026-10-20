@@ -11,12 +11,14 @@ class ListCollectedNodesUseCase {
     int? startOffsetNs,
     int? endOffsetNs,
     CollectedTimeBasis basis = CollectedTimeBasis.work,
+    CollectedSegmentUnit segmentUnit = CollectedSegmentUnit.job,
   }) {
     return _repository.listCollectedNodes(
       parent,
       startOffsetNs: startOffsetNs,
       endOffsetNs: endOffsetNs,
       basis: basis,
+      segmentUnit: segmentUnit,
     );
   }
 }

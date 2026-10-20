@@ -2,14 +2,15 @@ enum CollectedNodeView { equipment, worker }
 
 enum CollectedTimeBasis { work, collection }
 
-enum CollectedNodeLevel {
-  unspecified,
-  equipment,
-  worker,
-  project,
-  item,
-  job,
-  pass,
+enum CollectedNodeLevel { unspecified, equipment, worker, project, item, job }
+
+enum CollectedSegmentUnit { job, pass }
+
+class CollectedTimeRange {
+  const CollectedTimeRange({required this.startedAt, required this.endedAt});
+
+  final DateTime? startedAt;
+  final DateTime? endedAt;
 }
 
 class CollectedNodePath {
@@ -90,6 +91,7 @@ class CollectedNode {
     required this.startedAt,
     required this.endedAt,
     required this.contentUrl,
+    this.segments = const [],
   });
 
   final CollectedNodePath path;
@@ -105,6 +107,7 @@ class CollectedNode {
   final DateTime? startedAt;
   final DateTime? endedAt;
   final String contentUrl;
+  final List<CollectedTimeRange> segments;
 
   String get nodeKey => '${path.key}|$label|$contentUrl';
 }

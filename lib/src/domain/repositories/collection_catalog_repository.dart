@@ -10,5 +10,6 @@ abstract class CollectionCatalogRepository {
     int? startOffsetNs,
     int? endOffsetNs,
     CollectedTimeBasis basis = CollectedTimeBasis.work,
+    CollectedSegmentUnit segmentUnit = CollectedSegmentUnit.job,
   });
 }

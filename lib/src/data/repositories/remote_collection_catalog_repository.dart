@@ -92,7 +92,7 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
       statuses: [for (final node in nodes) _statusFrom(node, snapshotAt)],
       events: [
         for (final node in nodes)
-          ?_eventFrom(node, equipmentById, dayStart, dayEnd),
+          ..._eventsFrom(node, equipmentById, dayStart, dayEnd),
       ],
       snapshotAt: snapshotAt,
       isServerFiltered: false,
@@ -159,42 +159,58 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
     );
   }
 
-  CollectionEvent? _eventFrom(
+  List<CollectionEvent> _eventsFrom(
     CollectedNode node,
     Map<String, Equipment> equipmentById,
     DateTime dayStart,
     DateTime dayEnd,
   ) {
-    final startedAt = node.startedAt;
-    final endedAt = node.endedAt;
-    if (startedAt == null || endedAt == null || !endedAt.isAfter(startedAt)) {
-      return null;
-    }
-    final visibleStart = startedAt.isBefore(dayStart) ? dayStart : startedAt;
-    final visibleEnd = endedAt.isAfter(dayEnd) ? dayEnd : endedAt;
-    if (!visibleStart.isBefore(visibleEnd)) {
-      return null;
-    }
+    final ranges = node.segments.isNotEmpty
+        ? node.segments
+        : [
+            CollectedTimeRange(
+              startedAt: node.startedAt,
+              endedAt: node.endedAt,
+            ),
+          ];
+    final events = <CollectionEvent>[];
     final equipmentId = _equipmentIdOf(node);
     final equipment = equipmentById[equipmentId];
-    return CollectionEvent(
-      eventId: '$equipmentId/${visibleStart.toIso8601String()}',
-      equipmentId: equipmentId,
-      equipmentName: node.label.isNotEmpty
-          ? node.label
-          : (equipment?.equipmentName ?? equipmentId),
-      lineName: equipment?.lineName ?? '',
-      eventAt: visibleStart,
-      durationSec: visibleEnd.difference(visibleStart).inSeconds,
-      connectionStatus: (node.assetCount ?? 0) > 0
-          ? ConnectionStatus.connected
-          : ConnectionStatus.disconnected,
-      receivedCount: node.assetCount ?? 0,
-      windowLabel: _windowLabel(node),
-      lossRatePercent: null,
-      timeSyncStatus: TimeSyncStatus.synced,
-      clockOffsetMs: null,
-    );
+    for (var index = 0; index < ranges.length; index++) {
+      final startedAt = ranges[index].startedAt;
+      final endedAt = ranges[index].endedAt;
+      if (startedAt == null || endedAt == null || !endedAt.isAfter(startedAt)) {
+        continue;
+      }
+      final visibleStart = startedAt.isBefore(dayStart)
+          ? dayStart
+          : startedAt;
+      final visibleEnd = endedAt.isAfter(dayEnd) ? dayEnd : endedAt;
+      if (!visibleStart.isBefore(visibleEnd)) {
+        continue;
+      }
+      events.add(
+        CollectionEvent(
+          eventId: '$equipmentId/${visibleStart.toIso8601String()}/$index',
+          equipmentId: equipmentId,
+          equipmentName: node.label.isNotEmpty
+              ? node.label
+              : (equipment?.equipmentName ?? equipmentId),
+          lineName: equipment?.lineName ?? '',
+          eventAt: visibleStart,
+          durationSec: visibleEnd.difference(visibleStart).inSeconds,
+          connectionStatus: (node.assetCount ?? 0) > 0
+              ? ConnectionStatus.connected
+              : ConnectionStatus.disconnected,
+          receivedCount: node.assetCount ?? 0,
+          windowLabel: _windowLabel(node),
+          lossRatePercent: null,
+          timeSyncStatus: TimeSyncStatus.synced,
+          clockOffsetMs: null,
+        ),
+      );
+    }
+    return events;
   }
 
   String _equipmentIdOf(CollectedNode node) {
@@ -237,11 +253,16 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
     int? startOffsetNs,
     int? endOffsetNs,
     CollectedTimeBasis basis = CollectedTimeBasis.work,
+    CollectedSegmentUnit segmentUnit = CollectedSegmentUnit.job,
   }) async {
     final doesHaveJob = parent.jobId.isNotEmpty;
     final response = await _source.workService.listCollectionNodes(
       pb.ListCollectionNodesRequest(
         parent: _pathToProto(parent),
+        segmentUnit: switch (segmentUnit) {
+          CollectedSegmentUnit.job => pb.SegmentUnit.SEGMENT_UNIT_JOB,
+          CollectedSegmentUnit.pass => pb.SegmentUnit.SEGMENT_UNIT_PASS,
+        },
         basis: switch (basis) {
           CollectedTimeBasis.work => pb.TimeBasis.TIME_BASIS_WORK,
           CollectedTimeBasis.collection => pb.TimeBasis.TIME_BASIS_COLLECTION,
@@ -274,7 +295,6 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
           pb.CollectionLevel.COLLECTION_LEVEL_PROJECT,
         CollectedNodeLevel.item => pb.CollectionLevel.COLLECTION_LEVEL_ITEM,
         CollectedNodeLevel.job => pb.CollectionLevel.COLLECTION_LEVEL_JOB,
-        CollectedNodeLevel.pass => pb.CollectionLevel.COLLECTION_LEVEL_PASS,
       },
       projectNo: path.projectNo,
       commonKey: path.commonKey,
@@ -290,10 +310,6 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
     final jobId = protoIdOrNull(path.jobId);
     if (jobId != null) {
       message.jobId = jobId;
-    }
-    final passId = protoIdOrNull(path.passId);
-    if (passId != null) {
-      message.passId = passId;
     }
     return message;
   }
@@ -315,7 +331,6 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
             CollectedNodeLevel.project,
           pb.CollectionLevel.COLLECTION_LEVEL_ITEM => CollectedNodeLevel.item,
           pb.CollectionLevel.COLLECTION_LEVEL_JOB => CollectedNodeLevel.job,
-          pb.CollectionLevel.COLLECTION_LEVEL_PASS => CollectedNodeLevel.pass,
           _ => CollectedNodeLevel.unspecified,
         },
         equipmentId: idText(path.equipmentId),
@@ -354,6 +369,17 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
           : null,
       endedAt: node.hasEndedAt() ? node.endedAt.toDateTime().toLocal() : null,
       contentUrl: node.hasAsset() ? node.asset.contentUrl : '',
+      segments: [
+        for (final segment in node.segments)
+          CollectedTimeRange(
+            startedAt: segment.hasStartedAt()
+                ? segment.startedAt.toDateTime().toLocal()
+                : null,
+            endedAt: segment.hasEndedAt()
+                ? segment.endedAt.toDateTime().toLocal()
+                : null,
+          ),
+      ],
     );
   }
 }
