@@ -31,7 +31,18 @@ class _WorkHistoryBody extends StatelessWidget {
     final incomingWorkerId = context.select<AppCoordinator, String>(
       (coordinator) => coordinator.pendingHistoryWorkerId,
     );
-    if (incomingEquipmentId.isNotEmpty || incomingWorkerId.isNotEmpty) {
+    final incomingProjectNo = context.select<AppCoordinator, String>(
+      (coordinator) => coordinator.pendingHistoryProjectNo,
+    );
+    final incomingUnitNo = context.select<AppCoordinator, String>(
+      (coordinator) => coordinator.pendingHistoryUnitNo,
+    );
+    final incomingItemCode = context.select<AppCoordinator, String>(
+      (coordinator) => coordinator.pendingHistoryItemCode,
+    );
+    if (incomingEquipmentId.isNotEmpty ||
+        incomingWorkerId.isNotEmpty ||
+        incomingProjectNo.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!context.mounted) {
           return;
@@ -39,6 +50,9 @@ class _WorkHistoryBody extends StatelessWidget {
         context.read<WorkHistoryViewModel>().didApplyIncomingFilter(
           equipmentId: incomingEquipmentId,
           workerId: incomingWorkerId,
+          projectNo: incomingProjectNo,
+          unitNo: incomingUnitNo,
+          itemCode: incomingItemCode,
         );
         context.read<AppCoordinator>().didConsumePendingHistoryFilter();
       });

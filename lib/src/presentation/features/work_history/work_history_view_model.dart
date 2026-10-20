@@ -242,7 +242,19 @@ class WorkHistoryViewModel extends ChangeNotifier {
   void didApplyIncomingFilter({
     required String equipmentId,
     required String workerId,
+    String projectNo = '',
+    String unitNo = '',
+    String itemCode = '',
   }) {
+    if (projectNo.isNotEmpty) {
+      _query = WorkHistoryQuery.initial().copyWith(
+        projectNo: projectNo,
+        unitNo: unitNo,
+        itemCode: itemCode,
+      );
+      loadBoard();
+      return;
+    }
     // 장비 id는 이 조회 필터에 넣지 않는다. 화면이 넘긴 값은 코디네이터가 소비한다.
     if (equipmentId.isNotEmpty && workerId.isEmpty) {
       _query = WorkHistoryQuery.initial();

@@ -37,6 +37,9 @@ class AppCoordinator extends ChangeNotifier {
   String _linkId = '';
   String _pendingHistoryEquipmentId = '';
   String _pendingHistoryWorkerId = '';
+  String _pendingHistoryProjectNo = '';
+  String _pendingHistoryUnitNo = '';
+  String _pendingHistoryItemCode = '';
   String _lookupDetailId = '';
 
   LatestPassProfileTarget? _latestPassProfile;
@@ -59,6 +62,9 @@ class AppCoordinator extends ChangeNotifier {
   String get linkId => _linkId;
   String get pendingHistoryEquipmentId => _pendingHistoryEquipmentId;
   String get pendingHistoryWorkerId => _pendingHistoryWorkerId;
+  String get pendingHistoryProjectNo => _pendingHistoryProjectNo;
+  String get pendingHistoryUnitNo => _pendingHistoryUnitNo;
+  String get pendingHistoryItemCode => _pendingHistoryItemCode;
   String get lookupDetailId => _lookupDetailId;
   bool get canPopWorkHistoryStack => _stackHistory.isNotEmpty;
   WorkHistoryStack? get previousWorkHistoryStack =>
@@ -278,9 +284,15 @@ class AppCoordinator extends ChangeNotifier {
   void didTapOpenWorkHistory({
     required String equipmentId,
     String workerId = '',
+    String projectNo = '',
+    String unitNo = '',
+    String itemCode = '',
   }) {
     _pendingHistoryEquipmentId = equipmentId;
     _pendingHistoryWorkerId = workerId;
+    _pendingHistoryProjectNo = projectNo;
+    _pendingHistoryUnitNo = unitNo;
+    _pendingHistoryItemCode = itemCode;
     _resetWorkHistoryToList();
     if (_selectedPaneIndex == WORK_HISTORY_PANE_INDEX) {
       notifyListeners();
@@ -293,11 +305,16 @@ class AppCoordinator extends ChangeNotifier {
   }
 
   void didConsumePendingHistoryFilter() {
-    if (_pendingHistoryEquipmentId.isEmpty && _pendingHistoryWorkerId.isEmpty) {
+    if (_pendingHistoryEquipmentId.isEmpty &&
+        _pendingHistoryWorkerId.isEmpty &&
+        _pendingHistoryProjectNo.isEmpty) {
       return;
     }
     _pendingHistoryEquipmentId = '';
     _pendingHistoryWorkerId = '';
+    _pendingHistoryProjectNo = '';
+    _pendingHistoryUnitNo = '';
+    _pendingHistoryItemCode = '';
     notifyListeners();
   }
 

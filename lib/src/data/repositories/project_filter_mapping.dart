@@ -22,6 +22,7 @@ WorkHistoryProjectFilter projectFilterFromProto(
               WorkHistoryItemFilter(
                 itemCode: item.itemCode,
                 itemName: item.itemName,
+                projectItemId: idText(item.projectItemId),
                 jointNos: item.jointNos,
                 joints: [
                   for (final joint in item.joints)

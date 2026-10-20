@@ -11,12 +11,14 @@ class WorkHistoryItemFilter {
     required this.jointNos,
     this.joints = const [],
     this.itemName = '',
+    this.projectItemId = '',
   });
 
   final String itemCode;
   final List<String> jointNos;
   final List<WorkHistoryJointFilter> joints;
   final String itemName;
+  final String projectItemId;
 }
 
 class WorkHistoryUnitFilter {
