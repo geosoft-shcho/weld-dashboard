@@ -3,6 +3,8 @@ import 'package:fluent_ui/fluent_ui.dart';
 class AppTheme {
   static const Color SURFACE = Color(0xFF1C1F24);
   static const Color SURFACE_RAISED = Color(0xFF2A2D32);
+  /// 조회 테이블 짝수 행(1-based) 배경.
+  static const Color ROW_STRIPE = Color(0xFF24282E);
   static const Color INK = Color(0xFFE8EAED);
   static const Color ACCENT_STEEL = Color(0xFF8FA4C4);
   static const Color CTA = Color(0xFFE67E22);
@@ -19,6 +21,24 @@ class AppTheme {
   static const Color CHART_BAND_ACTIVE = Color(0xFF4D5F7A);
   static const Color CHART_CURSOR = Color(0xFF8FA4C4);
   static const Color CHART_PLOT = Color(0xFF1C1F24);
+
+  /// 선택 > hover > 짝수 행 스트라이프 > 투명.
+  static Color tableRowColor({
+    required int index,
+    bool hovered = false,
+    bool selected = false,
+  }) {
+    if (selected) {
+      return ACCENT_STEEL.withValues(alpha: 0.22);
+    }
+    if (hovered) {
+      return SURFACE_RAISED;
+    }
+    if (index.isOdd) {
+      return ROW_STRIPE;
+    }
+    return const Color(0x00000000);
+  }
 
   static AccentColor get steelAccent {
     return AccentColor.swatch({

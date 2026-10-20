@@ -37,6 +37,7 @@ class AppCoordinator extends ChangeNotifier {
   String _linkId = '';
   String _pendingHistoryEquipmentId = '';
   String _pendingHistoryWorkerId = '';
+  String _lookupDetailId = '';
 
   LatestPassProfileTarget? _latestPassProfile;
   LatestQualityIssueTarget? _latestQualityIssue;
@@ -58,6 +59,7 @@ class AppCoordinator extends ChangeNotifier {
   String get linkId => _linkId;
   String get pendingHistoryEquipmentId => _pendingHistoryEquipmentId;
   String get pendingHistoryWorkerId => _pendingHistoryWorkerId;
+  String get lookupDetailId => _lookupDetailId;
   bool get canPopWorkHistoryStack => _stackHistory.isNotEmpty;
   WorkHistoryStack? get previousWorkHistoryStack =>
       _stackHistory.isEmpty ? null : _stackHistory.last;
@@ -86,13 +88,13 @@ class AppCoordinator extends ChangeNotifier {
       case WORK_HISTORY_PANE_INDEX:
         return _workHistoryPageTitle;
       case PROJECT_LOOKUP_PANE_INDEX:
-        return '공사 조회';
+        return _lookupDetailId.isEmpty ? '공사 조회' : '공사 상세';
       case WORKER_LOOKUP_PANE_INDEX:
-        return '작업자 조회';
+        return _lookupDetailId.isEmpty ? '작업자 조회' : '작업자 상세';
       case EQUIPMENT_LOOKUP_PANE_INDEX:
-        return '장비 조회';
+        return _lookupDetailId.isEmpty ? '장비 조회' : '장비 상세';
       case ASSET_LOOKUP_PANE_INDEX:
-        return '에셋 조회';
+        return _lookupDetailId.isEmpty ? '에셋 조회' : '에셋 상세';
       case COLLECTION_PANE_INDEX:
       default:
         return '수집 모니터링';
@@ -190,10 +192,16 @@ class AppCoordinator extends ChangeNotifier {
         _resetWorkHistoryToList();
         notifyListeners();
         _publishLocation(_RouteWriteMode.go);
+      } else if (_isLookupPaneIndex(_selectedPaneIndex) &&
+          _lookupDetailId.isNotEmpty) {
+        _lookupDetailId = '';
+        notifyListeners();
+        _publishLocation(_RouteWriteMode.go);
       }
       return;
     }
     _selectedPaneIndex = index;
+    _lookupDetailId = '';
     if (index != WORK_HISTORY_PANE_INDEX) {
       _resetWorkHistoryToList();
     }
@@ -205,6 +213,66 @@ class AppCoordinator extends ChangeNotifier {
     }
     notifyListeners();
     _publishLocation(_RouteWriteMode.go);
+  }
+
+  bool _isLookupPaneIndex(int index) {
+    return index == PROJECT_LOOKUP_PANE_INDEX ||
+        index == WORKER_LOOKUP_PANE_INDEX ||
+        index == EQUIPMENT_LOOKUP_PANE_INDEX ||
+        index == ASSET_LOOKUP_PANE_INDEX;
+  }
+
+  void didTapOpenProjectDetail(String projectId) {
+    if (projectId.isEmpty) {
+      return;
+    }
+    _selectedPaneIndex = PROJECT_LOOKUP_PANE_INDEX;
+    _resetWorkHistoryToList();
+    _lookupDetailId = projectId;
+    notifyListeners();
+    _publishLocation(_RouteWriteMode.push);
+  }
+
+  void didTapOpenWorkerDetail(String workerId) {
+    if (workerId.isEmpty) {
+      return;
+    }
+    _selectedPaneIndex = WORKER_LOOKUP_PANE_INDEX;
+    _resetWorkHistoryToList();
+    _lookupDetailId = workerId;
+    notifyListeners();
+    _publishLocation(_RouteWriteMode.push);
+  }
+
+  void didTapOpenEquipmentDetail(String equipmentId) {
+    if (equipmentId.isEmpty) {
+      return;
+    }
+    _selectedPaneIndex = EQUIPMENT_LOOKUP_PANE_INDEX;
+    _resetWorkHistoryToList();
+    _lookupDetailId = equipmentId;
+    notifyListeners();
+    _publishLocation(_RouteWriteMode.push);
+  }
+
+  void didTapOpenAssetDetail(String assetId) {
+    if (assetId.isEmpty) {
+      return;
+    }
+    _selectedPaneIndex = ASSET_LOOKUP_PANE_INDEX;
+    _resetWorkHistoryToList();
+    _lookupDetailId = assetId;
+    notifyListeners();
+    _publishLocation(_RouteWriteMode.push);
+  }
+
+  void didTapBackFromLookupDetail() {
+    if (_lookupDetailId.isEmpty) {
+      return;
+    }
+    _lookupDetailId = '';
+    notifyListeners();
+    _publishLocation(_RouteWriteMode.pop);
   }
 
   void didTapOpenWorkHistory({
@@ -531,13 +599,25 @@ class AppCoordinator extends ChangeNotifier {
           qualityViaDetail: viaDetail,
         );
       case PROJECT_LOOKUP_PANE_INDEX:
-        return const AppRouteState(pane: AppPane.projects);
+        return AppRouteState(
+          pane: AppPane.projects,
+          lookupDetailId: _lookupDetailId,
+        );
       case WORKER_LOOKUP_PANE_INDEX:
-        return const AppRouteState(pane: AppPane.workers);
+        return AppRouteState(
+          pane: AppPane.workers,
+          lookupDetailId: _lookupDetailId,
+        );
       case EQUIPMENT_LOOKUP_PANE_INDEX:
-        return const AppRouteState(pane: AppPane.equipment);
+        return AppRouteState(
+          pane: AppPane.equipment,
+          lookupDetailId: _lookupDetailId,
+        );
       case ASSET_LOOKUP_PANE_INDEX:
-        return const AppRouteState(pane: AppPane.assets);
+        return AppRouteState(
+          pane: AppPane.assets,
+          lookupDetailId: _lookupDetailId,
+        );
       case COLLECTION_PANE_INDEX:
       default:
         return const AppRouteState(pane: AppPane.collection);
@@ -597,13 +677,17 @@ class AppCoordinator extends ChangeNotifier {
                 state.qualityViaDetail == viaDetail;
         }
       case AppPane.projects:
-        return _selectedPaneIndex == PROJECT_LOOKUP_PANE_INDEX;
+        return _selectedPaneIndex == PROJECT_LOOKUP_PANE_INDEX &&
+            state.lookupDetailId == _lookupDetailId;
       case AppPane.workers:
-        return _selectedPaneIndex == WORKER_LOOKUP_PANE_INDEX;
+        return _selectedPaneIndex == WORKER_LOOKUP_PANE_INDEX &&
+            state.lookupDetailId == _lookupDetailId;
       case AppPane.equipment:
-        return _selectedPaneIndex == EQUIPMENT_LOOKUP_PANE_INDEX;
+        return _selectedPaneIndex == EQUIPMENT_LOOKUP_PANE_INDEX &&
+            state.lookupDetailId == _lookupDetailId;
       case AppPane.assets:
-        return _selectedPaneIndex == ASSET_LOOKUP_PANE_INDEX;
+        return _selectedPaneIndex == ASSET_LOOKUP_PANE_INDEX &&
+            state.lookupDetailId == _lookupDetailId;
     }
   }
 
@@ -612,9 +696,11 @@ class AppCoordinator extends ChangeNotifier {
       case AppPane.collection:
         _selectedPaneIndex = COLLECTION_PANE_INDEX;
         _resetWorkHistoryToList();
+        _lookupDetailId = '';
       case AppPane.pass:
         _selectedPaneIndex = PASS_PROFILE_PANE_INDEX;
         _resetWorkHistoryToList();
+        _lookupDetailId = '';
         if (state.commonKey.isNotEmpty) {
           _panePassCommonKey = state.commonKey;
           _panePassJobId = state.jobId;
@@ -625,6 +711,7 @@ class AppCoordinator extends ChangeNotifier {
       case AppPane.quality:
         _selectedPaneIndex = QUALITY_ISSUE_PANE_INDEX;
         _resetWorkHistoryToList();
+        _lookupDetailId = '';
         if (state.commonKey.isNotEmpty) {
           _paneQualityCommonKey = state.commonKey;
           _paneQualityJobId = state.jobId;
@@ -635,6 +722,7 @@ class AppCoordinator extends ChangeNotifier {
         }
       case AppPane.history:
         _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
+        _lookupDetailId = '';
         _jobId = state.jobId;
         _historyCommonKey = state.commonKey;
         _passId = state.passId;
@@ -646,15 +734,19 @@ class AppCoordinator extends ChangeNotifier {
       case AppPane.projects:
         _selectedPaneIndex = PROJECT_LOOKUP_PANE_INDEX;
         _resetWorkHistoryToList();
+        _lookupDetailId = state.lookupDetailId;
       case AppPane.workers:
         _selectedPaneIndex = WORKER_LOOKUP_PANE_INDEX;
         _resetWorkHistoryToList();
+        _lookupDetailId = state.lookupDetailId;
       case AppPane.equipment:
         _selectedPaneIndex = EQUIPMENT_LOOKUP_PANE_INDEX;
         _resetWorkHistoryToList();
+        _lookupDetailId = state.lookupDetailId;
       case AppPane.assets:
         _selectedPaneIndex = ASSET_LOOKUP_PANE_INDEX;
         _resetWorkHistoryToList();
+        _lookupDetailId = state.lookupDetailId;
     }
   }
 

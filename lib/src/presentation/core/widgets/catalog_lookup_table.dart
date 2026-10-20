@@ -1,5 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+import '../themes/app_theme.dart';
+
 class CatalogLookupFrame extends StatelessWidget {
   const CatalogLookupFrame({
     super.key,
@@ -39,40 +41,106 @@ class CatalogLookupFrame extends StatelessWidget {
   }
 }
 
-class CatalogLookupTable extends StatelessWidget {
+class CatalogLookupTable extends StatefulWidget {
   const CatalogLookupTable({
     super.key,
     required this.headers,
     required this.columnFlexes,
     required this.rows,
     required this.emptyTitle,
+    this.onRowTap,
+    this.onNearEnd,
+    this.isLoadingMore = false,
   });
 
   final List<String> headers;
   final List<int> columnFlexes;
   final List<List<String>> rows;
   final String emptyTitle;
+  final ValueChanged<int>? onRowTap;
+  final VoidCallback? onNearEnd;
+  final bool isLoadingMore;
+
+  @override
+  State<CatalogLookupTable> createState() => _CatalogLookupTableState();
+}
+
+class _CatalogLookupTableState extends State<CatalogLookupTable> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController
+      ..removeListener(_onScroll)
+      ..dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (widget.onNearEnd == null || !_scrollController.hasClients) {
+      return;
+    }
+    if (_scrollController.position.extentAfter < 120) {
+      widget.onNearEnd!();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _LookupRow(cells: headers, flexes: columnFlexes, isHeader: true),
-        if (rows.isEmpty)
+        _LookupRow(
+          cells: widget.headers,
+          flexes: widget.columnFlexes,
+          isHeader: true,
+        ),
+        if (widget.rows.isEmpty)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: InfoBar(
-              title: Text(emptyTitle),
+              title: Text(widget.emptyTitle),
               severity: InfoBarSeverity.warning,
             ),
           )
         else
           Expanded(
             child: ListView.builder(
-              itemCount: rows.length,
+              controller: _scrollController,
+              itemCount: widget.rows.length + 1,
               itemBuilder: (context, index) {
-                return _LookupRow(cells: rows[index], flexes: columnFlexes);
+                if (index == widget.rows.length) {
+                  if (!widget.isLoadingMore) {
+                    return const SizedBox(height: 8);
+                  }
+                  return const Padding(
+                    padding: EdgeInsets.all(12),
+                    child: Center(child: ProgressRing(strokeWidth: 2)),
+                  );
+                }
+                return HoverButton(
+                  onPressed: widget.onRowTap == null
+                      ? null
+                      : () => widget.onRowTap!(index),
+                  builder: (context, states) {
+                    return ColoredBox(
+                      color: AppTheme.tableRowColor(
+                        index: index,
+                        hovered: states.contains(WidgetState.hovered),
+                      ),
+                      child: _LookupRow(
+                        cells: widget.rows[index],
+                        flexes: widget.columnFlexes,
+                      ),
+                    );
+                  },
+                );
               },
             ),
           ),

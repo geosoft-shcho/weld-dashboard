@@ -105,6 +105,7 @@ class _WorkHistoryTableState extends State<WorkHistoryTable> {
                 );
               }
               return _DataRow(
+                index: index,
                 item: board.visibleRows[index],
                 isSelected:
                     board.visibleRows[index].jobId == board.query.selectedJobId,
@@ -150,11 +151,13 @@ class _HeaderRow extends StatelessWidget {
 
 class _DataRow extends StatelessWidget {
   const _DataRow({
+    required this.index,
     required this.item,
     required this.isSelected,
     required this.viewModel,
   });
 
+  final int index;
   final WorkHistoryItem item;
   final bool isSelected;
   final WorkHistoryViewModel viewModel;
@@ -165,9 +168,7 @@ class _DataRow extends StatelessWidget {
       onSecondaryTap: () => _showMenu(context),
       child: DecoratedBox(
         decoration: BoxDecoration(
-          color: isSelected
-              ? AppTheme.ACCENT_STEEL.withValues(alpha: 0.22)
-              : const Color(0x00000000),
+          color: AppTheme.tableRowColor(index: index, selected: isSelected),
           border: const Border(bottom: BorderSide(color: Color(0xFF3E424A))),
         ),
         child: Padding(
@@ -179,11 +180,13 @@ class _DataRow extends StatelessWidget {
                 child: HoverButton(
                   onPressed: () => viewModel.didSelectRow(item.jobId),
                   builder: (context, states) {
-                    final isHovered = states.contains(WidgetState.hovered);
+                    final hovered = states.contains(WidgetState.hovered);
                     return ColoredBox(
-                      color: isHovered && !isSelected
-                          ? AppTheme.SURFACE_RAISED
-                          : const Color(0x00000000),
+                      color: AppTheme.tableRowColor(
+                        index: index,
+                        hovered: hovered,
+                        selected: isSelected,
+                      ),
                       child: Row(
                         children: [
                           _Cell(item.commonKey, flex: 16),

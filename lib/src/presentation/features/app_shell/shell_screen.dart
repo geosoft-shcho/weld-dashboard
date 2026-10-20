@@ -2,15 +2,19 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+import '../../features/asset_lookup/asset_lookup_detail_screen.dart';
 import '../../features/asset_lookup/asset_lookup_screen.dart';
 import '../../features/collection_monitoring/collection_monitoring_screen.dart';
+import '../../features/equipment_lookup/equipment_lookup_detail_screen.dart';
 import '../../features/equipment_lookup/equipment_lookup_screen.dart';
+import '../../features/job_lookup/job_lookup_detail_screen.dart';
 import '../../features/pass_profile/pass_profile_screen.dart';
+import '../../features/project_lookup/project_lookup_detail_screen.dart';
 import '../../features/project_lookup/project_lookup_screen.dart';
 import '../../features/quality_issue/quality_issue_screen.dart';
 import '../../features/video_multimodal/video_multimodal_screen.dart';
-import '../../features/work_detail/work_detail_screen.dart';
 import '../../features/work_history/work_history_screen.dart';
+import '../../features/worker_lookup/worker_lookup_detail_screen.dart';
 import '../../features/worker_lookup/worker_lookup_screen.dart';
 import '../../navigation/app_coordinator.dart';
 import 'shell_view_model.dart';
@@ -94,12 +98,12 @@ class _ShellScreenState extends State<ShellScreen> {
               PaneItem(
                 icon: const Icon(FluentIcons.city_next),
                 title: const Text('공사 조회'),
-                body: const ProjectLookupScreen(),
+                body: _projectLookupBody(nav),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.contact),
                 title: const Text('작업자 조회'),
-                body: const WorkerLookupScreen(),
+                body: _workerLookupBody(nav),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.history),
@@ -109,12 +113,12 @@ class _ShellScreenState extends State<ShellScreen> {
               PaneItem(
                 icon: const Icon(FluentIcons.camera),
                 title: const Text('장비 조회'),
-                body: const EquipmentLookupScreen(),
+                body: _equipmentLookupBody(nav),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.folder_open),
                 title: const Text('에셋 조회'),
-                body: const AssetLookupScreen(),
+                body: _assetLookupBody(nav),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.line_chart),
@@ -142,6 +146,46 @@ class _ShellScreenState extends State<ShellScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _projectLookupBody(_ShellNavSnapshot nav) {
+    if (nav.lookupDetailId.isEmpty) {
+      return const ProjectLookupScreen();
+    }
+    return ProjectLookupDetailScreen(
+      key: ValueKey('project-detail|${nav.lookupDetailId}'),
+      projectId: nav.lookupDetailId,
+    );
+  }
+
+  Widget _workerLookupBody(_ShellNavSnapshot nav) {
+    if (nav.lookupDetailId.isEmpty) {
+      return const WorkerLookupScreen();
+    }
+    return WorkerLookupDetailScreen(
+      key: ValueKey('worker-detail|${nav.lookupDetailId}'),
+      workerId: nav.lookupDetailId,
+    );
+  }
+
+  Widget _equipmentLookupBody(_ShellNavSnapshot nav) {
+    if (nav.lookupDetailId.isEmpty) {
+      return const EquipmentLookupScreen();
+    }
+    return EquipmentLookupDetailScreen(
+      key: ValueKey('equipment-detail|${nav.lookupDetailId}'),
+      equipmentId: nav.lookupDetailId,
+    );
+  }
+
+  Widget _assetLookupBody(_ShellNavSnapshot nav) {
+    if (nav.lookupDetailId.isEmpty) {
+      return const AssetLookupScreen();
+    }
+    return AssetLookupDetailScreen(
+      key: ValueKey('asset-detail|${nav.lookupDetailId}'),
+      assetId: nav.lookupDetailId,
     );
   }
 
@@ -179,7 +223,7 @@ class _ShellScreenState extends State<ShellScreen> {
       case WorkHistoryStack.list:
         return const WorkHistoryScreen();
       case WorkHistoryStack.detail:
-        return WorkDetailScreen(
+        return JobLookupDetailScreen(
           key: ValueKey('detail|${nav.jobId}'),
           jobId: nav.jobId,
         );
@@ -219,6 +263,7 @@ class _ShellNavSnapshot {
     required this.jobId,
     required this.passId,
     required this.linkId,
+    required this.lookupDetailId,
     required this.canOpenLatestPassProfile,
     required this.canOpenLatestQualityIssue,
     required this.panePassCommonKey,
@@ -238,6 +283,7 @@ class _ShellNavSnapshot {
       jobId: coordinator.jobId,
       passId: coordinator.passId,
       linkId: coordinator.linkId,
+      lookupDetailId: coordinator.lookupDetailId,
       canOpenLatestPassProfile: coordinator.canOpenLatestPassProfile,
       canOpenLatestQualityIssue: coordinator.canOpenLatestQualityIssue,
       panePassCommonKey: coordinator.panePassCommonKey,
@@ -256,6 +302,7 @@ class _ShellNavSnapshot {
   final String jobId;
   final String passId;
   final String linkId;
+  final String lookupDetailId;
   final bool canOpenLatestPassProfile;
   final bool canOpenLatestQualityIssue;
   final String panePassCommonKey;
@@ -275,6 +322,7 @@ class _ShellNavSnapshot {
         jobId == other.jobId &&
         passId == other.passId &&
         linkId == other.linkId &&
+        lookupDetailId == other.lookupDetailId &&
         canOpenLatestPassProfile == other.canOpenLatestPassProfile &&
         canOpenLatestQualityIssue == other.canOpenLatestQualityIssue &&
         panePassCommonKey == other.panePassCommonKey &&
@@ -294,6 +342,7 @@ class _ShellNavSnapshot {
     jobId,
     passId,
     linkId,
+    lookupDetailId,
     canOpenLatestPassProfile,
     canOpenLatestQualityIssue,
     panePassCommonKey,

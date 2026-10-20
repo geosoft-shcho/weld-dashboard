@@ -13,6 +13,7 @@ class AppRouteState {
     this.passId = '',
     this.linkId = '',
     this.qualityViaDetail = false,
+    this.lookupDetailId = '',
   });
 
   final AppPane pane;
@@ -25,6 +26,9 @@ class AppRouteState {
   /// When [stack] is [WorkHistoryStack.qualityIssue], true means previous
   /// screen was detail (not pass profile).
   final bool qualityViaDetail;
+
+  /// 공사·작업자·장비·에셋 조회의 상세 id. 비면 목록.
+  final String lookupDetailId;
 
   static const String collectionPath = '/collection';
   static const String projectsPath = '/projects';
@@ -40,13 +44,13 @@ class AppRouteState {
       case AppPane.collection:
         return collectionPath;
       case AppPane.projects:
-        return projectsPath;
+        return _lookupLocation(projectsPath);
       case AppPane.workers:
-        return workersPath;
+        return _lookupLocation(workersPath);
       case AppPane.equipment:
-        return equipmentPath;
+        return _lookupLocation(equipmentPath);
       case AppPane.assets:
-        return assetsPath;
+        return _lookupLocation(assetsPath);
       case AppPane.pass:
         return _locationWithQuery(passPath, {
           if (commonKey.isNotEmpty) 'commonKey': commonKey,
@@ -90,6 +94,13 @@ class AppRouteState {
     }
   }
 
+  String _lookupLocation(String base) {
+    if (lookupDetailId.isEmpty) {
+      return base;
+    }
+    return '$base/${Uri.encodeComponent(lookupDetailId)}';
+  }
+
   static AppRouteState? tryParse(Uri uri) {
     final path = uri.path.isEmpty ? '/' : uri.path;
     final query = uri.queryParameters;
@@ -100,14 +111,36 @@ class AppRouteState {
     if (path == collectionPath) {
       return const AppRouteState(pane: AppPane.collection);
     }
+    final projectDetail = _parseLookupDetail(path, projectsPath);
+    if (projectDetail != null) {
+      return AppRouteState(
+        pane: AppPane.projects,
+        lookupDetailId: projectDetail,
+      );
+    }
     if (path == projectsPath) {
       return const AppRouteState(pane: AppPane.projects);
+    }
+    final workerDetail = _parseLookupDetail(path, workersPath);
+    if (workerDetail != null) {
+      return AppRouteState(pane: AppPane.workers, lookupDetailId: workerDetail);
     }
     if (path == workersPath) {
       return const AppRouteState(pane: AppPane.workers);
     }
+    final equipmentDetail = _parseLookupDetail(path, equipmentPath);
+    if (equipmentDetail != null) {
+      return AppRouteState(
+        pane: AppPane.equipment,
+        lookupDetailId: equipmentDetail,
+      );
+    }
     if (path == equipmentPath) {
       return const AppRouteState(pane: AppPane.equipment);
+    }
+    final assetDetail = _parseLookupDetail(path, assetsPath);
+    if (assetDetail != null) {
+      return AppRouteState(pane: AppPane.assets, lookupDetailId: assetDetail);
     }
     if (path == assetsPath) {
       return const AppRouteState(pane: AppPane.assets);
@@ -177,6 +210,17 @@ class AppRouteState {
       );
     }
     return null;
+  }
+
+  static String? _parseLookupDetail(String path, String base) {
+    final match = RegExp(
+      '^${RegExp.escape(base)}/([^/]+)\$',
+    ).firstMatch(path);
+    if (match == null) {
+      return null;
+    }
+    final raw = match.group(1)!;
+    return raw == '_' ? '' : Uri.decodeComponent(raw);
   }
 
   static String _locationWithQuery(String path, Map<String, String> query) {

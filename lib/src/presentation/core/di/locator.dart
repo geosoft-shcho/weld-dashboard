@@ -3,15 +3,27 @@ import 'package:get_it/get_it.dart';
 import '../../../data/repositories/browser_camera_recording_repository.dart';
 import '../../../data/repositories/remote_asset_lookup_repository.dart';
 import '../../../data/repositories/remote_equipment_lookup_repository.dart';
+import '../../../data/repositories/remote_project_lookup_repository.dart';
+import '../../../data/repositories/remote_worker_lookup_repository.dart';
 import '../../../domain/repositories/asset_lookup_repository.dart';
 import '../../../domain/repositories/equipment_lookup_repository.dart';
+import '../../../domain/repositories/project_lookup_repository.dart';
+import '../../../domain/repositories/worker_lookup_repository.dart';
+import '../../../domain/use_cases/get_asset_lookup_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_job_asset_lookup_use_case.dart';
 import '../../../domain/use_cases/list_job_passes_use_case.dart';
+import '../../../domain/use_cases/list_project_lookup_use_case.dart';
+import '../../../domain/use_cases/list_worker_lookup_use_case.dart';
+import '../../features/asset_lookup/asset_lookup_detail_view_model.dart';
 import '../../features/asset_lookup/asset_lookup_view_model.dart';
+import '../../features/equipment_lookup/equipment_lookup_detail_view_model.dart';
 import '../../features/equipment_lookup/equipment_lookup_view_model.dart';
+import '../../features/job_lookup/job_lookup_detail_view_model.dart';
+import '../../features/project_lookup/project_lookup_detail_view_model.dart';
 import '../../features/project_lookup/project_lookup_view_model.dart';
+import '../../features/worker_lookup/worker_lookup_detail_view_model.dart';
 import '../../features/worker_lookup/worker_lookup_view_model.dart';
 import '../../../domain/repositories/asset_upload_repository.dart';
 import '../../../domain/repositories/camera_recording_repository.dart';
@@ -127,6 +139,14 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => LoadWorkHistoryCatalogUseCase(locator()));
   locator.registerLazySingleton(() => LoadWorkHistoryMastersUseCase(locator()));
   locator.registerLazySingleton(() => ListWorkHistoryPageUseCase(locator()));
+  locator.registerLazySingleton<ProjectLookupRepository>(
+    () => RemoteProjectLookupRepository(locator()),
+  );
+  locator.registerLazySingleton(() => ListProjectLookupUseCase(locator()));
+  locator.registerLazySingleton<WorkerLookupRepository>(
+    () => RemoteWorkerLookupRepository(locator()),
+  );
+  locator.registerLazySingleton(() => ListWorkerLookupUseCase(locator()));
   locator.registerLazySingleton<EquipmentLookupRepository>(
     () => RemoteEquipmentLookupRepository(locator()),
   );
@@ -137,14 +157,15 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => ListAssetLookupPageUseCase(locator()));
   locator.registerLazySingleton(() => ListJobAssetLookupUseCase(locator()));
   locator.registerLazySingleton(() => ListJobPassesUseCase(locator()));
+  locator.registerLazySingleton(() => GetAssetLookupUseCase(locator()));
   locator.registerFactory(
-    () => ProjectLookupViewModel(loadWorkHistoryMastersUseCase: locator()),
+    () => ProjectLookupViewModel(listProjectLookupUseCase: locator()),
   );
   locator.registerFactory(
-    () => WorkerLookupViewModel(loadWorkHistoryMastersUseCase: locator()),
+    () => WorkerLookupViewModel(listWorkerLookupUseCase: locator()),
   );
   locator.registerFactory(
-    () => EquipmentLookupViewModel(loadWorkHistoryMastersUseCase: locator()),
+    () => EquipmentLookupViewModel(listEquipmentLookupUseCase: locator()),
   );
   locator.registerFactory(
     () => AssetLookupViewModel(
@@ -153,6 +174,44 @@ void setupLocator({required bool pdfrxReady}) {
       listJobPassesUseCase: locator(),
       listEquipmentLookupUseCase: locator(),
       listWorkHistoryPageUseCase: locator(),
+    ),
+  );
+  locator.registerFactoryParam<ProjectLookupDetailViewModel, String, void>(
+    (projectId, _) => ProjectLookupDetailViewModel(
+      projectId: projectId,
+      listProjectLookupUseCase: locator(),
+    ),
+  );
+  locator.registerFactoryParam<WorkerLookupDetailViewModel, String, void>(
+    (workerId, _) => WorkerLookupDetailViewModel(
+      workerId: workerId,
+      listWorkerLookupUseCase: locator(),
+      listWorkHistoryPageUseCase: locator(),
+    ),
+  );
+  locator.registerFactoryParam<EquipmentLookupDetailViewModel, String, void>(
+    (equipmentId, _) => EquipmentLookupDetailViewModel(
+      equipmentId: equipmentId,
+      listEquipmentLookupUseCase: locator(),
+      listWorkHistoryPageUseCase: locator(),
+      listAssetLookupPageUseCase: locator(),
+    ),
+  );
+  locator.registerFactoryParam<AssetLookupDetailViewModel, String, void>(
+    (assetId, _) => AssetLookupDetailViewModel(
+      assetId: assetId,
+      getAssetLookupUseCase: locator(),
+      listWorkHistoryPageUseCase: locator(),
+      listEquipmentLookupUseCase: locator(),
+    ),
+  );
+  locator.registerFactoryParam<JobLookupDetailViewModel, String, void>(
+    (jobId, _) => JobLookupDetailViewModel(
+      jobId: jobId,
+      loadWorkDetailCatalogUseCase: locator(),
+      queryWorkDetailUseCase: locator(),
+      listJobPassesUseCase: locator(),
+      listJobAssetLookupUseCase: locator(),
     ),
   );
   locator.registerFactory(() => QueryWorkHistoryUseCase());

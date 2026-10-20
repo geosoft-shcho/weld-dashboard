@@ -41,11 +41,25 @@ GoRouter createAppRouter({
             path: AppRouteState.projectsPath,
             pageBuilder: (context, state) =>
                 const NoTransitionPage<void>(child: SizedBox.shrink()),
+            routes: [
+              GoRoute(
+                path: ':projectId',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage<void>(child: SizedBox.shrink()),
+              ),
+            ],
           ),
           GoRoute(
             path: AppRouteState.workersPath,
             pageBuilder: (context, state) =>
                 const NoTransitionPage<void>(child: SizedBox.shrink()),
+            routes: [
+              GoRoute(
+                path: ':workerId',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage<void>(child: SizedBox.shrink()),
+              ),
+            ],
           ),
           GoRoute(
             path: AppRouteState.historyPath,
@@ -80,11 +94,25 @@ GoRouter createAppRouter({
             path: AppRouteState.equipmentPath,
             pageBuilder: (context, state) =>
                 const NoTransitionPage<void>(child: SizedBox.shrink()),
+            routes: [
+              GoRoute(
+                path: ':equipmentId',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage<void>(child: SizedBox.shrink()),
+              ),
+            ],
           ),
           GoRoute(
             path: AppRouteState.assetsPath,
             pageBuilder: (context, state) =>
                 const NoTransitionPage<void>(child: SizedBox.shrink()),
+            routes: [
+              GoRoute(
+                path: ':assetId',
+                pageBuilder: (context, state) =>
+                    const NoTransitionPage<void>(child: SizedBox.shrink()),
+              ),
+            ],
           ),
           GoRoute(
             path: AppRouteState.passPath,

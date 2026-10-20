@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/di/locator.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
+import '../../navigation/app_coordinator.dart';
 import 'equipment_lookup_view_model.dart';
 
 class EquipmentLookupScreen extends StatelessWidget {
@@ -28,12 +29,12 @@ class _EquipmentLookupBody extends StatelessWidget {
       padding: EdgeInsets.zero,
       content: Padding(
         padding: const EdgeInsets.all(16),
-        child: _content(viewModel),
+        child: _content(context, viewModel),
       ),
     );
   }
 
-  Widget _content(EquipmentLookupViewModel viewModel) {
+  Widget _content(BuildContext context, EquipmentLookupViewModel viewModel) {
     if (viewModel.isLoading && viewModel.visibleEquipment.isEmpty) {
       return const Center(child: ProgressRing());
     }
@@ -45,9 +46,6 @@ class _EquipmentLookupBody extends StatelessWidget {
         severity: InfoBarSeverity.error,
       );
     }
-    final lineName = viewModel.lineNames.contains(viewModel.lineName)
-        ? viewModel.lineName
-        : '';
     return CatalogLookupFrame(
       actionLabel: '새 장비',
       filters: [
@@ -57,25 +55,9 @@ class _EquipmentLookupBody extends StatelessWidget {
             width: 240,
             child: LookupSearchField(
               value: viewModel.queryText,
-              hintText: '코드 · 이름 · 라인',
+              hintText: '코드 · 이름 · 비고',
               onChanged: viewModel.didChangeQueryText,
             ),
-          ),
-        ),
-        InfoLabel(
-          label: '라인',
-          child: ComboBox<String>(
-            value: lineName,
-            items: [
-              const ComboBoxItem(value: '', child: Text('전체')),
-              for (final name in viewModel.lineNames)
-                ComboBoxItem(value: name, child: Text(name)),
-            ],
-            onChanged: (value) {
-              if (value != null) {
-                viewModel.didSelectLine(value);
-              }
-            },
           ),
         ),
         Padding(
@@ -92,18 +74,26 @@ class _EquipmentLookupBody extends StatelessWidget {
         ),
       ],
       body: CatalogLookupTable(
-        headers: const ['장비 코드', '이름', '라인', '쓰인 작업'],
-        columnFlexes: const [16, 18, 12, 10],
+        headers: const ['장비 코드', '이름', '쓰인 작업', '기록한 에셋'],
+        columnFlexes: const [16, 18, 10, 10],
         emptyTitle: '조건에 맞는 장비가 없습니다',
+        isLoadingMore: viewModel.isLoadingMore,
+        onNearEnd: viewModel.didScrollNearEnd,
         rows: [
           for (final item in viewModel.visibleEquipment)
             [
               item.equipmentCode.isEmpty ? '—' : item.equipmentCode,
               equipmentNameCell(item),
-              item.lineName.isEmpty ? '—' : item.lineName,
               '${item.jobCount}건',
+              '${item.assetCount}건',
             ],
         ],
+        onRowTap: (index) {
+          final item = viewModel.visibleEquipment[index];
+          context.read<AppCoordinator>().didTapOpenEquipmentDetail(
+            item.equipmentId,
+          );
+        },
       ),
     );
   }

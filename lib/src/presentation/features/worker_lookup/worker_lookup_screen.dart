@@ -5,6 +5,7 @@ import '../../../domain/entities/worker_kind.dart';
 import '../../core/di/locator.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
+import '../../navigation/app_coordinator.dart';
 import 'worker_lookup_view_model.dart';
 
 class WorkerLookupScreen extends StatelessWidget {
@@ -29,12 +30,12 @@ class _WorkerLookupBody extends StatelessWidget {
       padding: EdgeInsets.zero,
       content: Padding(
         padding: const EdgeInsets.all(16),
-        child: _content(viewModel),
+        child: _content(context, viewModel),
       ),
     );
   }
 
-  Widget _content(WorkerLookupViewModel viewModel) {
+  Widget _content(BuildContext context, WorkerLookupViewModel viewModel) {
     if (viewModel.isLoading && viewModel.visibleWorkers.isEmpty) {
       return const Center(child: ProgressRing());
     }
@@ -95,6 +96,8 @@ class _WorkerLookupBody extends StatelessWidget {
         headers: const ['이름', '사번', '종류', '작업'],
         columnFlexes: const [16, 12, 10, 8],
         emptyTitle: '조건에 맞는 작업자가 없습니다',
+        isLoadingMore: viewModel.isLoadingMore,
+        onNearEnd: viewModel.didScrollNearEnd,
         rows: [
           for (final worker in viewModel.visibleWorkers)
             [
@@ -104,6 +107,12 @@ class _WorkerLookupBody extends StatelessWidget {
               '${worker.jobCount}건',
             ],
         ],
+        onRowTap: (index) {
+          final worker = viewModel.visibleWorkers[index];
+          context.read<AppCoordinator>().didTapOpenWorkerDetail(
+            worker.workerId,
+          );
+        },
       ),
     );
   }

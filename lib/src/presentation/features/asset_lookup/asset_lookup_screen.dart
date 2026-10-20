@@ -6,8 +6,10 @@ import '../../../domain/entities/asset_lookup_row.dart';
 import '../../../domain/entities/work_history_item.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
+import '../../core/themes/app_theme.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
+import '../../navigation/app_coordinator.dart';
 import 'asset_lookup_view_model.dart';
 
 class AssetLookupScreen extends StatelessWidget {
@@ -85,7 +87,7 @@ class _AssetLookupBody extends StatelessWidget {
             width: 200,
             child: LookupSearchField(
               value: viewModel.fileNameText,
-              hintText: '부분 일치',
+              hintText: '파일 이름 · 원본 위치 · 번호',
               onChanged: viewModel.didChangeFileName,
             ),
           ),
@@ -262,7 +264,7 @@ class _AssetTableState extends State<_AssetTable> {
                   );
                 }
                 final row = rows[index];
-                return _cells([
+                final cells = _cells([
                   row.assetId,
                   AssetLookupKindOption.labelOf(row.kindCode),
                   row.fileName,
@@ -275,6 +277,25 @@ class _AssetTableState extends State<_AssetTable> {
                     isJobScoped: isJobScoped,
                   ),
                 ], flexes);
+                return HoverButton(
+                  onPressed: () {
+                    if (row.assetId.isEmpty) {
+                      return;
+                    }
+                    context.read<AppCoordinator>().didTapOpenAssetDetail(
+                      row.assetId,
+                    );
+                  },
+                  builder: (context, states) {
+                    return ColoredBox(
+                      color: AppTheme.tableRowColor(
+                        index: index,
+                        hovered: states.contains(WidgetState.hovered),
+                      ),
+                      child: cells,
+                    );
+                  },
+                );
               },
             ),
           ),

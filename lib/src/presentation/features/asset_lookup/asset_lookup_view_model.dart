@@ -46,6 +46,7 @@ class AssetLookupViewModel extends ChangeNotifier {
   List<JobPassOption> _passes = const [];
   List<AssetLookupRow> _rows = const [];
   String _nextPageToken = '';
+  int _totalCount = 0;
   bool _isJobScoped = false;
   bool _isLoading = false;
   bool _isLoadingMore = false;
@@ -69,6 +70,7 @@ class AssetLookupViewModel extends ChangeNotifier {
   bool get isLoadingMore => _isLoadingMore;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
+  int get totalCount => _totalCount;
   bool get doesHaveMore => !_isJobScoped && _nextPageToken.isNotEmpty;
 
   List<AssetLookupRow> get visibleRows {
@@ -310,7 +312,7 @@ class AssetLookupViewModel extends ChangeNotifier {
     try {
       final page = await _listAssetLookupPageUseCase.execute(
         kindCode: _kindCode,
-        fileName: _fileNameText,
+        query: _fileNameText,
         equipmentId: _equipmentId,
         unattachedOnly: _unattachedOnly,
         pageSize: pageSize,
@@ -326,6 +328,7 @@ class AssetLookupViewModel extends ChangeNotifier {
           if (!existing.contains(row.assetId)) row,
       ];
       _nextPageToken = page.nextPageToken;
+      _totalCount = page.totalCount;
     } catch (_) {
       // 이어 받기 실패는 이미 받은 목록을 유지한다.
     } finally {
@@ -363,7 +366,7 @@ class AssetLookupViewModel extends ChangeNotifier {
     if (_jobId.isEmpty) {
       final page = await _listAssetLookupPageUseCase.execute(
         kindCode: _kindCode,
-        fileName: _fileNameText,
+        query: _fileNameText,
         equipmentId: _equipmentId,
         unattachedOnly: _unattachedOnly,
         pageSize: pageSize,
@@ -374,6 +377,7 @@ class AssetLookupViewModel extends ChangeNotifier {
       }
       _rows = page.rows;
       _nextPageToken = page.nextPageToken;
+      _totalCount = page.totalCount;
       _isJobScoped = false;
       return;
     }
@@ -386,6 +390,7 @@ class AssetLookupViewModel extends ChangeNotifier {
     }
     _rows = rows;
     _nextPageToken = '';
+    _totalCount = rows.length;
     _isJobScoped = true;
   }
 

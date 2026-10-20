@@ -82,6 +82,53 @@ void main() {
       );
     });
 
+    test('encodes and parses lookup detail paths', () {
+      expect(
+        const AppRouteState(
+          pane: AppPane.projects,
+          lookupDetailId: 'P1',
+        ).toLocation(),
+        '/projects/P1',
+      );
+      expect(
+        const AppRouteState(
+          pane: AppPane.workers,
+          lookupDetailId: 'W1',
+        ).toLocation(),
+        '/workers/W1',
+      );
+      expect(
+        const AppRouteState(
+          pane: AppPane.equipment,
+          lookupDetailId: 'E1',
+        ).toLocation(),
+        '/equipment/E1',
+      );
+      expect(
+        const AppRouteState(
+          pane: AppPane.assets,
+          lookupDetailId: 'A1',
+        ).toLocation(),
+        '/assets/A1',
+      );
+
+      final project = AppRouteState.tryParse(Uri.parse('/projects/P1'));
+      expect(project?.pane, AppPane.projects);
+      expect(project?.lookupDetailId, 'P1');
+
+      final worker = AppRouteState.tryParse(Uri.parse('/workers/W1'));
+      expect(worker?.pane, AppPane.workers);
+      expect(worker?.lookupDetailId, 'W1');
+
+      final equipment = AppRouteState.tryParse(Uri.parse('/equipment/E1'));
+      expect(equipment?.pane, AppPane.equipment);
+      expect(equipment?.lookupDetailId, 'E1');
+
+      final asset = AppRouteState.tryParse(Uri.parse('/assets/A1'));
+      expect(asset?.pane, AppPane.assets);
+      expect(asset?.lookupDetailId, 'A1');
+    });
+
     test('unknown path returns null', () {
       expect(AppRouteState.tryParse(Uri.parse('/unknown')), isNull);
     });

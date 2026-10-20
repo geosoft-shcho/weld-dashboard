@@ -1,65 +1,56 @@
+import 'dart:async';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../domain/entities/work_history_project_filter.dart';
-import '../../../domain/use_cases/load_work_history_masters_use_case.dart';
+import '../../../domain/use_cases/list_project_lookup_use_case.dart';
 
 class ProjectLookupViewModel extends ChangeNotifier {
   ProjectLookupViewModel({
-    required LoadWorkHistoryMastersUseCase loadWorkHistoryMastersUseCase,
-  }) : _loadWorkHistoryMastersUseCase = loadWorkHistoryMastersUseCase;
+    required ListProjectLookupUseCase listProjectLookupUseCase,
+  }) : _listProjectLookupUseCase = listProjectLookupUseCase;
 
-  final LoadWorkHistoryMastersUseCase _loadWorkHistoryMastersUseCase;
+  final ListProjectLookupUseCase _listProjectLookupUseCase;
 
   String _queryText = '';
   bool _emptyJobsOnly = false;
   List<WorkHistoryProjectFilter> _projects = const [];
+  String _nextPageToken = '';
+  int _totalCount = 0;
   bool _isLoading = false;
+  bool _isLoadingMore = false;
   bool _hasError = false;
   String _errorMessage = '';
   int _loadVersion = 0;
+  Timer? _queryDebounce;
 
   String get queryText => _queryText;
   bool get emptyJobsOnly => _emptyJobsOnly;
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
+  int get totalCount => _totalCount;
+  bool get doesHaveMore => _nextPageToken.isNotEmpty;
 
   List<WorkHistoryProjectFilter> get visibleProjects {
-    final query = _queryText.trim().toLowerCase();
+    if (!_emptyJobsOnly) {
+      return _projects;
+    }
     return [
       for (final project in _projects)
-        if ((!_emptyJobsOnly || project.jobCount == 0) &&
-            (query.isEmpty || _matches(project, query)))
-          project,
+        if (project.jobCount == 0) project,
     ];
   }
 
-  Future<void> load() async {
-    final version = ++_loadVersion;
-    _isLoading = true;
-    _hasError = false;
-    _errorMessage = '';
-    notifyListeners();
-    try {
-      final catalog = await _loadWorkHistoryMastersUseCase.execute();
-      if (version != _loadVersion) {
-        return;
-      }
-      _projects = catalog.projects;
-    } catch (error) {
-      if (version != _loadVersion) {
-        return;
-      }
-      _hasError = true;
-      _errorMessage = error.toString();
-      _projects = const [];
-    } finally {
-      if (version == _loadVersion) {
-        _isLoading = false;
-        notifyListeners();
-      }
+  Future<void> load() => _reload(reset: true);
+
+  Future<void> didScrollNearEnd() async {
+    if (_isLoading || _isLoadingMore || _nextPageToken.isEmpty) {
+      return;
     }
+    await _reload(reset: false);
   }
 
   void didChangeQueryText(String value) {
@@ -68,6 +59,10 @@ class ProjectLookupViewModel extends ChangeNotifier {
     }
     _queryText = value;
     notifyListeners();
+    _queryDebounce?.cancel();
+    _queryDebounce = Timer(const Duration(milliseconds: 400), () {
+      _reload(reset: true);
+    });
   }
 
   void didToggleEmptyJobsOnly(bool value) {
@@ -78,35 +73,52 @@ class ProjectLookupViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool _matches(WorkHistoryProjectFilter project, String query) {
-    if (_contains(project.projectNo, query) ||
-        _contains(project.projectName, query) ||
-        _contains(project.siteName, query) ||
-        _contains(project.customer, query)) {
-      return true;
+  Future<void> _reload({required bool reset}) async {
+    final version = reset ? ++_loadVersion : _loadVersion;
+    if (reset) {
+      _isLoading = true;
+      _isLoadingMore = false;
+      _hasError = false;
+      _errorMessage = '';
+      notifyListeners();
+    } else {
+      _isLoadingMore = true;
+      notifyListeners();
     }
-    for (final unit in project.units) {
-      for (final code in unit.itemCodes) {
-        if (_contains(code, query)) {
-          return true;
-        }
+    try {
+      final page = await _listProjectLookupUseCase.execute(
+        query: _queryText,
+        pageToken: reset ? '' : _nextPageToken,
+      );
+      if (version != _loadVersion) {
+        return;
       }
-      for (final item in unit.items) {
-        if (_contains(item.itemCode, query) ||
-            _contains(item.itemName, query)) {
-          return true;
-        }
+      _projects = reset ? page.items : [..._projects, ...page.items];
+      _nextPageToken = page.nextPageToken;
+      _totalCount = page.totalCount;
+    } catch (error) {
+      if (version != _loadVersion) {
+        return;
+      }
+      _hasError = true;
+      _errorMessage = error.toString();
+      if (reset) {
+        _projects = const [];
+        _nextPageToken = '';
+        _totalCount = 0;
+      }
+    } finally {
+      if (version == _loadVersion) {
+        _isLoading = false;
+        _isLoadingMore = false;
+        notifyListeners();
       }
     }
-    return false;
-  }
-
-  bool _contains(String value, String query) {
-    return value.toLowerCase().contains(query);
   }
 
   @override
   void dispose() {
+    _queryDebounce?.cancel();
     _loadVersion++;
     super.dispose();
   }

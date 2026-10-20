@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/di/locator.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
+import '../../navigation/app_coordinator.dart';
 import 'project_lookup_view_model.dart';
 
 class ProjectLookupScreen extends StatelessWidget {
@@ -28,12 +29,12 @@ class _ProjectLookupBody extends StatelessWidget {
       padding: EdgeInsets.zero,
       content: Padding(
         padding: const EdgeInsets.all(16),
-        child: _content(viewModel),
+        child: _content(context, viewModel),
       ),
     );
   }
 
-  Widget _content(ProjectLookupViewModel viewModel) {
+  Widget _content(BuildContext context, ProjectLookupViewModel viewModel) {
     if (viewModel.isLoading && viewModel.visibleProjects.isEmpty) {
       return const Center(child: ProgressRing());
     }
@@ -55,7 +56,7 @@ class _ProjectLookupBody extends StatelessWidget {
             width: 360,
             child: LookupSearchField(
               value: viewModel.queryText,
-              hintText: '공사 번호 · 이름 · 현장 · 발주처 · 품목',
+              hintText: '번호 · 이름 · 현장 · 발주처 · 품목',
               onChanged: viewModel.didChangeQueryText,
             ),
           ),
@@ -77,6 +78,8 @@ class _ProjectLookupBody extends StatelessWidget {
         headers: const ['공사 번호', '이름', '현장 · 발주처', '호기 · 품목', '작업'],
         columnFlexes: const [12, 18, 16, 28, 8],
         emptyTitle: '조건에 맞는 공사가 없습니다',
+        isLoadingMore: viewModel.isLoadingMore,
+        onNearEnd: viewModel.didScrollNearEnd,
         rows: [
           for (final project in projects)
             [
@@ -87,6 +90,15 @@ class _ProjectLookupBody extends StatelessWidget {
               '${project.jobCount}건',
             ],
         ],
+        onRowTap: (index) {
+          final project = projects[index];
+          if (project.projectId.isEmpty) {
+            return;
+          }
+          context.read<AppCoordinator>().didTapOpenProjectDetail(
+            project.projectId,
+          );
+        },
       ),
     );
   }
