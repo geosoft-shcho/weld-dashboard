@@ -52,12 +52,11 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
     if (jobId.isEmpty) {
       return const [];
     }
-    final response = await _mediaTag.assetService.listJobAssets(
-      asset_pb.ListJobAssetsRequest(jobId: protoId(jobId)),
-    );
+    final request = asset_pb.ListAssetsRequest(pageSize: 200);
+    request.job = asset_pb.AssetJobFilter(jobId: protoId(jobId));
+    final response = await _mediaTag.assetService.listAssets(request);
     final attachments = <WorkAttachment>[];
-    for (final item in response.assets) {
-      final asset = item.asset;
+    for (final asset in response.assets) {
       final type = _typeOf(asset);
       final assetId = idText(asset.assetId);
       if (type == null || assetId.isEmpty) {

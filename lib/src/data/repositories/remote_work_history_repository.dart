@@ -1,3 +1,4 @@
+import '../../domain/entities/asset_lookup_row.dart';
 import '../../domain/entities/equipment.dart';
 import '../../domain/entities/work_history_catalog.dart';
 import '../../domain/entities/work_history_item.dart';
@@ -181,6 +182,20 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
           : null,
       passCount: summary.passCount,
       attachmentCount: summary.attachmentCount,
+      passes: [
+        for (final pass in summary.passes)
+          if (idText(pass.passId).isNotEmpty)
+            JobPassOption(
+              passId: idText(pass.passId),
+              passNo: pass.passNo,
+              startedAt: pass.hasStartedAt()
+                  ? pass.startedAt.toDateTime().toLocal()
+                  : null,
+              endedAt: pass.hasEndedAt()
+                  ? pass.endedAt.toDateTime().toLocal()
+                  : null,
+            ),
+      ],
     );
   }
 

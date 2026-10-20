@@ -1,3 +1,4 @@
+import 'asset_lookup_row.dart';
 import 'worker_kind.dart';
 
 class WorkHistoryItem {
@@ -19,6 +20,7 @@ class WorkHistoryItem {
     required this.workedAt,
     required this.passCount,
     required this.attachmentCount,
+    this.passes = const [],
   });
 
   final String jobId;
@@ -38,6 +40,7 @@ class WorkHistoryItem {
   final DateTime? workedAt;
   final int passCount;
   final int attachmentCount;
+  final List<JobPassOption> passes;
 
   bool get doesHaveAttachments => attachmentCount > 0;
 }

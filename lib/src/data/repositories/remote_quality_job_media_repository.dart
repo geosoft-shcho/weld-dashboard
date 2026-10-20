@@ -17,18 +17,20 @@ class RemoteQualityJobMediaRepository implements QualityJobMediaRepository {
     if (jobId.isEmpty || passId.isEmpty) {
       return const [];
     }
-    final response = await _mediaTag.assetService.listJobAssets(
-      asset_pb.ListJobAssetsRequest(
-        jobId: protoId(jobId),
-        passId: protoId(passId),
-      ),
-    );
+    final request = asset_pb.ListAssetsRequest(pageSize: 200);
+    request.job = asset_pb.AssetJobFilter(jobId: protoId(jobId));
+    final response = await _mediaTag.assetService.listAssets(request);
     final pdfs = <QualityJobMedia>[];
     final videos = <QualityJobMedia>[];
-    for (final item in response.assets) {
-      final asset = item.asset;
+    for (final asset in response.assets) {
       final assetId = idText(asset.assetId);
       if (assetId.isEmpty) {
+        continue;
+      }
+      final attachedPassId = response.passIds.containsKey(asset.assetId)
+          ? idText(response.passIds[asset.assetId]!)
+          : '';
+      if (attachedPassId != passId) {
         continue;
       }
       final isVideo = asset.kind == asset_pb.AssetKind.ASSET_KIND_VIDEO;
@@ -39,7 +41,7 @@ class RemoteQualityJobMediaRepository implements QualityJobMediaRepository {
         assetId: assetId,
         fileName: asset.fileName,
         url: _mediaTag.resolveContentUrl(asset.contentUrl),
-        passId: idText(item.passId),
+        passId: attachedPassId,
         isVideo: isVideo,
         recordedAt: asset.hasRecordedAt()
             ? asset.recordedAt.toDateTime()

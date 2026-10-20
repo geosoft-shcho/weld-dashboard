@@ -1,9 +1,11 @@
 import 'dart:convert';
 
 import 'package:fixnum/fixnum.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/asset_lookup_row.dart';
 import '../../domain/repositories/asset_lookup_repository.dart';
+import '../datasources/generated/google/protobuf/timestamp.pb.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/media_tag_data_source.dart';
@@ -20,6 +22,17 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     required String query,
     required String equipmentId,
     required bool unattachedOnly,
+    String jobId = '',
+    String projectId = '',
+    String projectItemId = '',
+    String workerId = '',
+    String unitNo = '',
+    String itemCode = '',
+    String jointNo = '',
+    int passNo = 0,
+    bool sharedOnly = false,
+    DateTime? startedFrom,
+    DateTime? startedTo,
     required int pageSize,
     required String pageToken,
   }) async {
@@ -39,17 +52,51 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     if (equipment != null) {
       request.equipmentId = equipment;
     }
-    if (unattachedOnly) {
+    final job = _jobFilter(
+      jobId: jobId,
+      projectId: projectId,
+      projectItemId: projectItemId,
+      workerId: workerId,
+      unitNo: unitNo,
+      itemCode: itemCode,
+      jointNo: jointNo,
+      passNo: passNo,
+      sharedOnly: sharedOnly,
+      startedFrom: startedFrom,
+      startedTo: startedTo,
+    );
+    if (job != null) {
+      request.job = job;
+    } else if (unattachedOnly) {
       request.unattachedOnly = true;
     }
+    if (kDebugMode) {
+      debugPrint('[AssetLookup] request ${request.toProto3Json()}');
+    }
     final response = await _mediaTag.assetService.listAssets(request);
+    if (kDebugMode) {
+      final names = [
+        for (final asset in response.assets.take(5)) asset.fileName,
+      ];
+      debugPrint(
+        '[AssetLookup] response count=${response.assets.length} '
+        'total=${response.totalCount} next=${response.nextPageToken} '
+        'passIds=${response.passIds.length} first=$names',
+      );
+    }
+    final hasJob = jobId.isNotEmpty;
     return AssetLookupPage(
       rows: [
         for (final asset in response.assets)
           _rowFrom(
             asset,
-            isAttached: false,
-            isUnattached: unattachedOnly,
+            isAttached: hasJob,
+            isUnattached: !hasJob && unattachedOnly,
+            attachmentPassId: !hasJob
+                ? ''
+                : (response.passIds.containsKey(asset.assetId)
+                      ? idText(response.passIds[asset.assetId]!)
+                      : jobCommonPassToken),
           ),
       ],
       nextPageToken: response.nextPageToken,
@@ -57,31 +104,72 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     );
   }
 
-  @override
-  Future<List<AssetLookupRow>> listJobAssets({
+  asset_pb.AssetJobFilter? _jobFilter({
     required String jobId,
-    required String passId,
-  }) async {
-    final request = asset_pb.ListJobAssetsRequest(jobId: protoId(jobId));
-    if (passId == jobCommonPassToken) {
-      request.passId = Int64.ZERO;
-    } else {
-      final selectedPassId = protoIdOrNull(passId);
-      if (selectedPassId != null) {
-        request.passId = selectedPassId;
-      }
+    required String projectId,
+    required String projectItemId,
+    required String workerId,
+    required String unitNo,
+    required String itemCode,
+    required String jointNo,
+    required int passNo,
+    required bool sharedOnly,
+    required DateTime? startedFrom,
+    required DateTime? startedTo,
+  }) {
+    final hasJob =
+        jobId.isNotEmpty ||
+        projectId.isNotEmpty ||
+        projectItemId.isNotEmpty ||
+        workerId.isNotEmpty ||
+        unitNo.isNotEmpty ||
+        itemCode.isNotEmpty ||
+        jointNo.isNotEmpty ||
+        passNo != 0 ||
+        sharedOnly ||
+        startedFrom != null ||
+        startedTo != null;
+    if (!hasJob) {
+      return null;
     }
-    final response = await _mediaTag.assetService.listJobAssets(request);
-    return [
-      for (final item in response.assets)
-        _rowFrom(
-          item.asset,
-          isAttached: true,
-          attachmentPassId: item.passId == Int64.ZERO
-              ? jobCommonPassToken
-              : idText(item.passId),
-        ),
-    ];
+    final job = asset_pb.AssetJobFilter();
+    final jobIdValue = protoIdOrNull(jobId);
+    if (jobIdValue != null) {
+      job.jobId = jobIdValue;
+    }
+    final projectIdValue = protoIdOrNull(projectId);
+    if (projectIdValue != null) {
+      job.projectId = projectIdValue;
+    }
+    final projectItemIdValue = protoIdOrNull(projectItemId);
+    if (projectItemIdValue != null) {
+      job.projectItemId = projectItemIdValue;
+    }
+    final workerIdValue = protoIdOrNull(workerId);
+    if (workerIdValue != null) {
+      job.workerId = workerIdValue;
+    }
+    if (unitNo.isNotEmpty) {
+      job.unitNo = unitNo;
+    }
+    if (itemCode.isNotEmpty) {
+      job.itemCode = itemCode;
+    }
+    if (jointNo.isNotEmpty) {
+      job.jointNo = jointNo;
+    }
+    if (sharedOnly) {
+      job.sharedOnly = true;
+    } else if (passNo != 0) {
+      job.passNo = passNo;
+    }
+    if (startedFrom != null) {
+      job.startedFrom = Timestamp.fromDateTime(startedFrom);
+    }
+    if (startedTo != null) {
+      job.startedTo = Timestamp.fromDateTime(startedTo);
+    }
+    return job;
   }
 
   @override

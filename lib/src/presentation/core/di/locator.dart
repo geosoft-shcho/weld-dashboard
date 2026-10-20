@@ -12,7 +12,6 @@ import '../../../domain/repositories/worker_lookup_repository.dart';
 import '../../../domain/use_cases/get_asset_lookup_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
-import '../../../domain/use_cases/list_job_asset_lookup_use_case.dart';
 import '../../../domain/use_cases/list_job_passes_use_case.dart';
 import '../../../domain/use_cases/list_project_lookup_use_case.dart';
 import '../../../domain/use_cases/list_worker_lookup_use_case.dart';
@@ -155,7 +154,6 @@ void setupLocator({required bool pdfrxReady}) {
     () => RemoteAssetLookupRepository(locator()),
   );
   locator.registerLazySingleton(() => ListAssetLookupPageUseCase(locator()));
-  locator.registerLazySingleton(() => ListJobAssetLookupUseCase(locator()));
   locator.registerLazySingleton(() => ListJobPassesUseCase(locator()));
   locator.registerLazySingleton(() => GetAssetLookupUseCase(locator()));
   locator.registerFactory(
@@ -170,8 +168,6 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactory(
     () => AssetLookupViewModel(
       listAssetLookupPageUseCase: locator(),
-      listJobAssetLookupUseCase: locator(),
-      listJobPassesUseCase: locator(),
       listEquipmentLookupUseCase: locator(),
       listWorkHistoryPageUseCase: locator(),
     ),
@@ -211,7 +207,7 @@ void setupLocator({required bool pdfrxReady}) {
       loadWorkDetailCatalogUseCase: locator(),
       queryWorkDetailUseCase: locator(),
       listJobPassesUseCase: locator(),
-      listJobAssetLookupUseCase: locator(),
+      listAssetLookupPageUseCase: locator(),
     ),
   );
   locator.registerFactory(() => QueryWorkHistoryUseCase());

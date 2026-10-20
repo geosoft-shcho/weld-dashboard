@@ -2,7 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../domain/entities/asset_lookup_row.dart';
 import '../../../domain/entities/work_history_item.dart';
-import '../../../domain/use_cases/list_job_asset_lookup_use_case.dart';
+import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_job_passes_use_case.dart';
 import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
 import '../../../domain/use_cases/query_work_detail_use_case.dart';
@@ -15,17 +15,17 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     required LoadWorkDetailCatalogUseCase loadWorkDetailCatalogUseCase,
     required QueryWorkDetailUseCase queryWorkDetailUseCase,
     required ListJobPassesUseCase listJobPassesUseCase,
-    required ListJobAssetLookupUseCase listJobAssetLookupUseCase,
+    required ListAssetLookupPageUseCase listAssetLookupPageUseCase,
   }) : _loadWorkDetailCatalogUseCase = loadWorkDetailCatalogUseCase,
        _queryWorkDetailUseCase = queryWorkDetailUseCase,
        _listJobPassesUseCase = listJobPassesUseCase,
-       _listJobAssetLookupUseCase = listJobAssetLookupUseCase;
+       _listAssetLookupPageUseCase = listAssetLookupPageUseCase;
 
   final String jobId;
   final LoadWorkDetailCatalogUseCase _loadWorkDetailCatalogUseCase;
   final QueryWorkDetailUseCase _queryWorkDetailUseCase;
   final ListJobPassesUseCase _listJobPassesUseCase;
-  final ListJobAssetLookupUseCase _listJobAssetLookupUseCase;
+  final ListAssetLookupPageUseCase _listAssetLookupPageUseCase;
 
   WorkHistoryItem? _job;
   List<JobPassOption> _passes = const [];
@@ -89,10 +89,16 @@ class JobLookupDetailViewModel extends ChangeNotifier {
 
   Future<void> _loadAttachments() async {
     try {
-      _attachments = await _listJobAssetLookupUseCase.execute(
+      final page = await _listAssetLookupPageUseCase.execute(
+        kindCode: '',
+        query: '',
+        equipmentId: '',
+        unattachedOnly: false,
         jobId: jobId,
-        passId: '',
+        pageSize: 200,
+        pageToken: '',
       );
+      _attachments = page.rows;
       _didLoadAttachments = true;
     } catch (error) {
       _errorMessage = error.toString();

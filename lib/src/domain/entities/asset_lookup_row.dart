@@ -37,7 +37,7 @@ class AssetLookupRow {
   final bool isUnattached;
   final int childCount;
 
-  /// ListJobAssets의 pass_id. '0'이면 작업 공용, 빈 값이면 패스 정보 없음.
+  /// ListAssets(job)의 pass_ids. '0'이면 작업 공용, 빈 값이면 패스 정보 없음.
   final String attachmentPassId;
   final String parentAssetId;
   final String provenanceSummary;
@@ -73,5 +73,5 @@ class JobPassOption {
   final DateTime? endedAt;
 }
 
-/// ListJobAssets에서 작업 공용만 볼 때 쓰는 pass_id=0 토큰.
+/// pass_ids에 없을 때 작업 공용을 나타내는 pass_id=0 토큰.
 const String jobCommonPassToken = '0';

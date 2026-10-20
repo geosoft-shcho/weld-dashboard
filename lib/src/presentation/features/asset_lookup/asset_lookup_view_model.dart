@@ -9,28 +9,20 @@ import '../../../domain/entities/work_history_item.dart';
 import '../../../domain/entities/work_history_query.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
-import '../../../domain/use_cases/list_job_asset_lookup_use_case.dart';
-import '../../../domain/use_cases/list_job_passes_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
 
 class AssetLookupViewModel extends ChangeNotifier {
   AssetLookupViewModel({
     required ListAssetLookupPageUseCase listAssetLookupPageUseCase,
-    required ListJobAssetLookupUseCase listJobAssetLookupUseCase,
-    required ListJobPassesUseCase listJobPassesUseCase,
     required ListEquipmentLookupUseCase listEquipmentLookupUseCase,
     required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
   }) : _listAssetLookupPageUseCase = listAssetLookupPageUseCase,
-       _listJobAssetLookupUseCase = listJobAssetLookupUseCase,
-       _listJobPassesUseCase = listJobPassesUseCase,
        _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
        _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase;
 
   static const int pageSize = WorkHistoryQuery.BATCH_SIZE;
 
   final ListAssetLookupPageUseCase _listAssetLookupPageUseCase;
-  final ListJobAssetLookupUseCase _listJobAssetLookupUseCase;
-  final ListJobPassesUseCase _listJobPassesUseCase;
   final ListEquipmentLookupUseCase _listEquipmentLookupUseCase;
   final ListWorkHistoryPageUseCase _listWorkHistoryPageUseCase;
 
@@ -47,7 +39,6 @@ class AssetLookupViewModel extends ChangeNotifier {
   List<AssetLookupRow> _rows = const [];
   String _nextPageToken = '';
   int _totalCount = 0;
-  bool _isJobScoped = false;
   bool _isLoading = false;
   bool _isLoadingMore = false;
   bool _hasError = false;
@@ -71,20 +62,22 @@ class AssetLookupViewModel extends ChangeNotifier {
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
   int get totalCount => _totalCount;
-  bool get doesHaveMore => !_isJobScoped && _nextPageToken.isNotEmpty;
+  bool get doesHaveMore => _nextPageToken.isNotEmpty;
 
-  List<AssetLookupRow> get visibleRows {
-    if (!_isJobScoped) {
-      return _rows;
+  List<AssetLookupRow> get visibleRows => _rows;
+
+  bool get _sharedOnly => _passId == jobCommonPassToken;
+
+  int get _passNo {
+    if (_passId.isEmpty || _sharedOnly) {
+      return 0;
     }
-    final fileName = _fileNameText.trim().toLowerCase();
-    return [
-      for (final row in _rows)
-        if ((_kindCode.isEmpty || row.kindCode == _kindCode) &&
-            (_equipmentId.isEmpty || row.equipmentId == _equipmentId) &&
-            (fileName.isEmpty || row.fileName.toLowerCase().contains(fileName)))
-          row,
-    ];
+    for (final pass in _passes) {
+      if (pass.passId == _passId) {
+        return pass.passNo;
+      }
+    }
+    return 0;
   }
 
   String equipmentNameOf(String equipmentId) {
@@ -191,9 +184,6 @@ class AssetLookupViewModel extends ChangeNotifier {
     }
     _fileNameText = value;
     notifyListeners();
-    if (_jobId.isNotEmpty) {
-      return;
-    }
     _fileNameDebounce?.cancel();
     _fileNameDebounce = Timer(const Duration(milliseconds: 400), () {
       _reloadListAssets();
@@ -205,11 +195,7 @@ class AssetLookupViewModel extends ChangeNotifier {
       return;
     }
     _kindCode = kindCode;
-    if (_jobId.isEmpty) {
-      _reloadListAssets();
-      return;
-    }
-    notifyListeners();
+    _reloadListAssets();
   }
 
   void didSelectEquipment(String equipmentId) {
@@ -217,11 +203,7 @@ class AssetLookupViewModel extends ChangeNotifier {
       return;
     }
     _equipmentId = equipmentId;
-    if (_jobId.isEmpty) {
-      _reloadListAssets();
-      return;
-    }
-    notifyListeners();
+    _reloadListAssets();
   }
 
   void didToggleUnattachedOnly(bool value) {
@@ -229,10 +211,6 @@ class AssetLookupViewModel extends ChangeNotifier {
       return;
     }
     _unattachedOnly = value;
-    if (_jobId.isNotEmpty) {
-      notifyListeners();
-      return;
-    }
     _reloadListAssets();
   }
 
@@ -242,7 +220,7 @@ class AssetLookupViewModel extends ChangeNotifier {
     }
     _jobId = jobId;
     _passId = '';
-    _passes = const [];
+    _passes = passesOf(jobId);
     if (jobId.isNotEmpty) {
       _unattachedOnly = false;
     }
@@ -252,12 +230,6 @@ class AssetLookupViewModel extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
     try {
-      if (jobId.isNotEmpty) {
-        _passes = await _listJobPassesUseCase.execute(jobId: jobId);
-      }
-      if (version != _loadVersion) {
-        return;
-      }
       await _reloadRows(version);
     } catch (error) {
       if (version != _loadVersion) {
@@ -315,6 +287,9 @@ class AssetLookupViewModel extends ChangeNotifier {
         query: _fileNameText,
         equipmentId: _equipmentId,
         unattachedOnly: _unattachedOnly,
+        jobId: _jobId,
+        passNo: _passNo,
+        sharedOnly: _sharedOnly,
         pageSize: pageSize,
         pageToken: pageToken,
       );
@@ -337,6 +312,15 @@ class AssetLookupViewModel extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  List<JobPassOption> passesOf(String jobId) {
+    for (final job in _jobs) {
+      if (job.jobId == jobId) {
+        return job.passes;
+      }
+    }
+    return const [];
   }
 
   Future<void> _reloadListAssets() async {
@@ -363,35 +347,23 @@ class AssetLookupViewModel extends ChangeNotifier {
   }
 
   Future<void> _reloadRows(int version) async {
-    if (_jobId.isEmpty) {
-      final page = await _listAssetLookupPageUseCase.execute(
-        kindCode: _kindCode,
-        query: _fileNameText,
-        equipmentId: _equipmentId,
-        unattachedOnly: _unattachedOnly,
-        pageSize: pageSize,
-        pageToken: '',
-      );
-      if (version != _loadVersion) {
-        return;
-      }
-      _rows = page.rows;
-      _nextPageToken = page.nextPageToken;
-      _totalCount = page.totalCount;
-      _isJobScoped = false;
-      return;
-    }
-    final rows = await _listJobAssetLookupUseCase.execute(
+    final page = await _listAssetLookupPageUseCase.execute(
+      kindCode: _kindCode,
+      query: _fileNameText,
+      equipmentId: _equipmentId,
+      unattachedOnly: _unattachedOnly,
       jobId: _jobId,
-      passId: _passId,
+      passNo: _passNo,
+      sharedOnly: _sharedOnly,
+      pageSize: pageSize,
+      pageToken: '',
     );
     if (version != _loadVersion) {
       return;
     }
-    _rows = rows;
-    _nextPageToken = '';
-    _totalCount = rows.length;
-    _isJobScoped = true;
+    _rows = page.rows;
+    _nextPageToken = page.nextPageToken;
+    _totalCount = page.totalCount;
   }
 
   @override
