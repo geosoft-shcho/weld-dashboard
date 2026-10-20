@@ -48,7 +48,11 @@ class _WorkerLookupBody extends StatelessWidget {
       );
     }
     return CatalogLookupFrame(
-      actionLabel: '새 작업자',
+      tableHeader: LookupTableHeader(
+        label: '작업자',
+        count: viewModel.totalCount,
+        actionText: '+ 새 작업자',
+      ),
       filters: [
         InfoLabel(
           label: '검색',

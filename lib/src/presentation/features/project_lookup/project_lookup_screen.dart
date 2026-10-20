@@ -49,24 +49,11 @@ class _ProjectLookupBody extends StatelessWidget {
     }
     final projects = viewModel.visibleProjects;
     return CatalogLookupFrame(
-      tableHeader: Row(
-        children: [
-          Text('공사', style: const TextStyle(fontWeight: FontWeight.w600)),
-          const SizedBox(width: 4),
-          Text(
-            '${viewModel.totalCount}건',
-            style: const TextStyle(
-              fontWeight: FontWeight.w400,
-              fontSize: 14,
-              color: Color.fromARGB(255, 196, 196, 196),
-            ),
-          ),
-          const Spacer(),
-          FilledButton(
-            onPressed: () => _didTapNewProject(context, viewModel),
-            child: const Text('+ 새 공사'),
-          ),
-        ],
+      tableHeader: LookupTableHeader(
+        label: '공사',
+        count: viewModel.totalCount,
+        actionText: '+ 새 공사',
+        onAction: () => _didTapNewProject(context, viewModel),
       ),
       filters: [
         InfoLabel(

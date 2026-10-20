@@ -65,8 +65,12 @@ class _AssetLookupBody extends StatelessWidget {
         ? viewModel.equipmentId
         : '';
     return CatalogLookupFrame(
-      actionLabel: '올리기',
-      onAction: () => _didTapUpload(context, viewModel),
+      tableHeader: LookupTableHeader(
+        label: '에셋',
+        count: viewModel.totalCount,
+        actionText: '+ 올리기',
+        onAction: () => _didTapUpload(context, viewModel),
+      ),
       filters: [
         InfoLabel(
           label: '종류',

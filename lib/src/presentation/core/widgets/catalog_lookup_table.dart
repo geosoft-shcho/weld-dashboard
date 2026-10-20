@@ -7,15 +7,11 @@ class CatalogLookupFrame extends StatelessWidget {
     super.key,
     required this.filters,
     required this.body,
-    this.actionLabel,
-    this.onAction,
     this.tableHeader,
   });
 
   final List<Widget> filters;
-  final String? actionLabel;
   final Widget body;
-  final VoidCallback? onAction;
   final Widget? tableHeader;
 
   @override
@@ -23,22 +19,11 @@ class CatalogLookupFrame extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Expanded(
-              child: Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                crossAxisAlignment: WrapCrossAlignment.end,
-                children: filters,
-              ),
-            ),
-            if (actionLabel != null) ...[
-              const SizedBox(width: 12),
-              Button(onPressed: onAction, child: Text(actionLabel!)),
-            ],
-          ],
+        Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          crossAxisAlignment: WrapCrossAlignment.end,
+          children: filters,
         ),
         if (tableHeader != null) ...[
           const SizedBox(height: 12),
@@ -46,6 +31,41 @@ class CatalogLookupFrame extends StatelessWidget {
         ],
         const SizedBox(height: 12),
         Expanded(child: body),
+      ],
+    );
+  }
+}
+
+class LookupTableHeader extends StatelessWidget {
+  const LookupTableHeader({
+    super.key,
+    required this.label,
+    required this.count,
+    required this.actionText,
+    this.onAction,
+  });
+
+  final String label;
+  final int count;
+  final String actionText;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(width: 4),
+        Text(
+          '$count건',
+          style: const TextStyle(
+            fontWeight: FontWeight.w400,
+            fontSize: 14,
+            color: Color.fromARGB(255, 196, 196, 196),
+          ),
+        ),
+        const Spacer(),
+        FilledButton(onPressed: onAction, child: Text(actionText)),
       ],
     );
   }

@@ -47,7 +47,11 @@ class _EquipmentLookupBody extends StatelessWidget {
       );
     }
     return CatalogLookupFrame(
-      actionLabel: '새 장비',
+      tableHeader: LookupTableHeader(
+        label: '장비',
+        count: viewModel.totalCount,
+        actionText: '+ 새 장비',
+      ),
       filters: [
         InfoLabel(
           label: '검색',
