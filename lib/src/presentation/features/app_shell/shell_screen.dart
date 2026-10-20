@@ -97,27 +97,27 @@ class _ShellScreenState extends State<ShellScreen> {
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.city_next),
-                title: const Text('공사 조회'),
+                title: const Text('공사 관리'),
                 body: _projectLookupBody(nav),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.contact),
-                title: const Text('작업자 조회'),
+                title: const Text('작업자 관리'),
                 body: _workerLookupBody(nav),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.history),
-                title: const Text('작업 조회'),
+                title: const Text('작업 관리'),
                 body: _workHistoryBody(nav),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.camera),
-                title: const Text('장비 조회'),
+                title: const Text('장비 관리'),
                 body: _equipmentLookupBody(nav),
               ),
               PaneItem(
                 icon: const Icon(FluentIcons.folder_open),
-                title: const Text('에셋 조회'),
+                title: const Text('에셋 관리'),
                 body: _assetLookupBody(nav),
               ),
               PaneItem(

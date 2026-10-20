@@ -94,13 +94,13 @@ class AppCoordinator extends ChangeNotifier {
       case WORK_HISTORY_PANE_INDEX:
         return _workHistoryPageTitle;
       case PROJECT_LOOKUP_PANE_INDEX:
-        return _lookupDetailId.isEmpty ? '공사 조회' : '공사 상세';
+        return _lookupDetailId.isEmpty ? '공사 관리' : '공사 상세';
       case WORKER_LOOKUP_PANE_INDEX:
-        return _lookupDetailId.isEmpty ? '작업자 조회' : '작업자 상세';
+        return _lookupDetailId.isEmpty ? '작업자 관리' : '작업자 상세';
       case EQUIPMENT_LOOKUP_PANE_INDEX:
-        return _lookupDetailId.isEmpty ? '장비 조회' : '장비 상세';
+        return _lookupDetailId.isEmpty ? '장비 관리' : '장비 상세';
       case ASSET_LOOKUP_PANE_INDEX:
-        return _lookupDetailId.isEmpty ? '에셋 조회' : '에셋 상세';
+        return _lookupDetailId.isEmpty ? '에셋 관리' : '에셋 상세';
       case COLLECTION_PANE_INDEX:
       default:
         return '수집 모니터링';
@@ -110,7 +110,7 @@ class AppCoordinator extends ChangeNotifier {
   String get _workHistoryPageTitle {
     switch (_workHistoryStack) {
       case WorkHistoryStack.list:
-        return '작업 조회';
+        return '작업 관리';
       case WorkHistoryStack.detail:
         if (_jobId.isEmpty) {
           return '작업 상세';
