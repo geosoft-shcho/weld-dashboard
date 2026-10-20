@@ -1403,6 +1403,7 @@ class JobSummary extends $pb.GeneratedMessage {
     $core.int? attachmentCount,
     $core.bool? hasReport,
     WorkerType? workerType,
+    $core.Iterable<Pass>? passes,
   }) {
     final result = create();
     if (job != null) result.job = job;
@@ -1412,6 +1413,7 @@ class JobSummary extends $pb.GeneratedMessage {
     if (attachmentCount != null) result.attachmentCount = attachmentCount;
     if (hasReport != null) result.hasReport = hasReport;
     if (workerType != null) result.workerType = workerType;
+    if (passes != null) result.passes.addAll(passes);
     return result;
   }
 
@@ -1440,6 +1442,8 @@ class JobSummary extends $pb.GeneratedMessage {
         defaultOrMaker: WorkerType.WORKER_TYPE_UNSPECIFIED,
         valueOf: WorkerType.valueOf,
         enumValues: WorkerType.values)
+    ..pc<Pass>(9, _omitFieldNames ? '' : 'passes', $pb.PbFieldType.PM,
+        subBuilder: Pass.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1519,6 +1523,9 @@ class JobSummary extends $pb.GeneratedMessage {
   $core.bool hasWorkerType() => $_has(6);
   @$pb.TagNumber(8)
   void clearWorkerType() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $pb.PbList<Pass> get passes => $_getList(7);
 }
 
 /// 관리 · 조회 목록. ListJobs처럼 검색어 · 페이지 · 전체 건수. project_no 오름차순.
@@ -4345,6 +4352,7 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     $fixnum.Int64? projectId,
     $fixnum.Int64? assetId,
     WorkerType? workerType,
+    $fixnum.Int64? projectItemId,
   }) {
     final result = create();
     if (projectNo != null) result.projectNo = projectNo;
@@ -4362,6 +4370,7 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     if (projectId != null) result.projectId = projectId;
     if (assetId != null) result.assetId = assetId;
     if (workerType != null) result.workerType = workerType;
+    if (projectItemId != null) result.projectItemId = projectItemId;
     return result;
   }
 
@@ -4399,6 +4408,7 @@ class ListJobsRequest extends $pb.GeneratedMessage {
         defaultOrMaker: WorkerType.WORKER_TYPE_UNSPECIFIED,
         valueOf: WorkerType.valueOf,
         enumValues: WorkerType.values)
+    ..aInt64(17, _omitFieldNames ? '' : 'projectItemId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -4560,6 +4570,15 @@ class ListJobsRequest extends $pb.GeneratedMessage {
   $core.bool hasWorkerType() => $_has(14);
   @$pb.TagNumber(16)
   void clearWorkerType() => $_clearField(16);
+
+  @$pb.TagNumber(17)
+  $fixnum.Int64 get projectItemId => $_getI64(15);
+  @$pb.TagNumber(17)
+  set projectItemId($fixnum.Int64 value) => $_setInt64(15, value);
+  @$pb.TagNumber(17)
+  $core.bool hasProjectItemId() => $_has(15);
+  @$pb.TagNumber(17)
+  void clearProjectItemId() => $_clearField(17);
 }
 
 class ListJobsResponse extends $pb.GeneratedMessage {
@@ -4783,12 +4802,12 @@ class GetJobResponse extends $pb.GeneratedMessage {
 }
 
 /// 노드의 위치. 클라이언트는 받은 값을 그대로 parent로 돌려보낸다.
-/// level 단계의 ID가 비어 있으면 그 단계가 "미지정" 노드다(Pass 단계면 "작업 공용").
+/// level 단계의 ID가 비어 있으면 그 단계가 "미지정" 노드다.
 ///   - 장비 미지정: equipment_id 없는 Asset
 ///   - 공사 미지정: project_no 없는 Job, 또는 (장비별) 작업에 첨부 안 된 Asset
 ///   - 품목 미지정: common_key 없는 Job, 또는 (장비별) 작업에 첨부 안 된 Asset
-///   - 작업 미지정: (장비별) 작업에 첨부 안 된 Asset. 자식은 Pass 없이 바로 Asset
-///   - 작업 공용:   job_asset.pass_id가 빈 첨부
+///   - 작업 미지정: (장비별) 작업에 첨부 안 된 Asset
+/// 작업 노드의 자식은 바로 Asset이다. Asset 노드의 pass_id = 첨부된 패스(비어 있으면 작업 공용).
 /// 작업자별 보기에는 작업에 첨부 안 된 Asset이 나오지 않는다(작업자는 작업을 거쳐 안다).
 class CollectionPath extends $pb.GeneratedMessage {
   factory CollectionPath({
@@ -4943,12 +4962,14 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
     $fixnum.Int64? startOffsetNs,
     $fixnum.Int64? endOffsetNs,
     TimeBasis? basis,
+    SegmentUnit? segmentUnit,
   }) {
     final result = create();
     if (parent != null) result.parent = parent;
     if (startOffsetNs != null) result.startOffsetNs = startOffsetNs;
     if (endOffsetNs != null) result.endOffsetNs = endOffsetNs;
     if (basis != null) result.basis = basis;
+    if (segmentUnit != null) result.segmentUnit = segmentUnit;
     return result;
   }
 
@@ -4974,6 +4995,11 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
         defaultOrMaker: TimeBasis.TIME_BASIS_UNSPECIFIED,
         valueOf: TimeBasis.valueOf,
         enumValues: TimeBasis.values)
+    ..e<SegmentUnit>(
+        5, _omitFieldNames ? '' : 'segmentUnit', $pb.PbFieldType.OE,
+        defaultOrMaker: SegmentUnit.SEGMENT_UNIT_UNSPECIFIED,
+        valueOf: SegmentUnit.valueOf,
+        enumValues: SegmentUnit.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -5012,8 +5038,7 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
   CollectionPath ensureParent() => $_ensure(0);
 
   /// 선택 구간. parent에 job_id가 있을 때만 쓴다. job.started_at 기준 나노초 오프셋이고
-  /// asset.recorded_at이 [start, end) 안에 드는 Asset만 센다. Pass를 골랐고 구간을
-  /// 비우면 pass.started_at~ended_at이 구간이다.
+  /// asset.recorded_at이 [start, end) 안에 드는 Asset만 센다.
   @$pb.TagNumber(2)
   $fixnum.Int64 get startOffsetNs => $_getI64(1);
   @$pb.TagNumber(2)
@@ -5041,6 +5066,16 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
   $core.bool hasBasis() => $_has(3);
   @$pb.TagNumber(4)
   void clearBasis() => $_clearField(4);
+
+  /// segments를 자르는 단위(작업 구간 기준일 때). 비우면 JOB. 트리를 열지 않고 어느 단계에서든 작업/패스 단위 막대를 본다.
+  @$pb.TagNumber(5)
+  SegmentUnit get segmentUnit => $_getN(4);
+  @$pb.TagNumber(5)
+  set segmentUnit(SegmentUnit value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasSegmentUnit() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearSegmentUnit() => $_clearField(5);
 }
 
 class ListCollectionNodesResponse extends $pb.GeneratedMessage {
@@ -5108,6 +5143,7 @@ class CollectionNode extends $pb.GeneratedMessage {
     $2.Asset? asset,
     $0.Timestamp? startedAt,
     $0.Timestamp? endedAt,
+    $core.Iterable<TimeRange>? segments,
   }) {
     final result = create();
     if (path != null) result.path = path;
@@ -5117,6 +5153,7 @@ class CollectionNode extends $pb.GeneratedMessage {
     if (asset != null) result.asset = asset;
     if (startedAt != null) result.startedAt = startedAt;
     if (endedAt != null) result.endedAt = endedAt;
+    if (segments != null) result.segments.addAll(segments);
     return result;
   }
 
@@ -5146,6 +5183,8 @@ class CollectionNode extends $pb.GeneratedMessage {
         subBuilder: $0.Timestamp.create)
     ..aOM<$0.Timestamp>(7, _omitFieldNames ? '' : 'endedAt',
         subBuilder: $0.Timestamp.create)
+    ..pc<TimeRange>(8, _omitFieldNames ? '' : 'segments', $pb.PbFieldType.PM,
+        subBuilder: TimeRange.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -5241,9 +5280,88 @@ class CollectionNode extends $pb.GeneratedMessage {
   void clearEndedAt() => $_clearField(7);
   @$pb.TagNumber(7)
   $0.Timestamp ensureEndedAt() => $_ensure(6);
+
+  /// 막대로 그릴 구간(시작 순, 겹치거나 맞닿으면 합침) — started_at~ended_at은 전체 범위라 사이의 빈 날이 안 보인다.
+  /// 작업 구간 기준: 그 아래 작업들의 구간(segment_unit JOB — 작업 노드는 자기 구간 하나) 또는 패스들의 구간(PASS), 파일은 속한 패스(없으면 작업)의 구간.
+  /// 수집 구간 기준: 그 아래 파일들의 기록 구간, 파일은 자기 구간. 알 수 없으면 비어 있음
+  @$pb.TagNumber(8)
+  $pb.PbList<TimeRange> get segments => $_getList(7);
 }
 
 /// asset_id를 먼저 중복 제거한 뒤 집계한다(Asset 하나가 여러 작업에 첨부될 수 있음).
+class TimeRange extends $pb.GeneratedMessage {
+  factory TimeRange({
+    $0.Timestamp? startedAt,
+    $0.Timestamp? endedAt,
+  }) {
+    final result = create();
+    if (startedAt != null) result.startedAt = startedAt;
+    if (endedAt != null) result.endedAt = endedAt;
+    return result;
+  }
+
+  TimeRange._();
+
+  factory TimeRange.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory TimeRange.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'TimeRange',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<$0.Timestamp>(1, _omitFieldNames ? '' : 'startedAt',
+        subBuilder: $0.Timestamp.create)
+    ..aOM<$0.Timestamp>(2, _omitFieldNames ? '' : 'endedAt',
+        subBuilder: $0.Timestamp.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TimeRange clone() => TimeRange()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TimeRange copyWith(void Function(TimeRange) updates) =>
+      super.copyWith((message) => updates(message as TimeRange)) as TimeRange;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static TimeRange create() => TimeRange._();
+  @$core.override
+  TimeRange createEmptyInstance() => create();
+  static $pb.PbList<TimeRange> createRepeated() => $pb.PbList<TimeRange>();
+  @$core.pragma('dart2js:noInline')
+  static TimeRange getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<TimeRange>(create);
+  static TimeRange? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $0.Timestamp get startedAt => $_getN(0);
+  @$pb.TagNumber(1)
+  set startedAt($0.Timestamp value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasStartedAt() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearStartedAt() => $_clearField(1);
+  @$pb.TagNumber(1)
+  $0.Timestamp ensureStartedAt() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $0.Timestamp get endedAt => $_getN(1);
+  @$pb.TagNumber(2)
+  set endedAt($0.Timestamp value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasEndedAt() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearEndedAt() => $_clearField(2);
+  @$pb.TagNumber(2)
+  $0.Timestamp ensureEndedAt() => $_ensure(1);
+}
+
 class CollectionSummary extends $pb.GeneratedMessage {
   factory CollectionSummary({
     $fixnum.Int64? assetCount,
@@ -5935,13 +6053,14 @@ class WorkServiceApi {
       _client.invoke<ListItemsResponse>(
           ctx, 'WorkService', 'ListItems', request, ListItemsResponse());
 
-  /// 작업 목록(ListJobs) 필터의 드롭다운 값을 한 번에: 공사(호기·품목 포함)·작업자·장비.
+  /// 공사(호기·품목·이음부·패스 포함)·작업자·장비 드롭다운 값을 한 번에. 작업 목록(ListJobs)·Asset 목록(ListAssets.job)·관리 화면이 함께 쓴다.
+  /// 개수(job_count·*_counts)는 작업 수다 — Asset 수가 아니다.
   $async.Future<ListJobFiltersResponse> listJobFilters(
           $pb.ClientContext? ctx, ListJobFiltersRequest request) =>
       _client.invoke<ListJobFiltersResponse>(ctx, 'WorkService',
           'ListJobFilters', request, ListJobFiltersResponse());
 
-  /// 작업 목록. 행마다 표시용 이름·개수를 붙여 준다(행별 추가 조회 불필요).
+  /// 작업 목록. 행마다 표시용 이름·개수·패스를 붙여 준다(행별 추가 조회 불필요).
   $async.Future<ListJobsResponse> listJobs(
           $pb.ClientContext? ctx, ListJobsRequest request) =>
       _client.invoke<ListJobsResponse>(
@@ -6005,7 +6124,7 @@ class WorkServiceApi {
           ctx, 'WorkService', 'GetJob', request, GetJobResponse());
 
   /// 수집 현황 계층을 한 단계씩 조회한다. 장비가 기록한 자료(원본과 원본을 대신하는 표준화본·잘라 낸 PDF)만 센다 —
-  /// 도구 결과물(STT·포즈·잘라 낸 이미지·추출 JSON)은 작업 첨부(ListJobAssets)·타임라인에서 본다.
+  /// 도구 결과물(STT·포즈·잘라 낸 이미지·추출 JSON)은 작업 첨부(AssetService.ListAssets의 job 필터)·타임라인에서 본다.
   $async.Future<ListCollectionNodesResponse> listCollectionNodes(
           $pb.ClientContext? ctx, ListCollectionNodesRequest request) =>
       _client.invoke<ListCollectionNodesResponse>(ctx, 'WorkService',

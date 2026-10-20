@@ -37,8 +37,6 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $2.MergeAssetsRequest request);
   $async.Future<$2.ListUploadFormatsResponse> listUploadFormats(
       $pb.ServerContext ctx, $2.ListUploadFormatsRequest request);
-  $async.Future<$2.ListJobAssetsResponse> listJobAssets(
-      $pb.ServerContext ctx, $2.ListJobAssetsRequest request);
   $async.Future<$2.AttachAssetResponse> attachAsset(
       $pb.ServerContext ctx, $2.AttachAssetRequest request);
   $async.Future<$2.DetachAssetResponse> detachAsset(
@@ -62,8 +60,6 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
         return $2.MergeAssetsRequest();
       case 'ListUploadFormats':
         return $2.ListUploadFormatsRequest();
-      case 'ListJobAssets':
-        return $2.ListJobAssetsRequest();
       case 'AttachAsset':
         return $2.AttachAssetRequest();
       case 'DetachAsset':
@@ -95,8 +91,6 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
         return mergeAssets(ctx, request as $2.MergeAssetsRequest);
       case 'ListUploadFormats':
         return listUploadFormats(ctx, request as $2.ListUploadFormatsRequest);
-      case 'ListJobAssets':
-        return listJobAssets(ctx, request as $2.ListJobAssetsRequest);
       case 'AttachAsset':
         return attachAsset(ctx, request as $2.AttachAssetRequest);
       case 'DetachAsset':

@@ -594,6 +594,7 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     $fixnum.Int64? equipmentId,
     $core.bool? unattachedOnly,
     $core.String? query,
+    AssetJobFilter? job,
   }) {
     final result = create();
     if (pageSize != null) result.pageSize = pageSize;
@@ -604,6 +605,7 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     if (equipmentId != null) result.equipmentId = equipmentId;
     if (unattachedOnly != null) result.unattachedOnly = unattachedOnly;
     if (query != null) result.query = query;
+    if (job != null) result.job = job;
     return result;
   }
 
@@ -632,6 +634,8 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     ..aInt64(6, _omitFieldNames ? '' : 'equipmentId')
     ..aOB(7, _omitFieldNames ? '' : 'unattachedOnly')
     ..aOS(8, _omitFieldNames ? '' : 'query')
+    ..aOM<AssetJobFilter>(9, _omitFieldNames ? '' : 'job',
+        subBuilder: AssetJobFilter.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -726,6 +730,202 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
   $core.bool hasQuery() => $_has(7);
   @$pb.TagNumber(8)
   void clearQuery() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  AssetJobFilter get job => $_getN(8);
+  @$pb.TagNumber(9)
+  set job(AssetJobFilter value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasJob() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearJob() => $_clearField(9);
+  @$pb.TagNumber(9)
+  AssetJobFilter ensureJob() => $_ensure(8);
+}
+
+/// 이 조건에 맞는 작업에 직접 첨부(job_asset)된 Asset. 부모만 붙은 파생은 안 나온다(ListJobs.asset_id와 같은 기준).
+/// 칸은 ListJobs와 같은 뜻이고(pass_no만 다름) 모두 AND. 번호가 있는 것은 번호로, 번호가 없는 호기 · 품목 · 이음부 · 패스 순번은 값으로 받는다. 다 비면 어느 작업에든 첨부된 것.
+class AssetJobFilter extends $pb.GeneratedMessage {
+  factory AssetJobFilter({
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? projectId,
+    $core.String? unitNo,
+    $core.String? itemCode,
+    $fixnum.Int64? projectItemId,
+    $core.String? jointNo,
+    $core.int? passNo,
+    $core.bool? sharedOnly,
+    $fixnum.Int64? workerId,
+    $1.Timestamp? startedFrom,
+    $1.Timestamp? startedTo,
+  }) {
+    final result = create();
+    if (jobId != null) result.jobId = jobId;
+    if (projectId != null) result.projectId = projectId;
+    if (unitNo != null) result.unitNo = unitNo;
+    if (itemCode != null) result.itemCode = itemCode;
+    if (projectItemId != null) result.projectItemId = projectItemId;
+    if (jointNo != null) result.jointNo = jointNo;
+    if (passNo != null) result.passNo = passNo;
+    if (sharedOnly != null) result.sharedOnly = sharedOnly;
+    if (workerId != null) result.workerId = workerId;
+    if (startedFrom != null) result.startedFrom = startedFrom;
+    if (startedTo != null) result.startedTo = startedTo;
+    return result;
+  }
+
+  AssetJobFilter._();
+
+  factory AssetJobFilter.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory AssetJobFilter.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'AssetJobFilter',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(2, _omitFieldNames ? '' : 'projectId')
+    ..aOS(3, _omitFieldNames ? '' : 'unitNo')
+    ..aOS(4, _omitFieldNames ? '' : 'itemCode')
+    ..aInt64(5, _omitFieldNames ? '' : 'projectItemId')
+    ..aOS(6, _omitFieldNames ? '' : 'jointNo')
+    ..a<$core.int>(7, _omitFieldNames ? '' : 'passNo', $pb.PbFieldType.O3)
+    ..aOB(8, _omitFieldNames ? '' : 'sharedOnly')
+    ..aInt64(9, _omitFieldNames ? '' : 'workerId')
+    ..aOM<$1.Timestamp>(10, _omitFieldNames ? '' : 'startedFrom',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(11, _omitFieldNames ? '' : 'startedTo',
+        subBuilder: $1.Timestamp.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AssetJobFilter clone() => AssetJobFilter()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AssetJobFilter copyWith(void Function(AssetJobFilter) updates) =>
+      super.copyWith((message) => updates(message as AssetJobFilter))
+          as AssetJobFilter;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static AssetJobFilter create() => AssetJobFilter._();
+  @$core.override
+  AssetJobFilter createEmptyInstance() => create();
+  static $pb.PbList<AssetJobFilter> createRepeated() =>
+      $pb.PbList<AssetJobFilter>();
+  @$core.pragma('dart2js:noInline')
+  static AssetJobFilter getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AssetJobFilter>(create);
+  static AssetJobFilter? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get jobId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasJobId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearJobId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get projectId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set projectId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasProjectId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearProjectId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get unitNo => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set unitNo($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasUnitNo() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearUnitNo() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get itemCode => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set itemCode($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasItemCode() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearItemCode() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get projectItemId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set projectItemId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasProjectItemId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearProjectItemId() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get jointNo => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set jointNo($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasJointNo() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearJointNo() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.int get passNo => $_getIZ(6);
+  @$pb.TagNumber(7)
+  set passNo($core.int value) => $_setSignedInt32(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasPassNo() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearPassNo() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.bool get sharedOnly => $_getBF(7);
+  @$pb.TagNumber(8)
+  set sharedOnly($core.bool value) => $_setBool(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasSharedOnly() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearSharedOnly() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $fixnum.Int64 get workerId => $_getI64(8);
+  @$pb.TagNumber(9)
+  set workerId($fixnum.Int64 value) => $_setInt64(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasWorkerId() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearWorkerId() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $1.Timestamp get startedFrom => $_getN(9);
+  @$pb.TagNumber(10)
+  set startedFrom($1.Timestamp value) => $_setField(10, value);
+  @$pb.TagNumber(10)
+  $core.bool hasStartedFrom() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearStartedFrom() => $_clearField(10);
+  @$pb.TagNumber(10)
+  $1.Timestamp ensureStartedFrom() => $_ensure(9);
+
+  @$pb.TagNumber(11)
+  $1.Timestamp get startedTo => $_getN(10);
+  @$pb.TagNumber(11)
+  set startedTo($1.Timestamp value) => $_setField(11, value);
+  @$pb.TagNumber(11)
+  $core.bool hasStartedTo() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearStartedTo() => $_clearField(11);
+  @$pb.TagNumber(11)
+  $1.Timestamp ensureStartedTo() => $_ensure(10);
 }
 
 class ListAssetsResponse extends $pb.GeneratedMessage {
@@ -733,11 +933,13 @@ class ListAssetsResponse extends $pb.GeneratedMessage {
     $core.Iterable<Asset>? assets,
     $core.String? nextPageToken,
     $core.int? totalCount,
+    $core.Iterable<$core.MapEntry<$fixnum.Int64, $fixnum.Int64>>? passIds,
   }) {
     final result = create();
     if (assets != null) result.assets.addAll(assets);
     if (nextPageToken != null) result.nextPageToken = nextPageToken;
     if (totalCount != null) result.totalCount = totalCount;
+    if (passIds != null) result.passIds.addEntries(passIds);
     return result;
   }
 
@@ -759,6 +961,11 @@ class ListAssetsResponse extends $pb.GeneratedMessage {
         subBuilder: Asset.create)
     ..aOS(2, _omitFieldNames ? '' : 'nextPageToken')
     ..a<$core.int>(3, _omitFieldNames ? '' : 'totalCount', $pb.PbFieldType.O3)
+    ..m<$fixnum.Int64, $fixnum.Int64>(4, _omitFieldNames ? '' : 'passIds',
+        entryClassName: 'ListAssetsResponse.PassIdsEntry',
+        keyFieldType: $pb.PbFieldType.O6,
+        valueFieldType: $pb.PbFieldType.O6,
+        packageName: const $pb.PackageName('mediatag.asset.v1'))
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -802,6 +1009,9 @@ class ListAssetsResponse extends $pb.GeneratedMessage {
   $core.bool hasTotalCount() => $_has(2);
   @$pb.TagNumber(3)
   void clearTotalCount() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $pb.PbMap<$fixnum.Int64, $fixnum.Int64> get passIds => $_getMap(3);
 }
 
 class GetAssetRequest extends $pb.GeneratedMessage {
@@ -1934,131 +2144,6 @@ class JobAsset extends $pb.GeneratedMessage {
   void clearPassId() => $_clearField(2);
 }
 
-class ListJobAssetsRequest extends $pb.GeneratedMessage {
-  factory ListJobAssetsRequest({
-    $fixnum.Int64? jobId,
-    $fixnum.Int64? passId,
-  }) {
-    final result = create();
-    if (jobId != null) result.jobId = jobId;
-    if (passId != null) result.passId = passId;
-    return result;
-  }
-
-  ListJobAssetsRequest._();
-
-  factory ListJobAssetsRequest.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory ListJobAssetsRequest.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'ListJobAssetsRequest',
-      package:
-          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
-      createEmptyInstance: create)
-    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
-    ..aInt64(2, _omitFieldNames ? '' : 'passId')
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ListJobAssetsRequest clone() =>
-      ListJobAssetsRequest()..mergeFromMessage(this);
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ListJobAssetsRequest copyWith(void Function(ListJobAssetsRequest) updates) =>
-      super.copyWith((message) => updates(message as ListJobAssetsRequest))
-          as ListJobAssetsRequest;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static ListJobAssetsRequest create() => ListJobAssetsRequest._();
-  @$core.override
-  ListJobAssetsRequest createEmptyInstance() => create();
-  static $pb.PbList<ListJobAssetsRequest> createRepeated() =>
-      $pb.PbList<ListJobAssetsRequest>();
-  @$core.pragma('dart2js:noInline')
-  static ListJobAssetsRequest getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<ListJobAssetsRequest>(create);
-  static ListJobAssetsRequest? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $fixnum.Int64 get jobId => $_getI64(0);
-  @$pb.TagNumber(1)
-  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
-  @$pb.TagNumber(1)
-  $core.bool hasJobId() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearJobId() => $_clearField(1);
-
-  /// 설정하면 그 패스의 첨부만. 0이면 작업 공용 첨부만.
-  @$pb.TagNumber(2)
-  $fixnum.Int64 get passId => $_getI64(1);
-  @$pb.TagNumber(2)
-  set passId($fixnum.Int64 value) => $_setInt64(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasPassId() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearPassId() => $_clearField(2);
-}
-
-class ListJobAssetsResponse extends $pb.GeneratedMessage {
-  factory ListJobAssetsResponse({
-    $core.Iterable<JobAsset>? assets,
-  }) {
-    final result = create();
-    if (assets != null) result.assets.addAll(assets);
-    return result;
-  }
-
-  ListJobAssetsResponse._();
-
-  factory ListJobAssetsResponse.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory ListJobAssetsResponse.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'ListJobAssetsResponse',
-      package:
-          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
-      createEmptyInstance: create)
-    ..pc<JobAsset>(1, _omitFieldNames ? '' : 'assets', $pb.PbFieldType.PM,
-        subBuilder: JobAsset.create)
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ListJobAssetsResponse clone() =>
-      ListJobAssetsResponse()..mergeFromMessage(this);
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ListJobAssetsResponse copyWith(
-          void Function(ListJobAssetsResponse) updates) =>
-      super.copyWith((message) => updates(message as ListJobAssetsResponse))
-          as ListJobAssetsResponse;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static ListJobAssetsResponse create() => ListJobAssetsResponse._();
-  @$core.override
-  ListJobAssetsResponse createEmptyInstance() => create();
-  static $pb.PbList<ListJobAssetsResponse> createRepeated() =>
-      $pb.PbList<ListJobAssetsResponse>();
-  @$core.pragma('dart2js:noInline')
-  static ListJobAssetsResponse getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<ListJobAssetsResponse>(create);
-  static ListJobAssetsResponse? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $pb.PbList<JobAsset> get assets => $_getList(0);
-}
-
 class AttachAssetRequest extends $pb.GeneratedMessage {
   factory AttachAssetRequest({
     $fixnum.Int64? jobId,
@@ -2553,7 +2638,7 @@ class AssetServiceApi {
       _client.invoke<ImportAssetFromSourceResponse>(ctx, 'AssetService',
           'ImportAssetFromSource', request, ImportAssetFromSourceResponse());
 
-  /// Asset 목록(페이지·kind 필터·부모 필터). 작업별 목록은 ListJobAssets.
+  /// Asset 목록(페이지 · kind · 부모 · 작업 필터). 작업의 첨부 목록은 job.job_id로(pass_ids에 패스).
   $async.Future<ListAssetsResponse> listAssets(
           $pb.ClientContext? ctx, ListAssetsRequest request) =>
       _client.invoke<ListAssetsResponse>(
@@ -2604,12 +2689,6 @@ class AssetServiceApi {
 
   /// 첨부(job_asset) — "이 작업의 자료인가". Clip으로 놓으면 서버가 자동 첨부하므로, 이 RPC는
   /// 타임라인에 놓지 않고 작업 자료로만 둘 때(PDF 등)와 패스를 고칠 때 쓴다.
-  /// 작업의 첨부 목록
-  $async.Future<ListJobAssetsResponse> listJobAssets(
-          $pb.ClientContext? ctx, ListJobAssetsRequest request) =>
-      _client.invoke<ListJobAssetsResponse>(ctx, 'AssetService',
-          'ListJobAssets', request, ListJobAssetsResponse());
-
   /// 첨부. 이미 첨부돼 있으면 pass_id만 고친다(upsert).
   /// pass_id가 다른 작업의 패스면 InvalidArgument.
   $async.Future<AttachAssetResponse> attachAsset(

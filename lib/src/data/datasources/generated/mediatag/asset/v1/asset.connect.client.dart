@@ -27,7 +27,7 @@ extension type AssetServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// Asset 목록(페이지·kind 필터·부모 필터). 작업별 목록은 ListJobAssets.
+  /// Asset 목록(페이지 · kind · 부모 · 작업 필터). 작업의 첨부 목록은 job.job_id로(pass_ids에 패스).
   Future<mediatagassetv1asset.ListAssetsResponse> listAssets(
     mediatagassetv1asset.ListAssetsRequest input, {
     connect.Headers? headers,
@@ -164,24 +164,6 @@ extension type AssetServiceClient (connect.Transport _transport) {
 
   /// 첨부(job_asset) — "이 작업의 자료인가". Clip으로 놓으면 서버가 자동 첨부하므로, 이 RPC는
   /// 타임라인에 놓지 않고 작업 자료로만 둘 때(PDF 등)와 패스를 고칠 때 쓴다.
-  /// 작업의 첨부 목록
-  Future<mediatagassetv1asset.ListJobAssetsResponse> listJobAssets(
-    mediatagassetv1asset.ListJobAssetsRequest input, {
-    connect.Headers? headers,
-    connect.AbortSignal? signal,
-    Function(connect.Headers)? onHeader,
-    Function(connect.Headers)? onTrailer,
-  }) {
-    return connect.Client(_transport).unary(
-      specs.AssetService.listJobAssets,
-      input,
-      signal: signal,
-      headers: headers,
-      onHeader: onHeader,
-      onTrailer: onTrailer,
-    );
-  }
-
   /// 첨부. 이미 첨부돼 있으면 pass_id만 고친다(upsert).
   /// pass_id가 다른 작업의 패스면 InvalidArgument.
   Future<mediatagassetv1asset.AttachAssetResponse> attachAsset(

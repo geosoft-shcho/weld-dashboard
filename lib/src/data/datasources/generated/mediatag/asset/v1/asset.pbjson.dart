@@ -252,6 +252,14 @@ const ListAssetsRequest$json = {
     {'1': 'equipment_id', '3': 6, '4': 1, '5': 3, '10': 'equipmentId'},
     {'1': 'unattached_only', '3': 7, '4': 1, '5': 8, '10': 'unattachedOnly'},
     {'1': 'query', '3': 8, '4': 1, '5': 9, '10': 'query'},
+    {
+      '1': 'job',
+      '3': 9,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.asset.v1.AssetJobFilter',
+      '10': 'job'
+    },
   ],
 };
 
@@ -262,7 +270,51 @@ final $typed_data.Uint8List listAssetsRequestDescriptor = $convert.base64Decode(
     'djEuQXNzZXRLaW5kUgRraW5kEiYKD3BhcmVudF9hc3NldF9pZBgEIAEoA1INcGFyZW50QXNzZX'
     'RJZBIbCglmaWxlX25hbWUYBSABKAlSCGZpbGVOYW1lEiEKDGVxdWlwbWVudF9pZBgGIAEoA1IL'
     'ZXF1aXBtZW50SWQSJwoPdW5hdHRhY2hlZF9vbmx5GAcgASgIUg51bmF0dGFjaGVkT25seRIUCg'
-    'VxdWVyeRgIIAEoCVIFcXVlcnk=');
+    'VxdWVyeRgIIAEoCVIFcXVlcnkSMwoDam9iGAkgASgLMiEubWVkaWF0YWcuYXNzZXQudjEuQXNz'
+    'ZXRKb2JGaWx0ZXJSA2pvYg==');
+
+@$core.Deprecated('Use assetJobFilterDescriptor instead')
+const AssetJobFilter$json = {
+  '1': 'AssetJobFilter',
+  '2': [
+    {'1': 'job_id', '3': 1, '4': 1, '5': 3, '10': 'jobId'},
+    {'1': 'project_id', '3': 2, '4': 1, '5': 3, '10': 'projectId'},
+    {'1': 'unit_no', '3': 3, '4': 1, '5': 9, '10': 'unitNo'},
+    {'1': 'item_code', '3': 4, '4': 1, '5': 9, '10': 'itemCode'},
+    {'1': 'project_item_id', '3': 5, '4': 1, '5': 3, '10': 'projectItemId'},
+    {'1': 'joint_no', '3': 6, '4': 1, '5': 9, '10': 'jointNo'},
+    {'1': 'pass_no', '3': 7, '4': 1, '5': 5, '10': 'passNo'},
+    {'1': 'shared_only', '3': 8, '4': 1, '5': 8, '10': 'sharedOnly'},
+    {'1': 'worker_id', '3': 9, '4': 1, '5': 3, '10': 'workerId'},
+    {
+      '1': 'started_from',
+      '3': 10,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'startedFrom'
+    },
+    {
+      '1': 'started_to',
+      '3': 11,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'startedTo'
+    },
+  ],
+};
+
+/// Descriptor for `AssetJobFilter`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List assetJobFilterDescriptor = $convert.base64Decode(
+    'Cg5Bc3NldEpvYkZpbHRlchIVCgZqb2JfaWQYASABKANSBWpvYklkEh0KCnByb2plY3RfaWQYAi'
+    'ABKANSCXByb2plY3RJZBIXCgd1bml0X25vGAMgASgJUgZ1bml0Tm8SGwoJaXRlbV9jb2RlGAQg'
+    'ASgJUghpdGVtQ29kZRImCg9wcm9qZWN0X2l0ZW1faWQYBSABKANSDXByb2plY3RJdGVtSWQSGQ'
+    'oIam9pbnRfbm8YBiABKAlSB2pvaW50Tm8SFwoHcGFzc19ubxgHIAEoBVIGcGFzc05vEh8KC3No'
+    'YXJlZF9vbmx5GAggASgIUgpzaGFyZWRPbmx5EhsKCXdvcmtlcl9pZBgJIAEoA1IId29ya2VySW'
+    'QSPQoMc3RhcnRlZF9mcm9tGAogASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcFILc3Rh'
+    'cnRlZEZyb20SOQoKc3RhcnRlZF90bxgLIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbX'
+    'BSCXN0YXJ0ZWRUbw==');
 
 @$core.Deprecated('Use listAssetsResponseDescriptor instead')
 const ListAssetsResponse$json = {
@@ -278,14 +330,36 @@ const ListAssetsResponse$json = {
     },
     {'1': 'next_page_token', '3': 2, '4': 1, '5': 9, '10': 'nextPageToken'},
     {'1': 'total_count', '3': 3, '4': 1, '5': 5, '10': 'totalCount'},
+    {
+      '1': 'pass_ids',
+      '3': 4,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.asset.v1.ListAssetsResponse.PassIdsEntry',
+      '10': 'passIds'
+    },
   ],
+  '3': [ListAssetsResponse_PassIdsEntry$json],
+};
+
+@$core.Deprecated('Use listAssetsResponseDescriptor instead')
+const ListAssetsResponse_PassIdsEntry$json = {
+  '1': 'PassIdsEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 3, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 3, '10': 'value'},
+  ],
+  '7': {'7': true},
 };
 
 /// Descriptor for `ListAssetsResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listAssetsResponseDescriptor = $convert.base64Decode(
     'ChJMaXN0QXNzZXRzUmVzcG9uc2USMAoGYXNzZXRzGAEgAygLMhgubWVkaWF0YWcuYXNzZXQudj'
     'EuQXNzZXRSBmFzc2V0cxImCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAlSDW5leHRQYWdlVG9rZW4S'
-    'HwoLdG90YWxfY291bnQYAyABKAVSCnRvdGFsQ291bnQ=');
+    'HwoLdG90YWxfY291bnQYAyABKAVSCnRvdGFsQ291bnQSTQoIcGFzc19pZHMYBCADKAsyMi5tZW'
+    'RpYXRhZy5hc3NldC52MS5MaXN0QXNzZXRzUmVzcG9uc2UuUGFzc0lkc0VudHJ5UgdwYXNzSWRz'
+    'GjoKDFBhc3NJZHNFbnRyeRIQCgNrZXkYASABKANSA2tleRIUCgV2YWx1ZRgCIAEoA1IFdmFsdW'
+    'U6AjgB');
 
 @$core.Deprecated('Use getAssetRequestDescriptor instead')
 const GetAssetRequest$json = {
@@ -606,51 +680,6 @@ final $typed_data.Uint8List jobAssetDescriptor = $convert.base64Decode(
     'CghKb2JBc3NldBIuCgVhc3NldBgBIAEoCzIYLm1lZGlhdGFnLmFzc2V0LnYxLkFzc2V0UgVhc3'
     'NldBIXCgdwYXNzX2lkGAIgASgDUgZwYXNzSWQ=');
 
-@$core.Deprecated('Use listJobAssetsRequestDescriptor instead')
-const ListJobAssetsRequest$json = {
-  '1': 'ListJobAssetsRequest',
-  '2': [
-    {'1': 'job_id', '3': 1, '4': 1, '5': 3, '10': 'jobId'},
-    {
-      '1': 'pass_id',
-      '3': 2,
-      '4': 1,
-      '5': 3,
-      '9': 0,
-      '10': 'passId',
-      '17': true
-    },
-  ],
-  '8': [
-    {'1': '_pass_id'},
-  ],
-};
-
-/// Descriptor for `ListJobAssetsRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List listJobAssetsRequestDescriptor = $convert.base64Decode(
-    'ChRMaXN0Sm9iQXNzZXRzUmVxdWVzdBIVCgZqb2JfaWQYASABKANSBWpvYklkEhwKB3Bhc3NfaW'
-    'QYAiABKANIAFIGcGFzc0lkiAEBQgoKCF9wYXNzX2lk');
-
-@$core.Deprecated('Use listJobAssetsResponseDescriptor instead')
-const ListJobAssetsResponse$json = {
-  '1': 'ListJobAssetsResponse',
-  '2': [
-    {
-      '1': 'assets',
-      '3': 1,
-      '4': 3,
-      '5': 11,
-      '6': '.mediatag.asset.v1.JobAsset',
-      '10': 'assets'
-    },
-  ],
-};
-
-/// Descriptor for `ListJobAssetsResponse`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List listJobAssetsResponseDescriptor = $convert.base64Decode(
-    'ChVMaXN0Sm9iQXNzZXRzUmVzcG9uc2USMwoGYXNzZXRzGAEgAygLMhsubWVkaWF0YWcuYXNzZX'
-    'QudjEuSm9iQXNzZXRSBmFzc2V0cw==');
-
 @$core.Deprecated('Use attachAssetRequestDescriptor instead')
 const AttachAssetRequest$json = {
   '1': 'AttachAssetRequest',
@@ -822,11 +851,6 @@ const $core.Map<$core.String, $core.dynamic> AssetServiceBase$json = {
       '3': '.mediatag.asset.v1.ListUploadFormatsResponse'
     },
     {
-      '1': 'ListJobAssets',
-      '2': '.mediatag.asset.v1.ListJobAssetsRequest',
-      '3': '.mediatag.asset.v1.ListJobAssetsResponse'
-    },
-    {
       '1': 'AttachAsset',
       '2': '.mediatag.asset.v1.AttachAssetRequest',
       '3': '.mediatag.asset.v1.AttachAssetResponse'
@@ -855,7 +879,10 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.asset.v1.Provenance': Provenance$json,
   '.mediatag.asset.v1.DisplayField': DisplayField$json,
   '.mediatag.asset.v1.ListAssetsRequest': ListAssetsRequest$json,
+  '.mediatag.asset.v1.AssetJobFilter': AssetJobFilter$json,
   '.mediatag.asset.v1.ListAssetsResponse': ListAssetsResponse$json,
+  '.mediatag.asset.v1.ListAssetsResponse.PassIdsEntry':
+      ListAssetsResponse_PassIdsEntry$json,
   '.mediatag.asset.v1.GetAssetRequest': GetAssetRequest$json,
   '.mediatag.asset.v1.GetAssetResponse': GetAssetResponse$json,
   '.mediatag.asset.v1.DeleteAssetRequest': DeleteAssetRequest$json,
@@ -878,11 +905,9 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.asset.v1.ListUploadFormatsResponse':
       ListUploadFormatsResponse$json,
   '.mediatag.asset.v1.UploadFormat': UploadFormat$json,
-  '.mediatag.asset.v1.ListJobAssetsRequest': ListJobAssetsRequest$json,
-  '.mediatag.asset.v1.ListJobAssetsResponse': ListJobAssetsResponse$json,
-  '.mediatag.asset.v1.JobAsset': JobAsset$json,
   '.mediatag.asset.v1.AttachAssetRequest': AttachAssetRequest$json,
   '.mediatag.asset.v1.AttachAssetResponse': AttachAssetResponse$json,
+  '.mediatag.asset.v1.JobAsset': JobAsset$json,
   '.mediatag.asset.v1.DetachAssetRequest': DetachAssetRequest$json,
   '.mediatag.asset.v1.DetachAssetResponse': DetachAssetResponse$json,
 };
@@ -904,9 +929,7 @@ final $typed_data.Uint8List assetServiceDescriptor = $convert.base64Decode(
     'JS5tZWRpYXRhZy5hc3NldC52MS5NZXJnZUFzc2V0c1JlcXVlc3QaJi5tZWRpYXRhZy5hc3NldC'
     '52MS5NZXJnZUFzc2V0c1Jlc3BvbnNlEm4KEUxpc3RVcGxvYWRGb3JtYXRzEisubWVkaWF0YWcu'
     'YXNzZXQudjEuTGlzdFVwbG9hZEZvcm1hdHNSZXF1ZXN0GiwubWVkaWF0YWcuYXNzZXQudjEuTG'
-    'lzdFVwbG9hZEZvcm1hdHNSZXNwb25zZRJiCg1MaXN0Sm9iQXNzZXRzEicubWVkaWF0YWcuYXNz'
-    'ZXQudjEuTGlzdEpvYkFzc2V0c1JlcXVlc3QaKC5tZWRpYXRhZy5hc3NldC52MS5MaXN0Sm9iQX'
-    'NzZXRzUmVzcG9uc2USXAoLQXR0YWNoQXNzZXQSJS5tZWRpYXRhZy5hc3NldC52MS5BdHRhY2hB'
-    'c3NldFJlcXVlc3QaJi5tZWRpYXRhZy5hc3NldC52MS5BdHRhY2hBc3NldFJlc3BvbnNlElwKC0'
-    'RldGFjaEFzc2V0EiUubWVkaWF0YWcuYXNzZXQudjEuRGV0YWNoQXNzZXRSZXF1ZXN0GiYubWVk'
-    'aWF0YWcuYXNzZXQudjEuRGV0YWNoQXNzZXRSZXNwb25zZQ==');
+    'lzdFVwbG9hZEZvcm1hdHNSZXNwb25zZRJcCgtBdHRhY2hBc3NldBIlLm1lZGlhdGFnLmFzc2V0'
+    'LnYxLkF0dGFjaEFzc2V0UmVxdWVzdBomLm1lZGlhdGFnLmFzc2V0LnYxLkF0dGFjaEFzc2V0Um'
+    'VzcG9uc2USXAoLRGV0YWNoQXNzZXQSJS5tZWRpYXRhZy5hc3NldC52MS5EZXRhY2hBc3NldFJl'
+    'cXVlc3QaJi5tZWRpYXRhZy5hc3NldC52MS5EZXRhY2hBc3NldFJlc3BvbnNl');

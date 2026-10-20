@@ -103,8 +103,6 @@ class CollectionLevel extends $pb.ProtobufEnum {
       CollectionLevel._(3, _omitEnumNames ? '' : 'COLLECTION_LEVEL_PROJECT');
   static const CollectionLevel COLLECTION_LEVEL_JOB =
       CollectionLevel._(4, _omitEnumNames ? '' : 'COLLECTION_LEVEL_JOB');
-  static const CollectionLevel COLLECTION_LEVEL_PASS =
-      CollectionLevel._(5, _omitEnumNames ? '' : 'COLLECTION_LEVEL_PASS');
   static const CollectionLevel COLLECTION_LEVEL_ITEM =
       CollectionLevel._(6, _omitEnumNames ? '' : 'COLLECTION_LEVEL_ITEM');
 
@@ -114,7 +112,6 @@ class CollectionLevel extends $pb.ProtobufEnum {
     COLLECTION_LEVEL_WORKER,
     COLLECTION_LEVEL_PROJECT,
     COLLECTION_LEVEL_JOB,
-    COLLECTION_LEVEL_PASS,
     COLLECTION_LEVEL_ITEM,
   ];
 
@@ -126,11 +123,33 @@ class CollectionLevel extends $pb.ProtobufEnum {
   const CollectionLevel._(super.value, super.name);
 }
 
+class SegmentUnit extends $pb.ProtobufEnum {
+  static const SegmentUnit SEGMENT_UNIT_UNSPECIFIED =
+      SegmentUnit._(0, _omitEnumNames ? '' : 'SEGMENT_UNIT_UNSPECIFIED');
+  static const SegmentUnit SEGMENT_UNIT_JOB =
+      SegmentUnit._(1, _omitEnumNames ? '' : 'SEGMENT_UNIT_JOB');
+  static const SegmentUnit SEGMENT_UNIT_PASS =
+      SegmentUnit._(2, _omitEnumNames ? '' : 'SEGMENT_UNIT_PASS');
+
+  static const $core.List<SegmentUnit> values = <SegmentUnit>[
+    SEGMENT_UNIT_UNSPECIFIED,
+    SEGMENT_UNIT_JOB,
+    SEGMENT_UNIT_PASS,
+  ];
+
+  static final $core.List<SegmentUnit?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static SegmentUnit? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const SegmentUnit._(super.value, super.name);
+}
+
 class TimeBasis extends $pb.ProtobufEnum {
   static const TimeBasis TIME_BASIS_UNSPECIFIED =
       TimeBasis._(0, _omitEnumNames ? '' : 'TIME_BASIS_UNSPECIFIED');
 
-  /// 작업 구간: 작업·패스는 자기 시작~종료, 위 단계(공사·장비·작업자)는 그 아래 작업들의 처음 시작~마지막 종료,
+  /// 작업 구간: 작업은 자기 시작~종료, 위 단계(공사·장비·작업자)는 그 아래 작업들의 처음 시작~마지막 종료,
   /// 파일은 속한 패스(없으면 작업)의 구간
   static const TimeBasis TIME_BASIS_WORK =
       TimeBasis._(1, _omitEnumNames ? '' : 'TIME_BASIS_WORK');

@@ -4,6 +4,11 @@
 
 | 일자 | 수정자 | 수정 내용 |
 |---|---|---|
+| 2026-10-20 | geosoft-Server | `ListJobs` 행마다 그 작업의 패스 목록 `JobSummary.passes`("2026-10-20에 바뀐 것 — 작업 목록의 패스"). 추가만, 2026-10-20 15:08 운영 적용 |
+| 2026-10-20 | geosoft-Server | `Clip.embedded_at`은 이제 AI 서버가 채움(서버 목업 삭제, proto 그대로) — 화면 쪽 읽는 법은 그대로("2026-10-20에 바뀐 것") |
+| 2026-10-20 | geosoft-Server | 수집 현황 막대 구간 `CollectionNode.segments` · 단위 `segment_unit`(추가), **깨지는 변경** — 트리의 패스 단계 삭제("2026-10-20에 바뀐 것" 맨 위) |
+| 2026-10-20 | geosoft-Server | **깨지는 변경** — `ListJobAssets` 삭제, `ListAssets(job.job_id)` + `pass_ids`로("2026-10-20에 바뀐 것") |
+| 2026-10-20 | geosoft-Server | `ListAssets` 작업 필터(`job` — `AssetJobFilter`)와 `pass_ids`, `ListJobAssets`는 이것으로 대신("2026-10-20에 바뀐 것"). 추가만 |
 | 2026-10-20 | geosoft-Server | 목록에 개수 · 호기 · 품목 — `ListProjects.project_details`, `ListWorkers.job_counts`, `ListEquipment.job_counts` · `asset_counts`("2026-10-20에 바뀐 것"). 추가만 |
 | 2026-10-20 | geosoft-Server | **깨지는 변경** — 장비 `line_name` 삭제("2026-10-20에 바뀐 것") |
 | 2026-10-19 | geosoft-Server | 관리 · 조회 목록 `ListProjects` · `ListWorkers` · `ListEquipment` · `ListAssets`에 검색어 · 페이지 · 전체 건수(ListJobs와 같은 모양, "2026-10-19에 바뀐 것" 맨 위). 추가만 |
@@ -61,9 +66,33 @@
 타임라인에 클립을 놓고, 그리고, 재생하는 방법은 `타임라인 그리기와 재생 안내.md`에 따로 정리했다(함께 전달).
 그 문서는 화면 구성(§9) → 한 작업으로 끝까지 따라가는 예시(§8) → 규칙(§1~§7, §10) 순으로 읽으면 빠르다.
 
+## 2026-10-20에 바뀐 것 — 작업 목록의 패스
+
+2026-10-20 15:08 운영 적용됨. 추가만.
+
+- `JobSummary.passes`(`repeated Pass`, 9번) — `ListJobs` 행마다 그 작업의 패스(`pass_id` · `pass_no` · `pass_type` · 시각, `pass_no` 순).
+  목록에서 작업을 고른 뒤 패스 목록(예: `ListAssets`의 `job.pass_no` 탭)을 그리려고 `GetJob`을 따로 부르지 않아도 된다. 값은 `GetJob.passes`와 같다.
+  패스가 없는 작업은 빈 배열. `pass_count`는 그대로 둔다(`passes`의 길이와 같다).
+- `ListJobFilters`는 이름은 그대로지만 작업 목록 · `ListAssets.job` · 관리 화면이 함께 쓰는 드롭다운 값이다. 개수(`job_count` · `*_counts`)는 작업 수다(Asset 수 아님).
+
 ## 2026-10-20에 바뀐 것
 
 2026-10-20 운영 적용됨(서버 · DB 이관 22).
+
+**`Clip.embedded_at`을 AI 서버가 채운다.** 서버의 목업(마지막 수정 뒤 약 6초에 채움)은 지웠다. 이제 AI 서버가 임베딩을 마친 클립을 알릴 때(서버 간 HTTP, proto 없음) 채워진다 — AI 서버가 통지를 시작하기 전까지는 비어 있다. 화면이 읽는 법(비었거나 `updated_at`보다 이르면 "반영 대기")은 그대로이고, 다시 읽어야(`GetTimeline` · `GetClip`) 바뀐 값이 보인다. `compose.proto`의 `embedded_at` 주석(목업 6초)은 옛 내용이다.
+
+**수집 현황 — 막대 구간과 패스 단계 삭제.**
+
+- (추가만) `CollectionNode.segments`(`repeated TimeRange`) — 막대로 그릴 구간들(시작 순, 겹치거나 맞닿으면 합침). `started_at`~`ended_at`은 전체 범위라 사이의 빈 날이 안 보였다. 장비 줄 하나가 이제 작업한 구간 수십 개로 나뉜다.
+- (추가만) `ListCollectionNodesRequest.segment_unit` — 막대를 자르는 단위. 트리를 열지 않고 **어느 단계에서든** 고른 단위로 본다(작업/패스 토글, 또는 확대 정도에 따라 바꾸기).
+
+| `segment_unit` | 작업 구간 기준(`basis` WORK)의 `segments` |
+|---|---|
+| 비움 · `JOB` | 그 아래 작업들의 구간(작업 노드는 자기 구간 하나) |
+| `PASS` | 그 아래 작업들의 패스 구간(시각 있는 패스 전부, 패스가 없는 작업은 작업 구간) |
+
+  수집 구간 기준(`COLLECTION`)이면 단위와 상관없이 그 아래 파일들의 기록 구간이다. 파일 노드는 자기 구간 하나.
+- **깨지는 변경** — 트리의 패스 단계(`COLLECTION_LEVEL_PASS`) 삭제. 작업 노드를 열면 바로 파일이 온다. 파일 노드의 `path.pass_id`가 첨부된 패스(비어 있으면 작업 공용) — 화면이 이 값으로 패스별로 묶거나 표시한다. `"P01"` · `"공용"` 노드는 더 오지 않는다. parent에 `pass_id`를 줘도 무시된다.
 
 **목록에 개수 · 호기 · 품목**(추가만) — `ListJobFilters`와 맞춰 보던 매핑을 지워도 된다. 값은 `ListJobFilters`와 같다.
 
@@ -80,6 +109,31 @@
 - `Equipment.line_name`(`lineName`)이 응답에서 없어진다. 보내도 무시된다.
 - `UpdateEquipment`의 `update_mask`에 `line_name`을 넣으면 `InvalidArgument`. 남은 칸: `equipment_name` · `equipment_code` · `description` · `inactive`.
 - `ListEquipment`의 `query`는 라인을 더는 찾지 않는다(장비 코드 · 이름 · 비고).
+
+**깨지는 변경 — `ListJobAssets` 삭제.** 작업의 첨부 목록은 `ListAssets`에 `job.job_id`를 주고 받는다(아래 작업 필터).
+
+| 전에 | 이제 |
+|---|---|
+| `ListJobAssets{job_id}` | `ListAssets{job: {job_id}}` — 페이지(기본 50, 최대 200) · 종류 · 이름 필터도 함께 쓸 수 있다 |
+| `ListJobAssets{job_id, pass_id: 0}` | `job: {job_id, shared_only: true}` |
+| `ListJobAssets{job_id, pass_id: N}` | `job: {job_id, pass_no: 그 패스의 번호}` |
+| 응답 `JobAsset{asset, pass_id}` | 응답 `assets` + `pass_ids`(asset_id → pass_id, 없으면 작업 공용) |
+
+**`ListAssets` 작업 필터**(추가만) — 에셋 조회의 작업 필터. `ListAssetsRequest.job`(`AssetJobFilter`)에 맞는 작업에 **직접 첨부된** 에셋만 온다(부모만 붙은 파생은 안 나옴, `ListJobs.asset_id`와 같은 기준). 칸은 모두 AND, 다 비우면 어느 작업에든 첨부된 것.
+
+| 칸 | 뜻 |
+|---|---|
+| `job_id` | 그 작업 하나 |
+| `project_id` · `project_item_id` · `worker_id` | 번호로 고른다. `project_item_id`는 `ListJobFilters`의 `ProjectItem.project_item_id`(공사 · 호기 · 품목 한 줄) |
+| `unit_no` · `item_code` · `joint_no` | 번호가 없는 값 — 호기 전체(`project_id`와 함께), 호기 · 공사를 넘어 같은 품목(`item_code`만 주면 전체 공사의 그 품목), 이음부(`project_item_id`와 함께) |
+| `started_from` · `started_to` | 작업 시작 시각 범위(`ListJobs`와 같음) |
+| `pass_no` | 그 번호의 패스에 첨부된 것(**`ListJobs`와 다름** — 거기서는 "그 패스가 있는 작업") |
+| `shared_only` | 작업 공용 첨부만(패스 없음) |
+
+- 드롭다운 값은 지금처럼 `ListJobFilters`(공사 · 호기 · 품목 · 이음부 · 패스 · 작업자)에서, 작업 하나는 그 값으로 `ListJobs`에서 고른다. `ListJobsRequest`에도 `project_item_id`를 더했다(추가만).
+- `job_id`를 주면 응답 `pass_ids`(asset_id → pass_id)에 첨부된 패스가 온다. 없으면 작업 공용.
+- `job`과 `unattached_only`, `pass_no`와 `shared_only`는 함께 줄 수 없다(`InvalidArgument`).
+- 작업자 종류(`worker_type`) 필터는 아직 없다(필요하면 말해 달라).
 
 ## 2026-10-19에 바뀐 것
 
@@ -160,7 +214,7 @@
 
 | 무엇이 | 어떻게 | 화면이 할 일 |
 |---|---|---|
-| `Clip.embedded_at` | 검색 색인 반영을 마친 시각. 지금은 목업이라 벡터는 만들지 않고 시각만 채운다. 대상은 `confirmed` 타임라인의 클립 중 사람이 놓았거나(`provenance` 없음) 검수된(`reviewed`) 것. 마지막 수정 뒤 5초 대기 + 처리시간(1초 + 글자수 ÷ 100 × 0.5초)이 **실제로 지난 뒤** 그때 시각으로 채운다(보통 6초, 긴 자막 14초 안팎) | 비어 있거나 `updated_at`보다 이르면 "반영 대기", 아니면 "반영됨"으로 보여 준다. 수정 직후 몇 초 뒤 다시 읽으면 바뀐다 |
+| `Clip.embedded_at` | 검색 색인 반영을 마친 시각. (2026-10-20부터) AI 서버가 임베딩을 마치고 알리면 채워진다 — 이 아래 목업 설명은 옛 내용 | 비어 있거나 `updated_at`보다 이르면 "반영 대기", 아니면 "반영됨"으로 보여 준다 |
 | `Timeline.embedded_at` | 그대로 비어 있다(무엇을 임베딩할지 미정) | 쓰지 않는다 |
 | 태그 클립의 `source` | `kind = TAG`에도 `source`를 넣을 수 있다(선택, 전에는 InvalidArgument). 라벨은 그대로 필수. 근거 영상이 다른 작업의 것이면 서버가 이 작업에 첨부한다. `RELATION`은 그대로 source 없음 | RAG 근거에 좋아요·싫어요·코멘트를 남길 때 `source`에 근거 영상(숫자 `asset_id`)과 구간(`start_ns`·`end_ns`, 영상 자신의 시간축)을 넣는다. 읽을 때는 `GetClip(include_assets=true)`의 `asset`으로 받는다(`target_*`는 도구가 만든 클립용이라 비어 있다) |
 | 도구 실행(`tool.proto` 주석) | 돌릴 수 없는 실행은 바로 `FAILED` — 처리 서버가 연결 안 된 도구면 `error_code = not_connected`, 소리 없는 영상에 faster-whisper STT면 `invalid_target`. `MANUAL`로 pdf-to-text는 PDF 클립에, audio-extract는 영상 클립에도 돌린다. STT · 포즈를 클립에 돌리면 결과를 그 클립이 있는 작업에만, 그 클립 위치 기준으로 놓는다(Asset에 돌리면 지금처럼 촬영 시각 기준) | 실행 직후 `FAILED`면 `error_code`에 맞는 문구를 보인다 |
@@ -227,7 +281,7 @@ Content-Type: application/json
 1. `ListProjects`, `ListWorkers`, `ListEquipment`로 필터 선택지를 가져온다.
 2. `ListJobs`로 작업 목록을 조회하고, 선택한 작업은 `GetJob`으로 연다.
 3. 편집 화면은 `GetTimeline(include_assets=true)`로 타임라인·트랙·클립·파일 메타데이터를 한 번에 받는다.
-4. 작업 첨부는 `ListJobAssets`로 조회한다.
+4. 작업 첨부는 `ListAssets(job.job_id)`로 조회한다(패스는 `pass_ids`).
 5. 처리 도구 화면은 `ListTools`와 `ListRuns`로 복구하고, 실행 중인 건만 `GetRun`으로 갱신한다.
    `ListTools`는 켜진 도구만 준다. 꺼진 도구까지(관리 화면, 실행 이력의 도구 이름 찾기) 받으려면 `include_disabled`를 켠다.
    도구를 켜고 끄는 것은 `UpdateTool`에 `update_mask: enabled` — 마스크에 든 칸만 바뀐다(마스크가 없으면 `InvalidArgument`).
@@ -307,7 +361,7 @@ mediatag v1은 작업·파일·타임라인·성적서·도구 역할별 서비�
 | `ListWorkHistory` | `WorkService.ListJobs` | 작업 목록으로 대체. `history_id` 대신 `job_id` 사용 |
 | `GetContext` | `WorkService.GetJob` | `common_key` 대표값 조회 대신 정확한 `job_id` 한 건 조회 |
 | `ListPasses` | `WorkService.GetJob`의 `passes[]` | 작업 상세 응답에 통합 |
-| `ListWorkAttachments` | `AssetService.ListJobAssets` | `history_id` 대신 `job_id`, 응답에 전체 Asset 메타 포함 |
+| `ListWorkAttachments` | `AssetService.ListAssets`(`job.job_id`) | `history_id` 대신 `job_id`, 응답에 전체 Asset 메타 포함 |
 | `GetPassWaveform` | `WorkService.GetPassWaveform` | 같은 화면 목적. 요청·응답은 새 proto 기준으로 변경 |
 | `ListWaveformSeries` | 없음 | 화면에서 쓰지 않던 원본 테이블 전체 조회라 제거. 파형 화면은 `GetPassWaveform` 사용 |
 | `ListCollectionAssignments` | 직접 대응 없음 | 배정표가 아니라 실제 수집 Asset 계층을 `ListCollectionNodes`로 조회 |
@@ -324,10 +378,10 @@ mediatag v1은 작업·파일·타임라인·성적서·도구 역할별 서비�
   `ListCollectionNodes` 하나로 단계별 조회한다. 응답 노드의 `path`를 그대로 다음 요청의 `parent`로 보낸다.
   모든 노드에 `started_at`·`ended_at`이 있고 기준은 `basis`로 고른다(기본 작업 구간, `TIME_BASIS_COLLECTION`이면 실제 기록 구간).
   작업 노드 `label`은 표시용 이름("5호기 LEG DIAGONAL "F" · 9/16")이고 ID는 `path.job_id`다. 장비가 기록한 자료만 세며,
-  STT·포즈 같은 도구 결과물은 `ListJobAssets`·타임라인에서 본다.
+  STT·포즈 같은 도구 결과물은 작업 첨부(`ListAssets(job.job_id)`)·타임라인에서 본다.
 - 작업 목록: `ListWorkHistory` 대신 `ListJobs`를 사용한다.
 - 작업 상세: `GetContext` + `ListPasses`를 각각 호출하지 않고 `GetJob` 한 번으로 받는다.
-- 첨부: `ListWorkAttachments` 대신 `ListJobAssets`를 사용하고 파일은 `Asset.content_url`로 연다.
+- 첨부: `ListWorkAttachments` 대신 `ListAssets(job.job_id)`를 사용하고 파일은 `Asset.content_url`로 연다.
 - 파형 비교: `GetPassWaveform`을 사용하고 `ListWaveformSeries`는 호출하지 않는다. 2026-10-01에 요청이 바뀌었다(비교는
   패스끼리만 `comparison_pass_id`, `normalize = DTW`, 칸 번호 변경) — `docs/설계/GetPassWaveform 변경 안내.md`.
 
@@ -338,7 +392,7 @@ mediatag v1은 작업·파일·타임라인·성적서·도구 역할별 서비�
 
 | 하려는 일 | 방법 |
 |---|---|
-| 작업 화면에서 트리로 묶기 | `ListJobAssets` 결과에서 `provenance.parent_asset_id`가 같은 목록 안의 Asset이면 그 아래에 둔다. 부모가 목록에 없으면 뿌리로 둔다 |
+| 작업 화면에서 트리로 묶기 | `ListAssets(job.job_id)` 결과에서 `provenance.parent_asset_id`가 같은 목록 안의 Asset이면 그 아래에 둔다. 부모가 목록에 없으면 뿌리로 둔다 |
 | 펼칠 수 있는지 알기 | `Asset.child_count`가 0보다 크면 자식이 있다 |
 | 자식 목록 받기 | `ListAssets(parent_asset_id=…)`. `page_size`·`page_token`·`kind`를 그대로 쓴다(성적서 PDF 하나에 자식이 190개까지 있다) |
 

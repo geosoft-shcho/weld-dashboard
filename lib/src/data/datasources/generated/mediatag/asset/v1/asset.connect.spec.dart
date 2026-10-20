@@ -19,7 +19,7 @@ abstract final class AssetService {
     mediatagassetv1asset.ImportAssetFromSourceResponse.new,
   );
 
-  /// Asset 목록(페이지·kind 필터·부모 필터). 작업별 목록은 ListJobAssets.
+  /// Asset 목록(페이지 · kind · 부모 · 작업 필터). 작업의 첨부 목록은 job.job_id로(pass_ids에 패스).
   static const listAssets = connect.Spec(
     '/$name/ListAssets',
     connect.StreamType.unary,
@@ -86,14 +86,6 @@ abstract final class AssetService {
 
   /// 첨부(job_asset) — "이 작업의 자료인가". Clip으로 놓으면 서버가 자동 첨부하므로, 이 RPC는
   /// 타임라인에 놓지 않고 작업 자료로만 둘 때(PDF 등)와 패스를 고칠 때 쓴다.
-  /// 작업의 첨부 목록
-  static const listJobAssets = connect.Spec(
-    '/$name/ListJobAssets',
-    connect.StreamType.unary,
-    mediatagassetv1asset.ListJobAssetsRequest.new,
-    mediatagassetv1asset.ListJobAssetsResponse.new,
-  );
-
   /// 첨부. 이미 첨부돼 있으면 pass_id만 고친다(upsert).
   /// pass_id가 다른 작업의 패스면 InvalidArgument.
   static const attachAsset = connect.Spec(

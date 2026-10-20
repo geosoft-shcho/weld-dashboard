@@ -123,7 +123,8 @@ abstract final class WorkService {
     mediatagworkv1work.ListItemsResponse.new,
   );
 
-  /// 작업 목록(ListJobs) 필터의 드롭다운 값을 한 번에: 공사(호기·품목 포함)·작업자·장비.
+  /// 공사(호기·품목·이음부·패스 포함)·작업자·장비 드롭다운 값을 한 번에. 작업 목록(ListJobs)·Asset 목록(ListAssets.job)·관리 화면이 함께 쓴다.
+  /// 개수(job_count·*_counts)는 작업 수다 — Asset 수가 아니다.
   static const listJobFilters = connect.Spec(
     '/$name/ListJobFilters',
     connect.StreamType.unary,
@@ -131,7 +132,7 @@ abstract final class WorkService {
     mediatagworkv1work.ListJobFiltersResponse.new,
   );
 
-  /// 작업 목록. 행마다 표시용 이름·개수를 붙여 준다(행별 추가 조회 불필요).
+  /// 작업 목록. 행마다 표시용 이름·개수·패스를 붙여 준다(행별 추가 조회 불필요).
   static const listJobs = connect.Spec(
     '/$name/ListJobs',
     connect.StreamType.unary,
@@ -215,7 +216,7 @@ abstract final class WorkService {
   );
 
   /// 수집 현황 계층을 한 단계씩 조회한다. 장비가 기록한 자료(원본과 원본을 대신하는 표준화본·잘라 낸 PDF)만 센다 —
-  /// 도구 결과물(STT·포즈·잘라 낸 이미지·추출 JSON)은 작업 첨부(ListJobAssets)·타임라인에서 본다.
+  /// 도구 결과물(STT·포즈·잘라 낸 이미지·추출 JSON)은 작업 첨부(AssetService.ListAssets의 job 필터)·타임라인에서 본다.
   static const listCollectionNodes = connect.Spec(
     '/$name/ListCollectionNodes',
     connect.StreamType.unary,

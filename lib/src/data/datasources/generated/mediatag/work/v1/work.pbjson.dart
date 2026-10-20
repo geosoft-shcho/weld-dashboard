@@ -78,9 +78,12 @@ const CollectionLevel$json = {
     {'1': 'COLLECTION_LEVEL_WORKER', '2': 2},
     {'1': 'COLLECTION_LEVEL_PROJECT', '2': 3},
     {'1': 'COLLECTION_LEVEL_JOB', '2': 4},
-    {'1': 'COLLECTION_LEVEL_PASS', '2': 5},
     {'1': 'COLLECTION_LEVEL_ITEM', '2': 6},
   ],
+  '4': [
+    {'1': 5, '2': 5},
+  ],
+  '5': ['COLLECTION_LEVEL_PASS'],
 };
 
 /// Descriptor for `CollectionLevel`. Decode as a `google.protobuf.EnumDescriptorProto`.
@@ -88,7 +91,23 @@ final $typed_data.Uint8List collectionLevelDescriptor = $convert.base64Decode(
     'Cg9Db2xsZWN0aW9uTGV2ZWwSIAocQ09MTEVDVElPTl9MRVZFTF9VTlNQRUNJRklFRBAAEh4KGk'
     'NPTExFQ1RJT05fTEVWRUxfRVFVSVBNRU5UEAESGwoXQ09MTEVDVElPTl9MRVZFTF9XT1JLRVIQ'
     'AhIcChhDT0xMRUNUSU9OX0xFVkVMX1BST0pFQ1QQAxIYChRDT0xMRUNUSU9OX0xFVkVMX0pPQh'
-    'AEEhkKFUNPTExFQ1RJT05fTEVWRUxfUEFTUxAFEhkKFUNPTExFQ1RJT05fTEVWRUxfSVRFTRAG');
+    'AEEhkKFUNPTExFQ1RJT05fTEVWRUxfSVRFTRAGIgQIBRAFKhVDT0xMRUNUSU9OX0xFVkVMX1BB'
+    'U1M=');
+
+@$core.Deprecated('Use segmentUnitDescriptor instead')
+const SegmentUnit$json = {
+  '1': 'SegmentUnit',
+  '2': [
+    {'1': 'SEGMENT_UNIT_UNSPECIFIED', '2': 0},
+    {'1': 'SEGMENT_UNIT_JOB', '2': 1},
+    {'1': 'SEGMENT_UNIT_PASS', '2': 2},
+  ],
+};
+
+/// Descriptor for `SegmentUnit`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List segmentUnitDescriptor = $convert.base64Decode(
+    'CgtTZWdtZW50VW5pdBIcChhTRUdNRU5UX1VOSVRfVU5TUEVDSUZJRUQQABIUChBTRUdNRU5UX1'
+    'VOSVRfSk9CEAESFQoRU0VHTUVOVF9VTklUX1BBU1MQAg==');
 
 @$core.Deprecated('Use timeBasisDescriptor instead')
 const TimeBasis$json = {
@@ -511,6 +530,14 @@ const JobSummary$json = {
     {'1': 'pass_count', '3': 5, '4': 1, '5': 5, '10': 'passCount'},
     {'1': 'attachment_count', '3': 6, '4': 1, '5': 5, '10': 'attachmentCount'},
     {'1': 'has_report', '3': 7, '4': 1, '5': 8, '10': 'hasReport'},
+    {
+      '1': 'passes',
+      '3': 9,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.Pass',
+      '10': 'passes'
+    },
   ],
   '9': [
     {'1': 3, '2': 4},
@@ -524,7 +551,8 @@ final $typed_data.Uint8List jobSummaryDescriptor = $convert.base64Decode(
     'ZWRpYXRhZy53b3JrLnYxLldvcmtlclR5cGVSCndvcmtlclR5cGUSJwoPZXF1aXBtZW50X25hbW'
     'VzGAQgAygJUg5lcXVpcG1lbnROYW1lcxIdCgpwYXNzX2NvdW50GAUgASgFUglwYXNzQ291bnQS'
     'KQoQYXR0YWNobWVudF9jb3VudBgGIAEoBVIPYXR0YWNobWVudENvdW50Eh0KCmhhc19yZXBvcn'
-    'QYByABKAhSCWhhc1JlcG9ydEoECAMQBA==');
+    'QYByABKAhSCWhhc1JlcG9ydBIuCgZwYXNzZXMYCSADKAsyFi5tZWRpYXRhZy53b3JrLnYxLlBh'
+    'c3NSBnBhc3Nlc0oECAMQBA==');
 
 @$core.Deprecated('Use listProjectsRequestDescriptor instead')
 const ListProjectsRequest$json = {
@@ -1513,6 +1541,7 @@ const ListJobsRequest$json = {
     {'1': 'project_id', '3': 14, '4': 1, '5': 3, '10': 'projectId'},
     {'1': 'common_key', '3': 2, '4': 1, '5': 9, '10': 'commonKey'},
     {'1': 'item_code', '3': 3, '4': 1, '5': 9, '10': 'itemCode'},
+    {'1': 'project_item_id', '3': 17, '4': 1, '5': 3, '10': 'projectItemId'},
     {'1': 'unit_no', '3': 11, '4': 1, '5': 9, '10': 'unitNo'},
     {'1': 'joint_no', '3': 12, '4': 1, '5': 9, '10': 'jointNo'},
     {'1': 'pass_no', '3': 13, '4': 1, '5': 5, '10': 'passNo'},
@@ -1555,15 +1584,15 @@ const ListJobsRequest$json = {
 final $typed_data.Uint8List listJobsRequestDescriptor = $convert.base64Decode(
     'Cg9MaXN0Sm9ic1JlcXVlc3QSHQoKcHJvamVjdF9ubxgBIAEoCVIJcHJvamVjdE5vEh0KCnByb2'
     'plY3RfaWQYDiABKANSCXByb2plY3RJZBIdCgpjb21tb25fa2V5GAIgASgJUgljb21tb25LZXkS'
-    'GwoJaXRlbV9jb2RlGAMgASgJUghpdGVtQ29kZRIXCgd1bml0X25vGAsgASgJUgZ1bml0Tm8SGQ'
-    'oIam9pbnRfbm8YDCABKAlSB2pvaW50Tm8SFwoHcGFzc19ubxgNIAEoBVIGcGFzc05vEhsKCXdv'
-    'cmtlcl9pZBgEIAEoA1IId29ya2VySWQSPQoLd29ya2VyX3R5cGUYECABKA4yHC5tZWRpYXRhZy'
-    '53b3JrLnYxLldvcmtlclR5cGVSCndvcmtlclR5cGUSIQoMZXF1aXBtZW50X2lkGAYgASgDUgtl'
-    'cXVpcG1lbnRJZBIZCghhc3NldF9pZBgPIAEoA1IHYXNzZXRJZBI9CgxzdGFydGVkX2Zyb20YBy'
-    'ABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wUgtzdGFydGVkRnJvbRI5CgpzdGFydGVk'
-    'X3RvGAggASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcFIJc3RhcnRlZFRvEhsKCXBhZ2'
-    'Vfc2l6ZRgJIAEoBVIIcGFnZVNpemUSHQoKcGFnZV90b2tlbhgKIAEoCVIJcGFnZVRva2VuSgQI'
-    'BRAG');
+    'GwoJaXRlbV9jb2RlGAMgASgJUghpdGVtQ29kZRImCg9wcm9qZWN0X2l0ZW1faWQYESABKANSDX'
+    'Byb2plY3RJdGVtSWQSFwoHdW5pdF9ubxgLIAEoCVIGdW5pdE5vEhkKCGpvaW50X25vGAwgASgJ'
+    'Ugdqb2ludE5vEhcKB3Bhc3Nfbm8YDSABKAVSBnBhc3NObxIbCgl3b3JrZXJfaWQYBCABKANSCH'
+    'dvcmtlcklkEj0KC3dvcmtlcl90eXBlGBAgASgOMhwubWVkaWF0YWcud29yay52MS5Xb3JrZXJU'
+    'eXBlUgp3b3JrZXJUeXBlEiEKDGVxdWlwbWVudF9pZBgGIAEoA1ILZXF1aXBtZW50SWQSGQoIYX'
+    'NzZXRfaWQYDyABKANSB2Fzc2V0SWQSPQoMc3RhcnRlZF9mcm9tGAcgASgLMhouZ29vZ2xlLnBy'
+    'b3RvYnVmLlRpbWVzdGFtcFILc3RhcnRlZEZyb20SOQoKc3RhcnRlZF90bxgIIAEoCzIaLmdvb2'
+    'dsZS5wcm90b2J1Zi5UaW1lc3RhbXBSCXN0YXJ0ZWRUbxIbCglwYWdlX3NpemUYCSABKAVSCHBh'
+    'Z2VTaXplEh0KCnBhZ2VfdG9rZW4YCiABKAlSCXBhZ2VUb2tlbkoECAUQBg==');
 
 @$core.Deprecated('Use listJobsResponseDescriptor instead')
 const ListJobsResponse$json = {
@@ -1722,6 +1751,14 @@ const ListCollectionNodesRequest$json = {
       '6': '.mediatag.work.v1.TimeBasis',
       '10': 'basis'
     },
+    {
+      '1': 'segment_unit',
+      '3': 5,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.work.v1.SegmentUnit',
+      '10': 'segmentUnit'
+    },
   ],
   '8': [
     {'1': '_start_offset_ns'},
@@ -1735,7 +1772,8 @@ final $typed_data.Uint8List listCollectionNodesRequestDescriptor = $convert.base
     '53b3JrLnYxLkNvbGxlY3Rpb25QYXRoUgZwYXJlbnQSKwoPc3RhcnRfb2Zmc2V0X25zGAIgASgD'
     'SABSDXN0YXJ0T2Zmc2V0TnOIAQESJwoNZW5kX29mZnNldF9ucxgDIAEoA0gBUgtlbmRPZmZzZX'
     'ROc4gBARIxCgViYXNpcxgEIAEoDjIbLm1lZGlhdGFnLndvcmsudjEuVGltZUJhc2lzUgViYXNp'
-    'c0ISChBfc3RhcnRfb2Zmc2V0X25zQhAKDl9lbmRfb2Zmc2V0X25z');
+    'cxJACgxzZWdtZW50X3VuaXQYBSABKA4yHS5tZWRpYXRhZy53b3JrLnYxLlNlZ21lbnRVbml0Ug'
+    'tzZWdtZW50VW5pdEISChBfc3RhcnRfb2Zmc2V0X25zQhAKDl9lbmRfb2Zmc2V0X25z');
 
 @$core.Deprecated('Use listCollectionNodesResponseDescriptor instead')
 const ListCollectionNodesResponse$json = {
@@ -1804,6 +1842,14 @@ const CollectionNode$json = {
       '6': '.google.protobuf.Timestamp',
       '10': 'endedAt'
     },
+    {
+      '1': 'segments',
+      '3': 8,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.TimeRange',
+      '10': 'segments'
+    },
   ],
 };
 
@@ -1815,7 +1861,37 @@ final $typed_data.Uint8List collectionNodeDescriptor = $convert.base64Decode(
     'xsZWN0aW9uU3VtbWFyeVIHc3VtbWFyeRIuCgVhc3NldBgFIAEoCzIYLm1lZGlhdGFnLmFzc2V0'
     'LnYxLkFzc2V0UgVhc3NldBI5CgpzdGFydGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLl'
     'RpbWVzdGFtcFIJc3RhcnRlZEF0EjUKCGVuZGVkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVm'
-    'LlRpbWVzdGFtcFIHZW5kZWRBdA==');
+    'LlRpbWVzdGFtcFIHZW5kZWRBdBI3CghzZWdtZW50cxgIIAMoCzIbLm1lZGlhdGFnLndvcmsudj'
+    'EuVGltZVJhbmdlUghzZWdtZW50cw==');
+
+@$core.Deprecated('Use timeRangeDescriptor instead')
+const TimeRange$json = {
+  '1': 'TimeRange',
+  '2': [
+    {
+      '1': 'started_at',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'startedAt'
+    },
+    {
+      '1': 'ended_at',
+      '3': 2,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'endedAt'
+    },
+  ],
+};
+
+/// Descriptor for `TimeRange`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List timeRangeDescriptor = $convert.base64Decode(
+    'CglUaW1lUmFuZ2USOQoKc3RhcnRlZF9hdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3'
+    'RhbXBSCXN0YXJ0ZWRBdBI1CghlbmRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1l'
+    'c3RhbXBSB2VuZGVkQXQ=');
 
 @$core.Deprecated('Use collectionSummaryDescriptor instead')
 const CollectionSummary$json = {
@@ -2210,12 +2286,12 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.work.v1.ListJobsResponse': ListJobsResponse$json,
   '.mediatag.work.v1.JobSummary': JobSummary$json,
   '.mediatag.work.v1.Job': Job$json,
+  '.mediatag.work.v1.Pass': Pass$json,
   '.mediatag.work.v1.UpdateProjectRequest': UpdateProjectRequest$json,
   '.mediatag.work.v1.UpdateProjectResponse': UpdateProjectResponse$json,
   '.mediatag.work.v1.DeleteProjectRequest': DeleteProjectRequest$json,
   '.mediatag.work.v1.DeleteProjectResponse': DeleteProjectResponse$json,
   '.mediatag.work.v1.CreateJobRequest': CreateJobRequest$json,
-  '.mediatag.work.v1.Pass': Pass$json,
   '.mediatag.work.v1.CreateJobResponse': CreateJobResponse$json,
   '.mediatag.work.v1.UpdateJobRequest': UpdateJobRequest$json,
   '.mediatag.work.v1.UpdateJobResponse': UpdateJobResponse$json,
@@ -2243,6 +2319,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.google.protobuf.ListValue': $3.ListValue$json,
   '.mediatag.asset.v1.Provenance': $2.Provenance$json,
   '.mediatag.asset.v1.DisplayField': $2.DisplayField$json,
+  '.mediatag.work.v1.TimeRange': TimeRange$json,
   '.mediatag.work.v1.GetPassWaveformRequest': GetPassWaveformRequest$json,
   '.mediatag.work.v1.GetPassWaveformResponse': GetPassWaveformResponse$json,
   '.mediatag.work.v1.PassWaveform': PassWaveform$json,
