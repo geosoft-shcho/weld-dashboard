@@ -3,15 +3,24 @@ import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../domain/entities/project_item_draft.dart';
 import '../../../domain/entities/work_history_project_filter.dart';
+import '../../../domain/use_cases/create_project_items_use_case.dart';
+import '../../../domain/use_cases/create_project_use_case.dart';
 import '../../../domain/use_cases/list_project_lookup_use_case.dart';
 
 class ProjectLookupViewModel extends ChangeNotifier {
   ProjectLookupViewModel({
     required ListProjectLookupUseCase listProjectLookupUseCase,
-  }) : _listProjectLookupUseCase = listProjectLookupUseCase;
+    required CreateProjectUseCase createProjectUseCase,
+    required CreateProjectItemsUseCase createProjectItemsUseCase,
+  }) : _listProjectLookupUseCase = listProjectLookupUseCase,
+       _createProjectUseCase = createProjectUseCase,
+       _createProjectItemsUseCase = createProjectItemsUseCase;
 
   final ListProjectLookupUseCase _listProjectLookupUseCase;
+  final CreateProjectUseCase _createProjectUseCase;
+  final CreateProjectItemsUseCase _createProjectItemsUseCase;
 
   String _queryText = '';
   bool _emptyJobsOnly = false;
@@ -42,6 +51,34 @@ class ProjectLookupViewModel extends ChangeNotifier {
       for (final project in _projects)
         if (project.jobCount == 0) project,
     ];
+  }
+
+  List<String> get projectNos => [
+    for (final project in _projects) project.projectNo,
+  ];
+
+  Future<String> createProject({
+    required String projectNo,
+    required String projectName,
+    required String siteName,
+    required String customer,
+  }) {
+    return _createProjectUseCase.execute(
+      projectNo: projectNo,
+      projectName: projectName,
+      siteName: siteName,
+      customer: customer,
+    );
+  }
+
+  Future<void> createProjectItems({
+    required String projectId,
+    required List<ProjectItemDraft> items,
+  }) {
+    return _createProjectItemsUseCase.execute(
+      projectId: projectId,
+      items: items,
+    );
   }
 
   Future<void> load() => _reload(reset: true);

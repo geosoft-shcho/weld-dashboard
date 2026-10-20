@@ -13,6 +13,12 @@ import '../../../domain/use_cases/get_asset_lookup_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_job_passes_use_case.dart';
+import '../../../domain/use_cases/create_project_items_use_case.dart';
+import '../../../domain/use_cases/create_project_use_case.dart';
+import '../../../domain/use_cases/delete_project_item_use_case.dart';
+import '../../../domain/use_cases/delete_project_use_case.dart';
+import '../../../domain/use_cases/update_project_item_use_case.dart';
+import '../../../domain/use_cases/update_project_use_case.dart';
 import '../../../domain/use_cases/list_project_lookup_use_case.dart';
 import '../../../domain/use_cases/list_worker_lookup_use_case.dart';
 import '../../features/asset_lookup/asset_lookup_detail_view_model.dart';
@@ -144,6 +150,12 @@ void setupLocator({required bool pdfrxReady}) {
     () => RemoteProjectLookupRepository(locator()),
   );
   locator.registerLazySingleton(() => ListProjectLookupUseCase(locator()));
+  locator.registerLazySingleton(() => CreateProjectUseCase(locator()));
+  locator.registerLazySingleton(() => CreateProjectItemsUseCase(locator()));
+  locator.registerLazySingleton(() => UpdateProjectUseCase(locator()));
+  locator.registerLazySingleton(() => DeleteProjectUseCase(locator()));
+  locator.registerLazySingleton(() => UpdateProjectItemUseCase(locator()));
+  locator.registerLazySingleton(() => DeleteProjectItemUseCase(locator()));
   locator.registerLazySingleton<WorkerLookupRepository>(
     () => RemoteWorkerLookupRepository(locator()),
   );
@@ -159,7 +171,11 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => ListJobPassesUseCase(locator()));
   locator.registerLazySingleton(() => GetAssetLookupUseCase(locator()));
   locator.registerFactory(
-    () => ProjectLookupViewModel(listProjectLookupUseCase: locator()),
+    () => ProjectLookupViewModel(
+      listProjectLookupUseCase: locator(),
+      createProjectUseCase: locator(),
+      createProjectItemsUseCase: locator(),
+    ),
   );
   locator.registerFactory(
     () => WorkerLookupViewModel(listWorkerLookupUseCase: locator()),
@@ -180,6 +196,11 @@ void setupLocator({required bool pdfrxReady}) {
     (projectId, _) => ProjectLookupDetailViewModel(
       projectId: projectId,
       listProjectLookupUseCase: locator(),
+      updateProjectUseCase: locator(),
+      deleteProjectUseCase: locator(),
+      createProjectItemsUseCase: locator(),
+      updateProjectItemUseCase: locator(),
+      deleteProjectItemUseCase: locator(),
     ),
   );
   locator.registerFactoryParam<WorkerLookupDetailViewModel, String, void>(

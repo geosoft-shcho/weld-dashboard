@@ -5,6 +5,7 @@ import '../../core/di/locator.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../navigation/app_coordinator.dart';
+import 'project_create_dialog.dart';
 import 'project_lookup_view_model.dart';
 
 class ProjectLookupScreen extends StatelessWidget {
@@ -48,7 +49,25 @@ class _ProjectLookupBody extends StatelessWidget {
     }
     final projects = viewModel.visibleProjects;
     return CatalogLookupFrame(
-      actionLabel: '새 공사',
+      tableHeader: Row(
+        children: [
+          Text('공사', style: const TextStyle(fontWeight: FontWeight.w600)),
+          const SizedBox(width: 4),
+          Text(
+            '${viewModel.totalCount}건',
+            style: const TextStyle(
+              fontWeight: FontWeight.w400,
+              fontSize: 14,
+              color: Color.fromARGB(255, 196, 196, 196),
+            ),
+          ),
+          const Spacer(),
+          FilledButton(
+            onPressed: () => _didTapNewProject(context, viewModel),
+            child: const Text('+ 새 공사'),
+          ),
+        ],
+      ),
       filters: [
         InfoLabel(
           label: '검색',
@@ -102,4 +121,19 @@ class _ProjectLookupBody extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _didTapNewProject(
+  BuildContext context,
+  ProjectLookupViewModel viewModel,
+) async {
+  final projectId = await showProjectCreateDialog(context, viewModel);
+  if (projectId == null || projectId.isEmpty || !context.mounted) {
+    return;
+  }
+  await viewModel.load();
+  if (!context.mounted) {
+    return;
+  }
+  context.read<AppCoordinator>().didTapOpenProjectDetail(projectId);
 }
