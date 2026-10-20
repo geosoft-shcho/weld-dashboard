@@ -11,6 +11,7 @@ import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../navigation/app_coordinator.dart';
 import 'asset_lookup_view_model.dart';
+import 'asset_upload_dialog.dart';
 
 class AssetLookupScreen extends StatelessWidget {
   const AssetLookupScreen({super.key});
@@ -34,12 +35,12 @@ class _AssetLookupBody extends StatelessWidget {
       padding: EdgeInsets.zero,
       content: Padding(
         padding: const EdgeInsets.all(16),
-        child: _content(viewModel),
+        child: _content(context, viewModel),
       ),
     );
   }
 
-  Widget _content(AssetLookupViewModel viewModel) {
+  Widget _content(BuildContext context, AssetLookupViewModel viewModel) {
     if (viewModel.isLoading &&
         viewModel.visibleRows.isEmpty &&
         !viewModel.hasError) {
@@ -64,7 +65,8 @@ class _AssetLookupBody extends StatelessWidget {
         ? viewModel.equipmentId
         : '';
     return CatalogLookupFrame(
-      actionLabel: '업로드',
+      actionLabel: '올리기',
+      onAction: () => _didTapUpload(context, viewModel),
       filters: [
         InfoLabel(
           label: '종류',
@@ -335,6 +337,38 @@ class _AssetTableState extends State<_AssetTable> {
       ),
     );
   }
+}
+
+Future<void> _didTapUpload(
+  BuildContext context,
+  AssetLookupViewModel viewModel,
+) async {
+  final result = await showAssetUploadDialog(context, viewModel);
+  if (result == null || !context.mounted) {
+    return;
+  }
+  await viewModel.load();
+  if (!context.mounted) {
+    return;
+  }
+  final notes = [
+    ...result.warnings,
+    for (final id in result.duplicateAssetIds) '같은 내용의 에셋 $id가 이미 있습니다',
+  ];
+  if (notes.isEmpty) {
+    return;
+  }
+  await displayInfoBar(
+    context,
+    builder: (context, close) {
+      return InfoBar(
+        title: const Text('올리기 완료'),
+        content: Text(notes.join('\n')),
+        severity: InfoBarSeverity.warning,
+        onClose: close,
+      );
+    },
+  );
 }
 
 String _jobLabel(WorkHistoryItem job) {

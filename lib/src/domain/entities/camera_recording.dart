@@ -5,11 +5,13 @@ class CameraRecordingFile {
     required this.bytes,
     required this.mimeType,
     required this.fileName,
+    this.lastModifiedAt,
   });
 
   final Uint8List bytes;
   final String mimeType;
   final String fileName;
+  final DateTime? lastModifiedAt;
 }
 
 class CameraRecording {

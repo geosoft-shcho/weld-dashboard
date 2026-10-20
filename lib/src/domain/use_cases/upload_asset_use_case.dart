@@ -20,4 +20,25 @@ class UploadAssetUseCase {
     }
     return _repository.upload(jobId: jobId, timeOrigin: timeOrigin, file: file);
   }
+
+  Future<CameraRecordingFile?> pickFile() => _repository.pickFile();
+
+  Future<AssetUploadResult> uploadFile({
+    required String jobId,
+    required String passId,
+    required String equipmentId,
+    required DateTime? timeOrigin,
+    required CameraRecordingFile file,
+  }) {
+    if (file.bytes.isEmpty) {
+      throw const AssetUploadException('업로드할 파일이 비어 있습니다.');
+    }
+    return _repository.uploadFile(
+      jobId: jobId,
+      passId: passId,
+      equipmentId: equipmentId,
+      timeOrigin: timeOrigin,
+      file: file,
+    );
+  }
 }

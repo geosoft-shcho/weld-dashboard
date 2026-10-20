@@ -4,27 +4,37 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../domain/entities/asset_lookup_row.dart';
+import '../../../domain/entities/asset_upload.dart';
+import '../../../domain/entities/camera_recording.dart';
 import '../../../domain/entities/equipment.dart';
 import '../../../domain/entities/work_history_item.dart';
 import '../../../domain/entities/work_history_query.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
+import '../../../domain/use_cases/list_upload_formats_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
+import '../../../domain/use_cases/upload_asset_use_case.dart';
 
 class AssetLookupViewModel extends ChangeNotifier {
   AssetLookupViewModel({
     required ListAssetLookupPageUseCase listAssetLookupPageUseCase,
     required ListEquipmentLookupUseCase listEquipmentLookupUseCase,
     required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
+    required ListUploadFormatsUseCase listUploadFormatsUseCase,
+    required UploadAssetUseCase uploadAssetUseCase,
   }) : _listAssetLookupPageUseCase = listAssetLookupPageUseCase,
        _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
-       _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase;
+       _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase,
+       _listUploadFormatsUseCase = listUploadFormatsUseCase,
+       _uploadAssetUseCase = uploadAssetUseCase;
 
   static const int pageSize = WorkHistoryQuery.BATCH_SIZE;
 
   final ListAssetLookupPageUseCase _listAssetLookupPageUseCase;
   final ListEquipmentLookupUseCase _listEquipmentLookupUseCase;
   final ListWorkHistoryPageUseCase _listWorkHistoryPageUseCase;
+  final ListUploadFormatsUseCase _listUploadFormatsUseCase;
+  final UploadAssetUseCase _uploadAssetUseCase;
 
   String _kindCode = '';
   String _fileNameText = '';
@@ -314,6 +324,10 @@ class AssetLookupViewModel extends ChangeNotifier {
     }
   }
 
+  Future<AssetUploadFormats> loadUploadFormats() {
+    return _listUploadFormatsUseCase.execute();
+  }
+
   List<JobPassOption> passesOf(String jobId) {
     for (final job in _jobs) {
       if (job.jobId == jobId) {
@@ -321,6 +335,26 @@ class AssetLookupViewModel extends ChangeNotifier {
       }
     }
     return const [];
+  }
+
+  Future<CameraRecordingFile?> pickUploadFile() {
+    return _uploadAssetUseCase.pickFile();
+  }
+
+  Future<AssetUploadResult> uploadAssetFile({
+    required String jobId,
+    required String passId,
+    required String equipmentId,
+    required DateTime? timeOrigin,
+    required CameraRecordingFile file,
+  }) {
+    return _uploadAssetUseCase.uploadFile(
+      jobId: jobId,
+      passId: passId,
+      equipmentId: equipmentId,
+      timeOrigin: timeOrigin,
+      file: file,
+    );
   }
 
   Future<void> _reloadListAssets() async {

@@ -8,11 +8,13 @@ class CatalogLookupFrame extends StatelessWidget {
     required this.filters,
     required this.actionLabel,
     required this.body,
+    this.onAction,
   });
 
   final List<Widget> filters;
   final String actionLabel;
   final Widget body;
+  final VoidCallback? onAction;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +33,7 @@ class CatalogLookupFrame extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Button(onPressed: null, child: Text(actionLabel)),
+            Button(onPressed: onAction, child: Text(actionLabel)),
           ],
         ),
         const SizedBox(height: 12),

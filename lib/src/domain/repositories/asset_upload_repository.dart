@@ -7,4 +7,16 @@ abstract class AssetUploadRepository {
     required DateTime timeOrigin,
     required CameraRecordingFile file,
   });
+
+  Future<AssetUploadFormats> listUploadFormats();
+
+  Future<CameraRecordingFile?> pickFile();
+
+  Future<AssetUploadResult> uploadFile({
+    required String jobId,
+    required String passId,
+    required String equipmentId,
+    required DateTime? timeOrigin,
+    required CameraRecordingFile file,
+  });
 }

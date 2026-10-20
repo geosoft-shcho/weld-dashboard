@@ -4,7 +4,9 @@ import 'dart:typed_data';
 import '../../domain/entities/asset_upload.dart';
 import '../../domain/entities/camera_recording.dart';
 import '../../domain/repositories/asset_upload_repository.dart';
+import '../datasources/asset_file_picker.dart';
 import '../datasources/asset_multipart_upload.dart';
+import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
 import '../datasources/remote/media_tag_data_source.dart';
 
 typedef AssetMultipartUpload =
@@ -30,13 +32,55 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     required String jobId,
     required DateTime timeOrigin,
     required CameraRecordingFile file,
+  }) {
+    return uploadFile(
+      jobId: jobId,
+      passId: '',
+      equipmentId: '',
+      timeOrigin: timeOrigin,
+      file: file,
+    );
+  }
+
+  @override
+  Future<AssetUploadFormats> listUploadFormats() async {
+    final response = await _mediaTag.assetService.listUploadFormats(
+      asset_pb.ListUploadFormatsRequest(),
+    );
+    return AssetUploadFormats(
+      formats: [
+        for (final format in response.formats)
+          AssetUploadFormat(
+            label: format.label.isEmpty ? format.name : format.label,
+            extensions: format.extensions,
+            steps: format.steps,
+            timeOriginRequired: format.timeOriginRequired,
+          ),
+      ],
+      maxBytes: response.maxBytes.toInt(),
+    );
+  }
+
+  @override
+  Future<CameraRecordingFile?> pickFile() => pickAssetFile();
+
+  @override
+  Future<AssetUploadResult> uploadFile({
+    required String jobId,
+    required String passId,
+    required String equipmentId,
+    required DateTime? timeOrigin,
+    required CameraRecordingFile file,
   }) async {
     try {
       final body = await _upload(
         url: _mediaTag.resolveContentUrl('/assets'),
         metadata: jsonEncode({
-          'jobId': jobId,
-          'timeOrigin': timeOrigin.toUtc().toIso8601String(),
+          if (_hasId(jobId)) 'jobId': jobId,
+          if (_hasId(passId)) 'passId': passId,
+          if (_hasId(equipmentId)) 'equipmentId': equipmentId,
+          if (timeOrigin != null)
+            'timeOrigin': timeOrigin.toUtc().toIso8601String(),
         }),
         fileName: file.fileName,
         mimeType: file.mimeType,
@@ -52,6 +96,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
         throw const AssetUploadException('업로드 응답에 파일 번호가 없습니다.');
       }
       final warnings = decoded['warnings'];
+      final duplicates = decoded['duplicateOf'];
       return AssetUploadResult(
         assetId: assetId,
         fileName: _text(asset['fileName']).isEmpty
@@ -61,6 +106,9 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
         warnings: warnings is List
             ? [for (final warning in warnings) warning.toString()]
             : const [],
+        duplicateAssetIds: duplicates is List
+            ? [for (final id in duplicates) id.toString()]
+            : const [],
       );
     } on AssetUploadException {
       rethrow;
@@ -68,6 +116,8 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
       throw AssetUploadException(error.toString());
     }
   }
+
+  bool _hasId(String id) => id.isNotEmpty && id != '0';
 
   String _text(Object? value) => value?.toString().trim() ?? '';
 }
