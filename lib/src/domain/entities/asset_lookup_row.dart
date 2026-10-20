@@ -1,3 +1,10 @@
+class AssetDisplayField {
+  const AssetDisplayField({required this.label, required this.value});
+
+  final String label;
+  final String value;
+}
+
 class AssetLookupRow {
   const AssetLookupRow({
     required this.assetId,
@@ -11,6 +18,10 @@ class AssetLookupRow {
     this.isUnattached = false,
     this.childCount = 0,
     this.attachmentPassId = '',
+    this.parentAssetId = '',
+    this.provenanceSummary = '',
+    this.displayFields = const [],
+    this.propertiesJson = '',
   });
 
   final String assetId;
@@ -28,22 +39,38 @@ class AssetLookupRow {
 
   /// ListJobAssets의 pass_id. '0'이면 작업 공용, 빈 값이면 패스 정보 없음.
   final String attachmentPassId;
+  final String parentAssetId;
+  final String provenanceSummary;
+  final List<AssetDisplayField> displayFields;
+  final String propertiesJson;
 }
 
 class AssetLookupPage {
-  const AssetLookupPage({required this.rows, required this.nextPageToken});
+  const AssetLookupPage({
+    required this.rows,
+    required this.nextPageToken,
+    this.totalCount = 0,
+  });
 
   final List<AssetLookupRow> rows;
   final String nextPageToken;
+  final int totalCount;
 
   bool get doesHaveMore => nextPageToken.isNotEmpty;
 }
 
 class JobPassOption {
-  const JobPassOption({required this.passId, required this.passNo});
+  const JobPassOption({
+    required this.passId,
+    required this.passNo,
+    this.startedAt,
+    this.endedAt,
+  });
 
   final String passId;
   final int passNo;
+  final DateTime? startedAt;
+  final DateTime? endedAt;
 }
 
 /// ListJobAssets에서 작업 공용만 볼 때 쓰는 pass_id=0 토큰.

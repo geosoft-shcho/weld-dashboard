@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fixnum/fixnum.dart';
 
 import '../../domain/entities/asset_lookup_row.dart';
@@ -15,7 +17,7 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
   @override
   Future<AssetLookupPage> listAssets({
     required String kindCode,
-    required String fileName,
+    required String query,
     required String equipmentId,
     required bool unattachedOnly,
     required int pageSize,
@@ -29,9 +31,9 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     if (kind != asset_pb.AssetKind.ASSET_KIND_UNSPECIFIED) {
       request.kind = kind;
     }
-    final trimmedName = fileName.trim();
-    if (trimmedName.isNotEmpty) {
-      request.fileName = trimmedName;
+    final trimmedQuery = query.trim();
+    if (trimmedQuery.isNotEmpty) {
+      request.query = trimmedQuery;
     }
     final equipment = protoIdOrNull(equipmentId);
     if (equipment != null) {
@@ -51,6 +53,7 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
           ),
       ],
       nextPageToken: response.nextPageToken,
+      totalCount: response.totalCount,
     );
   }
 
@@ -89,8 +92,32 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     return [
       for (final pass in response.passes)
         if (idText(pass.passId).isNotEmpty)
-          JobPassOption(passId: idText(pass.passId), passNo: pass.passNo),
+          JobPassOption(
+            passId: idText(pass.passId),
+            passNo: pass.passNo,
+            startedAt: pass.hasStartedAt()
+                ? pass.startedAt.toDateTime().toLocal()
+                : null,
+            endedAt: pass.hasEndedAt()
+                ? pass.endedAt.toDateTime().toLocal()
+                : null,
+          ),
     ];
+  }
+
+  @override
+  Future<AssetLookupRow?> getAsset({required String assetId}) async {
+    final id = protoIdOrNull(assetId);
+    if (id == null) {
+      return null;
+    }
+    final response = await _mediaTag.assetService.getAsset(
+      asset_pb.GetAssetRequest(assetId: id),
+    );
+    if (!response.hasAsset()) {
+      return null;
+    }
+    return _rowFrom(response.asset, isAttached: false, includeDetail: true);
   }
 
   AssetLookupRow _rowFrom(
@@ -98,10 +125,23 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     required bool isAttached,
     bool isUnattached = false,
     String attachmentPassId = '',
+    bool includeDetail = false,
   }) {
     final parentId = asset.hasProvenance()
         ? asset.provenance.parentAssetId
         : Int64.ZERO;
+    final parentText = parentId == Int64.ZERO ? '' : idText(parentId);
+    var provenanceSummary = '';
+    if (includeDetail && asset.hasProvenance()) {
+      final provenance = asset.provenance;
+      final parts = <String>[
+        if (provenance.operation.isNotEmpty) provenance.operation,
+        if (provenance.runId != Int64.ZERO) '실행 ${idText(provenance.runId)}',
+        if (provenance.toolId != Int64.ZERO) '도구 ${idText(provenance.toolId)}',
+        if (provenance.toolVersion.isNotEmpty) provenance.toolVersion,
+      ];
+      provenanceSummary = parts.join(' · ');
+    }
     return AssetLookupRow(
       assetId: idText(asset.assetId),
       kindCode: _kindCodeOf(asset.kind),
@@ -114,6 +154,20 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
       isUnattached: isUnattached,
       childCount: asset.childCount,
       attachmentPassId: attachmentPassId,
+      parentAssetId: parentText,
+      provenanceSummary: provenanceSummary,
+      displayFields: includeDetail
+          ? [
+              for (final field in asset.display)
+                if (field.label.isNotEmpty)
+                  AssetDisplayField(label: field.label, value: field.value),
+            ]
+          : const [],
+      propertiesJson: includeDetail &&
+              asset.hasProperties() &&
+              asset.properties.fields.isNotEmpty
+          ? jsonEncode(asset.properties.toProto3Json())
+          : '',
     );
   }
 

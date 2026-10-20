@@ -1,31 +1,47 @@
 import '../../domain/entities/equipment.dart';
+import '../../domain/entities/lookup_page.dart';
 import '../../domain/repositories/equipment_lookup_repository.dart';
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/media_tag_data_source.dart';
 import 'proto_id.dart';
 
-/// 에셋 조회 장비 콤보용. 개수·숨김은 ListJobFilters를 쓰는 장비 조회 화면이 담당한다.
 class RemoteEquipmentLookupRepository implements EquipmentLookupRepository {
   RemoteEquipmentLookupRepository(this._mediaTag);
 
   final MediaTagDataSource _mediaTag;
 
   @override
-  Future<List<Equipment>> listEquipment() async {
-    final filters = await _mediaTag.workService.listJobFilters(
-      work_pb.ListJobFiltersRequest(),
+  Future<LookupPage<Equipment>> listEquipment({
+    required bool includeInactive,
+    required String query,
+    required int pageSize,
+    required String pageToken,
+  }) async {
+    final request = work_pb.ListEquipmentRequest(
+      includeInactive: includeInactive,
+      pageSize: pageSize,
+      pageToken: pageToken,
     );
-    return [
-      for (final item in filters.equipment)
-        Equipment(
-          equipmentId: idText(item.equipmentId),
-          equipmentName: item.equipmentName,
-          equipmentCode: item.equipmentCode,
-          lineName: item.lineName,
-          description: item.description,
-          isInactive: item.inactive,
-          jobCount: filters.equipmentJobCounts[item.equipmentId] ?? 0,
-        ),
-    ];
+    final trimmed = query.trim();
+    if (trimmed.isNotEmpty) {
+      request.query = trimmed;
+    }
+    final response = await _mediaTag.workService.listEquipment(request);
+    return LookupPage(
+      items: [
+        for (final item in response.equipment)
+          Equipment(
+            equipmentId: idText(item.equipmentId),
+            equipmentName: item.equipmentName,
+            equipmentCode: item.equipmentCode,
+            description: item.description,
+            isInactive: item.inactive,
+            jobCount: response.jobCounts[item.equipmentId] ?? 0,
+            assetCount: response.assetCounts[item.equipmentId] ?? 0,
+          ),
+      ],
+      nextPageToken: response.nextPageToken,
+      totalCount: response.totalCount,
+    );
   }
 }

@@ -2,13 +2,13 @@ import '../../domain/entities/equipment.dart';
 import '../../domain/entities/work_history_catalog.dart';
 import '../../domain/entities/work_history_item.dart';
 import '../../domain/entities/work_history_page.dart';
-import '../../domain/entities/work_history_project_filter.dart';
 import '../../domain/entities/work_history_query.dart';
 import '../../domain/entities/worker.dart';
 import '../../domain/repositories/work_history_repository.dart';
 import '../datasources/generated/google/protobuf/timestamp.pb.dart';
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/media_tag_data_source.dart';
+import 'project_filter_mapping.dart';
 import 'proto_id.dart';
 import 'worker_kind_mapper.dart';
 
@@ -27,37 +27,7 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
     return WorkHistoryCatalog(
       items: const [],
       projects: [
-        for (final project in filters.projects)
-          WorkHistoryProjectFilter(
-            projectId: idText(project.project.projectId),
-            projectNo: project.project.projectNo,
-            projectName: project.project.projectName,
-            siteName: project.project.siteName,
-            customer: project.project.customer,
-            jobCount: project.jobCount,
-            units: [
-              for (final unit in project.units)
-                WorkHistoryUnitFilter(
-                  unitNo: unit.unitNo,
-                  itemCodes: unit.itemCodes,
-                  items: [
-                    for (final item in unit.items)
-                      WorkHistoryItemFilter(
-                        itemCode: item.itemCode,
-                        itemName: item.itemName,
-                        jointNos: item.jointNos,
-                        joints: [
-                          for (final joint in item.joints)
-                            WorkHistoryJointFilter(
-                              jointNo: joint.jointNo,
-                              passNos: joint.passNos,
-                            ),
-                        ],
-                      ),
-                  ],
-                ),
-            ],
-          ),
+        for (final project in filters.projects) projectFilterFromProto(project),
       ],
       workers: [
         for (final item in filters.workers)
@@ -77,7 +47,6 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
             equipmentId: idText(item.equipmentId),
             equipmentName: item.equipmentName,
             equipmentCode: item.equipmentCode,
-            lineName: item.lineName,
             description: item.description,
             isInactive: item.inactive,
             jobCount: filters.equipmentJobCounts[item.equipmentId] ?? 0,
@@ -160,6 +129,10 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
     final equipmentId = protoIdOrNull(query.equipmentId);
     if (equipmentId != null) {
       request.equipmentId = equipmentId;
+    }
+    final assetId = protoIdOrNull(query.assetId);
+    if (assetId != null) {
+      request.assetId = assetId;
     }
     final fromDate = query.fromDate;
     if (fromDate != null) {

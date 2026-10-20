@@ -8,6 +8,7 @@ class WorkHistoryQuery {
     this.passNo = 0,
     required this.workerId,
     required this.equipmentId,
+    this.assetId = '',
     required this.fromDate,
     required this.toDate,
     required this.selectedJobId,
@@ -24,6 +25,7 @@ class WorkHistoryQuery {
       itemCode: '',
       workerId: '',
       equipmentId: '',
+      assetId: '',
       fromDate: null,
       toDate: null,
       selectedJobId: '',
@@ -39,6 +41,7 @@ class WorkHistoryQuery {
   final int passNo;
   final String workerId;
   final String equipmentId;
+  final String assetId;
   final DateTime? fromDate;
   final DateTime? toDate;
 
@@ -66,6 +69,7 @@ class WorkHistoryQuery {
         passNo != 0 ||
         workerId.isNotEmpty ||
         equipmentId.isNotEmpty ||
+        assetId.isNotEmpty ||
         fromDate != null ||
         toDate != null;
   }
@@ -79,6 +83,7 @@ class WorkHistoryQuery {
         passNo == other.passNo &&
         workerId == other.workerId &&
         equipmentId == other.equipmentId &&
+        assetId == other.assetId &&
         _sameDay(fromDate, other.fromDate) &&
         _sameDay(toDate, other.toDate);
   }
@@ -102,6 +107,7 @@ class WorkHistoryQuery {
     int? passNo,
     String? workerId,
     String? equipmentId,
+    String? assetId,
     DateTime? fromDate,
     bool clearFromDate = false,
     DateTime? toDate,
@@ -118,6 +124,7 @@ class WorkHistoryQuery {
       passNo: passNo ?? this.passNo,
       workerId: workerId ?? this.workerId,
       equipmentId: equipmentId ?? this.equipmentId,
+      assetId: assetId ?? this.assetId,
       fromDate: clearFromDate ? null : (fromDate ?? this.fromDate),
       toDate: clearToDate ? null : (toDate ?? this.toDate),
       selectedJobId: selectedJobId ?? this.selectedJobId,

@@ -48,7 +48,6 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
           equipmentId: idText(item.equipmentId),
           equipmentName: item.equipmentName,
           equipmentCode: item.equipmentCode,
-          lineName: item.lineName,
         ),
     ];
     for (final node in nodes) {
@@ -62,7 +61,6 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
           Equipment(
             equipmentId: equipmentId,
             equipmentName: name,
-            lineName: '',
           ),
         );
         continue;
@@ -74,7 +72,6 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
       equipments[index] = Equipment(
         equipmentId: current.equipmentId,
         equipmentName: node.label,
-        lineName: current.lineName,
       );
     }
     final equipmentById = {

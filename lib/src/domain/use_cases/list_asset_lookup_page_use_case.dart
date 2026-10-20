@@ -8,7 +8,7 @@ class ListAssetLookupPageUseCase {
 
   Future<AssetLookupPage> execute({
     required String kindCode,
-    required String fileName,
+    required String query,
     required String equipmentId,
     required bool unattachedOnly,
     required int pageSize,
@@ -16,7 +16,7 @@ class ListAssetLookupPageUseCase {
   }) {
     return _repository.listAssets(
       kindCode: kindCode,
-      fileName: fileName,
+      query: query,
       equipmentId: equipmentId,
       unattachedOnly: unattachedOnly,
       pageSize: pageSize,

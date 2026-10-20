@@ -3,7 +3,7 @@ import '../entities/asset_lookup_row.dart';
 abstract class AssetLookupRepository {
   Future<AssetLookupPage> listAssets({
     required String kindCode,
-    required String fileName,
+    required String query,
     required String equipmentId,
     required bool unattachedOnly,
     required int pageSize,
@@ -16,4 +16,6 @@ abstract class AssetLookupRepository {
   });
 
   Future<List<JobPassOption>> listJobPasses({required String jobId});
+
+  Future<AssetLookupRow?> getAsset({required String assetId});
 }
