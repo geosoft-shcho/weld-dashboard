@@ -11,6 +11,7 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-19  geosoft-Server: ListAssetsRequest.query, ListAssetsResponse.total_count
 //   2026-10-19  geosoft-Server: MergeAssets — 중복 사본을 기준 하나로 합치기(dry_run으로 미리 셈)
 //   2026-10-19  geosoft-Server: 중복 정리 — ListDuplicateAssets 판정(mergeable·reason)·결정·사본별 참조 수, ResolveDuplicateGroup
 //   2026-10-19  geosoft-Server: ListAssetsRequest file_name·equipment_id·unattached_only, Asset.display(종류별 표시 줄)
@@ -151,11 +152,13 @@ message ListAssetsRequest {
   string file_name = 5;      // 파일 이름 부분 일치(대소문자 무시)
   int64 equipment_id = 6;    // 그 장비가 기록한 것
   bool unattached_only = 7;  // 어느 작업에도 첨부(job_asset)되지 않은 것 — 작업 미지정
+  string query = 8;          // 부분 일치(대소문자 무시): 파일 이름 · 원본 위치. 숫자면 그 번호의 Asset도. 비면 전체
 }
 
 message ListAssetsResponse {
   repeated Asset assets = 1;
   string next_page_token = 2; // 비어 있으면 마지막 페이지
+  int32 total_count = 3;      // 조건에 맞는 전체 건수
 }
 
 message GetAssetRequest {

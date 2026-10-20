@@ -593,6 +593,7 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     $core.String? fileName,
     $fixnum.Int64? equipmentId,
     $core.bool? unattachedOnly,
+    $core.String? query,
   }) {
     final result = create();
     if (pageSize != null) result.pageSize = pageSize;
@@ -602,6 +603,7 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     if (fileName != null) result.fileName = fileName;
     if (equipmentId != null) result.equipmentId = equipmentId;
     if (unattachedOnly != null) result.unattachedOnly = unattachedOnly;
+    if (query != null) result.query = query;
     return result;
   }
 
@@ -629,6 +631,7 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     ..aOS(5, _omitFieldNames ? '' : 'fileName')
     ..aInt64(6, _omitFieldNames ? '' : 'equipmentId')
     ..aOB(7, _omitFieldNames ? '' : 'unattachedOnly')
+    ..aOS(8, _omitFieldNames ? '' : 'query')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -714,16 +717,27 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
   $core.bool hasUnattachedOnly() => $_has(6);
   @$pb.TagNumber(7)
   void clearUnattachedOnly() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.String get query => $_getSZ(7);
+  @$pb.TagNumber(8)
+  set query($core.String value) => $_setString(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasQuery() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearQuery() => $_clearField(8);
 }
 
 class ListAssetsResponse extends $pb.GeneratedMessage {
   factory ListAssetsResponse({
     $core.Iterable<Asset>? assets,
     $core.String? nextPageToken,
+    $core.int? totalCount,
   }) {
     final result = create();
     if (assets != null) result.assets.addAll(assets);
     if (nextPageToken != null) result.nextPageToken = nextPageToken;
+    if (totalCount != null) result.totalCount = totalCount;
     return result;
   }
 
@@ -744,6 +758,7 @@ class ListAssetsResponse extends $pb.GeneratedMessage {
     ..pc<Asset>(1, _omitFieldNames ? '' : 'assets', $pb.PbFieldType.PM,
         subBuilder: Asset.create)
     ..aOS(2, _omitFieldNames ? '' : 'nextPageToken')
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'totalCount', $pb.PbFieldType.O3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -778,6 +793,15 @@ class ListAssetsResponse extends $pb.GeneratedMessage {
   $core.bool hasNextPageToken() => $_has(1);
   @$pb.TagNumber(2)
   void clearNextPageToken() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get totalCount => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set totalCount($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTotalCount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTotalCount() => $_clearField(3);
 }
 
 class GetAssetRequest extends $pb.GeneratedMessage {

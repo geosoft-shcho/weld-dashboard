@@ -152,7 +152,7 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// update_mask: equipment_name, line_name, equipment_code, description, inactive
+  /// update_mask: equipment_name, equipment_code, description, inactive
   Future<mediatagworkv1work.UpdateEquipmentResponse> updateEquipment(
     mediatagworkv1work.UpdateEquipmentRequest input, {
     connect.Headers? headers,

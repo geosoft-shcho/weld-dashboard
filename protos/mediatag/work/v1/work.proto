@@ -15,6 +15,10 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-20  geosoft-Server: ListProjects에 호기·품목·작업 수(project_details), ListWorkers·ListEquipment에 작업 수(job_counts)·
+//                장비 Asset 수(asset_counts)
+//   2026-10-20  geosoft-Server: Equipment.line_name 삭제(쓰는 곳이 없다, 깨지는 변경)
+//   2026-10-19  geosoft-Server: ListProjects · ListWorkers · ListEquipment에 query · page_size · page_token, 응답 next_page_token · total_count
 //   2026-10-19  geosoft-Server: 작업자 종류 WorkerType(명장·일반·로봇)이 is_master·master_only를 대신함, Worker.team 삭제(깨지는 변경)
 //   2026-10-19  geosoft-Server: Worker.employee_no·description·inactive, Equipment.description·inactive, ListWorkers·ListEquipment
 //                include_inactive
@@ -80,10 +84,10 @@ service WorkService {
   // 행을 실제로 지운다(되돌릴 수 없음). 작업을 맡은 작업자는 FailedPrecondition.
   rpc DeleteWorker(DeleteWorkerRequest) returns (DeleteWorkerResponse);
   // 숨긴(inactive) 장비는 빠진다 — include_inactive면 전부.
-  rpc ListEquipment(각) returns (ListEquipmentResponse);
+  rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse);
   // 장비를 만든다. equipment.equipment_name 필수. equipment_code가 겹치면 AlreadyExists.
   rpc CreateEquipment(CreateEquipmentRequest) returns (CreateEquipmentResponse);
-  // update_mask: equipment_name, line_name, equipment_code, description, inactive
+  // update_mask: equipment_name, equipment_code, description, inactive
   rpc UpdateEquipment(UpdateEquipmentRequest) returns (UpdateEquipmentResponse);
   // 행을 실제로 지운다(되돌릴 수 없음). 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
   rpc DeleteEquipment(DeleteEquipmentRequest) returns (DeleteEquipmentResponse);
@@ -162,7 +166,7 @@ message Worker {
 message Equipment {
   int64 equipment_id = 1;      // 시스템이 매기는 번호
   string equipment_name = 2;
-  string line_name = 3;
+  reserved 3; // 옛 line_name
   string equipment_code = 4;   // 사람이 정한 값('DEMO-DEPTH-FRONT'). 적재기가 이 값으로 장비를 찾는다. 없어도 되고, 있으면 유일
   string description = 5;      // 비고
   bool inactive = 6;           // 숨김(안 쓰는 장비). 고르는 목록(ListEquipment)에서만 빠진다
@@ -275,10 +279,18 @@ message JobSummary {
   bool has_report = 7;                 // 매칭된 성적서 세트가 있는가
 }
 
-message ListProjectsRequest {}
+// 관리 · 조회 목록. ListJobs처럼 검색어 · 페이지 · 전체 건수. project_no 오름차순.
+message ListProjectsRequest {
+  string query = 1;      // 부분 일치(대소문자 무시): 공사 번호 · 이름 · 현장 · 발주처 · 배정된 품목 코드 · 이름. 비면 전체
+  int32 page_size = 2;   // 기본 50, 최대 200
+  string page_token = 3;
+}
 
 message ListProjectsResponse {
   repeated Project projects = 1;
+  string next_page_token = 2; // 비어 있으면 마지막 페이지
+  int32 total_count = 3;      // 검색 조건에 맞는 전체 건수
+  repeated ProjectFilter project_details = 4; // projects와 같은 공사·같은 순서 + 호기·품목·작업 수(ListJobFilters와 같은 값)
 }
 
 message CreateProjectRequest {
@@ -322,7 +334,7 @@ message CreateEquipmentResponse {
 
 message UpdateEquipmentRequest {
   Equipment equipment = 1;                 // equipment.equipment_id 필수
-  google.protobuf.FieldMask update_mask = 2; // equipment_name, line_name, equipment_code, description, inactive
+  google.protobuf.FieldMask update_mask = 2; // equipment_name, equipment_code, description, inactive
 }
 
 message UpdateEquipmentResponse {
@@ -444,20 +456,36 @@ message ProjectJoint {
   repeated int32 pass_nos = 2;     // 오름차순(1 = 초층). 고른 값은 ListJobs의 pass_no에
 }
 
+// worker_id 오름차순.
 message ListWorkersRequest {
   bool include_inactive = 1; // 숨긴 작업자도
+  string query = 2;          // 부분 일치(대소문자 무시): 이름 · 사번 · 비고. 비면 전체
+  int32 page_size = 3;       // 기본 50, 최대 200
+  string page_token = 4;
 }
 
 message ListWorkersResponse {
   repeated Worker workers = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+  map<int64, int32> job_counts = 4; // 이 페이지의 worker_id → 맡은 작업 수. 0인 것은 빠진다(ListJobFilters.worker_job_counts와 같은 값)
 }
 
-message 각 {
+// equipment_id 오름차순.
+message ListEquipmentRequest {
   bool include_inactive = 1; // 숨긴 장비도
+  string query = 2;          // 부분 일치(대소문자 무시): 장비 코드 · 이름 · 비고. 비면 전체
+  int32 page_size = 3;       // 기본 50, 최대 200
+  string page_token = 4;
 }
 
 message ListEquipmentResponse {
   repeated Equipment equipment = 1;
+  string next_page_token = 2;
+  int32 total_count = 3;
+  // 이 페이지의 equipment_id → 개수. 0인 것은 빠진다(ListJobFilters.equipment_job_counts · equipment_asset_counts와 같은 값)
+  map<int64, int32> job_counts = 4;   // 그 장비의 Asset이 첨부된 작업 수
+  map<int64, int32> asset_counts = 5; // 기록한 Asset 수. 0이 아니면 장비를 못 지운다
 }
 
 // 필터는 모두 선택이고 AND로 묶인다. 정렬은 started_at 내림차순, 같으면 job_id 내림차순.

@@ -74,7 +74,7 @@ abstract final class WorkService {
     mediatagworkv1work.CreateEquipmentResponse.new,
   );
 
-  /// update_mask: equipment_name, line_name, equipment_code, description, inactive
+  /// update_mask: equipment_name, equipment_code, description, inactive
   static const updateEquipment = connect.Spec(
     '/$name/UpdateEquipment',
     connect.StreamType.unary,

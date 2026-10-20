@@ -251,6 +251,7 @@ const ListAssetsRequest$json = {
     {'1': 'file_name', '3': 5, '4': 1, '5': 9, '10': 'fileName'},
     {'1': 'equipment_id', '3': 6, '4': 1, '5': 3, '10': 'equipmentId'},
     {'1': 'unattached_only', '3': 7, '4': 1, '5': 8, '10': 'unattachedOnly'},
+    {'1': 'query', '3': 8, '4': 1, '5': 9, '10': 'query'},
   ],
 };
 
@@ -260,7 +261,8 @@ final $typed_data.Uint8List listAssetsRequestDescriptor = $convert.base64Decode(
     'VfdG9rZW4YAiABKAlSCXBhZ2VUb2tlbhIwCgRraW5kGAMgASgOMhwubWVkaWF0YWcuYXNzZXQu'
     'djEuQXNzZXRLaW5kUgRraW5kEiYKD3BhcmVudF9hc3NldF9pZBgEIAEoA1INcGFyZW50QXNzZX'
     'RJZBIbCglmaWxlX25hbWUYBSABKAlSCGZpbGVOYW1lEiEKDGVxdWlwbWVudF9pZBgGIAEoA1IL'
-    'ZXF1aXBtZW50SWQSJwoPdW5hdHRhY2hlZF9vbmx5GAcgASgIUg51bmF0dGFjaGVkT25seQ==');
+    'ZXF1aXBtZW50SWQSJwoPdW5hdHRhY2hlZF9vbmx5GAcgASgIUg51bmF0dGFjaGVkT25seRIUCg'
+    'VxdWVyeRgIIAEoCVIFcXVlcnk=');
 
 @$core.Deprecated('Use listAssetsResponseDescriptor instead')
 const ListAssetsResponse$json = {
@@ -275,13 +277,15 @@ const ListAssetsResponse$json = {
       '10': 'assets'
     },
     {'1': 'next_page_token', '3': 2, '4': 1, '5': 9, '10': 'nextPageToken'},
+    {'1': 'total_count', '3': 3, '4': 1, '5': 5, '10': 'totalCount'},
   ],
 };
 
 /// Descriptor for `ListAssetsResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listAssetsResponseDescriptor = $convert.base64Decode(
     'ChJMaXN0QXNzZXRzUmVzcG9uc2USMAoGYXNzZXRzGAEgAygLMhgubWVkaWF0YWcuYXNzZXQudj'
-    'EuQXNzZXRSBmFzc2V0cxImCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAlSDW5leHRQYWdlVG9rZW4=');
+    'EuQXNzZXRSBmFzc2V0cxImCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAlSDW5leHRQYWdlVG9rZW4S'
+    'HwoLdG90YWxfY291bnQYAyABKAVSCnRvdGFsQ291bnQ=');
 
 @$core.Deprecated('Use getAssetRequestDescriptor instead')
 const GetAssetRequest$json = {

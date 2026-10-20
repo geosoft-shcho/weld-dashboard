@@ -253,7 +253,6 @@ class Equipment extends $pb.GeneratedMessage {
   factory Equipment({
     $fixnum.Int64? equipmentId,
     $core.String? equipmentName,
-    $core.String? lineName,
     $core.String? equipmentCode,
     $core.String? description,
     $core.bool? inactive,
@@ -261,7 +260,6 @@ class Equipment extends $pb.GeneratedMessage {
     final result = create();
     if (equipmentId != null) result.equipmentId = equipmentId;
     if (equipmentName != null) result.equipmentName = equipmentName;
-    if (lineName != null) result.lineName = lineName;
     if (equipmentCode != null) result.equipmentCode = equipmentCode;
     if (description != null) result.description = description;
     if (inactive != null) result.inactive = inactive;
@@ -284,7 +282,6 @@ class Equipment extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'equipmentId')
     ..aOS(2, _omitFieldNames ? '' : 'equipmentName')
-    ..aOS(3, _omitFieldNames ? '' : 'lineName')
     ..aOS(4, _omitFieldNames ? '' : 'equipmentCode')
     ..aOS(5, _omitFieldNames ? '' : 'description')
     ..aOB(6, _omitFieldNames ? '' : 'inactive')
@@ -327,39 +324,30 @@ class Equipment extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearEquipmentName() => $_clearField(2);
 
-  @$pb.TagNumber(3)
-  $core.String get lineName => $_getSZ(2);
-  @$pb.TagNumber(3)
-  set lineName($core.String value) => $_setString(2, value);
-  @$pb.TagNumber(3)
-  $core.bool hasLineName() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearLineName() => $_clearField(3);
-
   @$pb.TagNumber(4)
-  $core.String get equipmentCode => $_getSZ(3);
+  $core.String get equipmentCode => $_getSZ(2);
   @$pb.TagNumber(4)
-  set equipmentCode($core.String value) => $_setString(3, value);
+  set equipmentCode($core.String value) => $_setString(2, value);
   @$pb.TagNumber(4)
-  $core.bool hasEquipmentCode() => $_has(3);
+  $core.bool hasEquipmentCode() => $_has(2);
   @$pb.TagNumber(4)
   void clearEquipmentCode() => $_clearField(4);
 
   @$pb.TagNumber(5)
-  $core.String get description => $_getSZ(4);
+  $core.String get description => $_getSZ(3);
   @$pb.TagNumber(5)
-  set description($core.String value) => $_setString(4, value);
+  set description($core.String value) => $_setString(3, value);
   @$pb.TagNumber(5)
-  $core.bool hasDescription() => $_has(4);
+  $core.bool hasDescription() => $_has(3);
   @$pb.TagNumber(5)
   void clearDescription() => $_clearField(5);
 
   @$pb.TagNumber(6)
-  $core.bool get inactive => $_getBF(5);
+  $core.bool get inactive => $_getBF(4);
   @$pb.TagNumber(6)
-  set inactive($core.bool value) => $_setBool(5, value);
+  set inactive($core.bool value) => $_setBool(4, value);
   @$pb.TagNumber(6)
-  $core.bool hasInactive() => $_has(5);
+  $core.bool hasInactive() => $_has(4);
   @$pb.TagNumber(6)
   void clearInactive() => $_clearField(6);
 }
@@ -1533,8 +1521,19 @@ class JobSummary extends $pb.GeneratedMessage {
   void clearWorkerType() => $_clearField(8);
 }
 
+/// 관리 · 조회 목록. ListJobs처럼 검색어 · 페이지 · 전체 건수. project_no 오름차순.
 class ListProjectsRequest extends $pb.GeneratedMessage {
-  factory ListProjectsRequest() => create();
+  factory ListProjectsRequest({
+    $core.String? query,
+    $core.int? pageSize,
+    $core.String? pageToken,
+  }) {
+    final result = create();
+    if (query != null) result.query = query;
+    if (pageSize != null) result.pageSize = pageSize;
+    if (pageToken != null) result.pageToken = pageToken;
+    return result;
+  }
 
   ListProjectsRequest._();
 
@@ -1550,6 +1549,9 @@ class ListProjectsRequest extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
       createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'query')
+    ..a<$core.int>(2, _omitFieldNames ? '' : 'pageSize', $pb.PbFieldType.O3)
+    ..aOS(3, _omitFieldNames ? '' : 'pageToken')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1572,14 +1574,47 @@ class ListProjectsRequest extends $pb.GeneratedMessage {
   static ListProjectsRequest getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<ListProjectsRequest>(create);
   static ListProjectsRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get query => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set query($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasQuery() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearQuery() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.int get pageSize => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set pageSize($core.int value) => $_setSignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasPageSize() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPageSize() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get pageToken => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set pageToken($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasPageToken() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPageToken() => $_clearField(3);
 }
 
 class ListProjectsResponse extends $pb.GeneratedMessage {
   factory ListProjectsResponse({
     $core.Iterable<Project>? projects,
+    $core.String? nextPageToken,
+    $core.int? totalCount,
+    $core.Iterable<ProjectFilter>? projectDetails,
   }) {
     final result = create();
     if (projects != null) result.projects.addAll(projects);
+    if (nextPageToken != null) result.nextPageToken = nextPageToken;
+    if (totalCount != null) result.totalCount = totalCount;
+    if (projectDetails != null) result.projectDetails.addAll(projectDetails);
     return result;
   }
 
@@ -1599,6 +1634,11 @@ class ListProjectsResponse extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..pc<Project>(1, _omitFieldNames ? '' : 'projects', $pb.PbFieldType.PM,
         subBuilder: Project.create)
+    ..aOS(2, _omitFieldNames ? '' : 'nextPageToken')
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'totalCount', $pb.PbFieldType.O3)
+    ..pc<ProjectFilter>(
+        4, _omitFieldNames ? '' : 'projectDetails', $pb.PbFieldType.PM,
+        subBuilder: ProjectFilter.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1625,6 +1665,27 @@ class ListProjectsResponse extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(1)
   $pb.PbList<Project> get projects => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $core.String get nextPageToken => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set nextPageToken($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasNextPageToken() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearNextPageToken() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get totalCount => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set totalCount($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTotalCount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTotalCount() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $pb.PbList<ProjectFilter> get projectDetails => $_getList(3);
 }
 
 class CreateProjectRequest extends $pb.GeneratedMessage {
@@ -3892,12 +3953,19 @@ class ProjectJoint extends $pb.GeneratedMessage {
   $pb.PbList<$core.int> get passNos => $_getList(1);
 }
 
+/// worker_id 오름차순.
 class ListWorkersRequest extends $pb.GeneratedMessage {
   factory ListWorkersRequest({
     $core.bool? includeInactive,
+    $core.String? query,
+    $core.int? pageSize,
+    $core.String? pageToken,
   }) {
     final result = create();
     if (includeInactive != null) result.includeInactive = includeInactive;
+    if (query != null) result.query = query;
+    if (pageSize != null) result.pageSize = pageSize;
+    if (pageToken != null) result.pageToken = pageToken;
     return result;
   }
 
@@ -3916,6 +3984,9 @@ class ListWorkersRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
       createEmptyInstance: create)
     ..aOB(1, _omitFieldNames ? '' : 'includeInactive')
+    ..aOS(2, _omitFieldNames ? '' : 'query')
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'pageSize', $pb.PbFieldType.O3)
+    ..aOS(4, _omitFieldNames ? '' : 'pageToken')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3947,14 +4018,47 @@ class ListWorkersRequest extends $pb.GeneratedMessage {
   $core.bool hasIncludeInactive() => $_has(0);
   @$pb.TagNumber(1)
   void clearIncludeInactive() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get query => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set query($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasQuery() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearQuery() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get pageSize => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set pageSize($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasPageSize() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPageSize() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get pageToken => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set pageToken($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasPageToken() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearPageToken() => $_clearField(4);
 }
 
 class ListWorkersResponse extends $pb.GeneratedMessage {
   factory ListWorkersResponse({
     $core.Iterable<Worker>? workers,
+    $core.String? nextPageToken,
+    $core.int? totalCount,
+    $core.Iterable<$core.MapEntry<$fixnum.Int64, $core.int>>? jobCounts,
   }) {
     final result = create();
     if (workers != null) result.workers.addAll(workers);
+    if (nextPageToken != null) result.nextPageToken = nextPageToken;
+    if (totalCount != null) result.totalCount = totalCount;
+    if (jobCounts != null) result.jobCounts.addEntries(jobCounts);
     return result;
   }
 
@@ -3974,6 +4078,13 @@ class ListWorkersResponse extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..pc<Worker>(1, _omitFieldNames ? '' : 'workers', $pb.PbFieldType.PM,
         subBuilder: Worker.create)
+    ..aOS(2, _omitFieldNames ? '' : 'nextPageToken')
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'totalCount', $pb.PbFieldType.O3)
+    ..m<$fixnum.Int64, $core.int>(4, _omitFieldNames ? '' : 'jobCounts',
+        entryClassName: 'ListWorkersResponse.JobCountsEntry',
+        keyFieldType: $pb.PbFieldType.O6,
+        valueFieldType: $pb.PbFieldType.O3,
+        packageName: const $pb.PackageName('mediatag.work.v1'))
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3999,14 +4110,42 @@ class ListWorkersResponse extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(1)
   $pb.PbList<Worker> get workers => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $core.String get nextPageToken => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set nextPageToken($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasNextPageToken() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearNextPageToken() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get totalCount => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set totalCount($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTotalCount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTotalCount() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $pb.PbMap<$fixnum.Int64, $core.int> get jobCounts => $_getMap(3);
 }
 
+/// equipment_id 오름차순.
 class ListEquipmentRequest extends $pb.GeneratedMessage {
   factory ListEquipmentRequest({
     $core.bool? includeInactive,
+    $core.String? query,
+    $core.int? pageSize,
+    $core.String? pageToken,
   }) {
     final result = create();
     if (includeInactive != null) result.includeInactive = includeInactive;
+    if (query != null) result.query = query;
+    if (pageSize != null) result.pageSize = pageSize;
+    if (pageToken != null) result.pageToken = pageToken;
     return result;
   }
 
@@ -4025,6 +4164,9 @@ class ListEquipmentRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
       createEmptyInstance: create)
     ..aOB(1, _omitFieldNames ? '' : 'includeInactive')
+    ..aOS(2, _omitFieldNames ? '' : 'query')
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'pageSize', $pb.PbFieldType.O3)
+    ..aOS(4, _omitFieldNames ? '' : 'pageToken')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -4057,14 +4199,49 @@ class ListEquipmentRequest extends $pb.GeneratedMessage {
   $core.bool hasIncludeInactive() => $_has(0);
   @$pb.TagNumber(1)
   void clearIncludeInactive() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get query => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set query($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasQuery() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearQuery() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get pageSize => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set pageSize($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasPageSize() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPageSize() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get pageToken => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set pageToken($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasPageToken() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearPageToken() => $_clearField(4);
 }
 
 class ListEquipmentResponse extends $pb.GeneratedMessage {
   factory ListEquipmentResponse({
     $core.Iterable<Equipment>? equipment,
+    $core.String? nextPageToken,
+    $core.int? totalCount,
+    $core.Iterable<$core.MapEntry<$fixnum.Int64, $core.int>>? jobCounts,
+    $core.Iterable<$core.MapEntry<$fixnum.Int64, $core.int>>? assetCounts,
   }) {
     final result = create();
     if (equipment != null) result.equipment.addAll(equipment);
+    if (nextPageToken != null) result.nextPageToken = nextPageToken;
+    if (totalCount != null) result.totalCount = totalCount;
+    if (jobCounts != null) result.jobCounts.addEntries(jobCounts);
+    if (assetCounts != null) result.assetCounts.addEntries(assetCounts);
     return result;
   }
 
@@ -4084,6 +4261,18 @@ class ListEquipmentResponse extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..pc<Equipment>(1, _omitFieldNames ? '' : 'equipment', $pb.PbFieldType.PM,
         subBuilder: Equipment.create)
+    ..aOS(2, _omitFieldNames ? '' : 'nextPageToken')
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'totalCount', $pb.PbFieldType.O3)
+    ..m<$fixnum.Int64, $core.int>(4, _omitFieldNames ? '' : 'jobCounts',
+        entryClassName: 'ListEquipmentResponse.JobCountsEntry',
+        keyFieldType: $pb.PbFieldType.O6,
+        valueFieldType: $pb.PbFieldType.O3,
+        packageName: const $pb.PackageName('mediatag.work.v1'))
+    ..m<$fixnum.Int64, $core.int>(5, _omitFieldNames ? '' : 'assetCounts',
+        entryClassName: 'ListEquipmentResponse.AssetCountsEntry',
+        keyFieldType: $pb.PbFieldType.O6,
+        valueFieldType: $pb.PbFieldType.O3,
+        packageName: const $pb.PackageName('mediatag.work.v1'))
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -4111,6 +4300,31 @@ class ListEquipmentResponse extends $pb.GeneratedMessage {
 
   @$pb.TagNumber(1)
   $pb.PbList<Equipment> get equipment => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $core.String get nextPageToken => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set nextPageToken($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasNextPageToken() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearNextPageToken() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get totalCount => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set totalCount($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTotalCount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTotalCount() => $_clearField(3);
+
+  /// 이 페이지의 equipment_id → 개수. 0인 것은 빠진다(ListJobFilters.equipment_job_counts · equipment_asset_counts와 같은 값)
+  @$pb.TagNumber(4)
+  $pb.PbMap<$fixnum.Int64, $core.int> get jobCounts => $_getMap(3);
+
+  @$pb.TagNumber(5)
+  $pb.PbMap<$fixnum.Int64, $core.int> get assetCounts => $_getMap(4);
 }
 
 /// 필터는 모두 선택이고 AND로 묶인다. 정렬은 started_at 내림차순, 같으면 job_id 내림차순.
@@ -5684,7 +5898,7 @@ class WorkServiceApi {
       _client.invoke<CreateEquipmentResponse>(ctx, 'WorkService',
           'CreateEquipment', request, CreateEquipmentResponse());
 
-  /// update_mask: equipment_name, line_name, equipment_code, description, inactive
+  /// update_mask: equipment_name, equipment_code, description, inactive
   $async.Future<UpdateEquipmentResponse> updateEquipment(
           $pb.ClientContext? ctx, UpdateEquipmentRequest request) =>
       _client.invoke<UpdateEquipmentResponse>(ctx, 'WorkService',

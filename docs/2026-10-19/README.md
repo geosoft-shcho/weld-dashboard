@@ -4,6 +4,10 @@
 
 | 일자 | 수정자 | 수정 내용 |
 |---|---|---|
+| 2026-10-20 | geosoft-Server | 목록에 개수 · 호기 · 품목 — `ListProjects.project_details`, `ListWorkers.job_counts`, `ListEquipment.job_counts` · `asset_counts`("2026-10-20에 바뀐 것"). 추가만 |
+| 2026-10-20 | geosoft-Server | **깨지는 변경** — 장비 `line_name` 삭제("2026-10-20에 바뀐 것") |
+| 2026-10-19 | geosoft-Server | 관리 · 조회 목록 `ListProjects` · `ListWorkers` · `ListEquipment` · `ListAssets`에 검색어 · 페이지 · 전체 건수(ListJobs와 같은 모양, "2026-10-19에 바뀐 것" 맨 위). 추가만 |
+| 2026-10-19 | geosoft-Server | `Asset.properties.file_metadata`에 파일 정보 전체(종류 상관없이, 빈 값만 뺌)와 요약 키 — 화면 업로드 파일의 속성이 비던 것 고침("2026-10-19에 바뀐 것" 아래) |
 | 2026-10-19 | geosoft-Server | 성적서 PDF 파생 트리가 여러 단이 됨(원본 → 묶음 → 문서별 PDF → OCR · 그림) — 칸은 그대로, `parent_asset_id` 값만 바뀜("2026-10-19에 바뀐 것" 아래) |
 | 2026-10-19 | geosoft-Server | `MergeAssets`(중복 합치기, `dry_run`) 추가("2026-10-19에 바뀐 것" 아래). 추가만 |
 | 2026-10-19 | geosoft-Server | 중복 정리 — `ListDuplicateAssets` 판정 · 결정 · 사본별 참조 수, `ResolveDuplicateGroup`, 업로드 응답 `duplicateOf`("2026-10-19에 바뀐 것" 아래). 추가만 |
@@ -57,7 +61,40 @@
 타임라인에 클립을 놓고, 그리고, 재생하는 방법은 `타임라인 그리기와 재생 안내.md`에 따로 정리했다(함께 전달).
 그 문서는 화면 구성(§9) → 한 작업으로 끝까지 따라가는 예시(§8) → 규칙(§1~§7, §10) 순으로 읽으면 빠르다.
 
+## 2026-10-20에 바뀐 것
+
+2026-10-20 운영 적용됨(서버 · DB 이관 22).
+
+**목록에 개수 · 호기 · 품목**(추가만) — `ListJobFilters`와 맞춰 보던 매핑을 지워도 된다. 값은 `ListJobFilters`와 같다.
+
+| RPC | 응답에 더한 칸 | 뜻 |
+|---|---|---|
+| `ListProjects` | `project_details`(`repeated ProjectFilter`) | `projects`와 같은 공사 · 같은 순서. 공사 + 배정된 호기 · 품목 · 이음부 · 패스(`units`) + 작업 수(`job_count`) |
+| `ListWorkers` | `job_counts`(`map<int64, int32>`) | 이 페이지의 `worker_id` → 맡은 작업 수 |
+| `ListEquipment` | `job_counts` · `asset_counts`(`map<int64, int32>`) | 이 페이지의 `equipment_id` → 그 장비의 에셋이 첨부된 작업 수 · 기록한 에셋 수(0이 아니면 못 지운다) |
+
+- map에서 0인 것은 빠진다 — 없으면 0으로 본다.
+
+**깨지는 변경 — 장비 `line_name` 삭제.** 쓰는 곳이 없어 지웠다(proto 3번은 `reserved`).
+
+- `Equipment.line_name`(`lineName`)이 응답에서 없어진다. 보내도 무시된다.
+- `UpdateEquipment`의 `update_mask`에 `line_name`을 넣으면 `InvalidArgument`. 남은 칸: `equipment_name` · `equipment_code` · `description` · `inactive`.
+- `ListEquipment`의 `query`는 라인을 더는 찾지 않는다(장비 코드 · 이름 · 비고).
+
 ## 2026-10-19에 바뀐 것
+
+**관리 · 조회 목록에 검색어 · 페이지 · 전체 건수**(추가만 — `ListJobs`와 같은 모양):
+
+| RPC | 요청에 더한 칸 | 검색어(`query`, 부분 일치 · 대소문자 무시)가 찾는 곳 | 정렬 |
+|---|---|---|---|
+| `ListProjects` | `query` · `page_size` · `page_token` | 공사 번호 · 이름 · 현장 · 발주처 · 배정된 품목 코드 · 이름 | 공사 번호 |
+| `ListWorkers` | `query` · `page_size` · `page_token`(`include_inactive`는 그대로) | 이름 · 사번 · 비고 | 번호 |
+| `ListEquipment` | `query` · `page_size` · `page_token`(`include_inactive`는 그대로) | 장비 코드 · 이름 · 라인 · 비고 | 번호 |
+| `ListAssets` | `query`(나머지 필터 · 페이지는 그대로) | 파일 이름 · 원본 위치, 숫자면 그 번호의 에셋도 | 들어온 시각 역순 |
+
+- 응답에 `next_page_token`(비면 마지막 페이지)과 `total_count`(조건에 맞는 전체 건수)가 온다. `ListAssets`는 `total_count`만 새로.
+- `page_size`를 비우면 50, 최대 200. **공사 · 작업자 · 장비도 이제 한 번에 50개까지**다 — 지금 수(공사 9 · 작업자 8 · 장비 4)로는 달라지는 게 없지만, 다 받으려면 `next_page_token`을 따라가거나 `page_size`를 키운다. 고르는 목록(드롭다운)은 지금처럼 `ListJobFilters`를 써도 된다(전부 준다).
+- 검색어의 `%` · `_`는 글자 그대로 찾는다.
 
 **깨지는 변경 — 프론트가 고쳐야 한다(작업자).** 팀을 없애고, 명장 여부를 로봇까지 담는 작업자 종류로 바꿨다.
 
@@ -107,6 +144,11 @@
 - **`ResolveDuplicateGroup(sha256, member_asset_ids, keep_asset_id)`**: [그대로 두기]. 화면이 본 사본(`member_asset_ids`)이 지금 묶음과 다르면 FailedPrecondition — 다시 불러와서 보여 준다. 결정은 `DuplicateGroup.resolution`.
 - **`MergeAssets(keep_asset_id, merge_asset_ids, dry_run)`**: [기준 n으로 합치기]. 먼저 `dry_run = true`로 불러 `moved`(첨부 · 클립 · 파생 · 성적서 · 도구 실행 수)를 확인 창에 보이고, 확인하면 `dry_run = false`로 다시 부른다. 사본 행과 파일이 지워진다(되돌릴 수 없음). `mergeable`이 아닌 묶음은 FailedPrecondition. 같은 작업에 패스가 다르게 붙어 있었으면 `warnings`에 적힌다. 합친 묶음은 `resolution = MERGED`가 된다.
 - **올릴 때(`POST /assets`)**: 같은 내용이 이미 있으면 등록은 그대로 하고 `warnings`에 알리며 `duplicateOf`(번호 글자 배열)를 준다. 정리한 묶음이면 기준 번호 하나.
+
+파일 정보(`Asset.properties`, 칸은 그대로):
+
+- **`properties.file_metadata`**: 파일에서 읽을 수 있는 정보 전체(빈 값은 뺌) — 모든 파일에 `file.mime_type` · `file.description`, 그리고 영상 · 음성 · 그림 · 깊이는 ffprobe 전체(`format` · `streams`), PDF는 pdfinfo 전체, 엑셀 · 오피스는 문서 속성과 시트 이름 · 범위, CSV는 열 이름 · 행 수 · 첫 · 끝 행, JSON은 최상위 키 · 길이. 상세 보기의 "원래 속성"에 접어서 보여 줄 때 쓴다(기계용).
+- 화면 표시는 지금처럼 `Asset.display`를 쓴다. 요약 키(`width` · `height` · `fps` · `codec` · `pages` 등)도 전체 정보에서 채운다 — 웹캠으로 올린 webm · 잘라 낸 그림 · 잘라 낸 PDF처럼 비어 있던 것이 채워진다.
 
 성적서 PDF 파생 트리(칸은 그대로, 값만 바뀜 — `관리 화면 구성과 서버 추가 안내.md` §5.8):
 
