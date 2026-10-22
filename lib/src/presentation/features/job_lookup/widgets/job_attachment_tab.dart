@@ -215,6 +215,7 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
             ),
             child: Column(
               children: [
+                const _JobAttachmentTableHeader(),
                 for (final row in _viewModel.attachments)
                   DecoratedBox(
                     decoration: const BoxDecoration(
@@ -277,6 +278,34 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
             ),
           ),
       ],
+    );
+  }
+}
+
+class _JobAttachmentTableHeader extends StatelessWidget {
+  const _JobAttachmentTableHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    const headerStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.w600);
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        color: Color(0xFF32363C),
+        border: Border(bottom: BorderSide(color: Color(0xFF3E424A))),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            SizedBox(width: 70, child: Text('번호', style: headerStyle)),
+            SizedBox(width: 90, child: Text('종류', style: headerStyle)),
+            Expanded(child: Text('파일', style: headerStyle)),
+            SizedBox(width: 130, child: Text('패스', style: headerStyle)),
+            SizedBox(width: 4),
+            SizedBox(width: 30),
+          ],
+        ),
+      ),
     );
   }
 }

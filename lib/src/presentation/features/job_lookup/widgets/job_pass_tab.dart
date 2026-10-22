@@ -51,6 +51,7 @@ class JobPassTab extends StatelessWidget {
             ),
             child: Column(
               children: [
+                const _JobPassTableHeader(),
                 for (final pass in viewModel.passes)
                   DecoratedBox(
                     decoration: const BoxDecoration(
@@ -151,6 +152,32 @@ class JobPassTab extends StatelessWidget {
         );
       }
     }
+  }
+}
+
+class _JobPassTableHeader extends StatelessWidget {
+  const _JobPassTableHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    const headerStyle = TextStyle(fontSize: 13, fontWeight: FontWeight.w600);
+    return const DecoratedBox(
+      decoration: BoxDecoration(
+        color: Color(0xFF32363C),
+        border: Border(bottom: BorderSide(color: Color(0xFF3E424A))),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+            SizedBox(width: 130, child: Text('패스', style: headerStyle)),
+            Expanded(child: Text('시작', style: headerStyle)),
+            Expanded(child: Text('종료', style: headerStyle)),
+            SizedBox(width: 64),
+          ],
+        ),
+      ),
+    );
   }
 }
 
