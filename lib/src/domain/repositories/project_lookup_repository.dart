@@ -3,6 +3,8 @@ import '../entities/project_item_draft.dart';
 import '../entities/work_history_project_filter.dart';
 
 abstract class ProjectLookupRepository {
+  Future<WorkHistoryProjectFilter?> getProject({required String projectId});
+
   Future<LookupPage<WorkHistoryProjectFilter>> listProjects({
     required String query,
     required int pageSize,

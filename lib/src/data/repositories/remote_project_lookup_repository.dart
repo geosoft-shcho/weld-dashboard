@@ -1,3 +1,5 @@
+import 'package:connectrpc/connect.dart';
+
 import '../../domain/entities/lookup_page.dart';
 import '../../domain/entities/project_item_draft.dart';
 import '../../domain/entities/work_history_project_filter.dart';
@@ -12,6 +14,30 @@ class RemoteProjectLookupRepository implements ProjectLookupRepository {
   RemoteProjectLookupRepository(this._mediaTag);
 
   final MediaTagDataSource _mediaTag;
+
+  @override
+  Future<WorkHistoryProjectFilter?> getProject({
+    required String projectId,
+  }) async {
+    final id = protoIdOrNull(projectId);
+    if (id == null) {
+      return null;
+    }
+    try {
+      final response = await _mediaTag.workService.getProject(
+        work_pb.GetProjectRequest(projectId: id),
+      );
+      if (!response.hasProject()) {
+        return null;
+      }
+      return projectFilterFromProto(response.project);
+    } on ConnectException catch (error) {
+      if (error.code == Code.notFound) {
+        return null;
+      }
+      rethrow;
+    }
+  }
 
   @override
   Future<LookupPage<WorkHistoryProjectFilter>> listProjects({

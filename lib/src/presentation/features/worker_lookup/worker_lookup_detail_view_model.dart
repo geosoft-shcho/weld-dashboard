@@ -3,19 +3,19 @@ import 'package:fluent_ui/fluent_ui.dart';
 import '../../../domain/entities/work_history_item.dart';
 import '../../../domain/entities/work_history_query.dart';
 import '../../../domain/entities/worker.dart';
+import '../../../domain/use_cases/get_worker_lookup_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
-import '../../../domain/use_cases/list_worker_lookup_use_case.dart';
 
 class WorkerLookupDetailViewModel extends ChangeNotifier {
   WorkerLookupDetailViewModel({
     required this.workerId,
-    required ListWorkerLookupUseCase listWorkerLookupUseCase,
+    required GetWorkerLookupUseCase getWorkerLookupUseCase,
     required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
-  }) : _listWorkerLookupUseCase = listWorkerLookupUseCase,
+  }) : _getWorkerLookupUseCase = getWorkerLookupUseCase,
        _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase;
 
   final String workerId;
-  final ListWorkerLookupUseCase _listWorkerLookupUseCase;
+  final GetWorkerLookupUseCase _getWorkerLookupUseCase;
   final ListWorkHistoryPageUseCase _listWorkHistoryPageUseCase;
 
   Worker? _worker;
@@ -36,26 +36,8 @@ class WorkerLookupDetailViewModel extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
     try {
-      Worker? match;
-      var token = '';
-      do {
-        final page = await _listWorkerLookupUseCase.execute(
-          includeInactive: true,
-          pageToken: token,
-        );
-        for (final worker in page.items) {
-          if (worker.workerId == workerId) {
-            match = worker;
-            break;
-          }
-        }
-        if (match != null) {
-          break;
-        }
-        token = page.nextPageToken;
-      } while (token.isNotEmpty);
-      _worker = match;
-      if (match == null) {
+      _worker = await _getWorkerLookupUseCase.execute(workerId: workerId);
+      if (_worker == null) {
         _hasError = true;
         _errorMessage = '작업자를 찾지 못했습니다.';
         _jobs = const [];

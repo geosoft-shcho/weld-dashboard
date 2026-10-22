@@ -2,6 +2,8 @@ import '../entities/lookup_page.dart';
 import '../entities/worker.dart';
 
 abstract class WorkerLookupRepository {
+  Future<Worker?> getWorker({required String workerId});
+
   Future<LookupPage<Worker>> listWorkers({
     required bool includeInactive,
     required String query,

@@ -5,20 +5,20 @@ import '../../../domain/entities/work_history_project_filter.dart';
 import '../../../domain/use_cases/create_project_items_use_case.dart';
 import '../../../domain/use_cases/delete_project_item_use_case.dart';
 import '../../../domain/use_cases/delete_project_use_case.dart';
-import '../../../domain/use_cases/list_project_lookup_use_case.dart';
+import '../../../domain/use_cases/get_project_lookup_use_case.dart';
 import '../../../domain/use_cases/update_project_item_use_case.dart';
 import '../../../domain/use_cases/update_project_use_case.dart';
 
 class ProjectLookupDetailViewModel extends ChangeNotifier {
   ProjectLookupDetailViewModel({
     required this.projectId,
-    required ListProjectLookupUseCase listProjectLookupUseCase,
+    required GetProjectLookupUseCase getProjectLookupUseCase,
     required UpdateProjectUseCase updateProjectUseCase,
     required DeleteProjectUseCase deleteProjectUseCase,
     required CreateProjectItemsUseCase createProjectItemsUseCase,
     required UpdateProjectItemUseCase updateProjectItemUseCase,
     required DeleteProjectItemUseCase deleteProjectItemUseCase,
-  }) : _listProjectLookupUseCase = listProjectLookupUseCase,
+  }) : _getProjectLookupUseCase = getProjectLookupUseCase,
        _updateProjectUseCase = updateProjectUseCase,
        _deleteProjectUseCase = deleteProjectUseCase,
        _createProjectItemsUseCase = createProjectItemsUseCase,
@@ -26,7 +26,7 @@ class ProjectLookupDetailViewModel extends ChangeNotifier {
        _deleteProjectItemUseCase = deleteProjectItemUseCase;
 
   final String projectId;
-  final ListProjectLookupUseCase _listProjectLookupUseCase;
+  final GetProjectLookupUseCase _getProjectLookupUseCase;
   final UpdateProjectUseCase _updateProjectUseCase;
   final DeleteProjectUseCase _deleteProjectUseCase;
   final CreateProjectItemsUseCase _createProjectItemsUseCase;
@@ -104,23 +104,8 @@ class ProjectLookupDetailViewModel extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
     try {
-      WorkHistoryProjectFilter? match;
-      var token = '';
-      do {
-        final page = await _listProjectLookupUseCase.execute(pageToken: token);
-        for (final project in page.items) {
-          if (project.projectId == projectId) {
-            match = project;
-            break;
-          }
-        }
-        if (match != null) {
-          break;
-        }
-        token = page.nextPageToken;
-      } while (token.isNotEmpty);
-      _project = match;
-      if (match == null) {
+      _project = await _getProjectLookupUseCase.execute(projectId: projectId);
+      if (_project == null) {
         _hasError = true;
         _errorMessage = '공사를 찾지 못했습니다.';
       }
