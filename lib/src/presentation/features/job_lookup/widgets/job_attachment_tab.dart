@@ -1,6 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../../domain/entities/asset_lookup_kind.dart';
+import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/section_empty_placeholder.dart';
 import '../../asset_lookup/asset_upload_dialog.dart';
 import '../../../../domain/entities/asset_lookup_row.dart';
 import '../job_lookup_detail_view_model.dart';
@@ -187,46 +189,75 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
         ],
         const SizedBox(height: 12),
         if (_viewModel.attachments.isEmpty)
-          const Text('첨부가 없습니다')
+          const SectionEmptyPlaceholder(
+            title: '첨부가 없습니다',
+            message: '이 작업에 올리거나 이미 있는 에셋을 붙일 수 있습니다.',
+          )
         else
-          for (final row in _viewModel.attachments)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  SizedBox(width: 70, child: Text(row.assetId)),
-                  SizedBox(
-                    width: 90,
-                    child: Text(AssetLookupKindOption.labelOf(row.kindCode)),
-                  ),
-                  Expanded(
-                    child: Text(row.fileName, overflow: TextOverflow.ellipsis),
-                  ),
-                  SizedBox(
-                    width: 130,
-                    child: _passCombo(
-                      value: _passIdOf(row),
-                      onChanged: (value) {
-                        if (value == null) return;
-                        _run(
-                          () => _viewModel.changeAttachmentPass(
-                            assetId: row.assetId,
-                            passId: value,
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.SURFACE_RAISED,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFF3E424A)),
+            ),
+            child: Column(
+              children: [
+                for (final row in _viewModel.attachments)
+                  DecoratedBox(
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: Color(0xFF3E424A)),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          SizedBox(width: 70, child: Text(row.assetId)),
+                          SizedBox(
+                            width: 90,
+                            child: Text(
+                              AssetLookupKindOption.labelOf(row.kindCode),
+                            ),
                           ),
-                        );
-                      },
+                          Expanded(
+                            child: Text(
+                              row.fileName,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          SizedBox(
+                            width: 130,
+                            child: _passCombo(
+                              value: _passIdOf(row),
+                              onChanged: (value) {
+                                if (value == null) return;
+                                _run(
+                                  () => _viewModel.changeAttachmentPass(
+                                    assetId: row.assetId,
+                                    passId: value,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Button(
+                            onPressed: _isWorking
+                                ? null
+                                : () => _run(
+                                    () => _viewModel.detachAsset(row.assetId),
+                                  ),
+                            child: const Text('떼기'),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Button(
-                    onPressed: _isWorking
-                        ? null
-                        : () => _run(() => _viewModel.detachAsset(row.assetId)),
-                    child: const Text('떼기'),
-                  ),
-                ],
-              ),
+              ],
             ),
+          ),
       ],
     );
   }

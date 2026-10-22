@@ -2,6 +2,8 @@ import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../../domain/entities/job_detail.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
+import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/section_empty_placeholder.dart';
 import '../job_lookup_detail_view_model.dart';
 import 'job_detail_text_input.dart';
 
@@ -16,43 +18,72 @@ class JobPassTab extends StatelessWidget {
     return ListView(
       children: [
         if (detail == null)
-          const Text('패스 정보가 없습니다.')
-        else ...[
-          for (final pass in viewModel.passes)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 130,
-                    child: Text(
-                      '${pass.passNo}패스${pass.passNo == 1 ? ' 초층' : ''} · ${pass.kind.label}',
-                    ),
-                  ),
-                  Expanded(
-                    child: Text(DashboardFormatters.dateTime(pass.startedAt)),
-                  ),
-                  Expanded(
-                    child: Text(DashboardFormatters.dateTime(pass.endedAt)),
-                  ),
-                  Button(
-                    onPressed: () => showJobPassDialog(
-                      context,
-                      viewModel: viewModel,
-                      original: pass,
-                    ),
-                    child: const Text('수정'),
-                  ),
-                  const SizedBox(width: 8),
-                  Button(
-                    onPressed: () => _didTapDelete(context, pass),
-                    child: const Text('지우기'),
-                  ),
-                ],
-              ),
+          const SectionEmptyPlaceholder(
+            title: '패스 정보가 없습니다',
+            message: '작업 상세를 불러오지 못했습니다. 다시 조회하세요.',
+          )
+        else if (viewModel.passes.isEmpty)
+          const SectionEmptyPlaceholder(
+            title: '패스가 없습니다',
+            message: '패스를 추가하면 패스별 타임라인 · 파형을 열 수 있습니다.',
+          )
+        else
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.SURFACE_RAISED,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFF3E424A)),
             ),
-          if (viewModel.passes.isEmpty) const Text('패스가 없습니다'),
-        ],
+            child: Column(
+              children: [
+                for (final pass in viewModel.passes)
+                  DecoratedBox(
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: Color(0xFF3E424A)),
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 6),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 130,
+                            child: Text(
+                              '${pass.passNo}패스${pass.passNo == 1 ? ' 초층' : ''} · ${pass.kind.label}',
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              DashboardFormatters.dateTime(pass.startedAt),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              DashboardFormatters.dateTime(pass.endedAt),
+                            ),
+                          ),
+                          Button(
+                            onPressed: () => showJobPassDialog(
+                              context,
+                              viewModel: viewModel,
+                              original: pass,
+                            ),
+                            child: const Text('수정'),
+                          ),
+                          const SizedBox(width: 8),
+                          Button(
+                            onPressed: () => _didTapDelete(context, pass),
+                            child: const Text('지우기'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
         const SizedBox(height: 8),
         const Text(
           '작업 구간 안이어야 하고 서로 겹칠 수 없습니다. 끝과 시작이 맞닿는 건 됩니다.',

@@ -1,13 +1,15 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
+import '../../../domain/entities/pass_joint_context.dart';
 import '../../core/di/locator.dart';
-import '../../core/themes/app_theme.dart';
+import '../../core/widgets/pass_context_bar.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
 import '../../core/widgets/screen_command_bar.dart';
 import '../../navigation/app_coordinator.dart';
 import 'job_lookup_detail_view_model.dart';
 import 'widgets/job_attachment_tab.dart';
+import 'widgets/job_detail_tabs_bar.dart';
 import 'widgets/job_info_tab.dart';
 import 'widgets/job_pass_tab.dart';
 
@@ -38,7 +40,7 @@ class _JobLookupDetailBody extends StatelessWidget {
         : '${job.projectNo}_${job.unitNo}-${job.itemCode} · ${job.jointNo}';
     return LookupDetailScaffold(
       title: title,
-      subtitle: job == null ? '' : 'job ${job.jobId}',
+      subtitle: job == null ? '' : 'Job ID #${job.jobId}',
       onBack: () => coordinator.didTapBackToWorkHistory(context),
       commandBarExtra: [
         CommandBarButton(
@@ -97,44 +99,29 @@ class _JobLookupDetailBody extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Row(
-          children: [
-            _tabButton(viewModel, JobLookupDetailTab.info, '기본 정보'),
-            _tabButton(
-              viewModel,
-              JobLookupDetailTab.passes,
-              '패스 ${viewModel.passes.length}',
-            ),
-            _tabButton(
-              viewModel,
-              JobLookupDetailTab.attachments,
-              '첨부 ${job.attachmentCount}',
-            ),
-          ],
+        PassContextBar(
+          contextData: PassJointContext(
+            commonKey: job.commonKey,
+            projectNo: job.projectNo,
+            unitNo: job.unitNo,
+            itemCode: job.itemCode,
+            itemName: job.itemName,
+            jointNo: job.jointNo,
+            workerName: job.workerName,
+            workerKind: job.workerKind,
+            equipmentName: job.equipmentName,
+          ),
+        ),
+        const SizedBox(height: 12),
+        JobDetailTabsBar(
+          selectedTab: viewModel.tab,
+          passCount: viewModel.passes.length,
+          attachmentCount: job.attachmentCount,
+          onSelectTab: viewModel.didSelectTab,
         ),
         const SizedBox(height: 12),
         Expanded(child: _tabBody(context, viewModel)),
       ],
-    );
-  }
-
-  Widget _tabButton(
-    JobLookupDetailViewModel viewModel,
-    JobLookupDetailTab tab,
-    String label,
-  ) {
-    final selected = viewModel.tab == tab;
-    return Padding(
-      padding: const EdgeInsets.only(right: 8),
-      child: Button(
-        onPressed: () => viewModel.didSelectTab(tab),
-        style: ButtonStyle(
-          backgroundColor: WidgetStateProperty.all(
-            selected ? AppTheme.SURFACE_RAISED : const Color(0x00000000),
-          ),
-        ),
-        child: Text(label),
-      ),
     );
   }
 
