@@ -8,6 +8,7 @@ import '../../../core/themes/app_theme.dart';
 import '../../../core/widgets/command_bar_widget_item.dart';
 import '../../../core/widgets/waveform_material_scope.dart';
 import '../work_history_view_model.dart';
+import 'work_job_create_dialog.dart';
 
 class WorkHistoryCommandBar extends StatefulWidget {
   const WorkHistoryCommandBar({
@@ -402,7 +403,10 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
             ),
           ),
           const SizedBox(width: 8),
-          const Button(onPressed: null, child: Text('새 작업')),
+          Button(
+            onPressed: () => showWorkJobCreateDialog(context, widget.viewModel),
+            child: const Text('새 작업'),
+          ),
         ],
       ),
     );

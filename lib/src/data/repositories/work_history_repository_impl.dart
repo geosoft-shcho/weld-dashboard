@@ -1,4 +1,5 @@
 import '../../domain/entities/equipment.dart';
+import '../../domain/entities/job_draft.dart';
 import '../../domain/entities/joint.dart';
 import '../../domain/entities/work_history_catalog.dart';
 import '../../domain/entities/work_history_page.dart';
@@ -155,6 +156,11 @@ class WorkHistoryRepositoryImpl implements WorkHistoryRepository {
     );
     _cachedCatalog = catalog;
     return catalog;
+  }
+
+  @override
+  Future<String> createJob(JobDraft draft) {
+    throw UnsupportedError('로컬 CSV에서는 작업을 만들 수 없습니다.');
   }
 
   WorkHistoryItem _itemFrom(

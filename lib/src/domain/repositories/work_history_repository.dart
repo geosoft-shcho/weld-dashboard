@@ -1,3 +1,4 @@
+import '../entities/job_draft.dart';
 import '../entities/work_history_catalog.dart';
 import '../entities/work_history_page.dart';
 import '../entities/work_history_query.dart';
@@ -15,4 +16,7 @@ abstract class WorkHistoryRepository {
 
   /// 마스터 + 필터 전체 행. 상세/로컬 소비자가 사용.
   Future<WorkHistoryCatalog> loadCatalog({WorkHistoryQuery? query});
+
+  /// 작업(과 패스)을 만들고 새 `job_id`를 돌려준다.
+  Future<String> createJob(JobDraft draft);
 }

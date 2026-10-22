@@ -1,5 +1,6 @@
 import '../../domain/entities/asset_lookup_row.dart';
 import '../../domain/entities/equipment.dart';
+import '../../domain/entities/job_draft.dart';
 import '../../domain/entities/work_history_catalog.dart';
 import '../../domain/entities/work_history_item.dart';
 import '../../domain/entities/work_history_page.dart';
@@ -69,6 +70,40 @@ class RemoteWorkHistoryRepository implements WorkHistoryRepository {
       _request(query, pageSize: pageSize, pageToken: pageToken),
     );
     return _pageFrom(response);
+  }
+
+  @override
+  Future<String> createJob(JobDraft draft) async {
+    final job = work_pb.Job(
+      projectNo: draft.projectNo,
+      unitNo: draft.unitNo,
+      itemCode: draft.itemCode,
+      itemName: draft.itemName,
+      jointNo: draft.jointNo,
+      startedAt: Timestamp.fromDateTime(draft.startedAt!),
+    );
+    final projectId = protoIdOrNull(draft.projectId);
+    if (projectId != null) job.projectId = projectId;
+    final workerId = protoIdOrNull(draft.workerId);
+    if (workerId != null) job.workerId = workerId;
+    if (draft.endedAt != null) {
+      job.endedAt = Timestamp.fromDateTime(draft.endedAt!);
+    }
+    final passes = <work_pb.Pass>[];
+    for (final draftPass in draft.passes) {
+      final pass = work_pb.Pass(passNo: draftPass.passNo);
+      if (draftPass.startedAt != null) {
+        pass.startedAt = Timestamp.fromDateTime(draftPass.startedAt!);
+      }
+      if (draftPass.endedAt != null) {
+        pass.endedAt = Timestamp.fromDateTime(draftPass.endedAt!);
+      }
+      passes.add(pass);
+    }
+    final response = await _mediaTag.workService.createJob(
+      work_pb.CreateJobRequest(job: job, passes: passes),
+    );
+    return idText(response.job.jobId);
   }
 
   @override

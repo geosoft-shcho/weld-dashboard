@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 
+import '../../../domain/entities/job_draft.dart';
 import '../../../domain/entities/work_history_board.dart';
 import '../../../domain/entities/work_history_catalog.dart';
 import '../../../domain/entities/work_history_item.dart';
 import '../../../domain/entities/work_history_project_filter.dart';
 import '../../../domain/entities/work_history_query.dart';
+import '../../../domain/use_cases/create_job_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
 import '../../../domain/use_cases/load_work_history_masters_use_case.dart';
 
@@ -12,11 +14,14 @@ class WorkHistoryViewModel extends ChangeNotifier {
   WorkHistoryViewModel({
     required LoadWorkHistoryMastersUseCase loadWorkHistoryMastersUseCase,
     required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
+    required CreateJobUseCase createJobUseCase,
   }) : _loadWorkHistoryMastersUseCase = loadWorkHistoryMastersUseCase,
-       _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase;
+       _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase,
+       _createJobUseCase = createJobUseCase;
 
   final LoadWorkHistoryMastersUseCase _loadWorkHistoryMastersUseCase;
   final ListWorkHistoryPageUseCase _listWorkHistoryPageUseCase;
+  final CreateJobUseCase _createJobUseCase;
 
   WorkHistoryQuery _query = WorkHistoryQuery.initial();
   WorkHistoryQuery? _loadedQuery;
@@ -315,6 +320,22 @@ class WorkHistoryViewModel extends ChangeNotifier {
 
   void didTapReload() {
     loadBoard();
+  }
+
+  Future<String> createJob(JobDraft draft) {
+    return _createJobUseCase.execute(draft);
+  }
+
+  /// 만든 작업이 목록에 보이게 필터를 그 작업으로 맞추고 다시 조회한다.
+  Future<void> didCreateJob(JobDraft draft, String jobId) async {
+    _query = WorkHistoryQuery.initial().copyWith(
+      projectNo: draft.projectNo,
+      unitNo: draft.unitNo,
+      itemCode: draft.itemCode,
+      jointNo: draft.jointNo,
+      selectedJobId: jobId,
+    );
+    await loadBoard();
   }
 
   void _editFilters(WorkHistoryQuery Function(WorkHistoryQuery query) edit) {
