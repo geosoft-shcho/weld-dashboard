@@ -99,6 +99,9 @@ import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
 import '../../../domain/use_cases/load_work_history_catalog_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 import '../../../domain/use_cases/create_job_use_case.dart';
+import '../../../domain/repositories/job_admin_repository.dart';
+import '../../../domain/use_cases/job_admin_use_case.dart';
+import '../../../data/repositories/remote_job_admin_repository.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
 import '../../../domain/use_cases/load_work_history_masters_use_case.dart';
 import '../../../domain/use_cases/present_collection_nodes_use_case.dart';
@@ -148,6 +151,10 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => LoadWorkHistoryMastersUseCase(locator()));
   locator.registerLazySingleton(() => ListWorkHistoryPageUseCase(locator()));
   locator.registerLazySingleton(() => CreateJobUseCase(locator()));
+  locator.registerLazySingleton<JobAdminRepository>(
+    () => RemoteJobAdminRepository(locator()),
+  );
+  locator.registerLazySingleton(() => JobAdminUseCase(locator()));
   locator.registerLazySingleton<ProjectLookupRepository>(
     () => RemoteProjectLookupRepository(locator()),
   );
@@ -235,6 +242,8 @@ void setupLocator({required bool pdfrxReady}) {
       queryWorkDetailUseCase: locator(),
       listJobPassesUseCase: locator(),
       listAssetLookupPageUseCase: locator(),
+      jobAdminUseCase: locator(),
+      loadWorkHistoryMastersUseCase: locator(),
     ),
   );
   locator.registerFactory(() => QueryWorkHistoryUseCase());

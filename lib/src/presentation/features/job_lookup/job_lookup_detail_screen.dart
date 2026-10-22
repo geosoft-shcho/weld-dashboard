@@ -1,14 +1,15 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
-import '../../../domain/entities/asset_lookup_kind.dart';
 import '../../core/di/locator.dart';
-import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
 import '../../core/widgets/screen_command_bar.dart';
 import '../../navigation/app_coordinator.dart';
 import 'job_lookup_detail_view_model.dart';
+import 'widgets/job_attachment_tab.dart';
+import 'widgets/job_info_tab.dart';
+import 'widgets/job_pass_tab.dart';
 
 class JobLookupDetailScreen extends StatelessWidget {
   const JobLookupDetailScreen({super.key, required this.jobId});
@@ -70,11 +71,11 @@ class _JobLookupDetailBody extends StatelessWidget {
                 ),
         ),
       ],
-      body: _body(viewModel),
+      body: _body(context, viewModel),
     );
   }
 
-  Widget _body(JobLookupDetailViewModel viewModel) {
+  Widget _body(BuildContext context, JobLookupDetailViewModel viewModel) {
     if (viewModel.isLoading && viewModel.job == null) {
       return const Center(child: ProgressRing());
     }
@@ -98,11 +99,7 @@ class _JobLookupDetailBody extends StatelessWidget {
       children: [
         Row(
           children: [
-            _tabButton(
-              viewModel,
-              JobLookupDetailTab.info,
-              '기본 정보',
-            ),
+            _tabButton(viewModel, JobLookupDetailTab.info, '기본 정보'),
             _tabButton(
               viewModel,
               JobLookupDetailTab.passes,
@@ -116,7 +113,7 @@ class _JobLookupDetailBody extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 12),
-        Expanded(child: _tabBody(viewModel)),
+        Expanded(child: _tabBody(context, viewModel)),
       ],
     );
   }
@@ -141,109 +138,19 @@ class _JobLookupDetailBody extends StatelessWidget {
     );
   }
 
-  Widget _tabBody(JobLookupDetailViewModel viewModel) {
-    final job = viewModel.job!;
+  Widget _tabBody(BuildContext context, JobLookupDetailViewModel viewModel) {
+    final coordinator = context.read<AppCoordinator>();
     switch (viewModel.tab) {
       case JobLookupDetailTab.info:
-        return ListView(
-          children: [
-            if (job.jobKey.isNotEmpty)
-              Text(
-                job.jobKey,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.STATUS_OFF,
-                ),
-              ),
-            const SizedBox(height: 8),
-            LookupDetailKvGrid(
-              entries: [
-                ('공사', job.projectNo),
-                ('호기', DashboardFormatters.unitNo(job.unitNo)),
-                ('품목 코드', job.itemCode),
-                ('품목 이름', job.itemName),
-                ('이음부', job.jointNo),
-                ('시작', DashboardFormatters.dateTime(job.workedAt)),
-                ('작업자', job.workerName),
-                ('구분', DashboardFormatters.workerKindLabel(job.workerKind)),
-                ('성적서', job.hasReport ? '있음' : '—'),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '공사 · 호기 · 품목 · 이음부 · 시작을 바꾸면 공통키와 작업 키가 다시 만들어집니다. 품목 이름은 공사에서 고칩니다.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.55),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Button(onPressed: null, child: const Text('작업 지우기')),
-                const SizedBox(width: 8),
-                FilledButton(onPressed: null, child: const Text('저장')),
-              ],
-            ),
-          ],
+        return JobInfoTab(
+          key: ValueKey('job-info|${viewModel.jobId}'),
+          viewModel: viewModel,
+          onDeleted: () => coordinator.didTapBackToWorkHistory(context),
         );
       case JobLookupDetailTab.passes:
-        return ListView(
-          children: [
-            LookupDetailPlainTable(
-              headers: const ['패스', '시작', '종료', ''],
-              emptyText: '패스가 없습니다',
-              rows: [
-                for (final pass in viewModel.passes)
-                  [
-                    '${pass.passNo}${pass.passNo == 1 ? ' 초층' : ''}',
-                    DashboardFormatters.dateTime(pass.startedAt),
-                    DashboardFormatters.dateTime(pass.endedAt),
-                    '에셋 → · 수정 · 지우기',
-                  ],
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '작업 구간 안이어야 하고 서로 겹칠 수 없습니다. 끝과 시작이 맞닿는 건 됩니다.',
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.white.withValues(alpha: 0.55),
-              ),
-            ),
-            const SizedBox(height: 12),
-            FilledButton(onPressed: null, child: const Text('+ 패스 추가')),
-          ],
-        );
+        return JobPassTab(viewModel: viewModel);
       case JobLookupDetailTab.attachments:
-        return ListView(
-          children: [
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: const [
-                Button(onPressed: null, child: Text('+ 이 작업에 올리기')),
-                Button(onPressed: null, child: Text('에셋 붙이기')),
-                Button(onPressed: null, child: Text('에셋 탭에서 보기 →')),
-              ],
-            ),
-            const SizedBox(height: 12),
-            LookupDetailPlainTable(
-              headers: const ['번호', '종류', '파일', '패스', ''],
-              emptyText: '첨부가 없습니다',
-              rows: [
-                for (final row in viewModel.attachments)
-                  [
-                    row.assetId,
-                    AssetLookupKindOption.labelOf(row.kindCode),
-                    row.fileName,
-                    viewModel.passLabelOf(row),
-                    '떼기',
-                  ],
-              ],
-            ),
-          ],
-        );
+        return JobAttachmentTab(viewModel: viewModel);
     }
   }
 }
