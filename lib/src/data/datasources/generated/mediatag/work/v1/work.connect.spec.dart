@@ -18,6 +18,14 @@ abstract final class WorkService {
     mediatagworkv1work.ListProjectsResponse.new,
   );
 
+  /// 공사 하나 + 호기·품목·작업 수(ListProjects.project_details와 같은 값). 없으면 NotFound.
+  static const getProject = connect.Spec(
+    '/$name/GetProject',
+    connect.StreamType.unary,
+    mediatagworkv1work.GetProjectRequest.new,
+    mediatagworkv1work.GetProjectResponse.new,
+  );
+
   /// 공사를 만든다. project.project_no는 필수이고 발급 후 불변. 같은 번호가 있으면 AlreadyExists.
   static const createProject = connect.Spec(
     '/$name/CreateProject',
@@ -32,6 +40,14 @@ abstract final class WorkService {
     connect.StreamType.unary,
     mediatagworkv1work.ListWorkersRequest.new,
     mediatagworkv1work.ListWorkersResponse.new,
+  );
+
+  /// 작업자 하나 + 맡은 작업 수. 숨긴 작업자도 나온다. 없으면 NotFound.
+  static const getWorker = connect.Spec(
+    '/$name/GetWorker',
+    connect.StreamType.unary,
+    mediatagworkv1work.GetWorkerRequest.new,
+    mediatagworkv1work.GetWorkerResponse.new,
   );
 
   /// 작업자를 만든다. worker.worker_name 필수. employee_no가 겹치면 AlreadyExists.
@@ -64,6 +80,14 @@ abstract final class WorkService {
     connect.StreamType.unary,
     mediatagworkv1work.ListEquipmentRequest.new,
     mediatagworkv1work.ListEquipmentResponse.new,
+  );
+
+  /// 장비 하나 + 작업 수 · Asset 수. 숨긴 장비도 나온다. 없으면 NotFound.
+  static const getEquipment = connect.Spec(
+    '/$name/GetEquipment',
+    connect.StreamType.unary,
+    mediatagworkv1work.GetEquipmentRequest.new,
+    mediatagworkv1work.GetEquipmentResponse.new,
   );
 
   /// 장비를 만든다. equipment.equipment_name 필수. equipment_code가 겹치면 AlreadyExists.

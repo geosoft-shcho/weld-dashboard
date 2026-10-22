@@ -23,10 +23,14 @@ export 'work.pb.dart';
 abstract class WorkServiceBase extends $pb.GeneratedService {
   $async.Future<$4.ListProjectsResponse> listProjects(
       $pb.ServerContext ctx, $4.ListProjectsRequest request);
+  $async.Future<$4.GetProjectResponse> getProject(
+      $pb.ServerContext ctx, $4.GetProjectRequest request);
   $async.Future<$4.CreateProjectResponse> createProject(
       $pb.ServerContext ctx, $4.CreateProjectRequest request);
   $async.Future<$4.ListWorkersResponse> listWorkers(
       $pb.ServerContext ctx, $4.ListWorkersRequest request);
+  $async.Future<$4.GetWorkerResponse> getWorker(
+      $pb.ServerContext ctx, $4.GetWorkerRequest request);
   $async.Future<$4.CreateWorkerResponse> createWorker(
       $pb.ServerContext ctx, $4.CreateWorkerRequest request);
   $async.Future<$4.UpdateWorkerResponse> updateWorker(
@@ -35,6 +39,8 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $4.DeleteWorkerRequest request);
   $async.Future<$4.ListEquipmentResponse> listEquipment(
       $pb.ServerContext ctx, $4.ListEquipmentRequest request);
+  $async.Future<$4.GetEquipmentResponse> getEquipment(
+      $pb.ServerContext ctx, $4.GetEquipmentRequest request);
   $async.Future<$4.CreateEquipmentResponse> createEquipment(
       $pb.ServerContext ctx, $4.CreateEquipmentRequest request);
   $async.Future<$4.UpdateEquipmentResponse> updateEquipment(
@@ -80,10 +86,14 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
     switch (methodName) {
       case 'ListProjects':
         return $4.ListProjectsRequest();
+      case 'GetProject':
+        return $4.GetProjectRequest();
       case 'CreateProject':
         return $4.CreateProjectRequest();
       case 'ListWorkers':
         return $4.ListWorkersRequest();
+      case 'GetWorker':
+        return $4.GetWorkerRequest();
       case 'CreateWorker':
         return $4.CreateWorkerRequest();
       case 'UpdateWorker':
@@ -92,6 +102,8 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
         return $4.DeleteWorkerRequest();
       case 'ListEquipment':
         return $4.ListEquipmentRequest();
+      case 'GetEquipment':
+        return $4.GetEquipmentRequest();
       case 'CreateEquipment':
         return $4.CreateEquipmentRequest();
       case 'UpdateEquipment':
@@ -142,10 +154,14 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
     switch (methodName) {
       case 'ListProjects':
         return listProjects(ctx, request as $4.ListProjectsRequest);
+      case 'GetProject':
+        return getProject(ctx, request as $4.GetProjectRequest);
       case 'CreateProject':
         return createProject(ctx, request as $4.CreateProjectRequest);
       case 'ListWorkers':
         return listWorkers(ctx, request as $4.ListWorkersRequest);
+      case 'GetWorker':
+        return getWorker(ctx, request as $4.GetWorkerRequest);
       case 'CreateWorker':
         return createWorker(ctx, request as $4.CreateWorkerRequest);
       case 'UpdateWorker':
@@ -154,6 +170,8 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
         return deleteWorker(ctx, request as $4.DeleteWorkerRequest);
       case 'ListEquipment':
         return listEquipment(ctx, request as $4.ListEquipmentRequest);
+      case 'GetEquipment':
+        return getEquipment(ctx, request as $4.GetEquipmentRequest);
       case 'CreateEquipment':
         return createEquipment(ctx, request as $4.CreateEquipmentRequest);
       case 'UpdateEquipment':

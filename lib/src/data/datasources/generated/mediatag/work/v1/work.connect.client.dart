@@ -26,6 +26,24 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
+  /// 공사 하나 + 호기·품목·작업 수(ListProjects.project_details와 같은 값). 없으면 NotFound.
+  Future<mediatagworkv1work.GetProjectResponse> getProject(
+    mediatagworkv1work.GetProjectRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.WorkService.getProject,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
   /// 공사를 만든다. project.project_no는 필수이고 발급 후 불변. 같은 번호가 있으면 AlreadyExists.
   Future<mediatagworkv1work.CreateProjectResponse> createProject(
     mediatagworkv1work.CreateProjectRequest input, {
@@ -54,6 +72,24 @@ extension type WorkServiceClient (connect.Transport _transport) {
   }) {
     return connect.Client(_transport).unary(
       specs.WorkService.listWorkers,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
+  /// 작업자 하나 + 맡은 작업 수. 숨긴 작업자도 나온다. 없으면 NotFound.
+  Future<mediatagworkv1work.GetWorkerResponse> getWorker(
+    mediatagworkv1work.GetWorkerRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.WorkService.getWorker,
       input,
       signal: signal,
       headers: headers,
@@ -126,6 +162,24 @@ extension type WorkServiceClient (connect.Transport _transport) {
   }) {
     return connect.Client(_transport).unary(
       specs.WorkService.listEquipment,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
+  /// 장비 하나 + 작업 수 · Asset 수. 숨긴 장비도 나온다. 없으면 NotFound.
+  Future<mediatagworkv1work.GetEquipmentResponse> getEquipment(
+    mediatagworkv1work.GetEquipmentRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.WorkService.getEquipment,
       input,
       signal: signal,
       headers: headers,

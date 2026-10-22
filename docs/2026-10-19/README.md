@@ -4,6 +4,7 @@
 
 | 일자 | 수정자 | 수정 내용 |
 |---|---|---|
+| 2026-10-22 | geosoft-Server | 단건 조회 `GetProject` · `GetWorker` · `GetEquipment`("2026-10-22에 바뀐 것"). 추가만, 2026-10-22 13:00 운영 적용 |
 | 2026-10-20 | geosoft-Server | `ListJobs` 행마다 그 작업의 패스 목록 `JobSummary.passes`("2026-10-20에 바뀐 것 — 작업 목록의 패스"). 추가만, 2026-10-20 15:08 운영 적용 |
 | 2026-10-20 | geosoft-Server | `Clip.embedded_at`은 이제 AI 서버가 채움(서버 목업 삭제, proto 그대로) — 화면 쪽 읽는 법은 그대로("2026-10-20에 바뀐 것") |
 | 2026-10-20 | geosoft-Server | 수집 현황 막대 구간 `CollectionNode.segments` · 단위 `segment_unit`(추가), **깨지는 변경** — 트리의 패스 단계 삭제("2026-10-20에 바뀐 것" 맨 위) |
@@ -65,6 +66,20 @@
 
 타임라인에 클립을 놓고, 그리고, 재생하는 방법은 `타임라인 그리기와 재생 안내.md`에 따로 정리했다(함께 전달).
 그 문서는 화면 구성(§9) → 한 작업으로 끝까지 따라가는 예시(§8) → 규칙(§1~§7, §10) 순으로 읽으면 빠르다.
+
+## 2026-10-22에 바뀐 것 — 단건 조회
+
+2026-10-22 13:00 운영 적용됨. 추가만(`work.proto`).
+
+| RPC | 요청 | 응답 |
+|---|---|---|
+| `GetProject` | `project_id` | `project`(`ProjectFilter` — 공사 + 호기 · 품목 · 이음부 · 패스 + `job_count`) |
+| `GetWorker` | `worker_id` | `worker` + `job_count`(맡은 작업 수) |
+| `GetEquipment` | `equipment_id` | `equipment` + `job_count`(그 장비의 Asset이 첨부된 작업 수) · `asset_count`(기록한 Asset 수, 0이 아니면 못 지움) |
+
+- 값은 목록(`ListProjects.project_details` · `ListWorkers.job_counts` · `ListEquipment.job_counts` · `asset_counts`)과 같다.
+- 숨긴(`inactive`) 작업자 · 장비도 나온다. 없는 번호면 `NotFound`.
+- 공사는 `project_id`로만 찾는다(`project_no`로 찾으려면 `ListProjects`의 `query`).
 
 ## 2026-10-20에 바뀐 것 — 작업 목록의 패스
 

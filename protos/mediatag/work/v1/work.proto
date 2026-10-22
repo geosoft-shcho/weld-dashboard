@@ -15,6 +15,7 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-10-22  geosoft-Server: 단건 조회 GetProject · GetWorker · GetEquipment(목록과 같은 개수 포함)
 //   2026-10-20  geosoft-Server: JobSummary.passes — ListJobs 행마다 그 작업의 패스 목록
 //   2026-10-20  geosoft-Server: CollectionNode.segments — 막대를 실제로 일한(기록한) 구간들로. 위 단계의 빈 날이 보이게
 //   2026-10-20  geosoft-Server: 수집 현황 패스 단계 삭제(COLLECTION_LEVEL_PASS) — 작업 아래는 바로 파일(path.pass_id = 첨부 패스),
@@ -78,10 +79,14 @@ option go_package = "gen/protobuf/mediatag/work/v1;workv1";
 // 사용처: 대시보드(s0 수집 현황, s2 작업 이력·필터, s3 파형 비교, s3/s4 컨텍스트), 컴포즈(열 작업 고르기).
 service WorkService {
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
+  // 공사 하나 + 호기·품목·작업 수(ListProjects.project_details와 같은 값). 없으면 NotFound.
+  rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
   // 공사를 만든다. project.project_no는 필수이고 발급 후 불변. 같은 번호가 있으면 AlreadyExists.
   rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse);
   // 숨긴(inactive) 작업자는 빠진다 — include_inactive면 전부.
   rpc ListWorkers(ListWorkersRequest) returns (ListWorkersResponse);
+  // 작업자 하나 + 맡은 작업 수. 숨긴 작업자도 나온다. 없으면 NotFound.
+  rpc GetWorker(GetWorkerRequest) returns (GetWorkerResponse);
   // 작업자를 만든다. worker.worker_name 필수. employee_no가 겹치면 AlreadyExists.
   rpc CreateWorker(CreateWorkerRequest) returns (CreateWorkerResponse);
   // update_mask: worker_name, worker_type, employee_no, description, inactive. employee_no가 겹치면 AlreadyExists.
@@ -90,6 +95,8 @@ service WorkService {
   rpc DeleteWorker(DeleteWorkerRequest) returns (DeleteWorkerResponse);
   // 숨긴(inactive) 장비는 빠진다 — include_inactive면 전부.
   rpc ListEquipment(ListEquipmentRequest) returns (ListEquipmentResponse);
+  // 장비 하나 + 작업 수 · Asset 수. 숨긴 장비도 나온다. 없으면 NotFound.
+  rpc GetEquipment(GetEquipmentRequest) returns (GetEquipmentResponse);
   // 장비를 만든다. equipment.equipment_name 필수. equipment_code가 겹치면 AlreadyExists.
   rpc CreateEquipment(CreateEquipmentRequest) returns (CreateEquipmentResponse);
   // update_mask: equipment_name, equipment_code, description, inactive
@@ -298,6 +305,33 @@ message ListProjectsResponse {
   string next_page_token = 2; // 비어 있으면 마지막 페이지
   int32 total_count = 3;      // 검색 조건에 맞는 전체 건수
   repeated ProjectFilter project_details = 4; // projects와 같은 공사·같은 순서 + 호기·품목·작업 수(ListJobFilters와 같은 값)
+}
+
+message GetProjectRequest {
+  int64 project_id = 1;
+}
+
+message GetProjectResponse {
+  ProjectFilter project = 1; // 공사 + 호기·품목·작업 수
+}
+
+message GetWorkerRequest {
+  int64 worker_id = 1;
+}
+
+message GetWorkerResponse {
+  Worker worker = 1;
+  int32 job_count = 2; // 맡은 작업 수
+}
+
+message GetEquipmentRequest {
+  int64 equipment_id = 1;
+}
+
+message GetEquipmentResponse {
+  Equipment equipment = 1;
+  int32 job_count = 2;   // 그 장비의 Asset이 첨부된 작업 수
+  int32 asset_count = 3; // 기록한 Asset 수. 0이 아니면 장비를 못 지운다
 }
 
 message CreateProjectRequest {

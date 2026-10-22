@@ -1695,6 +1695,393 @@ class ListProjectsResponse extends $pb.GeneratedMessage {
   $pb.PbList<ProjectFilter> get projectDetails => $_getList(3);
 }
 
+class GetProjectRequest extends $pb.GeneratedMessage {
+  factory GetProjectRequest({
+    $fixnum.Int64? projectId,
+  }) {
+    final result = create();
+    if (projectId != null) result.projectId = projectId;
+    return result;
+  }
+
+  GetProjectRequest._();
+
+  factory GetProjectRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetProjectRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetProjectRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'projectId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetProjectRequest clone() => GetProjectRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetProjectRequest copyWith(void Function(GetProjectRequest) updates) =>
+      super.copyWith((message) => updates(message as GetProjectRequest))
+          as GetProjectRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetProjectRequest create() => GetProjectRequest._();
+  @$core.override
+  GetProjectRequest createEmptyInstance() => create();
+  static $pb.PbList<GetProjectRequest> createRepeated() =>
+      $pb.PbList<GetProjectRequest>();
+  @$core.pragma('dart2js:noInline')
+  static GetProjectRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetProjectRequest>(create);
+  static GetProjectRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get projectId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set projectId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasProjectId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearProjectId() => $_clearField(1);
+}
+
+class GetProjectResponse extends $pb.GeneratedMessage {
+  factory GetProjectResponse({
+    ProjectFilter? project,
+  }) {
+    final result = create();
+    if (project != null) result.project = project;
+    return result;
+  }
+
+  GetProjectResponse._();
+
+  factory GetProjectResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetProjectResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetProjectResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<ProjectFilter>(1, _omitFieldNames ? '' : 'project',
+        subBuilder: ProjectFilter.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetProjectResponse clone() => GetProjectResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetProjectResponse copyWith(void Function(GetProjectResponse) updates) =>
+      super.copyWith((message) => updates(message as GetProjectResponse))
+          as GetProjectResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetProjectResponse create() => GetProjectResponse._();
+  @$core.override
+  GetProjectResponse createEmptyInstance() => create();
+  static $pb.PbList<GetProjectResponse> createRepeated() =>
+      $pb.PbList<GetProjectResponse>();
+  @$core.pragma('dart2js:noInline')
+  static GetProjectResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetProjectResponse>(create);
+  static GetProjectResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  ProjectFilter get project => $_getN(0);
+  @$pb.TagNumber(1)
+  set project(ProjectFilter value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasProject() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearProject() => $_clearField(1);
+  @$pb.TagNumber(1)
+  ProjectFilter ensureProject() => $_ensure(0);
+}
+
+class GetWorkerRequest extends $pb.GeneratedMessage {
+  factory GetWorkerRequest({
+    $fixnum.Int64? workerId,
+  }) {
+    final result = create();
+    if (workerId != null) result.workerId = workerId;
+    return result;
+  }
+
+  GetWorkerRequest._();
+
+  factory GetWorkerRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetWorkerRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetWorkerRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'workerId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetWorkerRequest clone() => GetWorkerRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetWorkerRequest copyWith(void Function(GetWorkerRequest) updates) =>
+      super.copyWith((message) => updates(message as GetWorkerRequest))
+          as GetWorkerRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetWorkerRequest create() => GetWorkerRequest._();
+  @$core.override
+  GetWorkerRequest createEmptyInstance() => create();
+  static $pb.PbList<GetWorkerRequest> createRepeated() =>
+      $pb.PbList<GetWorkerRequest>();
+  @$core.pragma('dart2js:noInline')
+  static GetWorkerRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetWorkerRequest>(create);
+  static GetWorkerRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get workerId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set workerId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasWorkerId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearWorkerId() => $_clearField(1);
+}
+
+class GetWorkerResponse extends $pb.GeneratedMessage {
+  factory GetWorkerResponse({
+    Worker? worker,
+    $core.int? jobCount,
+  }) {
+    final result = create();
+    if (worker != null) result.worker = worker;
+    if (jobCount != null) result.jobCount = jobCount;
+    return result;
+  }
+
+  GetWorkerResponse._();
+
+  factory GetWorkerResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetWorkerResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetWorkerResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<Worker>(1, _omitFieldNames ? '' : 'worker', subBuilder: Worker.create)
+    ..a<$core.int>(2, _omitFieldNames ? '' : 'jobCount', $pb.PbFieldType.O3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetWorkerResponse clone() => GetWorkerResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetWorkerResponse copyWith(void Function(GetWorkerResponse) updates) =>
+      super.copyWith((message) => updates(message as GetWorkerResponse))
+          as GetWorkerResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetWorkerResponse create() => GetWorkerResponse._();
+  @$core.override
+  GetWorkerResponse createEmptyInstance() => create();
+  static $pb.PbList<GetWorkerResponse> createRepeated() =>
+      $pb.PbList<GetWorkerResponse>();
+  @$core.pragma('dart2js:noInline')
+  static GetWorkerResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetWorkerResponse>(create);
+  static GetWorkerResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Worker get worker => $_getN(0);
+  @$pb.TagNumber(1)
+  set worker(Worker value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasWorker() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearWorker() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Worker ensureWorker() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $core.int get jobCount => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set jobCount($core.int value) => $_setSignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasJobCount() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearJobCount() => $_clearField(2);
+}
+
+class GetEquipmentRequest extends $pb.GeneratedMessage {
+  factory GetEquipmentRequest({
+    $fixnum.Int64? equipmentId,
+  }) {
+    final result = create();
+    if (equipmentId != null) result.equipmentId = equipmentId;
+    return result;
+  }
+
+  GetEquipmentRequest._();
+
+  factory GetEquipmentRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetEquipmentRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetEquipmentRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'equipmentId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetEquipmentRequest clone() => GetEquipmentRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetEquipmentRequest copyWith(void Function(GetEquipmentRequest) updates) =>
+      super.copyWith((message) => updates(message as GetEquipmentRequest))
+          as GetEquipmentRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetEquipmentRequest create() => GetEquipmentRequest._();
+  @$core.override
+  GetEquipmentRequest createEmptyInstance() => create();
+  static $pb.PbList<GetEquipmentRequest> createRepeated() =>
+      $pb.PbList<GetEquipmentRequest>();
+  @$core.pragma('dart2js:noInline')
+  static GetEquipmentRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetEquipmentRequest>(create);
+  static GetEquipmentRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get equipmentId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set equipmentId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasEquipmentId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearEquipmentId() => $_clearField(1);
+}
+
+class GetEquipmentResponse extends $pb.GeneratedMessage {
+  factory GetEquipmentResponse({
+    Equipment? equipment,
+    $core.int? jobCount,
+    $core.int? assetCount,
+  }) {
+    final result = create();
+    if (equipment != null) result.equipment = equipment;
+    if (jobCount != null) result.jobCount = jobCount;
+    if (assetCount != null) result.assetCount = assetCount;
+    return result;
+  }
+
+  GetEquipmentResponse._();
+
+  factory GetEquipmentResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetEquipmentResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetEquipmentResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<Equipment>(1, _omitFieldNames ? '' : 'equipment',
+        subBuilder: Equipment.create)
+    ..a<$core.int>(2, _omitFieldNames ? '' : 'jobCount', $pb.PbFieldType.O3)
+    ..a<$core.int>(3, _omitFieldNames ? '' : 'assetCount', $pb.PbFieldType.O3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetEquipmentResponse clone() =>
+      GetEquipmentResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetEquipmentResponse copyWith(void Function(GetEquipmentResponse) updates) =>
+      super.copyWith((message) => updates(message as GetEquipmentResponse))
+          as GetEquipmentResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetEquipmentResponse create() => GetEquipmentResponse._();
+  @$core.override
+  GetEquipmentResponse createEmptyInstance() => create();
+  static $pb.PbList<GetEquipmentResponse> createRepeated() =>
+      $pb.PbList<GetEquipmentResponse>();
+  @$core.pragma('dart2js:noInline')
+  static GetEquipmentResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetEquipmentResponse>(create);
+  static GetEquipmentResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Equipment get equipment => $_getN(0);
+  @$pb.TagNumber(1)
+  set equipment(Equipment value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasEquipment() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearEquipment() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Equipment ensureEquipment() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $core.int get jobCount => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set jobCount($core.int value) => $_setSignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasJobCount() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearJobCount() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.int get assetCount => $_getIZ(2);
+  @$pb.TagNumber(3)
+  set assetCount($core.int value) => $_setSignedInt32(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasAssetCount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearAssetCount() => $_clearField(3);
+}
+
 class CreateProjectRequest extends $pb.GeneratedMessage {
   factory CreateProjectRequest({
     Project? project,
@@ -5974,6 +6361,12 @@ class WorkServiceApi {
       _client.invoke<ListProjectsResponse>(
           ctx, 'WorkService', 'ListProjects', request, ListProjectsResponse());
 
+  /// 공사 하나 + 호기·품목·작업 수(ListProjects.project_details와 같은 값). 없으면 NotFound.
+  $async.Future<GetProjectResponse> getProject(
+          $pb.ClientContext? ctx, GetProjectRequest request) =>
+      _client.invoke<GetProjectResponse>(
+          ctx, 'WorkService', 'GetProject', request, GetProjectResponse());
+
   /// 공사를 만든다. project.project_no는 필수이고 발급 후 불변. 같은 번호가 있으면 AlreadyExists.
   $async.Future<CreateProjectResponse> createProject(
           $pb.ClientContext? ctx, CreateProjectRequest request) =>
@@ -5985,6 +6378,12 @@ class WorkServiceApi {
           $pb.ClientContext? ctx, ListWorkersRequest request) =>
       _client.invoke<ListWorkersResponse>(
           ctx, 'WorkService', 'ListWorkers', request, ListWorkersResponse());
+
+  /// 작업자 하나 + 맡은 작업 수. 숨긴 작업자도 나온다. 없으면 NotFound.
+  $async.Future<GetWorkerResponse> getWorker(
+          $pb.ClientContext? ctx, GetWorkerRequest request) =>
+      _client.invoke<GetWorkerResponse>(
+          ctx, 'WorkService', 'GetWorker', request, GetWorkerResponse());
 
   /// 작업자를 만든다. worker.worker_name 필수. employee_no가 겹치면 AlreadyExists.
   $async.Future<CreateWorkerResponse> createWorker(
@@ -6009,6 +6408,12 @@ class WorkServiceApi {
           $pb.ClientContext? ctx, ListEquipmentRequest request) =>
       _client.invoke<ListEquipmentResponse>(ctx, 'WorkService', 'ListEquipment',
           request, ListEquipmentResponse());
+
+  /// 장비 하나 + 작업 수 · Asset 수. 숨긴 장비도 나온다. 없으면 NotFound.
+  $async.Future<GetEquipmentResponse> getEquipment(
+          $pb.ClientContext? ctx, GetEquipmentRequest request) =>
+      _client.invoke<GetEquipmentResponse>(
+          ctx, 'WorkService', 'GetEquipment', request, GetEquipmentResponse());
 
   /// 장비를 만든다. equipment.equipment_name 필수. equipment_code가 겹치면 AlreadyExists.
   $async.Future<CreateEquipmentResponse> createEquipment(
