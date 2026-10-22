@@ -9,6 +9,7 @@ import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
+import '../../core/widgets/pass_context_bar.dart';
 import '../../core/widgets/waveform_material_scope.dart';
 import '../../navigation/app_coordinator.dart';
 import 'project_lookup_detail_view_model.dart';
@@ -246,15 +247,16 @@ class _ProjectLookupDetailBodyState extends State<_ProjectLookupDetailBody> {
         if (_isEditing)
           _editForm(project)
         else ...[
-          LookupDetailKvGrid(
+          PassContextBar.entries(
             entries: [
+              ('공사 번호', project.projectNo),
               ('공사 이름', project.projectName),
               ('현장', project.siteName),
               ('발주처', project.customer),
               ('작업', '${project.jobCount}건'),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           Align(
             alignment: Alignment.centerLeft,
             child: Button(
@@ -298,7 +300,7 @@ class _ProjectLookupDetailBodyState extends State<_ProjectLookupDetailBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LookupDetailKvGrid(
+        PassContextBar.entries(
           entries: [
             ('공사 번호', project.projectNo),
             ('작업', '${project.jobCount}건'),

@@ -5,6 +5,7 @@ import '../../../domain/entities/worker_kind.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
+import '../../core/widgets/pass_context_bar.dart';
 import '../../navigation/app_coordinator.dart';
 import 'worker_lookup_detail_view_model.dart';
 
@@ -74,7 +75,7 @@ class _WorkerLookupDetailBody extends StatelessWidget {
         : '파형 비교의 명장 목록에는 안 들어갑니다.';
     return ListView(
       children: [
-        LookupDetailKvGrid(
+        PassContextBar.entries(
           entries: [
             ('종류', worker.workerKind.label),
             ('사번', worker.employeeNo),
@@ -82,6 +83,7 @@ class _WorkerLookupDetailBody extends StatelessWidget {
             ('숨김', worker.isInactive ? '숨김 — 고르는 목록에서 빠짐' : '아니오'),
           ],
         ),
+        const SizedBox(height: 12),
         if (worker.description.isNotEmpty) ...[
           const LookupDetailSectionTitle('비고'),
           Text(worker.description),
