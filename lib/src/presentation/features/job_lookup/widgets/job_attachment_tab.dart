@@ -1,6 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../../domain/entities/asset_lookup_kind.dart';
+import '../../asset_lookup/asset_upload_dialog.dart';
 import '../../../../domain/entities/asset_lookup_row.dart';
 import '../job_lookup_detail_view_model.dart';
 import 'job_detail_text_input.dart';
@@ -43,6 +44,52 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
     } finally {
       if (mounted) setState(() => _isWorking = false);
     }
+  }
+
+  Future<void> _didTapUploadToJob() async {
+    final result = await showAssetUploadDialog(
+      context,
+      jobs: _viewModel.uploadJobs,
+      equipment: _viewModel.equipment,
+      initialJobId: _viewModel.jobId,
+      initialPassId: '',
+      lockJob: true,
+      loadFormats: _viewModel.loadUploadFormats,
+      pickFile: _viewModel.pickUploadFile,
+      uploadFile:
+          ({
+            required jobId,
+            required passId,
+            required equipmentId,
+            required timeOrigin,
+            required file,
+          }) => _viewModel.uploadAssetFile(
+            jobId: jobId,
+            passId: passId,
+            equipmentId: equipmentId,
+            timeOrigin: timeOrigin,
+            file: file,
+          ),
+    );
+    if (result == null || !mounted) return;
+    await _run(_viewModel.didFinishUpload);
+    if (!mounted) return;
+    final notes = [
+      ...result.warnings,
+      for (final id in result.duplicateAssetIds) '같은 내용의 에셋 $id가 이미 있습니다',
+    ];
+    if (notes.isEmpty) return;
+    await displayInfoBar(
+      context,
+      builder: (context, close) {
+        return InfoBar(
+          title: const Text('올리기 완료'),
+          content: Text(notes.join('\n')),
+          severity: InfoBarSeverity.warning,
+          onClose: close,
+        );
+      },
+    );
   }
 
   Future<void> _didTapAttach() async {
@@ -120,6 +167,11 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
         Row(
           children: [
             FilledButton(
+              onPressed: _isWorking ? null : _didTapUploadToJob,
+              child: const Text('+ 이 작업에 올리기'),
+            ),
+            const SizedBox(width: 8),
+            Button(
               onPressed: _isWorking ? null : _didTapAttach,
               child: const Text('에셋 붙이기'),
             ),

@@ -1,6 +1,9 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../domain/entities/asset_lookup_row.dart';
+import '../../../domain/entities/asset_upload.dart';
+import '../../../domain/entities/camera_recording.dart';
+import '../../../domain/entities/equipment.dart';
 import '../../../domain/entities/job_detail.dart';
 import '../../../domain/entities/work_history_catalog.dart';
 import '../../../domain/entities/work_history_item.dart';
@@ -8,6 +11,9 @@ import '../../../domain/entities/work_history_project_filter.dart';
 import '../../../domain/entities/worker.dart';
 import '../../../domain/use_cases/job_admin_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
+import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
+import '../../../domain/use_cases/list_upload_formats_use_case.dart';
+import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../domain/use_cases/list_job_passes_use_case.dart';
 import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
 import '../../../domain/use_cases/load_work_history_masters_use_case.dart';
@@ -24,12 +30,19 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     required ListAssetLookupPageUseCase listAssetLookupPageUseCase,
     required JobAdminUseCase jobAdminUseCase,
     required LoadWorkHistoryMastersUseCase loadWorkHistoryMastersUseCase,
+    required ListEquipmentLookupUseCase listEquipmentLookupUseCase,
+    required ListUploadFormatsUseCase listUploadFormatsUseCase,
+    required UploadAssetUseCase uploadAssetUseCase,
   }) : _loadWorkDetailCatalogUseCase = loadWorkDetailCatalogUseCase,
        _queryWorkDetailUseCase = queryWorkDetailUseCase,
        _listJobPassesUseCase = listJobPassesUseCase,
        _listAssetLookupPageUseCase = listAssetLookupPageUseCase,
        _jobAdminUseCase = jobAdminUseCase,
-       _loadWorkHistoryMastersUseCase = loadWorkHistoryMastersUseCase;
+       _loadWorkHistoryMastersUseCase = loadWorkHistoryMastersUseCase,
+       _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
+       _listUploadFormatsUseCase = listUploadFormatsUseCase,
+       _uploadAssetUseCase = uploadAssetUseCase;
+
   final String jobId;
   final LoadWorkDetailCatalogUseCase _loadWorkDetailCatalogUseCase;
   final QueryWorkDetailUseCase _queryWorkDetailUseCase;
@@ -37,12 +50,16 @@ class JobLookupDetailViewModel extends ChangeNotifier {
   final ListAssetLookupPageUseCase _listAssetLookupPageUseCase;
   final JobAdminUseCase _jobAdminUseCase;
   final LoadWorkHistoryMastersUseCase _loadWorkHistoryMastersUseCase;
+  final ListEquipmentLookupUseCase _listEquipmentLookupUseCase;
+  final ListUploadFormatsUseCase _listUploadFormatsUseCase;
+  final UploadAssetUseCase _uploadAssetUseCase;
 
   WorkHistoryItem? _job;
   JobDetail? _detail;
   WorkHistoryCatalog? _masters;
   List<JobPassDetail> _passes = const [];
   List<AssetLookupRow> _attachments = const [];
+  List<Equipment> _equipment = const [];
   JobLookupDetailTab _tab = JobLookupDetailTab.info;
   bool _isLoading = false;
   bool _hasError = false;
@@ -55,6 +72,43 @@ class JobLookupDetailViewModel extends ChangeNotifier {
   List<Worker> get workers => _masters?.workers ?? const [];
   List<JobPassDetail> get passes => _passes;
   List<AssetLookupRow> get attachments => _attachments;
+  List<Equipment> get equipment => _equipment;
+
+  /// 올리기 다이얼로그용 — 잠긴 작업 하나와 그 패스들.
+  List<WorkHistoryItem> get uploadJobs {
+    final job = _job;
+    if (job == null) return const [];
+    return [
+      WorkHistoryItem(
+        jobId: job.jobId,
+        jobKey: job.jobKey,
+        commonKey: job.commonKey,
+        projectNo: job.projectNo,
+        unitNo: job.unitNo,
+        itemCode: job.itemCode,
+        itemName: job.itemName,
+        jointNo: job.jointNo,
+        hasReport: job.hasReport,
+        workerId: job.workerId,
+        workerName: job.workerName,
+        workerKind: job.workerKind,
+        equipmentId: job.equipmentId,
+        equipmentName: job.equipmentName,
+        workedAt: job.workedAt,
+        passCount: job.passCount,
+        attachmentCount: job.attachmentCount,
+        passes: [
+          for (final pass in _passes)
+            JobPassOption(
+              passId: pass.passId,
+              passNo: pass.passNo,
+              startedAt: pass.startedAt,
+              endedAt: pass.endedAt,
+            ),
+        ],
+      ),
+    ];
+  }
 
   JobLookupDetailTab get tab => _tab;
   bool get isLoading => _isLoading;
@@ -77,6 +131,11 @@ class JobLookupDetailViewModel extends ChangeNotifier {
         _masters = await _loadWorkHistoryMastersUseCase.execute();
       } catch (_) {
         _masters = null;
+      }
+      try {
+        _equipment = await _listEquipmentLookupUseCase.execute();
+      } catch (_) {
+        _equipment = const [];
       }
       try {
         _detail = await _jobAdminUseCase.getJobDetail(jobId: jobId);
@@ -271,6 +330,34 @@ class JobLookupDetailViewModel extends ChangeNotifier {
       attachmentCount: detail.attachmentCount,
       passes: old.passes,
     );
+  }
+
+  Future<AssetUploadFormats> loadUploadFormats() {
+    return _listUploadFormatsUseCase.execute();
+  }
+
+  Future<CameraRecordingFile?> pickUploadFile() {
+    return _uploadAssetUseCase.pickFile();
+  }
+
+  Future<AssetUploadResult> uploadAssetFile({
+    required String jobId,
+    required String passId,
+    required String equipmentId,
+    required DateTime? timeOrigin,
+    required CameraRecordingFile file,
+  }) {
+    return _uploadAssetUseCase.uploadFile(
+      jobId: jobId,
+      passId: passId,
+      equipmentId: equipmentId,
+      timeOrigin: timeOrigin,
+      file: file,
+    );
+  }
+
+  Future<void> didFinishUpload() async {
+    await _reloadAttachments();
   }
 
   String passLabelOf(AssetLookupRow row) {

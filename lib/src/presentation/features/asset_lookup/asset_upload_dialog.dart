@@ -5,9 +5,19 @@ import 'package:flutter/material.dart'
 import '../../../domain/entities/asset_lookup_row.dart';
 import '../../../domain/entities/asset_upload.dart';
 import '../../../domain/entities/camera_recording.dart';
+import '../../../domain/entities/equipment.dart';
+import '../../../domain/entities/work_history_item.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/waveform_material_scope.dart';
-import 'asset_lookup_view_model.dart';
+
+typedef AssetUploadFile =
+    Future<AssetUploadResult> Function({
+      required String jobId,
+      required String passId,
+      required String equipmentId,
+      required DateTime? timeOrigin,
+      required CameraRecordingFile file,
+    });
 
 const _stepLabels = {
   'properties': '파일 속성',
@@ -18,19 +28,51 @@ const _stepLabels = {
 };
 
 Future<AssetUploadResult?> showAssetUploadDialog(
-  BuildContext context,
-  AssetLookupViewModel viewModel,
-) {
+  BuildContext context, {
+  required List<WorkHistoryItem> jobs,
+  required List<Equipment> equipment,
+  required String initialJobId,
+  required String initialPassId,
+  required bool lockJob,
+  required Future<AssetUploadFormats> Function() loadFormats,
+  required Future<CameraRecordingFile?> Function() pickFile,
+  required AssetUploadFile uploadFile,
+}) {
   return showDialog<AssetUploadResult>(
     context: context,
-    builder: (_) => _AssetUploadDialog(viewModel: viewModel),
+    builder: (_) => _AssetUploadDialog(
+      jobs: jobs,
+      equipment: equipment,
+      initialJobId: initialJobId,
+      initialPassId: initialPassId,
+      lockJob: lockJob,
+      loadFormats: loadFormats,
+      pickFile: pickFile,
+      uploadFile: uploadFile,
+    ),
   );
 }
 
 class _AssetUploadDialog extends StatefulWidget {
-  const _AssetUploadDialog({required this.viewModel});
+  const _AssetUploadDialog({
+    required this.jobs,
+    required this.equipment,
+    required this.initialJobId,
+    required this.initialPassId,
+    required this.lockJob,
+    required this.loadFormats,
+    required this.pickFile,
+    required this.uploadFile,
+  });
 
-  final AssetLookupViewModel viewModel;
+  final List<WorkHistoryItem> jobs;
+  final List<Equipment> equipment;
+  final String initialJobId;
+  final String initialPassId;
+  final bool lockJob;
+  final Future<AssetUploadFormats> Function() loadFormats;
+  final Future<CameraRecordingFile?> Function() pickFile;
+  final AssetUploadFile uploadFile;
 
   @override
   State<_AssetUploadDialog> createState() => _AssetUploadDialogState();
@@ -48,17 +90,22 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
   String _error = '';
   bool _isUploading = false;
 
-  AssetLookupViewModel get _viewModel => widget.viewModel;
-
   @override
   void initState() {
     super.initState();
-    _jobId = _viewModel.jobId;
-    _passId = _viewModel.passId == jobCommonPassToken
+    _jobId = widget.initialJobId;
+    _passId = widget.initialPassId == jobCommonPassToken
         ? ''
-        : _viewModel.passId;
-    _passes = _viewModel.passes;
+        : widget.initialPassId;
+    _passes = _passesOf(_jobId);
     _loadFormats();
+  }
+
+  List<JobPassOption> _passesOf(String jobId) {
+    for (final job in widget.jobs) {
+      if (job.jobId == jobId) return job.passes;
+    }
+    return const [];
   }
 
   @override
@@ -69,7 +116,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
 
   Future<void> _loadFormats() async {
     try {
-      final formats = await _viewModel.loadUploadFormats();
+      final formats = await widget.loadFormats();
       if (mounted) {
         setState(() => _formats = formats);
       }
@@ -102,7 +149,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
 
   Future<void> _didTapPickFile() async {
     try {
-      final file = await _viewModel.pickUploadFile();
+      final file = await widget.pickFile();
       if (file != null && mounted) {
         setState(() {
           _file = file;
@@ -120,7 +167,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
     setState(() {
       _jobId = jobId;
       _passId = '';
-      _passes = _viewModel.passesOf(jobId);
+      _passes = _passesOf(jobId);
     });
   }
 
@@ -134,7 +181,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
   }
 
   DateTime? get _selectedJobStartedAt {
-    for (final job in _viewModel.jobs) {
+    for (final job in widget.jobs) {
       if (job.jobId == _jobId) {
         return job.workedAt;
       }
@@ -178,7 +225,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
       _error = '';
     });
     try {
-      final result = await _viewModel.uploadAssetFile(
+      final result = await widget.uploadFile(
         jobId: _jobId,
         passId: _passId == jobCommonPassToken ? '' : _passId,
         equipmentId: _equipmentId,
@@ -234,9 +281,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
               if (format != null && format.steps.isNotEmpty) ...[
                 const SizedBox(height: 8),
                 Text(
-                  '올린 뒤 후처리: ${[
-                    for (final step in format.steps) _stepLabels[step] ?? step,
-                  ].join(' → ')}',
+                  '올린 뒤 후처리: ${[for (final step in format.steps) _stepLabels[step] ?? step].join(' → ')}',
                   style: const TextStyle(fontSize: 12),
                 ),
               ],
@@ -251,11 +296,12 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
                         isExpanded: true,
                         value: _jobId,
                         items: [
-                          const ComboBoxItem(
-                            value: '',
-                            child: Text('작업 미지정'),
-                          ),
-                          for (final job in _viewModel.jobs)
+                          if (!widget.lockJob)
+                            const ComboBoxItem(
+                              value: '',
+                              child: Text('작업 미지정'),
+                            ),
+                          for (final job in widget.jobs)
                             ComboBoxItem(
                               value: job.jobId,
                               child: Text(
@@ -265,7 +311,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
                               ),
                             ),
                         ],
-                        onChanged: _isUploading
+                        onChanged: _isUploading || widget.lockJob
                             ? null
                             : (value) {
                                 if (value != null) {
@@ -283,10 +329,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
                         isExpanded: true,
                         value: _passId,
                         items: [
-                          const ComboBoxItem(
-                            value: '',
-                            child: Text('작업 공용'),
-                          ),
+                          const ComboBoxItem(value: '', child: Text('작업 공용')),
                           for (final pass in _passes)
                             ComboBoxItem(
                               value: pass.passId,
@@ -317,7 +360,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
                         value: _equipmentId,
                         items: [
                           const ComboBoxItem(value: '', child: Text('모름')),
-                          for (final item in _viewModel.equipment)
+                          for (final item in widget.equipment)
                             ComboBoxItem(
                               value: item.equipmentId,
                               child: Text(
@@ -419,7 +462,9 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
                         onPressed: _isUploading
                             ? null
                             : () => _fillTimeOrigin(_file!.lastModifiedAt!),
-                        child: Text('파일 시각 ${_timeText(_file!.lastModifiedAt!)}'),
+                        child: Text(
+                          '파일 시각 ${_timeText(_file!.lastModifiedAt!)}',
+                        ),
                       ),
                     Button(
                       onPressed: _isUploading
@@ -436,10 +481,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
               ],
               if (_error.isNotEmpty) ...[
                 const SizedBox(height: 12),
-                Text(
-                  _error,
-                  style: TextStyle(color: Colors.red),
-                ),
+                Text(_error, style: TextStyle(color: Colors.red)),
               ],
             ],
           ),
@@ -447,9 +489,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
       ),
       actions: [
         Button(
-          onPressed: _isUploading
-              ? null
-              : () => Navigator.of(context).pop(),
+          onPressed: _isUploading ? null : () => Navigator.of(context).pop(),
           child: const Text('취소'),
         ),
         FilledButton(

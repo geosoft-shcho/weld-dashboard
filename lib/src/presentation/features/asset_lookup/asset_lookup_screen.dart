@@ -347,7 +347,30 @@ Future<void> _didTapUpload(
   BuildContext context,
   AssetLookupViewModel viewModel,
 ) async {
-  final result = await showAssetUploadDialog(context, viewModel);
+  final result = await showAssetUploadDialog(
+    context,
+    jobs: viewModel.jobs,
+    equipment: viewModel.equipment,
+    initialJobId: viewModel.jobId,
+    initialPassId: viewModel.passId,
+    lockJob: false,
+    loadFormats: viewModel.loadUploadFormats,
+    pickFile: viewModel.pickUploadFile,
+    uploadFile:
+        ({
+          required jobId,
+          required passId,
+          required equipmentId,
+          required timeOrigin,
+          required file,
+        }) => viewModel.uploadAssetFile(
+          jobId: jobId,
+          passId: passId,
+          equipmentId: equipmentId,
+          timeOrigin: timeOrigin,
+          file: file,
+        ),
+  );
   if (result == null || !context.mounted) {
     return;
   }
