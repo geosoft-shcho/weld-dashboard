@@ -4,7 +4,9 @@ import '../../../../domain/entities/job_detail.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../core/widgets/section_empty_placeholder.dart';
+import '../../../core/widgets/screen_command_bar.dart';
 import '../job_lookup_detail_view_model.dart';
+import 'job_detail_action_bar.dart';
 import 'job_detail_text_input.dart';
 
 class JobPassTab extends StatelessWidget {
@@ -17,6 +19,18 @@ class JobPassTab extends StatelessWidget {
     final detail = viewModel.detail;
     return ListView(
       children: [
+        JobDetailActionBar(
+          items: [
+            CommandBarButton(
+              icon: const Icon(FluentIcons.add),
+              label: const CommandBarLabel('패스 추가'),
+              onPressed: detail == null
+                  ? null
+                  : () => showJobPassDialog(context, viewModel: viewModel),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
         if (detail == null)
           const SectionEmptyPlaceholder(
             title: '패스 정보가 없습니다',
@@ -64,18 +78,24 @@ class JobPassTab extends StatelessWidget {
                               DashboardFormatters.dateTime(pass.endedAt),
                             ),
                           ),
-                          Button(
-                            onPressed: () => showJobPassDialog(
-                              context,
-                              viewModel: viewModel,
-                              original: pass,
+                          Tooltip(
+                            message: '수정',
+                            child: IconButton(
+                              icon: const Icon(FluentIcons.edit, size: 14),
+                              onPressed: () => showJobPassDialog(
+                                context,
+                                viewModel: viewModel,
+                                original: pass,
+                              ),
                             ),
-                            child: const Text('수정'),
                           ),
-                          const SizedBox(width: 8),
-                          Button(
-                            onPressed: () => _didTapDelete(context, pass),
-                            child: const Text('지우기'),
+                          const SizedBox(width: 4),
+                          Tooltip(
+                            message: '지우기',
+                            child: IconButton(
+                              icon: const Icon(FluentIcons.delete, size: 14),
+                              onPressed: () => _didTapDelete(context, pass),
+                            ),
                           ),
                         ],
                       ),
@@ -88,16 +108,6 @@ class JobPassTab extends StatelessWidget {
         const Text(
           '작업 구간 안이어야 하고 서로 겹칠 수 없습니다. 끝과 시작이 맞닿는 건 됩니다.',
           style: TextStyle(fontSize: 12),
-        ),
-        const SizedBox(height: 12),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: FilledButton(
-            onPressed: detail == null
-                ? null
-                : () => showJobPassDialog(context, viewModel: viewModel),
-            child: const Text('+ 패스 추가'),
-          ),
         ),
       ],
     );

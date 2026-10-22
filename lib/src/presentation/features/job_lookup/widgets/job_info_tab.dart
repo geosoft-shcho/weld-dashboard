@@ -4,7 +4,9 @@ import '../../../../domain/entities/job_detail.dart';
 import '../../../../domain/entities/job_draft.dart';
 import '../../../../domain/entities/worker_kind.dart';
 import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/screen_command_bar.dart';
 import '../job_lookup_detail_view_model.dart';
+import 'job_detail_action_bar.dart';
 import 'job_detail_text_input.dart';
 
 class JobInfoTab extends StatefulWidget {
@@ -211,175 +213,191 @@ class _JobInfoTabState extends State<JobInfoTab> {
         severity: InfoBarSeverity.warning,
       );
     }
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.SURFACE_RAISED,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFF3E424A)),
-      ),
-      child: ListView(
-        children: [
-          if (detail.jobKey.isNotEmpty)
-            Text(detail.jobKey, style: const TextStyle(fontSize: 12)),
-          const SizedBox(height: 4),
-          Text(
-            '품목 이름: ${detail.itemName.isEmpty ? '—' : detail.itemName} '
-            '(품목 이름은 공사에서 고칩니다)',
-            style: const TextStyle(fontSize: 12),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: InfoLabel(
-                  label: '공사',
-                  child: ComboBox<String>(
-                    isExpanded: true,
-                    value: _projectNo.isEmpty ? null : _projectNo,
-                    items: [
-                      if (_projectNo.isNotEmpty &&
-                          !_viewModel.projects.any(
-                            (project) => project.projectNo == _projectNo,
-                          ))
-                        ComboBoxItem(
-                          value: _projectNo,
-                          child: Text(_projectNo),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        JobDetailActionBar(
+          items: [
+            CommandBarButton(
+              icon: const Icon(FluentIcons.save),
+              label: const CommandBarLabel('저장'),
+              onPressed: _isSaving ? null : _didTapSave,
+            ),
+            CommandBarButton(
+              icon: const Icon(FluentIcons.delete),
+              label: const CommandBarLabel('작업 지우기'),
+              onPressed: _isSaving ? null : _didTapDelete,
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        Expanded(
+          child: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.SURFACE_RAISED,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: const Color(0xFF3E424A)),
+            ),
+            child: ListView(
+              children: [
+                if (detail.jobKey.isNotEmpty)
+                  Text(detail.jobKey, style: const TextStyle(fontSize: 12)),
+                const SizedBox(height: 4),
+                Text(
+                  '품목 이름: ${detail.itemName.isEmpty ? '—' : detail.itemName} '
+                  '(품목 이름은 공사에서 고칩니다)',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: InfoLabel(
+                        label: '공사',
+                        child: ComboBox<String>(
+                          isExpanded: true,
+                          value: _projectNo.isEmpty ? null : _projectNo,
+                          items: [
+                            if (_projectNo.isNotEmpty &&
+                                !_viewModel.projects.any(
+                                  (project) => project.projectNo == _projectNo,
+                                ))
+                              ComboBoxItem(
+                                value: _projectNo,
+                                child: Text(_projectNo),
+                              ),
+                            for (final project in _viewModel.projects)
+                              ComboBoxItem(
+                                value: project.projectNo,
+                                child: Text(
+                                  project.projectName.isEmpty
+                                      ? project.projectNo
+                                      : '${project.projectNo} ${project.projectName}',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                          onChanged: _isSaving
+                              ? null
+                              : (value) {
+                                  if (value == null) return;
+                                  for (final project in _viewModel.projects) {
+                                    if (project.projectNo == value) {
+                                      _projectId = project.projectId;
+                                    }
+                                  }
+                                  setState(() => _projectNo = value);
+                                },
                         ),
-                      for (final project in _viewModel.projects)
-                        ComboBoxItem(
-                          value: project.projectNo,
-                          child: Text(
-                            project.projectName.isEmpty
-                                ? project.projectNo
-                                : '${project.projectNo} ${project.projectName}',
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: _field('호기', _unit, hintText: '05')),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _field('품목 코드', _itemCode, hintText: 'TFPB'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _field('이음부', _joint, hintText: 'DGT-ELA-01'),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: InfoLabel(
+                        label: '작업자',
+                        child: ComboBox<String>(
+                          isExpanded: true,
+                          value: _workerId,
+                          items: [
+                            const ComboBoxItem(value: '', child: Text('미지정')),
+                            for (final worker in _viewModel.workers)
+                              if (!worker.isInactive ||
+                                  worker.workerId == detail.workerId)
+                                ComboBoxItem(
+                                  value: worker.workerId,
+                                  child: Text(
+                                    '${worker.workerName} · ${worker.workerKind.label}',
+                                  ),
+                                ),
+                          ],
+                          onChanged: _isSaving
+                              ? null
+                              : (value) {
+                                  if (value != null)
+                                    setState(() => _workerId = value);
+                                },
                         ),
-                    ],
-                    onChanged: _isSaving
-                        ? null
-                        : (value) {
-                            if (value == null) return;
-                            for (final project in _viewModel.projects) {
-                              if (project.projectNo == value) {
-                                _projectId = project.projectId;
-                              }
-                            }
-                            setState(() => _projectNo = value);
-                          },
-                  ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: _field('작업 이름', _jobName)),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(child: _field('호기', _unit, hintText: '05')),
-              const SizedBox(width: 12),
-              Expanded(child: _field('품목 코드', _itemCode, hintText: 'TFPB')),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _field('이음부', _joint, hintText: 'DGT-ELA-01')),
-              const SizedBox(width: 12),
-              Expanded(
-                child: InfoLabel(
-                  label: '작업자',
-                  child: ComboBox<String>(
-                    isExpanded: true,
-                    value: _workerId,
-                    items: [
-                      const ComboBoxItem(value: '', child: Text('미지정')),
-                      for (final worker in _viewModel.workers)
-                        if (!worker.isInactive ||
-                            worker.workerId == detail.workerId)
-                          ComboBoxItem(
-                            value: worker.workerId,
-                            child: Text(
-                              '${worker.workerName} · ${worker.workerKind.label}',
-                            ),
-                          ),
-                    ],
-                    onChanged: _isSaving
-                        ? null
-                        : (value) {
-                            if (value != null)
-                              setState(() => _workerId = value);
-                          },
-                  ),
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: _field(
+                        '시작 *',
+                        _start,
+                        hintText: '2026-10-30 08:16:00.000',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _field(
+                        '종료',
+                        _end,
+                        hintText: '2026-10-30 09:04:14.100',
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(child: _field('작업 이름', _jobName)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _field(
-                  '시작 *',
-                  _start,
-                  hintText: '2026-10-30 08:16:00.000',
+                const SizedBox(height: 12),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(child: _field('품목 번호', _itemNo)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _field('공정 번호', _operationNo)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _field('재질', _material)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _field('외경 (mm)', _outerDiameter)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _field('두께 (mm)', _thickness)),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _field('종료', _end, hintText: '2026-10-30 09:04:14.100'),
-              ),
-            ],
+                const SizedBox(height: 8),
+                const Text(
+                  '공사 · 호기 · 품목 · 이음부 · 시작을 바꾸면 공통키와 작업 키가 다시 만들어집니다.',
+                  style: TextStyle(fontSize: 12),
+                ),
+                if (_error.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(_error, style: TextStyle(color: Colors.red)),
+                ],
+                if (_message.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(_message, style: const TextStyle(fontSize: 12)),
+                ],
+                if (_isSaving) ...[
+                  const SizedBox(height: 12),
+                  const Center(child: ProgressRing()),
+                ],
+              ],
+            ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: _field('품목 번호', _itemNo)),
-              const SizedBox(width: 12),
-              Expanded(child: _field('공정 번호', _operationNo)),
-              const SizedBox(width: 12),
-              Expanded(child: _field('재질', _material)),
-              const SizedBox(width: 12),
-              Expanded(child: _field('외경 (mm)', _outerDiameter)),
-              const SizedBox(width: 12),
-              Expanded(child: _field('두께 (mm)', _thickness)),
-            ],
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            '공사 · 호기 · 품목 · 이음부 · 시작을 바꾸면 공통키와 작업 키가 다시 만들어집니다.',
-            style: TextStyle(fontSize: 12),
-          ),
-          if (_error.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(_error, style: TextStyle(color: Colors.red)),
-          ],
-          if (_message.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(_message, style: const TextStyle(fontSize: 12)),
-          ],
-          if (_isSaving) ...[
-            const SizedBox(height: 12),
-            const Center(child: ProgressRing()),
-          ],
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Button(
-                onPressed: _isSaving ? null : _didTapDelete,
-                child: const Text('작업 지우기'),
-              ),
-              const SizedBox(width: 8),
-              FilledButton(
-                onPressed: _isSaving ? null : _didTapSave,
-                child: const Text('저장'),
-              ),
-            ],
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

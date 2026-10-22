@@ -3,9 +3,12 @@ import 'package:fluent_ui/fluent_ui.dart';
 import '../../../../domain/entities/asset_lookup_kind.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../core/widgets/section_empty_placeholder.dart';
+import '../../../core/widgets/command_bar_widget_item.dart';
+import '../../../core/widgets/screen_command_bar.dart';
 import '../../asset_lookup/asset_upload_dialog.dart';
 import '../../../../domain/entities/asset_lookup_row.dart';
 import '../job_lookup_detail_view_model.dart';
+import 'job_detail_action_bar.dart';
 import 'job_detail_text_input.dart';
 
 class JobAttachmentTab extends StatefulWidget {
@@ -166,16 +169,25 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
   Widget build(BuildContext context) {
     return ListView(
       children: [
-        Row(
-          children: [
-            FilledButton(
-              onPressed: _isWorking ? null : _didTapUploadToJob,
-              child: const Text('+ 이 작업에 올리기'),
+        JobDetailActionBar(
+          items: [
+            CommandBarWidgetItem(
+              child: FilledButton(
+                onPressed: _isWorking ? null : _didTapUploadToJob,
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(FluentIcons.upload, size: 14),
+                    SizedBox(width: 6),
+                    Text('에셋 올리기'),
+                  ],
+                ),
+              ),
             ),
-            const SizedBox(width: 8),
-            Button(
+            CommandBarButton(
+              icon: const Icon(FluentIcons.attach),
+              label: const CommandBarLabel('에셋 붙이기'),
               onPressed: _isWorking ? null : _didTapAttach,
-              child: const Text('에셋 붙이기'),
             ),
           ],
         ),
@@ -242,14 +254,20 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
                               },
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          Button(
-                            onPressed: _isWorking
-                                ? null
-                                : () => _run(
-                                    () => _viewModel.detachAsset(row.assetId),
-                                  ),
-                            child: const Text('떼기'),
+                          const SizedBox(width: 4),
+                          Tooltip(
+                            message: '떼기',
+                            child: IconButton(
+                              icon: const Icon(
+                                FluentIcons.remove_link,
+                                size: 14,
+                              ),
+                              onPressed: _isWorking
+                                  ? null
+                                  : () => _run(
+                                      () => _viewModel.detachAsset(row.assetId),
+                                    ),
+                            ),
                           ),
                         ],
                       ),
