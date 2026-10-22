@@ -15,7 +15,7 @@ import '../video_multimodal/widgets/camera_recording_dialog.dart';
 import 'pass_profile_args.dart';
 import 'pass_profile_view_model.dart';
 import 'widgets/pass_compare_summary.dart';
-import 'widgets/pass_context_bar.dart';
+import '../../core/widgets/pass_context_bar.dart';
 import 'widgets/pass_legend_toolbar.dart';
 import 'widgets/pass_tabs_bar.dart';
 

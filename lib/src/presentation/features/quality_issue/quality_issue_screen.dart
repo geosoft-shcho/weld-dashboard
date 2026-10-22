@@ -10,7 +10,7 @@ import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/waveform_channel_charts.dart';
 import '../../navigation/app_coordinator.dart';
-import '../pass_profile/widgets/pass_context_bar.dart';
+import '../../core/widgets/pass_context_bar.dart';
 import '../pass_profile/widgets/pass_legend_toolbar.dart';
 import '../pass_profile/widgets/pass_tabs_bar.dart';
 import '../video_multimodal/widgets/camera_recording_dialog.dart';

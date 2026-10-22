@@ -1,10 +1,12 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
-import '../../../../domain/entities/pass_joint_context.dart';
-import '../../../core/formatters/dashboard_formatters.dart';
-import '../../../core/themes/app_theme.dart';
-import '../../../core/widgets/section_empty_placeholder.dart';
+import '../../../domain/entities/pass_joint_context.dart';
+import '../formatters/dashboard_formatters.dart';
+import '../themes/app_theme.dart';
+import 'section_empty_placeholder.dart';
 
+/// 공통 컨텍스트 카드: 공통키·공사·호기·품목·이음부·작업자·구분·장비를
+/// 패스 프로파일·품질 이슈·작업 상세 화면이 같이 쓴다.
 class PassContextBar extends StatelessWidget {
   const PassContextBar({super.key, required this.contextData});
 
