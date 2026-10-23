@@ -9,7 +9,7 @@ class ShellTitleLeading extends StatelessWidget {
 
   final VoidCallback onTogglePane;
 
-  static const String APP_TITLE = '용접 수집 대시보드';
+  static const String APP_TITLE = 'tks.faivv.ai';
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +24,7 @@ class ShellTitleLeading extends StatelessWidget {
         PaneToggleButton(onPressed: onTogglePane),
         const SizedBox(width: 8),
         Text(
-          '$APP_TITLE : $pageTitle',
+          pageTitle,
           style: theme.typography.body?.copyWith(
             color: theme.resources.textFillColorPrimary,
             fontWeight: FontWeight.w600,
