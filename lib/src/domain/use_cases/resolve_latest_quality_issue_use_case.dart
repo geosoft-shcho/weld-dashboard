@@ -1,66 +1,25 @@
 import '../entities/latest_quality_issue_target.dart';
-import '../entities/pass_waveform_catalog.dart';
-import '../entities/quality_link.dart';
 import '../entities/work_history_item.dart';
 
 class ResolveLatestQualityIssueUseCase {
   LatestQualityIssueTarget? execute({
-    required PassWaveformCatalog catalog,
-    required DateTime snapshotAt,
+    required List<WorkHistoryItem> jobs,
   }) {
-    final linksByCommonKey = <String, List<QualityLink>>{};
-    for (final link in catalog.links) {
-      linksByCommonKey.putIfAbsent(link.commonKey, () => []).add(link);
-    }
-    final candidates = [
-      for (final item in catalog.historyItems)
-        if (_isOnOrBeforeSnapshot(item, snapshotAt) &&
-            (linksByCommonKey[item.commonKey]?.isNotEmpty ?? false))
-          item,
-    ];
-    _sortLatestFirst(candidates);
-    if (candidates.isEmpty) {
-      return null;
-    }
-    final item = candidates.first;
-    final links = linksByCommonKey[item.commonKey]!;
-    final link = links.first;
-    return LatestQualityIssueTarget(
-      commonKey: item.commonKey,
-      jobId: item.jobId,
-      passId: link.passId,
-      linkId: link.linkId,
-    );
-  }
-
-  bool _isOnOrBeforeSnapshot(WorkHistoryItem item, DateTime snapshotAt) {
-    final workedAt = item.workedAt;
-    if (workedAt == null) {
-      return false;
-    }
-    return !workedAt.isAfter(snapshotAt);
-  }
-
-  void _sortLatestFirst(List<WorkHistoryItem> items) {
-    items.sort((left, right) {
-      final byTime = _compareWorkedAt(right.workedAt, left.workedAt);
-      if (byTime != 0) {
-        return byTime;
+    for (final job in jobs) {
+      if (!job.hasReport) {
+        continue;
       }
-      return left.jobId.compareTo(right.jobId);
-    });
-  }
-
-  int _compareWorkedAt(DateTime? left, DateTime? right) {
-    if (left == null && right == null) {
-      return 0;
+      if (job.jobId.isEmpty || job.commonKey.isEmpty) {
+        continue;
+      }
+      final passId = job.passes.isEmpty ? '' : job.passes.first.passId;
+      return LatestQualityIssueTarget(
+        commonKey: job.commonKey,
+        jobId: job.jobId,
+        passId: passId,
+        linkId: '',
+      );
     }
-    if (left == null) {
-      return -1;
-    }
-    if (right == null) {
-      return 1;
-    }
-    return left.compareTo(right);
+    return null;
   }
 }

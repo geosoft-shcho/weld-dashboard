@@ -3,26 +3,29 @@ import 'package:flutter/foundation.dart';
 import '../../../domain/entities/catalog_snapshot.dart';
 import '../../../domain/entities/latest_pass_profile_target.dart';
 import '../../../domain/entities/latest_quality_issue_target.dart';
+import '../../../domain/entities/work_history_query.dart';
+import '../../../domain/use_cases/list_work_history_page_use_case.dart';
 import '../../../domain/use_cases/load_catalog_use_case.dart';
-import '../../../domain/use_cases/load_pass_waveform_catalog_use_case.dart';
 import '../../../domain/use_cases/resolve_latest_pass_profile_use_case.dart';
 import '../../../domain/use_cases/resolve_latest_quality_issue_use_case.dart';
 
 class ShellViewModel extends ChangeNotifier {
   ShellViewModel({
     required LoadCatalogUseCase loadCatalogUseCase,
-    required LoadPassWaveformCatalogUseCase loadPassWaveformCatalogUseCase,
+    required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
     required ResolveLatestPassProfileUseCase resolveLatestPassProfileUseCase,
     required ResolveLatestQualityIssueUseCase resolveLatestQualityIssueUseCase,
     required bool pdfrxReady,
   }) : _loadCatalogUseCase = loadCatalogUseCase,
-       _loadPassWaveformCatalogUseCase = loadPassWaveformCatalogUseCase,
+       _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase,
        _resolveLatestPassProfileUseCase = resolveLatestPassProfileUseCase,
        _resolveLatestQualityIssueUseCase = resolveLatestQualityIssueUseCase,
        _pdfrxReady = pdfrxReady;
 
+  static const int LATEST_JOBS_PAGE_SIZE = 50;
+
   final LoadCatalogUseCase _loadCatalogUseCase;
-  final LoadPassWaveformCatalogUseCase _loadPassWaveformCatalogUseCase;
+  final ListWorkHistoryPageUseCase _listWorkHistoryPageUseCase;
   final ResolveLatestPassProfileUseCase _resolveLatestPassProfileUseCase;
   final ResolveLatestQualityIssueUseCase _resolveLatestQualityIssueUseCase;
   final bool _pdfrxReady;
@@ -51,15 +54,16 @@ class ShellViewModel extends ChangeNotifier {
     notifyListeners();
     try {
       _catalog = await _loadCatalogUseCase.execute(pdfrxReady: _pdfrxReady);
-      final waveformCatalog = await _loadPassWaveformCatalogUseCase.execute();
-      final snapshotAt = _catalog!.snapshotAt;
+      final page = await _listWorkHistoryPageUseCase.execute(
+        query: WorkHistoryQuery.initial(),
+        pageSize: LATEST_JOBS_PAGE_SIZE,
+        pageToken: '',
+      );
       _latestPassProfile = _resolveLatestPassProfileUseCase.execute(
-        catalog: waveformCatalog,
-        snapshotAt: snapshotAt,
+        jobs: page.items,
       );
       _latestQualityIssue = _resolveLatestQualityIssueUseCase.execute(
-        catalog: waveformCatalog,
-        snapshotAt: snapshotAt,
+        jobs: page.items,
       );
     } catch (error) {
       _hasError = true;

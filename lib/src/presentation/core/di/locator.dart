@@ -409,7 +409,7 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactory(
     () => ShellViewModel(
       loadCatalogUseCase: locator(),
-      loadPassWaveformCatalogUseCase: locator(),
+      listWorkHistoryPageUseCase: locator(),
       resolveLatestPassProfileUseCase: locator(),
       resolveLatestQualityIssueUseCase: locator(),
       pdfrxReady: pdfrxReady,

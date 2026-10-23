@@ -525,7 +525,7 @@ class AppCoordinator extends ChangeNotifier {
     }
     _panePassCommonKey = target.commonKey;
     _panePassJobId = target.jobId;
-    _panePassPassId = '';
+    _panePassPassId = target.passId;
   }
 
   void _applyLatestQualityIssueKeys() {

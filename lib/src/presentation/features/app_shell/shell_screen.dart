@@ -124,9 +124,9 @@ class _ShellScreenState extends State<ShellScreen> {
                 icon: const Icon(FluentIcons.line_chart),
                 title: Tooltip(
                   message: nav.canOpenLatestPassProfile
-                      ? '스냅샷 기준 최신 패스 프로파일'
+                      ? '최근 작업의 패스 프로파일'
                       : '표시할 패스 프로파일이 없습니다',
-                  child: const Text('패스별 파라미터 프로파일'),
+                  child: const Text('최신 패스 프로파일'),
                 ),
                 enabled: nav.canOpenLatestPassProfile,
                 body: _panePassProfileBody(nav),
@@ -135,9 +135,9 @@ class _ShellScreenState extends State<ShellScreen> {
                 icon: const Icon(FluentIcons.report_document),
                 title: Tooltip(
                   message: nav.canOpenLatestQualityIssue
-                      ? '스냅샷 기준 최신 품질 이슈'
+                      ? '최근 작업의 품질 이슈'
                       : '표시할 품질 이슈가 없습니다',
-                  child: const Text('품질 이슈 연계'),
+                  child: const Text('최신 품질 이슈'),
                 ),
                 enabled: nav.canOpenLatestQualityIssue,
                 body: _paneQualityIssueBody(nav),

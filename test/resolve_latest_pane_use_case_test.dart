@@ -1,115 +1,69 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weld_dashboard/src/domain/entities/pass_waveform_catalog.dart';
-import 'package:weld_dashboard/src/domain/entities/quality_link.dart';
-import 'package:weld_dashboard/src/domain/entities/weld_pass.dart';
+import 'package:weld_dashboard/src/domain/entities/asset_lookup_row.dart';
 import 'package:weld_dashboard/src/domain/entities/work_history_item.dart';
 import 'package:weld_dashboard/src/domain/use_cases/resolve_latest_pass_profile_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/resolve_latest_quality_issue_use_case.dart';
 
 void main() {
-  final snapshotAt = DateTime(2026, 9, 7, 9, 50);
-
-  test('picks latest history with passes on or before snapshot', () {
+  test('picks first job with passes from ListJobs order', () {
     final target = ResolveLatestPassProfileUseCase().execute(
-      catalog: _catalog(
-        items: [
-          _item('H-OLD', 'KEY-A', DateTime(2026, 9, 1)),
-          _item('H-NEW', 'KEY-B', DateTime(2026, 9, 6)),
-          _item('H-FUTURE', 'KEY-C', DateTime(2026, 9, 8)),
-        ],
-        passes: [
-          _pass('P1', 'KEY-A'),
-          _pass('P2', 'KEY-B'),
-          _pass('P3', 'KEY-C'),
-        ],
-      ),
-      snapshotAt: snapshotAt,
+      jobs: [
+        _item('H-NEW', 'KEY-B', passCount: 2, passId: 'P2'),
+        _item('H-OLD', 'KEY-A', passCount: 1, passId: 'P1'),
+        _item('H-NONE', 'KEY-C', passCount: 0),
+      ],
     );
     expect(target?.jobId, 'H-NEW');
     expect(target?.commonKey, 'KEY-B');
+    expect(target?.passId, 'P2');
   });
 
-  test('returns null when no history has passes', () {
+  test('returns null when no job has passes', () {
     final target = ResolveLatestPassProfileUseCase().execute(
-      catalog: _catalog(
-        items: [_item('H1', 'KEY-X', DateTime(2026, 9, 6))],
-        passes: [_pass('P1', 'KEY-OTHER')],
-      ),
-      snapshotAt: snapshotAt,
+      jobs: [_item('H1', 'KEY-X', passCount: 0)],
     );
     expect(target, isNull);
   });
 
-  test('picks latest history with quality links and first link ids', () {
+  test('picks first job with hasReport', () {
     final target = ResolveLatestQualityIssueUseCase().execute(
-      catalog: _catalog(
-        items: [
-          _item('H1', 'KEY-A', DateTime(2026, 9, 5)),
-          _item('H2', 'KEY-B', DateTime(2026, 9, 6)),
-        ],
-        links: [
-          _link('L-A', 'KEY-A', 'PASS-A'),
-          _link('L-B1', 'KEY-B', 'PASS-B'),
-          _link('L-B2', 'KEY-B', 'PASS-B2'),
-        ],
-      ),
-      snapshotAt: snapshotAt,
+      jobs: [
+        _item('H1', 'KEY-A', hasReport: false, passId: 'PASS-A'),
+        _item('H2', 'KEY-B', hasReport: true, passId: 'PASS-B'),
+      ],
     );
     expect(target?.jobId, 'H2');
     expect(target?.commonKey, 'KEY-B');
-    expect(target?.linkId, 'L-B1');
     expect(target?.passId, 'PASS-B');
+    expect(target?.linkId, '');
   });
 
-  test('returns null when no history has quality links', () {
+  test('returns null when no job has report', () {
     final target = ResolveLatestQualityIssueUseCase().execute(
-      catalog: _catalog(
-        items: [_item('H1', 'KEY-A', DateTime(2026, 9, 6))],
-        links: [_link('L1', 'KEY-OTHER', 'PASS-1')],
-      ),
-      snapshotAt: snapshotAt,
+      jobs: [_item('H1', 'KEY-A', hasReport: false)],
     );
     expect(target, isNull);
   });
 
-  test('pass and quality latest keys may differ', () {
-    final catalog = _catalog(
-      items: [
-        _item('H-PASS', 'KEY-PASS', DateTime(2026, 9, 6, 12)),
-        _item('H-QUAL', 'KEY-QUAL', DateTime(2026, 9, 6, 10)),
-      ],
-      passes: [_pass('P1', 'KEY-PASS')],
-      links: [_link('L1', 'KEY-QUAL', 'PASS-Q')],
-    );
-    final pass = ResolveLatestPassProfileUseCase().execute(
-      catalog: catalog,
-      snapshotAt: snapshotAt,
-    );
-    final quality = ResolveLatestQualityIssueUseCase().execute(
-      catalog: catalog,
-      snapshotAt: snapshotAt,
-    );
+  test('pass and quality latest jobs may differ', () {
+    final jobs = [
+      _item('H-PASS', 'KEY-PASS', passCount: 1, passId: 'P1'),
+      _item('H-QUAL', 'KEY-QUAL', hasReport: true, passId: 'PQ'),
+    ];
+    final pass = ResolveLatestPassProfileUseCase().execute(jobs: jobs);
+    final quality = ResolveLatestQualityIssueUseCase().execute(jobs: jobs);
     expect(pass?.commonKey, 'KEY-PASS');
     expect(quality?.commonKey, 'KEY-QUAL');
   });
 }
 
-PassWaveformCatalog _catalog({
-  required List<WorkHistoryItem> items,
-  List<WeldPass> passes = const [],
-  List<QualityLink> links = const [],
+WorkHistoryItem _item(
+  String jobId,
+  String commonKey, {
+  int passCount = 0,
+  bool hasReport = false,
+  String passId = '',
 }) {
-  return PassWaveformCatalog(
-    passes: passes,
-    waveformRows: const [],
-    links: links,
-    qualityGroups: const [],
-    historyItems: items,
-    workers: const [],
-  );
-}
-
-WorkHistoryItem _item(String jobId, String commonKey, DateTime workedAt) {
   return WorkHistoryItem(
     jobId: jobId,
     commonKey: commonKey,
@@ -117,36 +71,16 @@ WorkHistoryItem _item(String jobId, String commonKey, DateTime workedAt) {
     unitNo: '05',
     itemCode: 'LD-A',
     itemName: 't',
+    hasReport: hasReport,
     workerId: 'W',
     workerName: 'w',
     equipmentId: 'E',
     equipmentName: 'e',
-    workedAt: workedAt,
-    passCount: 1,
+    workedAt: DateTime(2026, 9, 6),
+    passCount: passCount,
     attachmentCount: 0,
-  );
-}
-
-WeldPass _pass(String passId, String commonKey) {
-  return WeldPass(
-    passId: passId,
-    commonKey: commonKey,
-    passNo: 1,
-    passName: 'root',
-    masterProfileId: '',
-    controlWorkerId: '',
-  );
-}
-
-QualityLink _link(String linkId, String commonKey, String passId) {
-  return QualityLink(
-    linkId: linkId,
-    commonKey: commonKey,
-    qualityResultId: 'QR',
-    passId: passId,
-    segmentId: 'S',
-    startMs: 0,
-    endMs: 10,
-    note: '',
+    passes: passId.isEmpty
+        ? const []
+        : [JobPassOption(passId: passId, passNo: 1)],
   );
 }
