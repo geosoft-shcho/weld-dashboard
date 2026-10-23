@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 
 import '../../features/asset_lookup/asset_lookup_detail_screen.dart';
 import '../../features/asset_lookup/asset_lookup_screen.dart';
+import '../../features/auth/auth_session_view_model.dart';
 import '../../features/collection_monitoring/collection_monitoring_screen.dart';
 import '../../features/equipment_lookup/equipment_lookup_detail_screen.dart';
 import '../../features/equipment_lookup/equipment_lookup_screen.dart';
@@ -77,7 +78,14 @@ class _ShellScreenState extends State<ShellScreen> {
             leftHeader: ShellTitleLeading(onTogglePane: _didTapTogglePane),
             endHeader: const Padding(
               padding: EdgeInsets.only(right: 12),
-              child: _LastDataUpdatedLabel(),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _AuthSessionActions(),
+                  SizedBox(width: 12),
+                  _LastDataUpdatedLabel(),
+                ],
+              ),
             ),
           ),
           pane: NavigationPane(
@@ -353,6 +361,36 @@ class _ShellNavSnapshot {
     paneQualityPassId,
     paneQualityLinkId,
   );
+}
+
+class _AuthSessionActions extends StatelessWidget {
+  const _AuthSessionActions();
+
+  @override
+  Widget build(BuildContext context) {
+    final userId = context.select<AuthSessionViewModel, String>(
+      (auth) => auth.userId,
+    );
+    final isBusy = context.select<AuthSessionViewModel, bool>(
+      (auth) => auth.isBusy,
+    );
+    if (userId.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(userId, style: const TextStyle(fontSize: 12)),
+        const SizedBox(width: 8),
+        Button(
+          onPressed: isBusy
+              ? null
+              : () => context.read<AuthSessionViewModel>().signOut(),
+          child: const Text('로그아웃'),
+        ),
+      ],
+    );
+  }
 }
 
 class _LastDataUpdatedLabel extends StatelessWidget {

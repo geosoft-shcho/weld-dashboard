@@ -7,6 +7,7 @@ import '../../core/widgets/pass_context_bar.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
 import '../../core/widgets/screen_command_bar.dart';
 import '../../navigation/app_coordinator.dart';
+import '../auth/auth_session_view_model.dart';
 import 'job_lookup_detail_view_model.dart';
 import 'widgets/job_attachment_tab.dart';
 import 'widgets/job_detail_tabs_bar.dart';
@@ -33,7 +34,10 @@ class _JobLookupDetailBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<JobLookupDetailViewModel>();
-    final coordinator = context.read<AppCoordinator>();
+    final coordinator = context.watch<AppCoordinator>();
+    final canOpenVideo = context.select<AuthSessionViewModel, bool>(
+      (auth) => auth.canAccessVideoMultimodal,
+    );
     final job = viewModel.job;
     final title = job == null
         ? '작업 상세'
@@ -46,7 +50,7 @@ class _JobLookupDetailBody extends StatelessWidget {
         CommandBarButton(
           icon: const Icon(FluentIcons.video),
           label: const CommandBarLabel('비디오 멀티모달'),
-          onPressed: job == null
+          onPressed: job == null || !canOpenVideo
               ? null
               : () => coordinator.didTapOpenVideoMultimodal(context),
         ),

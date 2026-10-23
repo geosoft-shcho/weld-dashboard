@@ -44,7 +44,14 @@ import '../../../domain/use_cases/stop_camera_recording_use_case.dart';
 import '../../../domain/use_cases/list_upload_formats_use_case.dart';
 import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../data/datasources/remote/media_tag_data_source.dart';
+import '../../../data/datasources/local/auth_session_local_data_source.dart';
 import '../../../data/repositories/browser_ask_session_store.dart';
+import '../../../data/repositories/hardcoded_auth_repository.dart';
+import '../../../domain/repositories/auth_repository.dart';
+import '../../../domain/use_cases/restore_auth_session_use_case.dart';
+import '../../../domain/use_cases/sign_in_use_case.dart';
+import '../../../domain/use_cases/sign_out_use_case.dart';
+import '../../features/auth/auth_session_view_model.dart';
 import '../../../data/repositories/remote_ask_repository.dart';
 import '../../../data/repositories/remote_asset_upload_repository.dart';
 import '../../../data/repositories/remote_catalog_repository.dart';
@@ -130,6 +137,20 @@ import '../../navigation/app_coordinator.dart';
 final locator = GetIt.instance;
 
 void setupLocator({required bool pdfrxReady}) {
+  locator.registerLazySingleton(() => AuthSessionLocalDataSource());
+  locator.registerLazySingleton<AuthRepository>(
+    () => HardcodedAuthRepository(locator()),
+  );
+  locator.registerLazySingleton(() => RestoreAuthSessionUseCase(locator()));
+  locator.registerLazySingleton(() => SignInUseCase(locator()));
+  locator.registerLazySingleton(() => SignOutUseCase(locator()));
+  locator.registerLazySingleton(
+    () => AuthSessionViewModel(
+      restoreAuthSessionUseCase: locator(),
+      signInUseCase: locator(),
+      signOutUseCase: locator(),
+    ),
+  );
   locator.registerLazySingleton(() => MediaTagDataSource());
   locator.registerLazySingleton<AssetUploadRepository>(
     () => RemoteAssetUploadRepository(locator()),

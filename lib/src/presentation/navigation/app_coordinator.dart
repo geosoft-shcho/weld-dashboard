@@ -27,6 +27,7 @@ class AppCoordinator extends ChangeNotifier {
 
   AppNavigationPort? _navigation;
   bool _isApplyingRoute = false;
+  bool Function()? _canAccessVideoMultimodal;
 
   int _selectedPaneIndex = 0;
   WorkHistoryStack _workHistoryStack = WorkHistoryStack.list;
@@ -83,6 +84,34 @@ class AppCoordinator extends ChangeNotifier {
   String get paneQualityPassId => _paneQualityPassId;
   String get paneQualityLinkId => _paneQualityLinkId;
   DateTime get lastDataUpdatedAt => _lastDataUpdatedAt;
+  /// 권한 콜백 미연결 시 기본 거부 (guest 제한이 풀리지 않게).
+  bool get canAccessVideoMultimodal =>
+      _canAccessVideoMultimodal?.call() ?? false;
+
+  void attachAuthPermission({
+    required bool Function() canAccessVideoMultimodal,
+  }) {
+    _canAccessVideoMultimodal = canAccessVideoMultimodal;
+  }
+
+  /// guest 등 권한 없을 때 멀티모달 스택에 남아 있으면 상세로 되돌린다.
+  void didDenyVideoMultimodalIfNeeded() {
+    if (canAccessVideoMultimodal) {
+      return;
+    }
+    if (_workHistoryStack != WorkHistoryStack.videoMultimodal) {
+      return;
+    }
+    _popWorkHistoryStack();
+    notifyListeners();
+    _publishLocation(_RouteWriteMode.replace);
+  }
+
+  /// 로그인·로그아웃 후 버튼 활성 상태 등을 다시 그리게 한다.
+  void didAuthSessionChange() {
+    didDenyVideoMultimodalIfNeeded();
+    notifyListeners();
+  }
 
   /// 브라우저 탭에 붙는 현재 화면 이름.
   String get pageTitle {
@@ -358,7 +387,7 @@ class AppCoordinator extends ChangeNotifier {
   }
 
   void didTapOpenVideoMultimodal(BuildContext context) {
-    if (_jobId.isEmpty) {
+    if (_jobId.isEmpty || !canAccessVideoMultimodal) {
       return;
     }
     _selectedPaneIndex = WORK_HISTORY_PANE_INDEX;
@@ -744,8 +773,13 @@ class AppCoordinator extends ChangeNotifier {
         _historyCommonKey = state.commonKey;
         _passId = state.passId;
         _linkId = state.linkId;
+        final stack =
+            state.stack == WorkHistoryStack.videoMultimodal &&
+                !canAccessVideoMultimodal
+            ? WorkHistoryStack.detail
+            : state.stack;
         _rebuildStackHistory(
-          state.stack,
+          stack,
           qualityViaDetail: state.qualityViaDetail,
         );
       case AppPane.projects:

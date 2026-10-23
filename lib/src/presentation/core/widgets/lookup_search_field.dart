@@ -1,6 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart'
-    show InputDecoration, OutlineInputBorder, TextField;
+    show InputDecoration, OutlineInputBorder, TextField, TextInputAction;
 
 import '../themes/app_theme.dart';
 import 'waveform_material_scope.dart';
@@ -14,29 +14,51 @@ class LookupSearchField extends StatefulWidget {
     required this.hintText,
     required this.onChanged,
     this.onSubmitted,
+    this.obscureText = false,
+    this.textInputAction = TextInputAction.search,
+    this.controller,
   });
 
   final String value;
   final String hintText;
   final ValueChanged<String> onChanged;
   final ValueChanged<String>? onSubmitted;
+  final bool obscureText;
+  final TextInputAction textInputAction;
+
+  /// 넘기면 이 컨트롤러를 쓰고, 제출 시 부모가 최신 문구를 읽을 수 있다.
+  final TextEditingController? controller;
 
   @override
   State<LookupSearchField> createState() => _LookupSearchFieldState();
 }
 
 class _LookupSearchFieldState extends State<LookupSearchField> {
-  late final TextEditingController _controller;
+  TextEditingController? _ownedController;
+  late final FocusNode _focusNode;
+
+  TextEditingController get _controller =>
+      widget.controller ?? _ownedController!;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: widget.value);
+    _focusNode = FocusNode();
+    if (widget.controller == null) {
+      _ownedController = TextEditingController(text: widget.value);
+    } else if (widget.controller!.text != widget.value &&
+        widget.value.isNotEmpty) {
+      widget.controller!.text = widget.value;
+    }
   }
 
   @override
   void didUpdateWidget(covariant LookupSearchField oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // 포커스 중(타이핑·자동완성)에는 부모 value로 덮지 않는다.
+    if (_focusNode.hasFocus) {
+      return;
+    }
     if (_controller.text != widget.value) {
       _controller.value = TextEditingValue(
         text: widget.value,
@@ -47,7 +69,8 @@ class _LookupSearchFieldState extends State<LookupSearchField> {
 
   @override
   void dispose() {
-    _controller.dispose();
+    _focusNode.dispose();
+    _ownedController?.dispose();
     super.dispose();
   }
 
@@ -56,9 +79,11 @@ class _LookupSearchFieldState extends State<LookupSearchField> {
     return WaveformMaterialScope(
       child: TextField(
         controller: _controller,
+        focusNode: _focusNode,
+        obscureText: widget.obscureText,
         style: const TextStyle(color: AppTheme.INK, fontSize: 13),
         cursorColor: AppTheme.ACCENT_STEEL,
-        textInputAction: TextInputAction.search,
+        textInputAction: widget.textInputAction,
         onChanged: widget.onChanged,
         onSubmitted: widget.onSubmitted,
         decoration: InputDecoration(

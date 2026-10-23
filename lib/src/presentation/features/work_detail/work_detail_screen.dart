@@ -5,6 +5,7 @@ import '../../core/di/locator.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/screen_command_bar.dart';
 import '../../navigation/app_coordinator.dart';
+import '../auth/auth_session_view_model.dart';
 import 'work_detail_view_model.dart';
 import 'widgets/work_detail_identity.dart';
 import 'widgets/work_detail_stage.dart';
@@ -30,7 +31,10 @@ class _WorkDetailBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<WorkDetailViewModel>();
-    final coordinator = context.read<AppCoordinator>();
+    final coordinator = context.watch<AppCoordinator>();
+    final canOpenVideo = context.select<AuthSessionViewModel, bool>(
+      (auth) => auth.canAccessVideoMultimodal,
+    );
     final job = viewModel.detail?.job;
     return ColoredBox(
       color: AppTheme.SURFACE,
@@ -52,9 +56,10 @@ class _WorkDetailBody extends StatelessWidget {
                   CommandBarButton(
                     icon: const Icon(FluentIcons.video),
                     label: const CommandBarLabel('비디오 멀티모달'),
-                    onPressed: job == null
+                    onPressed: job == null || !canOpenVideo
                         ? null
-                        : () => coordinator.didTapOpenVideoMultimodal(context),
+                        : () =>
+                              coordinator.didTapOpenVideoMultimodal(context),
                   ),
                   CommandBarButton(
                     icon: const Icon(FluentIcons.line_chart),
