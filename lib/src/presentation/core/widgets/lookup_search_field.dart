@@ -17,6 +17,7 @@ class LookupSearchField extends StatefulWidget {
     this.obscureText = false,
     this.textInputAction = TextInputAction.search,
     this.controller,
+    this.suffixIcon,
   });
 
   final String value;
@@ -28,6 +29,9 @@ class LookupSearchField extends StatefulWidget {
 
   /// 넘기면 이 컨트롤러를 쓰고, 제출 시 부모가 최신 문구를 읽을 수 있다.
   final TextEditingController? controller;
+
+  /// 입력란 오른쪽 아이콘(비밀번호 보기 등). 없으면 두지 않는다.
+  final Widget? suffixIcon;
 
   @override
   State<LookupSearchField> createState() => _LookupSearchFieldState();
@@ -99,6 +103,10 @@ class _LookupSearchFieldState extends State<LookupSearchField> {
             horizontal: 10,
             vertical: 8,
           ),
+          suffixIcon: widget.suffixIcon,
+          suffixIconConstraints: widget.suffixIcon == null
+              ? null
+              : const BoxConstraints(minWidth: 36, minHeight: 32),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(4),
             borderSide: const BorderSide(color: Color(0xFF3E424A)),

@@ -31,6 +31,7 @@ class _LoginBody extends StatefulWidget {
 class _LoginBodyState extends State<_LoginBody> {
   late final TextEditingController _userIdController;
   late final TextEditingController _passwordController;
+  bool _isPasswordVisible = false;
 
   @override
   void initState() {
@@ -83,10 +84,22 @@ class _LoginBodyState extends State<_LoginBody> {
                   controller: _passwordController,
                   value: viewModel.passwordText,
                   hintText: AuthUser.TEMP_PASSWORD,
-                  obscureText: true,
+                  obscureText: !_isPasswordVisible,
                   textInputAction: TextInputAction.done,
                   onChanged: viewModel.didChangePassword,
                   onSubmitted: (_) => _didSubmit(context),
+                  suffixIcon: Tooltip(
+                    message: _isPasswordVisible ? '비밀번호 가리기' : '비밀번호 보기',
+                    child: IconButton(
+                      icon: Icon(
+                        _isPasswordVisible
+                            ? FluentIcons.hide
+                            : FluentIcons.red_eye,
+                        size: 14,
+                      ),
+                      onPressed: _didTapPasswordVisibility,
+                    ),
+                  ),
                 ),
               ),
               if (viewModel.doesHaveError) ...[
@@ -113,6 +126,12 @@ class _LoginBodyState extends State<_LoginBody> {
         ),
       ),
     );
+  }
+
+  void _didTapPasswordVisibility() {
+    setState(() {
+      _isPasswordVisible = !_isPasswordVisible;
+    });
   }
 
   Future<void> _didSubmit(BuildContext context) async {
