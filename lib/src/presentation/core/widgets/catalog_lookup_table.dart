@@ -25,10 +25,7 @@ class CatalogLookupFrame extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.end,
           children: filters,
         ),
-        if (tableHeader != null) ...[
-          const SizedBox(height: 12),
-          tableHeader!,
-        ],
+        if (tableHeader != null) ...[const SizedBox(height: 12), tableHeader!],
         const SizedBox(height: 12),
         Expanded(child: body),
       ],
@@ -54,16 +51,7 @@ class LookupTableHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(width: 4),
-        Text(
-          '$count건',
-          style: const TextStyle(
-            fontWeight: FontWeight.w400,
-            fontSize: 14,
-            color: Color.fromARGB(255, 196, 196, 196),
-          ),
-        ),
+        Text('$label 검색 결과 $count건', style: const TextStyle(fontSize: 12)),
         const Spacer(),
         FilledButton(onPressed: onAction, child: Text(actionText)),
       ],
