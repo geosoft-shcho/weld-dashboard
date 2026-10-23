@@ -136,8 +136,13 @@ GoRouter createAppRouter({
   );
 
   void notifyLocation() {
+    // 첫 프레임·매치 비어 있을 때 router.state 접근은 StateError(No element)가 난다.
+    final uri = _safeRouterUri(router);
+    if (uri == null) {
+      return;
+    }
     final parsed =
-        AppRouteState.tryParse(router.state.uri) ??
+        AppRouteState.tryParse(uri) ??
         const AppRouteState(pane: AppPane.collection);
     onLocationChanged(parsed);
   }
@@ -149,6 +154,18 @@ GoRouter createAppRouter({
   return router;
 }
 
+Uri? _safeRouterUri(GoRouter router) {
+  final matches = router.routerDelegate.currentConfiguration;
+  if (matches.isEmpty) {
+    return router.routeInformationProvider.value.uri;
+  }
+  try {
+    return router.state.uri;
+  } on StateError {
+    return router.routeInformationProvider.value.uri;
+  }
+}
+
 class GoRouterAppNavigation implements AppNavigationPort {
   GoRouterAppNavigation(this._router);
 
@@ -156,7 +173,7 @@ class GoRouterAppNavigation implements AppNavigationPort {
 
   @override
   String get currentLocation {
-    final uri = _router.state.uri;
+    final uri = _safeRouterUri(_router) ?? Uri(path: '/');
     if (uri.hasQuery) {
       return '${uri.path}?${uri.query}';
     }
