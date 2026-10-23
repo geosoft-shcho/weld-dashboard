@@ -271,6 +271,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final Map<String, List<VideoOverlayFrame>> _framesByAssetId = {};
   final Map<String, List<VideoCaption>> _cuesByAssetId = {};
   final List<SampleLayerSummary> _sampleLayers = const [];
+  /// Stage에 동시에 보여 줄 비디오 트랙(최대 [MAX_MONITORED_TRACK_COUNT]).
+  final List<String> _monitoredTrackIds = [];
+  String _focusedMonitorTrackId = '';
+  static const int MAX_MONITORED_TRACK_COUNT = 4;
 
   double get pixelsPerSecond => DEFAULT_PIXELS_PER_SECOND;
   double get playheadSeconds => _playheadSeconds;
@@ -520,8 +524,102 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  TemporaryAttachmentBar? get activeVideoBar {
-    final clip = _activeVideoClip();
+  TemporaryAttachmentBar? get activeVideoBar =>
+      _videoBarFromClip(_activeVideoClip());
+
+  List<String> get monitoredTrackIds {
+    final validTrackIds = {
+      for (final track in timelineTracks) track.trackId,
+    };
+    return [
+      for (final trackId in _monitoredTrackIds)
+        if (validTrackIds.contains(trackId)) trackId,
+    ];
+  }
+
+  String get focusedMonitorTrackId {
+    final trackIds = monitoredTrackIds;
+    if (trackIds.isEmpty) {
+      return '';
+    }
+    if (trackIds.contains(_focusedMonitorTrackId)) {
+      return _focusedMonitorTrackId;
+    }
+    return trackIds.first;
+  }
+
+  bool isTrackMonitored(String trackId) =>
+      monitoredTrackIds.contains(trackId);
+
+  bool isMonitorSlotFocused(String trackId) =>
+      focusedMonitorTrackId == trackId;
+
+  String monitorTrackLabel(String trackId) {
+    final name = _trackName(trackId).trim();
+    if (name.isNotEmpty) {
+      return name;
+    }
+    return trackId;
+  }
+
+  TemporaryAttachmentBar? videoBarForTrack(String trackId) =>
+      _videoBarFromClip(_coveringVideoOnTrack(trackId, _playheadSeconds));
+
+  List<VideoCaption> captionsForTrack(String trackId) {
+    final video = videoBarForTrack(trackId);
+    if (video == null) {
+      return const [];
+    }
+    return captionsOnVideo(
+      videoStartSeconds: video.startSeconds,
+      videoEndSeconds: video.endSeconds,
+      overlays: _timeline.overlays,
+      cuesByAssetId: _cuesByAssetId,
+    );
+  }
+
+  List<VideoOverlayFrame> overlayFramesForTrack(String trackId) {
+    final video = videoBarForTrack(trackId);
+    final active = activeVideoBar;
+    if (video == null ||
+        active == null ||
+        video.attachmentId != active.attachmentId) {
+      return const [];
+    }
+    return activeVideoOverlayFrames;
+  }
+
+  void didTapMonitorTrack(String trackId) {
+    if (trackId.isEmpty) {
+      return;
+    }
+    if (_monitoredTrackIds.contains(trackId)) {
+      _monitoredTrackIds.remove(trackId);
+      if (_focusedMonitorTrackId == trackId) {
+        _focusedMonitorTrackId =
+            _monitoredTrackIds.isEmpty ? '' : _monitoredTrackIds.first;
+      }
+      notifyListeners();
+      return;
+    }
+    if (_monitoredTrackIds.length >= MAX_MONITORED_TRACK_COUNT) {
+      didShowNotice('모니터는 최대 $MAX_MONITORED_TRACK_COUNT개까지입니다.');
+      return;
+    }
+    _monitoredTrackIds.add(trackId);
+    _focusedMonitorTrackId = trackId;
+    notifyListeners();
+  }
+
+  void didTapFocusMonitorSlot(String trackId) {
+    if (!isTrackMonitored(trackId) || _focusedMonitorTrackId == trackId) {
+      return;
+    }
+    _focusedMonitorTrackId = trackId;
+    notifyListeners();
+  }
+
+  TemporaryAttachmentBar? _videoBarFromClip(TimelineClip? clip) {
     if (clip == null) {
       return null;
     }
@@ -764,6 +862,23 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required double localSeconds,
     required bool isPlaying,
   }) {
+    // 모니터 분할 시에는 포커스 슬롯 클록만 플레이헤드에 반영한다.
+    final monitored = monitoredTrackIds;
+    if (monitored.isNotEmpty) {
+      final focusedClip = _coveringVideoOnTrack(
+        focusedMonitorTrackId,
+        _playheadSeconds,
+      );
+      if (focusedClip == null || focusedClip.playbackUrl != mediaUrl) {
+        return;
+      }
+      _followFileClock(
+        clip: focusedClip,
+        fileSeconds: localSeconds,
+        isPlaying: isPlaying,
+      );
+      return;
+    }
     final playing = _activeVideoClip();
     if (playing != null && playing.playbackUrl == mediaUrl) {
       _followFileClock(

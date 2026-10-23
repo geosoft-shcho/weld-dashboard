@@ -616,7 +616,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     fontSize: 9,
   );
   // 좌우 패딩 + 색 상자 + AI 배지 + clip id 여유
-  static const double _TRACK_LABEL_SIDE = 122;
+  static const double _TRACK_LABEL_SIDE = 140;
 
   double _labelTextWidth(String text) {
     final painter = TextPainter(
@@ -722,6 +722,22 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       color: isSelected ? MultimodalStudioPalette.GRAPE_100 : null,
       child: Row(
         children: [
+          if (viewModel.isServerTimelineTrack(row.laneKey))
+            GestureDetector(
+              onTap: () => viewModel.didTapMonitorTrack(row.laneKey),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  viewModel.isTrackMonitored(row.laneKey)
+                      ? Icons.videocam
+                      : Icons.videocam_outlined,
+                  size: 14,
+                  color: viewModel.isTrackMonitored(row.laneKey)
+                      ? MultimodalStudioPalette.GRAPE_700
+                      : MultimodalStudioPalette.SAND_600,
+                ),
+              ),
+            ),
           Container(
             width: 12,
             height: 12,
