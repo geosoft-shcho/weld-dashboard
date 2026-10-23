@@ -102,6 +102,16 @@ class _CatalogLookupTableState extends State<CatalogLookupTable> {
   void initState() {
     super.initState();
     _scrollController.addListener(_onScroll);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _tryLoadMore());
+  }
+
+  @override
+  void didUpdateWidget(covariant CatalogLookupTable oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.rows.length != widget.rows.length ||
+        oldWidget.isLoadingMore != widget.isLoadingMore) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _tryLoadMore());
+    }
   }
 
   @override
@@ -117,6 +127,19 @@ class _CatalogLookupTableState extends State<CatalogLookupTable> {
       return;
     }
     if (_scrollController.position.extentAfter < 120) {
+      widget.onNearEnd!();
+    }
+  }
+
+  /// 첫 페이지가 뷰포트에 다 들어가면 스크롤이 생기지 않아 이어받기가 멈춘다.
+  void _tryLoadMore() {
+    if (!mounted ||
+        widget.onNearEnd == null ||
+        !_scrollController.hasClients ||
+        widget.isLoadingMore) {
+      return;
+    }
+    if (_scrollController.position.maxScrollExtent <= 0) {
       widget.onNearEnd!();
     }
   }
@@ -141,37 +164,41 @@ class _CatalogLookupTableState extends State<CatalogLookupTable> {
           )
         else
           Expanded(
-            child: ListView.builder(
+            child: Scrollbar(
               controller: _scrollController,
-              itemCount: widget.rows.length + 1,
-              itemBuilder: (context, index) {
-                if (index == widget.rows.length) {
-                  if (!widget.isLoadingMore) {
-                    return const SizedBox(height: 8);
-                  }
-                  return const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Center(child: ProgressRing(strokeWidth: 2)),
-                  );
-                }
-                return HoverButton(
-                  onPressed: widget.onRowTap == null
-                      ? null
-                      : () => widget.onRowTap!(index),
-                  builder: (context, states) {
-                    return ColoredBox(
-                      color: AppTheme.tableRowColor(
-                        index: index,
-                        hovered: states.contains(WidgetState.hovered),
-                      ),
-                      child: _LookupRow(
-                        cells: widget.rows[index],
-                        flexes: widget.columnFlexes,
-                      ),
+              child: ListView.builder(
+                controller: _scrollController,
+                primary: false,
+                itemCount: widget.rows.length + 1,
+                itemBuilder: (context, index) {
+                  if (index == widget.rows.length) {
+                    if (!widget.isLoadingMore) {
+                      return const SizedBox(height: 8);
+                    }
+                    return const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Center(child: ProgressRing(strokeWidth: 2)),
                     );
-                  },
-                );
-              },
+                  }
+                  return HoverButton(
+                    onPressed: widget.onRowTap == null
+                        ? null
+                        : () => widget.onRowTap!(index),
+                    builder: (context, states) {
+                      return ColoredBox(
+                        color: AppTheme.tableRowColor(
+                          index: index,
+                          hovered: states.contains(WidgetState.hovered),
+                        ),
+                        child: _LookupRow(
+                          cells: widget.rows[index],
+                          flexes: widget.columnFlexes,
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
           ),
       ],

@@ -6,7 +6,6 @@ import '../../../domain/entities/asset_lookup_row.dart';
 import '../../../domain/entities/work_history_item.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
-import '../../core/themes/app_theme.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../navigation/app_coordinator.dart';
@@ -185,7 +184,36 @@ class _AssetLookupBody extends StatelessWidget {
           ),
         ),
       ],
-      body: _AssetTable(viewModel: viewModel),
+      body: CatalogLookupTable(
+        headers: const ['번호', '종류', '파일', '장비', '크기', '길이', '상태'],
+        columnFlexes: const [8, 10, 24, 14, 10, 8, 12],
+        emptyTitle: '조건에 맞는 에셋이 없습니다',
+        isLoadingMore: viewModel.isLoadingMore,
+        onNearEnd: viewModel.didScrollNearEnd,
+        rows: [
+          for (final row in viewModel.visibleRows)
+            [
+              row.assetId,
+              AssetLookupKindOption.labelOf(row.kindCode),
+              row.fileName,
+              viewModel.equipmentNameOf(row.equipmentId),
+              DashboardFormatters.byteSize(row.sizeBytes),
+              DashboardFormatters.durationFromNs(row.durationNs),
+              assetStatusText(
+                row,
+                passLabel: viewModel.passLabelOf(row),
+                isJobScoped: viewModel.jobId.isNotEmpty,
+              ),
+            ],
+        ],
+        onRowTap: (index) {
+          final row = viewModel.visibleRows[index];
+          if (row.assetId.isEmpty) {
+            return;
+          }
+          context.read<AppCoordinator>().didTapOpenAssetDetail(row.assetId);
+        },
+      ),
     );
   }
 }
@@ -198,149 +226,6 @@ String _selectedPassId(AssetLookupViewModel viewModel) {
     return viewModel.passId;
   }
   return '';
-}
-
-class _AssetTable extends StatefulWidget {
-  const _AssetTable({required this.viewModel});
-
-  final AssetLookupViewModel viewModel;
-
-  @override
-  State<_AssetTable> createState() => _AssetTableState();
-}
-
-class _AssetTableState extends State<_AssetTable> {
-  final ScrollController _scrollController = ScrollController();
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController.addListener(_onScroll);
-  }
-
-  @override
-  void dispose() {
-    _scrollController
-      ..removeListener(_onScroll)
-      ..dispose();
-    super.dispose();
-  }
-
-  void _onScroll() {
-    if (!_scrollController.hasClients) {
-      return;
-    }
-    if (_scrollController.position.extentAfter < 120) {
-      widget.viewModel.didScrollNearEnd();
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final viewModel = widget.viewModel;
-    final rows = viewModel.visibleRows;
-    const headers = ['번호', '종류', '파일', '장비', '크기', '길이', '상태'];
-    const flexes = [8, 10, 24, 14, 10, 8, 12];
-    final isJobScoped = viewModel.jobId.isNotEmpty;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _header(headers, flexes),
-        if (rows.isEmpty)
-          const Padding(
-            padding: EdgeInsets.only(top: 8),
-            child: InfoBar(
-              title: Text('조건에 맞는 에셋이 없습니다'),
-              severity: InfoBarSeverity.warning,
-            ),
-          )
-        else
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              itemCount: rows.length + 1,
-              itemBuilder: (context, index) {
-                if (index == rows.length) {
-                  if (!viewModel.isLoadingMore) {
-                    return const SizedBox(height: 8);
-                  }
-                  return const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: Center(child: ProgressRing(strokeWidth: 2)),
-                  );
-                }
-                final row = rows[index];
-                final cells = _cells([
-                  row.assetId,
-                  AssetLookupKindOption.labelOf(row.kindCode),
-                  row.fileName,
-                  viewModel.equipmentNameOf(row.equipmentId),
-                  DashboardFormatters.byteSize(row.sizeBytes),
-                  DashboardFormatters.durationFromNs(row.durationNs),
-                  assetStatusText(
-                    row,
-                    passLabel: viewModel.passLabelOf(row),
-                    isJobScoped: isJobScoped,
-                  ),
-                ], flexes);
-                return HoverButton(
-                  onPressed: () {
-                    if (row.assetId.isEmpty) {
-                      return;
-                    }
-                    context.read<AppCoordinator>().didTapOpenAssetDetail(
-                      row.assetId,
-                    );
-                  },
-                  builder: (context, states) {
-                    return ColoredBox(
-                      color: AppTheme.tableRowColor(
-                        index: index,
-                        hovered: states.contains(WidgetState.hovered),
-                      ),
-                      child: cells,
-                    );
-                  },
-                );
-              },
-            ),
-          ),
-      ],
-    );
-  }
-
-  Widget _header(List<String> headers, List<int> flexes) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: Color(0xFF32363C),
-        border: Border(bottom: BorderSide(color: Color(0xFF3E424A))),
-      ),
-      child: _cells(headers, flexes, isHeader: true),
-    );
-  }
-
-  Widget _cells(List<String> cells, List<int> flexes, {bool isHeader = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      child: Row(
-        children: [
-          for (var index = 0; index < cells.length; index++)
-            Expanded(
-              flex: flexes[index],
-              child: Text(
-                cells[index].isEmpty ? '—' : cells[index],
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: isHeader ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
 }
 
 Future<void> _didTapUpload(
