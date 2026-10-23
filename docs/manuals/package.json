@@ -1,0 +1,19 @@
+{
+  "name": "weld-dashboard-manuals",
+  "private": true,
+  "type": "commonjs",
+  "description": "마크다운 매뉴얼 → PDF / PPTX / DOCX 변환",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "build:field": "node scripts/build.mjs --source 작업_등록_매뉴얼 --tone field --format all",
+    "build:formal": "node scripts/build.mjs --source 작업_등록_매뉴얼 --tone formal --format all",
+    "build:brief": "node scripts/build.mjs --source 작업_등록_매뉴얼 --tone brief --format all"
+  },
+  "dependencies": {
+    "pptxgenjs": "^3.12.0",
+    "sharp": "^0.34.1"
+  },
+  "devDependencies": {
+    "playwright": "^1.64.1"
+  }
+}

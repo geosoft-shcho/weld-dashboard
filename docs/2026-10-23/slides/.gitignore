@@ -1,0 +1,4 @@
+node_modules/
+.venv/
+*-preview.pptx
+package-lock.json

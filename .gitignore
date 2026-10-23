@@ -44,3 +44,9 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Docs manuals — deps · 변환 산출물 · Office 잠금 파일
+docs/**/node_modules/
+docs/manuals/output/
+docs/**/slides/output/
+**/~$*
