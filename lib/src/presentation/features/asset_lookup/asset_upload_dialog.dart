@@ -80,6 +80,8 @@ class _AssetUploadDialog extends StatefulWidget {
 
 class _AssetUploadDialogState extends State<_AssetUploadDialog> {
   final TextEditingController _timeOriginController = TextEditingController();
+  final TextEditingController _subjectController = TextEditingController();
+  final TextEditingController _situationController = TextEditingController();
 
   CameraRecordingFile? _file;
   AssetUploadFormats? _formats;
@@ -111,6 +113,8 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
   @override
   void dispose() {
     _timeOriginController.dispose();
+    _subjectController.dispose();
+    _situationController.dispose();
     super.dispose();
   }
 
@@ -285,6 +289,24 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
                   style: const TextStyle(fontSize: 12),
                 ),
               ],
+              const SizedBox(height: 12),
+              InfoLabel(
+                label: '주제',
+                child: _MultilineTextInput(
+                  controller: _subjectController,
+                  hintText: '주제',
+                  enabled: !_isUploading,
+                ),
+              ),
+              const SizedBox(height: 12),
+              InfoLabel(
+                label: '상황',
+                child: _MultilineTextInput(
+                  controller: _situationController,
+                  hintText: '상황',
+                  enabled: !_isUploading,
+                ),
+              ),
               const SizedBox(height: 12),
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -497,6 +519,54 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
           child: const Text('올리기'),
         ),
       ],
+    );
+  }
+}
+
+class _MultilineTextInput extends StatelessWidget {
+  const _MultilineTextInput({
+    required this.controller,
+    required this.hintText,
+    required this.enabled,
+  });
+
+  final TextEditingController controller;
+  final String hintText;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return WaveformMaterialScope(
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        minLines: 2,
+        maxLines: 6,
+        style: const TextStyle(color: AppTheme.INK, fontSize: 13),
+        cursorColor: AppTheme.ACCENT_STEEL,
+        decoration: InputDecoration(
+          isDense: true,
+          hintText: hintText,
+          hintStyle: TextStyle(
+            color: AppTheme.INK.withValues(alpha: 0.45),
+            fontSize: 13,
+          ),
+          filled: true,
+          fillColor: AppTheme.SURFACE,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 8,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: Color(0xFF3E424A)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: Color(0xFF3E424A)),
+          ),
+        ),
+      ),
     );
   }
 }
