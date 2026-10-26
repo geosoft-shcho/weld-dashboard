@@ -54,6 +54,10 @@ class AssetLookupDetailViewModel extends ChangeNotifier {
     return equipmentId;
   }
 
+  Future<String> readContent({required String url}) {
+    return _getAssetLookupUseCase.readContent(url: url);
+  }
+
   Future<void> updateSubjectSituation({
     required String subject,
     required String situation,

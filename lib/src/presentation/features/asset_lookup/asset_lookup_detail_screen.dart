@@ -12,6 +12,7 @@ import '../../core/widgets/lookup_detail_scaffold.dart';
 import '../../core/widgets/waveform_material_scope.dart';
 import '../../navigation/app_coordinator.dart';
 import 'asset_lookup_detail_view_model.dart';
+import 'widgets/asset_preview_pane.dart';
 
 class AssetLookupDetailScreen extends StatelessWidget {
   const AssetLookupDetailScreen({super.key, required this.assetId});
@@ -78,7 +79,10 @@ class _AssetLookupDetailBody extends StatelessWidget {
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 12),
-        _previewPlaceholder(asset),
+        AssetPreviewPane(
+          asset: asset,
+          readContent: viewModel.readContent,
+        ),
         const SizedBox(height: 12),
         DecoratedBox(
           decoration: BoxDecoration(
@@ -185,31 +189,6 @@ class _AssetLookupDetailBody extends StatelessWidget {
     );
   }
 
-  Widget _previewPlaceholder(AssetLookupRow asset) {
-    final label = switch (asset.kindCode) {
-      'video' => '영상 미리 보기',
-      'audio' => '음성 미리 보기',
-      'timeseries' => '시계열 미리 보기',
-      'pose' => '포즈 미리 보기',
-      'image' => '이미지 미리 보기',
-      'document' => '문서 미리 보기',
-      'pointCloud' => '깊이 — 브라우저 재생 불가',
-      _ => '미리 보기 없음',
-    };
-    return Container(
-      height: 150,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: AppTheme.SURFACE_RAISED,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFF3E424A)),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(color: AppTheme.STATUS_OFF),
-      ),
-    );
-  }
 }
 
 Future<void> _didTapEditSubjectSituation(

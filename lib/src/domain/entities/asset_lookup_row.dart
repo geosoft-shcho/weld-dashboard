@@ -24,6 +24,7 @@ class AssetLookupRow {
     this.propertiesJson = '',
     this.subject = '',
     this.situation = '',
+    this.contentUrl = '',
   });
 
   final String assetId;
@@ -47,6 +48,7 @@ class AssetLookupRow {
   final String propertiesJson;
   final String subject;
   final String situation;
+  final String contentUrl;
 }
 
 class AssetLookupPage {

@@ -31,4 +31,6 @@ abstract class AssetLookupRepository {
     required String situation,
     required List<String> changedFields,
   });
+
+  Future<String> readContent({required String url});
 }

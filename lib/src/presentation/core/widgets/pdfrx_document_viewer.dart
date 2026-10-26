@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/material.dart' as material;
 import 'package:pdfrx/pdfrx.dart';
 
 import '../themes/app_theme.dart';
@@ -40,6 +41,32 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
   late final GlobalKey<PdfrxSearchFieldState> _searchFieldKey;
   PdfTextSearcher? _textSearcher;
 
+  /// Fluent 버튼과 같은 시각 높이. 레이아웃·크롬의 단일 기준.
+  static const double _toolbarControlHeight = 32;
+  static const double _toolbarRadius = 4;
+  static const Color _toolbarBorderColor = Color(0xFF3E424A);
+
+  static const List<int> _zoomPercentPresets = [
+    50,
+    75,
+    100,
+    125,
+    150,
+    200,
+    300,
+  ];
+
+  static final ButtonStyle _toolbarButtonStyle = ButtonStyle(
+    padding: const WidgetStatePropertyAll(
+      EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+    ),
+    shape: WidgetStatePropertyAll(
+      RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_toolbarRadius),
+      ),
+    ),
+  );
+
   List<PdfOutlineNode> _outlineNodes = const [];
   bool _isOutlineOpen = false;
   bool _hasLoadError = false;
@@ -47,6 +74,7 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
   String? _searchStatusMessage;
   int? _lastKnownPageNumber;
   int? _lastKnownPageCount;
+  int? _zoomPercent;
   bool _wasControllerReady = false;
   int? _appliedInitialPage;
 
@@ -107,6 +135,7 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
     _searchFieldKey.currentState?.clear();
     _lastKnownPageNumber = null;
     _lastKnownPageCount = null;
+    _zoomPercent = null;
     _wasControllerReady = false;
     setState(() {
       _outlineNodes = const [];
@@ -127,12 +156,15 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
       _attachTextSearcher();
       final pageNumber = _controller.pageNumber ?? 1;
       final pageCount = _controller.pageCount;
+      final zoomPercent = (_controller.currentZoom * 100).round();
       final didPageChange =
           pageNumber != _lastKnownPageNumber ||
           pageCount != _lastKnownPageCount;
+      final didZoomChange = zoomPercent != _zoomPercent;
       final didReadyChange = !_wasControllerReady;
       _lastKnownPageNumber = pageNumber;
       _lastKnownPageCount = pageCount;
+      _zoomPercent = zoomPercent;
       _wasControllerReady = true;
       if (!_pageJumpFocusNode.hasFocus) {
         final text = pageNumber.toString();
@@ -143,7 +175,10 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
       if (didReadyChange) {
         _jumpToInitialPage();
       }
-      if (didPageChange || didReadyChange || didAttachSearcher) {
+      if (didPageChange ||
+          didReadyChange ||
+          didAttachSearcher ||
+          didZoomChange) {
         setState(() {});
       }
       return;
@@ -152,6 +187,7 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
       _wasControllerReady = false;
       _lastKnownPageNumber = null;
       _lastKnownPageCount = null;
+      _zoomPercent = null;
       setState(() {});
     }
   }
@@ -223,6 +259,24 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
       return;
     }
     await _controller.zoomUp();
+  }
+
+  Future<void> _didSelectZoomPercent(int? percent) async {
+    if (percent == null || !_controller.isReady) {
+      return;
+    }
+    await _controller.setZoom(
+      _controller.centerPosition,
+      percent / 100.0,
+    );
+  }
+
+  List<int> get _zoomPercentItems {
+    final current = _zoomPercent;
+    if (current == null || _zoomPercentPresets.contains(current)) {
+      return _zoomPercentPresets;
+    }
+    return [..._zoomPercentPresets, current]..sort();
   }
 
   Future<void> _didSubmitPageJump() async {
@@ -349,60 +403,197 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
         : (widget.fallbackPageCount > 0 ? widget.fallbackPageCount : 0);
     final pageLabel = pageCount == 0 ? '불러오는 중' : '$pageNumber / $pageCount';
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _buildToolbar(pageLabel),
-        const SizedBox(height: 8),
-        if (widget.expandViewport)
-          Expanded(child: _buildViewport())
-        else
-          _buildViewport(),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final fillRemaining = widget.expandViewport ||
+            (constraints.hasBoundedHeight && constraints.maxHeight.isFinite);
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildToolbar(pageLabel),
+            const SizedBox(height: 8),
+            if (fillRemaining)
+              Expanded(child: _buildViewport(fillRemaining: true))
+            else
+              _buildViewport(),
+          ],
+        );
+      },
     );
   }
 
   Widget _buildToolbar(String pageLabel) {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      crossAxisAlignment: WrapCrossAlignment.center,
-      children: [
-        Button(onPressed: _didTapPrevious, child: const Text('이전 쪽')),
-        SizedBox(
-          width: 56,
-          child: TextBox(
-            controller: _pageJumpController,
-            focusNode: _pageJumpFocusNode,
-            placeholder: '쪽',
-            onTap: () => _pageJumpFocusNode.requestFocus(),
-            onSubmitted: (_) => _didSubmitPageJump(),
+    final items = <Widget>[
+      _toolbarButton(label: '이전 쪽', onPressed: _didTapPrevious),
+      _toolbarField(
+        width: 56,
+        child: _toolbarBorderlessTextField(
+          controller: _pageJumpController,
+          focusNode: _pageJumpFocusNode,
+          hintText: '쪽',
+          onSubmitted: (_) => _didSubmitPageJump(),
+        ),
+      ),
+      _toolbarLabel(pageLabel),
+      _toolbarButton(label: '다음 쪽', onPressed: _didTapNext),
+      _toolbarButton(label: '축소', onPressed: _didTapZoomOut),
+      _toolbarButton(label: '확대', onPressed: _didTapZoomIn),
+      // PDF 호스트가 WaveformMaterialScope라 Fluent ComboBox 로케일이 없다.
+      // 쪽·검색과 같은 필드 셸 + Material 드롭다운을 쓴다.
+      _toolbarField(
+        width: 96,
+        child: WaveformMaterialScope(
+          child: material.DropdownButtonHideUnderline(
+            child: material.DropdownButton<int>(
+              isExpanded: true,
+              isDense: true,
+              value: _zoomPercent,
+              hint: const Text('배율', style: TextStyle(fontSize: 13)),
+              style: const TextStyle(
+                color: AppTheme.INK,
+                fontSize: 13,
+                height: 1.2,
+              ),
+              dropdownColor: AppTheme.SURFACE,
+              iconEnabledColor: AppTheme.INK,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              items: [
+                for (final percent in _zoomPercentItems)
+                  material.DropdownMenuItem(
+                    value: percent,
+                    child: Text('$percent%'),
+                  ),
+              ],
+              onChanged: _controller.isReady ? _didSelectZoomPercent : null,
+            ),
           ),
         ),
-        Text(pageLabel),
-        Button(onPressed: _didTapNext, child: const Text('다음 쪽')),
-        Button(onPressed: _didTapZoomOut, child: const Text('축소')),
-        Button(onPressed: _didTapZoomIn, child: const Text('확대')),
-        PdfrxSearchField(key: _searchFieldKey, onSubmit: _didSubmitSearch),
-        Button(onPressed: () => _didSubmitSearch(), child: const Text('검색')),
-        Button(onPressed: _didTapSearchPrevious, child: const Text('이전 히트')),
-        Button(onPressed: _didTapSearchNext, child: const Text('다음 히트')),
-        if (_searchStatusMessage != null)
-          Text(
-            _searchStatusMessage!,
-            style: TextStyle(color: AppTheme.INK.withValues(alpha: 0.75)),
-          ),
-        if (_outlineNodes.isNotEmpty)
-          Button(
-            onPressed: _didTapOutlineToggle,
-            child: Text(_isOutlineOpen ? '아웃라인 닫기' : '아웃라인'),
-          ),
-      ],
+      ),
+      _toolbarField(
+        width: 180,
+        child: PdfrxSearchField(
+          key: _searchFieldKey,
+          onSubmit: _didSubmitSearch,
+        ),
+      ),
+      _toolbarButton(label: '검색', onPressed: () => _didSubmitSearch()),
+      _toolbarButton(label: '이전 히트', onPressed: _didTapSearchPrevious),
+      _toolbarButton(label: '다음 히트', onPressed: _didTapSearchNext),
+      if (_searchStatusMessage != null)
+        _toolbarLabel(
+          _searchStatusMessage!,
+          color: AppTheme.INK.withValues(alpha: 0.75),
+        ),
+      if (_outlineNodes.isNotEmpty)
+        _toolbarButton(
+          label: _isOutlineOpen ? '아웃라인 닫기' : '아웃라인',
+          onPressed: _didTapOutlineToggle,
+        ),
+    ];
+
+    return SizedBox(
+      height: _toolbarControlHeight,
+      width: double.infinity,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            for (var index = 0; index < items.length; index++) ...[
+              if (index > 0) const SizedBox(width: 8),
+              items[index],
+            ],
+          ],
+        ),
+      ),
     );
   }
 
-  Widget _buildViewport() {
-    final height = widget.viewportHeight;
+  /// 필드 공통 크롬. 보더·높이·radius는 여기서만 정한다.
+  Widget _toolbarField({required double width, required Widget child}) {
+    return SizedBox(
+      width: width,
+      height: _toolbarControlHeight,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          color: AppTheme.SURFACE,
+          borderRadius: BorderRadius.circular(_toolbarRadius),
+          border: Border.all(color: _toolbarBorderColor),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(_toolbarRadius),
+          child: child,
+        ),
+      ),
+    );
+  }
+
+  Widget _toolbarBorderlessTextField({
+    required TextEditingController controller,
+    required FocusNode focusNode,
+    required String hintText,
+    required ValueChanged<String> onSubmitted,
+  }) {
+    return WaveformMaterialScope(
+      child: material.TextField(
+        controller: controller,
+        focusNode: focusNode,
+        expands: true,
+        maxLines: null,
+        minLines: null,
+        style: const TextStyle(color: AppTheme.INK, fontSize: 13, height: 1.2),
+        cursorColor: AppTheme.ACCENT_STEEL,
+        textAlign: TextAlign.center,
+        textAlignVertical: material.TextAlignVertical.center,
+        keyboardType: TextInputType.number,
+        onTap: () => focusNode.requestFocus(),
+        onSubmitted: onSubmitted,
+        decoration: material.InputDecoration(
+          isDense: true,
+          isCollapsed: true,
+          hintText: hintText,
+          hintStyle: TextStyle(
+            color: AppTheme.INK.withValues(alpha: 0.45),
+            fontSize: 13,
+            height: 1.2,
+          ),
+          border: material.InputBorder.none,
+          enabledBorder: material.InputBorder.none,
+          focusedBorder: material.InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+        ),
+      ),
+    );
+  }
+
+  Widget _toolbarButton({
+    required String label,
+    required VoidCallback? onPressed,
+  }) {
+    return SizedBox(
+      height: _toolbarControlHeight,
+      child: Button(
+        onPressed: onPressed,
+        style: _toolbarButtonStyle,
+        child: Center(child: Text(label)),
+      ),
+    );
+  }
+
+  Widget _toolbarLabel(String text, {Color? color}) {
+    return SizedBox(
+      height: _toolbarControlHeight,
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          style: TextStyle(fontSize: 13, color: color),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildViewport({bool fillRemaining = false}) {
+    final height = fillRemaining ? null : widget.viewportHeight;
     final child = ColoredBox(
       color: widget.backgroundColor,
       child: WaveformMaterialScope(

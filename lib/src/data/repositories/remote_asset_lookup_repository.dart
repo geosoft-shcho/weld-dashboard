@@ -285,7 +285,18 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
           : '',
       subject: asset.subject,
       situation: asset.situation,
+      contentUrl: asset.contentUrl.isEmpty
+          ? ''
+          : _mediaTag.resolveContentUrl(asset.contentUrl),
     );
+  }
+
+  @override
+  Future<String> readContent({required String url}) {
+    if (url.isEmpty) {
+      return Future.value('');
+    }
+    return _mediaTag.readContent(url);
   }
 
   asset_pb.AssetKind _kindOf(String code) {

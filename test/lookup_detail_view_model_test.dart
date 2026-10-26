@@ -381,4 +381,7 @@ class _FakeAssetLookupRepository implements AssetLookupRepository {
     required String situation,
     required List<String> changedFields,
   }) async {}
+
+  @override
+  Future<String> readContent({required String url}) async => '';
 }

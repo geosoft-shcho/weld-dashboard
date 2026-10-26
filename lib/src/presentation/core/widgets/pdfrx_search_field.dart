@@ -50,44 +50,33 @@ class PdfrxSearchFieldState extends State<PdfrxSearchField> {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: 180,
-      height: 34,
-      child: WaveformMaterialScope(
-        child: TextField(
-          controller: _controller,
-          focusNode: _focusNode,
-          style: const TextStyle(color: AppTheme.INK, fontSize: 13),
-          cursorColor: AppTheme.ACCENT_STEEL,
-          textInputAction: TextInputAction.search,
-          onTap: () => _focusNode.requestFocus(),
-          onSubmitted: (_) => _didSubmit(),
-          decoration: InputDecoration(
-            isDense: true,
-            hintText: '검색',
-            hintStyle: TextStyle(
-              color: AppTheme.INK.withValues(alpha: 0.45),
-              fontSize: 13,
-            ),
-            filled: true,
-            fillColor: AppTheme.SURFACE,
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 8,
-            ),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: Color(0xFF3E424A)),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: Color(0xFF3E424A)),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(4),
-              borderSide: const BorderSide(color: AppTheme.ACCENT_STEEL),
-            ),
+    // 보더는 부모 툴바 필드 셸이 그린다. 여기선 내용만 채운다.
+    return WaveformMaterialScope(
+      child: TextField(
+        controller: _controller,
+        focusNode: _focusNode,
+        expands: true,
+        maxLines: null,
+        minLines: null,
+        style: const TextStyle(color: AppTheme.INK, fontSize: 13, height: 1.2),
+        cursorColor: AppTheme.ACCENT_STEEL,
+        textInputAction: TextInputAction.search,
+        textAlignVertical: TextAlignVertical.center,
+        onTap: () => _focusNode.requestFocus(),
+        onSubmitted: (_) => _didSubmit(),
+        decoration: InputDecoration(
+          isDense: true,
+          isCollapsed: true,
+          hintText: '검색',
+          hintStyle: TextStyle(
+            color: AppTheme.INK.withValues(alpha: 0.45),
+            fontSize: 13,
+            height: 1.2,
           ),
+          border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 10),
         ),
       ),
     );
