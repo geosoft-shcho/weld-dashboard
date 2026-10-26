@@ -14,6 +14,7 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
+import '../../../google/protobuf/field_mask.pbjson.dart' as $2;
 import '../../../google/protobuf/struct.pbjson.dart' as $0;
 import '../../../google/protobuf/timestamp.pbjson.dart' as $1;
 
@@ -130,6 +131,8 @@ const Asset$json = {
       '6': '.mediatag.asset.v1.DisplayField',
       '10': 'display'
     },
+    {'1': 'subject', '3': 17, '4': 1, '5': 9, '10': 'subject'},
+    {'1': 'situation', '3': 18, '4': 1, '5': 9, '10': 'situation'},
   ],
   '8': [
     {'1': '_duration_ns'},
@@ -150,7 +153,8 @@ final $typed_data.Uint8List assetDescriptor = $convert.base64Decode(
     '5jZVIKcHJvdmVuYW5jZRIfCgtjb250ZW50X3VybBgMIAEoCVIKY29udGVudFVybBIfCgtzb3Vy'
     'Y2VfcGF0aBgNIAEoCVIKc291cmNlUGF0aBIfCgtjaGlsZF9jb3VudBgPIAEoBVIKY2hpbGRDb3'
     'VudBI5CgdkaXNwbGF5GBAgAygLMh8ubWVkaWF0YWcuYXNzZXQudjEuRGlzcGxheUZpZWxkUgdk'
-    'aXNwbGF5Qg4KDF9kdXJhdGlvbl9ucw==');
+    'aXNwbGF5EhgKB3N1YmplY3QYESABKAlSB3N1YmplY3QSHAoJc2l0dWF0aW9uGBIgASgJUglzaX'
+    'R1YXRpb25CDgoMX2R1cmF0aW9uX25z');
 
 @$core.Deprecated('Use displayFieldDescriptor instead')
 const DisplayField$json = {
@@ -392,6 +396,55 @@ const GetAssetResponse$json = {
 final $typed_data.Uint8List getAssetResponseDescriptor = $convert.base64Decode(
     'ChBHZXRBc3NldFJlc3BvbnNlEi4KBWFzc2V0GAEgASgLMhgubWVkaWF0YWcuYXNzZXQudjEuQX'
     'NzZXRSBWFzc2V0');
+
+@$core.Deprecated('Use updateAssetRequestDescriptor instead')
+const UpdateAssetRequest$json = {
+  '1': 'UpdateAssetRequest',
+  '2': [
+    {
+      '1': 'asset',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.asset.v1.Asset',
+      '10': 'asset'
+    },
+    {
+      '1': 'update_mask',
+      '3': 2,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.FieldMask',
+      '10': 'updateMask'
+    },
+  ],
+};
+
+/// Descriptor for `UpdateAssetRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List updateAssetRequestDescriptor = $convert.base64Decode(
+    'ChJVcGRhdGVBc3NldFJlcXVlc3QSLgoFYXNzZXQYASABKAsyGC5tZWRpYXRhZy5hc3NldC52MS'
+    '5Bc3NldFIFYXNzZXQSOwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUucHJvdG9idWYuRmll'
+    'bGRNYXNrUgp1cGRhdGVNYXNr');
+
+@$core.Deprecated('Use updateAssetResponseDescriptor instead')
+const UpdateAssetResponse$json = {
+  '1': 'UpdateAssetResponse',
+  '2': [
+    {
+      '1': 'asset',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.asset.v1.Asset',
+      '10': 'asset'
+    },
+  ],
+};
+
+/// Descriptor for `UpdateAssetResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List updateAssetResponseDescriptor = $convert.base64Decode(
+    'ChNVcGRhdGVBc3NldFJlc3BvbnNlEi4KBWFzc2V0GAEgASgLMhgubWVkaWF0YWcuYXNzZXQudj'
+    'EuQXNzZXRSBWFzc2V0');
 
 @$core.Deprecated('Use deleteAssetRequestDescriptor instead')
 const DeleteAssetRequest$json = {
@@ -826,6 +879,11 @@ const $core.Map<$core.String, $core.dynamic> AssetServiceBase$json = {
       '3': '.mediatag.asset.v1.GetAssetResponse'
     },
     {
+      '1': 'UpdateAsset',
+      '2': '.mediatag.asset.v1.UpdateAssetRequest',
+      '3': '.mediatag.asset.v1.UpdateAssetResponse'
+    },
+    {
       '1': 'DeleteAsset',
       '2': '.mediatag.asset.v1.DeleteAssetRequest',
       '3': '.mediatag.asset.v1.DeleteAssetResponse'
@@ -885,6 +943,9 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
       ListAssetsResponse_PassIdsEntry$json,
   '.mediatag.asset.v1.GetAssetRequest': GetAssetRequest$json,
   '.mediatag.asset.v1.GetAssetResponse': GetAssetResponse$json,
+  '.mediatag.asset.v1.UpdateAssetRequest': UpdateAssetRequest$json,
+  '.google.protobuf.FieldMask': $2.FieldMask$json,
+  '.mediatag.asset.v1.UpdateAssetResponse': UpdateAssetResponse$json,
   '.mediatag.asset.v1.DeleteAssetRequest': DeleteAssetRequest$json,
   '.mediatag.asset.v1.DeleteAssetResponse': DeleteAssetResponse$json,
   '.mediatag.asset.v1.ListDuplicateAssetsRequest':
@@ -919,17 +980,19 @@ final $typed_data.Uint8List assetServiceDescriptor = $convert.base64Decode(
     'cG9ydEFzc2V0RnJvbVNvdXJjZVJlc3BvbnNlElkKCkxpc3RBc3NldHMSJC5tZWRpYXRhZy5hc3'
     'NldC52MS5MaXN0QXNzZXRzUmVxdWVzdBolLm1lZGlhdGFnLmFzc2V0LnYxLkxpc3RBc3NldHNS'
     'ZXNwb25zZRJTCghHZXRBc3NldBIiLm1lZGlhdGFnLmFzc2V0LnYxLkdldEFzc2V0UmVxdWVzdB'
-    'ojLm1lZGlhdGFnLmFzc2V0LnYxLkdldEFzc2V0UmVzcG9uc2USXAoLRGVsZXRlQXNzZXQSJS5t'
-    'ZWRpYXRhZy5hc3NldC52MS5EZWxldGVBc3NldFJlcXVlc3QaJi5tZWRpYXRhZy5hc3NldC52MS'
-    '5EZWxldGVBc3NldFJlc3BvbnNlEnQKE0xpc3REdXBsaWNhdGVBc3NldHMSLS5tZWRpYXRhZy5h'
-    'c3NldC52MS5MaXN0RHVwbGljYXRlQXNzZXRzUmVxdWVzdBouLm1lZGlhdGFnLmFzc2V0LnYxLk'
-    'xpc3REdXBsaWNhdGVBc3NldHNSZXNwb25zZRJ6ChVSZXNvbHZlRHVwbGljYXRlR3JvdXASLy5t'
-    'ZWRpYXRhZy5hc3NldC52MS5SZXNvbHZlRHVwbGljYXRlR3JvdXBSZXF1ZXN0GjAubWVkaWF0YW'
-    'cuYXNzZXQudjEuUmVzb2x2ZUR1cGxpY2F0ZUdyb3VwUmVzcG9uc2USXAoLTWVyZ2VBc3NldHMS'
-    'JS5tZWRpYXRhZy5hc3NldC52MS5NZXJnZUFzc2V0c1JlcXVlc3QaJi5tZWRpYXRhZy5hc3NldC'
-    '52MS5NZXJnZUFzc2V0c1Jlc3BvbnNlEm4KEUxpc3RVcGxvYWRGb3JtYXRzEisubWVkaWF0YWcu'
-    'YXNzZXQudjEuTGlzdFVwbG9hZEZvcm1hdHNSZXF1ZXN0GiwubWVkaWF0YWcuYXNzZXQudjEuTG'
-    'lzdFVwbG9hZEZvcm1hdHNSZXNwb25zZRJcCgtBdHRhY2hBc3NldBIlLm1lZGlhdGFnLmFzc2V0'
-    'LnYxLkF0dGFjaEFzc2V0UmVxdWVzdBomLm1lZGlhdGFnLmFzc2V0LnYxLkF0dGFjaEFzc2V0Um'
-    'VzcG9uc2USXAoLRGV0YWNoQXNzZXQSJS5tZWRpYXRhZy5hc3NldC52MS5EZXRhY2hBc3NldFJl'
-    'cXVlc3QaJi5tZWRpYXRhZy5hc3NldC52MS5EZXRhY2hBc3NldFJlc3BvbnNl');
+    'ojLm1lZGlhdGFnLmFzc2V0LnYxLkdldEFzc2V0UmVzcG9uc2USXAoLVXBkYXRlQXNzZXQSJS5t'
+    'ZWRpYXRhZy5hc3NldC52MS5VcGRhdGVBc3NldFJlcXVlc3QaJi5tZWRpYXRhZy5hc3NldC52MS'
+    '5VcGRhdGVBc3NldFJlc3BvbnNlElwKC0RlbGV0ZUFzc2V0EiUubWVkaWF0YWcuYXNzZXQudjEu'
+    'RGVsZXRlQXNzZXRSZXF1ZXN0GiYubWVkaWF0YWcuYXNzZXQudjEuRGVsZXRlQXNzZXRSZXNwb2'
+    '5zZRJ0ChNMaXN0RHVwbGljYXRlQXNzZXRzEi0ubWVkaWF0YWcuYXNzZXQudjEuTGlzdER1cGxp'
+    'Y2F0ZUFzc2V0c1JlcXVlc3QaLi5tZWRpYXRhZy5hc3NldC52MS5MaXN0RHVwbGljYXRlQXNzZX'
+    'RzUmVzcG9uc2USegoVUmVzb2x2ZUR1cGxpY2F0ZUdyb3VwEi8ubWVkaWF0YWcuYXNzZXQudjEu'
+    'UmVzb2x2ZUR1cGxpY2F0ZUdyb3VwUmVxdWVzdBowLm1lZGlhdGFnLmFzc2V0LnYxLlJlc29sdm'
+    'VEdXBsaWNhdGVHcm91cFJlc3BvbnNlElwKC01lcmdlQXNzZXRzEiUubWVkaWF0YWcuYXNzZXQu'
+    'djEuTWVyZ2VBc3NldHNSZXF1ZXN0GiYubWVkaWF0YWcuYXNzZXQudjEuTWVyZ2VBc3NldHNSZX'
+    'Nwb25zZRJuChFMaXN0VXBsb2FkRm9ybWF0cxIrLm1lZGlhdGFnLmFzc2V0LnYxLkxpc3RVcGxv'
+    'YWRGb3JtYXRzUmVxdWVzdBosLm1lZGlhdGFnLmFzc2V0LnYxLkxpc3RVcGxvYWRGb3JtYXRzUm'
+    'VzcG9uc2USXAoLQXR0YWNoQXNzZXQSJS5tZWRpYXRhZy5hc3NldC52MS5BdHRhY2hBc3NldFJl'
+    'cXVlc3QaJi5tZWRpYXRhZy5hc3NldC52MS5BdHRhY2hBc3NldFJlc3BvbnNlElwKC0RldGFjaE'
+    'Fzc2V0EiUubWVkaWF0YWcuYXNzZXQudjEuRGV0YWNoQXNzZXRSZXF1ZXN0GiYubWVkaWF0YWcu'
+    'YXNzZXQudjEuRGV0YWNoQXNzZXRSZXNwb25zZQ==');

@@ -40,6 +40,7 @@ syntax = "proto3";
 
 package mediatag.asset.v1;
 
+import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -52,6 +53,8 @@ service AssetService {
   // Asset 목록(페이지 · kind · 부모 · 작업 필터). 작업의 첨부 목록은 job.job_id로(pass_ids에 패스).
   rpc ListAssets(ListAssetsRequest) returns (ListAssetsResponse);
   rpc GetAsset(GetAssetRequest) returns (GetAssetResponse);
+  // 사람이 적는 칸만 고친다(update_mask: subject, situation). 빈 글로 보내면 지운다. 파일 · 종류 · 시각은 서버가 정해 못 고친다.
+  rpc UpdateAsset(UpdateAssetRequest) returns (UpdateAssetResponse);
   // 행과 저장된 파일을 실제로 지운다(되돌릴 수 없음).
   // 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
   rpc DeleteAsset(DeleteAssetRequest) returns (DeleteAssetResponse);
@@ -117,6 +120,8 @@ message Asset {
   int32 child_count = 15;    // 응답 전용: 이 Asset으로 만든 파생(자식) 수. 0보다 크면 ListAssets(parent_asset_id)로 펼친다
   // 응답 전용: 화면에 보일 정보(라벨·값) — 순서대로 그린다. 값이 없는 줄은 빠진다. 기계가 읽을 값은 properties.
   repeated DisplayField display = 16;
+  string subject = 17;   // 주제 — 화면 업로드에서 사람이 적은 글(POST /assets metadata.subject). 없으면 빈값
+  string situation = 18; // 상황 — 화면 업로드에서 사람이 적은 글(POST /assets metadata.situation). 없으면 빈값
 }
 
 message DisplayField {
@@ -184,6 +189,15 @@ message GetAssetRequest {
 }
 
 message GetAssetResponse {
+  Asset asset = 1;
+}
+
+message UpdateAssetRequest {
+  Asset asset = 1;                           // asset.asset_id 필수
+  google.protobuf.FieldMask update_mask = 2; // subject, situation
+}
+
+message UpdateAssetResponse {
   Asset asset = 1;
 }
 

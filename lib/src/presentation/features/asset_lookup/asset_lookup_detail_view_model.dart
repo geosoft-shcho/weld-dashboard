@@ -7,6 +7,7 @@ import '../../../domain/entities/work_history_query.dart';
 import '../../../domain/use_cases/get_asset_lookup_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
+import '../../../domain/use_cases/update_asset_use_case.dart';
 
 class AssetLookupDetailViewModel extends ChangeNotifier {
   AssetLookupDetailViewModel({
@@ -14,14 +15,17 @@ class AssetLookupDetailViewModel extends ChangeNotifier {
     required GetAssetLookupUseCase getAssetLookupUseCase,
     required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
     required ListEquipmentLookupUseCase listEquipmentLookupUseCase,
+    required UpdateAssetUseCase updateAssetUseCase,
   }) : _getAssetLookupUseCase = getAssetLookupUseCase,
        _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase,
-       _listEquipmentLookupUseCase = listEquipmentLookupUseCase;
+       _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
+       _updateAssetUseCase = updateAssetUseCase;
 
   final String assetId;
   final GetAssetLookupUseCase _getAssetLookupUseCase;
   final ListWorkHistoryPageUseCase _listWorkHistoryPageUseCase;
   final ListEquipmentLookupUseCase _listEquipmentLookupUseCase;
+  final UpdateAssetUseCase _updateAssetUseCase;
 
   AssetLookupRow? _asset;
   List<WorkHistoryItem> _jobs = const [];
@@ -42,10 +46,40 @@ class AssetLookupDetailViewModel extends ChangeNotifier {
     }
     for (final item in _equipment) {
       if (item.equipmentId == equipmentId) {
-        return item.equipmentName.isEmpty ? item.equipmentCode : item.equipmentName;
+        return item.equipmentName.isEmpty
+            ? item.equipmentCode
+            : item.equipmentName;
       }
     }
     return equipmentId;
+  }
+
+  Future<String> readContent({required String url}) {
+    return _getAssetLookupUseCase.readContent(url: url);
+  }
+
+  Future<void> updateSubjectSituation({
+    required String subject,
+    required String situation,
+  }) async {
+    final current = _asset;
+    if (current == null) {
+      return;
+    }
+    final changedFields = [
+      if (subject != current.subject) 'subject',
+      if (situation != current.situation) 'situation',
+    ];
+    if (changedFields.isEmpty) {
+      throw ArgumentError('바뀐 칸이 없습니다.');
+    }
+    await _updateAssetUseCase.execute(
+      assetId: assetId,
+      subject: subject,
+      situation: situation,
+      changedFields: changedFields,
+    );
+    await load();
   }
 
   Future<void> load() async {

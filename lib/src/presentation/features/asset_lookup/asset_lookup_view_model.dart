@@ -347,6 +347,8 @@ class AssetLookupViewModel extends ChangeNotifier {
     required String equipmentId,
     required DateTime? timeOrigin,
     required CameraRecordingFile file,
+    String subject = '',
+    String situation = '',
   }) {
     return _uploadAssetUseCase.uploadFile(
       jobId: jobId,
@@ -354,6 +356,8 @@ class AssetLookupViewModel extends ChangeNotifier {
       equipmentId: equipmentId,
       timeOrigin: timeOrigin,
       file: file,
+      subject: subject,
+      situation: situation,
     );
   }
 

@@ -9,4 +9,8 @@ class GetAssetLookupUseCase {
   Future<AssetLookupRow?> execute({required String assetId}) {
     return _repository.getAsset(assetId: assetId);
   }
+
+  Future<String> readContent({required String url}) {
+    return _repository.readContent(url: url);
+  }
 }

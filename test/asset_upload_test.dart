@@ -56,4 +56,77 @@ void main() {
     expect(result.runId, '96');
     expect(result.warnings, ['확인']);
   });
+
+  test('uploadFile sends subject and situation when non-empty', () async {
+    String? sentMetadata;
+    final repository = RemoteAssetUploadRepository(
+      MediaTagDataSource(baseUrl: 'http://media.example/api/'),
+      ({
+        required String url,
+        required String metadata,
+        required String fileName,
+        required String mimeType,
+        required Uint8List bytes,
+      }) async {
+        sentMetadata = metadata;
+        return '{"asset":{"assetId":"82","fileName":"a.mp4"},"runId":"1"}';
+      },
+    );
+
+    await repository.uploadFile(
+      jobId: '128',
+      passId: '45',
+      equipmentId: '3',
+      timeOrigin: DateTime.parse('2026-09-16T13:38:53+09:00'),
+      subject: '  초층 비드  ',
+      situation: '위보기',
+      file: CameraRecordingFile(
+        bytes: Uint8List.fromList([1]),
+        mimeType: 'video/mp4',
+        fileName: 'a.mp4',
+      ),
+    );
+
+    expect(jsonDecode(sentMetadata!), {
+      'jobId': '128',
+      'passId': '45',
+      'equipmentId': '3',
+      'timeOrigin': '2026-09-16T04:38:53.000Z',
+      'subject': '초층 비드',
+      'situation': '위보기',
+    });
+  });
+
+  test('uploadFile omits empty subject and situation', () async {
+    String? sentMetadata;
+    final repository = RemoteAssetUploadRepository(
+      MediaTagDataSource(baseUrl: 'http://media.example/api/'),
+      ({
+        required String url,
+        required String metadata,
+        required String fileName,
+        required String mimeType,
+        required Uint8List bytes,
+      }) async {
+        sentMetadata = metadata;
+        return '{"asset":{"assetId":"83","fileName":"b.mp4"},"runId":"2"}';
+      },
+    );
+
+    await repository.uploadFile(
+      jobId: '128',
+      passId: '',
+      equipmentId: '',
+      timeOrigin: null,
+      subject: '   ',
+      situation: '',
+      file: CameraRecordingFile(
+        bytes: Uint8List.fromList([1]),
+        mimeType: 'video/mp4',
+        fileName: 'b.mp4',
+      ),
+    );
+
+    expect(jsonDecode(sentMetadata!), {'jobId': '128'});
+  });
 }

@@ -15,55 +15,59 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import 'asset.pb.dart' as $2;
+import 'asset.pb.dart' as $3;
 import 'asset.pbjson.dart';
 
 export 'asset.pb.dart';
 
 abstract class AssetServiceBase extends $pb.GeneratedService {
-  $async.Future<$2.ImportAssetFromSourceResponse> importAssetFromSource(
-      $pb.ServerContext ctx, $2.ImportAssetFromSourceRequest request);
-  $async.Future<$2.ListAssetsResponse> listAssets(
-      $pb.ServerContext ctx, $2.ListAssetsRequest request);
-  $async.Future<$2.GetAssetResponse> getAsset(
-      $pb.ServerContext ctx, $2.GetAssetRequest request);
-  $async.Future<$2.DeleteAssetResponse> deleteAsset(
-      $pb.ServerContext ctx, $2.DeleteAssetRequest request);
-  $async.Future<$2.ListDuplicateAssetsResponse> listDuplicateAssets(
-      $pb.ServerContext ctx, $2.ListDuplicateAssetsRequest request);
-  $async.Future<$2.ResolveDuplicateGroupResponse> resolveDuplicateGroup(
-      $pb.ServerContext ctx, $2.ResolveDuplicateGroupRequest request);
-  $async.Future<$2.MergeAssetsResponse> mergeAssets(
-      $pb.ServerContext ctx, $2.MergeAssetsRequest request);
-  $async.Future<$2.ListUploadFormatsResponse> listUploadFormats(
-      $pb.ServerContext ctx, $2.ListUploadFormatsRequest request);
-  $async.Future<$2.AttachAssetResponse> attachAsset(
-      $pb.ServerContext ctx, $2.AttachAssetRequest request);
-  $async.Future<$2.DetachAssetResponse> detachAsset(
-      $pb.ServerContext ctx, $2.DetachAssetRequest request);
+  $async.Future<$3.ImportAssetFromSourceResponse> importAssetFromSource(
+      $pb.ServerContext ctx, $3.ImportAssetFromSourceRequest request);
+  $async.Future<$3.ListAssetsResponse> listAssets(
+      $pb.ServerContext ctx, $3.ListAssetsRequest request);
+  $async.Future<$3.GetAssetResponse> getAsset(
+      $pb.ServerContext ctx, $3.GetAssetRequest request);
+  $async.Future<$3.UpdateAssetResponse> updateAsset(
+      $pb.ServerContext ctx, $3.UpdateAssetRequest request);
+  $async.Future<$3.DeleteAssetResponse> deleteAsset(
+      $pb.ServerContext ctx, $3.DeleteAssetRequest request);
+  $async.Future<$3.ListDuplicateAssetsResponse> listDuplicateAssets(
+      $pb.ServerContext ctx, $3.ListDuplicateAssetsRequest request);
+  $async.Future<$3.ResolveDuplicateGroupResponse> resolveDuplicateGroup(
+      $pb.ServerContext ctx, $3.ResolveDuplicateGroupRequest request);
+  $async.Future<$3.MergeAssetsResponse> mergeAssets(
+      $pb.ServerContext ctx, $3.MergeAssetsRequest request);
+  $async.Future<$3.ListUploadFormatsResponse> listUploadFormats(
+      $pb.ServerContext ctx, $3.ListUploadFormatsRequest request);
+  $async.Future<$3.AttachAssetResponse> attachAsset(
+      $pb.ServerContext ctx, $3.AttachAssetRequest request);
+  $async.Future<$3.DetachAssetResponse> detachAsset(
+      $pb.ServerContext ctx, $3.DetachAssetRequest request);
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
       case 'ImportAssetFromSource':
-        return $2.ImportAssetFromSourceRequest();
+        return $3.ImportAssetFromSourceRequest();
       case 'ListAssets':
-        return $2.ListAssetsRequest();
+        return $3.ListAssetsRequest();
       case 'GetAsset':
-        return $2.GetAssetRequest();
+        return $3.GetAssetRequest();
+      case 'UpdateAsset':
+        return $3.UpdateAssetRequest();
       case 'DeleteAsset':
-        return $2.DeleteAssetRequest();
+        return $3.DeleteAssetRequest();
       case 'ListDuplicateAssets':
-        return $2.ListDuplicateAssetsRequest();
+        return $3.ListDuplicateAssetsRequest();
       case 'ResolveDuplicateGroup':
-        return $2.ResolveDuplicateGroupRequest();
+        return $3.ResolveDuplicateGroupRequest();
       case 'MergeAssets':
-        return $2.MergeAssetsRequest();
+        return $3.MergeAssetsRequest();
       case 'ListUploadFormats':
-        return $2.ListUploadFormatsRequest();
+        return $3.ListUploadFormatsRequest();
       case 'AttachAsset':
-        return $2.AttachAssetRequest();
+        return $3.AttachAssetRequest();
       case 'DetachAsset':
-        return $2.DetachAssetRequest();
+        return $3.DetachAssetRequest();
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }
@@ -74,27 +78,29 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
     switch (methodName) {
       case 'ImportAssetFromSource':
         return importAssetFromSource(
-            ctx, request as $2.ImportAssetFromSourceRequest);
+            ctx, request as $3.ImportAssetFromSourceRequest);
       case 'ListAssets':
-        return listAssets(ctx, request as $2.ListAssetsRequest);
+        return listAssets(ctx, request as $3.ListAssetsRequest);
       case 'GetAsset':
-        return getAsset(ctx, request as $2.GetAssetRequest);
+        return getAsset(ctx, request as $3.GetAssetRequest);
+      case 'UpdateAsset':
+        return updateAsset(ctx, request as $3.UpdateAssetRequest);
       case 'DeleteAsset':
-        return deleteAsset(ctx, request as $2.DeleteAssetRequest);
+        return deleteAsset(ctx, request as $3.DeleteAssetRequest);
       case 'ListDuplicateAssets':
         return listDuplicateAssets(
-            ctx, request as $2.ListDuplicateAssetsRequest);
+            ctx, request as $3.ListDuplicateAssetsRequest);
       case 'ResolveDuplicateGroup':
         return resolveDuplicateGroup(
-            ctx, request as $2.ResolveDuplicateGroupRequest);
+            ctx, request as $3.ResolveDuplicateGroupRequest);
       case 'MergeAssets':
-        return mergeAssets(ctx, request as $2.MergeAssetsRequest);
+        return mergeAssets(ctx, request as $3.MergeAssetsRequest);
       case 'ListUploadFormats':
-        return listUploadFormats(ctx, request as $2.ListUploadFormatsRequest);
+        return listUploadFormats(ctx, request as $3.ListUploadFormatsRequest);
       case 'AttachAsset':
-        return attachAsset(ctx, request as $2.AttachAssetRequest);
+        return attachAsset(ctx, request as $3.AttachAssetRequest);
       case 'DetachAsset':
-        return detachAsset(ctx, request as $2.DetachAssetRequest);
+        return detachAsset(ctx, request as $3.DetachAssetRequest);
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }

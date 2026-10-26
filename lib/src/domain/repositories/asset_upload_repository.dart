@@ -18,5 +18,7 @@ abstract class AssetUploadRepository {
     required String equipmentId,
     required DateTime? timeOrigin,
     required CameraRecordingFile file,
+    String subject = '',
+    String situation = '',
   });
 }

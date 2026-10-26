@@ -21,7 +21,7 @@ class PaperScanHost extends StatefulWidget {
 }
 
 class _PaperScanHostState extends State<PaperScanHost> {
-  static const double VIEWPORT_MIN_HEIGHT = 320;
+  static const double VIEWPORT_MIN_HEIGHT = 540;
   static const String UNAVAILABLE_MESSAGE =
       '페이퍼 원본이 연동되지 않았습니다. 성적서 번호와 검사 항목만 표시합니다.';
 

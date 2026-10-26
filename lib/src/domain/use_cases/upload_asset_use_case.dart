@@ -29,6 +29,8 @@ class UploadAssetUseCase {
     required String equipmentId,
     required DateTime? timeOrigin,
     required CameraRecordingFile file,
+    String subject = '',
+    String situation = '',
   }) {
     if (file.bytes.isEmpty) {
       throw const AssetUploadException('업로드할 파일이 비어 있습니다.');
@@ -39,6 +41,8 @@ class UploadAssetUseCase {
       equipmentId: equipmentId,
       timeOrigin: timeOrigin,
       file: file,
+      subject: subject,
+      situation: situation,
     );
   }
 }

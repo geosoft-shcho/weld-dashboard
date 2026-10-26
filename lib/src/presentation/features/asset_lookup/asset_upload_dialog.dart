@@ -17,6 +17,8 @@ typedef AssetUploadFile =
       required String equipmentId,
       required DateTime? timeOrigin,
       required CameraRecordingFile file,
+      required String subject,
+      required String situation,
     });
 
 const _stepLabels = {
@@ -235,6 +237,8 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
         equipmentId: _equipmentId,
         timeOrigin: timeOrigin,
         file: file,
+        subject: _subjectController.text.trim(),
+        situation: _situationController.text.trim(),
       );
       if (mounted) {
         Navigator.of(context).pop(result);

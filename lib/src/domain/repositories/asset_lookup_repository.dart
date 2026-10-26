@@ -24,4 +24,13 @@ abstract class AssetLookupRepository {
   Future<List<JobPassOption>> listJobPasses({required String jobId});
 
   Future<AssetLookupRow?> getAsset({required String assetId});
+
+  Future<void> updateAsset({
+    required String assetId,
+    required String subject,
+    required String situation,
+    required List<String> changedFields,
+  });
+
+  Future<String> readContent({required String url});
 }
