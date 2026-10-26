@@ -71,8 +71,12 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     required String equipmentId,
     required DateTime? timeOrigin,
     required CameraRecordingFile file,
+    String subject = '',
+    String situation = '',
   }) async {
     try {
+      final subjectText = subject.trim();
+      final situationText = situation.trim();
       final body = await _upload(
         url: _mediaTag.resolveContentUrl('/assets'),
         metadata: jsonEncode({
@@ -81,6 +85,8 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
           if (_hasId(equipmentId)) 'equipmentId': equipmentId,
           if (timeOrigin != null)
             'timeOrigin': timeOrigin.toUtc().toIso8601String(),
+          if (subjectText.isNotEmpty) 'subject': subjectText,
+          if (situationText.isNotEmpty) 'situation': situationText,
         }),
         fileName: file.fileName,
         mimeType: file.mimeType,

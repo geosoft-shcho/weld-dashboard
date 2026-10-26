@@ -373,4 +373,12 @@ class _FakeAssetLookupRepository implements AssetLookupRepository {
   Future<AssetLookupRow?> getAsset({required String assetId}) async {
     return null;
   }
+
+  @override
+  Future<void> updateAsset({
+    required String assetId,
+    required String subject,
+    required String situation,
+    required List<String> changedFields,
+  }) async {}
 }

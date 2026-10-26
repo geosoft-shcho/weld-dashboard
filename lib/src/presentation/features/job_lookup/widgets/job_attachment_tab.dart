@@ -68,12 +68,16 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
             required equipmentId,
             required timeOrigin,
             required file,
+            required subject,
+            required situation,
           }) => _viewModel.uploadAssetFile(
             jobId: jobId,
             passId: passId,
             equipmentId: equipmentId,
             timeOrigin: timeOrigin,
             file: file,
+            subject: subject,
+            situation: situation,
           ),
     );
     if (result == null || !mounted) return;

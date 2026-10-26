@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/asset_lookup_row.dart';
 import '../../domain/repositories/asset_lookup_repository.dart';
+import '../datasources/generated/google/protobuf/field_mask.pb.dart';
 import '../datasources/generated/google/protobuf/timestamp.pb.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
@@ -208,6 +209,32 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     return _rowFrom(response.asset, isAttached: false, includeDetail: true);
   }
 
+  @override
+  Future<void> updateAsset({
+    required String assetId,
+    required String subject,
+    required String situation,
+    required List<String> changedFields,
+  }) async {
+    final id = protoIdOrNull(assetId);
+    if (id == null) {
+      throw ArgumentError('에셋 번호가 없습니다.');
+    }
+    if (changedFields.isEmpty) {
+      throw ArgumentError('바뀐 칸이 없습니다.');
+    }
+    await _mediaTag.assetService.updateAsset(
+      asset_pb.UpdateAssetRequest(
+        asset: asset_pb.Asset(
+          assetId: id,
+          subject: subject,
+          situation: situation,
+        ),
+        updateMask: FieldMask(paths: changedFields),
+      ),
+    );
+  }
+
   AssetLookupRow _rowFrom(
     asset_pb.Asset asset, {
     required bool isAttached,
@@ -256,6 +283,8 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
               asset.properties.fields.isNotEmpty
           ? jsonEncode(asset.properties.toProto3Json())
           : '',
+      subject: asset.subject,
+      situation: asset.situation,
     );
   }
 

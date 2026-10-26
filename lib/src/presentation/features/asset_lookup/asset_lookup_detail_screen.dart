@@ -1,4 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:flutter/material.dart'
+    show InputDecoration, OutlineInputBorder, TextField;
 import 'package:provider/provider.dart';
 
 import '../../../domain/entities/asset_lookup_kind.dart';
@@ -7,6 +9,7 @@ import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
+import '../../core/widgets/waveform_material_scope.dart';
 import '../../navigation/app_coordinator.dart';
 import 'asset_lookup_detail_view_model.dart';
 
@@ -76,6 +79,46 @@ class _AssetLookupDetailBody extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         _previewPlaceholder(asset),
+        const SizedBox(height: 12),
+        DecoratedBox(
+          decoration: BoxDecoration(
+            color: AppTheme.SURFACE_RAISED,
+            borderRadius: BorderRadius.circular(4),
+            border: Border.all(color: const Color(0xFF3E424A)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    const Text(
+                      '주제·상황',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const Spacer(),
+                    Tooltip(
+                      message: '주제·상황 수정',
+                      child: IconButton(
+                        icon: const Icon(FluentIcons.edit, size: 14),
+                        onPressed: () =>
+                            _didTapEditSubjectSituation(context, asset),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                _LabeledTextBlock(label: '주제', value: asset.subject),
+                const SizedBox(height: 12),
+                _LabeledTextBlock(label: '상황', value: asset.situation),
+              ],
+            ),
+          ),
+        ),
         const LookupDetailSectionTitle('정보'),
         LookupDetailKvGrid(
           entries: [
@@ -83,10 +126,7 @@ class _AssetLookupDetailBody extends StatelessWidget {
             for (final field in asset.displayFields)
               (field.label, field.value),
             ('크기', DashboardFormatters.byteSize(asset.sizeBytes)),
-            (
-              '길이',
-              DashboardFormatters.durationFromNs(asset.durationNs),
-            ),
+            ('길이', DashboardFormatters.durationFromNs(asset.durationNs)),
             ('파생', '${asset.childCount}개'),
           ],
         ),
@@ -167,6 +207,158 @@ class _AssetLookupDetailBody extends StatelessWidget {
       child: Text(
         label,
         style: const TextStyle(color: AppTheme.STATUS_OFF),
+      ),
+    );
+  }
+}
+
+Future<void> _didTapEditSubjectSituation(
+  BuildContext context,
+  AssetLookupRow asset,
+) async {
+  final viewModel = context.read<AssetLookupDetailViewModel>();
+  final subjectController = TextEditingController(text: asset.subject);
+  final situationController = TextEditingController(text: asset.situation);
+  var error = '';
+  var busy = false;
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return ContentDialog(
+            title: const Text('주제·상황 수정'),
+            content: SizedBox(
+              width: 420,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  InfoLabel(
+                    label: '주제',
+                    child: _MultilineTextInput(
+                      controller: subjectController,
+                      enabled: !busy,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  InfoLabel(
+                    label: '상황',
+                    child: _MultilineTextInput(
+                      controller: situationController,
+                      enabled: !busy,
+                    ),
+                  ),
+                  if (error.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(error, style: TextStyle(color: Colors.red)),
+                  ],
+                ],
+              ),
+            ),
+            actions: [
+              Button(
+                onPressed: busy
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(),
+                child: const Text('취소'),
+              ),
+              FilledButton(
+                onPressed: busy
+                    ? null
+                    : () async {
+                        setDialogState(() {
+                          busy = true;
+                          error = '';
+                        });
+                        try {
+                          await viewModel.updateSubjectSituation(
+                            subject: subjectController.text.trim(),
+                            situation: situationController.text.trim(),
+                          );
+                          if (dialogContext.mounted) {
+                            Navigator.of(dialogContext).pop();
+                          }
+                        } catch (e) {
+                          setDialogState(() {
+                            busy = false;
+                            error = e.toString();
+                          });
+                        }
+                      },
+                child: const Text('저장'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+  subjectController.dispose();
+  situationController.dispose();
+}
+
+class _LabeledTextBlock extends StatelessWidget {
+  const _LabeledTextBlock({required this.label, required this.value});
+
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: AppTheme.STATUS_OFF),
+        ),
+        const SizedBox(height: 2),
+        SelectableText(
+          value.isEmpty ? '—' : value,
+          style: const TextStyle(fontSize: 13),
+        ),
+      ],
+    );
+  }
+}
+
+class _MultilineTextInput extends StatelessWidget {
+  const _MultilineTextInput({
+    required this.controller,
+    required this.enabled,
+  });
+
+  final TextEditingController controller;
+  final bool enabled;
+
+  @override
+  Widget build(BuildContext context) {
+    return WaveformMaterialScope(
+      child: TextField(
+        controller: controller,
+        enabled: enabled,
+        minLines: 2,
+        maxLines: 6,
+        style: const TextStyle(color: AppTheme.INK, fontSize: 13),
+        cursorColor: AppTheme.ACCENT_STEEL,
+        decoration: InputDecoration(
+          isDense: true,
+          filled: true,
+          fillColor: AppTheme.SURFACE,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 10,
+            vertical: 8,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: Color(0xFF3E424A)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(4),
+            borderSide: const BorderSide(color: Color(0xFF3E424A)),
+          ),
+        ),
       ),
     );
   }

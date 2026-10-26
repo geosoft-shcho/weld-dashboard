@@ -248,12 +248,16 @@ Future<void> _didTapUpload(
           required equipmentId,
           required timeOrigin,
           required file,
+          required subject,
+          required situation,
         }) => viewModel.uploadAssetFile(
           jobId: jobId,
           passId: passId,
           equipmentId: equipmentId,
           timeOrigin: timeOrigin,
           file: file,
+          subject: subject,
+          situation: situation,
         ),
   );
   if (result == null || !context.mounted) {

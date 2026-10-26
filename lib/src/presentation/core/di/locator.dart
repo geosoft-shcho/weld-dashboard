@@ -11,6 +11,7 @@ import '../../../domain/repositories/project_lookup_repository.dart';
 import '../../../domain/repositories/worker_lookup_repository.dart';
 import '../../../domain/use_cases/get_asset_lookup_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
+import '../../../domain/use_cases/update_asset_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_job_passes_use_case.dart';
 import '../../../domain/use_cases/create_project_items_use_case.dart';
@@ -206,6 +207,7 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => ListAssetLookupPageUseCase(locator()));
   locator.registerLazySingleton(() => ListJobPassesUseCase(locator()));
   locator.registerLazySingleton(() => GetAssetLookupUseCase(locator()));
+  locator.registerLazySingleton(() => UpdateAssetUseCase(locator()));
   locator.registerFactory(
     () => ProjectLookupViewModel(
       listProjectLookupUseCase: locator(),
@@ -260,6 +262,7 @@ void setupLocator({required bool pdfrxReady}) {
       getAssetLookupUseCase: locator(),
       listWorkHistoryPageUseCase: locator(),
       listEquipmentLookupUseCase: locator(),
+      updateAssetUseCase: locator(),
     ),
   );
   locator.registerFactoryParam<JobLookupDetailViewModel, String, void>(

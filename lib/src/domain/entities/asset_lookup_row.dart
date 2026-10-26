@@ -22,6 +22,8 @@ class AssetLookupRow {
     this.provenanceSummary = '',
     this.displayFields = const [],
     this.propertiesJson = '',
+    this.subject = '',
+    this.situation = '',
   });
 
   final String assetId;
@@ -43,6 +45,8 @@ class AssetLookupRow {
   final String provenanceSummary;
   final List<AssetDisplayField> displayFields;
   final String propertiesJson;
+  final String subject;
+  final String situation;
 }
 
 class AssetLookupPage {
