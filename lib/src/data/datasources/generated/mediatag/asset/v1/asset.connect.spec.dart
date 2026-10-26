@@ -34,6 +34,14 @@ abstract final class AssetService {
     mediatagassetv1asset.GetAssetResponse.new,
   );
 
+  /// 사람이 적는 칸만 고친다(update_mask: subject, situation). 빈 글로 보내면 지운다. 파일 · 종류 · 시각은 서버가 정해 못 고친다.
+  static const updateAsset = connect.Spec(
+    '/$name/UpdateAsset',
+    connect.StreamType.unary,
+    mediatagassetv1asset.UpdateAssetRequest.new,
+    mediatagassetv1asset.UpdateAssetResponse.new,
+  );
+
   /// 행과 저장된 파일을 실제로 지운다(되돌릴 수 없음).
   /// 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
   static const deleteAsset = connect.Spec(

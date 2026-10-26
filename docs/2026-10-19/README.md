@@ -4,6 +4,10 @@
 
 | 일자 | 수정자 | 수정 내용 |
 |---|---|---|
+| 2026-10-26 | geosoft-Server | 업로드 metadata에 주제 `subject` · 상황 `situation`, `Asset.subject` · `situation`, 고치는 `UpdateAsset`("2026-10-26에 바뀐 것"). 추가만, 09:00 운영 적용 |
+| 2026-10-22 | geosoft-Server | 업로드 — `구간초` 형식(0초 = `timeOrigin`)이 모든 열을 채널로 읽음, 전류 · 전압도 상대 시각 파일로 올릴 수 있음("2026-10-22에 바뀐 것 — 상대 시각 센서"). proto 그대로, 15:06 운영 적용 |
+| 2026-10-22 | geosoft-Server | 타임라인 상태는 표시용 — 서버가 거르지 않고 임베딩과도 무관, 화면이 안 쓰면 무시해도 됨. `Timeline.embedded_at`은 쓰지 않음("2026-10-22에 바뀐 것 — 작업과 타임라인"). proto 주석만 |
+| 2026-10-22 | geosoft-Server | `CreateJob`이 빈 타임라인(DRAFT)도 만들고 `DeleteJob`은 타임라인 · 트랙 · 클립을 함께 지움("2026-10-22에 바뀐 것 — 작업과 타임라인"). 칸 변경 없음, 14:05 운영 적용 |
 | 2026-10-22 | geosoft-Server | 단건 조회 `GetProject` · `GetWorker` · `GetEquipment`("2026-10-22에 바뀐 것"). 추가만, 2026-10-22 13:00 운영 적용 |
 | 2026-10-20 | geosoft-Server | `ListJobs` 행마다 그 작업의 패스 목록 `JobSummary.passes`("2026-10-20에 바뀐 것 — 작업 목록의 패스"). 추가만, 2026-10-20 15:08 운영 적용 |
 | 2026-10-20 | geosoft-Server | `Clip.embedded_at`은 이제 AI 서버가 채움(서버 목업 삭제, proto 그대로) — 화면 쪽 읽는 법은 그대로("2026-10-20에 바뀐 것") |
@@ -66,6 +70,39 @@
 
 타임라인에 클립을 놓고, 그리고, 재생하는 방법은 `타임라인 그리기와 재생 안내.md`에 따로 정리했다(함께 전달).
 그 문서는 화면 구성(§9) → 한 작업으로 끝까지 따라가는 예시(§8) → 규칙(§1~§7, §10) 순으로 읽으면 빠르다.
+
+## 2026-10-26에 바뀐 것
+
+2026-10-26 09:00 운영 적용됨. 추가만(asset.proto).
+
+- `POST /assets` metadata에 `subject`(주제) · `situation`(상황)을 받는다. 둘 다 선택, 문자열, 길이 제한 없음. 앞뒤 공백만 뗀다.
+- `Asset.subject = 17` · `Asset.situation = 18` — `GetAsset`, 업로드 응답의 `asset`, `ListAssets` 등 Asset이 나오는 곳 모두에 실린다. 없으면 빈값(JSON에서는 빠짐).
+- 이미 올린 Asset의 주제 · 상황은 `AssetService.UpdateAsset`으로 고친다 — `asset.asset_id` 필수, `update_mask`에 `subject` · `situation` 중 고칠 칸.
+  마스크에 든 칸만 바뀌고, 빈 글로 보내면 지운다. 다른 칸(파일 이름 등)이나 빈 마스크는 `InvalidArgument`, 없는 번호는 `NotFound`. 응답은 고친 뒤의 Asset.
+  ```json
+  {"asset": {"assetId": "128", "subject": "루트 패스", "situation": ""}, "updateMask": "subject,situation"}
+  ```
+- 여러 파일 올리기는 파일마다 `POST /assets`를 한 번씩 부른다(동시에 보내도 된다). 파일마다 `timeOrigin`이 달라서 metadata도 파일마다 따로 보낸다.
+
+## 2026-10-22에 바뀐 것 — 상대 시각 센서
+
+2026-10-22 15:06 운영 적용됨. proto 그대로(업로드 `POST /assets` 동작만).
+
+- 머리행에 `구간초` 열이 있는 CSV는 0초 = metadata `timeOrigin`으로 놓고, `프레임` · `구간초` 말고 모든 열을 파형 채널로 읽는다(전에는 회전수 세 열만).
+  그래서 전류 · 전압 등도 0초부터 적은 파일로 만들면 패스 시각을 아무 때로 잡고 `timeOrigin`만 맞춰 올리면 파형이 나온다. 시험용 세트는 따로 전달(zip 안 README에 올리는 법).
+- `ListUploadFormats`의 `rpm` 항목 이름 · 설명이 "회전수 · 상대 시각 센서", "머리행에 구간초(0초 = timeOrigin). 프레임 · 구간초 말고 모든 열을 채널로"로 바뀌었다.
+- 절대 시각을 가진 파일(패널 `절대시각_epoch`, 통합 신호 `t_abs`)은 전처럼 파일 안 시각을 쓰고 `timeOrigin`은 대조만 한다.
+
+## 2026-10-22에 바뀐 것 — 작업과 타임라인
+
+2026-10-22 14:05 운영 적용됨. 칸 변경 없음(주석만).
+
+- `CreateJob`으로 만든 작업은 빈 타임라인(`TIMELINE_STATUS_DRAFT`)이 함께 생긴다 — 만든 뒤 바로 `ListTimelines`에 나오고, 따로 만들 요청 없이 편집하면 된다.
+- 적재기가 만든 작업이나 이미 있던 작업은 처음 편집할 때 생긴다. 그전에도 `GetTimeline`은 같은 빈 DRAFT를 주므로 화면 처리는 같다.
+- `DeleteJob`은 작업과 함께 타임라인 · 트랙 · 클립을 지운다(숨김이 아니라 삭제, 되돌릴 수 없음). 첨부나 매칭된 성적서 세트가 있으면 전처럼 `FailedPrecondition`.
+- 타임라인 상태는 **표시용**이다 — 서버는 상태로 아무것도 거르지 않고, 임베딩도 상태와 무관하다(타임라인 단위 임베딩은 없다). 화면이 작업 흐름을 쓰지 않으면 무시해도 된다.
+  쓸 때는 `DRAFT`(작업 중) → `SUGGESTED`(검수 대기) → `CONFIRMED`(검수 완료) / `REJECTED`(반려). 바꿀 때는 `ChangeTimelineStatus(from_status, to_status)`, 그사이 다른 사람이 바꿨으면 `Aborted` → 다시 조회.
+- `Timeline.embedded_at`은 쓰지 않는다(늘 비어 있음). 임베딩 반영 표시는 `Clip.embedded_at`으로만 한다.
 
 ## 2026-10-22에 바뀐 것 — 단건 조회
 

@@ -16,6 +16,7 @@ import 'dart:core' as $core;
 import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
+import '../../../google/protobuf/field_mask.pb.dart' as $2;
 import '../../../google/protobuf/struct.pb.dart' as $0;
 import '../../../google/protobuf/timestamp.pb.dart' as $1;
 import 'asset.pbenum.dart';
@@ -42,6 +43,8 @@ class Asset extends $pb.GeneratedMessage {
     $fixnum.Int64? durationNs,
     $core.int? childCount,
     $core.Iterable<DisplayField>? display,
+    $core.String? subject,
+    $core.String? situation,
   }) {
     final result = create();
     if (assetId != null) result.assetId = assetId;
@@ -60,6 +63,8 @@ class Asset extends $pb.GeneratedMessage {
     if (durationNs != null) result.durationNs = durationNs;
     if (childCount != null) result.childCount = childCount;
     if (display != null) result.display.addAll(display);
+    if (subject != null) result.subject = subject;
+    if (situation != null) result.situation = situation;
     return result;
   }
 
@@ -101,6 +106,8 @@ class Asset extends $pb.GeneratedMessage {
     ..a<$core.int>(15, _omitFieldNames ? '' : 'childCount', $pb.PbFieldType.O3)
     ..pc<DisplayField>(16, _omitFieldNames ? '' : 'display', $pb.PbFieldType.PM,
         subBuilder: DisplayField.create)
+    ..aOS(17, _omitFieldNames ? '' : 'subject')
+    ..aOS(18, _omitFieldNames ? '' : 'situation')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -270,6 +277,24 @@ class Asset extends $pb.GeneratedMessage {
   /// 응답 전용: 화면에 보일 정보(라벨·값) — 순서대로 그린다. 값이 없는 줄은 빠진다. 기계가 읽을 값은 properties.
   @$pb.TagNumber(16)
   $pb.PbList<DisplayField> get display => $_getList(15);
+
+  @$pb.TagNumber(17)
+  $core.String get subject => $_getSZ(16);
+  @$pb.TagNumber(17)
+  set subject($core.String value) => $_setString(16, value);
+  @$pb.TagNumber(17)
+  $core.bool hasSubject() => $_has(16);
+  @$pb.TagNumber(17)
+  void clearSubject() => $_clearField(17);
+
+  @$pb.TagNumber(18)
+  $core.String get situation => $_getSZ(17);
+  @$pb.TagNumber(18)
+  set situation($core.String value) => $_setString(17, value);
+  @$pb.TagNumber(18)
+  $core.bool hasSituation() => $_has(17);
+  @$pb.TagNumber(18)
+  void clearSituation() => $_clearField(18);
 }
 
 class DisplayField extends $pb.GeneratedMessage {
@@ -1117,6 +1142,139 @@ class GetAssetResponse extends $pb.GeneratedMessage {
   static GetAssetResponse getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<GetAssetResponse>(create);
   static GetAssetResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Asset get asset => $_getN(0);
+  @$pb.TagNumber(1)
+  set asset(Asset value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAsset() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAsset() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Asset ensureAsset() => $_ensure(0);
+}
+
+class UpdateAssetRequest extends $pb.GeneratedMessage {
+  factory UpdateAssetRequest({
+    Asset? asset,
+    $2.FieldMask? updateMask,
+  }) {
+    final result = create();
+    if (asset != null) result.asset = asset;
+    if (updateMask != null) result.updateMask = updateMask;
+    return result;
+  }
+
+  UpdateAssetRequest._();
+
+  factory UpdateAssetRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory UpdateAssetRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'UpdateAssetRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aOM<Asset>(1, _omitFieldNames ? '' : 'asset', subBuilder: Asset.create)
+    ..aOM<$2.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $2.FieldMask.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateAssetRequest clone() => UpdateAssetRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateAssetRequest copyWith(void Function(UpdateAssetRequest) updates) =>
+      super.copyWith((message) => updates(message as UpdateAssetRequest))
+          as UpdateAssetRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UpdateAssetRequest create() => UpdateAssetRequest._();
+  @$core.override
+  UpdateAssetRequest createEmptyInstance() => create();
+  static $pb.PbList<UpdateAssetRequest> createRepeated() =>
+      $pb.PbList<UpdateAssetRequest>();
+  @$core.pragma('dart2js:noInline')
+  static UpdateAssetRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UpdateAssetRequest>(create);
+  static UpdateAssetRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Asset get asset => $_getN(0);
+  @$pb.TagNumber(1)
+  set asset(Asset value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAsset() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAsset() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Asset ensureAsset() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $2.FieldMask get updateMask => $_getN(1);
+  @$pb.TagNumber(2)
+  set updateMask($2.FieldMask value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasUpdateMask() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearUpdateMask() => $_clearField(2);
+  @$pb.TagNumber(2)
+  $2.FieldMask ensureUpdateMask() => $_ensure(1);
+}
+
+class UpdateAssetResponse extends $pb.GeneratedMessage {
+  factory UpdateAssetResponse({
+    Asset? asset,
+  }) {
+    final result = create();
+    if (asset != null) result.asset = asset;
+    return result;
+  }
+
+  UpdateAssetResponse._();
+
+  factory UpdateAssetResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory UpdateAssetResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'UpdateAssetResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aOM<Asset>(1, _omitFieldNames ? '' : 'asset', subBuilder: Asset.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateAssetResponse clone() => UpdateAssetResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateAssetResponse copyWith(void Function(UpdateAssetResponse) updates) =>
+      super.copyWith((message) => updates(message as UpdateAssetResponse))
+          as UpdateAssetResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UpdateAssetResponse create() => UpdateAssetResponse._();
+  @$core.override
+  UpdateAssetResponse createEmptyInstance() => create();
+  static $pb.PbList<UpdateAssetResponse> createRepeated() =>
+      $pb.PbList<UpdateAssetResponse>();
+  @$core.pragma('dart2js:noInline')
+  static UpdateAssetResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UpdateAssetResponse>(create);
+  static UpdateAssetResponse? _defaultInstance;
 
   @$pb.TagNumber(1)
   Asset get asset => $_getN(0);
@@ -2647,6 +2805,12 @@ class AssetServiceApi {
           $pb.ClientContext? ctx, GetAssetRequest request) =>
       _client.invoke<GetAssetResponse>(
           ctx, 'AssetService', 'GetAsset', request, GetAssetResponse());
+
+  /// 사람이 적는 칸만 고친다(update_mask: subject, situation). 빈 글로 보내면 지운다. 파일 · 종류 · 시각은 서버가 정해 못 고친다.
+  $async.Future<UpdateAssetResponse> updateAsset(
+          $pb.ClientContext? ctx, UpdateAssetRequest request) =>
+      _client.invoke<UpdateAssetResponse>(
+          ctx, 'AssetService', 'UpdateAsset', request, UpdateAssetResponse());
 
   /// 행과 저장된 파일을 실제로 지운다(되돌릴 수 없음).
   /// 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
