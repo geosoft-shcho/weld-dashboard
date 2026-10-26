@@ -265,10 +265,7 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
     if (percent == null || !_controller.isReady) {
       return;
     }
-    await _controller.setZoom(
-      _controller.centerPosition,
-      percent / 100.0,
-    );
+    await _controller.setZoom(_controller.centerPosition, percent / 100.0);
   }
 
   List<int> get _zoomPercentItems {
@@ -405,7 +402,8 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final fillRemaining = widget.expandViewport ||
+        final fillRemaining =
+            widget.expandViewport ||
             (constraints.hasBoundedHeight && constraints.maxHeight.isFinite);
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -448,12 +446,8 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
               isExpanded: true,
               isDense: true,
               value: _zoomPercent,
-              hint: const Text('배율', style: TextStyle(fontSize: 13)),
-              style: const TextStyle(
-                color: AppTheme.INK,
-                fontSize: 13,
-                height: 1.2,
-              ),
+              hint: const Text('배율'),
+              style: const TextStyle(color: AppTheme.INK),
               dropdownColor: AppTheme.SURFACE,
               iconEnabledColor: AppTheme.INK,
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -584,10 +578,7 @@ class _PdfrxDocumentViewerState extends State<PdfrxDocumentViewer> {
       height: _toolbarControlHeight,
       child: Align(
         alignment: Alignment.centerLeft,
-        child: Text(
-          text,
-          style: TextStyle(fontSize: 13, color: color),
-        ),
+        child: Text(text, style: TextStyle(fontSize: 13, color: color)),
       ),
     );
   }
