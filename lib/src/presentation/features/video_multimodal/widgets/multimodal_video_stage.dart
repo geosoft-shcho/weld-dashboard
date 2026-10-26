@@ -198,6 +198,7 @@ class MultimodalVideoStage extends StatelessWidget {
             mediaUrl: mediaUrl,
             localSeconds: clock.position.inMilliseconds / 1000,
             isPlaying: clock.isPlaying,
+            trackId: trackId,
           );
         },
       ),
