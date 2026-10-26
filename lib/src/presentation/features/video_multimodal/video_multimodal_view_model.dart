@@ -275,12 +275,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final List<String> _monitoredTrackIds = [];
   String _focusedMonitorTrackId = '';
   static const int MAX_MONITORED_TRACK_COUNT = 4;
-  /// 포커스 칸에서 마지막으로 클록을 받은 시각. 멈추면 다른 모니터로 폴백한다.
-  DateTime? _lastFocusedMonitorClockAt;
-  /// 포커스 클록은 오는데 플레이헤드가 안 움직이기 시작한 시각.
-  DateTime? _focusPlayheadStuckSince;
+  /// 포커스 시계는 오는데 바늘이 멈춘 시각. null이면 정상.
+  DateTime? _focusStuckAt;
+  /// 0=대기, 1=re-seek 함, 2=notice 함.
+  int _focusStuckPhase = 0;
   DateTime _lastMonitorDebugAt = DateTime.fromMillisecondsSinceEpoch(0);
-  static const Duration _FOCUSED_CLOCK_STALE = Duration(milliseconds: 500);
+  static const Duration _FOCUS_PLAYHEAD_STUCK = Duration(milliseconds: 500);
   static const Duration _MONITOR_DEBUG_INTERVAL = Duration(seconds: 2);
 
   double get pixelsPerSecond => DEFAULT_PIXELS_PER_SECOND;
@@ -603,8 +603,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (_monitoredTrackIds.contains(trackId)) {
       _monitoredTrackIds.remove(trackId);
       if (_focusedMonitorTrackId == trackId) {
-        _focusedMonitorTrackId =
-            _monitoredTrackIds.isEmpty ? '' : _monitoredTrackIds.first;
+        _setFocusedMonitorTrack(
+          _monitoredTrackIds.isEmpty ? '' : _monitoredTrackIds.first,
+        );
+      } else {
+        _resetFocusStuck();
       }
       notifyListeners();
       return;
@@ -614,9 +617,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return;
     }
     _monitoredTrackIds.add(trackId);
-    _focusedMonitorTrackId = trackId;
-    _lastFocusedMonitorClockAt = DateTime.now();
-    _focusPlayheadStuckSince = null;
+    _setFocusedMonitorTrack(trackId);
     notifyListeners();
   }
 
@@ -624,10 +625,27 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (!isTrackMonitored(trackId) || _focusedMonitorTrackId == trackId) {
       return;
     }
-    _focusedMonitorTrackId = trackId;
-    _lastFocusedMonitorClockAt = DateTime.now();
-    _focusPlayheadStuckSince = null;
+    _setFocusedMonitorTrack(trackId);
     notifyListeners();
+  }
+
+  void _setFocusedMonitorTrack(String trackId) {
+    _focusedMonitorTrackId = trackId;
+    _resetFocusStuck();
+    if (trackId.isEmpty) {
+      return;
+    }
+    _logMonitor(
+      'focus_tap',
+      sourceTrackId: trackId,
+      focusedId: trackId,
+      isPlaying: _isVideoPlaying,
+    );
+  }
+
+  void _resetFocusStuck() {
+    _focusStuckAt = null;
+    _focusStuckPhase = 0;
   }
 
   TemporaryAttachmentBar? _videoBarFromClip(TimelineClip? clip) {
@@ -874,7 +892,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required bool isPlaying,
     String trackId = '',
   }) {
-    // 모니터 분할: 포커스 칸 클록 우선. 포커스 비거나 시계가 멈추면 다른 칸으로 폴백.
+    // 모니터 분할: 포커스 칸 시계만 바늘을 민다. 다른 칸은 무시.
     if (monitoredTrackIds.isNotEmpty) {
       final clip = _resolveMonitorClockClip(
         mediaUrl: mediaUrl,
@@ -922,9 +940,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     );
   }
 
-  /// 모니터 클록에 쓸 클립.
-  /// 같은 mediaUrl이 여러 트랙에 있어도 **sourceTrackId == 포커스** 만 수락한다.
-  /// (URL 비교만 하면 4칸이 전부 match/reject 폭주하고 플레이헤드가 꼬인다.)
+  /// 포커스 칸 trackId 시계만 수락. 포커스 자동 이동 없음.
   TimelineClip? _resolveMonitorClockClip({
     required String mediaUrl,
     required String sourceTrackId,
@@ -932,89 +948,45 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required double localSeconds,
   }) {
     final focusedId = focusedMonitorTrackId;
+    if (sourceTrackId.isEmpty || sourceTrackId != focusedId) {
+      return null;
+    }
     final focusedClip = _coveringVideoOnTrack(focusedId, _playheadSeconds);
-    final isFromFocusSlot =
-        sourceTrackId.isNotEmpty && sourceTrackId == focusedId;
-    final needsFallback =
-        focusedClip == null ||
-        _isFocusedMonitorClockStale ||
-        _isFocusPlayheadStuck;
-
-    if (isFromFocusSlot) {
-      if (focusedClip == null || focusedClip.playbackUrl != mediaUrl) {
-        return null;
-      }
-      _lastFocusedMonitorClockAt = DateTime.now();
-      _debugMonitorClock(
-        reason: 'focus_track',
-        sourceTrackId: sourceTrackId,
-        focusedId: focusedId,
-        isPlaying: isPlaying,
-        localSeconds: localSeconds,
-      );
-      return focusedClip;
-    }
-
-    // 포커스 칸이 아닌 시계: 폴백이 필요할 때만 받는다.
-    if (!needsFallback) {
+    if (focusedClip == null || focusedClip.playbackUrl != mediaUrl) {
       return null;
     }
-
-    final candidate = _coveringVideoOnTrack(sourceTrackId, _playheadSeconds);
-    if (candidate == null || candidate.playbackUrl != mediaUrl) {
-      return null;
-    }
-    final moved = _focusedMonitorTrackId != sourceTrackId;
-    _focusedMonitorTrackId = sourceTrackId;
-    _lastFocusedMonitorClockAt = DateTime.now();
-    _focusPlayheadStuckSince = null;
-    _debugMonitorClock(
-      reason: focusedClip == null ? 'fallback_empty' : 'fallback_stuck',
+    _logMonitor(
+      'focus_track',
       sourceTrackId: sourceTrackId,
-      focusedId: sourceTrackId,
+      focusedId: focusedId,
       isPlaying: isPlaying,
       localSeconds: localSeconds,
-      focusMoved: moved,
+      throttle: true,
     );
-    return candidate;
+    return focusedClip;
   }
 
-  /// 포커스 칸 시계가 [_FOCUSED_CLOCK_STALE] 넘게 안 오면 true.
-  bool get _isFocusedMonitorClockStale {
-    final last = _lastFocusedMonitorClockAt;
-    if (last == null) {
-      return false;
-    }
-    return DateTime.now().difference(last) > _FOCUSED_CLOCK_STALE;
-  }
-
-  /// 포커스 클록은 오는데 플레이헤드가 안 바뀌면 true (파일 끝 고정 등).
-  bool get _isFocusPlayheadStuck {
-    final since = _focusPlayheadStuckSince;
-    if (since == null) {
-      return false;
-    }
-    return DateTime.now().difference(since) > _FOCUSED_CLOCK_STALE;
-  }
-
-  void _debugMonitorClock({
-    required String reason,
+  /// [throttle] true면 2초 간격(주기 focus_track). 이벤트 로그는 스로틀 없이 찍는다.
+  void _logMonitor(
+    String reason, {
     required String sourceTrackId,
     required String focusedId,
     required bool isPlaying,
-    required double localSeconds,
-    bool focusMoved = false,
+    double localSeconds = 0,
+    bool throttle = false,
   }) {
     if (!kDebugMode) {
       return;
     }
-    final now = DateTime.now();
-    if (now.difference(_lastMonitorDebugAt) < _MONITOR_DEBUG_INTERVAL) {
-      return;
+    if (throttle) {
+      final now = DateTime.now();
+      if (now.difference(_lastMonitorDebugAt) < _MONITOR_DEBUG_INTERVAL) {
+        return;
+      }
+      _lastMonitorDebugAt = now;
     }
-    _lastMonitorDebugAt = now;
     debugPrint(
-      '[MONITOR] $reason focusMoved=$focusMoved '
+      '[MONITOR] $reason '
       'src=$sourceTrackId focus=$focusedId '
       'playhead=${_playheadSeconds.toStringAsFixed(3)} '
       'local=${localSeconds.toStringAsFixed(3)} playing=$isPlaying '
@@ -1398,13 +1370,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       fileSeconds: fileSeconds,
     );
     if (expected == null || mapped == null) {
-      _markFocusPlayheadStuckIfNeeded(isPlaying: isPlaying);
-      _debugMonitorClock(
-        reason: 'follow_skip_null_map',
-        sourceTrackId: clip.trackId,
-        focusedId: focusedMonitorTrackId,
+      _recoverFocusIfStuck(
         isPlaying: isPlaying,
         localSeconds: fileSeconds,
+        skipReason: 'follow_skip_null_map',
+        trackId: clip.trackId,
       );
       return;
     }
@@ -1419,20 +1389,25 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _ignoreClockUntil = DateTime.fromMillisecondsSinceEpoch(0);
     final end = secondsFromNanoseconds(clip.endNanoseconds);
     if (mapped >= end) {
-      _markFocusPlayheadStuckIfNeeded(isPlaying: isPlaying);
+      _resetFocusStuck();
       _stopVideoAt(end);
       return;
     }
     final next = mapped.clamp(0.0, spanSeconds);
     if ((next - _playheadSeconds).abs() < 0.03 &&
         _isVideoPlaying == isPlaying) {
-      _markFocusPlayheadStuckIfNeeded(isPlaying: isPlaying);
+      _recoverFocusIfStuck(
+        isPlaying: isPlaying,
+        localSeconds: fileSeconds,
+        skipReason: 'follow_skip_same_playhead',
+        trackId: clip.trackId,
+      );
       return;
     }
-    _focusPlayheadStuckSince = null;
-    if (kDebugMode && monitoredTrackIds.isNotEmpty) {
-      _debugMonitorClock(
-        reason: 'playhead_move',
+    _resetFocusStuck();
+    if (monitoredTrackIds.isNotEmpty) {
+      _logMonitor(
+        'playhead_move',
         sourceTrackId: clip.trackId,
         focusedId: focusedMonitorTrackId,
         isPlaying: isPlaying,
@@ -1444,11 +1419,47 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _markFocusPlayheadStuckIfNeeded({required bool isPlaying}) {
-    if (!isPlaying || monitoredTrackIds.isEmpty) {
+  /// 바늘이 500ms 넘게 안 움직이면 re-seek 1회 → 그래도면 notice 1회. 포커스는 안 넘김.
+  void _recoverFocusIfStuck({
+    required bool isPlaying,
+    required double localSeconds,
+    required String skipReason,
+    required String trackId,
+  }) {
+    if (!isPlaying || !_wantsPlayback || monitoredTrackIds.isEmpty) {
       return;
     }
-    _focusPlayheadStuckSince ??= DateTime.now();
+    _focusStuckAt ??= DateTime.now();
+    if (DateTime.now().difference(_focusStuckAt!) < _FOCUS_PLAYHEAD_STUCK) {
+      return;
+    }
+    if (_focusStuckPhase == 0) {
+      _focusStuckPhase = 1;
+      _focusStuckAt = null;
+      _seekToken += 1;
+      _ignoreClockUntil = DateTime.now().add(const Duration(milliseconds: 450));
+      _logMonitor(
+        'focus_reseek',
+        sourceTrackId: trackId,
+        focusedId: focusedMonitorTrackId,
+        isPlaying: isPlaying,
+        localSeconds: localSeconds,
+      );
+      notifyListeners();
+      return;
+    }
+    _logMonitor(
+      skipReason,
+      sourceTrackId: trackId,
+      focusedId: focusedMonitorTrackId,
+      isPlaying: isPlaying,
+      localSeconds: localSeconds,
+    );
+    if (_focusStuckPhase >= 2) {
+      return;
+    }
+    _focusStuckPhase = 2;
+    didShowNotice('포커스 모니터 영상이 이 시각에서 더 나아가지 않습니다.');
   }
 
   void _stopVideoAt(double endSeconds) {

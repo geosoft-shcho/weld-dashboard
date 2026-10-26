@@ -113,8 +113,9 @@ class MultimodalVideoStage extends StatelessWidget {
   Widget _slot(String trackId) {
     final focused = viewModel.isMonitorSlotFocused(trackId);
     final video = viewModel.videoBarForTrack(trackId);
-    return GestureDetector(
-      onTap: () => viewModel.didTapFocusMonitorSlot(trackId),
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) => viewModel.didTapFocusMonitorSlot(trackId),
       child: DecoratedBox(
         decoration: BoxDecoration(
           border: Border.all(
