@@ -10,13 +10,13 @@ class AuthUser {
   static const String GEO_SOFT_USER_ID = 'geosoft';
   static const String GUEST_USER_ID = 'user';
 
-  /// `geosoft` 계정 비밀번호. 로그인 기본 입력·hint와 동일.
+  /// `geosoft` 계정 검증용 비밀번호 (폼 기본값·hint에 쓰지 않음).
   static const String GEO_SOFT_PASSWORD = '56781234';
 
-  /// `user`(게스트) 계정 비밀번호.
+  /// `user`(게스트) 계정 검증용 비밀번호.
   static const String GUEST_PASSWORD = '1234';
 
-  /// 로그인 화면 기본 계정(`geosoft`) 비밀번호. [GEO_SOFT_PASSWORD]와 같다.
+  /// [GEO_SOFT_PASSWORD] 별칭.
   static const String TEMP_PASSWORD = GEO_SOFT_PASSWORD;
 
   static const AuthUser geoSoft = AuthUser(

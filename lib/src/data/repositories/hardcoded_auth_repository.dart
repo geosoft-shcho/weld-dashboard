@@ -44,14 +44,10 @@ class HardcodedAuthRepository implements AuthRepository {
       return const SignInResult.failure(SignInFailure.unknownUser);
     }
     final expectedPassword = AuthUser.passwordForUserId(user.userId);
-    final normalizedPassword = _normalizePassword(
-      password,
-      expectedPassword: expectedPassword,
-    );
+    final normalizedPassword = _normalizePassword(password);
     if (normalizedPassword != expectedPassword) {
       return const SignInResult.failure(SignInFailure.wrongPassword);
     }
-    // 정규화된 계정 ID만 저장 (빈 입력을 geosoft로 보정한 경우 포함).
     await _sessionLocal.writeUserId(user.userId);
     return SignInResult.success(user);
   }
@@ -61,24 +57,11 @@ class HardcodedAuthRepository implements AuthRepository {
     return _sessionLocal.clear();
   }
 
-  /// 비어 있으면 hint 기본값 `geosoft`.
   String _normalizeUserId(String userId) {
-    final trimmed = userId.trim().toLowerCase();
-    if (trimmed.isEmpty) {
-      return AuthUser.GEO_SOFT_USER_ID;
-    }
-    return trimmed;
+    return userId.trim().toLowerCase();
   }
 
-  /// 비어 있으면 해당 계정의 기대 비밀번호로 보정.
-  String _normalizePassword(
-    String password, {
-    required String expectedPassword,
-  }) {
-    final trimmed = password.trim();
-    if (trimmed.isEmpty) {
-      return expectedPassword;
-    }
-    return trimmed;
+  String _normalizePassword(String password) {
+    return password.trim();
   }
 }

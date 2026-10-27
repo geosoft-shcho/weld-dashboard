@@ -1,7 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
-import '../../../domain/entities/auth_user.dart';
 import '../../core/di/locator.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../features/app_shell/widgets/shell_title_leading.dart';
@@ -71,7 +70,7 @@ class _LoginBodyState extends State<_LoginBody> {
                 child: LookupSearchField(
                   controller: _userIdController,
                   value: viewModel.userIdText,
-                  hintText: AuthUser.GEO_SOFT_USER_ID,
+                  hintText: 'ID',
                   textInputAction: TextInputAction.next,
                   onChanged: viewModel.didChangeUserId,
                   onSubmitted: (_) => _didSubmit(context),
@@ -83,7 +82,7 @@ class _LoginBodyState extends State<_LoginBody> {
                 child: LookupSearchField(
                   controller: _passwordController,
                   value: viewModel.passwordText,
-                  hintText: AuthUser.GEO_SOFT_PASSWORD,
+                  hintText: 'Password',
                   obscureText: !_isPasswordVisible,
                   textInputAction: TextInputAction.done,
                   onChanged: viewModel.didChangePassword,
