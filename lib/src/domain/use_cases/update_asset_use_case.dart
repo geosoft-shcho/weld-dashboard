@@ -5,10 +5,11 @@ class UpdateAssetUseCase {
 
   final AssetLookupRepository _repository;
 
-  Future<void> execute({
+  Future<String> execute({
     required String assetId,
     required String subject,
     required String situation,
+    DateTime? recordedAt,
     required List<String> changedFields,
   }) {
     if (changedFields.isEmpty) {
@@ -18,6 +19,7 @@ class UpdateAssetUseCase {
       assetId: assetId,
       subject: subject,
       situation: situation,
+      recordedAt: recordedAt,
       changedFields: changedFields,
     );
   }

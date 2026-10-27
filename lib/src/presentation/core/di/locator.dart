@@ -272,6 +272,7 @@ void setupLocator({required bool pdfrxReady}) {
       listWorkHistoryPageUseCase: locator(),
       listEquipmentLookupUseCase: locator(),
       updateAssetUseCase: locator(),
+      toolRunUseCase: locator(),
     ),
   );
   locator.registerFactoryParam<JobLookupDetailViewModel, String, void>(

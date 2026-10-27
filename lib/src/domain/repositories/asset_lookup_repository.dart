@@ -25,10 +25,12 @@ abstract class AssetLookupRepository {
 
   Future<AssetLookupRow?> getAsset({required String assetId});
 
-  Future<void> updateAsset({
+  /// 응답의 replace_run_id(없으면 빈 문자열). recorded_at 고치면 GetRun으로 기다린다.
+  Future<String> updateAsset({
     required String assetId,
     required String subject,
     required String situation,
+    DateTime? recordedAt,
     required List<String> changedFields,
   });
 

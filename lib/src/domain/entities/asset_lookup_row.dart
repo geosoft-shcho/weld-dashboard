@@ -25,6 +25,8 @@ class AssetLookupRow {
     this.subject = '',
     this.situation = '',
     this.contentUrl = '',
+    this.mimeType = '',
+    this.recordedAt,
   });
 
   final String assetId;
@@ -49,6 +51,8 @@ class AssetLookupRow {
   final String subject;
   final String situation;
   final String contentUrl;
+  final String mimeType;
+  final DateTime? recordedAt;
 }
 
 class AssetLookupPage {

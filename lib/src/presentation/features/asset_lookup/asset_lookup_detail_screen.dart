@@ -106,7 +106,7 @@ class _AssetLookupDetailBody extends StatelessWidget {
                     ),
                     const Spacer(),
                     Tooltip(
-                      message: '주제·상황 수정',
+                      message: '주제·상황·기록 시각 수정',
                       child: IconButton(
                         icon: const Icon(FluentIcons.edit, size: 14),
                         onPressed: () =>
@@ -119,6 +119,13 @@ class _AssetLookupDetailBody extends StatelessWidget {
                 _LabeledTextBlock(label: '주제', value: asset.subject),
                 const SizedBox(height: 12),
                 _LabeledTextBlock(label: '상황', value: asset.situation),
+                const SizedBox(height: 12),
+                _LabeledTextBlock(
+                  label: '기록 시작 시각',
+                  value: asset.recordedAt == null
+                      ? '—'
+                      : DashboardFormatters.dateTime(asset.recordedAt!),
+                ),
               ],
             ),
           ),
@@ -198,6 +205,11 @@ Future<void> _didTapEditSubjectSituation(
   final viewModel = context.read<AssetLookupDetailViewModel>();
   final subjectController = TextEditingController(text: asset.subject);
   final situationController = TextEditingController(text: asset.situation);
+  final recordedController = TextEditingController(
+    text: asset.recordedAt == null
+        ? ''
+        : DashboardFormatters.dateTime(asset.recordedAt!),
+  );
   var error = '';
   var busy = false;
   await showDialog<void>(
@@ -206,7 +218,7 @@ Future<void> _didTapEditSubjectSituation(
       return StatefulBuilder(
         builder: (context, setDialogState) {
           return ContentDialog(
-            title: const Text('주제·상황 수정'),
+            title: const Text('주제·상황·기록 시각'),
             content: SizedBox(
               width: 420,
               child: Column(
@@ -227,6 +239,22 @@ Future<void> _didTapEditSubjectSituation(
                       controller: situationController,
                       enabled: !busy,
                     ),
+                  ),
+                  const SizedBox(height: 12),
+                  InfoLabel(
+                    label: '기록 시작 시각',
+                    child: _MultilineTextInput(
+                      controller: recordedController,
+                      enabled: !busy,
+                      minLines: 1,
+                      maxLines: 1,
+                      hintText: '2026-09-16 13:38:53',
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    '시각을 고치면 자동 배치 클립을 다시 놓습니다(사람이 손댄 클립은 그대로).',
+                    style: TextStyle(fontSize: 12),
                   ),
                   if (error.isNotEmpty) ...[
                     const SizedBox(height: 8),
@@ -251,9 +279,24 @@ Future<void> _didTapEditSubjectSituation(
                           error = '';
                         });
                         try {
+                          final timeText = recordedController.text.trim();
+                          DateTime? recordedAt;
+                          if (timeText.isNotEmpty) {
+                            recordedAt = DateTime.tryParse(
+                              timeText.contains('T')
+                                  ? timeText
+                                  : timeText.replaceFirst(' ', 'T'),
+                            );
+                            if (recordedAt == null) {
+                              throw ArgumentError(
+                                '기록 시각 형식이 올바르지 않습니다.',
+                              );
+                            }
+                          }
                           await viewModel.updateSubjectSituation(
                             subject: subjectController.text.trim(),
                             situation: situationController.text.trim(),
+                            recordedAt: recordedAt,
                           );
                           if (dialogContext.mounted) {
                             Navigator.of(dialogContext).pop();
@@ -275,6 +318,7 @@ Future<void> _didTapEditSubjectSituation(
   );
   subjectController.dispose();
   situationController.dispose();
+  recordedController.dispose();
 }
 
 class _LabeledTextBlock extends StatelessWidget {
@@ -306,10 +350,16 @@ class _MultilineTextInput extends StatelessWidget {
   const _MultilineTextInput({
     required this.controller,
     required this.enabled,
+    this.minLines = 2,
+    this.maxLines = 6,
+    this.hintText,
   });
 
   final TextEditingController controller;
   final bool enabled;
+  final int minLines;
+  final int maxLines;
+  final String? hintText;
 
   @override
   Widget build(BuildContext context) {
@@ -317,12 +367,17 @@ class _MultilineTextInput extends StatelessWidget {
       child: TextField(
         controller: controller,
         enabled: enabled,
-        minLines: 2,
-        maxLines: 6,
+        minLines: minLines,
+        maxLines: maxLines,
         style: const TextStyle(color: AppTheme.INK, fontSize: 13),
         cursorColor: AppTheme.ACCENT_STEEL,
         decoration: InputDecoration(
           isDense: true,
+          hintText: hintText,
+          hintStyle: TextStyle(
+            color: AppTheme.INK.withValues(alpha: 0.45),
+            fontSize: 13,
+          ),
           filled: true,
           fillColor: AppTheme.SURFACE,
           contentPadding: const EdgeInsets.symmetric(

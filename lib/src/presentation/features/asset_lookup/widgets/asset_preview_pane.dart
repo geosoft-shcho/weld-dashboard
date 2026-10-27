@@ -5,6 +5,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:photo_view/photo_view.dart';
 
 import '../../../../domain/entities/asset_lookup_row.dart';
+import '../../../core/browser_open_url.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../core/widgets/pdfrx_document_source.dart';
 import '../../../core/widgets/pdfrx_document_viewer.dart';
@@ -56,9 +57,7 @@ class AssetPreviewPane extends StatelessWidget {
             _AssetPreviewKind.missing => const _PreviewMessage(
               '미리 볼 주소가 없습니다',
             ),
-            _AssetPreviewKind.unsupported => _PreviewMessage(
-              _unsupportedMessage(asset),
-            ),
+            _AssetPreviewKind.unsupported => _UnsupportedPreview(asset: asset),
             _AssetPreviewKind.video => WorkDetailMaterialScope(
               child: WorkDetailChewieStage(assetPath: url),
             ),
@@ -118,7 +117,7 @@ _AssetPreviewKind _previewKindOf(AssetLookupRow asset) {
   if (ext == 'txt') {
     return _AssetPreviewKind.text;
   }
-  if (ext == 'pdf') {
+  if (ext == 'pdf' || _isPdfMime(asset.mimeType)) {
     return _AssetPreviewKind.pdf;
   }
   if (ext == 'csv') {
@@ -160,6 +159,14 @@ _AssetPreviewKind _previewKindOf(AssetLookupRow asset) {
   }
 }
 
+bool _isPdfMime(String mimeType) {
+  if (mimeType.isEmpty) {
+    return false;
+  }
+  final base = mimeType.split(';').first.trim().toLowerCase();
+  return base == 'application/pdf';
+}
+
 String _unsupportedMessage(AssetLookupRow asset) {
   final ext = _extensionOf(asset.fileName);
   if (asset.kindCode == 'pointCloud') {
@@ -172,9 +179,13 @@ String _unsupportedMessage(AssetLookupRow asset) {
     return 'CSV가 아니면 표 미리보기를 지원하지 않습니다.';
   }
   if (asset.kindCode == 'document') {
-    return 'PDF가 아니면 문서 미리보기를 지원하지 않습니다.';
+    return '브라우저 미리 보기 없음';
   }
   return '이 형식은 미리보기를 지원하지 않습니다';
+}
+
+bool _canOpenUnsupported(AssetLookupRow asset) {
+  return asset.kindCode == 'document' && asset.contentUrl.isNotEmpty;
 }
 
 String _extensionOf(String fileName) {
@@ -203,6 +214,39 @@ class _PreviewMessage extends StatelessWidget {
           message,
           textAlign: TextAlign.center,
           style: const TextStyle(color: AppTheme.STATUS_OFF, fontSize: 13),
+        ),
+      ),
+    );
+  }
+}
+
+class _UnsupportedPreview extends StatelessWidget {
+  const _UnsupportedPreview({required this.asset});
+
+  final AssetLookupRow asset;
+
+  @override
+  Widget build(BuildContext context) {
+    final canOpen = _canOpenUnsupported(asset);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              _unsupportedMessage(asset),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppTheme.STATUS_OFF, fontSize: 13),
+            ),
+            if (canOpen) ...[
+              const SizedBox(height: 12),
+              Button(
+                onPressed: () => openBrowserUrl(asset.contentUrl),
+                child: const Text('내려받아 열기'),
+              ),
+            ],
+          ],
         ),
       ),
     );

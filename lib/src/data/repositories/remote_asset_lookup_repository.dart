@@ -210,10 +210,11 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
   }
 
   @override
-  Future<void> updateAsset({
+  Future<String> updateAsset({
     required String assetId,
     required String subject,
     required String situation,
+    DateTime? recordedAt,
     required List<String> changedFields,
   }) async {
     final id = protoIdOrNull(assetId);
@@ -223,16 +224,21 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     if (changedFields.isEmpty) {
       throw ArgumentError('바뀐 칸이 없습니다.');
     }
-    await _mediaTag.assetService.updateAsset(
+    final asset = asset_pb.Asset(
+      assetId: id,
+      subject: subject,
+      situation: situation,
+    );
+    if (recordedAt != null) {
+      asset.recordedAt = Timestamp.fromDateTime(recordedAt.toUtc());
+    }
+    final response = await _mediaTag.assetService.updateAsset(
       asset_pb.UpdateAssetRequest(
-        asset: asset_pb.Asset(
-          assetId: id,
-          subject: subject,
-          situation: situation,
-        ),
+        asset: asset,
         updateMask: FieldMask(paths: changedFields),
       ),
     );
+    return idText(response.replaceRunId);
   }
 
   AssetLookupRow _rowFrom(
@@ -288,6 +294,10 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
       contentUrl: asset.contentUrl.isEmpty
           ? ''
           : _mediaTag.resolveContentUrl(asset.contentUrl),
+      mimeType: asset.mimeType,
+      recordedAt: asset.hasRecordedAt()
+          ? asset.recordedAt.toDateTime().toLocal()
+          : null,
     );
   }
 
