@@ -4,6 +4,11 @@
 
 | 일자 | 수정자 | 수정 내용 |
 |---|---|---|
+| 2026-10-26 | geosoft-Server | 사람 값을 말없이 버리지 않기 — `UpdateAsset(recorded_at)` · `replace_run_id`, 구간 밖 업로드 알림, 품목 이름 충돌 400("2026-10-26에 바뀐 것 — 업로드 시각" 아래) |
+| 2026-10-26 | geosoft-Server | 업로드 시각 — `timeOrigin`이 늘 이긴다, 패널 · 통합 신호 · 포즈는 없으면 파일 시각("2026-10-26에 바뀐 것 — 업로드 시각"). asset.proto 주석 · 값만 |
+| 2026-10-26 | geosoft-Server | 성적서 칸 고치기 `UpdateReportField`, `Section.table` · `fields`의 행 번호 `id`, `ReviewReason` MANUAL("2026-10-26에 바뀐 것 — 작업의 성적서" 아래). 추가만 |
+| 2026-10-26 | geosoft-Server | **깨지는 변경** — 작업이 성적서 세트를 고른다(`Job.report_set_id` · `active_report_set_id`), `MatchReportSet` · `ReportSet.job_id` 삭제, 성적서 PDF 첨부 복사 없앰("2026-10-26에 바뀐 것 — 작업의 성적서"). 운영 적용 전 |
+| 2026-10-26 | geosoft-Server | 이어 올리기 `/uploads`(tus), 마지막 조각에서 자동 등록("2026-10-26에 바뀐 것 — 이어 올리기"). proto 그대로, 추가만 |
 | 2026-10-26 | geosoft-Server | 업로드 metadata에 주제 `subject` · 상황 `situation`, `Asset.subject` · `situation`, 고치는 `UpdateAsset`("2026-10-26에 바뀐 것"). 추가만, 09:00 운영 적용 |
 | 2026-10-22 | geosoft-Server | 업로드 — `구간초` 형식(0초 = `timeOrigin`)이 모든 열을 채널로 읽음, 전류 · 전압도 상대 시각 파일로 올릴 수 있음("2026-10-22에 바뀐 것 — 상대 시각 센서"). proto 그대로, 15:06 운영 적용 |
 | 2026-10-22 | geosoft-Server | 타임라인 상태는 표시용 — 서버가 거르지 않고 임베딩과도 무관, 화면이 안 쓰면 무시해도 됨. `Timeline.embedded_at`은 쓰지 않음("2026-10-22에 바뀐 것 — 작업과 타임라인"). proto 주석만 |
@@ -71,6 +76,61 @@
 타임라인에 클립을 놓고, 그리고, 재생하는 방법은 `타임라인 그리기와 재생 안내.md`에 따로 정리했다(함께 전달).
 그 문서는 화면 구성(§9) → 한 작업으로 끝까지 따라가는 예시(§8) → 규칙(§1~§7, §10) 순으로 읽으면 빠르다.
 
+## 2026-10-26에 바뀐 것 — 업로드 시각
+
+칸 변경 없음(asset.proto 주석, `ListUploadFormats` 값).
+
+- **`timeOrigin`이 늘 이긴다.** 패널(`절대시각_epoch`) · 통합 신호 · 포즈(`t_abs`)처럼 파일에 절대 시각이 있어도 `timeOrigin`을 주면 첫 샘플을 그 시각에 놓는다(전에는 파일 시각). 파일 시각과 12시간 넘게 다르면 `warnings`.
+- `timeOrigin`이 없으면: 절대 시각 파일(패널 · 통합 신호 · 포즈)은 파일 시각으로 받는다(전에는 400). **영상 · 음성은 파일에 적힌 촬영 시각(`creation_time` — 휴대폰 · 카메라 원본)이 있으면 그것으로 받고 `warnings`에 "촬영 시각을 썼음"**(기기 시계라 녹화 끝 시각이거나 9시간 어긋날 수 있다 — 꼭 보여 주세요). 그것도 없으면, 그리고 깊이 원본 · IMU · 구간초 센서는 그대로 400 — `timeOrigin`을 받아 다시 보낸다(이어 올리기면 `POST /assets {uploadId, timeOrigin}`).
+- 시각 없는 영상 · 음성의 400은 이제 첫 조각이 아니라 다 받은 뒤 나온다(mp4는 촬영 시각이 파일 끝에 있기도 하다).
+- `ListUploadFormats.time_origin_required`: 영상 · 음성 · 패널 · 통합 신호 · 포즈가 false로 바뀜 — 화면은 이 값으로 입력을 필수/선택으로 보이면 된다(우리 장비 영상은 파일에 시각이 없으니 넣어야 한다).
+- **올린 뒤 시각 고치기(추가)**: `UpdateAsset`의 `update_mask`에 `recorded_at`. 표준화본도 같이 옮기고 사람이 손대지 않은 자동 배치 클립을 새 시각으로 다시 놓는다 — 응답 `replace_run_id`(새, 2)를 `GetRun`으로 기다리면 끝. 사람이 옮기거나 라벨 · 설명 · 관계를 붙인 클립은 그대로. 촬영 시각이 틀렸을 때 다시 올리지 않고 고치는 길이다.
+- **구간 밖 알림**: 작업 · 패스에 붙였지만 기록 시각이 구간 밖이라 타임라인에 놓이지 않으면 업로드 응답 `warnings`에 알린다(첨부는 됨). 전에는 화면에 아무 표시 없이 타임라인에만 없었다 — 위 시각 고치기나 패스 조정으로 바로잡는다.
+- **품목 이름 충돌**: `CreateJob` · `CreateProjectItems`에서 이미 배정된 품목에 다른 `item_name`을 주면 `InvalidArgument`(전에는 말없이 저장된 이름을 씀). 이름을 바꾸려면 `UpdateProjectItem`.
+- 자세한 표는 `공사·작업·패스 관리와 업로드 안내.md` §2 · §4.
+
+## 2026-10-26에 바뀐 것 — 작업의 성적서
+
+**깨지는 변경**(report.proto · work.proto). 성적서 세트는 추출된 그대로 두고, 작업이 세트를 고른다 — 세트를 붙이거나 첨부해도
+세트 · 다른 작업이 바뀌지 않게 했다.
+
+- `Job.report_set_id`(새, 21): 작업이 고른 세트. 0이면 본인 세트(세트의 `common_key`가 작업의 `common_key`와 같은 것, 여럿이면 최근)를 쓴다.
+  고르기 · 풀기는 `UpdateJob`(`update_mask: report_set_id`, 0이면 풀기). 다른 품목 · 공사의 세트도 고를 수 있다.
+- `Job.active_report_set_id`(새, 22, 읽기 전용): 실제로 쓰는 세트. 0이면 성적서 없음.
+- `ListReportSets(job_id)` · `ListQualityResults(job_id)`: 그 작업이 쓰는 세트 하나. `common_key`로 물으면 본인 품목이 그 값인 세트들.
+- 삭제: `ReportService.MatchReportSet`, `ReportSet.job_id`(2). `ReportSet.common_key`는 이제 세트의 본인 품목(추출 때 정해짐, 바뀌지 않음).
+- **첨부 복사 없앰**: 잘라 낸 성적서 PDF를 같은 품목의 작업마다 첨부하던 것을 지웠다(운영 358행, 타임라인 클립이 쓰는 2행은 남김).
+  작업 화면의 성적서 PDF는 첨부 목록이 아니라 `ListReportSets(job_id)`의 `split_asset_id`(또는 `QualityReport.split_asset_id`)로 연다.
+  `JobSummary.attachment_count`는 그만큼 줄고, 성적서가 있는지는 `JobSummary.has_report`.
+- 문서 PDF를 `AttachAsset`하면 첨부만 된다(세트에 잇지 않음).
+- 성적서 PDF를 `jobId`와 함께 올려 세트가 하나 나오면 그 작업의 품목이 본인 품목이 된다. 여럿이면(호기 묶음) 작업마다 고른다.
+- 지금 운영 작업 360개는 지정 없이 본인 세트를 그대로 쓴다 — 조회 결과는 전과 같다.
+
+**성적서 칸 고치기(추가)** — OCR 오독을 화면에서 바로잡는다.
+
+- `ReportService.UpdateReportField(table, row_id, column, value)`: 칸 하나를 고친다. 값은 그 행에 바로 들어가 `GetReportSet` · `ListQualityResults`에 나온다.
+  - `table`: 세트 OCR 값은 `report_set`(row_id = report_set_id), 섹션은 `Section.table`(새, 6), 배열 행은 `Section.table + '_' + 배열 키`(예: `ndt_inspection_ut_joints`).
+  - `row_id`: `Section.fields`의 `id`(새로 들어감 — 배열 행에도 있다).
+  - `value`: 칸 형식대로(숫자 `12.5`, 날짜 `2026-10-26`, 배열 `{a,b}`, JSON 칸은 JSON 글). 비우면 지워진다.
+  - 못 고치는 칸(`id` · `*_id` · `created_at` · `updated_at` · `page_start` · `page_end` · `common_key`), 형식 틀림 → InvalidArgument. 없는 행 → NotFound.
+- 고치기 전 값은 확인 목록(`GetReportSet.reviews`)에 한 줄로 남는다 — `reason = REVIEW_REASON_MANUAL`(새), `value` = 전 값, `corrected_value` = 새 값.
+  확인 목록의 칸을 고치는 것이면 `review_id`를 주어 그 줄을 보정으로 표시한다(새 줄 없음).
+- `ResolveReview`는 그대로다 — 확인 표시와 보정 기록만 남고 세트 값은 바꾸지 않는다. 값을 바꾸려면 `UpdateReportField`(+ `review_id`).
+- 고치는 것은 그 칸 하나뿐이다. 품목 여럿을 묶은 문서(표면처리 · 도장)는 그 문서를 가리키는 다른 세트에도 같은 값이 보인다.
+
+## 2026-10-26에 바뀐 것 — 이어 올리기
+
+proto 그대로(HTTP 주소만 추가). 지금의 multipart 업로드는 그대로 동작한다 — 화면이 서두를 필요는 없다.
+
+- 큰 파일 · 외부망용으로 파일을 조각내 보내고 끊긴 데부터 잇는 `/uploads`(tus 1.0)를 열었다. 화면은 `tus-js-client`(MIT, v4 이상)를 쓰면 된다.
+- **마지막 조각을 받으면 서버가 바로 등록**하고 그 응답에 multipart와 같은 결과를 준다 — 등록을 따로 부르지 않는다.
+- metadata는 시작할 때 `Upload-Metadata`의 `metadata`(JSON)로 보낸다. 없는 작업 등은 시작할 때, 실행 파일 · `timeOrigin` 없는 영상은 첫 조각에서 거절한다(12GB를 다 올린 뒤가 아니라).
+- 마지막 응답을 못 받았거나 등록이 실패했을 때만 `POST /assets`에 JSON `{"uploadId", ...}`.
+- 여러 파일은 파일마다 따로 올린다(동시에 2~3개). 대기열은 화면이 관리한다. metadata는 파일마다 — 공통 기본값(`jobId` · `passId` · `equipmentId` · `subject` · `situation`)은 화면이 들고 파일별로 고쳐 보낸다. `timeOrigin`은 파일마다 다르다.
+- 묶음 확정(함께 등록)은 요구가 생기면 더한다 — 그때도 되는 것만 등록하고 실패는 이유와 함께 돌려준다.
+- 업로드 진행률 → 등록 → 후처리(`GetRun`)를 파일마다 상태 하나로 이어 보이는 법은 §4.4(상태표 · 예시). 후처리는 센서 · 영상 0~8초, 성적서 PDF 15~20분.
+- 주소 · 실패 처리 · 예시 코드는 `공사·작업·패스 관리와 업로드 안내.md` §4.3 · §4.4.
+
 ## 2026-10-26에 바뀐 것
 
 2026-10-26 09:00 운영 적용됨. 추가만(asset.proto).
@@ -82,7 +142,6 @@
   ```json
   {"asset": {"assetId": "128", "subject": "루트 패스", "situation": ""}, "updateMask": "subject,situation"}
   ```
-- 여러 파일 올리기는 파일마다 `POST /assets`를 한 번씩 부른다(동시에 보내도 된다). 파일마다 `timeOrigin`이 달라서 metadata도 파일마다 따로 보낸다.
 
 ## 2026-10-22에 바뀐 것 — 상대 시각 센서
 
