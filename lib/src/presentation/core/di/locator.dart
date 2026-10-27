@@ -101,6 +101,7 @@ import '../../../domain/use_cases/update_track_use_case.dart';
 import '../../../domain/use_cases/list_quality_job_media_use_case.dart';
 import '../../../domain/use_cases/list_quality_results_use_case.dart';
 import '../../../domain/use_cases/list_report_sets_use_case.dart';
+import '../../../domain/use_cases/update_report_field_use_case.dart';
 import '../../../domain/use_cases/load_catalog_use_case.dart';
 import '../../../domain/use_cases/load_collection_catalog_use_case.dart';
 import '../../../domain/use_cases/list_comparison_jobs_use_case.dart';
@@ -398,6 +399,7 @@ void setupLocator({required bool pdfrxReady}) {
   );
   locator.registerLazySingleton(() => ListReportSetsUseCase(locator()));
   locator.registerLazySingleton(() => GetReportSetUseCase(locator()));
+  locator.registerLazySingleton(() => UpdateReportFieldUseCase(locator()));
   locator.registerFactory(() => QueryQualityIssueUseCase());
   locator.registerFactory(() => ResolveLatestPassProfileUseCase());
   locator.registerFactory(() => ResolveLatestQualityIssueUseCase());
@@ -407,6 +409,8 @@ void setupLocator({required bool pdfrxReady}) {
       queryWorkDetailUseCase: locator(),
       listReportSetsUseCase: locator(),
       getReportSetUseCase: locator(),
+      jobAdminUseCase: locator(),
+      updateReportFieldUseCase: locator(),
       jobId: jobId,
     ),
   );

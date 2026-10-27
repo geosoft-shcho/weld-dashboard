@@ -9,6 +9,12 @@ abstract class JobAdminRepository {
     required JobEditDraft draft,
   });
 
+  /// 성적서 세트 지정. [reportSetId]가 비거나 '0'이면 풀기(본인 세트).
+  Future<JobDetail> updateJobReportSet({
+    required String jobId,
+    required String reportSetId,
+  });
+
   Future<void> deleteJob({required String jobId});
 
   Future<void> createPass({

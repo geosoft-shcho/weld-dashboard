@@ -34,6 +34,24 @@ class RemoteReportSetRepository implements ReportSetRepository {
   }
 
   @override
+  Future<List<ReportSetSummary>> listByCommonKey(String commonKey) async {
+    if (commonKey.isEmpty) {
+      return const [];
+    }
+    try {
+      final response = await _mediaTag.reportService.listReportSets(
+        report_pb.ListReportSetsRequest(commonKey: commonKey),
+      );
+      return [for (final set in response.reportSets) _summaryFrom(set)];
+    } on ConnectException catch (error) {
+      if (error.code == Code.notFound) {
+        throw const ReportSetNotFoundException();
+      }
+      rethrow;
+    }
+  }
+
+  @override
   Future<ReportSetDetail> getSet(String reportSetId) async {
     if (reportSetId.isEmpty) {
       throw const ReportSetNotFoundException();
@@ -50,6 +68,35 @@ class RemoteReportSetRepository implements ReportSetRepository {
       reviews: [for (final review in response.reviews) _reviewFrom(review)],
       pdfUrl: await _resolveSplitPdfUrl(set),
     );
+  }
+
+  @override
+  Future<ReportReviewRow> updateField({
+    required String table,
+    required String rowId,
+    required String column,
+    required String value,
+    String reviewId = '',
+  }) async {
+    final row = protoIdOrNull(rowId);
+    if (row == null) {
+      throw ArgumentError('행 번호가 없습니다.');
+    }
+    final request = report_pb.UpdateReportFieldRequest(
+      table: table,
+      rowId: row,
+      column: column,
+      correctedBy: 'human',
+    );
+    if (value.isNotEmpty) {
+      request.value = value;
+    }
+    final review = protoIdOrNull(reviewId);
+    if (review != null) {
+      request.reviewId = review;
+    }
+    final response = await _mediaTag.reportService.updateReportField(request);
+    return _reviewFrom(response.review);
   }
 
   Future<report_pb.GetReportSetResponse> _loadSet(String reportSetId) async {
@@ -79,13 +126,13 @@ class RemoteReportSetRepository implements ReportSetRepository {
     return ReportSetSummary(
       reportSetId: idText(set.reportSetId),
       commonKey: set.commonKey,
-      jobId: idText(set.jobId),
       itemName: set.itemName,
       unitNo: set.unitNo,
       projectNo: set.projectNo,
       pageStart: set.hasPageStart() ? set.pageStart : null,
       pageEnd: set.hasPageEnd() ? set.pageEnd : null,
       reviewCount: set.reviewCount,
+      splitAssetId: idText(set.splitAssetId),
       sections: [
         for (final section in set.sections)
           ReportSectionSummary(
@@ -100,22 +147,35 @@ class RemoteReportSetRepository implements ReportSetRepository {
 
   ReportSectionBody _sectionFrom(report_pb.Section section, int? setPageStart) {
     final originalPageStart = section.hasPageStart() ? section.pageStart : null;
+    final rowId = _structId(section.fields);
     return ReportSectionBody(
       kindLabel: _kindLabel(section.kind),
+      table: section.table,
       originalPageStart: originalPageStart,
       originalPageEnd: section.hasPageEnd() ? section.pageEnd : null,
       splitPageStart: _splitPage(originalPageStart, setPageStart),
-      fields: _fieldLines(section.fields),
+      fields: _fieldLines(section.fields, rowId),
     );
   }
 
   ReportReviewRow _reviewFrom(report_pb.ReviewItem review) {
     return ReportReviewRow(
+      id: idText(review.id),
       field: review.field_3,
+      columnName: review.columnName,
       value: review.hasValue() ? review.value : '',
       raw: review.raw,
       reason: _reasonLabel(review.reason),
+      correctedValue: review.hasCorrectedValue() ? review.correctedValue : '',
     );
+  }
+
+  String _structId(Struct struct) {
+    final id = struct.fields['id'];
+    if (id == null) {
+      return '';
+    }
+    return _scalarText(id, id.whichKind());
   }
 
   int? _splitPage(int? originalPage, int? setPageStart) {
@@ -126,41 +186,62 @@ class RemoteReportSetRepository implements ReportSetRepository {
     return page < 1 ? 1 : page;
   }
 
-  List<ReportFieldLine> _fieldLines(Struct struct) {
+  List<ReportFieldLine> _fieldLines(Struct struct, String rowId) {
     final lines = <ReportFieldLine>[];
-    _appendFields(struct, '', lines);
+    _appendFields(struct, '', rowId, lines);
     return lines;
   }
 
   void _appendFields(
     Struct struct,
     String prefix,
+    String rowId,
     List<ReportFieldLine> lines,
   ) {
     for (final entry in struct.fields.entries) {
+      if (entry.key == 'id') {
+        continue;
+      }
       final key = prefix.isEmpty ? entry.key : '$prefix.${entry.key}';
-      _appendValue(key, entry.value, lines);
+      _appendValue(key, entry.value, rowId, lines);
     }
   }
 
-  void _appendValue(String key, Value value, List<ReportFieldLine> lines) {
+  void _appendValue(
+    String key,
+    Value value,
+    String rowId,
+    List<ReportFieldLine> lines,
+  ) {
     final kind = value.whichKind();
     if (kind == Value_Kind.structValue) {
-      _appendFields(value.structValue, key, lines);
+      final nestedId = _structId(value.structValue);
+      _appendFields(
+        value.structValue,
+        key,
+        nestedId.isEmpty ? rowId : nestedId,
+        lines,
+      );
       return;
     }
     if (kind == Value_Kind.listValue) {
       final items = value.listValue.values;
       if (items.isEmpty) {
-        lines.add(ReportFieldLine(key: key, value: ''));
+        lines.add(ReportFieldLine(key: key, value: '', rowId: rowId));
         return;
       }
       for (var index = 0; index < items.length; index++) {
-        _appendValue('$key[$index]', items[index], lines);
+        _appendValue('$key[$index]', items[index], rowId, lines);
       }
       return;
     }
-    lines.add(ReportFieldLine(key: key, value: _scalarText(value, kind)));
+    lines.add(
+      ReportFieldLine(
+        key: key,
+        value: _scalarText(value, kind),
+        rowId: rowId,
+      ),
+    );
   }
 
   String _scalarText(Value value, Value_Kind kind) {
@@ -213,6 +294,9 @@ class RemoteReportSetRepository implements ReportSetRepository {
     }
     if (reason == ReviewReason.REVIEW_REASON_UNREADABLE) {
       return '읽지 못함';
+    }
+    if (reason == ReviewReason.REVIEW_REASON_MANUAL) {
+      return '직접 수정';
     }
     return '';
   }

@@ -1,3 +1,5 @@
+import 'package:fixnum/fixnum.dart';
+
 import '../../domain/entities/job_detail.dart';
 import '../../domain/repositories/job_admin_repository.dart';
 import '../datasources/generated/google/protobuf/field_mask.pb.dart';
@@ -44,7 +46,9 @@ class RemoteJobAdminRepository implements JobAdminRepository {
           ? job.startedAt.toDateTime().toLocal()
           : null,
       endedAt: job.hasEndedAt() ? job.endedAt.toDateTime().toLocal() : null,
-      hasReport: false,
+      reportSetId: idText(job.reportSetId),
+      activeReportSetId: idText(job.activeReportSetId),
+      hasReport: idText(job.activeReportSetId).isNotEmpty,
       attachmentCount: attachments.totalCount,
       passes: [
         for (final pass in response.passes)
@@ -100,6 +104,25 @@ class RemoteJobAdminRepository implements JobAdminRepository {
       ),
     );
     return getJobDetail(jobId: original.jobId);
+  }
+
+  @override
+  Future<JobDetail> updateJobReportSet({
+    required String jobId,
+    required String reportSetId,
+  }) async {
+    final id = protoIdOrNull(jobId);
+    if (id == null) {
+      throw ArgumentError('작업 번호가 없습니다.');
+    }
+    final setId = protoIdOrNull(reportSetId) ?? Int64.ZERO;
+    await _mediaTag.workService.updateJob(
+      work_pb.UpdateJobRequest(
+        job: work_pb.Job(jobId: id, reportSetId: setId),
+        updateMask: FieldMask(paths: const ['report_set_id']),
+      ),
+    );
+    return getJobDetail(jobId: jobId);
   }
 
   @override

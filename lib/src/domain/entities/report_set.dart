@@ -2,28 +2,29 @@ class ReportSetSummary {
   const ReportSetSummary({
     required this.reportSetId,
     required this.commonKey,
-    required this.jobId,
     required this.itemName,
     required this.unitNo,
     required this.projectNo,
     required this.pageStart,
     required this.pageEnd,
     required this.reviewCount,
+    required this.splitAssetId,
     required this.sections,
   });
 
   final String reportSetId;
   final String commonKey;
-  final String jobId;
   final String itemName;
   final String unitNo;
   final String projectNo;
   final int? pageStart;
   final int? pageEnd;
   final int reviewCount;
+  final String splitAssetId;
   final List<ReportSectionSummary> sections;
 
-  bool get isUnmatched => jobId.isEmpty && commonKey.isEmpty;
+  /// 본인 품목이 없으면 작업이 세트를 지정해야 쓴다.
+  bool get isUnmatched => commonKey.isEmpty;
 }
 
 class ReportSectionSummary {
@@ -57,6 +58,7 @@ class ReportSetDetail {
 class ReportSectionBody {
   const ReportSectionBody({
     required this.kindLabel,
+    required this.table,
     required this.originalPageStart,
     required this.originalPageEnd,
     required this.splitPageStart,
@@ -64,6 +66,7 @@ class ReportSectionBody {
   });
 
   final String kindLabel;
+  final String table;
   final int? originalPageStart;
   final int? originalPageEnd;
   final int? splitPageStart;
@@ -71,24 +74,35 @@ class ReportSectionBody {
 }
 
 class ReportFieldLine {
-  const ReportFieldLine({required this.key, required this.value});
+  const ReportFieldLine({
+    required this.key,
+    required this.value,
+    this.rowId = '',
+  });
 
   final String key;
   final String value;
+  final String rowId;
 }
 
 class ReportReviewRow {
   const ReportReviewRow({
+    required this.id,
     required this.field,
+    required this.columnName,
     required this.value,
     required this.raw,
     required this.reason,
+    this.correctedValue = '',
   });
 
+  final String id;
   final String field;
+  final String columnName;
   final String value;
   final String raw;
   final String reason;
+  final String correctedValue;
 }
 
 class ReportSetNotFoundException implements Exception {

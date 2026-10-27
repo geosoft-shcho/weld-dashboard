@@ -20,31 +20,84 @@ class WorkDetailReportPanel extends StatelessWidget {
         severity: InfoBarSeverity.error,
       );
     }
-    if (viewModel.reportSets.isEmpty) {
-      return const InfoBar(
-        title: Text('성적서가 없습니다'),
-        severity: InfoBarSeverity.info,
-      );
-    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SizedBox(
-          height: 132,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: [
-              for (final set in viewModel.reportSets)
-                _SetCard(
-                  summary: set,
-                  isSelected: set.reportSetId == viewModel.selectedReportSetId,
-                  onSelect: () => viewModel.didSelectReportSet(set.reportSetId),
-                ),
-            ],
+        _AssignBar(viewModel: viewModel),
+        const SizedBox(height: 8),
+        if (viewModel.reportSets.isEmpty)
+          const InfoBar(
+            title: Text('이 작업이 쓰는 성적서가 없습니다'),
+            content: Text('아래에서 품목 세트를 고르거나, 성적서 PDF를 올려 주세요.'),
+            severity: InfoBarSeverity.info,
+          )
+        else
+          SizedBox(
+            height: 120,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              children: [
+                for (final set in viewModel.reportSets)
+                  _SetCard(
+                    summary: set,
+                    isSelected: set.reportSetId == viewModel.selectedReportSetId,
+                    onSelect: () =>
+                        viewModel.didSelectReportSet(set.reportSetId),
+                  ),
+              ],
+            ),
           ),
-        ),
         const SizedBox(height: 12),
         Expanded(child: _SetBody(viewModel: viewModel)),
+      ],
+    );
+  }
+}
+
+class _AssignBar extends StatelessWidget {
+  const _AssignBar({required this.viewModel});
+
+  final WorkDetailViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final busy = viewModel.isReportAssigning;
+    final candidates = viewModel.reportCandidates;
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        const Text('성적서 세트', style: TextStyle(fontSize: 12)),
+        ComboBox<String>(
+          placeholder: const Text('품목 세트 고르기'),
+          isExpanded: false,
+          items: [
+            for (final set in candidates)
+              ComboBoxItem(
+                value: set.reportSetId,
+                child: Text(
+                  [
+                    set.reportSetId,
+                    set.isUnmatched ? '본인 품목 없음' : set.commonKey,
+                    set.itemName,
+                  ].where((t) => t.isNotEmpty).join(' · '),
+                ),
+              ),
+          ],
+          onChanged: busy || candidates.isEmpty
+              ? null
+              : (value) {
+                  if (value != null) {
+                    viewModel.didAssignReportSet(value);
+                  }
+                },
+        ),
+        Button(
+          onPressed: busy ? null : () => viewModel.didClearReportSet(),
+          child: const Text('지정 풀기'),
+        ),
+        if (busy) const SizedBox(width: 16, height: 16, child: ProgressRing()),
       ],
     );
   }
@@ -80,12 +133,13 @@ class _SetCard extends StatelessWidget {
             child: Text(
               [
                 summary.reportSetId,
-                summary.isUnmatched ? '미매칭' : summary.commonKey,
+                summary.isUnmatched ? '본인 품목 없음' : summary.commonKey,
                 summary.itemName,
                 '호기 ${summary.unitNo}',
                 '공사 ${summary.projectNo}',
                 if (pages.isNotEmpty) '쪽 $pages',
                 '확인 ${summary.reviewCount}',
+                if (summary.splitAssetId.isNotEmpty) 'PDF 있음',
                 [
                   for (final section in summary.sections)
                     if (section.kindLabel.isNotEmpty ||
@@ -135,6 +189,13 @@ class _SetBody extends StatelessWidget {
         final body = _SectionAndReviews(
           detail: detail,
           onSelectSection: viewModel.didSelectReportSection,
+          onEditReview: (review, value) => viewModel.didUpdateReportField(
+            table: _tableOf(review.columnName),
+            rowId: _rowIdOf(review, detail),
+            column: _columnOf(review.columnName),
+            value: value,
+            reviewId: review.id,
+          ),
         );
         final pdf = _SplitPdf(
           pdfUrl: detail.pdfUrl,
@@ -166,10 +227,12 @@ class _SectionAndReviews extends StatelessWidget {
   const _SectionAndReviews({
     required this.detail,
     required this.onSelectSection,
+    required this.onEditReview,
   });
 
   final ReportSetDetail detail;
   final ValueChanged<int?> onSelectSection;
+  final Future<void> Function(ReportReviewRow review, String value) onEditReview;
 
   @override
   Widget build(BuildContext context) {
@@ -185,6 +248,7 @@ class _SectionAndReviews extends StatelessWidget {
               child: Text(
                 [
                   section.kindLabel,
+                  if (section.table.isNotEmpty) section.table,
                   _pageLabel(section),
                 ].where((line) => line.isNotEmpty).join(' · '),
               ),
@@ -199,6 +263,11 @@ class _SectionAndReviews extends StatelessWidget {
           const SizedBox(height: 12),
         ],
         const Text('확인 목록', style: TextStyle(fontWeight: FontWeight.w600)),
+        const SizedBox(height: 4),
+        const Text(
+          '값을 바꾸려면 행의 [고치기]를 씁니다. 확인만 하면 세트 값은 안 바뀝니다.',
+          style: TextStyle(fontSize: 12),
+        ),
         const SizedBox(height: 6),
         if (detail.reviews.isEmpty)
           const Text('확인 목록이 없습니다')
@@ -209,9 +278,10 @@ class _SectionAndReviews extends StatelessWidget {
             ),
             columnWidths: const {
               0: FlexColumnWidth(1.4),
-              1: FlexColumnWidth(1.6),
-              2: FlexColumnWidth(1.6),
-              3: FlexColumnWidth(1.2),
+              1: FlexColumnWidth(1.4),
+              2: FlexColumnWidth(1.4),
+              3: FlexColumnWidth(1.0),
+              4: FlexColumnWidth(0.8),
             },
             children: [
               const TableRow(
@@ -220,21 +290,65 @@ class _SectionAndReviews extends StatelessWidget {
                   _Cell('값', isHeader: true),
                   _Cell('원문', isHeader: true),
                   _Cell('이유', isHeader: true),
+                  _Cell('', isHeader: true),
                 ],
               ),
               for (final review in detail.reviews)
                 TableRow(
                   children: [
                     _Cell(review.field),
-                    _Cell(review.value),
+                    _Cell(
+                      review.correctedValue.isEmpty
+                          ? review.value
+                          : '${review.value} → ${review.correctedValue}',
+                    ),
                     _Cell(review.raw),
                     _Cell(review.reason),
+                    Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Button(
+                        onPressed: () => _editReview(context, review),
+                        child: const Text('고치기'),
+                      ),
+                    ),
                   ],
                 ),
             ],
           ),
       ],
     );
+  }
+
+  Future<void> _editReview(BuildContext context, ReportReviewRow review) async {
+    final controller = TextEditingController(
+      text: review.correctedValue.isEmpty ? review.value : review.correctedValue,
+    );
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => ContentDialog(
+        title: Text('${review.field} 고치기'),
+        content: InfoLabel(
+          label: '새 값',
+          child: TextBox(controller: controller),
+        ),
+        actions: [
+          Button(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('저장'),
+          ),
+        ],
+      ),
+    );
+    final value = controller.text.trim();
+    controller.dispose();
+    if (ok != true) {
+      return;
+    }
+    await onEditReview(review, value);
   }
 }
 
@@ -313,4 +427,41 @@ String _pageLabel(ReportSectionBody section) {
     return 'PDF $split쪽';
   }
   return '원본 $original쪽 · PDF $split쪽';
+}
+
+String _tableOf(String columnName) {
+  final dot = columnName.indexOf('.');
+  if (dot <= 0) {
+    return 'report_set';
+  }
+  return columnName.substring(0, dot);
+}
+
+String _columnOf(String columnName) {
+  final dot = columnName.indexOf('.');
+  if (dot < 0 || dot >= columnName.length - 1) {
+    return columnName;
+  }
+  return columnName.substring(dot + 1);
+}
+
+String _rowIdOf(ReportReviewRow review, ReportSetDetail detail) {
+  final table = _tableOf(review.columnName);
+  if (table == 'report_set') {
+    return detail.summary.reportSetId;
+  }
+  for (final section in detail.sections) {
+    if (section.table == table) {
+      for (final field in section.fields) {
+        if (field.key == _columnOf(review.columnName) &&
+            field.rowId.isNotEmpty) {
+          return field.rowId;
+        }
+      }
+      if (section.fields.isNotEmpty && section.fields.first.rowId.isNotEmpty) {
+        return section.fields.first.rowId;
+      }
+    }
+  }
+  return detail.summary.reportSetId;
 }

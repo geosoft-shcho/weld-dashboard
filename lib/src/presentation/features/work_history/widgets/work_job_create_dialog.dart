@@ -207,9 +207,12 @@ class _WorkJobCreateDialogState extends State<_WorkJobCreateDialog> {
       if (mounted) Navigator.of(context).pop();
     } catch (error) {
       if (mounted) {
+        final text = error.toString();
         setState(() {
           _isCreating = false;
-          _error = error.toString();
+          _error = text.contains('item_name') || text.contains('InvalidArgument')
+              ? '품목 이름이 이미 배정된 이름과 다릅니다. 공사에서 품목 이름을 고치세요(UpdateProjectItem).'
+              : text;
         });
       }
     }

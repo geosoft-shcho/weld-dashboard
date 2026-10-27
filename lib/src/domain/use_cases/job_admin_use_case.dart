@@ -18,6 +18,16 @@ class JobAdminUseCase {
     return _repository.updateJob(original: original, draft: draft);
   }
 
+  Future<JobDetail> updateJobReportSet({
+    required String jobId,
+    required String reportSetId,
+  }) {
+    return _repository.updateJobReportSet(
+      jobId: jobId,
+      reportSetId: reportSetId,
+    );
+  }
+
   Future<void> deleteJob({required String jobId}) {
     return _repository.deleteJob(jobId: jobId);
   }

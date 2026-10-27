@@ -9,9 +9,11 @@ import '../../../domain/entities/work_detail.dart';
 import '../../../domain/entities/work_detail_catalog.dart';
 import '../../../domain/entities/work_detail_tab.dart';
 import '../../../domain/use_cases/get_report_set_use_case.dart';
+import '../../../domain/use_cases/job_admin_use_case.dart';
 import '../../../domain/use_cases/list_report_sets_use_case.dart';
 import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
 import '../../../domain/use_cases/query_work_detail_use_case.dart';
+import '../../../domain/use_cases/update_report_field_use_case.dart';
 
 class WorkDetailViewModel extends ChangeNotifier {
   WorkDetailViewModel({
@@ -19,11 +21,15 @@ class WorkDetailViewModel extends ChangeNotifier {
     required QueryWorkDetailUseCase queryWorkDetailUseCase,
     required ListReportSetsUseCase listReportSetsUseCase,
     required GetReportSetUseCase getReportSetUseCase,
+    required JobAdminUseCase jobAdminUseCase,
+    required UpdateReportFieldUseCase updateReportFieldUseCase,
     required this.jobId,
   }) : _loadWorkDetailCatalogUseCase = loadWorkDetailCatalogUseCase,
        _queryWorkDetailUseCase = queryWorkDetailUseCase,
        _listReportSetsUseCase = listReportSetsUseCase,
-       _getReportSetUseCase = getReportSetUseCase;
+       _getReportSetUseCase = getReportSetUseCase,
+       _jobAdminUseCase = jobAdminUseCase,
+       _updateReportFieldUseCase = updateReportFieldUseCase;
 
   static const int VIDEO_DURATION_SECONDS = 12;
   static const int AUDIO_DURATION_SECONDS = 41;
@@ -33,6 +39,8 @@ class WorkDetailViewModel extends ChangeNotifier {
   final QueryWorkDetailUseCase _queryWorkDetailUseCase;
   final ListReportSetsUseCase _listReportSetsUseCase;
   final GetReportSetUseCase _getReportSetUseCase;
+  final JobAdminUseCase _jobAdminUseCase;
+  final UpdateReportFieldUseCase _updateReportFieldUseCase;
   final String jobId;
 
   WorkDetailCatalog? _catalog;
@@ -43,12 +51,14 @@ class WorkDetailViewModel extends ChangeNotifier {
   bool _hasError = false;
   String _errorMessage = '';
   List<ReportSetSummary> _reportSets = const [];
+  List<ReportSetSummary> _reportCandidates = const [];
   ReportSetDetail? _reportDetail;
   String _selectedReportSetId = '';
   int? _reportPdfPage;
   String _reportError = '';
   String _reportDetailError = '';
   bool _isReportDetailLoading = false;
+  bool _isReportAssigning = false;
   bool _isPlaying = false;
   double _positionSeconds = 0;
   int _pdfPageNumber = 1;
@@ -59,12 +69,14 @@ class WorkDetailViewModel extends ChangeNotifier {
   WorkDetailTab get selectedTab => _selectedTab;
   int get selectedFileIndex => _selectedFileIndex;
   List<ReportSetSummary> get reportSets => _reportSets;
+  List<ReportSetSummary> get reportCandidates => _reportCandidates;
   ReportSetDetail? get reportDetail => _reportDetail;
   String get selectedReportSetId => _selectedReportSetId;
   int? get reportPdfPage => _reportPdfPage;
   String get reportError => _reportError;
   String get reportDetailError => _reportDetailError;
   bool get isReportDetailLoading => _isReportDetailLoading;
+  bool get isReportAssigning => _isReportAssigning;
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
@@ -128,12 +140,71 @@ class WorkDetailViewModel extends ChangeNotifier {
     }
     try {
       _reportSets = await _listReportSetsUseCase.execute(jobId: jobId);
+      final commonKey = _detail?.job?.commonKey ?? '';
+      _reportCandidates = commonKey.isEmpty
+          ? const []
+          : await _listReportSetsUseCase.byCommonKey(commonKey: commonKey);
+      if (_reportSets.isNotEmpty) {
+        await didSelectReportSet(_reportSets.first.reportSetId);
+      }
     } catch (error) {
       _reportError = error.toString();
       _reportSets = const [];
+      _reportCandidates = const [];
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// 작업이 쓸 성적서 세트를 지정한다(UpdateJob report_set_id).
+  Future<void> didAssignReportSet(String reportSetId) async {
+    if (reportSetId.isEmpty || _isReportAssigning) {
+      return;
+    }
+    _isReportAssigning = true;
+    _reportError = '';
+    notifyListeners();
+    try {
+      await _jobAdminUseCase.updateJobReportSet(
+        jobId: jobId,
+        reportSetId: reportSetId,
+      );
+      _reportSets = await _listReportSetsUseCase.execute(jobId: jobId);
+      if (_reportSets.isNotEmpty) {
+        await didSelectReportSet(_reportSets.first.reportSetId);
+      } else {
+        _selectedReportSetId = '';
+        _reportDetail = null;
+      }
+    } catch (error) {
+      _reportError = error.toString();
+    } finally {
+      _isReportAssigning = false;
+      notifyListeners();
+    }
+  }
+
+  /// 지정 풀기(report_set_id = 0) → 본인 세트.
+  Future<void> didClearReportSet() => didAssignReportSet('0');
+
+  Future<void> didUpdateReportField({
+    required String table,
+    required String rowId,
+    required String column,
+    required String value,
+    String reviewId = '',
+  }) async {
+    await _updateReportFieldUseCase.execute(
+      table: table,
+      rowId: rowId,
+      column: column,
+      value: value,
+      reviewId: reviewId,
+    );
+    final selected = _selectedReportSetId;
+    if (selected.isNotEmpty) {
+      await didSelectReportSet(selected);
     }
   }
 
