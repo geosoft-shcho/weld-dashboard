@@ -176,6 +176,22 @@ function extractNumberedItems(text) {
   return items;
 }
 
+/** `- 제목 — 설명` 형태 불릿 */
+function extractBulletItems(text) {
+  const items = [];
+  for (const line of text.split('\n')) {
+    const m = /^\s*[-*]\s+(.+)$/.exec(line);
+    if (!m) continue;
+    const raw = stripMd(m[1]);
+    const parts = raw.split(/\s+[—–-]\s+/);
+    items.push({
+      title: parts[0].trim(),
+      detail: parts.slice(1).join(' — ').trim(),
+    });
+  }
+  return items;
+}
+
 function addPageBadge(slide, pres, theme, page) {
   slide.addShape(pres.shapes.OVAL, {
     x: 9.3,
@@ -199,10 +215,12 @@ function addPageBadge(slide, pres, theme, page) {
   });
 }
 
-/** 텍스트 전용 슬라이드: 목차 · 전체 순서 · 끝으로 */
+/** 텍스트 전용 슬라이드: 개요 · 목차 · 전체 순서 · 끝으로 */
 function renderTextSlide(slide, pres, theme, section, body, paras) {
   const items = extractNumberedItems(body);
+  const bullets = extractBulletItems(body);
   const title = section.title;
+  const isOverview = title === '개요';
   const isToc = title === '목차';
   const isFlow = /전체\s*순서/.test(title);
   const isClose = title === '끝으로';
@@ -227,6 +245,41 @@ function renderTextSlide(slide, pres, theme, section, body, paras) {
     h: 0.05,
     fill: { color: theme.accent },
   });
+
+  if (isOverview && bullets.length) {
+    const rowH = Math.min(0.7, 3.8 / bullets.length);
+    bullets.forEach((it, i) => {
+      const y = 0.85 + i * rowH;
+      slide.addShape(pres.shapes.ROUNDED_RECTANGLE, {
+        x: 0.4,
+        y,
+        w: 9.2,
+        h: rowH - 0.1,
+        fill: { color: i % 2 === 0 ? 'FFFFFF' : 'EEF6F4' },
+        rectRadius: 0.06,
+      });
+      slide.addShape(pres.shapes.OVAL, {
+        x: 0.58,
+        y: y + (rowH - 0.1) / 2 - 0.1,
+        w: 0.2,
+        h: 0.2,
+        fill: { color: theme.accent },
+      });
+      const label = it.detail ? `${it.title} — ${it.detail}` : it.title;
+      slide.addText(label, {
+        x: 1.0,
+        y,
+        w: 8.4,
+        h: rowH - 0.1,
+        fontSize: 14,
+        fontFace: 'Arial',
+        color: theme.primary,
+        valign: 'middle',
+        margin: 0,
+      });
+    });
+    return;
+  }
 
   if (isToc && items.length) {
     // 1단 목차 — 제목 + 상세, 글자 축소
@@ -598,10 +651,11 @@ async function buildPptx(markdown) {
     const hasNotes = table.length > 0;
     const textOnly = !hasImg && !hasNotes;
 
-    // 목차 · 전체 순서 · 끝으로 등 텍스트 전용
+    // 개요 · 목차 · 전체 순서 · 끝으로 등 텍스트 전용
     if (
       textOnly &&
-      (section.title === '목차' ||
+      (section.title === '개요' ||
+        section.title === '목차' ||
         section.title === '끝으로' ||
         /전체\s*순서/.test(section.title) ||
         numbered.length > 0)
