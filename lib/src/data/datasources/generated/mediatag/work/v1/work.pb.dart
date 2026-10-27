@@ -374,6 +374,8 @@ class Job extends $pb.GeneratedMessage {
     $fixnum.Int64? projectId,
     $core.String? jobName,
     $fixnum.Int64? projectItemId,
+    $fixnum.Int64? reportSetId,
+    $fixnum.Int64? activeReportSetId,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
@@ -395,6 +397,8 @@ class Job extends $pb.GeneratedMessage {
     if (projectId != null) result.projectId = projectId;
     if (jobName != null) result.jobName = jobName;
     if (projectItemId != null) result.projectItemId = projectItemId;
+    if (reportSetId != null) result.reportSetId = reportSetId;
+    if (activeReportSetId != null) result.activeReportSetId = activeReportSetId;
     return result;
   }
 
@@ -435,6 +439,8 @@ class Job extends $pb.GeneratedMessage {
     ..aInt64(18, _omitFieldNames ? '' : 'projectId')
     ..aOS(19, _omitFieldNames ? '' : 'jobName')
     ..aInt64(20, _omitFieldNames ? '' : 'projectItemId')
+    ..aInt64(21, _omitFieldNames ? '' : 'reportSetId')
+    ..aInt64(22, _omitFieldNames ? '' : 'activeReportSetId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -637,6 +643,27 @@ class Job extends $pb.GeneratedMessage {
   $core.bool hasProjectItemId() => $_has(18);
   @$pb.TagNumber(20)
   void clearProjectItemId() => $_clearField(20);
+
+  /// 이 작업이 고른 성적서 세트(지정). 0이면 지정하지 않음 — 본인 세트(세트의 common_key가 이 작업의 common_key와 같은 것,
+  /// 여럿이면 가장 최근)를 쓴다. 고칠 때는 UpdateJob(update_mask: report_set_id), 0을 보내면 지정을 푼다.
+  @$pb.TagNumber(21)
+  $fixnum.Int64 get reportSetId => $_getI64(19);
+  @$pb.TagNumber(21)
+  set reportSetId($fixnum.Int64 value) => $_setInt64(19, value);
+  @$pb.TagNumber(21)
+  $core.bool hasReportSetId() => $_has(19);
+  @$pb.TagNumber(21)
+  void clearReportSetId() => $_clearField(21);
+
+  /// 실제로 쓰는 세트(지정한 세트, 없으면 본인 세트). 읽기 전용, 없으면 0. ListReportSets(job_id) · ListQualityResults(job_id)가 이 세트다
+  @$pb.TagNumber(22)
+  $fixnum.Int64 get activeReportSetId => $_getI64(20);
+  @$pb.TagNumber(22)
+  set activeReportSetId($fixnum.Int64 value) => $_setInt64(20, value);
+  @$pb.TagNumber(22)
+  $core.bool hasActiveReportSetId() => $_has(20);
+  @$pb.TagNumber(22)
+  void clearActiveReportSetId() => $_clearField(22);
 }
 
 /// 공사·호기에 배정한 품목 한 줄. (project_id, unit_no, item_code)가 유일하다. 이름은 배정 줄마다 따로 둔다.
@@ -6486,19 +6513,22 @@ class WorkServiceApi {
   /// 작업을 만든다. 필수: job.project_no(또는 project_id)·unit_no·item_code(공백 없이, 정규화된 값 — '05'·'TFPB')·joint_no·started_at, 그리고 item_name(이미 배정된 품목이면 안 줘도 되고, 줘도 저장된 이름을 따른다).
   /// job_id·job_key·common_key는 서버가 정하고 보낸 값은 무시한다. 공사·작업자가 없으면 InvalidArgument.
   /// passes를 주면 패스도 함께 만든다 — 하나라도 틀리면 작업도 만들어지지 않는다. 나중에 더할 때는 CreatePass.
+  /// 빈 타임라인(DRAFT)도 함께 만든다 — 만든 뒤 바로 MediaComposeService로 편집한다.
   $async.Future<CreateJobResponse> createJob(
           $pb.ClientContext? ctx, CreateJobRequest request) =>
       _client.invoke<CreateJobResponse>(
           ctx, 'WorkService', 'CreateJob', request, CreateJobResponse());
 
   /// 작업을 고친다(update_mask에 든 칸만). job_id는 그대로이고, 공사·호기·품목·이음부·시작 시각이 바뀌면 common_key·job_key를
-  /// 다시 만든다 — 성적서는 품목(common_key)에 붙어 있어 바뀐 품목의 성적서를 보게 된다. 필수 칸은 비울 수 없다.
+  /// 다시 만든다. 필수 칸은 비울 수 없다. report_set_id로 성적서 세트를 고른다(0이면 지정을 풀고 본인 세트로) —
+  /// 세트와 다른 작업은 바뀌지 않는다.
   $async.Future<UpdateJobResponse> updateJob(
           $pb.ClientContext? ctx, UpdateJobRequest request) =>
       _client.invoke<UpdateJobResponse>(
           ctx, 'WorkService', 'UpdateJob', request, UpdateJobResponse());
 
-  /// 작업과 그 패스의 행을 실제로 지운다(되돌릴 수 없음). 첨부·타임라인·매칭된 성적서 세트가 있으면 FailedPrecondition(먼저 떼거나 지운다).
+  /// 작업과 그 패스·타임라인(트랙·클립 포함)의 행을 실제로 지운다(되돌릴 수 없음). 첨부가 있으면
+  /// FailedPrecondition(먼저 뗀다). 고른 성적서 세트는 막지 않는다(세트는 그대로 남는다).
   $async.Future<DeleteJobResponse> deleteJob(
           $pb.ClientContext? ctx, DeleteJobRequest request) =>
       _client.invoke<DeleteJobResponse>(

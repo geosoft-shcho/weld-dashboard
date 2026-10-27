@@ -50,6 +50,7 @@ const ReviewReason$json = {
     {'1': 'REVIEW_REASON_VLM_RECHECKED', '2': 2},
     {'1': 'REVIEW_REASON_SNAPPED', '2': 3},
     {'1': 'REVIEW_REASON_UNREADABLE', '2': 4},
+    {'1': 'REVIEW_REASON_MANUAL', '2': 5},
   ],
 };
 
@@ -58,14 +59,13 @@ final $typed_data.Uint8List reviewReasonDescriptor = $convert.base64Decode(
     'CgxSZXZpZXdSZWFzb24SHQoZUkVWSUVXX1JFQVNPTl9VTlNQRUNJRklFRBAAEiAKHFJFVklFV1'
     '9SRUFTT05fTE9XX0NPTkZJREVOQ0UQARIfChtSRVZJRVdfUkVBU09OX1ZMTV9SRUNIRUNLRUQQ'
     'AhIZChVSRVZJRVdfUkVBU09OX1NOQVBQRUQQAxIcChhSRVZJRVdfUkVBU09OX1VOUkVBREFCTE'
-    'UQBA==');
+    'UQBBIYChRSRVZJRVdfUkVBU09OX01BTlVBTBAF');
 
 @$core.Deprecated('Use reportSetDescriptor instead')
 const ReportSet$json = {
   '1': 'ReportSet',
   '2': [
     {'1': 'report_set_id', '3': 1, '4': 1, '5': 3, '10': 'reportSetId'},
-    {'1': 'job_id', '3': 2, '4': 1, '5': 3, '10': 'jobId'},
     {'1': 'common_key', '3': 14, '4': 1, '5': 9, '10': 'commonKey'},
     {'1': 'source_asset_id', '3': 3, '4': 1, '5': 3, '10': 'sourceAssetId'},
     {
@@ -113,20 +113,23 @@ const ReportSet$json = {
     {'1': '_page_start'},
     {'1': '_page_end'},
   ],
+  '9': [
+    {'1': 2, '2': 3},
+  ],
 };
 
 /// Descriptor for `ReportSet`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List reportSetDescriptor = $convert.base64Decode(
-    'CglSZXBvcnRTZXQSIgoNcmVwb3J0X3NldF9pZBgBIAEoA1ILcmVwb3J0U2V0SWQSFQoGam9iX2'
-    'lkGAIgASgDUgVqb2JJZBIdCgpjb21tb25fa2V5GA4gASgJUgljb21tb25LZXkSJgoPc291cmNl'
-    'X2Fzc2V0X2lkGAMgASgDUg1zb3VyY2VBc3NldElkEiIKCnBhZ2Vfc3RhcnQYBCABKAVIAFIJcG'
-    'FnZVN0YXJ0iAEBEh4KCHBhZ2VfZW5kGAUgASgFSAFSB3BhZ2VFbmSIAQESJAoOc3BsaXRfYXNz'
-    'ZXRfaWQYDCABKANSDHNwbGl0QXNzZXRJZBIbCglpdGVtX25hbWUYBiABKAlSCGl0ZW1OYW1lEh'
-    'cKB3VuaXRfbm8YByABKAlSBnVuaXRObxIdCgpwcm9qZWN0X25vGAggASgJUglwcm9qZWN0Tm8S'
-    'GwoJaXRlbV9hYmJyGAkgASgJUghpdGVtQWJichI5CgpjcmVhdGVkX2F0GAogASgLMhouZ29vZ2'
-    'xlLnByb3RvYnVmLlRpbWVzdGFtcFIJY3JlYXRlZEF0Ej4KCHNlY3Rpb25zGAsgAygLMiIubWVk'
-    'aWF0YWcucmVwb3J0LnYxLlNlY3Rpb25TdW1tYXJ5UghzZWN0aW9ucxIhCgxyZXZpZXdfY291bn'
-    'QYDSABKAVSC3Jldmlld0NvdW50Qg0KC19wYWdlX3N0YXJ0QgsKCV9wYWdlX2VuZA==');
+    'CglSZXBvcnRTZXQSIgoNcmVwb3J0X3NldF9pZBgBIAEoA1ILcmVwb3J0U2V0SWQSHQoKY29tbW'
+    '9uX2tleRgOIAEoCVIJY29tbW9uS2V5EiYKD3NvdXJjZV9hc3NldF9pZBgDIAEoA1INc291cmNl'
+    'QXNzZXRJZBIiCgpwYWdlX3N0YXJ0GAQgASgFSABSCXBhZ2VTdGFydIgBARIeCghwYWdlX2VuZB'
+    'gFIAEoBUgBUgdwYWdlRW5kiAEBEiQKDnNwbGl0X2Fzc2V0X2lkGAwgASgDUgxzcGxpdEFzc2V0'
+    'SWQSGwoJaXRlbV9uYW1lGAYgASgJUghpdGVtTmFtZRIXCgd1bml0X25vGAcgASgJUgZ1bml0Tm'
+    '8SHQoKcHJvamVjdF9ubxgIIAEoCVIJcHJvamVjdE5vEhsKCWl0ZW1fYWJichgJIAEoCVIIaXRl'
+    'bUFiYnISOQoKY3JlYXRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBSCW'
+    'NyZWF0ZWRBdBI+CghzZWN0aW9ucxgLIAMoCzIiLm1lZGlhdGFnLnJlcG9ydC52MS5TZWN0aW9u'
+    'U3VtbWFyeVIIc2VjdGlvbnMSIQoMcmV2aWV3X2NvdW50GA0gASgFUgtyZXZpZXdDb3VudEINCg'
+    'tfcGFnZV9zdGFydEILCglfcGFnZV9lbmRKBAgCEAM=');
 
 @$core.Deprecated('Use sectionSummaryDescriptor instead')
 const SectionSummary$json = {
@@ -214,6 +217,7 @@ const Section$json = {
       '10': 'fields'
     },
     {'1': 'asset_id', '3': 5, '4': 1, '5': 3, '10': 'assetId'},
+    {'1': 'table', '3': 6, '4': 1, '5': 9, '10': 'table'},
   ],
   '8': [
     {'1': '_page_start'},
@@ -226,8 +230,8 @@ final $typed_data.Uint8List sectionDescriptor = $convert.base64Decode(
     'CgdTZWN0aW9uEjMKBGtpbmQYASABKA4yHy5tZWRpYXRhZy5yZXBvcnQudjEuU2VjdGlvbktpbm'
     'RSBGtpbmQSIgoKcGFnZV9zdGFydBgCIAEoBUgAUglwYWdlU3RhcnSIAQESHgoIcGFnZV9lbmQY'
     'AyABKAVIAVIHcGFnZUVuZIgBARIvCgZmaWVsZHMYBCABKAsyFy5nb29nbGUucHJvdG9idWYuU3'
-    'RydWN0UgZmaWVsZHMSGQoIYXNzZXRfaWQYBSABKANSB2Fzc2V0SWRCDQoLX3BhZ2Vfc3RhcnRC'
-    'CwoJX3BhZ2VfZW5k');
+    'RydWN0UgZmaWVsZHMSGQoIYXNzZXRfaWQYBSABKANSB2Fzc2V0SWQSFAoFdGFibGUYBiABKAlS'
+    'BXRhYmxlQg0KC19wYWdlX3N0YXJ0QgsKCV9wYWdlX2VuZA==');
 
 @$core.Deprecated('Use listReportSetsRequestDescriptor instead')
 const ListReportSetsRequest$json = {
@@ -429,42 +433,49 @@ final $typed_data.Uint8List resolveReviewResponseDescriptor = $convert.base64Dec
     'ChVSZXNvbHZlUmV2aWV3UmVzcG9uc2USNgoGcmV2aWV3GAEgASgLMh4ubWVkaWF0YWcucmVwb3'
     'J0LnYxLlJldmlld0l0ZW1SBnJldmlldw==');
 
-@$core.Deprecated('Use matchReportSetRequestDescriptor instead')
-const MatchReportSetRequest$json = {
-  '1': 'MatchReportSetRequest',
+@$core.Deprecated('Use updateReportFieldRequestDescriptor instead')
+const UpdateReportFieldRequest$json = {
+  '1': 'UpdateReportFieldRequest',
   '2': [
-    {'1': 'report_set_id', '3': 1, '4': 1, '5': 3, '10': 'reportSetId'},
-    {'1': 'job_id', '3': 2, '4': 1, '5': 3, '10': 'jobId'},
-    {'1': 'common_key', '3': 3, '4': 1, '5': 9, '10': 'commonKey'},
+    {'1': 'table', '3': 1, '4': 1, '5': 9, '10': 'table'},
+    {'1': 'row_id', '3': 2, '4': 1, '5': 3, '10': 'rowId'},
+    {'1': 'column', '3': 3, '4': 1, '5': 9, '10': 'column'},
+    {'1': 'value', '3': 4, '4': 1, '5': 9, '9': 0, '10': 'value', '17': true},
+    {'1': 'corrected_by', '3': 5, '4': 1, '5': 9, '10': 'correctedBy'},
+    {'1': 'review_id', '3': 6, '4': 1, '5': 3, '10': 'reviewId'},
+  ],
+  '8': [
+    {'1': '_value'},
   ],
 };
 
-/// Descriptor for `MatchReportSetRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List matchReportSetRequestDescriptor = $convert.base64Decode(
-    'ChVNYXRjaFJlcG9ydFNldFJlcXVlc3QSIgoNcmVwb3J0X3NldF9pZBgBIAEoA1ILcmVwb3J0U2'
-    'V0SWQSFQoGam9iX2lkGAIgASgDUgVqb2JJZBIdCgpjb21tb25fa2V5GAMgASgJUgljb21tb25L'
-    'ZXk=');
+/// Descriptor for `UpdateReportFieldRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List updateReportFieldRequestDescriptor = $convert.base64Decode(
+    'ChhVcGRhdGVSZXBvcnRGaWVsZFJlcXVlc3QSFAoFdGFibGUYASABKAlSBXRhYmxlEhUKBnJvd1'
+    '9pZBgCIAEoA1IFcm93SWQSFgoGY29sdW1uGAMgASgJUgZjb2x1bW4SGQoFdmFsdWUYBCABKAlI'
+    'AFIFdmFsdWWIAQESIQoMY29ycmVjdGVkX2J5GAUgASgJUgtjb3JyZWN0ZWRCeRIbCglyZXZpZX'
+    'dfaWQYBiABKANSCHJldmlld0lkQggKBl92YWx1ZQ==');
 
-@$core.Deprecated('Use matchReportSetResponseDescriptor instead')
-const MatchReportSetResponse$json = {
-  '1': 'MatchReportSetResponse',
+@$core.Deprecated('Use updateReportFieldResponseDescriptor instead')
+const UpdateReportFieldResponse$json = {
+  '1': 'UpdateReportFieldResponse',
   '2': [
     {
-      '1': 'report_set',
+      '1': 'review',
       '3': 1,
       '4': 1,
       '5': 11,
-      '6': '.mediatag.report.v1.ReportSet',
-      '10': 'reportSet'
+      '6': '.mediatag.report.v1.ReviewItem',
+      '10': 'review'
     },
   ],
 };
 
-/// Descriptor for `MatchReportSetResponse`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List matchReportSetResponseDescriptor =
+/// Descriptor for `UpdateReportFieldResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List updateReportFieldResponseDescriptor =
     $convert.base64Decode(
-        'ChZNYXRjaFJlcG9ydFNldFJlc3BvbnNlEjwKCnJlcG9ydF9zZXQYASABKAsyHS5tZWRpYXRhZy'
-        '5yZXBvcnQudjEuUmVwb3J0U2V0UglyZXBvcnRTZXQ=');
+        'ChlVcGRhdGVSZXBvcnRGaWVsZFJlc3BvbnNlEjYKBnJldmlldxgBIAEoCzIeLm1lZGlhdGFnLn'
+        'JlcG9ydC52MS5SZXZpZXdJdGVtUgZyZXZpZXc=');
 
 @$core.Deprecated('Use listQualityResultsRequestDescriptor instead')
 const ListQualityResultsRequest$json = {
@@ -744,9 +755,9 @@ const $core.Map<$core.String, $core.dynamic> ReportServiceBase$json = {
       '3': '.mediatag.report.v1.ResolveReviewResponse'
     },
     {
-      '1': 'MatchReportSet',
-      '2': '.mediatag.report.v1.MatchReportSetRequest',
-      '3': '.mediatag.report.v1.MatchReportSetResponse'
+      '1': 'UpdateReportField',
+      '2': '.mediatag.report.v1.UpdateReportFieldRequest',
+      '3': '.mediatag.report.v1.UpdateReportFieldResponse'
     },
     {
       '1': 'ListQualityResults',
@@ -774,8 +785,9 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.report.v1.ReviewItem': ReviewItem$json,
   '.mediatag.report.v1.ResolveReviewRequest': ResolveReviewRequest$json,
   '.mediatag.report.v1.ResolveReviewResponse': ResolveReviewResponse$json,
-  '.mediatag.report.v1.MatchReportSetRequest': MatchReportSetRequest$json,
-  '.mediatag.report.v1.MatchReportSetResponse': MatchReportSetResponse$json,
+  '.mediatag.report.v1.UpdateReportFieldRequest': UpdateReportFieldRequest$json,
+  '.mediatag.report.v1.UpdateReportFieldResponse':
+      UpdateReportFieldResponse$json,
   '.mediatag.report.v1.ListQualityResultsRequest':
       ListQualityResultsRequest$json,
   '.mediatag.report.v1.ListQualityResultsResponse':
@@ -795,8 +807,8 @@ final $typed_data.Uint8List reportServiceDescriptor = $convert.base64Decode(
     'c1Jlc3BvbnNlEmEKDEdldFJlcG9ydFNldBInLm1lZGlhdGFnLnJlcG9ydC52MS5HZXRSZXBvcn'
     'RTZXRSZXF1ZXN0GigubWVkaWF0YWcucmVwb3J0LnYxLkdldFJlcG9ydFNldFJlc3BvbnNlEmQK'
     'DVJlc29sdmVSZXZpZXcSKC5tZWRpYXRhZy5yZXBvcnQudjEuUmVzb2x2ZVJldmlld1JlcXVlc3'
-    'QaKS5tZWRpYXRhZy5yZXBvcnQudjEuUmVzb2x2ZVJldmlld1Jlc3BvbnNlEmcKDk1hdGNoUmVw'
-    'b3J0U2V0EikubWVkaWF0YWcucmVwb3J0LnYxLk1hdGNoUmVwb3J0U2V0UmVxdWVzdBoqLm1lZG'
-    'lhdGFnLnJlcG9ydC52MS5NYXRjaFJlcG9ydFNldFJlc3BvbnNlEnMKEkxpc3RRdWFsaXR5UmVz'
-    'dWx0cxItLm1lZGlhdGFnLnJlcG9ydC52MS5MaXN0UXVhbGl0eVJlc3VsdHNSZXF1ZXN0Gi4ubW'
-    'VkaWF0YWcucmVwb3J0LnYxLkxpc3RRdWFsaXR5UmVzdWx0c1Jlc3BvbnNl');
+    'QaKS5tZWRpYXRhZy5yZXBvcnQudjEuUmVzb2x2ZVJldmlld1Jlc3BvbnNlEnAKEVVwZGF0ZVJl'
+    'cG9ydEZpZWxkEiwubWVkaWF0YWcucmVwb3J0LnYxLlVwZGF0ZVJlcG9ydEZpZWxkUmVxdWVzdB'
+    'otLm1lZGlhdGFnLnJlcG9ydC52MS5VcGRhdGVSZXBvcnRGaWVsZFJlc3BvbnNlEnMKEkxpc3RR'
+    'dWFsaXR5UmVzdWx0cxItLm1lZGlhdGFnLnJlcG9ydC52MS5MaXN0UXVhbGl0eVJlc3VsdHNSZX'
+    'F1ZXN0Gi4ubWVkaWF0YWcucmVwb3J0LnYxLkxpc3RRdWFsaXR5UmVzdWx0c1Jlc3BvbnNl');

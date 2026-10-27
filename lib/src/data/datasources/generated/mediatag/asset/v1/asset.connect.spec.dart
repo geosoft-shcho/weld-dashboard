@@ -34,7 +34,10 @@ abstract final class AssetService {
     mediatagassetv1asset.GetAssetResponse.new,
   );
 
-  /// 사람이 적는 칸만 고친다(update_mask: subject, situation). 빈 글로 보내면 지운다. 파일 · 종류 · 시각은 서버가 정해 못 고친다.
+  /// 사람이 정하는 칸을 고친다(update_mask: subject, situation, recorded_at). 글은 빈 글로 보내면 지운다. 파일 · 종류는 못 고친다.
+  /// recorded_at(기록 시작 시각 — 틀린 촬영 시각 · timeOrigin 바로잡기): 표준화본도 같은 만큼 옮기고, 그 자료의 자동 배치 클립 중
+  /// 사람이 손대지 않은 것(옮기거나 고치거나 라벨 · 설명 · 관계를 붙이지 않은 것)을 지운 뒤 후처리를 다시 걸어 새 시각으로 놓는다
+  /// (replace_run_id). 사람이 손댄 클립은 그대로 둔다. 비울 수는 없다.
   static const updateAsset = connect.Spec(
     '/$name/UpdateAsset',
     connect.StreamType.unary,

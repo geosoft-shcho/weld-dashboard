@@ -67,6 +67,8 @@ class ReviewReason extends $pb.ProtobufEnum {
       ReviewReason._(3, _omitEnumNames ? '' : 'REVIEW_REASON_SNAPPED');
   static const ReviewReason REVIEW_REASON_UNREADABLE =
       ReviewReason._(4, _omitEnumNames ? '' : 'REVIEW_REASON_UNREADABLE');
+  static const ReviewReason REVIEW_REASON_MANUAL =
+      ReviewReason._(5, _omitEnumNames ? '' : 'REVIEW_REASON_MANUAL');
 
   static const $core.List<ReviewReason> values = <ReviewReason>[
     REVIEW_REASON_UNSPECIFIED,
@@ -74,10 +76,11 @@ class ReviewReason extends $pb.ProtobufEnum {
     REVIEW_REASON_VLM_RECHECKED,
     REVIEW_REASON_SNAPPED,
     REVIEW_REASON_UNREADABLE,
+    REVIEW_REASON_MANUAL,
   ];
 
   static final $core.List<ReviewReason?> _byValue =
-      $pb.ProtobufEnum.$_initByValueList(values, 4);
+      $pb.ProtobufEnum.$_initByValueList(values, 5);
   static ReviewReason? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 

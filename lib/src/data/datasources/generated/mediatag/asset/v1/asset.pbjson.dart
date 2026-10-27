@@ -438,13 +438,14 @@ const UpdateAssetResponse$json = {
       '6': '.mediatag.asset.v1.Asset',
       '10': 'asset'
     },
+    {'1': 'replace_run_id', '3': 2, '4': 1, '5': 3, '10': 'replaceRunId'},
   ],
 };
 
 /// Descriptor for `UpdateAssetResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List updateAssetResponseDescriptor = $convert.base64Decode(
     'ChNVcGRhdGVBc3NldFJlc3BvbnNlEi4KBWFzc2V0GAEgASgLMhgubWVkaWF0YWcuYXNzZXQudj'
-    'EuQXNzZXRSBWFzc2V0');
+    'EuQXNzZXRSBWFzc2V0EiQKDnJlcGxhY2VfcnVuX2lkGAIgASgDUgxyZXBsYWNlUnVuSWQ=');
 
 @$core.Deprecated('Use deleteAssetRequestDescriptor instead')
 const DeleteAssetRequest$json = {

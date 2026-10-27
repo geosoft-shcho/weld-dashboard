@@ -27,7 +27,6 @@ export 'report.pbenum.dart';
 class ReportSet extends $pb.GeneratedMessage {
   factory ReportSet({
     $fixnum.Int64? reportSetId,
-    $fixnum.Int64? jobId,
     $fixnum.Int64? sourceAssetId,
     $core.int? pageStart,
     $core.int? pageEnd,
@@ -43,7 +42,6 @@ class ReportSet extends $pb.GeneratedMessage {
   }) {
     final result = create();
     if (reportSetId != null) result.reportSetId = reportSetId;
-    if (jobId != null) result.jobId = jobId;
     if (sourceAssetId != null) result.sourceAssetId = sourceAssetId;
     if (pageStart != null) result.pageStart = pageStart;
     if (pageEnd != null) result.pageEnd = pageEnd;
@@ -74,7 +72,6 @@ class ReportSet extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'reportSetId')
-    ..aInt64(2, _omitFieldNames ? '' : 'jobId')
     ..aInt64(3, _omitFieldNames ? '' : 'sourceAssetId')
     ..a<$core.int>(4, _omitFieldNames ? '' : 'pageStart', $pb.PbFieldType.O3)
     ..a<$core.int>(5, _omitFieldNames ? '' : 'pageEnd', $pb.PbFieldType.O3)
@@ -120,119 +117,112 @@ class ReportSet extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearReportSetId() => $_clearField(1);
 
-  @$pb.TagNumber(2)
-  $fixnum.Int64 get jobId => $_getI64(1);
-  @$pb.TagNumber(2)
-  set jobId($fixnum.Int64 value) => $_setInt64(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasJobId() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearJobId() => $_clearField(2);
-
   @$pb.TagNumber(3)
-  $fixnum.Int64 get sourceAssetId => $_getI64(2);
+  $fixnum.Int64 get sourceAssetId => $_getI64(1);
   @$pb.TagNumber(3)
-  set sourceAssetId($fixnum.Int64 value) => $_setInt64(2, value);
+  set sourceAssetId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(3)
-  $core.bool hasSourceAssetId() => $_has(2);
+  $core.bool hasSourceAssetId() => $_has(1);
   @$pb.TagNumber(3)
   void clearSourceAssetId() => $_clearField(3);
 
   @$pb.TagNumber(4)
-  $core.int get pageStart => $_getIZ(3);
+  $core.int get pageStart => $_getIZ(2);
   @$pb.TagNumber(4)
-  set pageStart($core.int value) => $_setSignedInt32(3, value);
+  set pageStart($core.int value) => $_setSignedInt32(2, value);
   @$pb.TagNumber(4)
-  $core.bool hasPageStart() => $_has(3);
+  $core.bool hasPageStart() => $_has(2);
   @$pb.TagNumber(4)
   void clearPageStart() => $_clearField(4);
 
   @$pb.TagNumber(5)
-  $core.int get pageEnd => $_getIZ(4);
+  $core.int get pageEnd => $_getIZ(3);
   @$pb.TagNumber(5)
-  set pageEnd($core.int value) => $_setSignedInt32(4, value);
+  set pageEnd($core.int value) => $_setSignedInt32(3, value);
   @$pb.TagNumber(5)
-  $core.bool hasPageEnd() => $_has(4);
+  $core.bool hasPageEnd() => $_has(3);
   @$pb.TagNumber(5)
   void clearPageEnd() => $_clearField(5);
 
   /// OCR로 읽은 원문 값(정규화 전). 매칭 재료이자 근거
   @$pb.TagNumber(6)
-  $core.String get itemName => $_getSZ(5);
+  $core.String get itemName => $_getSZ(4);
   @$pb.TagNumber(6)
-  set itemName($core.String value) => $_setString(5, value);
+  set itemName($core.String value) => $_setString(4, value);
   @$pb.TagNumber(6)
-  $core.bool hasItemName() => $_has(5);
+  $core.bool hasItemName() => $_has(4);
   @$pb.TagNumber(6)
   void clearItemName() => $_clearField(6);
 
   @$pb.TagNumber(7)
-  $core.String get unitNo => $_getSZ(6);
+  $core.String get unitNo => $_getSZ(5);
   @$pb.TagNumber(7)
-  set unitNo($core.String value) => $_setString(6, value);
+  set unitNo($core.String value) => $_setString(5, value);
   @$pb.TagNumber(7)
-  $core.bool hasUnitNo() => $_has(6);
+  $core.bool hasUnitNo() => $_has(5);
   @$pb.TagNumber(7)
   void clearUnitNo() => $_clearField(7);
 
   @$pb.TagNumber(8)
-  $core.String get projectNo => $_getSZ(7);
+  $core.String get projectNo => $_getSZ(6);
   @$pb.TagNumber(8)
-  set projectNo($core.String value) => $_setString(7, value);
+  set projectNo($core.String value) => $_setString(6, value);
   @$pb.TagNumber(8)
-  $core.bool hasProjectNo() => $_has(7);
+  $core.bool hasProjectNo() => $_has(6);
   @$pb.TagNumber(8)
   void clearProjectNo() => $_clearField(8);
 
   @$pb.TagNumber(9)
-  $core.String get itemAbbr => $_getSZ(8);
+  $core.String get itemAbbr => $_getSZ(7);
   @$pb.TagNumber(9)
-  set itemAbbr($core.String value) => $_setString(8, value);
+  set itemAbbr($core.String value) => $_setString(7, value);
   @$pb.TagNumber(9)
-  $core.bool hasItemAbbr() => $_has(8);
+  $core.bool hasItemAbbr() => $_has(7);
   @$pb.TagNumber(9)
   void clearItemAbbr() => $_clearField(9);
 
   @$pb.TagNumber(10)
-  $0.Timestamp get createdAt => $_getN(9);
+  $0.Timestamp get createdAt => $_getN(8);
   @$pb.TagNumber(10)
   set createdAt($0.Timestamp value) => $_setField(10, value);
   @$pb.TagNumber(10)
-  $core.bool hasCreatedAt() => $_has(9);
+  $core.bool hasCreatedAt() => $_has(8);
   @$pb.TagNumber(10)
   void clearCreatedAt() => $_clearField(10);
   @$pb.TagNumber(10)
-  $0.Timestamp ensureCreatedAt() => $_ensure(9);
+  $0.Timestamp ensureCreatedAt() => $_ensure(8);
 
   @$pb.TagNumber(11)
-  $pb.PbList<SectionSummary> get sections => $_getList(10);
+  $pb.PbList<SectionSummary> get sections => $_getList(9);
 
   /// 원본에서 이 세트 구간만 잘라 낸 작업별 PDF(파생 Asset). 작업 화면·첨부는 이것. 비면 아직 안 잘랐다.
   /// 잘라 낸 PDF 안의 쪽 = 원본 쪽 - page_start + 1
   @$pb.TagNumber(12)
-  $fixnum.Int64 get splitAssetId => $_getI64(11);
+  $fixnum.Int64 get splitAssetId => $_getI64(10);
   @$pb.TagNumber(12)
-  set splitAssetId($fixnum.Int64 value) => $_setInt64(11, value);
+  set splitAssetId($fixnum.Int64 value) => $_setInt64(10, value);
   @$pb.TagNumber(12)
-  $core.bool hasSplitAssetId() => $_has(11);
+  $core.bool hasSplitAssetId() => $_has(10);
   @$pb.TagNumber(12)
   void clearSplitAssetId() => $_clearField(12);
 
   @$pb.TagNumber(13)
-  $core.int get reviewCount => $_getIZ(12);
+  $core.int get reviewCount => $_getIZ(11);
   @$pb.TagNumber(13)
-  set reviewCount($core.int value) => $_setSignedInt32(12, value);
+  set reviewCount($core.int value) => $_setSignedInt32(11, value);
   @$pb.TagNumber(13)
-  $core.bool hasReviewCount() => $_has(12);
+  $core.bool hasReviewCount() => $_has(11);
   @$pb.TagNumber(13)
   void clearReviewCount() => $_clearField(13);
 
+  /// 본인 품목. 추출 때 정해진다 — 작업(jobId)과 함께 올린 PDF에서 세트가 하나 나오면 그 작업의 품목. 비면 본인 품목 없음
+  /// (작업이 지정해야 쓰인다). 이 값이 같은 작업 중 지정하지 않은 작업이 이 세트를 쓴다.
   @$pb.TagNumber(14)
-  $core.String get commonKey => $_getSZ(13);
+  $core.String get commonKey => $_getSZ(12);
   @$pb.TagNumber(14)
-  set commonKey($core.String value) => $_setString(13, value);
+  set commonKey($core.String value) => $_setString(12, value);
   @$pb.TagNumber(14)
-  $core.bool hasCommonKey() => $_has(13);
+  $core.bool hasCommonKey() => $_has(12);
   @$pb.TagNumber(14)
   void clearCommonKey() => $_clearField(14);
 }
@@ -354,6 +344,7 @@ class Section extends $pb.GeneratedMessage {
     $core.int? pageEnd,
     $1.Struct? fields,
     $fixnum.Int64? assetId,
+    $core.String? table,
   }) {
     final result = create();
     if (kind != null) result.kind = kind;
@@ -361,6 +352,7 @@ class Section extends $pb.GeneratedMessage {
     if (pageEnd != null) result.pageEnd = pageEnd;
     if (fields != null) result.fields = fields;
     if (assetId != null) result.assetId = assetId;
+    if (table != null) result.table = table;
     return result;
   }
 
@@ -387,6 +379,7 @@ class Section extends $pb.GeneratedMessage {
     ..aOM<$1.Struct>(4, _omitFieldNames ? '' : 'fields',
         subBuilder: $1.Struct.create)
     ..aInt64(5, _omitFieldNames ? '' : 'assetId')
+    ..aOS(6, _omitFieldNames ? '' : 'table')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -435,10 +428,11 @@ class Section extends $pb.GeneratedMessage {
   @$pb.TagNumber(3)
   void clearPageEnd() => $_clearField(3);
 
-  /// 섹션 행의 컬럼 전체(id·report_set_id·created_at 제외)와 자식 테이블 배열
+  /// 섹션 행의 컬럼 전체(관계 칸·created_at·updated_at 제외)와 자식 테이블 배열
   /// (예: dimension_points, gauge_readings, ut_joints). 키는 DB 컬럼·테이블 이름 그대로.
   /// ponytail: 섹션 8종 × 수십 컬럼을 메시지로 옮기지 않고 Struct 하나로 둔다. 화면이 필드별
   /// 타입 검사가 필요해지면 섹션별 메시지로 바꾼다.
+  /// 행마다 번호 "id"가 있다(배열 행도) — UpdateReportField의 row_id.
   @$pb.TagNumber(4)
   $1.Struct get fields => $_getN(3);
   @$pb.TagNumber(4)
@@ -458,6 +452,16 @@ class Section extends $pb.GeneratedMessage {
   $core.bool hasAssetId() => $_has(4);
   @$pb.TagNumber(5)
   void clearAssetId() => $_clearField(5);
+
+  /// 섹션 행의 표 이름(UpdateReportField.table). 배열 행의 표는 이 이름 + '_' + 배열 키(예: ndt_inspection_ut_joints)
+  @$pb.TagNumber(6)
+  $core.String get table => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set table($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasTable() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearTable() => $_clearField(6);
 }
 
 class ListReportSetsRequest extends $pb.GeneratedMessage {
@@ -1050,149 +1054,187 @@ class ResolveReviewResponse extends $pb.GeneratedMessage {
   ReviewItem ensureReview() => $_ensure(0);
 }
 
-class MatchReportSetRequest extends $pb.GeneratedMessage {
-  factory MatchReportSetRequest({
-    $fixnum.Int64? reportSetId,
-    $fixnum.Int64? jobId,
-    $core.String? commonKey,
+class UpdateReportFieldRequest extends $pb.GeneratedMessage {
+  factory UpdateReportFieldRequest({
+    $core.String? table,
+    $fixnum.Int64? rowId,
+    $core.String? column,
+    $core.String? value,
+    $core.String? correctedBy,
+    $fixnum.Int64? reviewId,
   }) {
     final result = create();
-    if (reportSetId != null) result.reportSetId = reportSetId;
-    if (jobId != null) result.jobId = jobId;
-    if (commonKey != null) result.commonKey = commonKey;
+    if (table != null) result.table = table;
+    if (rowId != null) result.rowId = rowId;
+    if (column != null) result.column = column;
+    if (value != null) result.value = value;
+    if (correctedBy != null) result.correctedBy = correctedBy;
+    if (reviewId != null) result.reviewId = reviewId;
     return result;
   }
 
-  MatchReportSetRequest._();
+  UpdateReportFieldRequest._();
 
-  factory MatchReportSetRequest.fromBuffer($core.List<$core.int> data,
+  factory UpdateReportFieldRequest.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory MatchReportSetRequest.fromJson($core.String json,
+  factory UpdateReportFieldRequest.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'MatchReportSetRequest',
+      _omitMessageNames ? '' : 'UpdateReportFieldRequest',
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
-    ..aInt64(1, _omitFieldNames ? '' : 'reportSetId')
-    ..aInt64(2, _omitFieldNames ? '' : 'jobId')
-    ..aOS(3, _omitFieldNames ? '' : 'commonKey')
+    ..aOS(1, _omitFieldNames ? '' : 'table')
+    ..aInt64(2, _omitFieldNames ? '' : 'rowId')
+    ..aOS(3, _omitFieldNames ? '' : 'column')
+    ..aOS(4, _omitFieldNames ? '' : 'value')
+    ..aOS(5, _omitFieldNames ? '' : 'correctedBy')
+    ..aInt64(6, _omitFieldNames ? '' : 'reviewId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  MatchReportSetRequest clone() =>
-      MatchReportSetRequest()..mergeFromMessage(this);
+  UpdateReportFieldRequest clone() =>
+      UpdateReportFieldRequest()..mergeFromMessage(this);
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  MatchReportSetRequest copyWith(
-          void Function(MatchReportSetRequest) updates) =>
-      super.copyWith((message) => updates(message as MatchReportSetRequest))
-          as MatchReportSetRequest;
+  UpdateReportFieldRequest copyWith(
+          void Function(UpdateReportFieldRequest) updates) =>
+      super.copyWith((message) => updates(message as UpdateReportFieldRequest))
+          as UpdateReportFieldRequest;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static MatchReportSetRequest create() => MatchReportSetRequest._();
+  static UpdateReportFieldRequest create() => UpdateReportFieldRequest._();
   @$core.override
-  MatchReportSetRequest createEmptyInstance() => create();
-  static $pb.PbList<MatchReportSetRequest> createRepeated() =>
-      $pb.PbList<MatchReportSetRequest>();
+  UpdateReportFieldRequest createEmptyInstance() => create();
+  static $pb.PbList<UpdateReportFieldRequest> createRepeated() =>
+      $pb.PbList<UpdateReportFieldRequest>();
   @$core.pragma('dart2js:noInline')
-  static MatchReportSetRequest getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<MatchReportSetRequest>(create);
-  static MatchReportSetRequest? _defaultInstance;
+  static UpdateReportFieldRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UpdateReportFieldRequest>(create);
+  static UpdateReportFieldRequest? _defaultInstance;
 
+  /// 'report_set'(세트의 OCR 값 — item_name · unit_no · material 등), 섹션 표(Section.table), 배열 행의 표(Section.table + '_' + 배열 키)
   @$pb.TagNumber(1)
-  $fixnum.Int64 get reportSetId => $_getI64(0);
+  $core.String get table => $_getSZ(0);
   @$pb.TagNumber(1)
-  set reportSetId($fixnum.Int64 value) => $_setInt64(0, value);
+  set table($core.String value) => $_setString(0, value);
   @$pb.TagNumber(1)
-  $core.bool hasReportSetId() => $_has(0);
+  $core.bool hasTable() => $_has(0);
   @$pb.TagNumber(1)
-  void clearReportSetId() => $_clearField(1);
+  void clearTable() => $_clearField(1);
 
   @$pb.TagNumber(2)
-  $fixnum.Int64 get jobId => $_getI64(1);
+  $fixnum.Int64 get rowId => $_getI64(1);
   @$pb.TagNumber(2)
-  set jobId($fixnum.Int64 value) => $_setInt64(1, value);
+  set rowId($fixnum.Int64 value) => $_setInt64(1, value);
   @$pb.TagNumber(2)
-  $core.bool hasJobId() => $_has(1);
+  $core.bool hasRowId() => $_has(1);
   @$pb.TagNumber(2)
-  void clearJobId() => $_clearField(2);
+  void clearRowId() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $core.String get commonKey => $_getSZ(2);
+  $core.String get column => $_getSZ(2);
   @$pb.TagNumber(3)
-  set commonKey($core.String value) => $_setString(2, value);
+  set column($core.String value) => $_setString(2, value);
   @$pb.TagNumber(3)
-  $core.bool hasCommonKey() => $_has(2);
+  $core.bool hasColumn() => $_has(2);
   @$pb.TagNumber(3)
-  void clearCommonKey() => $_clearField(3);
+  void clearColumn() => $_clearField(3);
+
+  /// 새 값. 없으면 비운다(NULL). 칸 형식대로 — 숫자 '12.5', 날짜 '2026-10-26', 배열 '{a,b}', JSON 칸은 JSON 글
+  @$pb.TagNumber(4)
+  $core.String get value => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set value($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasValue() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearValue() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get correctedBy => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set correctedBy($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasCorrectedBy() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearCorrectedBy() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get reviewId => $_getI64(5);
+  @$pb.TagNumber(6)
+  set reviewId($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasReviewId() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearReviewId() => $_clearField(6);
 }
 
-class MatchReportSetResponse extends $pb.GeneratedMessage {
-  factory MatchReportSetResponse({
-    ReportSet? reportSet,
+class UpdateReportFieldResponse extends $pb.GeneratedMessage {
+  factory UpdateReportFieldResponse({
+    ReviewItem? review,
   }) {
     final result = create();
-    if (reportSet != null) result.reportSet = reportSet;
+    if (review != null) result.review = review;
     return result;
   }
 
-  MatchReportSetResponse._();
+  UpdateReportFieldResponse._();
 
-  factory MatchReportSetResponse.fromBuffer($core.List<$core.int> data,
+  factory UpdateReportFieldResponse.fromBuffer($core.List<$core.int> data,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromBuffer(data, registry);
-  factory MatchReportSetResponse.fromJson($core.String json,
+  factory UpdateReportFieldResponse.fromJson($core.String json,
           [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
       create()..mergeFromJson(json, registry);
 
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'MatchReportSetResponse',
+      _omitMessageNames ? '' : 'UpdateReportFieldResponse',
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.report.v1'),
       createEmptyInstance: create)
-    ..aOM<ReportSet>(1, _omitFieldNames ? '' : 'reportSet',
-        subBuilder: ReportSet.create)
+    ..aOM<ReviewItem>(1, _omitFieldNames ? '' : 'review',
+        subBuilder: ReviewItem.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  MatchReportSetResponse clone() =>
-      MatchReportSetResponse()..mergeFromMessage(this);
+  UpdateReportFieldResponse clone() =>
+      UpdateReportFieldResponse()..mergeFromMessage(this);
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  MatchReportSetResponse copyWith(
-          void Function(MatchReportSetResponse) updates) =>
-      super.copyWith((message) => updates(message as MatchReportSetResponse))
-          as MatchReportSetResponse;
+  UpdateReportFieldResponse copyWith(
+          void Function(UpdateReportFieldResponse) updates) =>
+      super.copyWith((message) => updates(message as UpdateReportFieldResponse))
+          as UpdateReportFieldResponse;
 
   @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  static MatchReportSetResponse create() => MatchReportSetResponse._();
+  static UpdateReportFieldResponse create() => UpdateReportFieldResponse._();
   @$core.override
-  MatchReportSetResponse createEmptyInstance() => create();
-  static $pb.PbList<MatchReportSetResponse> createRepeated() =>
-      $pb.PbList<MatchReportSetResponse>();
+  UpdateReportFieldResponse createEmptyInstance() => create();
+  static $pb.PbList<UpdateReportFieldResponse> createRepeated() =>
+      $pb.PbList<UpdateReportFieldResponse>();
   @$core.pragma('dart2js:noInline')
-  static MatchReportSetResponse getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<MatchReportSetResponse>(create);
-  static MatchReportSetResponse? _defaultInstance;
+  static UpdateReportFieldResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UpdateReportFieldResponse>(create);
+  static UpdateReportFieldResponse? _defaultInstance;
 
   @$pb.TagNumber(1)
-  ReportSet get reportSet => $_getN(0);
+  ReviewItem get review => $_getN(0);
   @$pb.TagNumber(1)
-  set reportSet(ReportSet value) => $_setField(1, value);
+  set review(ReviewItem value) => $_setField(1, value);
   @$pb.TagNumber(1)
-  $core.bool hasReportSet() => $_has(0);
+  $core.bool hasReview() => $_has(0);
   @$pb.TagNumber(1)
-  void clearReportSet() => $_clearField(1);
+  void clearReview() => $_clearField(1);
   @$pb.TagNumber(1)
-  ReportSet ensureReportSet() => $_ensure(0);
+  ReviewItem ensureReview() => $_ensure(0);
 }
 
 class ListQualityResultsRequest extends $pb.GeneratedMessage {
@@ -1996,7 +2038,7 @@ class ReportServiceApi {
   ReportServiceApi(this._client);
 
   /// 작업(job_id) 또는 품목(common_key)의 성적서 세트 목록. 섹션 본문은 빼고 준다.
-  /// job_id를 주면 그 작업에 매칭된 세트와 그 작업의 품목에 매칭된 세트를 함께 준다.
+  /// job_id: 그 작업이 쓰는 세트 하나(Job.active_report_set_id, 없으면 빈 목록). common_key: 본인 품목이 그 값인 세트들.
   $async.Future<ListReportSetsResponse> listReportSets(
           $pb.ClientContext? ctx, ListReportSetsRequest request) =>
       _client.invoke<ListReportSetsResponse>(ctx, 'ReportService',
@@ -2015,17 +2057,19 @@ class ReportServiceApi {
       _client.invoke<ResolveReviewResponse>(ctx, 'ReportService',
           'ResolveReview', request, ResolveReviewResponse());
 
-  /// 세트를 작업 또는 품목에 매칭한다. 잘라 낸 PDF(split_asset_id)를 같은 트랜잭션에서 첨부한다.
-  ///   job_id: 그 작업에 매칭하고 세트의 common_key도 그 작업의 품목으로 채운다(PDF는 그 작업에 첨부).
-  ///   common_key만: 품목에 매칭한다(PDF는 그 품목의 작업 모두에 첨부). 이음부 단위 작업은 이쪽을 쓴다.
-  ///   둘 다 비면 매칭을 푼다(첨부는 그대로 — 필요하면 DetachAsset).
-  $async.Future<MatchReportSetResponse> matchReportSet(
-          $pb.ClientContext? ctx, MatchReportSetRequest request) =>
-      _client.invoke<MatchReportSetResponse>(ctx, 'ReportService',
-          'MatchReportSet', request, MatchReportSetResponse());
+  /// 세트 · 섹션의 칸 하나를 고친다(OCR 오독 바로잡기). 값은 그 행에 바로 들어가 GetReportSet · ListQualityResults에 나온다.
+  /// 고치기 전 값은 확인 목록에 한 줄로 남는다(reason MANUAL, value = 전 값, corrected_value = 새 값). review_id를 주면 새 줄 대신
+  /// 그 칸을 보정한 것으로 표시한다. 그 칸 하나만 바뀐다 — 작업 · 다른 칸은 그대로다. 같은 문서를 가리키는 다른 세트(품목 여럿을 묶은
+  /// 표면처리 · 도장 문서)에도 같은 값이 보인다(문서는 하나다).
+  /// 고칠 수 없는 칸(id · *_id · created_at · updated_at · page_start · page_end · common_key)이나 없는 표 · 칸은 InvalidArgument,
+  /// 없는 행은 NotFound, 칸 형식(숫자 · 날짜 · 허용 값)에 안 맞으면 InvalidArgument.
+  $async.Future<UpdateReportFieldResponse> updateReportField(
+          $pb.ClientContext? ctx, UpdateReportFieldRequest request) =>
+      _client.invoke<UpdateReportFieldResponse>(ctx, 'ReportService',
+          'UpdateReportField', request, UpdateReportFieldResponse());
 
   /// 작업·이음부 기준 품질 결과: 검사 종류별 판정과 이음부별 UT·MT 표. 성적서 원문 전체는 GetReportSet.
-  /// job_id(그 작업의 이음부) 또는 common_key(+joint_no). 이음부를 안 주면 품목의 이음부 전체가 표로 온다.
+  /// job_id(그 작업이 쓰는 세트, 그 작업의 이음부) 또는 common_key(+joint_no). 이음부를 안 주면 세트의 이음부 전체가 표로 온다.
   $async.Future<ListQualityResultsResponse> listQualityResults(
           $pb.ClientContext? ctx, ListQualityResultsRequest request) =>
       _client.invoke<ListQualityResultsResponse>(ctx, 'ReportService',

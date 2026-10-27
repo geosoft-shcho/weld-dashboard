@@ -264,6 +264,14 @@ const Job$json = {
     {'1': 'project_id', '3': 18, '4': 1, '5': 3, '10': 'projectId'},
     {'1': 'job_name', '3': 19, '4': 1, '5': 9, '10': 'jobName'},
     {'1': 'project_item_id', '3': 20, '4': 1, '5': 3, '10': 'projectItemId'},
+    {'1': 'report_set_id', '3': 21, '4': 1, '5': 3, '10': 'reportSetId'},
+    {
+      '1': 'active_report_set_id',
+      '3': 22,
+      '4': 1,
+      '5': 3,
+      '10': 'activeReportSetId'
+    },
   ],
   '8': [
     {'1': '_outer_diameter_mm'},
@@ -287,8 +295,9 @@ final $typed_data.Uint8List jobDescriptor = $convert.base64Decode(
     'ZGVkX2F0GA8gASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcFIHZW5kZWRBdBIZCghqb2'
     'ludF9ubxgQIAEoCVIHam9pbnRObxIXCgdqb2Jfa2V5GBEgASgJUgZqb2JLZXkSHQoKcHJvamVj'
     'dF9pZBgSIAEoA1IJcHJvamVjdElkEhkKCGpvYl9uYW1lGBMgASgJUgdqb2JOYW1lEiYKD3Byb2'
-    'plY3RfaXRlbV9pZBgUIAEoA1INcHJvamVjdEl0ZW1JZEIUChJfb3V0ZXJfZGlhbWV0ZXJfbW1C'
-    'DwoNX3RoaWNrbmVzc19tbUoECAcQCA==');
+    'plY3RfaXRlbV9pZBgUIAEoA1INcHJvamVjdEl0ZW1JZBIiCg1yZXBvcnRfc2V0X2lkGBUgASgD'
+    'UgtyZXBvcnRTZXRJZBIvChRhY3RpdmVfcmVwb3J0X3NldF9pZBgWIAEoA1IRYWN0aXZlUmVwb3'
+    'J0U2V0SWRCFAoSX291dGVyX2RpYW1ldGVyX21tQg8KDV90aGlja25lc3NfbW1KBAgHEAg=');
 
 @$core.Deprecated('Use itemAssignmentDescriptor instead')
 const ItemAssignment$json = {

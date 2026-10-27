@@ -27,8 +27,8 @@ abstract class ReportServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $2.GetReportSetRequest request);
   $async.Future<$2.ResolveReviewResponse> resolveReview(
       $pb.ServerContext ctx, $2.ResolveReviewRequest request);
-  $async.Future<$2.MatchReportSetResponse> matchReportSet(
-      $pb.ServerContext ctx, $2.MatchReportSetRequest request);
+  $async.Future<$2.UpdateReportFieldResponse> updateReportField(
+      $pb.ServerContext ctx, $2.UpdateReportFieldRequest request);
   $async.Future<$2.ListQualityResultsResponse> listQualityResults(
       $pb.ServerContext ctx, $2.ListQualityResultsRequest request);
 
@@ -40,8 +40,8 @@ abstract class ReportServiceBase extends $pb.GeneratedService {
         return $2.GetReportSetRequest();
       case 'ResolveReview':
         return $2.ResolveReviewRequest();
-      case 'MatchReportSet':
-        return $2.MatchReportSetRequest();
+      case 'UpdateReportField':
+        return $2.UpdateReportFieldRequest();
       case 'ListQualityResults':
         return $2.ListQualityResultsRequest();
       default:
@@ -58,8 +58,8 @@ abstract class ReportServiceBase extends $pb.GeneratedService {
         return getReportSet(ctx, request as $2.GetReportSetRequest);
       case 'ResolveReview':
         return resolveReview(ctx, request as $2.ResolveReviewRequest);
-      case 'MatchReportSet':
-        return matchReportSet(ctx, request as $2.MatchReportSetRequest);
+      case 'UpdateReportField':
+        return updateReportField(ctx, request as $2.UpdateReportFieldRequest);
       case 'ListQualityResults':
         return listQualityResults(ctx, request as $2.ListQualityResultsRequest);
       default:

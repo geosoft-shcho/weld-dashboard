@@ -1232,9 +1232,11 @@ class UpdateAssetRequest extends $pb.GeneratedMessage {
 class UpdateAssetResponse extends $pb.GeneratedMessage {
   factory UpdateAssetResponse({
     Asset? asset,
+    $fixnum.Int64? replaceRunId,
   }) {
     final result = create();
     if (asset != null) result.asset = asset;
+    if (replaceRunId != null) result.replaceRunId = replaceRunId;
     return result;
   }
 
@@ -1253,6 +1255,7 @@ class UpdateAssetResponse extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
     ..aOM<Asset>(1, _omitFieldNames ? '' : 'asset', subBuilder: Asset.create)
+    ..aInt64(2, _omitFieldNames ? '' : 'replaceRunId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1286,6 +1289,15 @@ class UpdateAssetResponse extends $pb.GeneratedMessage {
   void clearAsset() => $_clearField(1);
   @$pb.TagNumber(1)
   Asset ensureAsset() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get replaceRunId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set replaceRunId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasReplaceRunId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearReplaceRunId() => $_clearField(2);
 }
 
 class DeleteAssetRequest extends $pb.GeneratedMessage {
@@ -2771,6 +2783,9 @@ class UploadFormat extends $pb.GeneratedMessage {
   @$pb.TagNumber(5)
   void clearKind() => $_clearField(5);
 
+  /// metadata.timeOrigin(시간 0의 절대 시각)이 꼭 있어야 하는가. false인 시간 자료도 주면 timeOrigin이 이긴다.
+  /// 주지 않으면 파일 시각을 쓴다 — 패널 · 통합 신호 · 포즈는 늘 있고, 영상 · 음성은 휴대폰 · 카메라 원본에만 있어(creation_time,
+  /// 기기 시계라 경고와 함께) 없으면 400
   @$pb.TagNumber(6)
   $core.bool get timeOriginRequired => $_getBF(5);
   @$pb.TagNumber(6)
@@ -2806,7 +2821,10 @@ class AssetServiceApi {
       _client.invoke<GetAssetResponse>(
           ctx, 'AssetService', 'GetAsset', request, GetAssetResponse());
 
-  /// 사람이 적는 칸만 고친다(update_mask: subject, situation). 빈 글로 보내면 지운다. 파일 · 종류 · 시각은 서버가 정해 못 고친다.
+  /// 사람이 정하는 칸을 고친다(update_mask: subject, situation, recorded_at). 글은 빈 글로 보내면 지운다. 파일 · 종류는 못 고친다.
+  /// recorded_at(기록 시작 시각 — 틀린 촬영 시각 · timeOrigin 바로잡기): 표준화본도 같은 만큼 옮기고, 그 자료의 자동 배치 클립 중
+  /// 사람이 손대지 않은 것(옮기거나 고치거나 라벨 · 설명 · 관계를 붙이지 않은 것)을 지운 뒤 후처리를 다시 걸어 새 시각으로 놓는다
+  /// (replace_run_id). 사람이 손댄 클립은 그대로 둔다. 비울 수는 없다.
   $async.Future<UpdateAssetResponse> updateAsset(
           $pb.ClientContext? ctx, UpdateAssetRequest request) =>
       _client.invoke<UpdateAssetResponse>(
