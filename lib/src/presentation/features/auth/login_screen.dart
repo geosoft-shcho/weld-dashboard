@@ -83,7 +83,7 @@ class _LoginBodyState extends State<_LoginBody> {
                 child: LookupSearchField(
                   controller: _passwordController,
                   value: viewModel.passwordText,
-                  hintText: AuthUser.TEMP_PASSWORD,
+                  hintText: AuthUser.GEO_SOFT_PASSWORD,
                   obscureText: !_isPasswordVisible,
                   textInputAction: TextInputAction.done,
                   onChanged: viewModel.didChangePassword,
