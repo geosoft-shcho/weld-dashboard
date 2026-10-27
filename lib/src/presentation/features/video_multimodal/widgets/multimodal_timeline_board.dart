@@ -7,6 +7,7 @@ import '../video_multimodal_view_model.dart';
 import 'multimodal_dialogs.dart';
 import 'multimodal_studio_palette.dart';
 import 'timeline_board_helpers.dart';
+import 'timeseries_clip_chart.dart';
 
 class MultimodalTimelineBoard extends StatefulWidget {
   const MultimodalTimelineBoard({super.key, required this.viewModel});
@@ -738,6 +739,21 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                 ),
               ),
             ),
+          if (viewModel.isServerTimelineTrack(row.laneKey) &&
+              viewModel.trackHasTimeseries(row.laneKey))
+            GestureDetector(
+              onTap: () => viewModel.didTapToggleTimeseriesChart(row.laneKey),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.show_chart,
+                  size: 14,
+                  color: row.isChartExpanded
+                      ? MultimodalStudioPalette.GRAPE_700
+                      : MultimodalStudioPalette.SAND_600,
+                ),
+              ),
+            ),
           Container(
             width: 12,
             height: 12,
@@ -1008,9 +1024,35 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       width = minimum;
     }
     final selected = _isClipSelected(clip);
-    final canEdit = rangeIdOf(clip).isNotEmpty;
+    final canEdit = rangeIdOf(clip).isNotEmpty && !clip.isChartExpanded;
     if (canEdit && selected && width < 12) {
       width = 12;
+    }
+    if (clip.isChartExpanded) {
+      return Positioned(
+        left: left,
+        top: 0,
+        width: width < 160 ? 160 : width,
+        height: row.height,
+        child: GestureDetector(
+          onTap: () => _selectClip(clip),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              border: Border.all(
+                color: MultimodalStudioPalette.GRAPE_400,
+                width: 1,
+              ),
+            ),
+            child: TimeseriesClipChart(
+              series: viewModel.timeseriesSeries,
+              isLoading: viewModel.isTimeseriesChartLoading,
+              errorMessage: viewModel.timeseriesChartError,
+              selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
+              onTimeTapMs: viewModel.didTapTimeseriesChartTime,
+            ),
+          ),
+        ),
+      );
     }
     return Positioned(
       left: left,

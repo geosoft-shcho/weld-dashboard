@@ -20,10 +20,13 @@ import '../../../domain/use_cases/delete_clip_use_case.dart';
 import '../../../domain/use_cases/delete_timeline_use_case.dart';
 import '../../../domain/use_cases/delete_track_use_case.dart';
 import '../../../domain/use_cases/get_clip_use_case.dart';
+import '../../../domain/entities/timeseries_waveform_load.dart';
+import '../../../domain/entities/waveform_series_bundle.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
 import '../../../domain/use_cases/label_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 import '../../../domain/use_cases/load_job_project_id_use_case.dart';
+import '../../../domain/use_cases/load_timeseries_waveform_use_case.dart';
 import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
 import '../../../domain/use_cases/update_timeline_use_case.dart';
@@ -56,6 +59,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required this._getSessionHistoryUseCase,
     required this._askSessionStore,
     required this._loadJobProjectIdUseCase,
+    required this._loadTimeseriesWaveformUseCase,
     required this.jobId,
     this.toolRunPoll = const Duration(seconds: 2),
   });
@@ -95,6 +99,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final GetSessionHistoryUseCase _getSessionHistoryUseCase;
   final AskSessionStore _askSessionStore;
   final LoadJobProjectIdUseCase _loadJobProjectIdUseCase;
+  final LoadTimeseriesWaveformUseCase _loadTimeseriesWaveformUseCase;
   final String jobId;
   final Duration toolRunPoll;
 
@@ -167,6 +172,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final List<String> _monitoredTrackIds = [];
   String _focusedMonitorTrackId = '';
   static const int MAX_MONITORED_TRACK_COUNT = 4;
+  String _chartExpandedClipId = '';
+  int _timeseriesChartEpoch = 0;
+  bool _isTimeseriesChartLoading = false;
+  String _timeseriesChartError = '';
+  WaveformSeriesBundle _timeseriesSeries =
+      LoadTimeseriesWaveformUseCase.emptySeries;
   /// 포커스 시계는 오는데 바늘이 멈춘 시각. null이면 정상.
   DateTime? _focusStuckAt;
   /// 0=대기, 1=re-seek 함, 2=notice 함.
@@ -511,6 +522,234 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _monitoredTrackIds.add(trackId);
     _setFocusedMonitorTrack(trackId);
     notifyListeners();
+  }
+
+  String get chartExpandedClipId => _chartExpandedClipId;
+  bool get isTimeseriesChartLoading => _isTimeseriesChartLoading;
+  String get timeseriesChartError => _timeseriesChartError;
+  WaveformSeriesBundle get timeseriesSeries => _timeseriesSeries;
+
+  bool trackHasTimeseries(String trackId) {
+    for (final clip in _timeline.clips) {
+      if (clip.trackId == trackId &&
+          clip.kind == TimelineClipKind.timeseries) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool isTimeseriesChartExpanded(String clipId) =>
+      clipId.isNotEmpty && clipId == _chartExpandedClipId;
+
+  int? get timeseriesSelectedTimeMs {
+    final clip = _timelineClip(_chartExpandedClipId);
+    if (clip == null) {
+      return null;
+    }
+    final start = secondsFromNanoseconds(clip.startNanoseconds);
+    final end = secondsFromNanoseconds(clip.endNanoseconds);
+    if (end <= start) {
+      return 0;
+    }
+    final local = (_playheadSeconds - start).clamp(0.0, end - start);
+    return (local * 1000).round();
+  }
+
+  void didTapToggleTimeseriesChart(String trackId) {
+    if (trackId.isEmpty || !trackHasTimeseries(trackId)) {
+      return;
+    }
+    final selected = _timelineClip(_selectedClipId);
+    TimelineClip? target;
+    if (selected != null &&
+        selected.trackId == trackId &&
+        selected.kind == TimelineClipKind.timeseries) {
+      target = selected;
+    } else {
+      target = _coveringTimeseriesOnTrack(trackId, _playheadSeconds);
+      target ??= _firstTimeseriesOnTrack(trackId);
+    }
+    if (target == null) {
+      return;
+    }
+    if (_chartExpandedClipId == target.clipId) {
+      _collapseTimeseriesChart();
+      notifyListeners();
+      return;
+    }
+    _expandTimeseriesChart(target);
+  }
+
+  void didTapTimeseriesChartTime(int timeMs) {
+    final clip = _timelineClip(_chartExpandedClipId);
+    if (clip == null) {
+      return;
+    }
+    final start = secondsFromNanoseconds(clip.startNanoseconds);
+    didSeekToSeconds(start + timeMs / 1000.0);
+  }
+
+  TimelineClip? _coveringTimeseriesOnTrack(String trackId, double seconds) {
+    TimelineClip? best;
+    for (final clip in _timeline.clips) {
+      if (clip.trackId != trackId ||
+          clip.kind != TimelineClipKind.timeseries) {
+        continue;
+      }
+      final start = secondsFromNanoseconds(clip.startNanoseconds);
+      final end = secondsFromNanoseconds(clip.endNanoseconds);
+      if (seconds < start || seconds >= end) {
+        continue;
+      }
+      if (best == null || clip.clipId.compareTo(best.clipId) > 0) {
+        best = clip;
+      }
+    }
+    return best;
+  }
+
+  TimelineClip? _firstTimeseriesOnTrack(String trackId) {
+    TimelineClip? best;
+    for (final clip in _timeline.clips) {
+      if (clip.trackId != trackId ||
+          clip.kind != TimelineClipKind.timeseries) {
+        continue;
+      }
+      if (best == null ||
+          secondsFromNanoseconds(clip.startNanoseconds) <
+              secondsFromNanoseconds(best.startNanoseconds)) {
+        best = clip;
+      }
+    }
+    return best;
+  }
+
+  void _expandTimeseriesChart(TimelineClip clip) {
+    _chartExpandedClipId = clip.clipId;
+    _selectedClipId = clip.clipId;
+    unawaited(_loadTimeseriesChart(clip));
+  }
+
+  void _collapseTimeseriesChart() {
+    _chartExpandedClipId = '';
+    _timeseriesChartEpoch += 1;
+    _isTimeseriesChartLoading = false;
+    _timeseriesChartError = '';
+    _timeseriesSeries = LoadTimeseriesWaveformUseCase.emptySeries;
+  }
+
+  Future<void> _loadTimeseriesChart(TimelineClip clip) async {
+    final epoch = ++_timeseriesChartEpoch;
+    _isTimeseriesChartLoading = true;
+    _timeseriesChartError = '';
+    _timeseriesSeries = LoadTimeseriesWaveformUseCase.emptySeries;
+    notifyListeners();
+    _logTimeseries(
+      'request',
+      clip: clip,
+      detail:
+          'urlEmpty=${clip.contentUrl.isEmpty} '
+          'urlLen=${clip.contentUrl.length}',
+    );
+    if (clip.contentUrl.isEmpty) {
+      if (epoch != _timeseriesChartEpoch || _isClosed) {
+        return;
+      }
+      _isTimeseriesChartLoading = false;
+      _timeseriesChartError = '파형 주소가 없습니다';
+      _logTimeseries('skip_empty_url', clip: clip);
+      notifyListeners();
+      return;
+    }
+    try {
+      final load = await _loadTimeseriesWaveformUseCase.execute(
+        contentUrl: clip.contentUrl,
+      );
+      if (epoch != _timeseriesChartEpoch || _isClosed) {
+        _logTimeseries('stale', clip: clip, detail: 'epoch=$epoch');
+        return;
+      }
+      _timeseriesSeries = load.series;
+      if (!load.series.doesHaveAnySeries) {
+        _timeseriesChartError = '파형 데이터 없음';
+      }
+      _logTimeseriesLoad(clip, load);
+    } catch (error) {
+      if (epoch != _timeseriesChartEpoch || _isClosed) {
+        return;
+      }
+      _timeseriesChartError = error.toString();
+      _timeseriesSeries = LoadTimeseriesWaveformUseCase.emptySeries;
+      _logTimeseries('error', clip: clip, detail: '$error');
+    } finally {
+      if (epoch == _timeseriesChartEpoch && !_isClosed) {
+        _isTimeseriesChartLoading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  void _logTimeseriesLoad(TimelineClip clip, TimeseriesWaveformLoad load) {
+    final points = load.series.robot;
+    final first = points.isEmpty ? null : points.first;
+    final last = points.isEmpty ? null : points.last;
+    var currentCount = 0;
+    var voltageCount = 0;
+    var speedCount = 0;
+    var rpmCount = 0;
+    for (final point in points) {
+      if (point.currentA != null) {
+        currentCount += 1;
+      }
+      if (point.voltageV != null) {
+        voltageCount += 1;
+      }
+      if (point.speedValue != null) {
+        speedCount += 1;
+      }
+      if (point.rotationSpeedRpm != null) {
+        rpmCount += 1;
+      }
+    }
+    _logTimeseries(
+      'response',
+      clip: clip,
+      detail:
+          'bodyLen=${load.bodyLength} lines=${load.lineCount} '
+          'headers=${load.headers.join('|')} '
+          'match(time=${load.matchedTimeHeader},'
+          'current=${load.matchedCurrentHeader},'
+          'voltage=${load.matchedVoltageHeader},'
+          'speed=${load.matchedSpeedHeader},'
+          'rpm=${load.matchedRpmHeader}) '
+          'rawPoints=${load.rawPointCount} points=${load.pointCount} '
+          'filled(current=$currentCount,voltage=$voltageCount,'
+          'speed=$speedCount,rpm=$rpmCount) '
+          'rangeMs=${first?.timeMs ?? '-'}..${last?.timeMs ?? '-'} '
+          'sample(t=${first?.timeMs},I=${first?.currentA},'
+          'V=${first?.voltageV},S=${first?.speedValue},'
+          'rpm=${first?.rotationSpeedRpm})',
+    );
+  }
+
+  void _logTimeseries(
+    String phase, {
+    required TimelineClip clip,
+    String detail = '',
+  }) {
+    if (!kDebugMode) {
+      return;
+    }
+    debugPrint(
+      '[TIMESERIES] $phase clipId=${clip.clipId} trackId=${clip.trackId} '
+      'assetId=${clip.assetId} file=${clip.fileName} '
+      'kind=${clip.kind} '
+      'timeline=${clip.startNs}..${clip.endNs} '
+      'source=${clip.sourceStartNs}..${clip.sourceEndNs} '
+      'url=${clip.contentUrl}'
+      '${detail.isEmpty ? '' : ' $detail'}',
+    );
   }
 
   void didTapFocusMonitorSlot(String trackId) {
@@ -923,6 +1162,13 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _selectedClipId = clipId;
     _clearPosePlayback();
     _side = VideoMultimodalSide.properties;
+    if (timelineClip.kind == TimelineClipKind.timeseries) {
+      if (_chartExpandedClipId != clipId) {
+        _expandTimeseriesChart(timelineClip);
+      }
+    } else {
+      _collapseTimeseriesChart();
+    }
     didSeekToSeconds(secondsFromNanoseconds(timelineClip.startNanoseconds));
     unawaited(_loadClipDetail(clipId));
   }

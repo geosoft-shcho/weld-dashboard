@@ -7,6 +7,7 @@ import '../video_multimodal_view_model.dart';
 import 'multimodal_studio_palette.dart';
 
 const double TIMELINE_TRACK_LANE_HEIGHT = 28;
+const double TIMELINE_TIMESERIES_CHART_HEIGHT = 240;
 
 class TimelineBoardRow {
   const TimelineBoardRow({
@@ -16,6 +17,7 @@ class TimelineBoardRow {
     required this.showsAiBadge,
     required this.clips,
     required this.laneCount,
+    this.isChartExpanded = false,
   });
 
   final String laneKey;
@@ -24,8 +26,11 @@ class TimelineBoardRow {
   final bool showsAiBadge;
   final List<TimelineBoardClip> clips;
   final int laneCount;
+  final bool isChartExpanded;
 
-  double get height => TIMELINE_TRACK_LANE_HEIGHT * laneCount;
+  double get height => isChartExpanded
+      ? TIMELINE_TIMESERIES_CHART_HEIGHT
+      : TIMELINE_TRACK_LANE_HEIGHT * laneCount;
 }
 
 class TimelineBoardClip {
@@ -38,10 +43,12 @@ class TimelineBoardClip {
     required this.background,
     required this.foreground,
     required this.border,
+    this.kind = TimelineClipKind.unspecified,
     this.showsPoseDots = false,
     this.hasLabel = false,
     this.laneIndex = 0,
     this.rateLabel = '',
+    this.isChartExpanded = false,
   });
 
   final String clipId;
@@ -52,10 +59,12 @@ class TimelineBoardClip {
   final Color background;
   final Color foreground;
   final Color border;
+  final TimelineClipKind kind;
   final bool showsPoseDots;
   final bool hasLabel;
   final int laneIndex;
   final String rateLabel;
+  final bool isChartExpanded;
 }
 
 /// 클립 또는 막대 식별자
@@ -179,6 +188,7 @@ List<TimelineBoardRow> buildTimelineBoardRows(
     }
     final clips = track.clips;
     final lanes = assignClipLanes(clips);
+    final expandedClipId = viewModel.chartExpandedClipId;
     rows.add(
       TimelineBoardRow(
         laneKey: track.trackId,
@@ -186,6 +196,7 @@ List<TimelineBoardRow> buildTimelineBoardRows(
         labelColor: MultimodalStudioPalette.SAND_700,
         showsAiBadge: clips.any((clip) => clip.showsToolMark),
         laneCount: _laneCount(lanes),
+        isChartExpanded: clips.any((clip) => clip.clipId == expandedClipId),
         clips: [
           for (final clip in clips)
             TimelineBoardClip(
@@ -203,10 +214,12 @@ List<TimelineBoardRow> buildTimelineBoardRows(
               border: clip.labelValueId.isEmpty
                   ? Colors.transparent
                   : MultimodalStudioPalette.PLUM_500,
+              kind: clip.kind,
               showsPoseDots: clip.kind == TimelineClipKind.pose,
               hasLabel: clip.labelValueId.isNotEmpty,
               laneIndex: lanes[clip.clipId] ?? 0,
               rateLabel: _rateLabel(clip),
+              isChartExpanded: clip.clipId == expandedClipId,
             ),
         ],
       ),
