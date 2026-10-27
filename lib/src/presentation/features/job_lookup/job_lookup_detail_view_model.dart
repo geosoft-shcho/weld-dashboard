@@ -13,6 +13,7 @@ import '../../../domain/use_cases/job_admin_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_upload_formats_use_case.dart';
+import '../../../domain/use_cases/upload_asset_queue_use_case.dart';
 import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../domain/use_cases/list_job_passes_use_case.dart';
 import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
@@ -33,6 +34,7 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     required ListEquipmentLookupUseCase listEquipmentLookupUseCase,
     required ListUploadFormatsUseCase listUploadFormatsUseCase,
     required UploadAssetUseCase uploadAssetUseCase,
+    required UploadAssetQueueUseCase uploadAssetQueueUseCase,
   }) : _loadWorkDetailCatalogUseCase = loadWorkDetailCatalogUseCase,
        _queryWorkDetailUseCase = queryWorkDetailUseCase,
        _listJobPassesUseCase = listJobPassesUseCase,
@@ -41,7 +43,8 @@ class JobLookupDetailViewModel extends ChangeNotifier {
        _loadWorkHistoryMastersUseCase = loadWorkHistoryMastersUseCase,
        _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
        _listUploadFormatsUseCase = listUploadFormatsUseCase,
-       _uploadAssetUseCase = uploadAssetUseCase;
+       _uploadAssetUseCase = uploadAssetUseCase,
+       _uploadAssetQueueUseCase = uploadAssetQueueUseCase;
 
   final String jobId;
   final LoadWorkDetailCatalogUseCase _loadWorkDetailCatalogUseCase;
@@ -53,6 +56,7 @@ class JobLookupDetailViewModel extends ChangeNotifier {
   final ListEquipmentLookupUseCase _listEquipmentLookupUseCase;
   final ListUploadFormatsUseCase _listUploadFormatsUseCase;
   final UploadAssetUseCase _uploadAssetUseCase;
+  final UploadAssetQueueUseCase _uploadAssetQueueUseCase;
 
   WorkHistoryItem? _job;
   JobDetail? _detail;
@@ -294,6 +298,8 @@ class JobLookupDetailViewModel extends ChangeNotifier {
           workerName: detail.workerName,
           startedAt: detail.startedAt,
           endedAt: detail.endedAt,
+          reportSetId: detail.reportSetId,
+          activeReportSetId: detail.activeReportSetId,
           hasReport: detail.hasReport,
           attachmentCount: _attachments.length,
           passes: detail.passes,
@@ -317,7 +323,7 @@ class JobLookupDetailViewModel extends ChangeNotifier {
       itemCode: detail.itemCode,
       itemName: detail.itemName,
       jointNo: detail.jointNo,
-      hasReport: old.hasReport,
+      hasReport: detail.hasReport,
       workerId: detail.workerId,
       workerName: detail.workerName.isEmpty
           ? old.workerName
@@ -340,6 +346,10 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     return _uploadAssetUseCase.pickFile();
   }
 
+  Future<List<CameraRecordingFile>> pickUploadFiles() {
+    return _uploadAssetUseCase.pickFiles();
+  }
+
   Future<AssetUploadResult> uploadAssetFile({
     required String jobId,
     required String passId,
@@ -355,6 +365,26 @@ class JobLookupDetailViewModel extends ChangeNotifier {
       equipmentId: equipmentId,
       timeOrigin: timeOrigin,
       file: file,
+      subject: subject,
+      situation: situation,
+    );
+  }
+
+  Future<AssetUploadBatchResult> uploadAssetQueue({
+    required String jobId,
+    required String passId,
+    required String equipmentId,
+    required List<AssetUploadQueueEntry> entries,
+    required void Function(AssetUploadQueueItem item) onItemUpdated,
+    String subject = '',
+    String situation = '',
+  }) {
+    return _uploadAssetQueueUseCase.execute(
+      jobId: jobId,
+      passId: passId,
+      equipmentId: equipmentId,
+      entries: entries,
+      onItemUpdated: onItemUpdated,
       subject: subject,
       situation: situation,
     );

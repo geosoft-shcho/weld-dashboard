@@ -56,6 +56,8 @@ class JobDetail {
     required this.workerName,
     required this.startedAt,
     required this.endedAt,
+    required this.reportSetId,
+    required this.activeReportSetId,
     required this.hasReport,
     required this.attachmentCount,
     required this.passes,
@@ -80,6 +82,10 @@ class JobDetail {
   final String workerName;
   final DateTime? startedAt;
   final DateTime? endedAt;
+  /// 작업이 지정한 세트. 비어 있으면 본인 세트 자동.
+  final String reportSetId;
+  /// 실제로 쓰는 세트(읽기 전용).
+  final String activeReportSetId;
   final bool hasReport;
   final int attachmentCount;
   final List<JobPassDetail> passes;

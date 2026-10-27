@@ -43,6 +43,7 @@ import '../../../domain/use_cases/release_camera_recording_use_case.dart';
 import '../../../domain/use_cases/start_camera_recording_use_case.dart';
 import '../../../domain/use_cases/stop_camera_recording_use_case.dart';
 import '../../../domain/use_cases/list_upload_formats_use_case.dart';
+import '../../../domain/use_cases/upload_asset_queue_use_case.dart';
 import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../../data/datasources/local/auth_session_local_data_source.dart';
@@ -157,6 +158,12 @@ void setupLocator({required bool pdfrxReady}) {
     () => RemoteAssetUploadRepository(locator()),
   );
   locator.registerFactory(() => UploadAssetUseCase(locator()));
+  locator.registerFactory(
+    () => UploadAssetQueueUseCase(
+      locator<AssetUploadRepository>(),
+      locator<ToolRunRepository>(),
+    ),
+  );
   locator.registerLazySingleton(() => ListUploadFormatsUseCase(locator()));
   locator.registerLazySingleton<CatalogRepository>(
     () => RemoteCatalogRepository(),
@@ -228,6 +235,7 @@ void setupLocator({required bool pdfrxReady}) {
       listWorkHistoryPageUseCase: locator(),
       listUploadFormatsUseCase: locator(),
       uploadAssetUseCase: locator(),
+      uploadAssetQueueUseCase: locator(),
     ),
   );
   locator.registerFactoryParam<ProjectLookupDetailViewModel, String, void>(
@@ -277,6 +285,7 @@ void setupLocator({required bool pdfrxReady}) {
       listEquipmentLookupUseCase: locator(),
       listUploadFormatsUseCase: locator(),
       uploadAssetUseCase: locator(),
+      uploadAssetQueueUseCase: locator(),
     ),
   );
   locator.registerFactory(() => QueryWorkHistoryUseCase());

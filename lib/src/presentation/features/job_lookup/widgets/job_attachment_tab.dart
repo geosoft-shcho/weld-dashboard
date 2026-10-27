@@ -60,33 +60,13 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
       initialPassId: '',
       lockJob: true,
       loadFormats: _viewModel.loadUploadFormats,
-      pickFile: _viewModel.pickUploadFile,
-      uploadFile:
-          ({
-            required jobId,
-            required passId,
-            required equipmentId,
-            required timeOrigin,
-            required file,
-            required subject,
-            required situation,
-          }) => _viewModel.uploadAssetFile(
-            jobId: jobId,
-            passId: passId,
-            equipmentId: equipmentId,
-            timeOrigin: timeOrigin,
-            file: file,
-            subject: subject,
-            situation: situation,
-          ),
+      pickFiles: _viewModel.pickUploadFiles,
+      uploadQueue: _viewModel.uploadAssetQueue,
     );
-    if (result == null || !mounted) return;
+    if (result == null || !result.hasSuccess || !mounted) return;
     await _run(_viewModel.didFinishUpload);
     if (!mounted) return;
-    final notes = [
-      ...result.warnings,
-      for (final id in result.duplicateAssetIds) '같은 내용의 에셋 $id가 이미 있습니다',
-    ];
+    final notes = [...result.warningNotes, ...result.failureNotes];
     if (notes.isEmpty) return;
     await displayInfoBar(
       context,
@@ -113,6 +93,11 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              const Text(
+                '문서 PDF를 붙이면 첨부만 됩니다. 성적서 세트에는 이어지지 않습니다.',
+                style: TextStyle(fontSize: 12),
+              ),
+              const SizedBox(height: 8),
               InfoLabel(
                 label: '에셋 번호 *',
                 child: JobDetailTextInput(
@@ -190,7 +175,7 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
             ),
             CommandBarButton(
               icon: const Icon(FluentIcons.attach),
-              label: const CommandBarLabel('에셋 붙이기'),
+              label: const CommandBarLabel('에셋 붙이기(첨부만)'),
               onPressed: _isWorking ? null : _didTapAttach,
             ),
           ],

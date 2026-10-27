@@ -240,37 +240,17 @@ Future<void> _didTapUpload(
     initialPassId: viewModel.passId,
     lockJob: false,
     loadFormats: viewModel.loadUploadFormats,
-    pickFile: viewModel.pickUploadFile,
-    uploadFile:
-        ({
-          required jobId,
-          required passId,
-          required equipmentId,
-          required timeOrigin,
-          required file,
-          required subject,
-          required situation,
-        }) => viewModel.uploadAssetFile(
-          jobId: jobId,
-          passId: passId,
-          equipmentId: equipmentId,
-          timeOrigin: timeOrigin,
-          file: file,
-          subject: subject,
-          situation: situation,
-        ),
+    pickFiles: viewModel.pickUploadFiles,
+    uploadQueue: viewModel.uploadAssetQueue,
   );
-  if (result == null || !context.mounted) {
+  if (result == null || !result.hasSuccess || !context.mounted) {
     return;
   }
   await viewModel.load();
   if (!context.mounted) {
     return;
   }
-  final notes = [
-    ...result.warnings,
-    for (final id in result.duplicateAssetIds) '같은 내용의 에셋 $id가 이미 있습니다',
-  ];
+  final notes = [...result.warningNotes, ...result.failureNotes];
   if (notes.isEmpty) {
     return;
   }

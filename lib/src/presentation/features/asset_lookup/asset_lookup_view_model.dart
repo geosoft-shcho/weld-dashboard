@@ -13,6 +13,7 @@ import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_upload_formats_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
+import '../../../domain/use_cases/upload_asset_queue_use_case.dart';
 import '../../../domain/use_cases/upload_asset_use_case.dart';
 
 class AssetLookupViewModel extends ChangeNotifier {
@@ -22,11 +23,13 @@ class AssetLookupViewModel extends ChangeNotifier {
     required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
     required ListUploadFormatsUseCase listUploadFormatsUseCase,
     required UploadAssetUseCase uploadAssetUseCase,
+    required UploadAssetQueueUseCase uploadAssetQueueUseCase,
   }) : _listAssetLookupPageUseCase = listAssetLookupPageUseCase,
        _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
        _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase,
        _listUploadFormatsUseCase = listUploadFormatsUseCase,
-       _uploadAssetUseCase = uploadAssetUseCase;
+       _uploadAssetUseCase = uploadAssetUseCase,
+       _uploadAssetQueueUseCase = uploadAssetQueueUseCase;
 
   static const int pageSize = WorkHistoryQuery.BATCH_SIZE;
 
@@ -35,6 +38,7 @@ class AssetLookupViewModel extends ChangeNotifier {
   final ListWorkHistoryPageUseCase _listWorkHistoryPageUseCase;
   final ListUploadFormatsUseCase _listUploadFormatsUseCase;
   final UploadAssetUseCase _uploadAssetUseCase;
+  final UploadAssetQueueUseCase _uploadAssetQueueUseCase;
 
   String _kindCode = '';
   String _fileNameText = '';
@@ -341,6 +345,10 @@ class AssetLookupViewModel extends ChangeNotifier {
     return _uploadAssetUseCase.pickFile();
   }
 
+  Future<List<CameraRecordingFile>> pickUploadFiles() {
+    return _uploadAssetUseCase.pickFiles();
+  }
+
   Future<AssetUploadResult> uploadAssetFile({
     required String jobId,
     required String passId,
@@ -356,6 +364,26 @@ class AssetLookupViewModel extends ChangeNotifier {
       equipmentId: equipmentId,
       timeOrigin: timeOrigin,
       file: file,
+      subject: subject,
+      situation: situation,
+    );
+  }
+
+  Future<AssetUploadBatchResult> uploadAssetQueue({
+    required String jobId,
+    required String passId,
+    required String equipmentId,
+    required List<AssetUploadQueueEntry> entries,
+    required void Function(AssetUploadQueueItem item) onItemUpdated,
+    String subject = '',
+    String situation = '',
+  }) {
+    return _uploadAssetQueueUseCase.execute(
+      jobId: jobId,
+      passId: passId,
+      equipmentId: equipmentId,
+      entries: entries,
+      onItemUpdated: onItemUpdated,
       subject: subject,
       situation: situation,
     );

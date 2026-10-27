@@ -23,6 +23,8 @@ class UploadAssetUseCase {
 
   Future<CameraRecordingFile?> pickFile() => _repository.pickFile();
 
+  Future<List<CameraRecordingFile>> pickFiles() => _repository.pickFiles();
+
   Future<AssetUploadResult> uploadFile({
     required String jobId,
     required String passId,
@@ -31,6 +33,7 @@ class UploadAssetUseCase {
     required CameraRecordingFile file,
     String subject = '',
     String situation = '',
+    void Function(double progressPercent)? onProgress,
   }) {
     if (file.bytes.isEmpty) {
       throw const AssetUploadException('업로드할 파일이 비어 있습니다.');
@@ -43,6 +46,29 @@ class UploadAssetUseCase {
       file: file,
       subject: subject,
       situation: situation,
+      onProgress: onProgress,
+    );
+  }
+
+  Future<AssetUploadResult> registerUploaded({
+    required String uploadId,
+    required String jobId,
+    required String passId,
+    required String equipmentId,
+    required DateTime? timeOrigin,
+    String subject = '',
+    String situation = '',
+    String fallbackFileName = '',
+  }) {
+    return _repository.registerUploaded(
+      uploadId: uploadId,
+      jobId: jobId,
+      passId: passId,
+      equipmentId: equipmentId,
+      timeOrigin: timeOrigin,
+      subject: subject,
+      situation: situation,
+      fallbackFileName: fallbackFileName,
     );
   }
 }

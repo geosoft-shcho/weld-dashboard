@@ -6,32 +6,50 @@ import 'package:web/web.dart' as web;
 import '../../domain/entities/camera_recording.dart';
 
 Future<CameraRecordingFile?> pickAssetFile() async {
-  final input = web.HTMLInputElement()..type = 'file';
-  final completer = Completer<CameraRecordingFile?>();
+  final files = await pickAssetFiles(multiple: false);
+  if (files.isEmpty) {
+    return null;
+  }
+  return files.first;
+}
+
+Future<List<CameraRecordingFile>> pickAssetFiles({bool multiple = true}) async {
+  final input = web.HTMLInputElement()
+    ..type = 'file'
+    ..multiple = multiple;
+  final completer = Completer<List<CameraRecordingFile>>();
   input.onchange = (web.Event _) {
-    final file = input.files?.item(0);
-    if (file == null) {
-      completer.complete(null);
+    final list = input.files;
+    if (list == null || list.length == 0) {
+      completer.complete(const []);
       return;
     }
-    file.arrayBuffer().toDart.then((buffer) {
-      completer.complete(
-        CameraRecordingFile(
-          bytes: buffer.toDart.asUint8List(),
-          mimeType: file.type,
-          fileName: file.name,
-          lastModifiedAt: DateTime.fromMillisecondsSinceEpoch(
-            file.lastModified,
-          ),
-        ),
+    final futures = <Future<CameraRecordingFile>>[];
+    for (var i = 0; i < list.length; i++) {
+      final file = list.item(i);
+      if (file == null) {
+        continue;
+      }
+      futures.add(
+        file.arrayBuffer().toDart.then((buffer) {
+          return CameraRecordingFile(
+            bytes: buffer.toDart.asUint8List(),
+            mimeType: file.type,
+            fileName: file.name,
+            lastModifiedAt: DateTime.fromMillisecondsSinceEpoch(
+              file.lastModified,
+            ),
+          );
+        }),
       );
-    }).catchError((Object error) {
+    }
+    Future.wait(futures).then(completer.complete).catchError((Object error) {
       completer.completeError(error);
     });
   }.toJS;
   input.oncancel = (web.Event _) {
     if (!completer.isCompleted) {
-      completer.complete(null);
+      completer.complete(const []);
     }
   }.toJS;
   input.click();
