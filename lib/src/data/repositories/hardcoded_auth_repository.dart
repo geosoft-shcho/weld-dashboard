@@ -3,11 +3,14 @@ import '../../domain/entities/sign_in_result.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/local/auth_session_local_data_source.dart';
 
-/// 서버 계약 전 임시 계정. `geosoft` · `guest`, 비밀번호 `1234`.
+/// 서버 계약 전 임시 계정. `geosoft` · `user`, 비밀번호 `1234`.
 class HardcodedAuthRepository implements AuthRepository {
   HardcodedAuthRepository(this._sessionLocal);
 
   final AuthSessionLocalDataSource _sessionLocal;
+
+  /// prefs에 남아 있을 수 있는 구 제한 계정 ID (`GUEST_USER_ID` 변경 전).
+  static const String _legacyGuestUserId = 'guest';
 
   static final Map<String, AuthUser> _usersById = {
     AuthUser.GEO_SOFT_USER_ID: AuthUser.geoSoft,
@@ -20,7 +23,13 @@ class HardcodedAuthRepository implements AuthRepository {
     if (userId == null) {
       return null;
     }
-    return _usersById[userId.toLowerCase()];
+    final normalizedId = userId.toLowerCase();
+    // 구 세션 `guest` → `user` (로그인 ID 변경 호환).
+    if (normalizedId == _legacyGuestUserId) {
+      await _sessionLocal.writeUserId(AuthUser.GUEST_USER_ID);
+      return AuthUser.guest;
+    }
+    return _usersById[normalizedId];
   }
 
   @override

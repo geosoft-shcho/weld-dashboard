@@ -8,7 +8,7 @@ class AuthUser {
   final bool canAccessVideoMultimodal;
 
   static const String GEO_SOFT_USER_ID = 'geosoft';
-  static const String GUEST_USER_ID = 'guest';
+  static const String GUEST_USER_ID = 'user';
 
   /// 서버 계약 전 임시 비밀번호 (hint·기본 전달값과 동일).
   static const String TEMP_PASSWORD = '1234';

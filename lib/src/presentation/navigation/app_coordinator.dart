@@ -84,7 +84,7 @@ class AppCoordinator extends ChangeNotifier {
   String get paneQualityPassId => _paneQualityPassId;
   String get paneQualityLinkId => _paneQualityLinkId;
   DateTime get lastDataUpdatedAt => _lastDataUpdatedAt;
-  /// 권한 콜백 미연결 시 기본 거부 (guest 제한이 풀리지 않게).
+  /// 권한 콜백 미연결 시 기본 거부 (제한 계정 권한이 풀리지 않게).
   bool get canAccessVideoMultimodal =>
       _canAccessVideoMultimodal?.call() ?? false;
 
@@ -94,7 +94,7 @@ class AppCoordinator extends ChangeNotifier {
     _canAccessVideoMultimodal = canAccessVideoMultimodal;
   }
 
-  /// guest 등 권한 없을 때 멀티모달 스택에 남아 있으면 상세로 되돌린다.
+  /// 제한 계정 등 권한 없을 때 멀티모달 스택에 남아 있으면 상세로 되돌린다.
   void didDenyVideoMultimodalIfNeeded() {
     if (canAccessVideoMultimodal) {
       return;

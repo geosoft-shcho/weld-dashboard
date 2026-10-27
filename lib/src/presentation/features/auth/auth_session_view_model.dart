@@ -67,7 +67,7 @@ class AuthSessionViewModel extends ChangeNotifier {
         _errorMessage = switch (result.failure) {
           SignInFailure.wrongPassword => '비밀번호가 올바르지 않습니다.',
           SignInFailure.unknownUser || null =>
-            '사용할 수 없는 계정입니다. geosoft 또는 guest를 입력하세요.',
+            '사용할 수 없는 계정입니다. geosoft 또는 user를 입력하세요.',
         };
         return false;
       }
