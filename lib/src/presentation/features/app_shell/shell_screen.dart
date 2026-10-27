@@ -98,55 +98,45 @@ class _ShellScreenState extends State<ShellScreen> {
             toggleButton: null,
             size: const NavigationPaneSize(openWidth: 240),
             items: [
-              PaneItem(
-                icon: const Icon(FluentIcons.server_processes),
-                title: const Text('수집 모니터링'),
+              _navPaneItem(
+                iconData: FluentIcons.server_processes,
+                label: '수집 모니터링',
                 body: const CollectionMonitoringScreen(),
               ),
-              PaneItem(
-                icon: const Icon(FluentIcons.city_next),
-                title: const Text('공사 관리'),
+              _navPaneItem(
+                iconData: FluentIcons.city_next,
+                label: '공사 관리',
                 body: _projectLookupBody(nav),
               ),
-              PaneItem(
-                icon: const Icon(FluentIcons.contact),
-                title: const Text('작업자 관리'),
+              _navPaneItem(
+                iconData: FluentIcons.contact,
+                label: '작업자 관리',
                 body: _workerLookupBody(nav),
               ),
-              PaneItem(
-                icon: const Icon(FluentIcons.history),
-                title: const Text('작업 관리'),
+              _navPaneItem(
+                iconData: FluentIcons.history,
+                label: '작업 관리',
                 body: _workHistoryBody(nav),
               ),
-              PaneItem(
-                icon: const Icon(FluentIcons.camera),
-                title: const Text('장비 관리'),
+              _navPaneItem(
+                iconData: FluentIcons.camera,
+                label: '장비 관리',
                 body: _equipmentLookupBody(nav),
               ),
-              PaneItem(
-                icon: const Icon(FluentIcons.folder_open),
-                title: const Text('에셋 관리'),
+              _navPaneItem(
+                iconData: FluentIcons.folder_open,
+                label: '에셋 관리',
                 body: _assetLookupBody(nav),
               ),
-              PaneItem(
-                icon: const Icon(FluentIcons.line_chart),
-                title: Tooltip(
-                  message: nav.canOpenLatestPassProfile
-                      ? '최근 작업의 패스 프로파일'
-                      : '표시할 패스 프로파일이 없습니다',
-                  child: const Text('최신 패스 프로파일'),
-                ),
+              _navPaneItem(
+                iconData: FluentIcons.line_chart,
+                label: '최신 패스 프로파일',
                 enabled: nav.canOpenLatestPassProfile,
                 body: _panePassProfileBody(nav),
               ),
-              PaneItem(
-                icon: const Icon(FluentIcons.report_document),
-                title: Tooltip(
-                  message: nav.canOpenLatestQualityIssue
-                      ? '최근 작업의 품질 이슈'
-                      : '표시할 품질 이슈가 없습니다',
-                  child: const Text('최신 품질 이슈'),
-                ),
+              _navPaneItem(
+                iconData: FluentIcons.report_document,
+                label: '최신 품질 이슈',
                 enabled: nav.canOpenLatestQualityIssue,
                 body: _paneQualityIssueBody(nav),
               ),
@@ -154,6 +144,30 @@ class _ShellScreenState extends State<ShellScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  /// compact에서 아이콘 오른쪽 툴팁(오프셋 12). 내장 위쪽 툴팁은 title을 Builder로 막아 끈다.
+  PaneItem _navPaneItem({
+    required IconData iconData,
+    required String label,
+    required Widget body,
+    bool enabled = true,
+  }) {
+    return PaneItem(
+      icon: Tooltip(
+        message: label,
+        displayHorizontally: true,
+        useMousePosition: false,
+        style: const TooltipThemeData(
+          verticalOffset: 12,
+          preferBelow: false,
+        ),
+        child: Icon(iconData),
+      ),
+      title: Builder(builder: (_) => Text(label)),
+      enabled: enabled,
+      body: body,
     );
   }
 

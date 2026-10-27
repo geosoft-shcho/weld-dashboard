@@ -3,7 +3,8 @@ import '../../domain/entities/sign_in_result.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/local/auth_session_local_data_source.dart';
 
-/// 서버 계약 전 임시 계정. `geosoft` · `user`, 비밀번호 `1234`.
+/// 서버 계약 전 임시 계정.
+/// `geosoft` 비밀번호 [AuthUser.GEO_SOFT_PASSWORD], `user` 비밀번호 [AuthUser.GUEST_PASSWORD].
 class HardcodedAuthRepository implements AuthRepository {
   HardcodedAuthRepository(this._sessionLocal);
 
@@ -38,12 +39,16 @@ class HardcodedAuthRepository implements AuthRepository {
     required String password,
   }) async {
     final normalizedId = _normalizeUserId(userId);
-    final normalizedPassword = _normalizePassword(password);
     final user = _usersById[normalizedId];
     if (user == null) {
       return const SignInResult.failure(SignInFailure.unknownUser);
     }
-    if (normalizedPassword != AuthUser.TEMP_PASSWORD) {
+    final expectedPassword = AuthUser.passwordForUserId(user.userId);
+    final normalizedPassword = _normalizePassword(
+      password,
+      expectedPassword: expectedPassword,
+    );
+    if (normalizedPassword != expectedPassword) {
       return const SignInResult.failure(SignInFailure.wrongPassword);
     }
     // 정규화된 계정 ID만 저장 (빈 입력을 geosoft로 보정한 경우 포함).
@@ -65,11 +70,14 @@ class HardcodedAuthRepository implements AuthRepository {
     return trimmed;
   }
 
-  /// 비어 있으면 hint 기본값 `1234`.
-  String _normalizePassword(String password) {
+  /// 비어 있으면 해당 계정의 기대 비밀번호로 보정.
+  String _normalizePassword(
+    String password, {
+    required String expectedPassword,
+  }) {
     final trimmed = password.trim();
     if (trimmed.isEmpty) {
-      return AuthUser.TEMP_PASSWORD;
+      return expectedPassword;
     }
     return trimmed;
   }

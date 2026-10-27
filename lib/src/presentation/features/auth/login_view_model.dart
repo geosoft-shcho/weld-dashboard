@@ -9,9 +9,9 @@ class LoginViewModel extends ChangeNotifier {
 
   final AuthSessionViewModel _authSession;
 
-  /// hint 기본값과 동일하게 채워 전달한다.
+  /// hint 기본값과 동일하게 채워 전달한다 (기본 계정 geosoft).
   String _userIdText = AuthUser.GEO_SOFT_USER_ID;
-  String _passwordText = AuthUser.TEMP_PASSWORD;
+  String _passwordText = AuthUser.GEO_SOFT_PASSWORD;
   String _errorMessage = '';
 
   String get userIdText => _userIdText;
