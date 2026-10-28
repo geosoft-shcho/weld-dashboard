@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../../domain/clip_file_position.dart';
 import '../../../../domain/entities/job_timeline.dart';
 import '../../../../domain/timeline_time.dart';
+import '../pose_board_marks.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_studio_palette.dart';
+
+export '../pose_board_marks.dart' show PoseBoardMark;
 
 const double TIMELINE_TRACK_LANE_HEIGHT = 28;
 const double TIMELINE_TIMESERIES_CHART_HEIGHT = 240;
@@ -44,7 +47,7 @@ class TimelineBoardClip {
     required this.foreground,
     required this.border,
     this.kind = TimelineClipKind.unspecified,
-    this.showsPoseDots = false,
+    this.poseMarks = const [],
     this.hasLabel = false,
     this.laneIndex = 0,
     this.rateLabel = '',
@@ -60,7 +63,8 @@ class TimelineBoardClip {
   final Color foreground;
   final Color border;
   final TimelineClipKind kind;
-  final bool showsPoseDots;
+  /// 포즈 JSON 실시각 구간. 비어 있으면 막대 없음.
+  final List<PoseBoardMark> poseMarks;
   final bool hasLabel;
   final int laneIndex;
   final String rateLabel;
@@ -215,7 +219,7 @@ List<TimelineBoardRow> buildTimelineBoardRows(
                   ? Colors.transparent
                   : MultimodalStudioPalette.PLUM_500,
               kind: clip.kind,
-              showsPoseDots: clip.kind == TimelineClipKind.pose,
+              poseMarks: viewModel.poseBoardMarksForClip(clip.clipId),
               hasLabel: clip.labelValueId.isNotEmpty,
               laneIndex: lanes[clip.clipId] ?? 0,
               rateLabel: _rateLabel(clip),

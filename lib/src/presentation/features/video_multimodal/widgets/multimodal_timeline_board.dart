@@ -1013,7 +1013,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           children: [
             for (final clip in row.clips) _clip(clip, row),
             for (final clip in row.clips)
-              if (clip.showsPoseDots) ..._poseDots(clip),
+              if (clip.poseMarks.isNotEmpty) ..._poseMarks(clip),
           ],
         ),
       ),
@@ -1244,25 +1244,42 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     setState(() => _edit = null);
   }
 
-  List<Widget> _poseDots(TimelineBoardClip clip) {
-    const fractions = [0.1, 0.35, 0.6, 0.85];
-    final left = clip.startSeconds * viewModel.pixelsPerSecond;
-    final width =
-        (clip.endSeconds - clip.startSeconds) * viewModel.pixelsPerSecond;
-    return [
-      for (final fraction in fractions)
+  List<Widget> _poseMarks(TimelineBoardClip clip) {
+    final top = 8.0 + clip.laneIndex * TIMELINE_TRACK_LANE_HEIGHT;
+    final marks = <Widget>[];
+    final pps = viewModel.pixelsPerSecond;
+    for (var index = 0; index < clip.poseMarks.length; index++) {
+      final mark = clip.poseMarks[index];
+      final left = mark.startSeconds * pps;
+      final durationSeconds = mark.endSeconds - mark.startSeconds;
+      final rawWidth = durationSeconds * pps;
+      var width = rawWidth;
+      if (width < 2) {
+        width = 2;
+      }
+      if (index < 3 || index == clip.poseMarks.length - 1) {
+        debugPrint(
+          '[POSE_BOARD] paint clipId=${clip.clipId} i=$index/'
+          '${clip.poseMarks.length} '
+          't=${mark.startSeconds.toStringAsFixed(3)}'
+          '..${mark.endSeconds.toStringAsFixed(3)} '
+          'dur=${durationSeconds.toStringAsFixed(4)}s '
+          'rawPx=${rawWidth.toStringAsFixed(2)} drawPx=${width.toStringAsFixed(2)} '
+          'left=${left.toStringAsFixed(1)} pps=$pps',
+        );
+      }
+      final seekSeconds = mark.startSeconds + durationSeconds / 2;
+      marks.add(
         Positioned(
-          left: left + width * fraction,
-          top: 8 + clip.laneIndex * TIMELINE_TRACK_LANE_HEIGHT,
+          left: left,
+          top: top,
           child: GestureDetector(
-            onTap: () => viewModel.didSeekToSeconds(
-              clip.startSeconds +
-                  (clip.endSeconds - clip.startSeconds) * fraction,
-            ),
-            child: const SizedBox(
-              width: 6,
+            behavior: HitTestBehavior.opaque,
+            onTap: () => viewModel.didSeekToSeconds(seekSeconds),
+            child: SizedBox(
+              width: width,
               height: 12,
-              child: DecoratedBox(
+              child: const DecoratedBox(
                 decoration: BoxDecoration(
                   color: MultimodalStudioPalette.GRAPE_400,
                 ),
@@ -1270,7 +1287,9 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             ),
           ),
         ),
-    ];
+      );
+    }
+    return marks;
   }
 
   Future<void> _acceptDroppedAsset({

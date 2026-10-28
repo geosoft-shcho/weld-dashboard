@@ -32,6 +32,7 @@ import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
 import '../../../domain/use_cases/update_timeline_use_case.dart';
 import '../../../domain/use_cases/update_track_use_case.dart';
+import 'pose_board_marks.dart';
 import 'video_caption.dart';
 import 'video_overlay_clock.dart';
 import 'video_overlay_frame.dart';
@@ -170,6 +171,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   int _overlayEpoch = 0;
   final Map<String, List<VideoOverlayFrame>> _framesByAssetId = {};
   final Map<String, List<VideoCaption>> _cuesByAssetId = {};
+  final Map<String, List<PoseBoardMark>> _poseBoardMarksByClipId = {};
   final List<SampleLayerSummary> _sampleLayers = const [];
 
   /// Stage에 동시에 보여 줄 비디오 트랙(최대 [MAX_MONITORED_TRACK_COUNT]).
@@ -296,6 +298,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       overlays: [poseOverlay],
       framesByAssetId: {poseOverlay.assetId: _selectedPoseFrames},
     );
+  }
+
+  /// 보드 포즈 클립 위 실데이터 막대. 없으면 빈 목록(가짜 fractions 없음).
+  List<PoseBoardMark> poseBoardMarksForClip(String clipId) {
+    return _poseBoardMarksByClipId[clipId] ?? const [];
   }
 
   TimelineClip? _videoClipAt(double seconds) {
@@ -899,6 +906,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _bars = const [];
       _framesByAssetId.clear();
       _cuesByAssetId.clear();
+      _poseBoardMarksByClipId.clear();
       _noticeText = '작업을 열지 못했습니다.';
       _isLoading = false;
       notifyListeners();
@@ -3123,9 +3131,18 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final epoch = _overlayEpoch;
     _framesByAssetId.clear();
     _cuesByAssetId.clear();
+    _poseBoardMarksByClipId.clear();
     final urlsByAssetId = <String, String>{};
     for (final overlay in _timeline.overlays) {
       urlsByAssetId.putIfAbsent(overlay.assetId, () => overlay.contentUrl);
+    }
+    for (final clip in _timeline.clips) {
+      if (clip.kind != TimelineClipKind.pose ||
+          clip.assetId.isEmpty ||
+          clip.playbackUrl.isEmpty) {
+        continue;
+      }
+      urlsByAssetId.putIfAbsent(clip.assetId, () => clip.playbackUrl);
     }
     final bodiesByAssetId = <String, String>{};
     for (final entry in urlsByAssetId.entries) {
@@ -3147,6 +3164,80 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         _cuesByAssetId[overlay.assetId] = parseSubtitleCues(body);
       }
     }
+    for (final clip in _timeline.clips) {
+      if (clip.kind != TimelineClipKind.pose || clip.assetId.isEmpty) {
+        continue;
+      }
+      if (_framesByAssetId.containsKey(clip.assetId)) {
+        continue;
+      }
+      final body = bodiesByAssetId[clip.assetId] ?? '';
+      if (body.isEmpty) {
+        continue;
+      }
+      _framesByAssetId[clip.assetId] = parsePoseOverlay(body);
+    }
+    if (epoch != _overlayEpoch || _isClosed) {
+      return;
+    }
+    _rebuildPoseBoardMarks();
+  }
+
+  void _rebuildPoseBoardMarks() {
+    final next = <String, List<PoseBoardMark>>{};
+    for (final clip in _timeline.clips) {
+      if (clip.kind != TimelineClipKind.pose) {
+        continue;
+      }
+      final frames = _framesByAssetId[clip.assetId];
+      if (frames == null || frames.isEmpty) {
+        continue;
+      }
+      final startSeconds = secondsFromNanoseconds(clip.startNs);
+      final endSeconds = secondsFromNanoseconds(clip.endNs);
+      final marks = poseBoardMarksFromFrames(
+        frames: frames,
+        clipStartSeconds: startSeconds,
+        clipEndSeconds: endSeconds,
+      );
+      if (marks.isEmpty) {
+        continue;
+      }
+      next[clip.clipId] = marks;
+      final first = frames.first;
+      final last = frames.last;
+      final firstDur =
+          (first.end.inMicroseconds - first.start.inMicroseconds) / 1e6;
+      var minMarkDur = double.infinity;
+      var maxMarkDur = 0.0;
+      for (final mark in marks) {
+        final dur = mark.endSeconds - mark.startSeconds;
+        if (dur < minMarkDur) {
+          minMarkDur = dur;
+        }
+        if (dur > maxMarkDur) {
+          maxMarkDur = dur;
+        }
+      }
+      debugPrint(
+        '[POSE_BOARD] clipId=${clip.clipId} frames=${frames.length} '
+        'marks=${marks.length} clip=${startSeconds.toStringAsFixed(3)}'
+        '..${endSeconds.toStringAsFixed(3)} '
+        'frame0=${(first.start.inMicroseconds / 1e6).toStringAsFixed(3)}'
+        '..${(first.end.inMicroseconds / 1e6).toStringAsFixed(3)} '
+        'dur0=${firstDur.toStringAsFixed(4)}s '
+        'last=${(last.start.inMicroseconds / 1e6).toStringAsFixed(3)}'
+        '..${(last.end.inMicroseconds / 1e6).toStringAsFixed(3)} '
+        'markDur=${minMarkDur.toStringAsFixed(3)}'
+        '..${maxMarkDur.toStringAsFixed(3)}s '
+        'px=${(minMarkDur * pixelsPerSecond).toStringAsFixed(1)}'
+        '..${(maxMarkDur * pixelsPerSecond).toStringAsFixed(1)} '
+        '(pps=$pixelsPerSecond, minClamp=2)',
+      );
+    }
+    _poseBoardMarksByClipId
+      ..clear()
+      ..addAll(next);
   }
 
   Future<void> _restoreActiveToolRun() async {
