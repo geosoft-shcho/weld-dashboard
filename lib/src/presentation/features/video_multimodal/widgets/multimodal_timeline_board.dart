@@ -6,6 +6,7 @@ import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_dialogs.dart';
 import 'multimodal_studio_palette.dart';
+import 'pose_board_mark_layer.dart';
 import 'timeline_board_helpers.dart';
 import 'timeseries_clip_chart.dart';
 
@@ -1013,7 +1014,12 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           children: [
             for (final clip in row.clips) _clip(clip, row),
             for (final clip in row.clips)
-              if (clip.poseMarks.isNotEmpty) ..._poseMarks(clip),
+              if (clip.poseMarks.isNotEmpty)
+                ...buildPoseBoardMarkWidgets(
+                  clip: clip,
+                  pixelsPerSecond: viewModel.pixelsPerSecond,
+                  seekHandler: viewModel.didSeekToSeconds,
+                ),
           ],
         ),
       ),
@@ -1242,41 +1248,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   void _clearEdit() {
     setState(() => _edit = null);
-  }
-
-  List<Widget> _poseMarks(TimelineBoardClip clip) {
-    final top = 8.0 + clip.laneIndex * TIMELINE_TRACK_LANE_HEIGHT;
-    final marks = <Widget>[];
-    final pps = viewModel.pixelsPerSecond;
-    for (final mark in clip.poseMarks) {
-      final left = mark.startSeconds * pps;
-      final durationSeconds = mark.endSeconds - mark.startSeconds;
-      var width = durationSeconds * pps;
-      if (width < 2) {
-        width = 2;
-      }
-      final seekSeconds = mark.startSeconds + durationSeconds / 2;
-      marks.add(
-        Positioned(
-          left: left,
-          top: top,
-          child: GestureDetector(
-            behavior: HitTestBehavior.opaque,
-            onTap: () => viewModel.didSeekToSeconds(seekSeconds),
-            child: SizedBox(
-              width: width,
-              height: 12,
-              child: const DecoratedBox(
-                decoration: BoxDecoration(
-                  color: MultimodalStudioPalette.GRAPE_400,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
-    }
-    return marks;
   }
 
   Future<void> _acceptDroppedAsset({
