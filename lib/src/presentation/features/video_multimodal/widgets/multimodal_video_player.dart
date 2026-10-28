@@ -25,6 +25,8 @@ class MultimodalVideoPlayer extends StatefulWidget {
     required this.captions,
     required this.frames,
     required this.onClock,
+    this.contentEndMs,
+    this.usesStepSeek = false,
   });
 
   final String mediaUrl;
@@ -36,6 +38,10 @@ class MultimodalVideoPlayer extends StatefulWidget {
   final List<VideoCaption> captions;
   final List<VideoOverlayFrame> frames;
   final ValueChanged<VideoPlaybackClock> onClock;
+  /// 파일 축 내용 끝(ms). `asset_start + duration` 기준. null이면 video.duration.
+  final int? contentEndMs;
+  /// 가이드 §6: 배속 0·범위 밖이면 재생 대신 시크만(소리 off).
+  final bool usesStepSeek;
 
   @override
   State<MultimodalVideoPlayer> createState() => _MultimodalVideoPlayerState();
@@ -69,7 +75,8 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       _leftTarget = false;
       _seekAndApply(widget.seekToken);
     } else if (oldWidget.playbackToken != widget.playbackToken ||
-        oldWidget.playbackRate != widget.playbackRate) {
+        oldWidget.playbackRate != widget.playbackRate ||
+        oldWidget.usesStepSeek != widget.usesStepSeek) {
       final playbackToken = widget.playbackToken;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || widget.playbackToken != playbackToken) {
@@ -247,12 +254,13 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     if (_leftTarget || _pullingFromEnd) {
       return false;
     }
-    final durationMs = value.duration.inMilliseconds;
-    if (durationMs < 1000) {
+    // 가이드 §5: 끝은 asset 길이(+첫 시각) 기준. video.duration은 쓰지 않는다.
+    final endMs = widget.contentEndMs ?? value.duration.inMilliseconds;
+    if (endMs < 1000) {
       return false;
     }
-    final atEnd = value.position.inMilliseconds >= durationMs - 400;
-    final targetBeforeEnd = widget.seekToMs < durationMs - 1000;
+    final atEnd = value.position.inMilliseconds >= endMs - 400;
+    final targetBeforeEnd = widget.seekToMs < endMs - 1000;
     return atEnd && targetBeforeEnd;
   }
 
@@ -289,8 +297,14 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     if (controller == null || !controller.value.isInitialized) {
       return;
     }
-    final durationMs = controller.value.duration.inMilliseconds;
-    final clamped = durationMs <= 0 ? 0 : milliseconds.clamp(0, durationMs);
+    final fileDurationMs = controller.value.duration.inMilliseconds;
+    final contentEnd = widget.contentEndMs;
+    final maxMs = contentEnd == null
+        ? fileDurationMs
+        : (fileDurationMs <= 0
+              ? contentEnd
+              : (contentEnd < fileDurationMs ? contentEnd : fileDurationMs));
+    final clamped = maxMs <= 0 ? 0 : milliseconds.clamp(0, maxMs);
     await controller.seekTo(Duration(milliseconds: clamped));
   }
 
@@ -299,14 +313,31 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       return;
     }
     final requestedRate = widget.playbackRate;
-    final rate = supportedVideoPlaybackRate(requestedRate);
-    if (rate != requestedRate) {
+    final stepSeek =
+        widget.usesStepSeek || doesRequireStepSeek(requestedRate);
+    if (stepSeek) {
       debugPrint(
-        '[VIDEO] unsupported playback rate: '
-        'url=${widget.mediaUrl} requested=$requestedRate applied=$rate',
+        '[VIDEO] step-seek mode: '
+        'url=${widget.mediaUrl} requested=$requestedRate',
       );
+      try {
+        await controller.setVolume(0);
+        if ((controller.value.playbackSpeed - 1).abs() >= 0.01) {
+          await controller.setPlaybackSpeed(1);
+        }
+      } catch (error) {
+        debugPrint('[VIDEO] step-seek setup failed: $error');
+      }
+      if (!mounted || _videoController != controller) {
+        return;
+      }
+      await controller.pause();
+      await _seekTo(widget.seekToMs);
+      return;
     }
+    final rate = browserPlaybackRate(requestedRate) ?? 1;
     try {
+      await controller.setVolume(1);
       if ((controller.value.playbackSpeed - rate).abs() >= 0.01) {
         await controller.setPlaybackSpeed(rate);
       }

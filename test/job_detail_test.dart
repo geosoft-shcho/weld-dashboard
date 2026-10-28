@@ -26,6 +26,8 @@ JobDetail detail({
     workerName: '김작업',
     startedAt: startedAt ?? DateTime(2026, 10, 30, 8),
     endedAt: endedAt ?? DateTime(2026, 10, 30, 10),
+    reportSetId: '',
+    activeReportSetId: '',
     hasReport: false,
     attachmentCount: 0,
     passes: passes,

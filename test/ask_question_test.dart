@@ -28,6 +28,7 @@ import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.da
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/load_timeseries_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
@@ -691,6 +692,9 @@ VideoMultimodalViewModel _viewModel(
     getSessionHistoryUseCase: GetSessionHistoryUseCase(asks),
     askSessionStore: askSessionStore ?? _MemoryAskSessionStore(),
     loadJobProjectIdUseCase: LoadJobProjectIdUseCase(workDetail),
+    loadTimeseriesWaveformUseCase: LoadTimeseriesWaveformUseCase(
+      GetJobTimelineUseCase(repository),
+    ),
     jobId: '128',
   );
 }

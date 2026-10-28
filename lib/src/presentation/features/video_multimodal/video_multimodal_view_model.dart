@@ -10,6 +10,7 @@ import '../../../domain/entities/tool_run.dart';
 import '../../../domain/entities/work_attachment.dart';
 import '../../../domain/entities/work_attachment_type.dart';
 import '../../../domain/repositories/ask_session_store.dart';
+import '../../../domain/timeline_clip_playback.dart';
 import '../../../domain/timeline_time.dart';
 import '../../../domain/use_cases/ask_question_use_case.dart';
 import '../../../domain/use_cases/get_session_history_use_case.dart';
@@ -35,6 +36,9 @@ import 'video_caption.dart';
 import 'video_overlay_clock.dart';
 import 'video_overlay_frame.dart';
 import 'video_overlay_json.dart';
+import 'playhead_covering_log.dart';
+import 'timeline_playhead_clock.dart';
+import 'video_playback_rate.dart';
 import 'video_subtitle_text.dart';
 import 'video_multimodal_models.dart';
 export 'video_multimodal_models.dart';
@@ -103,7 +107,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final String jobId;
   final Duration toolRunPoll;
 
-  double _playheadSeconds = 0;
+  final TimelinePlayheadClock _playhead = TimelinePlayheadClock();
+  final PlayheadCoveringLog _playheadCoveringLog = PlayheadCoveringLog();
   int _seekToken = 0;
   VideoMultimodalSide _side = VideoMultimodalSide.none;
   bool _isLaneMenuOpen = false;
@@ -139,11 +144,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _labelMessage = '';
   int _labelEpoch = 0;
   List<LabelNode> _labelRoots = const [];
-  bool _isVideoPlaying = false;
-  bool _wantsPlayback = false;
   int _playbackToken = 0;
-  DateTime _ignoreClockUntil = DateTime.fromMillisecondsSinceEpoch(0);
-  double? _seekAnchorSeconds;
+  String _coveringVideoClipId = '';
   InferencePanelPhase _inferencePhase = InferencePanelPhase.hidden;
   bool _isCameraRecordingOpen = false;
   bool _isCameraRecordingMinimized = false;
@@ -168,6 +170,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final Map<String, List<VideoOverlayFrame>> _framesByAssetId = {};
   final Map<String, List<VideoCaption>> _cuesByAssetId = {};
   final List<SampleLayerSummary> _sampleLayers = const [];
+
   /// Stage에 동시에 보여 줄 비디오 트랙(최대 [MAX_MONITORED_TRACK_COUNT]).
   final List<String> _monitoredTrackIds = [];
   String _focusedMonitorTrackId = '';
@@ -178,16 +181,15 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _timeseriesChartError = '';
   WaveformSeriesBundle _timeseriesSeries =
       LoadTimeseriesWaveformUseCase.emptySeries;
-  /// 포커스 시계는 오는데 바늘이 멈춘 시각. null이면 정상.
-  DateTime? _focusStuckAt;
-  /// 0=대기, 1=re-seek 함, 2=notice 함.
-  int _focusStuckPhase = 0;
   DateTime _lastMonitorDebugAt = DateTime.fromMillisecondsSinceEpoch(0);
-  static const Duration _FOCUS_PLAYHEAD_STUCK = Duration(milliseconds: 500);
   static const Duration _MONITOR_DEBUG_INTERVAL = Duration(seconds: 2);
 
   double get pixelsPerSecond => DEFAULT_PIXELS_PER_SECOND;
-  double get playheadSeconds => _playheadSeconds;
+  double get playheadSeconds => _playhead.playheadSeconds;
+
+  /// 타임라인 배속(기본 1). `playbackRate = timeline × clip`.
+  double get timelinePlaybackRate => _playhead.timelinePlaybackRate;
+  String get timelinePlaybackRateLabel => _playhead.timelinePlaybackRateLabel;
   int get seekToken => _seekToken;
   VideoMultimodalSide get side => _side;
   bool get isAssetsOpen => _side == VideoMultimodalSide.assets;
@@ -311,15 +313,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return chosen;
   }
 
-  double? _timelineVideoStart(String mediaUrl) {
-    for (final clip in timelineClips) {
-      if (clip.kind == TimelineClipKind.video && clip.playbackUrl == mediaUrl) {
-        return secondsFromNanoseconds(clip.startNanoseconds);
-      }
-    }
-    return null;
-  }
-
   TimelineClip? _timelineClip(String clipId) {
     for (final clip in timelineClips) {
       if (clip.clipId == clipId) {
@@ -404,43 +397,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     }
   }
 
-  void _followClock({
-    required double startSeconds,
-    required double localSeconds,
-    required bool isPlaying,
-    bool notifyWhenIgnored = false,
-  }) {
-    final expectedLocal = _playheadSeconds - startSeconds;
-    final clockSettled = (localSeconds - expectedLocal).abs() <= 0.35;
-    final anchor = _seekAnchorSeconds;
-    final stillAtAnchor =
-        anchor != null && (startSeconds + localSeconds - anchor).abs() <= 0.35;
-    if ((stillAtAnchor || DateTime.now().isBefore(_ignoreClockUntil)) &&
-        !clockSettled) {
-      if (notifyWhenIgnored) {
-        notifyListeners();
-      }
-      return;
-    }
-    _seekAnchorSeconds = null;
-    _ignoreClockUntil = DateTime.fromMillisecondsSinceEpoch(0);
-    final next = (startSeconds + localSeconds).clamp(0.0, spanSeconds);
-    if ((next - _playheadSeconds).abs() < 0.03 &&
-        _isVideoPlaying == isPlaying) {
-      return;
-    }
-    _playheadSeconds = next;
-    _isVideoPlaying = isPlaying;
-    notifyListeners();
-  }
-
   TemporaryAttachmentBar? get activeVideoBar =>
       _videoBarFromClip(_activeVideoClip());
 
   List<String> get monitoredTrackIds {
-    final validTrackIds = {
-      for (final track in timelineTracks) track.trackId,
-    };
+    final validTrackIds = {for (final track in timelineTracks) track.trackId};
     return [
       for (final trackId in _monitoredTrackIds)
         if (validTrackIds.contains(trackId)) trackId,
@@ -458,11 +419,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return trackIds.first;
   }
 
-  bool isTrackMonitored(String trackId) =>
-      monitoredTrackIds.contains(trackId);
+  bool isTrackMonitored(String trackId) => monitoredTrackIds.contains(trackId);
 
-  bool isMonitorSlotFocused(String trackId) =>
-      focusedMonitorTrackId == trackId;
+  bool isMonitorSlotFocused(String trackId) => focusedMonitorTrackId == trackId;
 
   String monitorTrackLabel(String trackId) {
     final name = _trackName(trackId).trim();
@@ -473,7 +432,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   TemporaryAttachmentBar? videoBarForTrack(String trackId) =>
-      _videoBarFromClip(_coveringVideoOnTrack(trackId, _playheadSeconds));
+      _videoBarFromClip(_coveringVideoOnTrack(trackId, playheadSeconds));
 
   List<VideoCaption> captionsForTrack(String trackId) {
     final video = videoBarForTrack(trackId);
@@ -509,8 +468,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         _setFocusedMonitorTrack(
           _monitoredTrackIds.isEmpty ? '' : _monitoredTrackIds.first,
         );
-      } else {
-        _resetFocusStuck();
       }
       notifyListeners();
       return;
@@ -531,8 +488,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   bool trackHasTimeseries(String trackId) {
     for (final clip in _timeline.clips) {
-      if (clip.trackId == trackId &&
-          clip.kind == TimelineClipKind.timeseries) {
+      if (clip.trackId == trackId && clip.kind == TimelineClipKind.timeseries) {
         return true;
       }
     }
@@ -552,7 +508,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (end <= start) {
       return 0;
     }
-    final local = (_playheadSeconds - start).clamp(0.0, end - start);
+    final local = (playheadSeconds - start).clamp(0.0, end - start);
     return (local * 1000).round();
   }
 
@@ -567,7 +523,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         selected.kind == TimelineClipKind.timeseries) {
       target = selected;
     } else {
-      target = _coveringTimeseriesOnTrack(trackId, _playheadSeconds);
+      target = _coveringTimeseriesOnTrack(trackId, playheadSeconds);
       target ??= _firstTimeseriesOnTrack(trackId);
     }
     if (target == null) {
@@ -593,8 +549,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   TimelineClip? _coveringTimeseriesOnTrack(String trackId, double seconds) {
     TimelineClip? best;
     for (final clip in _timeline.clips) {
-      if (clip.trackId != trackId ||
-          clip.kind != TimelineClipKind.timeseries) {
+      if (clip.trackId != trackId || clip.kind != TimelineClipKind.timeseries) {
         continue;
       }
       final start = secondsFromNanoseconds(clip.startNanoseconds);
@@ -612,8 +567,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   TimelineClip? _firstTimeseriesOnTrack(String trackId) {
     TimelineClip? best;
     for (final clip in _timeline.clips) {
-      if (clip.trackId != trackId ||
-          clip.kind != TimelineClipKind.timeseries) {
+      if (clip.trackId != trackId || clip.kind != TimelineClipKind.timeseries) {
         continue;
       }
       if (best == null ||
@@ -762,7 +716,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   void _setFocusedMonitorTrack(String trackId) {
     _focusedMonitorTrackId = trackId;
-    _resetFocusStuck();
+    _coveringVideoClipId = '';
+    if (_playhead.wantsPlayback) {
+      _seekToken += 1;
+    }
     if (trackId.isEmpty) {
       return;
     }
@@ -770,13 +727,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       'focus_tap',
       sourceTrackId: trackId,
       focusedId: trackId,
-      isPlaying: _isVideoPlaying,
+      isPlaying: _playhead.isPlaying,
     );
-  }
-
-  void _resetFocusStuck() {
-    _focusStuckAt = null;
-    _focusStuckPhase = 0;
   }
 
   TemporaryAttachmentBar? _videoBarFromClip(TimelineClip? clip) {
@@ -809,7 +761,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return end;
   }
 
-  String get playheadLabel => _formatClock(_playheadSeconds);
+  String get playheadLabel => _formatClock(playheadSeconds);
   String get spanLabel => _formatClock(spanSeconds);
   String get timelineName => _timeline.name;
   String get timelineDescription => _timeline.description;
@@ -827,8 +779,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  bool get isVideoPlaying => _isVideoPlaying;
-  bool get wantsPlayback => _wantsPlayback;
+  bool get isVideoPlaying => _playhead.isPlaying;
+  bool get wantsPlayback => _playhead.wantsPlayback;
   int get playbackToken => _playbackToken;
 
   bool isLaneVisible(String laneKey) => !_hiddenLaneKeys.contains(laneKey);
@@ -1004,7 +956,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     } else {
       _hiddenAttachmentIds.add(attachmentId);
     }
-    _playheadSeconds = _playheadSeconds.clamp(0, spanSeconds);
+    _playhead.clampToSpan(spanSeconds);
     notifyListeners();
   }
 
@@ -1017,87 +969,59 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// 가이드 §6·§6.2: `T`는 틱만. 파일 시계는 드리프트 시 seek만. 비포커스 무시.
   void didReceiveVideoClock({
     required String mediaUrl,
     required double localSeconds,
     required bool isPlaying,
     String trackId = '',
   }) {
-    // 모니터 분할: 포커스 칸 시계만 바늘을 민다. 다른 칸은 무시.
-    if (monitoredTrackIds.isNotEmpty) {
-      final clip = _resolveMonitorClockClip(
-        mediaUrl: mediaUrl,
-        sourceTrackId: trackId,
-        isPlaying: isPlaying,
-        localSeconds: localSeconds,
-      );
-      if (clip == null) {
-        return;
-      }
-      _followFileClock(
-        clip: clip,
-        fileSeconds: localSeconds,
-        isPlaying: isPlaying,
-      );
+    if (!_playhead.wantsPlayback || _doesPrimaryCoveringNeedStepSeek()) {
       return;
+    }
+    final clip = _clockClipForVideo(mediaUrl: mediaUrl, trackId: trackId);
+    if (clip == null) {
+      return;
+    }
+    final expected = clipFilePositionAt(
+      clip: _playbackInput(clip),
+      playheadSeconds: playheadSeconds,
+    );
+    if (expected == null) {
+      return;
+    }
+    if (!doesFileDriftBeyond(
+      fileSeconds: localSeconds,
+      expectedFileSeconds: expected.fileSeconds,
+    )) {
+      return;
+    }
+    _seekToken += 1;
+    notifyListeners();
+  }
+
+  TimelineClip? _clockClipForVideo({
+    required String mediaUrl,
+    required String trackId,
+  }) {
+    if (monitoredTrackIds.isNotEmpty) {
+      final focusedId = focusedMonitorTrackId;
+      if (trackId.isEmpty || trackId != focusedId) {
+        return null;
+      }
+      final clip = _coveringVideoOnTrack(focusedId, playheadSeconds);
+      if (clip == null || clip.playbackUrl != mediaUrl) {
+        return null;
+      }
+      return clip;
     }
     final playing = _activeVideoClip();
-    if (playing != null && playing.playbackUrl == mediaUrl) {
-      _followFileClock(
-        clip: playing,
-        fileSeconds: localSeconds,
-        isPlaying: isPlaying,
-      );
-      return;
-    }
-    final timelineStart = _timelineVideoStart(mediaUrl);
-    if (timelineStart != null) {
-      return;
-    }
-    TemporaryAttachmentBar? bar;
-    for (final candidate in _bars) {
-      if (candidate.isVideo && candidate.mediaUrl == mediaUrl) {
-        bar = candidate;
-        break;
-      }
-    }
-    if (bar == null) {
-      return;
-    }
-    _followClock(
-      startSeconds: bar.startSeconds,
-      localSeconds: localSeconds,
-      isPlaying: isPlaying,
-    );
-  }
-
-  /// 포커스 칸 trackId 시계만 수락. 포커스 자동 이동 없음.
-  TimelineClip? _resolveMonitorClockClip({
-    required String mediaUrl,
-    required String sourceTrackId,
-    required bool isPlaying,
-    required double localSeconds,
-  }) {
-    final focusedId = focusedMonitorTrackId;
-    if (sourceTrackId.isEmpty || sourceTrackId != focusedId) {
+    if (playing == null || playing.playbackUrl != mediaUrl) {
       return null;
     }
-    final focusedClip = _coveringVideoOnTrack(focusedId, _playheadSeconds);
-    if (focusedClip == null || focusedClip.playbackUrl != mediaUrl) {
-      return null;
-    }
-    _logMonitor(
-      'focus_track',
-      sourceTrackId: sourceTrackId,
-      focusedId: focusedId,
-      isPlaying: isPlaying,
-      localSeconds: localSeconds,
-      throttle: true,
-    );
-    return focusedClip;
+    return playing;
   }
 
-  /// [throttle] true면 2초 간격(주기 focus_track). 이벤트 로그는 스로틀 없이 찍는다.
   void _logMonitor(
     String reason, {
     required String sourceTrackId,
@@ -1119,39 +1043,48 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     debugPrint(
       '[MONITOR] $reason '
       'src=$sourceTrackId focus=$focusedId '
-      'playhead=${_playheadSeconds.toStringAsFixed(3)} '
+      'playhead=${playheadSeconds.toStringAsFixed(3)} '
       'local=${localSeconds.toStringAsFixed(3)} playing=$isPlaying '
-      'wants=$_wantsPlayback monitored=$monitoredTrackIds',
+      'wants=${_playhead.wantsPlayback} monitored=$monitoredTrackIds',
     );
   }
 
   int fileSeekMilliseconds(TemporaryAttachmentBar video) {
     final clip = _clipForBar(video);
-    final position = clip == null
-        ? null
-        : clipFilePositionAt(
-            clip: _playbackInput(clip),
-            playheadSeconds: _playheadSeconds,
-          );
-    final seconds =
-        position?.fileSeconds ?? (_playheadSeconds - video.startSeconds);
-    final milliseconds = (seconds * 1000).round();
-    if (milliseconds < 0) {
-      return 0;
-    }
-    return milliseconds;
+    return fileSeekMillisecondsAt(
+      clip: clip == null ? null : _playbackInput(clip),
+      playheadSeconds: playheadSeconds,
+      fallbackLocalSeconds: playheadSeconds - video.startSeconds,
+    );
   }
 
   double playbackRateFor(TemporaryAttachmentBar video) {
     final clip = _clipForBar(video);
+    return playbackRateAt(
+      clip: clip == null ? null : _playbackInput(clip),
+      playheadSeconds: playheadSeconds,
+      timelinePlaybackRate: timelinePlaybackRate,
+    );
+  }
+
+  int? fileContentEndMilliseconds(TemporaryAttachmentBar video) {
+    final clip = _clipForBar(video);
     if (clip == null) {
-      return 1;
+      return null;
     }
-    return clipFilePositionAt(
-          clip: _playbackInput(clip),
-          playheadSeconds: _playheadSeconds,
-        )?.rate ??
-        1;
+    return clipFileContentEndMilliseconds(clip: _playbackInput(clip));
+  }
+
+  bool doesPlaybackUseStepSeek(TemporaryAttachmentBar video) {
+    return doesRequireStepSeek(playbackRateFor(video));
+  }
+
+  void didTapCycleTimelinePlaybackRate() {
+    _playhead.cycleTimelinePlaybackRate();
+    _playbackToken += 1;
+    _coveringVideoClipId = '';
+    _syncPlayheadClock();
+    notifyListeners();
   }
 
   void didSelectSampleClip(String clipId) {
@@ -1231,9 +1164,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (!isOpenNanosecondInterval(startNs, endNs)) {
       return;
     }
-    _wantsPlayback = true;
     _playbackToken += 1;
-    didSeekToSeconds(secondsFromNanoseconds(startNs));
+    didSeekToSeconds(secondsFromNanoseconds(startNs), resumePlayback: true);
   }
 
   Future<void> _startPosePlayback(ClipDetail pose, int epoch) async {
@@ -1321,9 +1253,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     }
 
     _playbackVideoClip = video;
-    _wantsPlayback = true;
     _playbackToken += 1;
-    didSeekToSeconds(secondsFromNanoseconds(overlayStartNs));
+    didSeekToSeconds(
+      secondsFromNanoseconds(overlayStartNs),
+      resumePlayback: true,
+    );
 
     debugPrint('[POSE] loading pose content: assetId=${pose.assetId}');
     final body = await _getJobTimelineUseCase.readContent(
@@ -1356,7 +1290,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final videoBar = activeVideoBar;
     final localMs = videoBar == null
         ? -1
-        : ((_playheadSeconds - videoBar.startSeconds) * 1000).round();
+        : ((playheadSeconds - videoBar.startSeconds) * 1000).round();
     final position = Duration(milliseconds: localMs < 0 ? 0 : localMs);
     var hits = 0;
     var boxCount = 0;
@@ -1408,12 +1342,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final selected = _timelineClip(_selectedClipId);
     if (selected?.kind == TimelineClipKind.pose) {
       final playback = _playbackVideoClip;
-      if (playback != null && _clipCovers(playback, _playheadSeconds)) {
+      if (playback != null && _clipCovers(playback, playheadSeconds)) {
         return playback;
       }
       return null;
     }
-    return _videoOnSelectedTrack(_playheadSeconds);
+    return _videoOnSelectedTrack(playheadSeconds);
   }
 
   TimelineClip? _videoOnSelectedTrack(double seconds) {
@@ -1493,124 +1427,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     );
   }
 
-  void _followFileClock({
-    required TimelineClip clip,
-    required double fileSeconds,
-    required bool isPlaying,
-  }) {
-    final input = _playbackInput(clip);
-    final expected = clipFilePositionAt(
-      clip: input,
-      playheadSeconds: _playheadSeconds,
-    );
-    final mapped = playheadSecondsFromFilePosition(
-      clip: input,
-      fileSeconds: fileSeconds,
-    );
-    if (expected == null || mapped == null) {
-      _recoverFocusIfStuck(
-        isPlaying: isPlaying,
-        localSeconds: fileSeconds,
-        skipReason: 'follow_skip_null_map',
-        trackId: clip.trackId,
-      );
-      return;
-    }
-    final clockSettled = (fileSeconds - expected.fileSeconds).abs() <= 0.35;
-    final anchor = _seekAnchorSeconds;
-    final stillAtAnchor = anchor != null && (mapped - anchor).abs() <= 0.35;
-    if ((stillAtAnchor || DateTime.now().isBefore(_ignoreClockUntil)) &&
-        !clockSettled) {
-      return;
-    }
-    _seekAnchorSeconds = null;
-    _ignoreClockUntil = DateTime.fromMillisecondsSinceEpoch(0);
-    final end = secondsFromNanoseconds(clip.endNanoseconds);
-    if (mapped >= end) {
-      _resetFocusStuck();
-      _stopVideoAt(end);
-      return;
-    }
-    final next = mapped.clamp(0.0, spanSeconds);
-    if ((next - _playheadSeconds).abs() < 0.03 &&
-        _isVideoPlaying == isPlaying) {
-      _recoverFocusIfStuck(
-        isPlaying: isPlaying,
-        localSeconds: fileSeconds,
-        skipReason: 'follow_skip_same_playhead',
-        trackId: clip.trackId,
-      );
-      return;
-    }
-    _resetFocusStuck();
-    if (monitoredTrackIds.isNotEmpty) {
-      _logMonitor(
-        'playhead_move',
-        sourceTrackId: clip.trackId,
-        focusedId: focusedMonitorTrackId,
-        isPlaying: isPlaying,
-        localSeconds: fileSeconds,
-      );
-    }
-    _playheadSeconds = next;
-    _isVideoPlaying = isPlaying;
-    notifyListeners();
-  }
-
-  /// 바늘이 500ms 넘게 안 움직이면 re-seek 1회 → 그래도면 notice 1회. 포커스는 안 넘김.
-  void _recoverFocusIfStuck({
-    required bool isPlaying,
-    required double localSeconds,
-    required String skipReason,
-    required String trackId,
-  }) {
-    if (!isPlaying || !_wantsPlayback || monitoredTrackIds.isEmpty) {
-      return;
-    }
-    _focusStuckAt ??= DateTime.now();
-    if (DateTime.now().difference(_focusStuckAt!) < _FOCUS_PLAYHEAD_STUCK) {
-      return;
-    }
-    if (_focusStuckPhase == 0) {
-      _focusStuckPhase = 1;
-      _focusStuckAt = null;
-      _seekToken += 1;
-      _ignoreClockUntil = DateTime.now().add(const Duration(milliseconds: 450));
-      _logMonitor(
-        'focus_reseek',
-        sourceTrackId: trackId,
-        focusedId: focusedMonitorTrackId,
-        isPlaying: isPlaying,
-        localSeconds: localSeconds,
-      );
-      notifyListeners();
-      return;
-    }
-    _logMonitor(
-      skipReason,
-      sourceTrackId: trackId,
-      focusedId: focusedMonitorTrackId,
-      isPlaying: isPlaying,
-      localSeconds: localSeconds,
-    );
-    if (_focusStuckPhase >= 2) {
-      return;
-    }
-    _focusStuckPhase = 2;
-    didShowNotice('포커스 모니터 영상이 이 시각에서 더 나아가지 않습니다.');
-  }
-
-  void _stopVideoAt(double endSeconds) {
-    final held = endSeconds > 0.05 ? endSeconds - 0.05 : 0.0;
-    _playheadSeconds = held.clamp(0, spanSeconds);
-    _isVideoPlaying = false;
-    if (_wantsPlayback) {
-      _wantsPlayback = false;
-      _playbackToken += 1;
-    }
-    notifyListeners();
-  }
-
   void _dropClipDetail() {
     _clipDetailEpoch += 1;
     _isClipDetailLoading = false;
@@ -1623,7 +1439,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _playbackVideoClip = null;
     _selectedPoseOverlay = null;
     _selectedPoseFrames = const [];
-    _wantsPlayback = false;
+    _playhead.pause();
     _playbackToken += 1;
   }
 
@@ -1711,10 +1527,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return;
     }
     _noticeText = '';
-    didSeekToSeconds(citation.startSeconds);
-    _wantsPlayback = true;
     _playbackToken += 1;
-    notifyListeners();
+    didSeekToSeconds(citation.startSeconds, resumePlayback: true);
   }
 
   Future<bool> didLikeCitation(AskCitation citation) {
@@ -2234,7 +2048,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadAskHistory() async {
-    if (_askSessionId.isEmpty || _isLoadingAskHistory || _isAsking || _isClosed) {
+    if (_askSessionId.isEmpty ||
+        _isLoadingAskHistory ||
+        _isAsking ||
+        _isClosed) {
       return;
     }
     _isLoadingAskHistory = true;
@@ -2316,38 +2133,20 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void didSeekToSeconds(double seconds) {
-    final wasPlaying = _wantsPlayback || _isVideoPlaying;
-    final previous = _playheadSeconds;
-    _playheadSeconds = seconds.clamp(0, spanSeconds);
+  void didSeekToSeconds(double seconds, {bool? resumePlayback}) {
+    final wasPlaying =
+        resumePlayback ?? (_playhead.wantsPlayback || _playhead.isPlaying);
+    _playhead.seekTo(
+      seconds,
+      spanSeconds: spanSeconds,
+      resumeIfWasPlaying: wasPlaying,
+    );
+    _coveringVideoClipId = '';
     _seekToken += 1;
-    _ignoreClockUntil = DateTime.now().add(const Duration(milliseconds: 450));
-    if ((_playheadSeconds - previous).abs() > 0.35) {
-      _seekAnchorSeconds = previous;
-    }
-    final covered = _doesPlayheadHaveVideo();
-    _wantsPlayback = covered && wasPlaying;
-    _isVideoPlaying = covered && wasPlaying;
     _playbackToken += 1;
+    _syncPlayheadClock();
+    _logPlayheadCovering(reason: 'seek');
     notifyListeners();
-  }
-
-  /// 시크 후 재생 유지 여부. 모니터가 있으면 포커스·모니터 칸 covering을 본다.
-  bool _doesPlayheadHaveVideo() {
-    final monitored = monitoredTrackIds;
-    if (monitored.isNotEmpty) {
-      if (_coveringVideoOnTrack(focusedMonitorTrackId, _playheadSeconds) !=
-          null) {
-        return true;
-      }
-      for (final trackId in monitored) {
-        if (_coveringVideoOnTrack(trackId, _playheadSeconds) != null) {
-          return true;
-        }
-      }
-      return false;
-    }
-    return activeVideoBar != null;
   }
 
   Future<void> didTapDeleteSelection() async {
@@ -2646,7 +2445,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final attachment = _attachmentById(assetId);
     final durationNs = attachment?.durationNs.trim() ?? '';
     final hasDuration = durationNs.isNotEmpty && durationNs != '0';
-    final startSeconds = _playheadSeconds < 0 ? 0.0 : _playheadSeconds;
+    final startSeconds = playheadSeconds < 0 ? 0.0 : playheadSeconds;
     final startNs = nanosecondsFromSeconds(startSeconds);
     final String endNs;
     final String sourceStartNs;
@@ -3137,9 +2936,98 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didTapTogglePlayback() {
-    _wantsPlayback = !_isVideoPlaying;
+    if (_playhead.wantsPlayback) {
+      _playhead.pause();
+      _playbackToken += 1;
+      _logPlayheadCovering(reason: 'pause');
+      notifyListeners();
+      return;
+    }
+    _playhead.play(spanSeconds: spanSeconds);
+    _coveringVideoClipId = '';
     _playbackToken += 1;
+    _seekToken += 1;
+    _syncPlayheadClock();
+    _logPlayheadCovering(reason: 'play');
     notifyListeners();
+  }
+
+  /// 가이드 §6: wantsPlayback이면 clock이 `T`를 민다. onTick에서 covering seek.
+  void _syncPlayheadClock() {
+    if (_isClosed) {
+      _playhead.pause();
+      return;
+    }
+    _playhead.syncTimer(
+      spanSeconds: () => spanSeconds,
+      onTick: () {
+        if (_isClosed) {
+          _playhead.pause();
+          return;
+        }
+        _syncCoveringSeek();
+        notifyListeners();
+      },
+      onEndedAtSpan: () {
+        _playbackToken += 1;
+        notifyListeners();
+      },
+    );
+  }
+
+  /// covering 클립이 바뀌면 seek. 스텝 시킹이면 매 틱 seek(가이드 §6 rate 폴백).
+  void _syncCoveringSeek() {
+    final clip = _primaryCoveringVideoClip();
+    final coveringId = clip?.clipId ?? '';
+    final coveringChanged = coveringId != _coveringVideoClipId;
+    _coveringVideoClipId = coveringId;
+    if (coveringChanged) {
+      _logPlayheadCovering(clip: clip, reason: 'covering_changed');
+    } else {
+      _logPlayheadCovering(clip: clip, reason: 'tick', throttle: true);
+    }
+    if (coveringChanged || _doesPrimaryCoveringNeedStepSeek()) {
+      _seekToken += 1;
+    }
+  }
+
+  void _logPlayheadCovering({
+    TimelineClip? clip,
+    required String reason,
+    bool throttle = false,
+  }) {
+    final resolved = clip ?? _primaryCoveringVideoClip();
+    final bar = resolved == null ? null : _videoBarFromClip(resolved);
+    _playheadCoveringLog.log(
+      reason: reason,
+      playheadSeconds: playheadSeconds,
+      spanSeconds: spanSeconds,
+      wantsPlayback: _playhead.wantsPlayback,
+      modeLabel: monitoredTrackIds.isNotEmpty
+          ? 'monitor focus=$focusedMonitorTrackId'
+          : 'selected/active',
+      clip: resolved,
+      seekMs: bar == null ? -1 : fileSeekMilliseconds(bar),
+      rate: bar == null ? 0 : playbackRateFor(bar),
+      step: bar != null && doesPlaybackUseStepSeek(bar),
+      throttle: throttle,
+    );
+  }
+
+  TimelineClip? _primaryCoveringVideoClip() {
+    if (monitoredTrackIds.isNotEmpty) {
+      return _coveringVideoOnTrack(focusedMonitorTrackId, playheadSeconds);
+    }
+    return _activeVideoClip();
+  }
+
+  bool _doesPrimaryCoveringNeedStepSeek() {
+    final clip = _primaryCoveringVideoClip();
+    if (clip == null) {
+      return false;
+    }
+    final bar = _videoBarFromClip(clip);
+    return bar != null && doesPlaybackUseStepSeek(bar);
   }
 
   void didTapToggleLaneMenu() {
@@ -3148,7 +3036,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didTapAddMarker() {
-    _markerSeconds.add(_playheadSeconds);
+    _markerSeconds.add(playheadSeconds);
     _noticeText = '';
     notifyListeners();
   }
@@ -3203,6 +3091,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _isClosed = true;
+    _playhead.dispose();
     _clipDetailEpoch += 1;
     _toolRunEpoch += 1;
     _labelEpoch += 1;

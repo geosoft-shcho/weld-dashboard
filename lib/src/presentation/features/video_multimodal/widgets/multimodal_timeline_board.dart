@@ -830,6 +830,11 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             onPressed: viewModel.didTapTogglePlayback,
           ),
           const SizedBox(width: 8),
+          _tool(
+            viewModel.timelinePlaybackRateLabel,
+            onPressed: viewModel.didTapCycleTimelinePlaybackRate,
+          ),
+          const SizedBox(width: 8),
           Text(
             '${viewModel.playheadLabel} | ${viewModel.spanLabel}',
             style: const TextStyle(

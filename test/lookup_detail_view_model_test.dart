@@ -375,12 +375,15 @@ class _FakeAssetLookupRepository implements AssetLookupRepository {
   }
 
   @override
-  Future<void> updateAsset({
+  Future<String> updateAsset({
     required String assetId,
     required String subject,
     required String situation,
+    DateTime? recordedAt,
     required List<String> changedFields,
-  }) async {}
+  }) async {
+    return '';
+  }
 
   @override
   Future<String> readContent({required String url}) async => '';

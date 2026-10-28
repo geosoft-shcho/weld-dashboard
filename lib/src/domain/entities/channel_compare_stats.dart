@@ -87,23 +87,19 @@ class ChannelCompareStats {
     }
     var sum = 0.0;
     var max = 0.0;
-    var sampleCount = 0;
     for (var index = 0; index < count; index++) {
       final left = channelOf(master[index]);
       final right = channelOf(other[index]);
+      // 같은 인덱스에 빈 칸이 있으면 비교 불가로 둔다.
       if (left == null || right == null) {
-        continue;
+        return const DiffStat();
       }
       final diff = (right - left).abs();
       sum += diff;
       if (diff > max) {
         max = diff;
       }
-      sampleCount += 1;
     }
-    if (sampleCount == 0) {
-      return const DiffStat();
-    }
-    return DiffStat(mean: sum / sampleCount, max: max);
+    return DiffStat(mean: sum / count, max: max);
   }
 }

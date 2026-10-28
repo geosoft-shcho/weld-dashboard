@@ -32,6 +32,7 @@ import 'package:weld_dashboard/src/domain/repositories/ask_session_store.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_session_history_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/load_timeseries_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
@@ -458,6 +459,9 @@ VideoMultimodalViewModel _viewModel(
     askSessionStore: _MemoryAskSessionStore(),
     loadJobProjectIdUseCase: LoadJobProjectIdUseCase(
       workDetail ?? _EmptyWorkDetailRepository(),
+    ),
+    loadTimeseriesWaveformUseCase: LoadTimeseriesWaveformUseCase(
+      GetJobTimelineUseCase(timelineRepository),
     ),
     jobId: '128',
     toolRunPoll: Duration.zero,
