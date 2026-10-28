@@ -1248,25 +1248,12 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     final top = 8.0 + clip.laneIndex * TIMELINE_TRACK_LANE_HEIGHT;
     final marks = <Widget>[];
     final pps = viewModel.pixelsPerSecond;
-    for (var index = 0; index < clip.poseMarks.length; index++) {
-      final mark = clip.poseMarks[index];
+    for (final mark in clip.poseMarks) {
       final left = mark.startSeconds * pps;
       final durationSeconds = mark.endSeconds - mark.startSeconds;
-      final rawWidth = durationSeconds * pps;
-      var width = rawWidth;
+      var width = durationSeconds * pps;
       if (width < 2) {
         width = 2;
-      }
-      if (index < 3 || index == clip.poseMarks.length - 1) {
-        debugPrint(
-          '[POSE_BOARD] paint clipId=${clip.clipId} i=$index/'
-          '${clip.poseMarks.length} '
-          't=${mark.startSeconds.toStringAsFixed(3)}'
-          '..${mark.endSeconds.toStringAsFixed(3)} '
-          'dur=${durationSeconds.toStringAsFixed(4)}s '
-          'rawPx=${rawWidth.toStringAsFixed(2)} drawPx=${width.toStringAsFixed(2)} '
-          'left=${left.toStringAsFixed(1)} pps=$pps',
-        );
       }
       final seekSeconds = mark.startSeconds + durationSeconds / 2;
       marks.add(

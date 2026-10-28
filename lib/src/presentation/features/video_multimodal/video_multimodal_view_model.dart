@@ -3204,36 +3204,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         continue;
       }
       next[clip.clipId] = marks;
-      final first = frames.first;
-      final last = frames.last;
-      final firstDur =
-          (first.end.inMicroseconds - first.start.inMicroseconds) / 1e6;
-      var minMarkDur = double.infinity;
-      var maxMarkDur = 0.0;
-      for (final mark in marks) {
-        final dur = mark.endSeconds - mark.startSeconds;
-        if (dur < minMarkDur) {
-          minMarkDur = dur;
-        }
-        if (dur > maxMarkDur) {
-          maxMarkDur = dur;
-        }
-      }
-      debugPrint(
-        '[POSE_BOARD] clipId=${clip.clipId} frames=${frames.length} '
-        'marks=${marks.length} clip=${startSeconds.toStringAsFixed(3)}'
-        '..${endSeconds.toStringAsFixed(3)} '
-        'frame0=${(first.start.inMicroseconds / 1e6).toStringAsFixed(3)}'
-        '..${(first.end.inMicroseconds / 1e6).toStringAsFixed(3)} '
-        'dur0=${firstDur.toStringAsFixed(4)}s '
-        'last=${(last.start.inMicroseconds / 1e6).toStringAsFixed(3)}'
-        '..${(last.end.inMicroseconds / 1e6).toStringAsFixed(3)} '
-        'markDur=${minMarkDur.toStringAsFixed(3)}'
-        '..${maxMarkDur.toStringAsFixed(3)}s '
-        'px=${(minMarkDur * pixelsPerSecond).toStringAsFixed(1)}'
-        '..${(maxMarkDur * pixelsPerSecond).toStringAsFixed(1)} '
-        '(pps=$pixelsPerSecond, minClamp=2)',
-      );
     }
     _poseBoardMarksByClipId
       ..clear()
