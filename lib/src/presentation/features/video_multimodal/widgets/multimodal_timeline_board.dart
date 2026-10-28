@@ -10,9 +10,14 @@ import 'timeline_board_helpers.dart';
 import 'timeseries_clip_chart.dart';
 
 class MultimodalTimelineBoard extends StatefulWidget {
-  const MultimodalTimelineBoard({super.key, required this.viewModel});
+  const MultimodalTimelineBoard({
+    super.key,
+    required this.viewModel,
+    required this.maxHeight,
+  });
 
   final VideoMultimodalViewModel viewModel;
+  final double maxHeight;
 
   @override
   State<MultimodalTimelineBoard> createState() =>
@@ -254,22 +259,42 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   Widget build(BuildContext context) {
     final rows = buildTimelineBoardRows(viewModel);
     final hasMedia = rows.isNotEmpty && viewModel.spanSeconds > 0;
+    final height = viewModel.timelineBoardHeight.clamp(
+      VideoMultimodalViewModel.MIN_TIMELINE_HEIGHT,
+      widget.maxHeight,
+    );
     return Container(
       margin: const EdgeInsets.fromLTRB(0, 8, 0, 12),
-      constraints: const BoxConstraints(
-        minHeight: VideoMultimodalViewModel.MIN_TIMELINE_HEIGHT,
-      ),
       decoration: BoxDecoration(
         color: MultimodalStudioPalette.SAND_100,
         border: Border.all(color: MultimodalStudioPalette.SAND_300),
         borderRadius: BorderRadius.circular(8),
       ),
       clipBehavior: Clip.antiAlias,
-      height: VideoMultimodalViewModel.MIN_TIMELINE_HEIGHT,
+      height: height,
       child: Stack(
         children: [
           hasMedia ? _filled(rows) : _empty(),
           if (viewModel.isLaneMenuOpen) _laneMenu(),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 6,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onVerticalDragUpdate: (details) {
+                viewModel.didDragTimelineBoardHeight(
+                  details.delta.dy,
+                  maxHeight: widget.maxHeight,
+                );
+              },
+              child: const MouseRegion(
+                cursor: SystemMouseCursors.resizeRow,
+                child: ColoredBox(color: Color(0x00000000)),
+              ),
+            ),
+          ),
         ],
       ),
     );

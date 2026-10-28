@@ -69,6 +69,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   });
 
   static const double MIN_TIMELINE_HEIGHT = 320;
+  static const double MAX_TIMELINE_HEIGHT = 720;
   static const double SIDE_WIDTH = 320;
   static const double DEFAULT_PIXELS_PER_SECOND = 10;
   static const double EMPTY_SPAN_SECONDS = 60;
@@ -183,8 +184,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       LoadTimeseriesWaveformUseCase.emptySeries;
   DateTime _lastMonitorDebugAt = DateTime.fromMillisecondsSinceEpoch(0);
   static const Duration _MONITOR_DEBUG_INTERVAL = Duration(seconds: 2);
+  double _timelineBoardHeight = MIN_TIMELINE_HEIGHT;
 
   double get pixelsPerSecond => DEFAULT_PIXELS_PER_SECOND;
+  double get timelineBoardHeight => _timelineBoardHeight;
   double get playheadSeconds => _playhead.playheadSeconds;
 
   /// 타임라인 배속(기본 1). `playbackRate = timeline × clip`.
@@ -2107,6 +2110,16 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (willOpen) {
       unawaited(loadLabelSections());
     }
+  }
+
+  /// 보드 상단 핸들을 위로 끌면 커지고, 아래로 끌면 줄어든다.
+  void didDragTimelineBoardHeight(double deltaDy, {required double maxHeight}) {
+    final limit = maxHeight.clamp(MIN_TIMELINE_HEIGHT, MAX_TIMELINE_HEIGHT);
+    _timelineBoardHeight = (_timelineBoardHeight - deltaDy).clamp(
+      MIN_TIMELINE_HEIGHT,
+      limit,
+    );
+    notifyListeners();
   }
 
   void didShowNotice(String text) {

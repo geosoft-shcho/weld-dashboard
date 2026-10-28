@@ -80,16 +80,28 @@ class _VideoMultimodalBody extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Expanded(
-                                child: MultimodalVideoStage(
-                                  viewModel: viewModel,
-                                ),
-                              ),
-                              MultimodalTimelineBoard(viewModel: viewModel),
-                            ],
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final maxBoardHeight =
+                                  (constraints.maxHeight - 100).clamp(
+                                    VideoMultimodalViewModel.MIN_TIMELINE_HEIGHT,
+                                    VideoMultimodalViewModel.MAX_TIMELINE_HEIGHT,
+                                  );
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Expanded(
+                                    child: MultimodalVideoStage(
+                                      viewModel: viewModel,
+                                    ),
+                                  ),
+                                  MultimodalTimelineBoard(
+                                    viewModel: viewModel,
+                                    maxHeight: maxBoardHeight,
+                                  ),
+                                ],
+                              );
+                            },
                           ),
                         ),
                         if (viewModel.side != VideoMultimodalSide.none)
