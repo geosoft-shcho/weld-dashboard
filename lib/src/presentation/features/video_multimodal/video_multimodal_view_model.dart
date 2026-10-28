@@ -416,7 +416,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final validTrackIds = {for (final track in timelineTracks) track.trackId};
     return [
       for (final trackId in _monitoredTrackIds)
-        if (validTrackIds.contains(trackId)) trackId,
+        if (validTrackIds.contains(trackId) && trackHasVideo(trackId)) trackId,
     ];
   }
 
@@ -471,20 +471,20 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didTapMonitorTrack(String trackId) {
-    if (trackId.isEmpty) {
+    if (trackId.isEmpty || !trackHasVideo(trackId)) {
       return;
     }
     if (_monitoredTrackIds.contains(trackId)) {
       _monitoredTrackIds.remove(trackId);
       if (_focusedMonitorTrackId == trackId) {
         _setFocusedMonitorTrack(
-          _monitoredTrackIds.isEmpty ? '' : _monitoredTrackIds.first,
+          monitoredTrackIds.isEmpty ? '' : monitoredTrackIds.first,
         );
       }
       notifyListeners();
       return;
     }
-    if (_monitoredTrackIds.length >= MAX_MONITORED_TRACK_COUNT) {
+    if (monitoredTrackIds.length >= MAX_MONITORED_TRACK_COUNT) {
       didShowNotice('모니터는 최대 $MAX_MONITORED_TRACK_COUNT개까지입니다.');
       return;
     }
@@ -501,6 +501,18 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool trackHasTimeseries(String trackId) {
     for (final clip in _timeline.clips) {
       if (clip.trackId == trackId && clip.kind == TimelineClipKind.timeseries) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  /// 트랙에 재생 URL이 있는 VIDEO 클립이 있으면 true (videocam·모니터 대상).
+  bool trackHasVideo(String trackId) {
+    for (final clip in _timeline.clips) {
+      if (clip.trackId == trackId &&
+          clip.kind == TimelineClipKind.video &&
+          clip.playbackUrl.isNotEmpty) {
         return true;
       }
     }

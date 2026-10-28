@@ -749,7 +749,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       color: isSelected ? MultimodalStudioPalette.GRAPE_100 : null,
       child: Row(
         children: [
-          if (viewModel.isServerTimelineTrack(row.laneKey))
+          if (viewModel.isServerTimelineTrack(row.laneKey) &&
+              viewModel.trackHasVideo(row.laneKey))
             GestureDetector(
               onTap: () => viewModel.didTapMonitorTrack(row.laneKey),
               child: Padding(
