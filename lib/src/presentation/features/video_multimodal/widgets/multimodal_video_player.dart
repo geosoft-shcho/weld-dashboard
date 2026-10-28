@@ -10,6 +10,7 @@ import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_caption.dart';
 import '../video_overlay_frame.dart';
 import '../video_playback_rate.dart';
+import 'multimodal_desktop_controls.dart';
 import 'multimodal_studio_palette.dart';
 import 'video_frame_mark_layer.dart';
 
@@ -156,7 +157,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       draggableProgressBar: true,
       showSubtitles: cues.isNotEmpty,
       subtitle: cues.isEmpty ? null : Subtitles(cues),
-      customControls: const MaterialDesktopControls(),
+      customControls: const MultimodalDesktopControls(),
       overlay: const _AnnotationOverlay(),
       materialProgressColors: ChewieProgressColors(
         playedColor: MultimodalStudioPalette.GRAPE_500,
