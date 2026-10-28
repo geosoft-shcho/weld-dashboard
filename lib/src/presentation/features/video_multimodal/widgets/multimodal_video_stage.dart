@@ -202,6 +202,7 @@ class MultimodalVideoStage extends StatelessWidget {
         wantsPlayback: viewModel.wantsPlayback,
         captions: captions,
         frames: frames,
+        togglePlaybackHandler: viewModel.didTapTogglePlayback,
         onClock: (clock) {
           viewModel.didReceiveVideoClock(
             mediaUrl: mediaUrl,

@@ -184,6 +184,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       LoadTimeseriesWaveformUseCase.emptySeries;
   DateTime _lastMonitorDebugAt = DateTime.fromMillisecondsSinceEpoch(0);
   static const Duration _MONITOR_DEBUG_INTERVAL = Duration(seconds: 2);
+  DateTime _lastDriftSeekAt = DateTime.fromMillisecondsSinceEpoch(0);
+  static const Duration _DRIFT_SEEK_COOLDOWN = Duration(milliseconds: 500);
   double _timelineBoardHeight = MIN_TIMELINE_HEIGHT;
 
   double get pixelsPerSecond => DEFAULT_PIXELS_PER_SECOND;
@@ -999,6 +1001,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     )) {
       return;
     }
+    final now = DateTime.now();
+    if (now.difference(_lastDriftSeekAt) < _DRIFT_SEEK_COOLDOWN) {
+      return;
+    }
+    _lastDriftSeekAt = now;
     _seekToken += 1;
     notifyListeners();
   }

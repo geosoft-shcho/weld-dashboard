@@ -26,6 +26,7 @@ class MultimodalVideoPlayer extends StatefulWidget {
     required this.captions,
     required this.frames,
     required this.onClock,
+    required this.togglePlaybackHandler,
     this.contentEndMs,
     this.usesStepSeek = false,
   });
@@ -39,6 +40,8 @@ class MultimodalVideoPlayer extends StatefulWidget {
   final List<VideoCaption> captions;
   final List<VideoOverlayFrame> frames;
   final ValueChanged<VideoPlaybackClock> onClock;
+  /// Stage·보드와 같은 ViewModel 재생 토글.
+  final VoidCallback togglePlaybackHandler;
   /// 파일 축 내용 끝(ms). `asset_start + duration` 기준. null이면 video.duration.
   final int? contentEndMs;
   /// 가이드 §6: 배속 0·범위 밖이면 재생 대신 시크만(소리 off).
@@ -49,6 +52,9 @@ class MultimodalVideoPlayer extends StatefulWidget {
 }
 
 class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
+  static const Duration _seekTimeout = Duration(milliseconds: 1500);
+  static const Duration _pauseTimeout = Duration(milliseconds: 800);
+
   VideoPlayerController? _videoController;
   ChewieController? _chewieController;
   int _captionGeneration = 0;
@@ -58,6 +64,9 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   bool _leftTarget = false;
   bool _pullingFromEnd = false;
   int _openGeneration = 0;
+  int _seekGeneration = 0;
+  bool _seekInFlight = false;
+  int? _queuedSeekToken;
 
   @override
   void initState() {
@@ -72,20 +81,34 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       _open();
       return;
     }
+
+    final didPause = oldWidget.wantsPlayback && !widget.wantsPlayback;
+    if (didPause) {
+      _cancelSeek();
+      unawaited(_pauseNow());
+    }
+
     if (oldWidget.seekToken != widget.seekToken) {
       _leftTarget = false;
-      _seekAndApply(widget.seekToken);
-    } else if (oldWidget.playbackToken != widget.playbackToken ||
-        oldWidget.playbackRate != widget.playbackRate ||
-        oldWidget.usesStepSeek != widget.usesStepSeek) {
+      if (!didPause) {
+        unawaited(_seekAndApply(widget.seekToken));
+      }
+    } else if (!didPause &&
+        (oldWidget.playbackToken != widget.playbackToken ||
+            oldWidget.playbackRate != widget.playbackRate ||
+            oldWidget.usesStepSeek != widget.usesStepSeek)) {
       final playbackToken = widget.playbackToken;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || widget.playbackToken != playbackToken) {
           return;
         }
+        if (!widget.wantsPlayback) {
+          unawaited(_pauseNow());
+          return;
+        }
         final controller = _videoController;
         if (controller != null) {
-          _applyPlaybackRate(controller);
+          unawaited(_applyPlaybackRate(controller));
         }
       });
     }
@@ -94,15 +117,32 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     }
   }
 
+  void _cancelSeek() {
+    _seekGeneration += 1;
+    _queuedSeekToken = null;
+  }
+
+  Future<void> _pauseNow() async {
+    final controller = _videoController;
+    if (controller == null) {
+      return;
+    }
+    try {
+      await controller.pause().timeout(_pauseTimeout, onTimeout: () {});
+    } catch (_) {}
+  }
+
   @override
   void dispose() {
     _openGeneration += 1;
+    _cancelSeek();
     _release();
     super.dispose();
   }
 
   Future<void> _open() async {
     final generation = ++_openGeneration;
+    _cancelSeek();
     _release();
     setState(() => _errorText = '');
     final source = widget.mediaUrl;
@@ -157,7 +197,9 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       draggableProgressBar: true,
       showSubtitles: cues.isNotEmpty,
       subtitle: cues.isEmpty ? null : Subtitles(cues),
-      customControls: const MultimodalDesktopControls(),
+      customControls: MultimodalDesktopControls(
+        togglePlaybackHandler: widget.togglePlaybackHandler,
+      ),
       overlay: const _AnnotationOverlay(),
       materialProgressColors: ChewieProgressColors(
         playedColor: MultimodalStudioPalette.GRAPE_500,
@@ -281,16 +323,54 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     _pullingFromEnd = false;
   }
 
+  /// 최신 seek만 적용. 진행 중이면 큐에 넣고, pause 시 [_cancelSeek]로 버린다.
   Future<void> _seekAndApply(int token) async {
-    final controller = _videoController;
-    await _seekTo(widget.seekToMs);
-    if (!mounted ||
-        widget.seekToken != token ||
-        controller == null ||
-        _videoController != controller) {
+    _queuedSeekToken = token;
+    if (_seekInFlight) {
       return;
     }
-    await _applyPlaybackRate(controller);
+    _seekInFlight = true;
+    final generation = _seekGeneration;
+    try {
+      while (mounted && generation == _seekGeneration) {
+        final activeToken = _queuedSeekToken;
+        if (activeToken == null) {
+          break;
+        }
+        _queuedSeekToken = null;
+        final controller = _videoController;
+        if (controller == null) {
+          break;
+        }
+        try {
+          await _seekTo(widget.seekToMs).timeout(_seekTimeout, onTimeout: () {});
+        } catch (_) {}
+        if (!mounted || generation != _seekGeneration) {
+          break;
+        }
+        if (_queuedSeekToken != null || widget.seekToken != activeToken) {
+          _queuedSeekToken ??= widget.seekToken;
+          continue;
+        }
+        if (_videoController != controller) {
+          break;
+        }
+        if (!widget.wantsPlayback) {
+          await controller.pause();
+          break;
+        }
+        await _applyPlaybackRate(controller);
+      }
+    } finally {
+      _seekInFlight = false;
+      final queued = _queuedSeekToken;
+      if (queued != null &&
+          mounted &&
+          generation == _seekGeneration &&
+          widget.wantsPlayback) {
+        unawaited(_seekAndApply(queued));
+      }
+    }
   }
 
   Future<void> _seekTo(int milliseconds) async {
@@ -358,10 +438,12 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     if (!mounted || _videoController != controller) {
       return;
     }
-    if (widget.wantsPlayback) {
-      await controller.play();
-    } else {
+    if (!widget.wantsPlayback) {
       await controller.pause();
+      return;
+    }
+    if (!controller.value.isPlaying) {
+      await controller.play();
     }
   }
 

@@ -5,10 +5,16 @@ import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
 /// Chewie 데스크톱 기본 바와 같되, 재생바·버튼 줄 가로 여백을 동일하게 둔다.
+/// 재생/정지는 [togglePlaybackHandler]로 ViewModel과 맞춘다.
 class MultimodalDesktopControls extends StatefulWidget {
-  const MultimodalDesktopControls({super.key});
+  const MultimodalDesktopControls({
+    super.key,
+    required this.togglePlaybackHandler,
+  });
 
   static const double horizontalPadding = 20;
+
+  final VoidCallback togglePlaybackHandler;
 
   @override
   State<MultimodalDesktopControls> createState() =>
@@ -86,17 +92,9 @@ class _MultimodalDesktopControlsState extends State<MultimodalDesktopControls> {
     _scheduleHide();
   }
 
-  Future<void> _togglePlay() async {
-    final video = _video;
-    if (video == null) {
-      return;
-    }
+  void _togglePlay() {
     _showControls();
-    if (video.value.isPlaying) {
-      await video.pause();
-    } else {
-      await video.play();
-    }
+    widget.togglePlaybackHandler();
   }
 
   Future<void> _toggleMute() async {
