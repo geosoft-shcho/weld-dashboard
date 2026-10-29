@@ -16,14 +16,15 @@ enum WorkHistoryStack {
 enum _RouteWriteMode { go, push, replace, pop, none }
 
 class AppCoordinator extends ChangeNotifier {
+  /// shell_screen 메뉴 순서. 묶음 이름과 구분선은 번호에 넣지 않는다.
   static const int COLLECTION_PANE_INDEX = 0;
-  static const int PROJECT_LOOKUP_PANE_INDEX = 1;
-  static const int WORKER_LOOKUP_PANE_INDEX = 2;
-  static const int WORK_HISTORY_PANE_INDEX = 3;
-  static const int EQUIPMENT_LOOKUP_PANE_INDEX = 4;
-  static const int ASSET_LOOKUP_PANE_INDEX = 5;
-  static const int PASS_PROFILE_PANE_INDEX = 6;
-  static const int QUALITY_ISSUE_PANE_INDEX = 7;
+  static const int PASS_PROFILE_PANE_INDEX = 1;
+  static const int QUALITY_ISSUE_PANE_INDEX = 2;
+  static const int PROJECT_LOOKUP_PANE_INDEX = 3;
+  static const int WORKER_LOOKUP_PANE_INDEX = 4;
+  static const int WORK_HISTORY_PANE_INDEX = 5;
+  static const int EQUIPMENT_LOOKUP_PANE_INDEX = 6;
+  static const int ASSET_LOOKUP_PANE_INDEX = 7;
 
   AppNavigationPort? _navigation;
   bool _isApplyingRoute = false;

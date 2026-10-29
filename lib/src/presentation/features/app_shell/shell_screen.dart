@@ -98,11 +98,25 @@ class _ShellScreenState extends State<ShellScreen> {
             toggleButton: null,
             size: const NavigationPaneSize(openWidth: 240),
             items: [
+              _buildPaneGroupLabel('모니터링', showsDivider: false),
               _navPaneItem(
                 iconData: FluentIcons.server_processes,
                 label: '수집 모니터링',
                 body: const CollectionMonitoringScreen(),
               ),
+              _navPaneItem(
+                iconData: FluentIcons.line_chart,
+                label: '최신 패스 프로파일',
+                enabled: nav.canOpenLatestPassProfile,
+                body: _panePassProfileBody(nav),
+              ),
+              _navPaneItem(
+                iconData: FluentIcons.report_document,
+                label: '최신 품질 이슈',
+                enabled: nav.canOpenLatestQualityIssue,
+                body: _paneQualityIssueBody(nav),
+              ),
+              _buildPaneGroupLabel('관리'),
               _navPaneItem(
                 iconData: FluentIcons.city_next,
                 label: '공사 관리',
@@ -128,22 +142,22 @@ class _ShellScreenState extends State<ShellScreen> {
                 label: '에셋 관리',
                 body: _assetLookupBody(nav),
               ),
-              _navPaneItem(
-                iconData: FluentIcons.line_chart,
-                label: '최신 패스 프로파일',
-                enabled: nav.canOpenLatestPassProfile,
-                body: _panePassProfileBody(nav),
-              ),
-              _navPaneItem(
-                iconData: FluentIcons.report_document,
-                label: '최신 품질 이슈',
-                enabled: nav.canOpenLatestQualityIssue,
-                body: _paneQualityIssueBody(nav),
-              ),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  /// 펼친 창에는 묶음 이름을 보이고, 아이콘만 보이는 창에는 구분선을 둔다.
+  /// 헤더·구분선은 선택 번호에 들어가지 않는다.
+  NavigationPaneItem _buildPaneGroupLabel(
+    String label, {
+    bool showsDivider = true,
+  }) {
+    return PaneItemWidgetAdapter(
+      applyPadding: false,
+      child: _PaneGroupLabel(label: label, showsDivider: showsDivider),
     );
   }
 
@@ -159,10 +173,7 @@ class _ShellScreenState extends State<ShellScreen> {
         message: label,
         displayHorizontally: true,
         useMousePosition: false,
-        style: const TooltipThemeData(
-          verticalOffset: 12,
-          preferBelow: false,
-        ),
+        style: const TooltipThemeData(verticalOffset: 12, preferBelow: false),
         child: Icon(iconData),
       ),
       title: Builder(builder: (_) => Text(label)),
@@ -375,6 +386,47 @@ class _ShellNavSnapshot {
     paneQualityPassId,
     paneQualityLinkId,
   );
+}
+
+class _PaneGroupLabel extends StatelessWidget {
+  const _PaneGroupLabel({required this.label, required this.showsDivider});
+
+  final String label;
+  final bool showsDivider;
+
+  @override
+  Widget build(BuildContext context) {
+    final isIconOnly =
+        NavigationView.of(context).displayMode == PaneDisplayMode.compact;
+    if (isIconOnly) {
+      if (!showsDivider) {
+        return const SizedBox.shrink();
+      }
+      final stroke = FluentTheme.of(context).resources.cardStrokeColorDefault;
+      return Tooltip(
+        message: label,
+        child: Padding(
+          padding: const EdgeInsetsDirectional.symmetric(
+            horizontal: 10,
+            vertical: 6,
+          ),
+          child: Container(height: 1, color: stroke),
+        ),
+      );
+    }
+
+    final theme = FluentTheme.of(context);
+    return Padding(
+      padding: EdgeInsetsDirectional.fromSTEB(20, showsDivider ? 16 : 8, 12, 2),
+      child: Text(
+        label,
+        style: theme.typography.caption?.copyWith(
+          fontWeight: FontWeight.w600,
+          color: theme.resources.textFillColorSecondary,
+        ),
+      ),
+    );
+  }
 }
 
 class _AuthSessionActions extends StatelessWidget {
