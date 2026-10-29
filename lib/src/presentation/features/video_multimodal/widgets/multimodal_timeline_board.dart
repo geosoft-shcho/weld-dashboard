@@ -7,6 +7,7 @@ import '../video_multimodal_view_model.dart';
 import 'multimodal_dialogs.dart';
 import 'multimodal_studio_palette.dart';
 import 'pose_board_mark_layer.dart';
+import 'audio_clip_chart.dart';
 import 'timeline_board_helpers.dart';
 import 'timeseries_clip_chart.dart';
 
@@ -765,6 +766,21 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                 ),
               ),
             ),
+          if (viewModel.isServerTimelineTrack(row.laneKey) &&
+              viewModel.trackHasAudio(row.laneKey))
+            GestureDetector(
+              onTap: () => viewModel.didTapToggleAudioChart(row.laneKey),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.show_chart,
+                  size: 14,
+                  color: row.isChartExpanded
+                      ? MultimodalStudioPalette.GRAPE_700
+                      : MultimodalStudioPalette.SAND_600,
+                ),
+              ),
+            ),
           Container(
             width: 12,
             height: 12,
@@ -1050,6 +1066,25 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       width = 12;
     }
     if (clip.isChartExpanded) {
+      final rawDurationMs = ((range.endSeconds - range.startSeconds) * 1000)
+          .round();
+      final durationMs = rawDurationMs < 1 ? 1 : rawDurationMs;
+      final chart = clip.kind == TimelineClipKind.audio
+          ? AudioClipChart(
+              amplitudes: viewModel.audioAmplitudes,
+              isLoading: viewModel.isAudioChartLoading,
+              errorMessage: viewModel.audioChartError,
+              durationMs: durationMs,
+              selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
+              onTimeTapMs: viewModel.didTapAudioChartTime,
+            )
+          : TimeseriesClipChart(
+              series: viewModel.timeseriesSeries,
+              isLoading: viewModel.isTimeseriesChartLoading,
+              errorMessage: viewModel.timeseriesChartError,
+              selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
+              onTimeTapMs: viewModel.didTapTimeseriesChartTime,
+            );
       return Positioned(
         left: left,
         top: 0,
@@ -1064,13 +1099,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                 width: 1,
               ),
             ),
-            child: TimeseriesClipChart(
-              series: viewModel.timeseriesSeries,
-              isLoading: viewModel.isTimeseriesChartLoading,
-              errorMessage: viewModel.timeseriesChartError,
-              selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
-              onTimeTapMs: viewModel.didTapTimeseriesChartTime,
-            ),
+            child: chart,
           ),
         ),
       );

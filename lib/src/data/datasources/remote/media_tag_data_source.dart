@@ -40,10 +40,24 @@ class MediaTagDataSource {
   late final RagServiceClient ragService;
 
   Future<String> readContent(String url) async {
+    final bytes = await readBytes(url);
+    return utf8.decode(bytes, allowMalformed: true);
+  }
+
+  Future<Uint8List> readBytes(
+    String url, {
+    int? startByte,
+    int? endByte,
+  }) async {
+    final headers = connect.Headers();
+    if (startByte != null) {
+      final end = endByte == null ? '' : '$endByte';
+      headers.add('range', 'bytes=$startByte-$end');
+    }
     final response = await createDashboardHttpClient()(
-      connect.HttpRequest(url, 'GET', connect.Headers(), null, null),
+      connect.HttpRequest(url, 'GET', headers, null, null),
     );
-    if (response.status < 200 || response.status >= 300) {
+    if (response.status != 200 && response.status != 206) {
       throw StateError('content ${response.status}');
     }
     final chunks = await response.body.toList();
@@ -54,7 +68,7 @@ class MediaTagDataSource {
       bytes.setRange(offset, offset + chunk.length, chunk);
       offset += chunk.length;
     }
-    return utf8.decode(bytes, allowMalformed: true);
+    return bytes;
   }
 
   String resolveContentUrl(String path) {

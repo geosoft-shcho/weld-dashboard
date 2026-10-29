@@ -11,6 +11,7 @@ export '../pose_board_marks.dart' show PoseBoardMark;
 
 const double TIMELINE_TRACK_LANE_HEIGHT = 28;
 const double TIMELINE_TIMESERIES_CHART_HEIGHT = 240;
+const double TIMELINE_AUDIO_CHART_HEIGHT = 60;
 
 class TimelineBoardRow {
   const TimelineBoardRow({
@@ -21,6 +22,7 @@ class TimelineBoardRow {
     required this.clips,
     required this.laneCount,
     this.isChartExpanded = false,
+    this.expandedChartHeight = TIMELINE_TIMESERIES_CHART_HEIGHT,
   });
 
   final String laneKey;
@@ -30,9 +32,10 @@ class TimelineBoardRow {
   final List<TimelineBoardClip> clips;
   final int laneCount;
   final bool isChartExpanded;
+  final double expandedChartHeight;
 
   double get height => isChartExpanded
-      ? TIMELINE_TIMESERIES_CHART_HEIGHT
+      ? expandedChartHeight
       : TIMELINE_TRACK_LANE_HEIGHT * laneCount;
 }
 
@@ -63,6 +66,7 @@ class TimelineBoardClip {
   final Color foreground;
   final Color border;
   final TimelineClipKind kind;
+
   /// 포즈 JSON 실시각 구간. 비어 있으면 막대 없음.
   final List<PoseBoardMark> poseMarks;
   final bool hasLabel;
@@ -193,6 +197,13 @@ List<TimelineBoardRow> buildTimelineBoardRows(
     final clips = track.clips;
     final lanes = assignClipLanes(clips);
     final expandedClipId = viewModel.chartExpandedClipId;
+    TimelineClip? expandedClip;
+    for (final clip in clips) {
+      if (clip.clipId == expandedClipId) {
+        expandedClip = clip;
+        break;
+      }
+    }
     rows.add(
       TimelineBoardRow(
         laneKey: track.trackId,
@@ -200,7 +211,10 @@ List<TimelineBoardRow> buildTimelineBoardRows(
         labelColor: MultimodalStudioPalette.SAND_700,
         showsAiBadge: clips.any((clip) => clip.showsToolMark),
         laneCount: _laneCount(lanes),
-        isChartExpanded: clips.any((clip) => clip.clipId == expandedClipId),
+        isChartExpanded: expandedClip != null,
+        expandedChartHeight: expandedClip?.kind == TimelineClipKind.audio
+            ? TIMELINE_AUDIO_CHART_HEIGHT
+            : TIMELINE_TIMESERIES_CHART_HEIGHT,
         clips: [
           for (final clip in clips)
             TimelineBoardClip(

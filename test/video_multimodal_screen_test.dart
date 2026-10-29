@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:provider/provider.dart';
@@ -26,6 +28,7 @@ import 'package:weld_dashboard/src/domain/repositories/ask_session_store.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_session_history_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/load_audio_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_timeseries_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
@@ -69,6 +72,9 @@ void main() {
           _FakeWorkDetailRepository(),
         ),
         loadTimeseriesWaveformUseCase: LoadTimeseriesWaveformUseCase(
+          GetJobTimelineUseCase(timeline),
+        ),
+        loadAudioWaveformUseCase: LoadAudioWaveformUseCase(
           GetJobTimelineUseCase(timeline),
         ),
         jobId: jobId,
@@ -204,6 +210,13 @@ class _FakeTimelineRepository implements JobTimelineRepository {
 
   @override
   Future<String> readContent({required String url}) async => '';
+
+  @override
+  Future<Uint8List> readBytes({
+    required String url,
+    int? startByte,
+    int? endByte,
+  }) async => Uint8List(0);
 }
 
 class _IdleAskRepository implements AskRepository {

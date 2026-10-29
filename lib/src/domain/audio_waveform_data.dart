@@ -113,7 +113,9 @@ class AudioWaveformData {
     return [
       for (var index = 0; index < sampleCount; index++)
         amplitudeAt(
-          Duration(microseconds: duration.inMicroseconds * index ~/ sampleCount),
+          Duration(
+            microseconds: duration.inMicroseconds * index ~/ sampleCount,
+          ),
         ),
     ];
   }

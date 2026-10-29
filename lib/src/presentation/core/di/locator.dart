@@ -99,6 +99,7 @@ import '../../../domain/use_cases/delete_timeline_use_case.dart';
 import '../../../domain/use_cases/delete_track_use_case.dart';
 import '../../../domain/use_cases/get_clip_use_case.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
+import '../../../domain/use_cases/load_audio_waveform_use_case.dart';
 import '../../../domain/use_cases/load_timeseries_waveform_use_case.dart';
 import '../../../domain/use_cases/label_use_case.dart';
 import '../../../domain/use_cases/tool_run_use_case.dart';
@@ -324,9 +325,8 @@ void setupLocator({required bool pdfrxReady}) {
     () => RemoteJobTimelineRepository(locator()),
   );
   locator.registerFactory(() => GetJobTimelineUseCase(locator()));
-  locator.registerFactory(
-    () => LoadTimeseriesWaveformUseCase(locator()),
-  );
+  locator.registerFactory(() => LoadTimeseriesWaveformUseCase(locator()));
+  locator.registerFactory(() => LoadAudioWaveformUseCase(locator()));
   locator.registerFactory(() => GetClipUseCase(locator()));
   locator.registerFactory(() => CreateTrackUseCase(locator()));
   locator.registerFactory(() => UpdateTrackUseCase(locator()));
@@ -401,6 +401,7 @@ void setupLocator({required bool pdfrxReady}) {
       askSessionStore: locator(),
       loadJobProjectIdUseCase: locator(),
       loadTimeseriesWaveformUseCase: locator(),
+      loadAudioWaveformUseCase: locator(),
       jobId: jobId,
     ),
   );

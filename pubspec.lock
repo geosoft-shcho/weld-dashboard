@@ -1138,6 +1138,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
+  waveform_pro:
+    dependency: "direct main"
+    description:
+      name: waveform_pro
+      sha256: "5d1def5a6a751859cc0daf1a6337e12509196687ded1917548d930be1a9cc199"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.1.5"
   waveform_visualizer:
     dependency: "direct main"
     description:

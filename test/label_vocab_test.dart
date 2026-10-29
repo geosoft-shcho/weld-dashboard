@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:fixnum/fixnum.dart';
 import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
@@ -30,6 +32,7 @@ import 'package:weld_dashboard/src/domain/repositories/ask_session_store.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_session_history_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/load_audio_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_timeseries_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
@@ -431,6 +434,9 @@ VideoMultimodalViewModel _viewModel(
     loadTimeseriesWaveformUseCase: LoadTimeseriesWaveformUseCase(
       GetJobTimelineUseCase(timeline),
     ),
+    loadAudioWaveformUseCase: LoadAudioWaveformUseCase(
+      GetJobTimelineUseCase(timeline),
+    ),
     jobId: '128',
   );
 }
@@ -675,6 +681,13 @@ class _CountingTimelineRepository implements JobTimelineRepository {
 
   @override
   Future<String> readContent({required String url}) async => '';
+
+  @override
+  Future<Uint8List> readBytes({
+    required String url,
+    int? startByte,
+    int? endByte,
+  }) async => Uint8List(0);
 }
 
 

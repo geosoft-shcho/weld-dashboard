@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/data/datasources/generated/tacittag/rag/v2/rag.pb.dart'
@@ -28,6 +30,7 @@ import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.da
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/load_audio_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_timeseries_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
@@ -695,6 +698,9 @@ VideoMultimodalViewModel _viewModel(
     loadTimeseriesWaveformUseCase: LoadTimeseriesWaveformUseCase(
       GetJobTimelineUseCase(repository),
     ),
+    loadAudioWaveformUseCase: LoadAudioWaveformUseCase(
+      GetJobTimelineUseCase(repository),
+    ),
     jobId: '128',
   );
 }
@@ -841,6 +847,15 @@ class _IdleTimeline implements JobTimelineRepository {
   @override
   Future<String> readContent({required String url}) async {
     return '';
+  }
+
+  @override
+  Future<Uint8List> readBytes({
+    required String url,
+    int? startByte,
+    int? endByte,
+  }) async {
+    return Uint8List(0);
   }
 }
 

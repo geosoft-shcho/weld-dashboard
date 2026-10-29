@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:connectrpc/connect.dart';
 
 import '../../domain/entities/job_timeline.dart';
@@ -69,6 +71,22 @@ class RemoteJobTimelineRepository implements JobTimelineRepository {
     } catch (_) {
       return '';
     }
+  }
+
+  @override
+  Future<Uint8List> readBytes({
+    required String url,
+    int? startByte,
+    int? endByte,
+  }) async {
+    if (url.isEmpty) {
+      return Uint8List(0);
+    }
+    return _mediaTag.readBytes(
+      url,
+      startByte: startByte,
+      endByte: endByte,
+    );
   }
 
   @override

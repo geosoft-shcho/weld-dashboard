@@ -27,6 +27,7 @@ import '../../../domain/use_cases/get_job_timeline_use_case.dart';
 import '../../../domain/use_cases/label_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 import '../../../domain/use_cases/load_job_project_id_use_case.dart';
+import '../../../domain/use_cases/load_audio_waveform_use_case.dart';
 import '../../../domain/use_cases/load_timeseries_waveform_use_case.dart';
 import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
@@ -65,6 +66,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required this._askSessionStore,
     required this._loadJobProjectIdUseCase,
     required this._loadTimeseriesWaveformUseCase,
+    required this._loadAudioWaveformUseCase,
     required this.jobId,
     this.toolRunPoll = const Duration(seconds: 2),
   });
@@ -106,6 +108,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final AskSessionStore _askSessionStore;
   final LoadJobProjectIdUseCase _loadJobProjectIdUseCase;
   final LoadTimeseriesWaveformUseCase _loadTimeseriesWaveformUseCase;
+  final LoadAudioWaveformUseCase _loadAudioWaveformUseCase;
   final String jobId;
   final Duration toolRunPoll;
 
@@ -184,6 +187,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _timeseriesChartError = '';
   WaveformSeriesBundle _timeseriesSeries =
       LoadTimeseriesWaveformUseCase.emptySeries;
+  int _audioChartEpoch = 0;
+  bool _isAudioChartLoading = false;
+  String _audioChartError = '';
+  List<double> _audioAmplitudes = const [];
   DateTime _lastMonitorDebugAt = DateTime.fromMillisecondsSinceEpoch(0);
   static const Duration _MONITOR_DEBUG_INTERVAL = Duration(seconds: 2);
   DateTime _lastDriftSeekAt = DateTime.fromMillisecondsSinceEpoch(0);
@@ -497,10 +504,22 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get isTimeseriesChartLoading => _isTimeseriesChartLoading;
   String get timeseriesChartError => _timeseriesChartError;
   WaveformSeriesBundle get timeseriesSeries => _timeseriesSeries;
+  bool get isAudioChartLoading => _isAudioChartLoading;
+  String get audioChartError => _audioChartError;
+  List<double> get audioAmplitudes => _audioAmplitudes;
 
   bool trackHasTimeseries(String trackId) {
     for (final clip in _timeline.clips) {
       if (clip.trackId == trackId && clip.kind == TimelineClipKind.timeseries) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool trackHasAudio(String trackId) {
+    for (final clip in _timeline.clips) {
+      if (clip.trackId == trackId && clip.kind == TimelineClipKind.audio) {
         return true;
       }
     }
@@ -547,21 +566,62 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         selected.kind == TimelineClipKind.timeseries) {
       target = selected;
     } else {
-      target = _coveringTimeseriesOnTrack(trackId, playheadSeconds);
-      target ??= _firstTimeseriesOnTrack(trackId);
+      target = _coveringClipOnTrack(
+        trackId,
+        playheadSeconds,
+        TimelineClipKind.timeseries,
+      );
+      target ??= _firstClipOnTrack(trackId, TimelineClipKind.timeseries);
     }
     if (target == null) {
       return;
     }
     if (_chartExpandedClipId == target.clipId) {
-      _collapseTimeseriesChart();
+      _collapseChart();
       notifyListeners();
       return;
     }
     _expandTimeseriesChart(target);
   }
 
+  void didTapToggleAudioChart(String trackId) {
+    if (trackId.isEmpty || !trackHasAudio(trackId)) {
+      return;
+    }
+    final selected = _timelineClip(_selectedClipId);
+    TimelineClip? target;
+    if (selected != null &&
+        selected.trackId == trackId &&
+        selected.kind == TimelineClipKind.audio) {
+      target = selected;
+    } else {
+      target = _coveringClipOnTrack(
+        trackId,
+        playheadSeconds,
+        TimelineClipKind.audio,
+      );
+      target ??= _firstClipOnTrack(trackId, TimelineClipKind.audio);
+    }
+    if (target == null) {
+      return;
+    }
+    if (_chartExpandedClipId == target.clipId) {
+      _collapseChart();
+      notifyListeners();
+      return;
+    }
+    _expandAudioChart(target);
+  }
+
   void didTapTimeseriesChartTime(int timeMs) {
+    _didSeekChartTime(timeMs);
+  }
+
+  void didTapAudioChartTime(int timeMs) {
+    _didSeekChartTime(timeMs);
+  }
+
+  void _didSeekChartTime(int timeMs) {
     final clip = _timelineClip(_chartExpandedClipId);
     if (clip == null) {
       return;
@@ -570,10 +630,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     didSeekToSeconds(start + timeMs / 1000.0);
   }
 
-  TimelineClip? _coveringTimeseriesOnTrack(String trackId, double seconds) {
+  TimelineClip? _coveringClipOnTrack(
+    String trackId,
+    double seconds,
+    TimelineClipKind kind,
+  ) {
     TimelineClip? best;
     for (final clip in _timeline.clips) {
-      if (clip.trackId != trackId || clip.kind != TimelineClipKind.timeseries) {
+      if (clip.trackId != trackId || clip.kind != kind) {
         continue;
       }
       final start = secondsFromNanoseconds(clip.startNanoseconds);
@@ -588,10 +652,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return best;
   }
 
-  TimelineClip? _firstTimeseriesOnTrack(String trackId) {
+  TimelineClip? _firstClipOnTrack(String trackId, TimelineClipKind kind) {
     TimelineClip? best;
     for (final clip in _timeline.clips) {
-      if (clip.trackId != trackId || clip.kind != TimelineClipKind.timeseries) {
+      if (clip.trackId != trackId || clip.kind != kind) {
         continue;
       }
       if (best == null ||
@@ -604,17 +668,39 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void _expandTimeseriesChart(TimelineClip clip) {
+    _clearAudioChartState();
     _chartExpandedClipId = clip.clipId;
     _selectedClipId = clip.clipId;
     unawaited(_loadTimeseriesChart(clip));
+    notifyListeners();
   }
 
-  void _collapseTimeseriesChart() {
+  void _expandAudioChart(TimelineClip clip) {
+    _clearTimeseriesChartState();
+    _chartExpandedClipId = clip.clipId;
+    _selectedClipId = clip.clipId;
+    unawaited(_loadAudioChart(clip));
+    notifyListeners();
+  }
+
+  void _collapseChart() {
     _chartExpandedClipId = '';
+    _clearTimeseriesChartState();
+    _clearAudioChartState();
+  }
+
+  void _clearTimeseriesChartState() {
     _timeseriesChartEpoch += 1;
     _isTimeseriesChartLoading = false;
     _timeseriesChartError = '';
     _timeseriesSeries = LoadTimeseriesWaveformUseCase.emptySeries;
+  }
+
+  void _clearAudioChartState() {
+    _audioChartEpoch += 1;
+    _isAudioChartLoading = false;
+    _audioChartError = '';
+    _audioAmplitudes = const [];
   }
 
   Future<void> _loadTimeseriesChart(TimelineClip clip) async {
@@ -665,6 +751,51 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     } finally {
       if (epoch == _timeseriesChartEpoch && !_isClosed) {
         _isTimeseriesChartLoading = false;
+        notifyListeners();
+      }
+    }
+  }
+
+  Future<void> _loadAudioChart(TimelineClip clip) async {
+    final epoch = ++_audioChartEpoch;
+    _isAudioChartLoading = true;
+    _audioChartError = '';
+    _audioAmplitudes = const [];
+    notifyListeners();
+    try {
+      var contentUrl = clip.contentUrl;
+      try {
+        final detail = await _getClipUseCase.execute(clipId: clip.clipId);
+        if (detail.assetContentUrl.isNotEmpty) {
+          contentUrl = detail.assetContentUrl;
+        }
+      } catch (_) {
+        // 타임라인 contentUrl로 이어 간다.
+      }
+      if (contentUrl.isEmpty) {
+        if (epoch != _audioChartEpoch || _isClosed) {
+          return;
+        }
+        _audioChartError = '파형 주소가 없습니다';
+        return;
+      }
+      final load = await _loadAudioWaveformUseCase.execute(
+        contentUrl: contentUrl,
+      );
+      if (epoch != _audioChartEpoch || _isClosed) {
+        return;
+      }
+      _audioAmplitudes = load.amplitudes;
+      _audioChartError = load.errorMessage;
+    } catch (error) {
+      if (epoch != _audioChartEpoch || _isClosed) {
+        return;
+      }
+      _audioChartError = error.toString();
+      _audioAmplitudes = const [];
+    } finally {
+      if (epoch == _audioChartEpoch && !_isClosed) {
+        _isAudioChartLoading = false;
         notifyListeners();
       }
     }
@@ -1111,6 +1242,53 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return doesRequireStepSeek(playbackRateFor(video));
   }
 
+  /// `T`를 덮는 음성 클립(트랙 무관). 겹치면 clipId가 큰 쪽.
+  TimelineClip? get coveringAudioClip => _coveringAudioAt(playheadSeconds);
+
+  String get coveringAudioMediaUrl => coveringAudioClip?.playbackUrl ?? '';
+
+  int get coveringAudioSeekMilliseconds {
+    final clip = coveringAudioClip;
+    if (clip == null) {
+      return 0;
+    }
+    return fileSeekMillisecondsAt(
+      clip: _playbackInput(clip),
+      playheadSeconds: playheadSeconds,
+      fallbackLocalSeconds:
+          playheadSeconds - secondsFromNanoseconds(clip.startNanoseconds),
+    );
+  }
+
+  double get coveringAudioPlaybackRate {
+    final clip = coveringAudioClip;
+    if (clip == null) {
+      return timelinePlaybackRate;
+    }
+    return playbackRateAt(
+      clip: _playbackInput(clip),
+      playheadSeconds: playheadSeconds,
+      timelinePlaybackRate: timelinePlaybackRate,
+    );
+  }
+
+  TimelineClip? _coveringAudioAt(double seconds) {
+    final covering = <TimelineClip>[];
+    for (final clip in timelineClips) {
+      if (clip.kind != TimelineClipKind.audio ||
+          clip.playbackUrl.isEmpty ||
+          !_clipCovers(clip, seconds)) {
+        continue;
+      }
+      covering.add(clip);
+    }
+    if (covering.isEmpty) {
+      return null;
+    }
+    covering.sort((left, right) => _compareClipId(right, left));
+    return covering.first;
+  }
+
   void didTapCycleTimelinePlaybackRate() {
     _playhead.cycleTimelinePlaybackRate();
     _playbackToken += 1;
@@ -1131,8 +1309,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       if (_chartExpandedClipId != clipId) {
         _expandTimeseriesChart(timelineClip);
       }
+    } else if (timelineClip.kind == TimelineClipKind.audio) {
+      if (_chartExpandedClipId != clipId) {
+        _expandAudioChart(timelineClip);
+      }
     } else {
-      _collapseTimeseriesChart();
+      _collapseChart();
     }
     didSeekToSeconds(secondsFromNanoseconds(timelineClip.startNanoseconds));
     unawaited(_loadClipDetail(clipId));

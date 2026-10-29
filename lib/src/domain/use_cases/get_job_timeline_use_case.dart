@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../entities/job_timeline.dart';
 import '../repositories/job_timeline_repository.dart';
 
@@ -15,5 +17,17 @@ class GetJobTimelineUseCase {
 
   Future<String> readContent({required String url}) {
     return _repository.readContent(url: url);
+  }
+
+  Future<Uint8List> readBytes({
+    required String url,
+    int? startByte,
+    int? endByte,
+  }) {
+    return _repository.readBytes(
+      url: url,
+      startByte: startByte,
+      endByte: endByte,
+    );
   }
 }

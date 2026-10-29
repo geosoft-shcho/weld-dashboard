@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import '../entities/job_timeline.dart';
 
 abstract class JobTimelineRepository {
@@ -63,4 +65,10 @@ abstract class JobTimelineRepository {
   Future<void> deleteTimeline({required String jobId});
 
   Future<String> readContent({required String url});
+
+  Future<Uint8List> readBytes({
+    required String url,
+    int? startByte,
+    int? endByte,
+  });
 }

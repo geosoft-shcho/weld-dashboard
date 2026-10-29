@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
 
-import 'audio_waveform_data.dart';
+import '../../../../domain/audio_waveform_data.dart';
 
 Future<AudioWaveformData> loadWorkDetailWaveform({
   required String audioAssetPath,

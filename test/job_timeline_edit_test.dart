@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:typed_data';
 
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/timeline_board_helpers.dart';
 
@@ -34,6 +35,7 @@ import 'package:weld_dashboard/src/domain/repositories/ask_session_store.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_session_history_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/load_audio_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_timeseries_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
@@ -2133,6 +2135,9 @@ VideoMultimodalViewModel _viewModel(
     loadTimeseriesWaveformUseCase: LoadTimeseriesWaveformUseCase(
       GetJobTimelineUseCase(repository),
     ),
+    loadAudioWaveformUseCase: LoadAudioWaveformUseCase(
+      GetJobTimelineUseCase(repository),
+    ),
     jobId: 'job-1',
   );
 }
@@ -2319,6 +2324,15 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
 
   @override
   Future<String> readContent({required String url}) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<Uint8List> readBytes({
+    required String url,
+    int? startByte,
+    int? endByte,
+  }) {
     throw StateError('unused');
   }
 }
@@ -2566,6 +2580,15 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
       return gate.future;
     }
     return contentByUrl[url] ?? '';
+  }
+
+  @override
+  Future<Uint8List> readBytes({
+    required String url,
+    int? startByte,
+    int? endByte,
+  }) async {
+    return Uint8List(0);
   }
 }
 

@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weld_dashboard/src/presentation/features/work_detail/widgets/audio_waveform_data.dart';
+import 'package:weld_dashboard/src/domain/audio_waveform_data.dart';
 
 void main() {
   test('parses little-endian audiowaveform bytes', () {
@@ -26,10 +26,7 @@ void main() {
     expect(waveform.getPixelMin(1), -800);
     expect(waveform.getPixelMax(1), 1600);
     expect(waveform.duration, const Duration(milliseconds: 40));
-    expect(
-      waveform.amplitudeAt(Duration.zero),
-      closeTo(2400 / 32768, 0.0001),
-    );
+    expect(waveform.amplitudeAt(Duration.zero), closeTo(2400 / 32768, 0.0001));
     expect(
       waveform.amplitudeAt(const Duration(milliseconds: 20)),
       closeTo(1600 / 32768, 0.0001),

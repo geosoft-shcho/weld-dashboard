@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
 import 'package:weld_dashboard/src/domain/repositories/job_timeline_repository.dart';
@@ -123,6 +125,15 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
 
   @override
   Future<String> readContent({required String url}) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<Uint8List> readBytes({
+    required String url,
+    int? startByte,
+    int? endByte,
+  }) {
     throw StateError('unused');
   }
 }

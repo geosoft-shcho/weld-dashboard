@@ -6,7 +6,7 @@ import 'package:waveform_visualizer/waveform_visualizer.dart';
 
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
-import 'audio_waveform_data.dart';
+import '../../../../domain/audio_waveform_data.dart';
 import 'work_detail_material_scope.dart';
 import 'work_detail_waveform_loader.dart';
 
