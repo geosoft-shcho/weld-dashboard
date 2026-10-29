@@ -259,7 +259,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   @override
   Widget build(BuildContext context) {
     final rows = buildTimelineBoardRows(viewModel);
-    final hasMedia = rows.isNotEmpty && viewModel.spanSeconds > 0;
     final height = viewModel.timelineBoardHeight.clamp(
       VideoMultimodalViewModel.MIN_TIMELINE_HEIGHT,
       widget.maxHeight,
@@ -275,7 +274,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       height: height,
       child: Stack(
         children: [
-          hasMedia ? _filled(rows) : _empty(),
+          _filled(rows),
           if (viewModel.isLaneMenuOpen) _laneMenu(),
           Positioned(
             top: 0,
@@ -297,21 +296,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _empty() {
-    return const SizedBox(
-      height: 80,
-      child: Center(
-        child: Text(
-          '미디어가 로드되면 멀티 모달 타임라인이 표시됩니다.',
-          style: TextStyle(
-            color: MultimodalStudioPalette.SAND_600,
-            fontSize: 12,
-          ),
-        ),
       ),
     );
   }
