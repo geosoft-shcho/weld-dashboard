@@ -339,14 +339,18 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
           final value = _channelValue(channel, index);
           switch (_channelKey(channel.name)) {
             case 'current_a':
+            case 'current_A':
             case '전류_a':
               currentA = value;
             case 'voltage_v':
             case '전압_v':
               voltageV = value;
             case 'wire_feed_speed_mpm':
+            case 'wire_speed_mpm':
+            case '와이어송급속도_m_min':
               speedValue = value;
             case 'rotation_speed_rpm':
+            case 'rpm':
               rotationSpeedRpm = value;
           }
         }
