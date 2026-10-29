@@ -6,6 +6,7 @@ import '../../core/di/locator.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../navigation/app_coordinator.dart';
+import 'worker_create_dialog.dart';
 import 'worker_lookup_view_model.dart';
 
 class WorkerLookupScreen extends StatelessWidget {
@@ -52,6 +53,7 @@ class _WorkerLookupBody extends StatelessWidget {
         label: '작업자',
         count: viewModel.totalCount,
         actionText: '+ 새 작업자',
+        onAction: () => _didTapNewWorker(context, viewModel),
       ),
       filters: [
         InfoLabel(
@@ -120,4 +122,19 @@ class _WorkerLookupBody extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _didTapNewWorker(
+  BuildContext context,
+  WorkerLookupViewModel viewModel,
+) async {
+  final workerId = await showWorkerCreateDialog(context, viewModel);
+  if (workerId == null || workerId.isEmpty || !context.mounted) {
+    return;
+  }
+  await viewModel.load();
+  if (!context.mounted) {
+    return;
+  }
+  context.read<AppCoordinator>().didTapOpenWorkerDetail(workerId);
 }

@@ -10,6 +10,7 @@ import 'package:weld_dashboard/src/domain/entities/work_history_page.dart';
 import 'package:weld_dashboard/src/domain/entities/work_history_project_filter.dart';
 import 'package:weld_dashboard/src/domain/entities/work_history_query.dart';
 import 'package:weld_dashboard/src/domain/entities/worker.dart';
+import 'package:weld_dashboard/src/domain/entities/worker_kind.dart';
 import 'package:weld_dashboard/src/domain/repositories/asset_lookup_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/equipment_lookup_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/project_lookup_repository.dart';
@@ -18,6 +19,7 @@ import 'package:weld_dashboard/src/domain/repositories/worker_lookup_repository.
 import 'package:weld_dashboard/src/domain/use_cases/create_project_items_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_project_item_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_project_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/delete_worker_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_equipment_lookup_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_project_lookup_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_worker_lookup_use_case.dart';
@@ -25,6 +27,7 @@ import 'package:weld_dashboard/src/domain/use_cases/list_asset_lookup_page_use_c
 import 'package:weld_dashboard/src/domain/use_cases/list_work_history_page_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_project_item_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_project_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/update_worker_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/equipment_lookup/equipment_lookup_detail_view_model.dart';
 import 'package:weld_dashboard/src/presentation/features/project_lookup/project_lookup_detail_view_model.dart';
 import 'package:weld_dashboard/src/presentation/features/worker_lookup/worker_lookup_detail_view_model.dart';
@@ -114,6 +117,8 @@ void main() {
       listWorkHistoryPageUseCase: ListWorkHistoryPageUseCase(
         workHistoryRepository,
       ),
+      updateWorkerUseCase: UpdateWorkerUseCase(workerRepository),
+      deleteWorkerUseCase: DeleteWorkerUseCase(workerRepository),
     );
 
     await viewModel.load();
@@ -264,6 +269,31 @@ class _FakeWorkerLookupRepository implements WorkerLookupRepository {
     listWorkersCallCount++;
     throw StateError('상세에서 목록을 조회하면 안 됩니다.');
   }
+
+  @override
+  Future<String> createWorker({
+    required String workerName,
+    required WorkerKind workerKind,
+    required String employeeNo,
+    required String description,
+    required bool isInactive,
+  }) async {
+    return '';
+  }
+
+  @override
+  Future<void> updateWorker({
+    required String workerId,
+    required String workerName,
+    required WorkerKind workerKind,
+    required String employeeNo,
+    required String description,
+    required bool isInactive,
+    required List<String> changedFields,
+  }) async {}
+
+  @override
+  Future<void> deleteWorker({required String workerId}) async {}
 }
 
 class _FakeEquipmentLookupRepository implements EquipmentLookupRepository {

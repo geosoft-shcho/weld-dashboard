@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 
 import '../../../domain/entities/worker.dart';
 import '../../../domain/entities/worker_kind.dart';
+import '../../../domain/use_cases/create_worker_use_case.dart';
 import '../../../domain/use_cases/list_worker_lookup_use_case.dart';
 
 enum WorkerKindFilter { all, master, general, robot, unknown }
@@ -12,9 +13,12 @@ enum WorkerKindFilter { all, master, general, robot, unknown }
 class WorkerLookupViewModel extends ChangeNotifier {
   WorkerLookupViewModel({
     required ListWorkerLookupUseCase listWorkerLookupUseCase,
-  }) : _listWorkerLookupUseCase = listWorkerLookupUseCase;
+    required CreateWorkerUseCase createWorkerUseCase,
+  }) : _listWorkerLookupUseCase = listWorkerLookupUseCase,
+       _createWorkerUseCase = createWorkerUseCase;
 
   final ListWorkerLookupUseCase _listWorkerLookupUseCase;
+  final CreateWorkerUseCase _createWorkerUseCase;
 
   String _queryText = '';
   WorkerKindFilter _kind = WorkerKindFilter.all;
@@ -38,6 +42,7 @@ class WorkerLookupViewModel extends ChangeNotifier {
   String get errorMessage => _errorMessage;
   int get totalCount => _totalCount;
   bool get doesHaveMore => _nextPageToken.isNotEmpty;
+  List<Worker> get workers => _workers;
 
   List<Worker> get visibleWorkers {
     return [
@@ -48,6 +53,22 @@ class WorkerLookupViewModel extends ChangeNotifier {
   }
 
   Future<void> load() => _reload(reset: true);
+
+  Future<String> createWorker({
+    required String workerName,
+    required WorkerKind workerKind,
+    required String employeeNo,
+    required String description,
+    required bool isInactive,
+  }) {
+    return _createWorkerUseCase.execute(
+      workerName: workerName,
+      workerKind: workerKind,
+      employeeNo: employeeNo,
+      description: description,
+      isInactive: isInactive,
+    );
+  }
 
   Future<void> didScrollNearEnd() async {
     if (_isLoading || _isLoadingMore || _nextPageToken.isEmpty) {

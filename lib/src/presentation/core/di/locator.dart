@@ -19,7 +19,10 @@ import '../../../domain/use_cases/create_project_use_case.dart';
 import '../../../domain/use_cases/delete_project_item_use_case.dart';
 import '../../../domain/use_cases/delete_project_use_case.dart';
 import '../../../domain/use_cases/update_project_item_use_case.dart';
+import '../../../domain/use_cases/update_worker_use_case.dart';
 import '../../../domain/use_cases/update_project_use_case.dart';
+import '../../../domain/use_cases/create_worker_use_case.dart';
+import '../../../domain/use_cases/delete_worker_use_case.dart';
 import '../../../domain/use_cases/get_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/get_project_lookup_use_case.dart';
 import '../../../domain/use_cases/get_worker_lookup_use_case.dart';
@@ -205,6 +208,9 @@ void setupLocator({required bool pdfrxReady}) {
   );
   locator.registerLazySingleton(() => ListWorkerLookupUseCase(locator()));
   locator.registerLazySingleton(() => GetWorkerLookupUseCase(locator()));
+  locator.registerLazySingleton(() => CreateWorkerUseCase(locator()));
+  locator.registerLazySingleton(() => UpdateWorkerUseCase(locator()));
+  locator.registerLazySingleton(() => DeleteWorkerUseCase(locator()));
   locator.registerLazySingleton<EquipmentLookupRepository>(
     () => RemoteEquipmentLookupRepository(locator()),
   );
@@ -225,7 +231,10 @@ void setupLocator({required bool pdfrxReady}) {
     ),
   );
   locator.registerFactory(
-    () => WorkerLookupViewModel(listWorkerLookupUseCase: locator()),
+    () => WorkerLookupViewModel(
+      listWorkerLookupUseCase: locator(),
+      createWorkerUseCase: locator(),
+    ),
   );
   locator.registerFactory(
     () => EquipmentLookupViewModel(listEquipmentLookupUseCase: locator()),
@@ -256,6 +265,8 @@ void setupLocator({required bool pdfrxReady}) {
       workerId: workerId,
       getWorkerLookupUseCase: locator(),
       listWorkHistoryPageUseCase: locator(),
+      updateWorkerUseCase: locator(),
+      deleteWorkerUseCase: locator(),
     ),
   );
   locator.registerFactoryParam<EquipmentLookupDetailViewModel, String, void>(

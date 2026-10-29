@@ -18,6 +18,9 @@ class LookupSearchField extends StatefulWidget {
     this.textInputAction = TextInputAction.search,
     this.controller,
     this.suffixIcon,
+    this.enabled = true,
+    this.readOnly = false,
+    this.maxLines = 1,
   });
 
   final String value;
@@ -32,6 +35,9 @@ class LookupSearchField extends StatefulWidget {
 
   /// 입력란 오른쪽 아이콘(비밀번호 보기 등). 없으면 두지 않는다.
   final Widget? suffixIcon;
+  final bool enabled;
+  final bool readOnly;
+  final int maxLines;
 
   @override
   State<LookupSearchField> createState() => _LookupSearchFieldState();
@@ -84,6 +90,9 @@ class _LookupSearchFieldState extends State<LookupSearchField> {
       child: TextField(
         controller: _controller,
         focusNode: _focusNode,
+        enabled: widget.enabled,
+        readOnly: widget.readOnly,
+        maxLines: widget.maxLines,
         obscureText: widget.obscureText,
         style: const TextStyle(color: AppTheme.INK, fontSize: 13),
         cursorColor: AppTheme.ACCENT_STEEL,
