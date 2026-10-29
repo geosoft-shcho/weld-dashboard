@@ -4,6 +4,7 @@ import '../../../core/themes/app_theme.dart';
 import '../video_caption.dart';
 import '../video_multimodal_view_model.dart';
 import '../video_overlay_frame.dart';
+import 'multimodal_timeline_audio_player.dart';
 import 'multimodal_video_player.dart';
 
 class MultimodalVideoStage extends StatelessWidget {
@@ -13,6 +14,23 @@ class MultimodalVideoStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        _stageBody(context),
+        MultimodalTimelineAudioPlayer(
+          mediaUrl: viewModel.coveringAudioMediaUrl,
+          seekToMs: viewModel.coveringAudioSeekMilliseconds,
+          playbackRate: viewModel.coveringAudioPlaybackRate,
+          seekToken: viewModel.seekToken,
+          playbackToken: viewModel.playbackToken,
+          wantsPlayback: viewModel.wantsPlayback,
+        ),
+      ],
+    );
+  }
+
+  Widget _stageBody(BuildContext context) {
     final theme = FluentTheme.of(context);
     if (viewModel.isLoading) {
       return const ColoredBox(
