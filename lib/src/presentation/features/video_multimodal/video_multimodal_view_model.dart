@@ -641,8 +641,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return;
     }
     try {
+      final detail = await _getClipUseCase.execute(clipId: clip.clipId);
       final load = await _loadTimeseriesWaveformUseCase.execute(
         contentUrl: clip.contentUrl,
+        channelNames: detail.channelNames,
       );
       if (epoch != _timeseriesChartEpoch || _isClosed) {
         _logTimeseries('stale', clip: clip, detail: 'epoch=$epoch');

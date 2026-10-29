@@ -173,6 +173,7 @@ class ClipDetail {
     this.targetAssetId = '',
     this.targetAssetFileName = '',
     this.targetAssetContentUrl = '',
+    this.channelNames = const [],
   });
 
   static const empty = ClipDetail(clipId: '', fields: []);
@@ -200,6 +201,9 @@ class ClipDetail {
   final String targetAssetId;
   final String targetAssetFileName;
   final String targetAssetContentUrl;
+
+  /// GetClip asset.properties.channels. 시계열 CSV 열 이름.
+  final List<String> channelNames;
 
   String valueOf(String label) {
     for (final field in fields) {

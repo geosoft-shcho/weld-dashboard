@@ -79,6 +79,7 @@ void main() {
     expect(detail.valueOf('asset.kind'), 'VIDEO');
     expect(detail.valueOf('asset.contentUrl'), '/files/take.mp4');
     expect(detail.valueOf('asset.childCount'), '1');
+    expect(detail.channelNames, isEmpty);
     expect(detail.valueOf('asset.provenance.operation'), 'stt');
     expect(detail.valueOf('asset.provenance.parentAssetId'), '8');
     expect(
@@ -89,6 +90,35 @@ void main() {
       detail.fields.any((field) => field.value.contains('/secret/')),
       isFalse,
     );
+  });
+
+  test('timeseries properties.channels stay on the detail', () {
+    final properties = Struct()
+      ..fields['channels'] = (Value()
+        ..listValue = (ListValue()
+          ..values.addAll([
+            Value()..stringValue = 'current_A',
+            Value()..stringValue = 'wire_speed_mpm',
+            Value()..stringValue = '전압_V',
+            Value()..stringValue = 'rpm',
+          ])));
+    final detail = clipDetailFromResponse(
+      compose_pb.GetClipResponse(
+        clip: compose_pb.Clip(
+          clipId: Int64(16821),
+          kind: compose_pb.ClipKind.CLIP_KIND_TIMESERIES,
+          source: compose_pb.ClipSource(assetId: Int64(9505)),
+        ),
+        asset: asset_pb.Asset(
+          assetId: Int64(9505),
+          kind: asset_pb.AssetKind.ASSET_KIND_TIMESERIES,
+          fileName: 'signals_30fps.csv',
+          properties: properties,
+        ),
+      ),
+    );
+
+    expect(detail.channelNames, ['current_A', 'wire_speed_mpm', '전압_V', 'rpm']);
   });
 
   test('a tag clip has no asset', () {
@@ -350,10 +380,7 @@ ClipDetail _poseDetail() {
         clipId: Int64(9247),
         kind: compose_pb.ClipKind.CLIP_KIND_VIDEO,
       ),
-      targetAsset: asset_pb.Asset(
-        assetId: Int64(20),
-        fileName: 'target.mp4',
-      ),
+      targetAsset: asset_pb.Asset(assetId: Int64(20), fileName: 'target.mp4'),
     ),
   );
 }

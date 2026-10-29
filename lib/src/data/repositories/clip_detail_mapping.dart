@@ -202,6 +202,9 @@ ClipDetail clipDetailFromResponse(
         hasTargetAsset && response.targetAsset.contentUrl.isNotEmpty
         ? resolveContentUrl(response.targetAsset.contentUrl)
         : '',
+    channelNames: hasAsset
+        ? channelNamesFromProperties(response.asset.properties)
+        : const [],
   );
 }
 
@@ -216,6 +219,18 @@ ClipTargetKind _targetKindFrom(compose_pb.ClipTargetKind kind) {
 }
 
 String _sameUrl(String contentUrl) => contentUrl;
+
+List<String> channelNamesFromProperties(Struct properties) {
+  final value = properties.fields['channels'];
+  if (value == null || !value.hasListValue()) {
+    return const [];
+  }
+  return [
+    for (final item in value.listValue.values)
+      if (item.hasStringValue() && item.stringValue.trim().isNotEmpty)
+        item.stringValue.trim(),
+  ];
+}
 
 String _id(Int64 id) => id == Int64.ZERO ? _none : id.toString();
 

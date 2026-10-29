@@ -15,12 +15,15 @@ class LoadTimeseriesWaveformUseCase {
     robot: [],
   );
 
-  Future<TimeseriesWaveformLoad> execute({required String contentUrl}) async {
+  Future<TimeseriesWaveformLoad> execute({
+    required String contentUrl,
+    List<String> channelNames = const [],
+  }) async {
     if (contentUrl.isEmpty) {
       return TimeseriesWaveformLoad.empty;
     }
     final body = await _getJobTimelineUseCase.readContent(url: contentUrl);
-    final parsed = TimeseriesCsvParser.parse(body);
+    final parsed = TimeseriesCsvParser.parse(body, channelNames: channelNames);
     final series = parsed.points.isEmpty
         ? emptySeries
         : WaveformSeriesBundle(

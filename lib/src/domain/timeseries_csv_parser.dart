@@ -30,7 +30,10 @@ class TimeseriesCsvParser {
 
   static const int maxPointCount = 2000;
 
-  static TimeseriesCsvParseResult parse(String body) {
+  static TimeseriesCsvParseResult parse(
+    String body, {
+    List<String> channelNames = const [],
+  }) {
     final lines = [
       for (final line in body.split(RegExp(r'\r?\n')))
         if (line.trim().isNotEmpty) line.trim(),
@@ -65,25 +68,25 @@ class TimeseriesCsvParser {
       't_offset_ns',
       'timestamp',
     ]);
-    final currentMatch = _columnMatch(headers, const [
-      'current_a',
-      'current',
-      '전류_a',
-      '전류',
-    ]);
-    final voltageMatch = _columnMatch(headers, const [
-      'voltage_v',
-      'voltage',
-      '전압_v',
-      '전압',
-    ]);
-    final speedMatch = _columnMatch(headers, const [
-      'wire_feed_speed_mpm',
-      'speed',
-      'speed_mpm',
-      '속도',
-    ]);
-    final rpmMatch = _columnMatch(headers, const [
+    final currentMatch = _fieldMatch(
+      headers,
+      channelNames,
+      _isCurrentChannel,
+      const ['current_a', 'current', '전류_a', '전류'],
+    );
+    final voltageMatch = _fieldMatch(
+      headers,
+      channelNames,
+      _isVoltageChannel,
+      const ['voltage_v', 'voltage', '전압_v', '전압'],
+    );
+    final speedMatch = _fieldMatch(
+      headers,
+      channelNames,
+      _isSpeedChannel,
+      const ['wire_feed_speed_mpm', 'speed', 'speed_mpm', '속도'],
+    );
+    final rpmMatch = _fieldMatch(headers, channelNames, _isRpmChannel, const [
       'rotation_speed_rpm',
       'rpm',
       '회전속도',
@@ -134,6 +137,52 @@ class TimeseriesCsvParser {
   }
 
   static List<WaveformPoint> pointsFrom(String body) => parse(body).points;
+
+  static ({int index, String name}) _fieldMatch(
+    List<String> headers,
+    List<String> channelNames,
+    bool Function(String key) matches,
+    List<String> fallbackNames,
+  ) {
+    if (channelNames.isEmpty) {
+      return _columnMatch(headers, fallbackNames);
+    }
+    for (final name in channelNames) {
+      final key = _channelKey(name);
+      if (!matches(key)) {
+        continue;
+      }
+      final index = headers.indexOf(key);
+      if (index >= 0) {
+        return (index: index, name: headers[index]);
+      }
+    }
+    return (index: -1, name: '');
+  }
+
+  static String _channelKey(String name) {
+    final slash = name.lastIndexOf('/');
+    final bare = slash < 0 ? name : name.substring(slash + 1);
+    return bare.trim().toLowerCase();
+  }
+
+  static bool _isCurrentChannel(String key) {
+    return key == 'current_a' || key == '전류_a';
+  }
+
+  static bool _isVoltageChannel(String key) {
+    return key == 'voltage_v' || key == '전압_v';
+  }
+
+  static bool _isSpeedChannel(String key) {
+    return key == 'wire_feed_speed_mpm' ||
+        key == 'wire_speed_mpm' ||
+        key == '와이어송급속도_m_min';
+  }
+
+  static bool _isRpmChannel(String key) {
+    return key == 'rotation_speed_rpm' || key == 'rpm';
+  }
 
   static ({int index, String name}) _columnMatch(
     List<String> headers,
