@@ -4,9 +4,11 @@ import '../../../domain/entities/asset_lookup_row.dart';
 import '../../../domain/entities/equipment.dart';
 import '../../../domain/entities/work_history_item.dart';
 import '../../../domain/entities/work_history_query.dart';
+import '../../../domain/use_cases/delete_equipment_use_case.dart';
 import '../../../domain/use_cases/get_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
+import '../../../domain/use_cases/update_equipment_use_case.dart';
 
 class EquipmentLookupDetailViewModel extends ChangeNotifier {
   EquipmentLookupDetailViewModel({
@@ -14,14 +16,20 @@ class EquipmentLookupDetailViewModel extends ChangeNotifier {
     required GetEquipmentLookupUseCase getEquipmentLookupUseCase,
     required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
     required ListAssetLookupPageUseCase listAssetLookupPageUseCase,
+    required UpdateEquipmentUseCase updateEquipmentUseCase,
+    required DeleteEquipmentUseCase deleteEquipmentUseCase,
   }) : _getEquipmentLookupUseCase = getEquipmentLookupUseCase,
        _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase,
-       _listAssetLookupPageUseCase = listAssetLookupPageUseCase;
+       _listAssetLookupPageUseCase = listAssetLookupPageUseCase,
+       _updateEquipmentUseCase = updateEquipmentUseCase,
+       _deleteEquipmentUseCase = deleteEquipmentUseCase;
 
   final String equipmentId;
   final GetEquipmentLookupUseCase _getEquipmentLookupUseCase;
   final ListWorkHistoryPageUseCase _listWorkHistoryPageUseCase;
   final ListAssetLookupPageUseCase _listAssetLookupPageUseCase;
+  final UpdateEquipmentUseCase _updateEquipmentUseCase;
+  final DeleteEquipmentUseCase _deleteEquipmentUseCase;
 
   Equipment? _equipment;
   List<WorkHistoryItem> _jobs = const [];
@@ -36,6 +44,40 @@ class EquipmentLookupDetailViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
+
+  Future<void> updateEquipment({
+    required String equipmentName,
+    required String equipmentCode,
+    required String description,
+    required bool isInactive,
+  }) async {
+    final current = _equipment;
+    if (current == null) {
+      return;
+    }
+    final changedFields = [
+      if (equipmentName != current.equipmentName) 'equipment_name',
+      if (equipmentCode != current.equipmentCode) 'equipment_code',
+      if (description != current.description) 'description',
+      if (isInactive != current.isInactive) 'inactive',
+    ];
+    if (changedFields.isEmpty) {
+      throw _FormFailure('바뀐 칸이 없습니다.');
+    }
+    await _updateEquipmentUseCase.execute(
+      equipmentId: equipmentId,
+      equipmentName: equipmentName,
+      equipmentCode: equipmentCode,
+      description: description,
+      isInactive: isInactive,
+      changedFields: changedFields,
+    );
+    await load();
+  }
+
+  Future<void> deleteEquipment() {
+    return _deleteEquipmentUseCase.execute(equipmentId: equipmentId);
+  }
 
   Future<void> load() async {
     _isLoading = true;
@@ -79,4 +121,13 @@ class EquipmentLookupDetailViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+}
+
+class _FormFailure implements Exception {
+  _FormFailure(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

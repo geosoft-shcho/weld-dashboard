@@ -18,6 +18,7 @@ import 'package:weld_dashboard/src/domain/repositories/work_history_repository.d
 import 'package:weld_dashboard/src/domain/repositories/worker_lookup_repository.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_project_items_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_project_item_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/delete_equipment_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_project_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_worker_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/get_equipment_lookup_use_case.dart';
@@ -26,6 +27,7 @@ import 'package:weld_dashboard/src/domain/use_cases/get_worker_lookup_use_case.d
 import 'package:weld_dashboard/src/domain/use_cases/list_asset_lookup_page_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_work_history_page_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_project_item_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/update_equipment_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_project_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_worker_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/equipment_lookup/equipment_lookup_detail_view_model.dart';
@@ -150,6 +152,8 @@ void main() {
       listAssetLookupPageUseCase: ListAssetLookupPageUseCase(
         _FakeAssetLookupRepository(),
       ),
+      updateEquipmentUseCase: UpdateEquipmentUseCase(equipmentRepository),
+      deleteEquipmentUseCase: DeleteEquipmentUseCase(equipmentRepository),
     );
 
     await viewModel.load();
@@ -319,6 +323,29 @@ class _FakeEquipmentLookupRepository implements EquipmentLookupRepository {
     listEquipmentCallCount++;
     throw StateError('상세에서 목록을 조회하면 안 됩니다.');
   }
+
+  @override
+  Future<String> createEquipment({
+    required String equipmentName,
+    required String equipmentCode,
+    required String description,
+    required bool isInactive,
+  }) async {
+    return '';
+  }
+
+  @override
+  Future<void> updateEquipment({
+    required String equipmentId,
+    required String equipmentName,
+    required String equipmentCode,
+    required String description,
+    required bool isInactive,
+    required List<String> changedFields,
+  }) async {}
+
+  @override
+  Future<void> deleteEquipment({required String equipmentId}) async {}
 }
 
 class _FakeWorkHistoryRepository implements WorkHistoryRepository {

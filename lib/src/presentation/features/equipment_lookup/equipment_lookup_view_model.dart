@@ -4,14 +4,18 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/foundation.dart';
 
 import '../../../domain/entities/equipment.dart';
+import '../../../domain/use_cases/create_equipment_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 
 class EquipmentLookupViewModel extends ChangeNotifier {
   EquipmentLookupViewModel({
     required ListEquipmentLookupUseCase listEquipmentLookupUseCase,
-  }) : _listEquipmentLookupUseCase = listEquipmentLookupUseCase;
+    required CreateEquipmentUseCase createEquipmentUseCase,
+  }) : _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
+       _createEquipmentUseCase = createEquipmentUseCase;
 
   final ListEquipmentLookupUseCase _listEquipmentLookupUseCase;
+  final CreateEquipmentUseCase _createEquipmentUseCase;
 
   String _queryText = '';
   bool _includeInactive = false;
@@ -33,6 +37,7 @@ class EquipmentLookupViewModel extends ChangeNotifier {
   String get errorMessage => _errorMessage;
   int get totalCount => _totalCount;
   bool get doesHaveMore => _nextPageToken.isNotEmpty;
+  List<Equipment> get equipmentItems => _equipment;
 
   List<Equipment> get visibleEquipment {
     return [
@@ -42,6 +47,20 @@ class EquipmentLookupViewModel extends ChangeNotifier {
   }
 
   Future<void> load() => _reload(reset: true);
+
+  Future<String> createEquipment({
+    required String equipmentName,
+    required String equipmentCode,
+    required String description,
+    required bool isInactive,
+  }) {
+    return _createEquipmentUseCase.execute(
+      equipmentName: equipmentName,
+      equipmentCode: equipmentCode,
+      description: description,
+      isInactive: isInactive,
+    );
+  }
 
   Future<void> didScrollNearEnd() async {
     if (_isLoading || _isLoadingMore || _nextPageToken.isEmpty) {

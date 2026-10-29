@@ -19,3 +19,7 @@ class Equipment {
   final int jobCount;
   final int assetCount;
 }
+
+/// 장비 코드는 공백 없이 대문자로 보낸다. 비우면 빈 문자열이다.
+String normalizedEquipmentCode(String value) =>
+    value.trim().replaceAll(RegExp(r'\s+'), '').toUpperCase();

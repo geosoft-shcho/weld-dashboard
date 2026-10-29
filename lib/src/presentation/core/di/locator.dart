@@ -18,10 +18,13 @@ import '../../../domain/use_cases/create_project_items_use_case.dart';
 import '../../../domain/use_cases/create_project_use_case.dart';
 import '../../../domain/use_cases/delete_project_item_use_case.dart';
 import '../../../domain/use_cases/delete_project_use_case.dart';
+import '../../../domain/use_cases/update_equipment_use_case.dart';
 import '../../../domain/use_cases/update_project_item_use_case.dart';
 import '../../../domain/use_cases/update_worker_use_case.dart';
 import '../../../domain/use_cases/update_project_use_case.dart';
+import '../../../domain/use_cases/create_equipment_use_case.dart';
 import '../../../domain/use_cases/create_worker_use_case.dart';
+import '../../../domain/use_cases/delete_equipment_use_case.dart';
 import '../../../domain/use_cases/delete_worker_use_case.dart';
 import '../../../domain/use_cases/get_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/get_project_lookup_use_case.dart';
@@ -216,6 +219,9 @@ void setupLocator({required bool pdfrxReady}) {
   );
   locator.registerLazySingleton(() => ListEquipmentLookupUseCase(locator()));
   locator.registerLazySingleton(() => GetEquipmentLookupUseCase(locator()));
+  locator.registerLazySingleton(() => CreateEquipmentUseCase(locator()));
+  locator.registerLazySingleton(() => UpdateEquipmentUseCase(locator()));
+  locator.registerLazySingleton(() => DeleteEquipmentUseCase(locator()));
   locator.registerLazySingleton<AssetLookupRepository>(
     () => RemoteAssetLookupRepository(locator()),
   );
@@ -237,7 +243,10 @@ void setupLocator({required bool pdfrxReady}) {
     ),
   );
   locator.registerFactory(
-    () => EquipmentLookupViewModel(listEquipmentLookupUseCase: locator()),
+    () => EquipmentLookupViewModel(
+      listEquipmentLookupUseCase: locator(),
+      createEquipmentUseCase: locator(),
+    ),
   );
   locator.registerFactory(
     () => AssetLookupViewModel(
@@ -275,6 +284,8 @@ void setupLocator({required bool pdfrxReady}) {
       getEquipmentLookupUseCase: locator(),
       listWorkHistoryPageUseCase: locator(),
       listAssetLookupPageUseCase: locator(),
+      updateEquipmentUseCase: locator(),
+      deleteEquipmentUseCase: locator(),
     ),
   );
   locator.registerFactoryParam<AssetLookupDetailViewModel, String, void>(

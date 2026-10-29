@@ -5,6 +5,7 @@ import '../../core/di/locator.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../navigation/app_coordinator.dart';
+import 'equipment_create_dialog.dart';
 import 'equipment_lookup_view_model.dart';
 
 class EquipmentLookupScreen extends StatelessWidget {
@@ -51,6 +52,7 @@ class _EquipmentLookupBody extends StatelessWidget {
         label: '장비',
         count: viewModel.totalCount,
         actionText: '+ 새 장비',
+        onAction: () => _didTapNewEquipment(context, viewModel),
       ),
       filters: [
         InfoLabel(
@@ -101,4 +103,19 @@ class _EquipmentLookupBody extends StatelessWidget {
       ),
     );
   }
+}
+
+Future<void> _didTapNewEquipment(
+  BuildContext context,
+  EquipmentLookupViewModel viewModel,
+) async {
+  final equipmentId = await showEquipmentCreateDialog(context, viewModel);
+  if (equipmentId == null || equipmentId.isEmpty || !context.mounted) {
+    return;
+  }
+  await viewModel.load();
+  if (!context.mounted) {
+    return;
+  }
+  context.read<AppCoordinator>().didTapOpenEquipmentDetail(equipmentId);
 }
