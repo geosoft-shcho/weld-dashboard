@@ -1,0 +1,8 @@
+---
+description: PPT·PPTX·PDF·DOCX·매뉴얼 요청은 마크다운을 먼저 쓰고 검수 스냅샷 확인 뒤에만 변환한다
+alwaysApply: true
+---
+
+PPT, PPTX, PowerPoint, 슬라이드, 발표자료, PDF, DOCX, 매뉴얼, 안내 문서를 만들거나 고치기 전에 `.cursor/skills/document-export/SKILL.md`를 따른다.
+
+원본은 마크다운이다. 관객을 확인하기 전에는 문서를 쓰지 않는다. 변환 스크립트로 PDF·PPTX·DOCX를 만들기 전에 검수 스냅샷을 만들고, 사용자가 검수하기 전에는 그 형식으로 변환하지 않는다. 슬라이드 구성은 `.agents/skills/pptx-generator/SKILL.md`를 따른다.
