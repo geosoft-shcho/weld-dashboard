@@ -1,3 +1,4 @@
+import '../../domain/entities/job_timeline.dart';
 import '../../domain/entities/work_attachment.dart';
 import '../../domain/entities/work_attachment_type.dart';
 import '../../domain/entities/work_detail_catalog.dart';
@@ -71,6 +72,10 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
           note: '',
           content: _mediaTag.resolveContentUrl(asset.contentUrl),
           durationNs: asset.hasDurationNs() ? asset.durationNs.toString() : '',
+          clipKind: timelineClipKindFromAssetKind(
+            asset.kind,
+            fileName: asset.fileName,
+          ),
         ),
       );
     }
@@ -131,5 +136,41 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
       default:
         return WorkAttachmentType.fromFileName(asset.fileName);
     }
+  }
+}
+
+/// 에셋 종류와 같은 이름의 클립 종류. PDF 문서는 pdf, 같은 이름이 없는 문서와 OCR은 file이다.
+TimelineClipKind? timelineClipKindFromAssetKind(
+  asset_pb.AssetKind kind, {
+  required String fileName,
+}) {
+  switch (kind) {
+    case asset_pb.AssetKind.ASSET_KIND_VIDEO:
+      return TimelineClipKind.video;
+    case asset_pb.AssetKind.ASSET_KIND_AUDIO:
+      return TimelineClipKind.audio;
+    case asset_pb.AssetKind.ASSET_KIND_IMAGE:
+      return TimelineClipKind.image;
+    case asset_pb.AssetKind.ASSET_KIND_DOCUMENT:
+      if (WorkAttachmentType.fromFileName(fileName) == WorkAttachmentType.pdf) {
+        return TimelineClipKind.pdf;
+      }
+      return TimelineClipKind.file;
+    case asset_pb.AssetKind.ASSET_KIND_POSE:
+      return TimelineClipKind.pose;
+    case asset_pb.AssetKind.ASSET_KIND_SUBTITLE:
+      return TimelineClipKind.subtitle;
+    case asset_pb.AssetKind.ASSET_KIND_TIMESERIES:
+      return TimelineClipKind.timeseries;
+    case asset_pb.AssetKind.ASSET_KIND_POINTCLOUD:
+      return TimelineClipKind.pointCloud;
+    case asset_pb.AssetKind.ASSET_KIND_REGION:
+      return TimelineClipKind.region;
+    case asset_pb.AssetKind.ASSET_KIND_OCR_JSON:
+      return TimelineClipKind.file;
+    case asset_pb.AssetKind.ASSET_KIND_UNSPECIFIED:
+      return null;
+    default:
+      return null;
   }
 }

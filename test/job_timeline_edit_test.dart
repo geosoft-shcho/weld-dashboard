@@ -5,6 +5,8 @@ import 'package:weld_dashboard/src/presentation/features/video_multimodal/widget
 import 'package:connectrpc/connect.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:weld_dashboard/src/data/datasources/generated/mediatag/asset/v1/asset.pbenum.dart';
+import 'package:weld_dashboard/src/data/repositories/remote_work_detail_repository.dart';
 import 'package:weld_dashboard/src/data/repositories/job_timeline_edit_requests.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
 import 'package:weld_dashboard/src/domain/entities/label_vocab.dart';
@@ -43,6 +45,51 @@ import 'package:weld_dashboard/src/presentation/features/video_multimodal/widget
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('asset kind becomes the same clip kind', () {
+    expect(
+      timelineClipKindFromAssetKind(
+        AssetKind.ASSET_KIND_TIMESERIES,
+        fileName: 'signals_30fps.csv',
+      ),
+      TimelineClipKind.timeseries,
+    );
+    expect(
+      timelineClipKindFromAssetKind(
+        AssetKind.ASSET_KIND_POSE,
+        fileName: 'pose.json',
+      ),
+      TimelineClipKind.pose,
+    );
+    expect(
+      timelineClipKindFromAssetKind(
+        AssetKind.ASSET_KIND_SUBTITLE,
+        fileName: 'caption.vtt',
+      ),
+      TimelineClipKind.subtitle,
+    );
+    expect(
+      timelineClipKindFromAssetKind(
+        AssetKind.ASSET_KIND_POINTCLOUD,
+        fileName: 'depth.ply',
+      ),
+      TimelineClipKind.pointCloud,
+    );
+    expect(
+      timelineClipKindFromAssetKind(
+        AssetKind.ASSET_KIND_REGION,
+        fileName: 'boxes.json',
+      ),
+      TimelineClipKind.region,
+    );
+    expect(
+      timelineClipKindFromAssetKind(
+        AssetKind.ASSET_KIND_DOCUMENT,
+        fileName: 'sheet.pdf',
+      ),
+      TimelineClipKind.pdf,
+    );
+  });
 
   test('update mask lists only changed fields', () {
     final request = buildUpdateClipRequest(clipId: '1', startNs: '1000000000');
@@ -476,6 +523,29 @@ void main() {
     expect(viewModel.takeCreatedClipNotice(), isNull);
   });
 
+  test('a timeseries asset creates a timeseries clip', () async {
+    final repository = _ScriptedTimelineRepository(_loadedTimeline());
+    final viewModel = _viewModel(
+      repository,
+      workDetail: const _VideoAttachmentRepository(
+        fileType: WorkAttachmentType.text,
+        fileName: 'signals_30fps.csv',
+        clipKind: TimelineClipKind.timeseries,
+      ),
+    );
+    await viewModel.loadAttachments();
+
+    await viewModel.didDropAsset(
+      dragData: '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}asset-9',
+      laneKey: 'track-video',
+      startSeconds: 1.5,
+    );
+
+    expect(repository.createClipCount, 1);
+    expect(repository.lastCreatedClipKind, TimelineClipKind.timeseries);
+    expect(repository.lastCreatedClipAssetId, 'asset-9');
+  });
+
   test('dropping an asset with a duration places the whole file', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(
@@ -886,7 +956,9 @@ void main() {
     expect(repository.lastCreatedClipKind, TimelineClipKind.video);
   });
 
-  testWidgets('row list scrolls under a fixed track labels header', (tester) async {
+  testWidgets('row list scrolls under a fixed track labels header', (
+    tester,
+  ) async {
     final repository = _ScriptedTimelineRepository(_manyTrackTimeline());
     final viewModel = _viewModel(repository);
     await tester.runAsync(() => viewModel.loadAttachments());
@@ -1786,7 +1858,10 @@ Widget _board(VideoMultimodalViewModel viewModel) {
       body: AnimatedBuilder(
         animation: viewModel,
         builder: (context, _) {
-          return MultimodalTimelineBoard(viewModel: viewModel);
+          return MultimodalTimelineBoard(
+            viewModel: viewModel,
+            maxHeight: VideoMultimodalViewModel.MAX_TIMELINE_HEIGHT,
+          );
         },
       ),
     ),
@@ -2073,15 +2148,25 @@ class _IdleAskRepository implements AskRepository {
   }
 
   @override
-  Future<AskSessionHistory> getSessionHistory({required String sessionId}) async {
+  Future<AskSessionHistory> getSessionHistory({
+    required String sessionId,
+  }) async {
     return const AskSessionHistory(sessionId: '');
   }
 }
 
 class _VideoAttachmentRepository implements WorkDetailRepository {
-  const _VideoAttachmentRepository({this.durationNs = ''});
+  const _VideoAttachmentRepository({
+    this.durationNs = '',
+    this.fileType = WorkAttachmentType.video,
+    this.fileName = 'take.mp4',
+    this.clipKind,
+  });
 
   final String durationNs;
+  final WorkAttachmentType fileType;
+  final String fileName;
+  final TimelineClipKind? clipKind;
   @override
   Future<String> loadProjectId({required String jobId}) async {
     return '';
@@ -2098,11 +2183,12 @@ class _VideoAttachmentRepository implements WorkDetailRepository {
       WorkAttachment(
         attachmentId: 'asset-9',
         jobId: 'job-1',
-        fileType: WorkAttachmentType.video,
-        fileName: 'take.mp4',
+        fileType: fileType,
+        fileName: fileName,
         note: '',
         content: '',
         durationNs: durationNs,
+        clipKind: clipKind,
       ),
     ];
   }
@@ -2539,7 +2625,6 @@ class _IdleToolRunRepository implements ToolRunRepository {
     throw StateError('unused');
   }
 }
-
 
 class _MemoryAskSessionStore implements AskSessionStore {
   final Map<String, String> values = {};

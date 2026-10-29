@@ -1,3 +1,4 @@
+import 'job_timeline.dart';
 import 'work_attachment_type.dart';
 
 class WorkAttachment {
@@ -9,6 +10,7 @@ class WorkAttachment {
     required this.note,
     required this.content,
     this.durationNs = '',
+    this.clipKind,
   });
 
   final String attachmentId;
@@ -18,6 +20,9 @@ class WorkAttachment {
   final String note;
   final String content;
   final String durationNs;
+
+  /// 에셋 종류와 같은 클립 종류. 없으면 파일 유형으로 정한다.
+  final TimelineClipKind? clipKind;
 
   bool get doesHaveSourcePath {
     final value = content.trim();

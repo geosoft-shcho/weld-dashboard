@@ -2796,6 +2796,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   TimelineClipKind _clipKindForAttachment(WorkAttachment attachment) {
+    final clipKind = attachment.clipKind;
+    if (clipKind != null) {
+      return clipKind;
+    }
     switch (attachment.fileType) {
       case WorkAttachmentType.video:
         return TimelineClipKind.video;
