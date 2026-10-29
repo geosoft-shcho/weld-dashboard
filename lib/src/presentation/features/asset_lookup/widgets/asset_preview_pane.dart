@@ -11,8 +11,8 @@ import '../../../core/widgets/pdfrx_document_source.dart';
 import '../../../core/widgets/pdfrx_document_viewer.dart';
 import '../../../core/widgets/waveform_material_scope.dart';
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
-import '../../work_detail/widgets/work_detail_just_audio_stage.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
+import 'asset_just_audio_stage.dart';
 
 typedef AssetContentReader = Future<String> Function({required String url});
 
@@ -62,7 +62,7 @@ class AssetPreviewPane extends StatelessWidget {
               child: WorkDetailChewieStage(assetPath: url),
             ),
             _AssetPreviewKind.audio => WorkDetailMaterialScope(
-              child: WorkDetailJustAudioStage(assetPath: url),
+              child: AssetJustAudioStage(contentUrl: url),
             ),
             _AssetPreviewKind.image => _ImagePreview(url: url),
             _AssetPreviewKind.pdf => WaveformMaterialScope(
