@@ -598,7 +598,7 @@ void main() {
   });
 
   test(
-    'an uploaded asset on another track moves to the recording track',
+    'an uploaded asset on another track moves to the recording track at playhead',
     () async {
       final timeline = _RecordingTimeline(
         JobTimeline(
@@ -619,6 +619,7 @@ void main() {
         projectId: '42',
         timelineRepository: timeline,
       );
+      viewModel.didSeekToSeconds(12);
 
       await viewModel.didPlaceUploadedRecording(assetId: '55', isVideo: true);
 
@@ -629,6 +630,8 @@ void main() {
         (track) => track.name == '녹화 영상',
       );
       expect(recording.clips.single.assetId, '55');
+      expect(recording.clips.single.startNs, '12000000000');
+      expect(recording.clips.single.endNs, '17000000000');
       expect(
         timeline.current.tracks
             .firstWhere((track) => track.trackId == 'track-1')
@@ -639,7 +642,48 @@ void main() {
   );
 
   test(
-    'an uploaded asset already on the recording track is not placed again',
+    'server empty-equipment video track is renamed to the recording track',
+    () async {
+      final timeline = _RecordingTimeline(
+        JobTimeline(
+          jobId: '128',
+          name: '작업',
+          tracks: [
+            TimelineTrack(
+              trackId: 'track-1',
+              name: '- · video',
+              order: 0,
+              clips: [
+                _clip(
+                  clipId: 'clip-1',
+                  assetId: '55',
+                  startNs: '1000000000',
+                  endNs: '6000000000',
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+      final viewModel = _viewModel(
+        _ScriptedAsk(),
+        projectId: '42',
+        timelineRepository: timeline,
+      );
+      viewModel.didSeekToSeconds(3);
+
+      await viewModel.didPlaceUploadedRecording(assetId: '55', isVideo: true);
+
+      expect(timeline.trackNames, isEmpty);
+      expect(timeline.renamedTracks, {'track-1': '녹화 영상'});
+      expect(timeline.current.tracks.single.name, '녹화 영상');
+      expect(timeline.current.tracks.single.clips.single.startNs, '3000000000');
+      expect(timeline.current.tracks.single.clips.single.endNs, '8000000000');
+    },
+  );
+
+  test(
+    'an uploaded asset already on the recording track at playhead is not moved',
     () async {
       final timeline = _RecordingTimeline(
         JobTimeline(
@@ -650,7 +694,14 @@ void main() {
               trackId: 'track-1',
               name: '녹화 영상',
               order: 0,
-              clips: [_clip(clipId: 'clip-1', assetId: '55')],
+              clips: [
+                _clip(
+                  clipId: 'clip-1',
+                  assetId: '55',
+                  startNs: '0',
+                  endNs: '5000000000',
+                ),
+              ],
             ),
           ],
         ),
@@ -666,6 +717,47 @@ void main() {
       expect(timeline.trackNames, isEmpty);
       expect(timeline.clips, isEmpty);
       expect(timeline.movedClipIds, isEmpty);
+    },
+  );
+
+  test(
+    'an uploaded asset already on the recording track moves to playhead',
+    () async {
+      final timeline = _RecordingTimeline(
+        JobTimeline(
+          jobId: '128',
+          name: '작업',
+          tracks: [
+            TimelineTrack(
+              trackId: 'track-1',
+              name: '녹화 영상',
+              order: 0,
+              clips: [
+                _clip(
+                  clipId: 'clip-1',
+                  assetId: '55',
+                  startNs: '0',
+                  endNs: '5000000000',
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+      final viewModel = _viewModel(
+        _ScriptedAsk(),
+        projectId: '42',
+        timelineRepository: timeline,
+      );
+      viewModel.didSeekToSeconds(8);
+
+      await viewModel.didPlaceUploadedRecording(assetId: '55', isVideo: true);
+
+      expect(timeline.trackNames, isEmpty);
+      expect(timeline.clips, isEmpty);
+      expect(timeline.movedClipIds, isEmpty);
+      expect(timeline.current.tracks.single.clips.single.startNs, '8000000000');
+      expect(timeline.current.tracks.single.clips.single.endNs, '13000000000');
     },
   );
 
@@ -709,13 +801,15 @@ TimelineClip _clip({
   TimelineClipKind kind = TimelineClipKind.video,
   double endSeconds = 4000,
   String assetId = '1',
+  String? startNs,
+  String? endNs,
 }) {
   return TimelineClip(
     clipId: clipId,
     trackId: 'track-1',
     kind: kind,
-    startNs: '0',
-    endNs: '${(endSeconds * 1000000000).round()}',
+    startNs: startNs ?? '0',
+    endNs: endNs ?? '${(endSeconds * 1000000000).round()}',
     assetId: assetId,
     fileName: 'video.mp4',
     playbackUrl: playbackUrl,
@@ -948,6 +1042,7 @@ class _RecordingTimeline extends _IdleTimeline {
   final trackNames = <String>[];
   final clips = <_SavedClip>[];
   final movedClipIds = <String>[];
+  final renamedTracks = <String, String>{};
 
   @override
   Future<JobTimeline> getTimeline({required String jobId}) async {
@@ -974,6 +1069,35 @@ class _RecordingTimeline extends _IdleTimeline {
           clips: const [],
         ),
       ],
+    );
+  }
+
+  @override
+  Future<void> updateTrack({
+    required String trackId,
+    String? name,
+    int? order,
+    bool? isVisible,
+  }) async {
+    if (name != null) {
+      renamedTracks[trackId] = name;
+    }
+    current = JobTimeline(
+      jobId: current.jobId,
+      name: current.name,
+      tracks: [
+        for (final track in current.tracks)
+          TimelineTrack(
+            trackId: track.trackId,
+            name: track.trackId == trackId && name != null ? name : track.name,
+            order: order ?? track.order,
+            isVisible: isVisible ?? track.isVisible,
+            clips: track.clips,
+          ),
+      ],
+      description: current.description,
+      overlays: current.overlays,
+      status: current.status,
     );
   }
 

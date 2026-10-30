@@ -88,6 +88,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const String COMMENT_TRACK_NAME = '코멘트';
   static const String RECORDING_VIDEO_TRACK_NAME = '녹화 영상';
   static const String RECORDING_AUDIO_TRACK_NAME = '녹화 음성';
+  /// 서버 자동 배치: 장비 없이 올리면 `장비 · 계열`이 `- · video`/`- · audio`가 된다.
+  static const String SERVER_EMPTY_EQUIPMENT_VIDEO_TRACK_NAME = '- · video';
+  static const String SERVER_EMPTY_EQUIPMENT_AUDIO_TRACK_NAME = '- · audio';
 
   final ListHistoryWorkAttachmentsUseCase _listHistoryWorkAttachmentsUseCase;
   final GetJobTimelineUseCase _getJobTimelineUseCase;
@@ -1881,6 +1884,35 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return _trackIdByName(name);
   }
 
+  /// 녹화 전용 트랙. 서버가 만든 `- · video`/`- · audio`는 이름만 바꾼다.
+  Future<String?> _ensureRecordingTrackId({required bool isVideo}) async {
+    final wanted = isVideo
+        ? RECORDING_VIDEO_TRACK_NAME
+        : RECORDING_AUDIO_TRACK_NAME;
+    final existing = _trackIdByName(wanted);
+    if (existing != null) {
+      return existing;
+    }
+    final placeholder = isVideo
+        ? SERVER_EMPTY_EQUIPMENT_VIDEO_TRACK_NAME
+        : SERVER_EMPTY_EQUIPMENT_AUDIO_TRACK_NAME;
+    final placeholderId = _trackIdByName(placeholder);
+    if (placeholderId != null) {
+      final didRename = await _commitServerWrite(
+        () => _updateTrackUseCase.execute(
+          trackId: placeholderId,
+          name: wanted,
+        ),
+        changedTrackCount: 1,
+      );
+      if (!didRename) {
+        return null;
+      }
+      return _trackIdByName(wanted) ?? placeholderId;
+    }
+    return _ensureTrackId(wanted);
+  }
+
   String? _trackIdByName(String name) {
     for (final track in _timeline.tracks) {
       if (track.name.trim() == name && track.trackId.isNotEmpty) {
@@ -2654,30 +2686,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (_isClosed) {
       return;
     }
-    final trackName = isVideo
-        ? RECORDING_VIDEO_TRACK_NAME
-        : RECORDING_AUDIO_TRACK_NAME;
-    final trackId = await _ensureTrackId(trackName);
+    final trackId = await _ensureRecordingTrackId(isVideo: isVideo);
     if (trackId == null) {
       throw JobTimelineException(
         _timelineHint.isEmpty ? '녹화 트랙을 만들 수 없습니다.' : _timelineHint,
       );
-    }
-    if (_hasAssetClipOnTrack(assetId: assetId, trackId: trackId)) {
-      return;
-    }
-    final existing = _findAssetClip(assetId);
-    if (existing != null) {
-      final didMove = await updateTimelineClip(
-        clipId: existing.clipId,
-        trackId: trackId,
-      );
-      if (!didMove) {
-        throw JobTimelineException(
-          _timelineHint.isEmpty ? '녹화 트랙으로 옮기지 못했습니다.' : _timelineHint,
-        );
-      }
-      return;
     }
     try {
       _attachments = await _listHistoryWorkAttachmentsUseCase.execute(
@@ -2689,6 +2702,63 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (_isClosed) {
       return;
     }
+    final range = _recordingClipRangeAtPlayhead(assetId);
+    final existing = _findAssetClip(assetId);
+    if (existing != null && existing.trackId == trackId) {
+      if (existing.startNs == range.startNs && existing.endNs == range.endNs) {
+        return;
+      }
+      final didMove = await updateTimelineClip(
+        clipId: existing.clipId,
+        startNs: range.startNs,
+        endNs: range.endNs,
+      );
+      if (!didMove) {
+        throw JobTimelineException(
+          _timelineHint.isEmpty ? '녹화 클립 위치를 맞추지 못했습니다.' : _timelineHint,
+        );
+      }
+      return;
+    }
+    if (existing != null) {
+      final didMove = await updateTimelineClip(
+        clipId: existing.clipId,
+        trackId: trackId,
+        startNs: range.startNs,
+        endNs: range.endNs,
+      );
+      if (!didMove) {
+        throw JobTimelineException(
+          _timelineHint.isEmpty ? '녹화 트랙으로 옮기지 못했습니다.' : _timelineHint,
+        );
+      }
+      return;
+    }
+    final didSave = await createTimelineClip(
+      trackId: trackId,
+      kind: isVideo ? TimelineClipKind.video : TimelineClipKind.audio,
+      startNs: range.startNs,
+      endNs: range.endNs,
+      assetId: assetId,
+      sourceStartNs: range.sourceStartNs,
+      sourceEndNs: range.sourceEndNs,
+      sourceLimitNs: range.sourceLimitNs,
+    );
+    if (!didSave) {
+      throw JobTimelineException(
+        _timelineHint.isEmpty ? '녹화 클립을 만들지 못했습니다.' : _timelineHint,
+      );
+    }
+  }
+
+  ({
+    String startNs,
+    String endNs,
+    String sourceStartNs,
+    String sourceEndNs,
+    String sourceLimitNs,
+  })
+  _recordingClipRangeAtPlayhead(String assetId) {
     final attachment = _attachmentById(assetId);
     final durationNs = attachment?.durationNs.trim() ?? '';
     final hasDuration = durationNs.isNotEmpty && durationNs != '0';
@@ -2718,38 +2788,13 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (!isOpenNanosecondInterval(startNs, endNs)) {
       throw const JobTimelineException('구간이 너무 짧습니다.');
     }
-    final didSave = await createTimelineClip(
-      trackId: trackId,
-      kind: isVideo ? TimelineClipKind.video : TimelineClipKind.audio,
+    return (
       startNs: startNs,
       endNs: endNs,
-      assetId: assetId,
       sourceStartNs: sourceStartNs,
       sourceEndNs: sourceEndNs,
       sourceLimitNs: hasDuration ? durationNs : '',
     );
-    if (!didSave) {
-      throw JobTimelineException(
-        _timelineHint.isEmpty ? '녹화 클립을 만들지 못했습니다.' : _timelineHint,
-      );
-    }
-  }
-
-  bool _hasAssetClipOnTrack({
-    required String assetId,
-    required String trackId,
-  }) {
-    for (final track in _timeline.tracks) {
-      if (track.trackId != trackId) {
-        continue;
-      }
-      for (final clip in track.clips) {
-        if (clip.assetId == assetId) {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   TimelineClip? _findAssetClip(String assetId) {
