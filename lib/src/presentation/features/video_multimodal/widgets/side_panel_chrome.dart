@@ -4,7 +4,12 @@ import 'package:flutter/material.dart';
 import 'multimodal_studio_palette.dart';
 
 class SidePanelFrame extends StatelessWidget {
-  const SidePanelFrame({super.key, required this.head, required this.body, this.foot});
+  const SidePanelFrame({
+    super.key,
+    required this.head,
+    required this.body,
+    this.foot,
+  });
 
   final Widget head;
   final Widget body;
@@ -133,7 +138,11 @@ class SidePanelFootNote extends StatelessWidget {
 }
 
 class SidePanelAccentButton extends StatelessWidget {
-  const SidePanelAccentButton({super.key, required this.label, required this.onPressed});
+  const SidePanelAccentButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+  });
 
   final String label;
   final VoidCallback? onPressed;
@@ -156,7 +165,11 @@ class SidePanelAccentButton extends StatelessWidget {
 }
 
 class SidePanelQuietButton extends StatelessWidget {
-  const SidePanelQuietButton({super.key, required this.label, required this.onPressed});
+  const SidePanelQuietButton({
+    super.key,
+    required this.label,
+    required this.onPressed,
+  });
 
   final String label;
   final VoidCallback onPressed;

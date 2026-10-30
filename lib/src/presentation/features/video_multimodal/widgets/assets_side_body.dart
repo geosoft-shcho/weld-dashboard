@@ -1,3 +1,4 @@
+import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/work_attachment.dart';
@@ -16,7 +17,11 @@ const Map<WorkAttachmentType, Color> _DOT_COLOR = {
 };
 
 class AssetsSideBody extends StatelessWidget {
-  const AssetsSideBody({super.key, required this.viewModel, required this.onClose});
+  const AssetsSideBody({
+    super.key,
+    required this.viewModel,
+    required this.onClose,
+  });
 
   final VideoMultimodalViewModel viewModel;
   final VoidCallback onClose;
@@ -31,10 +36,7 @@ class AssetsSideBody extends StatelessWidget {
     ];
     return SidePanelFrame(
       head: _head(),
-      body: ListView(
-        children: [const SidePanelSectionLabel('ASSETS'), _assetTable(visible)],
-      ),
-      foot: const SidePanelFootNote('VIDEO/AUDIO 편집 금지 · 서버 트랙에 놓으면 클립이 생깁니다.'),
+      body: ListView(children: [_assetTable(visible)]),
     );
   }
 
@@ -44,14 +46,24 @@ class AssetsSideBody extends StatelessWidget {
       leading: TextField(
         style: sidePanelFieldTextStyle,
         cursorColor: MultimodalStudioPalette.PANEL_ACCENT,
-        decoration: sidePanelFieldDecoration('검색…'),
+        decoration: sidePanelFieldDecoration('검색…').copyWith(
+          prefixIcon: const Icon(
+            fluent.FluentIcons.search,
+            size: 14,
+            color: MultimodalStudioPalette.PANEL_MUTED,
+          ),
+          prefixIconConstraints: const BoxConstraints(
+            minWidth: 28,
+            minHeight: 28,
+          ),
+        ),
         onChanged: viewModel.didChangeAssetsSearch,
       ),
       actions: [
-        SidePanelAccentButton(
-          label: 'Import',
-          onPressed: () => viewModel.didShowNotice('Import는 다음 단계에서 연결됩니다.'),
-        ),
+        // SidePanelAccentButton(
+        //   label: 'Import',
+        //   onPressed: () => viewModel.didShowNotice('Import는 다음 단계에서 연결됩니다.'),
+        // ),
       ],
     );
   }
