@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../../features/app_shell/shell_view_model.dart';
+import 'query_failure_pane.dart';
 
 class PlaceholderPage extends StatelessWidget {
   const PlaceholderPage({super.key, required this.title, required this.body});
@@ -26,10 +27,9 @@ class PlaceholderPage extends StatelessWidget {
       return const Center(child: ProgressRing());
     }
     if (viewModel.hasError) {
-      return InfoBar(
-        title: const Text('조회 실패'),
-        content: Text(viewModel.errorMessage),
-        severity: InfoBarSeverity.error,
+      return QueryFailurePane(
+        title: '조회 실패',
+        message: viewModel.errorMessage,
       );
     }
     final catalog = viewModel.catalog;

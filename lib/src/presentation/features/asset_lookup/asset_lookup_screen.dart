@@ -8,6 +8,7 @@ import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
+import '../../core/widgets/query_failure_pane.dart';
 import '../../navigation/app_coordinator.dart';
 import 'asset_lookup_view_model.dart';
 import 'asset_upload_dialog.dart';
@@ -46,11 +47,10 @@ class _AssetLookupBody extends StatelessWidget {
       return const Center(child: ProgressRing());
     }
     if (viewModel.hasError && viewModel.visibleRows.isEmpty) {
-      return InfoBar(
-        title: const Text('조회 실패'),
-        content: Text(viewModel.errorMessage),
-        action: Button(onPressed: viewModel.load, child: const Text('재시도')),
-        severity: InfoBarSeverity.error,
+      return QueryFailurePane(
+        title: '조회 실패',
+        message: viewModel.errorMessage,
+        onRetry: viewModel.load,
       );
     }
     final jobId = viewModel.jobs.any((job) => job.jobId == viewModel.jobId)

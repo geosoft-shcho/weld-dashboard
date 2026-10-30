@@ -8,9 +8,10 @@ import '../../../domain/entities/waveform_series_bundle.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/widgets/pass_context_bar.dart';
+import '../../core/widgets/query_failure_pane.dart';
 import '../../core/widgets/waveform_channel_charts.dart';
 import '../../navigation/app_coordinator.dart';
-import '../../core/widgets/pass_context_bar.dart';
 import '../pass_profile/widgets/pass_legend_toolbar.dart';
 import '../pass_profile/widgets/pass_tabs_bar.dart';
 import '../video_multimodal/widgets/camera_recording_dialog.dart';
@@ -146,14 +147,10 @@ class _QualityIssueError extends StatelessWidget {
     final message = context.select<QualityIssueViewModel, String>(
       (viewModel) => viewModel.errorMessage,
     );
-    return InfoBar(
-      title: const Text('로드 실패'),
-      content: Text(message),
-      severity: InfoBarSeverity.error,
-      action: Button(
-        onPressed: () => context.read<QualityIssueViewModel>().didTapReload(),
-        child: const Text('재시도'),
-      ),
+    return QueryFailurePane(
+      title: '로드 실패',
+      message: message,
+      onRetry: () => context.read<QualityIssueViewModel>().didTapReload(),
     );
   }
 }

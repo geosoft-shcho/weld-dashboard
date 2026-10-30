@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../core/di/locator.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
+import '../../core/widgets/query_failure_pane.dart';
 import '../../navigation/app_coordinator.dart';
 import 'project_create_dialog.dart';
 import 'project_lookup_view_model.dart';
@@ -40,11 +41,10 @@ class _ProjectLookupBody extends StatelessWidget {
       return const Center(child: ProgressRing());
     }
     if (viewModel.hasError) {
-      return InfoBar(
-        title: const Text('조회 실패'),
-        content: Text(viewModel.errorMessage),
-        action: Button(onPressed: viewModel.load, child: const Text('재시도')),
-        severity: InfoBarSeverity.error,
+      return QueryFailurePane(
+        title: '조회 실패',
+        message: viewModel.errorMessage,
+        onRetry: viewModel.load,
       );
     }
     final projects = viewModel.visibleProjects;

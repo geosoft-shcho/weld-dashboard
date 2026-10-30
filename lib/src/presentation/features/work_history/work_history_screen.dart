@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../../core/di/locator.dart';
+import '../../core/widgets/query_failure_pane.dart';
 import '../../navigation/app_coordinator.dart';
 import 'work_history_view_model.dart';
 import 'widgets/work_history_command_bar.dart';
@@ -71,14 +72,10 @@ class _WorkHistoryBody extends StatelessWidget {
       return const Center(child: ProgressRing());
     }
     if (viewModel.hasError) {
-      return InfoBar(
-        title: const Text('조회 실패'),
-        content: Text(viewModel.errorMessage),
-        action: Button(
-          onPressed: viewModel.didTapReload,
-          child: const Text('재시도'),
-        ),
-        severity: InfoBarSeverity.error,
+      return QueryFailurePane(
+        title: '조회 실패',
+        message: viewModel.errorMessage,
+        onRetry: viewModel.didTapReload,
       );
     }
     final board = viewModel.board;

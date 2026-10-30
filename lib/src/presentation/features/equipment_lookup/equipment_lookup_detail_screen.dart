@@ -9,6 +9,7 @@ import '../../core/themes/app_theme.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../core/widgets/pass_context_bar.dart';
+import '../../core/widgets/query_failure_pane.dart';
 import '../../navigation/app_coordinator.dart';
 import 'equipment_lookup_detail_view_model.dart';
 
@@ -233,11 +234,10 @@ class _EquipmentLookupDetailBodyState
       return const Center(child: ProgressRing());
     }
     if (viewModel.hasError) {
-      return InfoBar(
-        title: const Text('조회 실패'),
-        content: Text(viewModel.errorMessage),
-        action: Button(onPressed: viewModel.load, child: const Text('재시도')),
-        severity: InfoBarSeverity.error,
+      return QueryFailurePane(
+        title: '조회 실패',
+        message: viewModel.errorMessage,
+        onRetry: viewModel.load,
       );
     }
     final equipment = viewModel.equipment;
