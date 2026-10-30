@@ -4,7 +4,6 @@ import 'package:flutter/foundation.dart';
 import '../../domain/entities/camera_recording.dart';
 import '../../domain/entities/camera_recording_exception.dart';
 import '../../domain/repositories/camera_recording_repository.dart';
-import '../datasources/browser_file_download.dart';
 import '../datasources/microphone_track_recorder.dart';
 
 class BrowserCameraRecordingRepository implements CameraRecordingRepository {
@@ -113,15 +112,6 @@ class BrowserCameraRecordingRepository implements CameraRecordingRepository {
       await _audioRecorder.cancel();
       throw _asRecordingException(error);
     }
-  }
-
-  @override
-  Future<void> downloadFile(CameraRecordingFile file) {
-    return downloadBrowserFile(
-      bytes: file.bytes,
-      mimeType: file.mimeType,
-      fileName: file.fileName,
-    );
   }
 
   @override

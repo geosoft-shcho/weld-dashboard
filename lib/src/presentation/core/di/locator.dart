@@ -42,7 +42,6 @@ import '../../features/worker_lookup/worker_lookup_detail_view_model.dart';
 import '../../features/worker_lookup/worker_lookup_view_model.dart';
 import '../../../domain/repositories/asset_upload_repository.dart';
 import '../../../domain/repositories/camera_recording_repository.dart';
-import '../../../domain/use_cases/download_camera_recording_file_use_case.dart';
 import '../../../domain/use_cases/prepare_camera_recording_use_case.dart';
 import '../../../domain/use_cases/read_camera_preview_handle_use_case.dart';
 import '../../../domain/use_cases/release_camera_recording_use_case.dart';
@@ -365,9 +364,6 @@ void setupLocator({required bool pdfrxReady}) {
       prepareCameraRecordingUseCase: PrepareCameraRecordingUseCase(repository),
       startCameraRecordingUseCase: StartCameraRecordingUseCase(repository),
       stopCameraRecordingUseCase: StopCameraRecordingUseCase(repository),
-      downloadCameraRecordingFileUseCase: DownloadCameraRecordingFileUseCase(
-        repository,
-      ),
       releaseCameraRecordingUseCase: ReleaseCameraRecordingUseCase(repository),
       readCameraPreviewHandleUseCase: ReadCameraPreviewHandleUseCase(
         repository,

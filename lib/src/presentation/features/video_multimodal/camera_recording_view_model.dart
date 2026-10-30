@@ -7,7 +7,6 @@ import '../../../domain/entities/camera_recording.dart';
 import '../../../domain/entities/camera_recording_exception.dart';
 import '../../../domain/entities/asset_upload.dart';
 import '../../../domain/entities/tool_run.dart';
-import '../../../domain/use_cases/download_camera_recording_file_use_case.dart';
 import '../../../domain/use_cases/prepare_camera_recording_use_case.dart';
 import '../../../domain/use_cases/read_camera_preview_handle_use_case.dart';
 import '../../../domain/use_cases/release_camera_recording_use_case.dart';
@@ -38,7 +37,6 @@ class CameraRecordingViewModel extends ChangeNotifier {
     required this._prepareCameraRecordingUseCase,
     required this._startCameraRecordingUseCase,
     required this._stopCameraRecordingUseCase,
-    required this._downloadCameraRecordingFileUseCase,
     required this._releaseCameraRecordingUseCase,
     required this._readCameraPreviewHandleUseCase,
     required this._uploadAssetUseCase,
@@ -52,7 +50,6 @@ class CameraRecordingViewModel extends ChangeNotifier {
   final PrepareCameraRecordingUseCase _prepareCameraRecordingUseCase;
   final StartCameraRecordingUseCase _startCameraRecordingUseCase;
   final StopCameraRecordingUseCase _stopCameraRecordingUseCase;
-  final DownloadCameraRecordingFileUseCase _downloadCameraRecordingFileUseCase;
   final ReleaseCameraRecordingUseCase _releaseCameraRecordingUseCase;
   final ReadCameraPreviewHandleUseCase _readCameraPreviewHandleUseCase;
   final UploadAssetUseCase _uploadAssetUseCase;
@@ -86,10 +83,6 @@ class CameraRecordingViewModel extends ChangeNotifier {
           phase == CameraRecordingPhase.stopped);
 
   bool get canStop => phase == CameraRecordingPhase.recording;
-
-  bool get canSaveVideo => recording != null && !canStop && !isUploading;
-
-  bool get canSaveAudio => recording != null && !canStop && !isUploading;
 
   bool get canUpload =>
       recording != null &&
@@ -151,7 +144,7 @@ class CameraRecordingViewModel extends ChangeNotifier {
     try {
       recording = await _stopCameraRecordingUseCase.execute();
       phase = CameraRecordingPhase.stopped;
-      noticeText = '영상 저장과 음성 저장을 각각 눌러 파일을 내려받으세요.';
+      noticeText = '녹화 파일 업로드를 눌러 서버에 저장하세요.';
       isNoticeError = false;
     } catch (error) {
       phase = CameraRecordingPhase.ready;
@@ -160,22 +153,6 @@ class CameraRecordingViewModel extends ChangeNotifier {
       isNoticeError = true;
     }
     _publish();
-  }
-
-  void didTapSaveVideo() {
-    final file = recording?.video;
-    if (file == null || !canSaveVideo) {
-      return;
-    }
-    _save(file, '영상 파일 저장 창을 열었습니다.');
-  }
-
-  void didTapSaveAudio() {
-    final file = recording?.audio;
-    if (file == null || !canSaveAudio) {
-      return;
-    }
-    _save(file, '음성 파일 저장 창을 열었습니다.');
   }
 
   Future<void> didTapUpload() async {
@@ -317,18 +294,6 @@ class CameraRecordingViewModel extends ChangeNotifier {
   }
 
   Future<void> didTapRetry() => prepare();
-
-  void _save(CameraRecordingFile file, String successText) {
-    try {
-      unawaited(_downloadCameraRecordingFileUseCase.execute(file));
-      noticeText = '$successText ${file.fileName}';
-      isNoticeError = false;
-    } catch (error) {
-      noticeText = _message(error);
-      isNoticeError = true;
-    }
-    _publish();
-  }
 
   String _message(Object error) {
     if (error is CameraRecordingException) {

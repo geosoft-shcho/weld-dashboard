@@ -9,7 +9,5 @@ abstract class CameraRecordingRepository {
 
   Future<CameraRecording> stop();
 
-  Future<void> downloadFile(CameraRecordingFile file);
-
   Future<void> release();
 }

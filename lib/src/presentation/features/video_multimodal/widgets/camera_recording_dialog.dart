@@ -260,18 +260,6 @@ class _CameraRecordingCard extends StatelessWidget {
                                   : null,
                               child: const Text('정지'),
                             ),
-                            Button(
-                              onPressed: viewModel.canSaveVideo
-                                  ? viewModel.didTapSaveVideo
-                                  : null,
-                              child: const Text('영상 저장'),
-                            ),
-                            Button(
-                              onPressed: viewModel.canSaveAudio
-                                  ? viewModel.didTapSaveAudio
-                                  : null,
-                              child: const Text('음성 저장'),
-                            ),
                             FilledButton(
                               onPressed: viewModel.canUpload
                                   ? viewModel.didTapUpload
