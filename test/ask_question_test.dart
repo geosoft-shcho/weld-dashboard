@@ -579,8 +579,26 @@ void main() {
     expect(timeline.clips.single.endNs, '5000000000');
   });
 
+  test('an uploaded audio without a clip gets a recording track', () async {
+    final timeline = _RecordingTimeline(
+      const JobTimeline(jobId: '128', name: '작업', tracks: []),
+    );
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timelineRepository: timeline,
+    );
+
+    await viewModel.didPlaceUploadedRecording(assetId: '77', isVideo: false);
+
+    expect(timeline.trackNames, ['녹화 음성']);
+    expect(timeline.clips, hasLength(1));
+    expect(timeline.clips.single.kind, TimelineClipKind.audio);
+    expect(timeline.clips.single.assetId, '77');
+  });
+
   test(
-    'an uploaded asset already on the timeline is not placed again',
+    'an uploaded asset on another track moves to the recording track',
     () async {
       final timeline = _RecordingTimeline(
         JobTimeline(
@@ -589,7 +607,48 @@ void main() {
           tracks: [
             TimelineTrack(
               trackId: 'track-1',
-              name: '서버',
+              name: 'video',
+              order: 0,
+              clips: [_clip(clipId: 'clip-1', assetId: '55')],
+            ),
+          ],
+        ),
+      );
+      final viewModel = _viewModel(
+        _ScriptedAsk(),
+        projectId: '42',
+        timelineRepository: timeline,
+      );
+
+      await viewModel.didPlaceUploadedRecording(assetId: '55', isVideo: true);
+
+      expect(timeline.trackNames, ['녹화 영상']);
+      expect(timeline.clips, isEmpty);
+      expect(timeline.movedClipIds, ['clip-1']);
+      final recording = timeline.current.tracks.singleWhere(
+        (track) => track.name == '녹화 영상',
+      );
+      expect(recording.clips.single.assetId, '55');
+      expect(
+        timeline.current.tracks
+            .firstWhere((track) => track.trackId == 'track-1')
+            .clips,
+        isEmpty,
+      );
+    },
+  );
+
+  test(
+    'an uploaded asset already on the recording track is not placed again',
+    () async {
+      final timeline = _RecordingTimeline(
+        JobTimeline(
+          jobId: '128',
+          name: '작업',
+          tracks: [
+            TimelineTrack(
+              trackId: 'track-1',
+              name: '녹화 영상',
               order: 0,
               clips: [_clip(clipId: 'clip-1', assetId: '55')],
             ),
@@ -606,6 +665,7 @@ void main() {
 
       expect(timeline.trackNames, isEmpty);
       expect(timeline.clips, isEmpty);
+      expect(timeline.movedClipIds, isEmpty);
     },
   );
 
@@ -887,6 +947,7 @@ class _RecordingTimeline extends _IdleTimeline {
   late JobTimeline current;
   final trackNames = <String>[];
   final clips = <_SavedClip>[];
+  final movedClipIds = <String>[];
 
   @override
   Future<JobTimeline> getTimeline({required String jobId}) async {
@@ -907,7 +968,7 @@ class _RecordingTimeline extends _IdleTimeline {
       tracks: [
         ...current.tracks,
         TimelineTrack(
-          trackId: 'track-${trackNames.length}',
+          trackId: 'created-${trackNames.length}',
           name: name,
           order: current.tracks.length,
           clips: const [],
@@ -940,6 +1001,76 @@ class _RecordingTimeline extends _IdleTimeline {
         endNs: endNs,
         description: description,
       ),
+    );
+  }
+
+  @override
+  Future<void> updateClip({
+    required String clipId,
+    String? trackId,
+    String? startNs,
+    String? endNs,
+    String? assetId,
+    String? labelValueId,
+    String? description,
+    bool? isReviewed,
+  }) async {
+    TimelineClip? found;
+    for (final track in current.tracks) {
+      for (final clip in track.clips) {
+        if (clip.clipId == clipId) {
+          found = clip;
+          break;
+        }
+      }
+      if (found != null) {
+        break;
+      }
+    }
+    if (found == null) {
+      return;
+    }
+    final nextTrackId = trackId ?? found.trackId;
+    final moved = TimelineClip(
+      clipId: found.clipId,
+      trackId: nextTrackId,
+      kind: found.kind,
+      startNs: startNs ?? found.startNs,
+      endNs: endNs ?? found.endNs,
+      assetId: assetId ?? found.assetId,
+      fileName: found.fileName,
+      playbackUrl: found.playbackUrl,
+      description: description ?? found.description,
+      showsToolBadge: found.showsToolBadge,
+      labelValueId: labelValueId ?? found.labelValueId,
+      sourceStartNs: found.sourceStartNs,
+      sourceEndNs: found.sourceEndNs,
+      assetDurationNs: found.assetDurationNs,
+      assetStartTimeNs: found.assetStartTimeNs,
+    );
+    if (nextTrackId != found.trackId) {
+      movedClipIds.add(clipId);
+    }
+    current = JobTimeline(
+      jobId: current.jobId,
+      name: current.name,
+      tracks: [
+        for (final track in current.tracks)
+          TimelineTrack(
+            trackId: track.trackId,
+            name: track.name,
+            order: track.order,
+            isVisible: track.isVisible,
+            clips: [
+              for (final clip in track.clips)
+                if (clip.clipId != clipId) clip,
+              if (track.trackId == nextTrackId) moved,
+            ],
+          ),
+      ],
+      description: current.description,
+      overlays: current.overlays,
+      status: current.status,
     );
   }
 }

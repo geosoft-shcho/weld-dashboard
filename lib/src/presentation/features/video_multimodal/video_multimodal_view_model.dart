@@ -2468,7 +2468,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     );
   }
 
-  Future<void> updateTimelineClip({
+  Future<bool> updateTimelineClip({
     required String clipId,
     String? trackId,
     String? startNs,
@@ -2480,7 +2480,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }) {
     final clip = _timelineClip(clipId);
     if (clip == null) {
-      return Future.value();
+      return Future.value(false);
     }
     final nextTrackId = trackId == null || trackId == clip.trackId
         ? null
@@ -2503,7 +2503,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         labelValueId == null &&
         nextDescription == null &&
         isReviewed == null) {
-      return Future.value();
+      return Future.value(true);
     }
     final resolvedStart = nextStart ?? clip.startNs;
     final resolvedEnd = nextEnd ?? clip.endNs;
@@ -2511,7 +2511,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         !isOpenNanosecondInterval(resolvedStart, resolvedEnd)) {
       _timelineHint = '구간이 너무 짧습니다.';
       notifyListeners();
-      return Future.value();
+      return Future.value(false);
     }
     return _commitServerWrite(
       () => _updateClipUseCase.execute(
@@ -2646,7 +2646,37 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return;
     }
     final didReload = await _replaceTimelineFromServer(clearHint: false);
-    if (!didReload || _hasAssetClip(assetId)) {
+    if (!didReload) {
+      throw JobTimelineException(
+        _timelineHint.isEmpty ? '타임라인을 불러오지 못했습니다.' : _timelineHint,
+      );
+    }
+    if (_isClosed) {
+      return;
+    }
+    final trackName = isVideo
+        ? RECORDING_VIDEO_TRACK_NAME
+        : RECORDING_AUDIO_TRACK_NAME;
+    final trackId = await _ensureTrackId(trackName);
+    if (trackId == null) {
+      throw JobTimelineException(
+        _timelineHint.isEmpty ? '녹화 트랙을 만들 수 없습니다.' : _timelineHint,
+      );
+    }
+    if (_hasAssetClipOnTrack(assetId: assetId, trackId: trackId)) {
+      return;
+    }
+    final existing = _findAssetClip(assetId);
+    if (existing != null) {
+      final didMove = await updateTimelineClip(
+        clipId: existing.clipId,
+        trackId: trackId,
+      );
+      if (!didMove) {
+        throw JobTimelineException(
+          _timelineHint.isEmpty ? '녹화 트랙으로 옮기지 못했습니다.' : _timelineHint,
+        );
+      }
       return;
     }
     try {
@@ -2657,13 +2687,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       // 첨부 길이를 모르면 5초 클립으로 놓는다.
     }
     if (_isClosed) {
-      return;
-    }
-    final trackName = isVideo
-        ? RECORDING_VIDEO_TRACK_NAME
-        : RECORDING_AUDIO_TRACK_NAME;
-    final trackId = await _ensureTrackId(trackName);
-    if (trackId == null) {
       return;
     }
     final attachment = _attachmentById(assetId);
@@ -2683,9 +2706,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         sourceEndNs: sourceEndNs,
         assetDurationNs: durationNs,
       )) {
-        _timelineHint = '소스 구간이 올바르지 않습니다.';
-        notifyListeners();
-        return;
+        throw const JobTimelineException('소스 구간이 올바르지 않습니다.');
       }
     } else {
       endNs = nanosecondsFromSeconds(
@@ -2695,11 +2716,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       sourceEndNs = '';
     }
     if (!isOpenNanosecondInterval(startNs, endNs)) {
-      _timelineHint = '구간이 너무 짧습니다.';
-      notifyListeners();
-      return;
+      throw const JobTimelineException('구간이 너무 짧습니다.');
     }
-    await createTimelineClip(
+    final didSave = await createTimelineClip(
       trackId: trackId,
       kind: isVideo ? TimelineClipKind.video : TimelineClipKind.audio,
       startNs: startNs,
@@ -2709,10 +2728,21 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       sourceEndNs: sourceEndNs,
       sourceLimitNs: hasDuration ? durationNs : '',
     );
+    if (!didSave) {
+      throw JobTimelineException(
+        _timelineHint.isEmpty ? '녹화 클립을 만들지 못했습니다.' : _timelineHint,
+      );
+    }
   }
 
-  bool _hasAssetClip(String assetId) {
+  bool _hasAssetClipOnTrack({
+    required String assetId,
+    required String trackId,
+  }) {
     for (final track in _timeline.tracks) {
+      if (track.trackId != trackId) {
+        continue;
+      }
       for (final clip in track.clips) {
         if (clip.assetId == assetId) {
           return true;
@@ -2720,6 +2750,17 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       }
     }
     return false;
+  }
+
+  TimelineClip? _findAssetClip(String assetId) {
+    for (final track in _timeline.tracks) {
+      for (final clip in track.clips) {
+        if (clip.assetId == assetId) {
+          return clip;
+        }
+      }
+    }
+    return null;
   }
 
   Future<void> didCreateTimelineClipOnTrack({
