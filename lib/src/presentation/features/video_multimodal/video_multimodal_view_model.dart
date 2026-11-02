@@ -139,6 +139,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _clipDetailMessage = '';
   ClipDetail? _clipDetail;
   TimelineClip? _playbackVideoClip;
+  /// 비영상 선택 시 대상 영상이 없을 때 스테이지에 남겨 둘 직전 영상.
+  TimelineClip? _retainedStageVideoClip;
+  bool _showsMissingTargetVideoBanner = false;
   TimelineOverlay? _selectedPoseOverlay;
   List<VideoOverlayFrame> _selectedPoseFrames = const [];
   bool _isRelationMode = false;
@@ -421,6 +424,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   TemporaryAttachmentBar? get activeVideoBar =>
       _videoBarFromClip(_activeVideoClip());
+
+  /// 비영상 클립에 대상 영상이 없을 때 스테이지 하단 안내.
+  bool get showsMissingTargetVideoBanner => _showsMissingTargetVideoBanner;
 
   List<String> get monitoredTrackIds {
     final validTrackIds = {for (final track in timelineTracks) track.trackId};
@@ -1302,8 +1308,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (timelineClip == null) {
       return;
     }
+    final previousVideo = _activeVideoClip();
+    final retainStageVideo =
+        timelineClip.kind != TimelineClipKind.video &&
+        timelineClip.kind != TimelineClipKind.pose;
     _selectedClipId = clipId;
     _clearPosePlayback();
+    _retainedStageVideoClip = retainStageVideo ? previousVideo : null;
+    _showsMissingTargetVideoBanner = false;
     _side = VideoMultimodalSide.properties;
     if (timelineClip.kind == TimelineClipKind.timeseries) {
       if (_chartExpandedClipId != clipId) {
@@ -1333,9 +1345,15 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       }
       _clipDetail = detail;
       if (detail.isPose) {
+        _retainedStageVideoClip = null;
+        _showsMissingTargetVideoBanner = false;
         await _startPosePlayback(detail, epoch);
-      } else {
+      } else if (detail.isVideo) {
+        _retainedStageVideoClip = null;
+        _showsMissingTargetVideoBanner = false;
         _startVideoRange(detail);
+      } else {
+        _startTargetVideoPlayback(detail);
       }
       if (epoch != _clipDetailEpoch || _isClosed) {
         return;
@@ -1380,6 +1398,71 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     }
     _playbackToken += 1;
     didSeekToSeconds(secondsFromNanoseconds(startNs), resumePlayback: true);
+  }
+
+  /// 비영상 클립의 GetClip 대상 영상(targetClip+targetAsset)을 스테이지에 올린다.
+  void _startTargetVideoPlayback(ClipDetail detail) {
+    final video = _targetVideoClipFromDetail(detail);
+    if (video == null) {
+      _showsMissingTargetVideoBanner = true;
+      return;
+    }
+    _showsMissingTargetVideoBanner = false;
+    _retainedStageVideoClip = null;
+    final seekStartNs = _overlaySeekStartNs(detail, video);
+    _playbackVideoClip = video;
+    _playbackToken += 1;
+    didSeekToSeconds(
+      secondsFromNanoseconds(seekStartNs),
+      resumePlayback: true,
+    );
+  }
+
+  TimelineClip? _targetVideoClipFromDetail(ClipDetail detail) {
+    if (!detail.hasTargetClip || detail.targetClipKind != 'VIDEO') {
+      return null;
+    }
+    if (!detail.hasTargetAsset ||
+        !detail.isTargetAssetVideo ||
+        detail.targetAssetContentUrl.isEmpty) {
+      return null;
+    }
+    if (!isOpenNanosecondInterval(
+      detail.targetTimelineStartNs,
+      detail.targetTimelineEndNs,
+    )) {
+      return null;
+    }
+    final placed = _timelineClip(detail.targetClipId);
+    return TimelineClip(
+      clipId: detail.targetClipId,
+      trackId: placed?.trackId ?? '',
+      kind: TimelineClipKind.video,
+      startNs: detail.targetTimelineStartNs,
+      endNs: detail.targetTimelineEndNs,
+      assetId: detail.targetAssetId,
+      fileName: detail.targetAssetFileName,
+      playbackUrl: detail.targetAssetContentUrl,
+      description: '',
+      showsToolBadge: false,
+      sourceStartNs: placed?.sourceStartNs ?? '',
+      sourceEndNs: placed?.sourceEndNs ?? '',
+      assetDurationNs: placed?.assetDurationNs ?? '',
+      assetStartTimeNs: placed?.assetStartTimeNs ?? '',
+    );
+  }
+
+  String _overlaySeekStartNs(ClipDetail detail, TimelineClip video) {
+    final overlaps = _intervalsOverlap(
+      detail.timelineStartNs,
+      detail.timelineEndNs,
+      video.startNs,
+      video.endNs,
+    );
+    if (overlaps && detail.timelineStartNs.isNotEmpty) {
+      return detail.timelineStartNs;
+    }
+    return video.startNs;
   }
 
   Future<void> _startPosePlayback(ClipDetail pose, int epoch) async {
@@ -1554,12 +1637,19 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   TimelineClip? _activeVideoClip() {
     final selected = _timelineClip(_selectedClipId);
-    if (selected?.kind == TimelineClipKind.pose) {
+    if (selected != null && selected.kind != TimelineClipKind.video) {
       final playback = _playbackVideoClip;
       if (playback != null && _clipCovers(playback, playheadSeconds)) {
         return playback;
       }
-      return null;
+      if (selected.kind == TimelineClipKind.pose) {
+        return null;
+      }
+      final onTrack = _videoOnSelectedTrack(playheadSeconds);
+      if (onTrack != null) {
+        return onTrack;
+      }
+      return _retainedStageVideoClip;
     }
     return _videoOnSelectedTrack(playheadSeconds);
   }
@@ -1646,6 +1736,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _isClipDetailLoading = false;
     _clipDetailMessage = '';
     _clipDetail = null;
+    _retainedStageVideoClip = null;
+    _showsMissingTargetVideoBanner = false;
     _clearPosePlayback();
   }
 

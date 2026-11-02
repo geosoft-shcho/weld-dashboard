@@ -173,6 +173,7 @@ class ClipDetail {
     this.targetAssetId = '',
     this.targetAssetFileName = '',
     this.targetAssetContentUrl = '',
+    this.isTargetAssetVideo = false,
     this.channelNames = const [],
     this.waveformUrl = '',
   });
@@ -202,6 +203,7 @@ class ClipDetail {
   final String targetAssetId;
   final String targetAssetFileName;
   final String targetAssetContentUrl;
+  final bool isTargetAssetVideo;
 
   /// GetClip asset.properties.channels. 시계열 CSV 열 이름.
   final List<String> channelNames;

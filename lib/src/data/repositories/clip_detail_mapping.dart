@@ -5,6 +5,8 @@ import 'package:fixnum/fixnum.dart';
 import '../../domain/entities/job_timeline.dart';
 import '../datasources/generated/google/protobuf/struct.pb.dart';
 import '../datasources/generated/google/protobuf/timestamp.pb.dart';
+import '../datasources/generated/mediatag/asset/v1/asset.pbenum.dart'
+    as asset_pb;
 import '../datasources/generated/mediatag/compose/v1/compose.pb.dart'
     as compose_pb;
 import 'proto_id.dart';
@@ -202,6 +204,8 @@ ClipDetail clipDetailFromResponse(
         hasTargetAsset && response.targetAsset.contentUrl.isNotEmpty
         ? resolveContentUrl(response.targetAsset.contentUrl)
         : '',
+    isTargetAssetVideo: hasTargetAsset &&
+        response.targetAsset.kind == asset_pb.AssetKind.ASSET_KIND_VIDEO,
     channelNames: hasAsset
         ? channelNamesFromProperties(response.asset.properties)
         : const [],

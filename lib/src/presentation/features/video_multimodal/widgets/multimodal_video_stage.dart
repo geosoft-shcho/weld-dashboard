@@ -51,26 +51,49 @@ class MultimodalVideoStage extends StatelessWidget {
   /// 모니터 미선택 시: 기존과 같이 활성 트랙 영상 1칸.
   Widget _singleLegacy(FluentThemeData theme) {
     final video = viewModel.activeVideoBar;
-    if (video == null) {
-      return ColoredBox(
-        color: AppTheme.SURFACE,
-        child: Center(
-          child: Text(
-            '고른 트랙에서 이 시각을 덮는 영상이 없습니다. ${viewModel.playheadLabel}',
-            style: theme.typography.caption,
-          ),
-        ),
-      );
-    }
-    return _player(
-      trackId: '',
-      mediaUrl: video.mediaUrl,
-      seekToMs: viewModel.fileSeekMilliseconds(video),
-      playbackRate: viewModel.playbackRateFor(video),
-      contentEndMs: viewModel.fileContentEndMilliseconds(video),
-      usesStepSeek: viewModel.doesPlaybackUseStepSeek(video),
-      captions: viewModel.activeVideoCaptions,
-      frames: viewModel.activeVideoOverlayFrames,
+    final showBanner = viewModel.showsMissingTargetVideoBanner || video == null;
+    return ColoredBox(
+      color: AppTheme.SURFACE,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          if (video != null)
+            _player(
+              trackId: '',
+              mediaUrl: video.mediaUrl,
+              seekToMs: viewModel.fileSeekMilliseconds(video),
+              playbackRate: viewModel.playbackRateFor(video),
+              contentEndMs: viewModel.fileContentEndMilliseconds(video),
+              usesStepSeek: viewModel.doesPlaybackUseStepSeek(video),
+              captions: viewModel.activeVideoCaptions,
+              frames: viewModel.activeVideoOverlayFrames,
+            ),
+          if (showBanner)
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  color: AppTheme.SURFACE.withValues(alpha: 0.92),
+                  borderRadius: BorderRadius.circular(4),
+                  border: Border.all(color: const Color(0xFF3E424A)),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    '고른 트랙에서 이 시각을 덮는 영상이 없습니다. '
+                    '${viewModel.playheadLabel}',
+                    style: theme.typography.caption,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
