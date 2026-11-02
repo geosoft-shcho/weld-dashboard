@@ -119,7 +119,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final PlayheadCoveringLog _playheadCoveringLog = PlayheadCoveringLog();
   int _seekToken = 0;
   VideoMultimodalSide _side = VideoMultimodalSide.none;
-  bool _isLaneMenuOpen = false;
+  bool _isTrackMenuOpen = false;
   bool _isLoading = false;
   bool _isSavingTimeline = false;
   int? _vectorSaveTrackCount;
@@ -131,7 +131,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   List<TemporaryAttachmentBar> _bars = const [];
   JobTimeline _timeline = JobTimeline.empty;
   final Set<String> _hiddenAttachmentIds = {};
-  final Set<String> _hiddenLaneKeys = {};
+  final Set<String> _hiddenTrackIds = {};
   String _selectedAttachmentId = '';
   String _selectedClipId = '';
   int _clipDetailEpoch = 0;
@@ -213,7 +213,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get isPropertiesOpen => _side == VideoMultimodalSide.properties;
   bool get isAskOpen => _side == VideoMultimodalSide.ask;
   bool get isLabelsOpen => _side == VideoMultimodalSide.labels;
-  bool get isLaneMenuOpen => _isLaneMenuOpen;
+  bool get isTrackMenuOpen => _isTrackMenuOpen;
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
@@ -259,9 +259,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   bool get canEditSelectedServerTrack => selectedServerTrack != null;
 
-  bool isServerTimelineTrack(String laneKey) {
+  bool isServerTimelineTrack(String trackId) {
     for (final track in _timeline.tracks) {
-      if (track.trackId == laneKey) {
+      if (track.trackId == trackId) {
         return true;
       }
     }
@@ -940,7 +940,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get wantsPlayback => _playhead.wantsPlayback;
   int get playbackToken => _playbackToken;
 
-  bool isLaneVisible(String laneKey) => !_hiddenLaneKeys.contains(laneKey);
+  bool isTrackVisible(String trackId) => !_hiddenTrackIds.contains(trackId);
   String get assetsSearchQuery => _assetsSearchQuery;
   String get timelineHint => _timelineHint;
 
@@ -1020,8 +1020,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     }
     return TimelineSampleClip(
       clipId: timelineClip.clipId,
-      laneKey: timelineClip.trackId,
-      laneLabel: _trackName(timelineClip.trackId),
+      trackId: timelineClip.trackId,
+      trackLabel: _trackName(timelineClip.trackId),
       text: clipCaption(timelineClip),
       startSeconds: secondsFromNanoseconds(timelineClip.startNanoseconds),
       endSeconds: secondsFromNanoseconds(timelineClip.endNanoseconds),
@@ -2250,7 +2250,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _selectedClipId = '';
     }
     _side = VideoMultimodalSide.properties;
-    _isLaneMenuOpen = false;
+    _isTrackMenuOpen = false;
     if (bar != null) {
       didSeekToSeconds(bar.startSeconds);
       return;
@@ -2374,7 +2374,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   void _toggleSide(VideoMultimodalSide next) {
     _side = _side == next ? VideoMultimodalSide.none : next;
-    _isLaneMenuOpen = false;
+    _isTrackMenuOpen = false;
     notifyListeners();
   }
 
@@ -2870,7 +2870,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   Future<void> didDropAsset({
     required String dragData,
-    required String laneKey,
+    required String trackId,
     required double startSeconds,
   }) {
     _createdClipNotice = null;
@@ -2879,7 +2879,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return Future.value();
     }
     final attachmentId = _attachmentIdFromDragData(dragData);
-    if (isServerTimelineTrack(laneKey)) {
+    if (isServerTimelineTrack(trackId)) {
       if (attachmentId == null) {
         return Future.value();
       }
@@ -2888,7 +2888,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         return Future.value();
       }
       return didCreateTimelineClipOnTrack(
-        trackId: laneKey,
+        trackId: trackId,
         attachment: attachment,
         startSeconds: startSeconds,
       );
@@ -3232,11 +3232,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void didTapToggleLaneKey(String laneKey) {
-    if (_hiddenLaneKeys.contains(laneKey)) {
-      _hiddenLaneKeys.remove(laneKey);
+  void didTapToggleTrackVisibility(String trackId) {
+    if (_hiddenTrackIds.contains(trackId)) {
+      _hiddenTrackIds.remove(trackId);
     } else {
-      _hiddenLaneKeys.add(laneKey);
+      _hiddenTrackIds.add(trackId);
     }
     notifyListeners();
   }
@@ -3341,8 +3341,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return bar != null && doesPlaybackUseStepSeek(bar);
   }
 
-  void didTapToggleLaneMenu() {
-    _isLaneMenuOpen = !_isLaneMenuOpen;
+  void didTapToggleTrackMenu() {
+    _isTrackMenuOpen = !_isTrackMenuOpen;
     notifyListeners();
   }
 

@@ -48,8 +48,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     super.initState();
     _trackedPlayhead = widget.viewModel.playheadSeconds;
     _trackedClipId = widget.viewModel.selectedClipId;
-    _trackLabelScrollController.addListener(_syncTrackLanesFromLabels);
-    _trackScrollController.addListener(_syncTrackLabelsFromLanes);
+    _trackLabelScrollController.addListener(_syncTrackRowsFromLabels);
+    _trackScrollController.addListener(_syncTrackLabelsFromRows);
     _syncSelectedTrackName();
   }
 
@@ -76,8 +76,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   @override
   void dispose() {
-    _trackLabelScrollController.removeListener(_syncTrackLanesFromLabels);
-    _trackScrollController.removeListener(_syncTrackLabelsFromLanes);
+    _trackLabelScrollController.removeListener(_syncTrackRowsFromLabels);
+    _trackScrollController.removeListener(_syncTrackLabelsFromRows);
     _newTrackNameController.dispose();
     _trackNameController.dispose();
     _scrollController.dispose();
@@ -88,11 +88,11 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   bool _isSyncingRowScroll = false;
 
-  void _syncTrackLanesFromLabels() {
+  void _syncTrackRowsFromLabels() {
     _alignRowScroll(_trackLabelScrollController, _trackScrollController);
   }
 
-  void _syncTrackLabelsFromLanes() {
+  void _syncTrackLabelsFromRows() {
     _alignRowScroll(_trackScrollController, _trackLabelScrollController);
   }
 
@@ -276,7 +276,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       child: Stack(
         children: [
           _filled(rows),
-          if (viewModel.isLaneMenuOpen) _laneMenu(),
+          if (viewModel.isTrackMenuOpen) _trackMenu(height),
           Positioned(
             top: 0,
             left: 0,
@@ -356,9 +356,9 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           const Spacer(),
           _toolGroup([
             _tool(
-              'Lanes',
-              selected: viewModel.isLaneMenuOpen,
-              onPressed: viewModel.didTapToggleLaneMenu,
+              'Tracks',
+              selected: viewModel.isTrackMenuOpen,
+              onPressed: viewModel.didTapToggleTrackMenu,
             ),
             _tool('Marker', onPressed: viewModel.didTapAddMarker),
             _tool('Labels', onPressed: viewModel.didTapToggleLabels),
@@ -565,54 +565,77 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  Widget _laneMenu() {
-    final lanes = <({String key, String label})>[
+  Widget _trackMenu(double boardHeight) {
+    const menuTop = 36.0;
+    const menuBottomPad = 8.0;
+    // icon 16 + gap 6 + horizontal padding 16
+    const rowChrome = 38.0;
+    final maxHeight = (boardHeight - menuTop - menuBottomPad).clamp(
+      120.0,
+      double.infinity,
+    );
+    final tracks = <({String key, String label})>[
       for (final track in viewModel.timelineTracks)
         (
           key: track.trackId,
           label: track.name.trim().isEmpty ? '트랙' : track.name.trim(),
         ),
     ];
+    var menuWidth = 96.0;
+    for (final track in tracks) {
+      final width = rowChrome + _labelTextWidth(track.label);
+      if (width > menuWidth) {
+        menuWidth = width;
+      }
+    }
     return Positioned(
       right: 12,
-      top: 36,
+      top: menuTop,
       child: Material(
         elevation: 6,
         color: MultimodalStudioPalette.SAND_0,
-        child: Padding(
-          padding: const EdgeInsets.all(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              for (final lane in lanes)
-                InkWell(
-                  onTap: () => viewModel.didTapToggleLaneKey(lane.key),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          viewModel.isLaneVisible(lane.key)
-                              ? Icons.check_box
-                              : Icons.check_box_outline_blank,
-                          size: 16,
-                          color: MultimodalStudioPalette.SAND_700,
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          lane.label,
-                          style: const TextStyle(
-                            color: MultimodalStudioPalette.SAND_900,
-                            fontSize: 11,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: maxHeight,
+            maxWidth: menuWidth,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: ListView(
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              children: [
+                for (final track in tracks)
+                  InkWell(
+                    onTap: () =>
+                        viewModel.didTapToggleTrackVisibility(track.key),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 2),
+                      child: Row(
+                        children: [
+                          Icon(
+                            viewModel.isTrackVisible(track.key)
+                                ? Icons.check_box
+                                : Icons.check_box_outline_blank,
+                            size: 16,
+                            color: MultimodalStudioPalette.SAND_700,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              track.label,
+                              style: const TextStyle(
+                                color: MultimodalStudioPalette.SAND_900,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -698,33 +721,19 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   Widget _trackLabelRow(TimelineBoardRow row) {
     if (row.clips.isEmpty) {
-      return _trackLabel(
-        row,
-        swatch: MultimodalStudioPalette.SAND_200,
-        border: MultimodalStudioPalette.SAND_900,
-      );
+      return _trackLabel(row);
     }
     final clip = _rowSelection(row);
     final isSelected = row.clips.any(_isClipSelected);
     final identity = row.clips.length == 1 ? row.clips.first.clipId : '';
     return GestureDetector(
       onTap: () => _selectClip(clip),
-      child: _trackLabel(
-        row,
-        swatch: clip.background,
-        border: clip.border == Colors.transparent
-            ? clip.foreground
-            : clip.border,
-        isSelected: isSelected,
-        identity: identity,
-      ),
+      child: _trackLabel(row, isSelected: isSelected, identity: identity),
     );
   }
 
   Widget _trackLabel(
     TimelineBoardRow row, {
-    required Color swatch,
-    required Color border,
     bool isSelected = false,
     String identity = '',
   }) {
@@ -734,27 +743,27 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       color: isSelected ? MultimodalStudioPalette.GRAPE_100 : null,
       child: Row(
         children: [
-          if (viewModel.isServerTimelineTrack(row.laneKey) &&
-              viewModel.trackHasVideo(row.laneKey))
+          if (viewModel.isServerTimelineTrack(row.trackId) &&
+              viewModel.trackHasVideo(row.trackId))
             GestureDetector(
-              onTap: () => viewModel.didTapMonitorTrack(row.laneKey),
+              onTap: () => viewModel.didTapMonitorTrack(row.trackId),
               child: Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: Icon(
-                  viewModel.isTrackMonitored(row.laneKey)
+                  viewModel.isTrackMonitored(row.trackId)
                       ? Icons.videocam
                       : Icons.videocam_outlined,
                   size: 14,
-                  color: viewModel.isTrackMonitored(row.laneKey)
+                  color: viewModel.isTrackMonitored(row.trackId)
                       ? MultimodalStudioPalette.GRAPE_700
                       : MultimodalStudioPalette.SAND_600,
                 ),
               ),
             ),
-          if (viewModel.isServerTimelineTrack(row.laneKey) &&
-              viewModel.trackHasTimeseries(row.laneKey))
+          if (viewModel.isServerTimelineTrack(row.trackId) &&
+              viewModel.trackHasTimeseries(row.trackId))
             GestureDetector(
-              onTap: () => viewModel.didTapToggleTimeseriesChart(row.laneKey),
+              onTap: () => viewModel.didTapToggleTimeseriesChart(row.trackId),
               child: Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: Icon(
@@ -766,10 +775,10 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                 ),
               ),
             ),
-          if (viewModel.isServerTimelineTrack(row.laneKey) &&
-              viewModel.trackHasAudio(row.laneKey))
+          if (viewModel.isServerTimelineTrack(row.trackId) &&
+              viewModel.trackHasAudio(row.trackId))
             GestureDetector(
-              onTap: () => viewModel.didTapToggleAudioChart(row.laneKey),
+              onTap: () => viewModel.didTapToggleAudioChart(row.trackId),
               child: Padding(
                 padding: const EdgeInsets.only(right: 4),
                 child: Icon(
@@ -781,14 +790,18 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                 ),
               ),
             ),
-          Container(
-            width: 12,
-            height: 12,
-            margin: const EdgeInsets.only(right: 6),
-            decoration: BoxDecoration(
-              color: swatch,
-              borderRadius: BorderRadius.circular(2),
-              border: Border.all(color: border),
+          Tooltip(
+            message: '트랙 가리기',
+            child: GestureDetector(
+              onTap: () => viewModel.didTapToggleTrackVisibility(row.trackId),
+              child: const Padding(
+                padding: EdgeInsets.only(right: 6),
+                child: Icon(
+                  Icons.check_box,
+                  size: 16,
+                  color: MultimodalStudioPalette.SAND_700,
+                ),
+              ),
             ),
           ),
           if (row.showsAiBadge)
@@ -1025,7 +1038,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         ),
       ),
     );
-    if (!viewModel.isServerTimelineTrack(row.laneKey)) {
+    if (!viewModel.isServerTimelineTrack(row.trackId)) {
       return track;
     }
     return Builder(
@@ -1034,7 +1047,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           onAcceptWithDetails: (details) {
             _acceptDroppedAsset(
               dragData: details.data,
-              laneKey: row.laneKey,
+              trackId: row.trackId,
               startSeconds: _secondsInBox(dropContext, details.offset),
             );
           },
@@ -1266,12 +1279,12 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   Future<void> _acceptDroppedAsset({
     required String dragData,
-    required String laneKey,
+    required String trackId,
     required double startSeconds,
   }) async {
     await viewModel.didDropAsset(
       dragData: dragData,
-      laneKey: laneKey,
+      trackId: trackId,
       startSeconds: startSeconds,
     );
     await _showCreatedClipNotice();

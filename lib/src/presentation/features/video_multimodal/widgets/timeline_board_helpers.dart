@@ -15,7 +15,7 @@ const double TIMELINE_AUDIO_CHART_HEIGHT = 60;
 
 class TimelineBoardRow {
   const TimelineBoardRow({
-    required this.laneKey,
+    required this.trackId,
     required this.label,
     required this.labelColor,
     required this.showsAiBadge,
@@ -25,7 +25,7 @@ class TimelineBoardRow {
     this.expandedChartHeight = TIMELINE_TIMESERIES_CHART_HEIGHT,
   });
 
-  final String laneKey;
+  final String trackId;
   final String label;
   final Color labelColor;
   final bool showsAiBadge;
@@ -191,7 +191,7 @@ List<TimelineBoardRow> buildTimelineBoardRows(
 ) {
   final rows = <TimelineBoardRow>[];
   for (final track in viewModel.timelineTracks) {
-    if (!viewModel.isLaneVisible(track.trackId)) {
+    if (!viewModel.isTrackVisible(track.trackId)) {
       continue;
     }
     final clips = track.clips;
@@ -206,7 +206,7 @@ List<TimelineBoardRow> buildTimelineBoardRows(
     }
     rows.add(
       TimelineBoardRow(
-        laneKey: track.trackId,
+        trackId: track.trackId,
         label: track.name.trim().isEmpty ? '트랙' : track.name.trim(),
         labelColor: MultimodalStudioPalette.SAND_700,
         showsAiBadge: clips.any((clip) => clip.showsToolMark),

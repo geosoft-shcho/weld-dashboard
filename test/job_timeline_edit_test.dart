@@ -500,7 +500,7 @@ void main() {
 
     await viewModel.didDropAsset(
       dragData: '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}asset-9',
-      laneKey: 'track-video',
+      trackId: 'track-video',
       startSeconds: 1.5,
     );
 
@@ -539,7 +539,7 @@ void main() {
 
     await viewModel.didDropAsset(
       dragData: '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}asset-9',
-      laneKey: 'track-video',
+      trackId: 'track-video',
       startSeconds: 1.5,
     );
 
@@ -558,7 +558,7 @@ void main() {
 
     await viewModel.didDropAsset(
       dragData: '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}asset-9',
-      laneKey: 'track-video',
+      trackId: 'track-video',
       startSeconds: 1.5,
     );
 
@@ -584,27 +584,27 @@ void main() {
 
     await viewModel.didDropAsset(
       dragData: dragData,
-      laneKey: 'saved_attachment',
+      trackId: 'saved_attachment',
       startSeconds: 2,
     );
     await viewModel.didDropAsset(
       dragData: dragData,
-      laneKey: 'audio_manual',
+      trackId: 'audio_manual',
       startSeconds: 2,
     );
     await viewModel.didDropAsset(
       dragData: dragData,
-      laneKey: 'relation',
+      trackId: 'relation',
       startSeconds: 2,
     );
     await viewModel.didDropAsset(
       dragData: 'file:take.mp4',
-      laneKey: 'track-video',
+      trackId: 'track-video',
       startSeconds: 1.5,
     );
     await viewModel.didDropAsset(
       dragData: dragData,
-      laneKey: 'track-video',
+      trackId: 'track-video',
       startSeconds: -1,
     );
 

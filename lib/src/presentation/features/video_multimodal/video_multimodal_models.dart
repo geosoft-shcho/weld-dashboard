@@ -49,8 +49,8 @@ class TemporaryAttachmentBar {
 class TimelineSampleClip {
   TimelineSampleClip({
     required this.clipId,
-    required this.laneKey,
-    required this.laneLabel,
+    required this.trackId,
+    required this.trackLabel,
     required this.text,
     required this.startSeconds,
     required this.endSeconds,
@@ -60,8 +60,8 @@ class TimelineSampleClip {
   });
 
   final String clipId;
-  final String laneKey;
-  final String laneLabel;
+  final String trackId;
+  final String trackLabel;
   final String text;
   double startSeconds;
   double endSeconds;
