@@ -1,4 +1,3 @@
-import '../audio_waveform_data.dart';
 import '../entities/audio_waveform_load.dart';
 import '../wav_pcm_peaks.dart';
 import 'get_job_timeline_use_case.dart';
@@ -22,33 +21,7 @@ class LoadAudioWaveformUseCase {
         errorMessage: '파형 주소가 없습니다',
       );
     }
-    final waveUrl = AudioWaveformData.assetPathFor(contentUrl);
-    final fromWave = await _loadWavePeaks(waveUrl);
-    if (fromWave != null) {
-      return fromWave;
-    }
     return _loadWavPeaks(contentUrl);
-  }
-
-  Future<AudioWaveformLoad?> _loadWavePeaks(String waveUrl) async {
-    try {
-      final bytes = await _getJobTimelineUseCase.readBytes(url: waveUrl);
-      if (bytes.isEmpty) {
-        return null;
-      }
-      final waveform = AudioWaveformData.parse(bytes);
-      final amplitudes = waveform.sampledAmplitudes(sampleCount);
-      if (amplitudes.isEmpty) {
-        return null;
-      }
-      return AudioWaveformLoad(
-        waveUrl: waveUrl,
-        amplitudes: amplitudes,
-        bodyLength: bytes.length,
-      );
-    } catch (_) {
-      return null;
-    }
   }
 
   Future<AudioWaveformLoad> _loadWavPeaks(String contentUrl) async {
