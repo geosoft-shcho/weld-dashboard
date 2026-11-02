@@ -270,7 +270,10 @@ String _time(bool present, Timestamp value) {
   if (!present) {
     return _dash;
   }
-  return value.toDateTime().toLocal().toIso8601String();
+  final local = value.toDateTime().toLocal();
+  String two(int n) => n.toString().padLeft(2, '0');
+  return '${local.year}-${two(local.month)}-${two(local.day)} '
+      '${two(local.hour)}:${two(local.minute)}:${two(local.second)}';
 }
 
 String _struct(bool present, Struct value) {
