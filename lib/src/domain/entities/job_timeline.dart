@@ -174,6 +174,7 @@ class ClipDetail {
     this.targetAssetFileName = '',
     this.targetAssetContentUrl = '',
     this.channelNames = const [],
+    this.waveformUrl = '',
   });
 
   static const empty = ClipDetail(clipId: '', fields: []);
@@ -204,6 +205,9 @@ class ClipDetail {
 
   /// GetClip asset.properties.channels. 시계열 CSV 열 이름.
   final List<String> channelNames;
+
+  /// GetClip asset.properties.waveform_url (MEDIA_TAG_BASE_URL 해석됨).
+  final String waveformUrl;
 
   String valueOf(String label) {
     for (final field in fields) {

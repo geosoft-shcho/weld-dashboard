@@ -766,24 +766,21 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _audioAmplitudes = const [];
     notifyListeners();
     try {
-      var contentUrl = clip.contentUrl;
+      var waveformUrl = '';
+      var sourceStartNs = '';
+      var sourceEndNs = '';
       try {
         final detail = await _getClipUseCase.execute(clipId: clip.clipId);
-        if (detail.assetContentUrl.isNotEmpty) {
-          contentUrl = detail.assetContentUrl;
-        }
+        waveformUrl = detail.waveformUrl;
+        sourceStartNs = detail.sourceStartNs;
+        sourceEndNs = detail.sourceEndNs;
       } catch (_) {
-        // 타임라인 contentUrl로 이어 간다.
-      }
-      if (contentUrl.isEmpty) {
-        if (epoch != _audioChartEpoch || _isClosed) {
-          return;
-        }
-        _audioChartError = '파형 주소가 없습니다';
-        return;
+        // waveform_url 없으면 파형 없이 표시한다.
       }
       final load = await _loadAudioWaveformUseCase.execute(
-        contentUrl: contentUrl,
+        waveformUrl: waveformUrl,
+        sourceStartNs: sourceStartNs,
+        sourceEndNs: sourceEndNs,
       );
       if (epoch != _audioChartEpoch || _isClosed) {
         return;

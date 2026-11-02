@@ -1,5 +1,6 @@
+import 'dart:convert';
+
 import '../entities/audio_waveform_load.dart';
-import '../wav_pcm_peaks.dart';
 import 'get_job_timeline_use_case.dart';
 
 class LoadAudioWaveformUseCase {
@@ -7,71 +8,56 @@ class LoadAudioWaveformUseCase {
 
   final GetJobTimelineUseCase _getJobTimelineUseCase;
 
-  static const int sampleCount = 120;
-  static const int _headerBytes = 4096;
-  static const int _windowBytes = 4096;
-  static const int _rangeBatchSize = 16;
-
-  Future<AudioWaveformLoad> execute({required String contentUrl}) async {
-    if (contentUrl.isEmpty) {
+  Future<AudioWaveformLoad> execute({
+    required String waveformUrl,
+    String sourceStartNs = '',
+    String sourceEndNs = '',
+  }) async {
+    if (waveformUrl.isEmpty) {
       return const AudioWaveformLoad(
         waveUrl: '',
         amplitudes: [],
         bodyLength: 0,
-        errorMessage: '파형 주소가 없습니다',
       );
     }
-    return _loadWavPeaks(contentUrl);
-  }
-
-  Future<AudioWaveformLoad> _loadWavPeaks(String contentUrl) async {
     try {
-      final header = await _getJobTimelineUseCase.readBytes(
-        url: contentUrl,
-        startByte: 0,
-        endByte: _headerBytes - 1,
-      );
-      final layout = wavPcmLayoutFromHeader(header);
-      if (layout == null) {
+      final body = await _getJobTimelineUseCase.readContent(url: waveformUrl);
+      final decoded = jsonDecode(body);
+      if (decoded is! Map) {
         return AudioWaveformLoad(
-          waveUrl: contentUrl,
+          waveUrl: waveformUrl,
           amplitudes: const [],
-          bodyLength: header.length,
-          errorMessage: 'PCM WAV 파형을 읽을 수 없습니다',
+          bodyLength: body.length,
+          errorMessage: '파형 JSON 형식이 아닙니다',
         );
       }
-      final offsets = wavPcmSampleOffsets(
-        layout: layout,
-        sampleCount: sampleCount,
-        windowBytes: _windowBytes,
-      );
-      if (offsets.isEmpty) {
+      final intervalMs = _asPositiveInt(decoded['interval_ms']);
+      final raw = decoded['max_amplitudes'];
+      if (intervalMs == null || raw is! List) {
         return AudioWaveformLoad(
-          waveUrl: contentUrl,
+          waveUrl: waveformUrl,
           amplitudes: const [],
-          bodyLength: layout.dataSize,
-          errorMessage: '파형 데이터 없음',
+          bodyLength: body.length,
+          errorMessage: '파형 JSON에 interval_ms·max_amplitudes가 없습니다',
         );
       }
-      final amplitudes = List<double>.filled(sampleCount, 0);
-      for (var start = 0; start < offsets.length; start += _rangeBatchSize) {
-        final end = (start + _rangeBatchSize).clamp(0, offsets.length);
-        final chunk = await Future.wait([
-          for (var index = start; index < end; index++)
-            _peakAt(contentUrl, layout, offsets[index]),
-        ]);
-        for (var index = 0; index < chunk.length; index++) {
-          amplitudes[start + index] = chunk[index];
-        }
-      }
-      return AudioWaveformLoad(
-        waveUrl: contentUrl,
+      final amplitudes = <double>[
+        for (final item in raw) _asAmplitude(item),
+      ];
+      final sliced = _sliceForSource(
         amplitudes: amplitudes,
-        bodyLength: layout.dataSize,
+        intervalMs: intervalMs,
+        sourceStartNs: sourceStartNs,
+        sourceEndNs: sourceEndNs,
+      );
+      return AudioWaveformLoad(
+        waveUrl: waveformUrl,
+        amplitudes: sliced,
+        bodyLength: body.length,
       );
     } catch (error) {
       return AudioWaveformLoad(
-        waveUrl: contentUrl,
+        waveUrl: waveformUrl,
         amplitudes: const [],
         bodyLength: 0,
         errorMessage: error.toString(),
@@ -79,20 +65,56 @@ class LoadAudioWaveformUseCase {
     }
   }
 
-  Future<double> _peakAt(
-    String contentUrl,
-    WavPcmLayout layout,
-    int fileOffset,
-  ) async {
-    final end = (fileOffset + _windowBytes - 1).clamp(
-      fileOffset,
-      layout.dataOffset + layout.dataSize - 1,
-    );
-    final bytes = await _getJobTimelineUseCase.readBytes(
-      url: contentUrl,
-      startByte: fileOffset,
-      endByte: end,
-    );
-    return wavPcmPeakAmplitude(bytes, layout.channels);
+  List<double> _sliceForSource({
+    required List<double> amplitudes,
+    required int intervalMs,
+    required String sourceStartNs,
+    required String sourceEndNs,
+  }) {
+    if (amplitudes.isEmpty || intervalMs <= 0) {
+      return amplitudes;
+    }
+    final startNs = int.tryParse(sourceStartNs.trim());
+    final endNs = int.tryParse(sourceEndNs.trim());
+    if (startNs == null || endNs == null || endNs <= startNs) {
+      return amplitudes;
+    }
+    final startIndex = (startNs / 1e6 / intervalMs).floor();
+    final endIndex = (endNs / 1e6 / intervalMs).ceil();
+    final from = startIndex.clamp(0, amplitudes.length);
+    final to = endIndex.clamp(0, amplitudes.length);
+    if (from >= to) {
+      return const [];
+    }
+    return amplitudes.sublist(from, to);
+  }
+
+  int? _asPositiveInt(Object? value) {
+    if (value is int && value > 0) {
+      return value;
+    }
+    if (value is num && value > 0) {
+      return value.round();
+    }
+    if (value is String) {
+      final parsed = int.tryParse(value.trim());
+      if (parsed != null && parsed > 0) {
+        return parsed;
+      }
+    }
+    return null;
+  }
+
+  double _asAmplitude(Object? value) {
+    if (value is num) {
+      return value.toDouble().clamp(0.0, 1.0);
+    }
+    if (value is String) {
+      final parsed = double.tryParse(value.trim());
+      if (parsed != null) {
+        return parsed.clamp(0.0, 1.0);
+      }
+    }
+    return 0;
   }
 }

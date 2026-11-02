@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
@@ -7,69 +8,61 @@ import 'package:weld_dashboard/src/domain/use_cases/get_job_timeline_use_case.da
 import 'package:weld_dashboard/src/domain/use_cases/load_audio_waveform_use_case.dart';
 
 void main() {
-  test('empty contentUrl returns an error without reading', () async {
-    final repository = _WavRepository(Uint8List(0));
+  test('empty waveformUrl returns empty amplitudes without reading', () async {
+    final repository = _JsonRepository('');
     final useCase = LoadAudioWaveformUseCase(GetJobTimelineUseCase(repository));
 
-    final load = await useCase.execute(contentUrl: '');
+    final load = await useCase.execute(waveformUrl: '');
 
     expect(repository.readUrls, isEmpty);
-    expect(load.errorMessage, '파형 주소가 없습니다');
     expect(load.amplitudes, isEmpty);
+    expect(load.errorMessage, isEmpty);
   });
 
-  test('pcm wav ranges fill amplitudes from contentUrl only', () async {
-    final wav = _pcmWavFile();
-    final repository = _WavRepository(wav);
+  test('json max_amplitudes fill amplitudes from waveformUrl', () async {
+    final body = jsonEncode({
+      'interval_ms': 10,
+      'max_amplitudes': [0.1, 0.2, 0.3, 0.4],
+    });
+    final repository = _JsonRepository(body);
     final useCase = LoadAudioWaveformUseCase(GetJobTimelineUseCase(repository));
 
     final load = await useCase.execute(
-      contentUrl: 'https://host/files/take.wav',
+      waveformUrl: 'https://host/api/files/take.waveform.json',
     );
 
-    expect(repository.readUrls, isNotEmpty);
-    expect(
-      repository.readUrls.every((url) => url == 'https://host/files/take.wav'),
-      isTrue,
-    );
-    expect(
-      repository.readUrls.any((url) => url.endsWith('.wave')),
-      isFalse,
-    );
-    expect(load.waveUrl, 'https://host/files/take.wav');
+    expect(repository.readUrls, [
+      'https://host/api/files/take.waveform.json',
+    ]);
+    expect(load.waveUrl, 'https://host/api/files/take.waveform.json');
     expect(load.errorMessage, isEmpty);
-    expect(load.amplitudes, hasLength(LoadAudioWaveformUseCase.sampleCount));
-    expect(load.amplitudes.any((value) => value > 0), isTrue);
+    expect(load.amplitudes, [0.1, 0.2, 0.3, 0.4]);
+  });
+
+  test('source ns slices amplitudes by interval_ms', () async {
+    final body = jsonEncode({
+      'interval_ms': 10,
+      'max_amplitudes': [0.0, 0.1, 0.2, 0.3, 0.4, 0.5],
+    });
+    final repository = _JsonRepository(body);
+    final useCase = LoadAudioWaveformUseCase(GetJobTimelineUseCase(repository));
+
+    // 20ms..45ms → floor(20/10)=2, ceil(45/10)=5 → indices 2..4
+    final load = await useCase.execute(
+      waveformUrl: 'https://host/api/files/take.waveform.json',
+      sourceStartNs: '20000000',
+      sourceEndNs: '45000000',
+    );
+
+    expect(load.errorMessage, isEmpty);
+    expect(load.amplitudes, [0.2, 0.3, 0.4]);
   });
 }
 
-Uint8List _pcmWavFile() {
-  const dataSize = 4000;
-  final bytes = Uint8List(44 + dataSize);
-  final view = ByteData.sublistView(bytes);
-  bytes.setRange(0, 4, 'RIFF'.codeUnits);
-  view.setUint32(4, 36 + dataSize, Endian.little);
-  bytes.setRange(8, 12, 'WAVE'.codeUnits);
-  bytes.setRange(12, 16, 'fmt '.codeUnits);
-  view.setUint32(16, 16, Endian.little);
-  view.setUint16(20, 1, Endian.little);
-  view.setUint16(22, 2, Endian.little);
-  view.setUint32(24, 44100, Endian.little);
-  view.setUint32(28, 44100 * 4, Endian.little);
-  view.setUint16(32, 4, Endian.little);
-  view.setUint16(34, 16, Endian.little);
-  bytes.setRange(36, 40, 'data'.codeUnits);
-  view.setUint32(40, dataSize, Endian.little);
-  for (var index = 0; index < dataSize ~/ 2; index++) {
-    view.setInt16(44 + index * 2, index.isEven ? 8000 : -4000, Endian.little);
-  }
-  return bytes;
-}
+class _JsonRepository implements JobTimelineRepository {
+  _JsonRepository(this.body);
 
-class _WavRepository implements JobTimelineRepository {
-  _WavRepository(this.wavBytes);
-
-  final Uint8List wavBytes;
+  final String body;
   final List<String> readUrls = [];
 
   @override
@@ -79,15 +72,14 @@ class _WavRepository implements JobTimelineRepository {
     int? endByte,
   }) async {
     readUrls.add(url);
-    final start = startByte ?? 0;
-    final endExclusive = (endByte ?? (wavBytes.length - 1)) + 1;
-    return Uint8List.fromList(
-      wavBytes.sublist(start, endExclusive.clamp(0, wavBytes.length)),
-    );
+    return Uint8List.fromList(utf8.encode(body));
   }
 
   @override
-  Future<String> readContent({required String url}) async => '';
+  Future<String> readContent({required String url}) async {
+    readUrls.add(url);
+    return body;
+  }
 
   @override
   Future<JobTimeline> getTimeline({required String jobId}) async =>

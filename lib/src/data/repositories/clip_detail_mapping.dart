@@ -205,6 +205,11 @@ ClipDetail clipDetailFromResponse(
     channelNames: hasAsset
         ? channelNamesFromProperties(response.asset.properties)
         : const [],
+    waveformUrl: hasAsset
+        ? resolveContentUrl(
+            waveformUrlFromProperties(response.asset.properties),
+          )
+        : '',
   );
 }
 
@@ -230,6 +235,14 @@ List<String> channelNamesFromProperties(Struct properties) {
       if (item.hasStringValue() && item.stringValue.trim().isNotEmpty)
         item.stringValue.trim(),
   ];
+}
+
+String waveformUrlFromProperties(Struct properties) {
+  final value = properties.fields['waveform_url'];
+  if (value == null || !value.hasStringValue()) {
+    return '';
+  }
+  return value.stringValue.trim();
 }
 
 String _id(Int64 id) => id == Int64.ZERO ? _none : id.toString();

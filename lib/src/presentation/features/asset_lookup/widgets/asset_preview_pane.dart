@@ -62,7 +62,10 @@ class AssetPreviewPane extends StatelessWidget {
               child: WorkDetailChewieStage(assetPath: url),
             ),
             _AssetPreviewKind.audio => WorkDetailMaterialScope(
-              child: AssetJustAudioStage(contentUrl: url),
+              child: AssetJustAudioStage(
+                contentUrl: url,
+                propertiesJson: asset.propertiesJson,
+              ),
             ),
             _AssetPreviewKind.image => _ImagePreview(url: url),
             _AssetPreviewKind.pdf => WaveformMaterialScope(

@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:waveform_pro/waveform_pro.dart';
 
+import '../../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../../../domain/use_cases/load_audio_waveform_use_case.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
@@ -12,9 +14,14 @@ import '../../../core/widgets/waveform_material_scope.dart';
 
 /// 에셋 상세 음성 미리보기: just_audio 재생 + waveform_pro 파형.
 class AssetJustAudioStage extends StatefulWidget {
-  const AssetJustAudioStage({super.key, required this.contentUrl});
+  const AssetJustAudioStage({
+    super.key,
+    required this.contentUrl,
+    this.propertiesJson = '',
+  });
 
   final String contentUrl;
+  final String propertiesJson;
 
   @override
   State<AssetJustAudioStage> createState() => _AssetJustAudioStageState();
@@ -43,7 +50,8 @@ class _AssetJustAudioStageState extends State<AssetJustAudioStage> {
   @override
   void didUpdateWidget(covariant AssetJustAudioStage oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.contentUrl != widget.contentUrl) {
+    if (oldWidget.contentUrl != widget.contentUrl ||
+        oldWidget.propertiesJson != widget.propertiesJson) {
       _load();
     }
   }
@@ -99,6 +107,7 @@ class _AssetJustAudioStageState extends State<AssetJustAudioStage> {
 
   Future<void> _loadWaveform() async {
     final contentUrl = widget.contentUrl;
+    final waveformUrl = _resolvedWaveformUrl(widget.propertiesJson);
     setState(() {
       _isWaveformLoading = true;
       _waveformError = '';
@@ -106,7 +115,7 @@ class _AssetJustAudioStageState extends State<AssetJustAudioStage> {
     });
     try {
       final load = await locator<LoadAudioWaveformUseCase>().execute(
-        contentUrl: contentUrl,
+        waveformUrl: waveformUrl,
       );
       if (!mounted || widget.contentUrl != contentUrl) {
         return;
@@ -254,7 +263,7 @@ class _AssetJustAudioStageState extends State<AssetJustAudioStage> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final data = WaveformData(
-          samples: _amplitudes,
+          samples: _normalizedAmplitudes(_amplitudes),
           durationSeconds: durationSeconds,
         );
         return WaveformMaterialScope(
@@ -282,4 +291,36 @@ class _AssetJustAudioStageState extends State<AssetJustAudioStage> {
       },
     );
   }
+}
+
+String _resolvedWaveformUrl(String propertiesJson) {
+  if (propertiesJson.trim().isEmpty) {
+    return '';
+  }
+  try {
+    final decoded = jsonDecode(propertiesJson);
+    if (decoded is! Map) {
+      return '';
+    }
+    final raw = decoded['waveform_url'];
+    if (raw is! String || raw.trim().isEmpty) {
+      return '';
+    }
+    return locator<MediaTagDataSource>().resolveContentUrl(raw.trim());
+  } catch (_) {
+    return '';
+  }
+}
+
+List<double> _normalizedAmplitudes(List<double> amplitudes) {
+  var peak = 0.0;
+  for (final value in amplitudes) {
+    if (value > peak) {
+      peak = value;
+    }
+  }
+  if (peak <= 0) {
+    return amplitudes;
+  }
+  return [for (final value in amplitudes) value / peak];
 }

@@ -1,4 +1,4 @@
-/// 타임라인 음성 클립용 `.wave` 피크 로드 결과.
+/// 음성 클립·에셋용 waveform_url JSON 피크 로드 결과.
 class AudioWaveformLoad {
   const AudioWaveformLoad({
     required this.waveUrl,
