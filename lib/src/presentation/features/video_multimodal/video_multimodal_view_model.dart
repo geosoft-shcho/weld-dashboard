@@ -3633,10 +3633,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   String _formatClock(double seconds) {
     final whole = seconds.floor().clamp(0, 86400);
-    final minutes = whole ~/ 60;
+    final hours = whole ~/ 3600;
+    final minutes = (whole % 3600) ~/ 60;
     final remain = whole % 60;
     final minuteText = minutes.toString().padLeft(2, '0');
     final secondText = remain.toString().padLeft(2, '0');
-    return '$minuteText:$secondText';
+    return '$hours:$minuteText:$secondText';
   }
 }
