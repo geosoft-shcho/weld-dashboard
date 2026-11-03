@@ -87,6 +87,21 @@ class _AssetLookupBody extends StatelessWidget {
           ),
         ),
         InfoLabel(
+          label: '후처리',
+          child: ComboBox<String>(
+            value: viewModel.postprocessStatusCode,
+            items: [
+              for (final status in AssetPostprocessStatusOption.statuses)
+                ComboBoxItem(value: status.code, child: Text(status.label)),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                viewModel.didSelectPostprocessStatus(value);
+              }
+            },
+          ),
+        ),
+        InfoLabel(
           label: '파일 이름',
           child: SizedBox(
             width: 200,
@@ -242,6 +257,7 @@ Future<void> _didTapUpload(
     loadFormats: viewModel.loadUploadFormats,
     pickFiles: viewModel.pickUploadFiles,
     uploadQueue: viewModel.uploadAssetQueue,
+    retryPostprocess: viewModel.retryPostprocess,
   );
   if (result == null || !result.hasSuccess || !context.mounted) {
     return;

@@ -22,6 +22,7 @@ class ListAssetLookupPageUseCase {
     bool sharedOnly = false,
     DateTime? startedFrom,
     DateTime? startedTo,
+    String postprocessStatusCode = '',
     required int pageSize,
     required String pageToken,
   }) {
@@ -41,6 +42,7 @@ class ListAssetLookupPageUseCase {
       sharedOnly: sharedOnly,
       startedFrom: startedFrom,
       startedTo: startedTo,
+      postprocessStatusCode: postprocessStatusCode,
       pageSize: pageSize,
       pageToken: pageToken,
     );

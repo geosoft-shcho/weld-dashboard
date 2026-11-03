@@ -45,6 +45,7 @@ class AssetLookupViewModel extends ChangeNotifier {
   String _equipmentId = '';
   String _jobId = '';
   String _passId = '';
+  String _postprocessStatusCode = '';
   bool _unattachedOnly = false;
   List<Equipment> _equipment = const [];
   List<WorkHistoryItem> _jobs = const [];
@@ -66,6 +67,7 @@ class AssetLookupViewModel extends ChangeNotifier {
   String get equipmentId => _equipmentId;
   String get jobId => _jobId;
   String get passId => _passId;
+  String get postprocessStatusCode => _postprocessStatusCode;
   bool get unattachedOnly => _unattachedOnly;
   List<Equipment> get equipment => _equipment;
   List<WorkHistoryItem> get jobs => _jobs;
@@ -212,6 +214,13 @@ class AssetLookupViewModel extends ChangeNotifier {
     _reloadListAssets();
   }
 
+  void didSelectPostprocessStatus(String statusCode) {
+    if (_postprocessStatusCode == statusCode) {
+      return;
+    }
+    _postprocessStatusCode = statusCode;
+    _reloadListAssets();
+  }
 
   void didSelectEquipment(String equipmentId) {
     if (_equipmentId == equipmentId) {
@@ -305,6 +314,7 @@ class AssetLookupViewModel extends ChangeNotifier {
         jobId: _jobId,
         passNo: _passNo,
         sharedOnly: _sharedOnly,
+        postprocessStatusCode: _postprocessStatusCode,
         pageSize: pageSize,
         pageToken: pageToken,
       );
@@ -434,6 +444,7 @@ class AssetLookupViewModel extends ChangeNotifier {
       jobId: _jobId,
       passNo: _passNo,
       sharedOnly: _sharedOnly,
+      postprocessStatusCode: _postprocessStatusCode,
       pageSize: pageSize,
       pageToken: '',
     );

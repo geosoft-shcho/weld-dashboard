@@ -8,8 +8,22 @@ import '../../../domain/entities/tool_run.dart';
 import '../../../domain/use_cases/get_asset_lookup_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
+import '../../../domain/use_cases/retry_asset_postprocess_use_case.dart';
 import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_asset_use_case.dart';
+
+/// 후처리 다시 걸기 끝난 뒤 `displayInfoBar`에 넘길 알림.
+class AssetPostprocessRetryNotice {
+  const AssetPostprocessRetryNotice({
+    required this.title,
+    required this.message,
+    required this.severity,
+  });
+
+  final String title;
+  final String message;
+  final InfoBarSeverity severity;
+}
 
 class AssetLookupDetailViewModel extends ChangeNotifier {
   AssetLookupDetailViewModel({
@@ -18,11 +32,13 @@ class AssetLookupDetailViewModel extends ChangeNotifier {
     required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
     required ListEquipmentLookupUseCase listEquipmentLookupUseCase,
     required UpdateAssetUseCase updateAssetUseCase,
+    required RetryAssetPostprocessUseCase retryAssetPostprocessUseCase,
     required ToolRunUseCase toolRunUseCase,
   }) : _getAssetLookupUseCase = getAssetLookupUseCase,
        _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase,
        _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
        _updateAssetUseCase = updateAssetUseCase,
+       _retryAssetPostprocessUseCase = retryAssetPostprocessUseCase,
        _toolRunUseCase = toolRunUseCase;
 
   final String assetId;
@@ -30,18 +46,21 @@ class AssetLookupDetailViewModel extends ChangeNotifier {
   final ListWorkHistoryPageUseCase _listWorkHistoryPageUseCase;
   final ListEquipmentLookupUseCase _listEquipmentLookupUseCase;
   final UpdateAssetUseCase _updateAssetUseCase;
+  final RetryAssetPostprocessUseCase _retryAssetPostprocessUseCase;
   final ToolRunUseCase _toolRunUseCase;
 
   AssetLookupRow? _asset;
   List<WorkHistoryItem> _jobs = const [];
   List<Equipment> _equipment = const [];
   bool _isLoading = false;
+  bool _isRetryingPostprocess = false;
   bool _hasError = false;
   String _errorMessage = '';
 
   AssetLookupRow? get asset => _asset;
   List<WorkHistoryItem> get jobs => _jobs;
   bool get isLoading => _isLoading;
+  bool get isRetryingPostprocess => _isRetryingPostprocess;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
 
@@ -109,6 +128,113 @@ class AssetLookupDetailViewModel extends ChangeNotifier {
       }
       await Future<void>.delayed(const Duration(seconds: 1));
     }
+  }
+
+  Future<AssetPostprocessRetryNotice?> retryPostprocess() async {
+    final current = _asset;
+    if (current == null || !current.postprocess.isFailed) {
+      return null;
+    }
+    if (_isRetryingPostprocess) {
+      return null;
+    }
+    _isRetryingPostprocess = true;
+    notifyListeners();
+    try {
+      final runId = await _retryAssetPostprocessUseCase.execute(
+        assetId: assetId,
+      );
+      final run = await _waitPostprocessRun(runId);
+      await load();
+      return _noticeFrom(run: run, reloaded: _asset?.postprocess);
+    } catch (error) {
+      return AssetPostprocessRetryNotice(
+        title: '후처리 다시 걸기 실패',
+        message: error.toString(),
+        severity: InfoBarSeverity.error,
+      );
+    } finally {
+      _isRetryingPostprocess = false;
+      notifyListeners();
+    }
+  }
+
+  Future<ToolRunSnapshot> _waitPostprocessRun(String runId) async {
+    while (true) {
+      final run = await _toolRunUseCase.getRun(runId: runId);
+      if (run.status == ToolRunStatus.succeeded ||
+          run.status == ToolRunStatus.failed ||
+          run.status == ToolRunStatus.canceled) {
+        return run;
+      }
+      await Future<void>.delayed(const Duration(seconds: 1));
+    }
+  }
+
+  AssetPostprocessRetryNotice _noticeFrom({
+    required ToolRunSnapshot run,
+    required AssetPostprocessSummary? reloaded,
+  }) {
+    final statusLabel = AssetPostprocessStatusOption.labelOf(
+      reloaded?.statusCode.isNotEmpty == true
+          ? reloaded!.statusCode
+          : _statusCodeOf(run.status),
+    );
+    final reason = run.errorMessage.isNotEmpty
+        ? run.errorMessage
+        : (reloaded?.errorMessage ?? '');
+    final lines = <String>[
+      '실행 ${run.runId}',
+      'GetRun · ${_runStatusLabel(run.status)}',
+      '재조회 · $statusLabel',
+      if (reason.isNotEmpty) '사유 · $reason',
+    ];
+    switch (run.status) {
+      case ToolRunStatus.succeeded:
+        return AssetPostprocessRetryNotice(
+          title: '후처리 완료',
+          message: lines.join('\n'),
+          severity: InfoBarSeverity.success,
+        );
+      case ToolRunStatus.failed:
+        return AssetPostprocessRetryNotice(
+          title: '후처리 실패',
+          message: lines.join('\n'),
+          severity: InfoBarSeverity.error,
+        );
+      case ToolRunStatus.canceled:
+        return AssetPostprocessRetryNotice(
+          title: '후처리 취소',
+          message: lines.join('\n'),
+          severity: InfoBarSeverity.error,
+        );
+      case ToolRunStatus.queued:
+      case ToolRunStatus.running:
+        return AssetPostprocessRetryNotice(
+          title: '후처리 진행',
+          message: lines.join('\n'),
+          severity: InfoBarSeverity.info,
+        );
+    }
+  }
+
+  String _statusCodeOf(ToolRunStatus status) {
+    switch (status) {
+      case ToolRunStatus.queued:
+        return 'queued';
+      case ToolRunStatus.running:
+        return 'running';
+      case ToolRunStatus.succeeded:
+        return 'succeeded';
+      case ToolRunStatus.failed:
+        return 'failed';
+      case ToolRunStatus.canceled:
+        return 'canceled';
+    }
+  }
+
+  String _runStatusLabel(ToolRunStatus status) {
+    return AssetPostprocessStatusOption.labelOf(_statusCodeOf(status));
   }
 
   Future<void> load() async {

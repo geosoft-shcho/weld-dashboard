@@ -5,6 +5,51 @@ class AssetDisplayField {
   final String value;
 }
 
+/// 마지막 후처리(Asset.postprocess) 요약. 없으면 빈 값.
+class AssetPostprocessSummary {
+  const AssetPostprocessSummary({
+    this.runId = '',
+    this.statusCode = '',
+    this.errorMessage = '',
+  });
+
+  final String runId;
+  final String statusCode;
+  final String errorMessage;
+
+  bool get isEmpty => runId.isEmpty && statusCode.isEmpty;
+
+  bool get isFailed => statusCode == 'failed';
+}
+
+class AssetPostprocessStatusOption {
+  const AssetPostprocessStatusOption({
+    required this.code,
+    required this.label,
+  });
+
+  final String code;
+  final String label;
+
+  static const List<AssetPostprocessStatusOption> statuses = [
+    AssetPostprocessStatusOption(code: '', label: '전체'),
+    AssetPostprocessStatusOption(code: 'queued', label: '대기'),
+    AssetPostprocessStatusOption(code: 'running', label: '처리 중'),
+    AssetPostprocessStatusOption(code: 'succeeded', label: '완료'),
+    AssetPostprocessStatusOption(code: 'failed', label: '실패'),
+    AssetPostprocessStatusOption(code: 'canceled', label: '취소'),
+  ];
+
+  static String labelOf(String code) {
+    for (final status in statuses) {
+      if (status.code == code) {
+        return status.label;
+      }
+    }
+    return code.isEmpty ? '—' : code;
+  }
+}
+
 class AssetLookupRow {
   const AssetLookupRow({
     required this.assetId,
@@ -27,6 +72,7 @@ class AssetLookupRow {
     this.contentUrl = '',
     this.mimeType = '',
     this.recordedAt,
+    this.postprocess = const AssetPostprocessSummary(),
   });
 
   final String assetId;
@@ -53,6 +99,7 @@ class AssetLookupRow {
   final String contentUrl;
   final String mimeType;
   final DateTime? recordedAt;
+  final AssetPostprocessSummary postprocess;
 }
 
 class AssetLookupPage {

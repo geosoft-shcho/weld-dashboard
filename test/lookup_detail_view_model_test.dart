@@ -400,6 +400,7 @@ class _FakeAssetLookupRepository implements AssetLookupRepository {
     bool sharedOnly = false,
     DateTime? startedFrom,
     DateTime? startedTo,
+    String postprocessStatusCode = '',
     required int pageSize,
     required String pageToken,
   }) async {

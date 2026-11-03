@@ -130,6 +130,48 @@ class _AssetLookupDetailBody extends StatelessWidget {
             ),
           ),
         ),
+        LookupDetailSectionTitle(
+          '후처리',
+          trailing: asset.postprocess.isFailed
+              ? Button(
+                  onPressed: viewModel.isRetryingPostprocess
+                      ? null
+                      : () => _didTapRetryPostprocess(context, viewModel),
+                  child: Text(
+                    viewModel.isRetryingPostprocess
+                        ? '다시 거는 중…'
+                        : '후처리 다시 걸기',
+                  ),
+                )
+              : null,
+        ),
+        if (asset.postprocess.isEmpty)
+          Text(
+            '후처리 없음',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withValues(alpha: 0.55),
+            ),
+          )
+        else
+          LookupDetailKvGrid(
+            entries: [
+              (
+                '상태',
+                AssetPostprocessStatusOption.labelOf(
+                  asset.postprocess.statusCode,
+                ),
+              ),
+              (
+                '실행 번호',
+                asset.postprocess.runId.isEmpty
+                    ? '—'
+                    : asset.postprocess.runId,
+              ),
+              if (asset.postprocess.errorMessage.isNotEmpty)
+                ('사유', asset.postprocess.errorMessage),
+            ],
+          ),
         const LookupDetailSectionTitle('정보'),
         LookupDetailKvGrid(
           entries: [
@@ -196,6 +238,27 @@ class _AssetLookupDetailBody extends StatelessWidget {
     );
   }
 
+}
+
+Future<void> _didTapRetryPostprocess(
+  BuildContext context,
+  AssetLookupDetailViewModel viewModel,
+) async {
+  final notice = await viewModel.retryPostprocess();
+  if (notice == null || !context.mounted) {
+    return;
+  }
+  await displayInfoBar(
+    context,
+    builder: (context, close) {
+      return InfoBar(
+        title: Text(notice.title),
+        content: Text(notice.message),
+        severity: notice.severity,
+        onClose: close,
+      );
+    },
+  );
 }
 
 Future<void> _didTapEditSubjectSituation(

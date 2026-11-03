@@ -34,6 +34,7 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     bool sharedOnly = false,
     DateTime? startedFrom,
     DateTime? startedTo,
+    String postprocessStatusCode = '',
     required int pageSize,
     required String pageToken,
   }) async {
@@ -70,6 +71,11 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
       request.job = job;
     } else if (unattachedOnly) {
       request.unattachedOnly = true;
+    }
+    final postprocessStatus = _postprocessStatusOf(postprocessStatusCode);
+    if (postprocessStatus !=
+        asset_pb.PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED) {
+      request.postprocessStatus = postprocessStatus;
     }
     if (kDebugMode) {
       debugPrint('[AssetLookup] request ${request.toProto3Json()}');
@@ -298,7 +304,51 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
       recordedAt: asset.hasRecordedAt()
           ? asset.recordedAt.toDateTime().toLocal()
           : null,
+      postprocess: asset.hasPostprocess()
+          ? AssetPostprocessSummary(
+              runId: asset.postprocess.runId == Int64.ZERO
+                  ? ''
+                  : idText(asset.postprocess.runId),
+              statusCode: _postprocessStatusCodeOf(asset.postprocess.status),
+              errorMessage: asset.postprocess.errorMessage,
+            )
+          : const AssetPostprocessSummary(),
     );
+  }
+
+  asset_pb.PostprocessStatus _postprocessStatusOf(String code) {
+    switch (code) {
+      case 'queued':
+        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_QUEUED;
+      case 'running':
+        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_RUNNING;
+      case 'succeeded':
+        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_SUCCEEDED;
+      case 'failed':
+        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_FAILED;
+      case 'canceled':
+        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_CANCELED;
+      default:
+        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED;
+    }
+  }
+
+  String _postprocessStatusCodeOf(asset_pb.PostprocessStatus status) {
+    switch (status) {
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_QUEUED:
+        return 'queued';
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_RUNNING:
+        return 'running';
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_SUCCEEDED:
+        return 'succeeded';
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_FAILED:
+        return 'failed';
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_CANCELED:
+        return 'canceled';
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED:
+      default:
+        return '';
+    }
   }
 
   @override
