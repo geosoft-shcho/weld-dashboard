@@ -165,48 +165,60 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
 
   @override
   Widget build(BuildContext context) {
-    return NotificationListener<ScrollNotification>(
-      onNotification: (notification) {
-        if (notification.metrics.extentAfter < 240) {
-          _viewModel.didScrollAttachmentsNearEnd();
-        }
-        return false;
-      },
-      child: ListView(
-        children: [
-          JobDetailActionBar(
-            leading: _viewModel.didLoadAttachments
-                ? Text('전체 첨부 ${_viewModel.attachmentTotalCount}건')
-                : null,
-            items: [
-              CommandBarButton(
-                icon: const Icon(FluentIcons.upload, size: 12),
-                label: const CommandBarLabel('에셋 올리기'),
-                onPressed: _isWorking ? null : _didTapUploadToJob,
-              ),
-              CommandBarButton(
-                icon: const Icon(FluentIcons.attach, size: 12),
-                label: const CommandBarLabel('에셋 붙이기(첨부만)'),
-                onPressed: _isWorking ? null : _didTapAttach,
-              ),
-            ],
-          ),
-          if (_error.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Text(_error, style: TextStyle(color: Colors.red)),
-          ],
-          if (_isWorking) ...[
-            const SizedBox(height: 12),
-            const Center(child: ProgressRing()),
-          ],
-          const SizedBox(height: 12),
-          if (_viewModel.attachments.isEmpty)
-            const SectionEmptyPlaceholder(
-              title: '첨부가 없습니다',
-              message: '이 작업에 올리거나 이미 있는 에셋을 붙일 수 있습니다.',
-            )
-          else
-            Container(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (_viewModel.isLoadingAttachments) const ProgressBar(),
+        Expanded(
+          child: NotificationListener<ScrollNotification>(
+            onNotification: (notification) {
+              if (notification.metrics.extentAfter < 240) {
+                _viewModel.didScrollAttachmentsNearEnd();
+              }
+              return false;
+            },
+            child: ListView(
+              children: [
+                JobDetailActionBar(
+                  leading: _viewModel.didLoadAttachments
+                      ? Text('전체 첨부 ${_viewModel.attachmentTotalCount}건')
+                      : null,
+                  items: [
+                    CommandBarButton(
+                      icon: const Icon(FluentIcons.upload, size: 12),
+                      label: const CommandBarLabel('에셋 올리기'),
+                      onPressed: _isWorking || _viewModel.isLoadingAttachments
+                          ? null
+                          : _didTapUploadToJob,
+                    ),
+                    CommandBarButton(
+                      icon: const Icon(FluentIcons.attach, size: 12),
+                      label: const CommandBarLabel('에셋 붙이기(첨부만)'),
+                      onPressed: _isWorking || _viewModel.isLoadingAttachments
+                          ? null
+                          : _didTapAttach,
+                    ),
+                  ],
+                ),
+                if (_error.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(_error, style: TextStyle(color: Colors.red)),
+                ],
+                if (_isWorking) ...[
+                  const SizedBox(height: 12),
+                  const Center(child: ProgressRing()),
+                ],
+                const SizedBox(height: 12),
+                if (_viewModel.isLoadingAttachments &&
+                    _viewModel.attachments.isEmpty)
+                  const SizedBox.shrink()
+                else if (_viewModel.attachments.isEmpty)
+                  const SectionEmptyPlaceholder(
+                    title: '첨부가 없습니다',
+                    message: '이 작업에 올리거나 이미 있는 에셋을 붙일 수 있습니다.',
+                  )
+                else
+                  Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: AppTheme.SURFACE_RAISED,
@@ -328,12 +340,15 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
                 ],
               ),
             ),
-          if (_viewModel.isLoadingMoreAttachments) ...[
-            const SizedBox(height: 12),
-            const Center(child: ProgressRing()),
-          ],
-        ],
-      ),
+                if (_viewModel.isLoadingMoreAttachments) ...[
+                  const SizedBox(height: 12),
+                  const Center(child: ProgressRing()),
+                ],
+              ],
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

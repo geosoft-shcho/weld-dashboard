@@ -309,7 +309,6 @@ void setupLocator({required bool pdfrxReady}) {
       listAssetLookupPageUseCase: locator(),
       jobAdminUseCase: locator(),
       loadWorkHistoryMastersUseCase: locator(),
-      listEquipmentLookupUseCase: locator(),
       listUploadFormatsUseCase: locator(),
       uploadAssetUseCase: locator(),
       uploadAssetQueueUseCase: locator(),

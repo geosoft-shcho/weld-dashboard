@@ -13,7 +13,6 @@ import '../../../domain/entities/worker.dart';
 import '../../../domain/entities/worker_kind.dart';
 import '../../../domain/use_cases/job_admin_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
-import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_upload_formats_use_case.dart';
 import '../../../domain/use_cases/upload_asset_queue_use_case.dart';
 import '../../../domain/use_cases/upload_asset_use_case.dart';
@@ -29,7 +28,6 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     required ListAssetLookupPageUseCase listAssetLookupPageUseCase,
     required JobAdminUseCase jobAdminUseCase,
     required LoadWorkHistoryMastersUseCase loadWorkHistoryMastersUseCase,
-    required ListEquipmentLookupUseCase listEquipmentLookupUseCase,
     required ListUploadFormatsUseCase listUploadFormatsUseCase,
     required UploadAssetUseCase uploadAssetUseCase,
     required UploadAssetQueueUseCase uploadAssetQueueUseCase,
@@ -37,7 +35,6 @@ class JobLookupDetailViewModel extends ChangeNotifier {
        _listAssetLookupPageUseCase = listAssetLookupPageUseCase,
        _jobAdminUseCase = jobAdminUseCase,
        _loadWorkHistoryMastersUseCase = loadWorkHistoryMastersUseCase,
-       _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
        _listUploadFormatsUseCase = listUploadFormatsUseCase,
        _uploadAssetUseCase = uploadAssetUseCase,
        _uploadAssetQueueUseCase = uploadAssetQueueUseCase;
@@ -47,7 +44,6 @@ class JobLookupDetailViewModel extends ChangeNotifier {
   final ListAssetLookupPageUseCase _listAssetLookupPageUseCase;
   final JobAdminUseCase _jobAdminUseCase;
   final LoadWorkHistoryMastersUseCase _loadWorkHistoryMastersUseCase;
-  final ListEquipmentLookupUseCase _listEquipmentLookupUseCase;
   final ListUploadFormatsUseCase _listUploadFormatsUseCase;
   final UploadAssetUseCase _uploadAssetUseCase;
   final UploadAssetQueueUseCase _uploadAssetQueueUseCase;
@@ -57,12 +53,12 @@ class JobLookupDetailViewModel extends ChangeNotifier {
   WorkHistoryCatalog? _masters;
   List<JobPassDetail> _passes = const [];
   List<AssetLookupRow> _attachments = const [];
-  List<Equipment> _equipment = const [];
   JobLookupDetailTab _tab = JobLookupDetailTab.info;
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
   bool _didLoadAttachments = false;
+  bool _isLoadingAttachments = false;
   String _attachmentsNextPageToken = '';
   bool _isLoadingMoreAttachments = false;
   int _attachmentsTotalCount = 0;
@@ -76,8 +72,9 @@ class JobLookupDetailViewModel extends ChangeNotifier {
   List<Worker> get workers => _masters?.workers ?? const [];
   List<JobPassDetail> get passes => _passes;
   List<AssetLookupRow> get attachments => _attachments;
-  List<Equipment> get equipment => _equipment;
+  List<Equipment> get equipment => _masters?.equipments ?? const [];
   bool get doesHaveMoreAttachments => _attachmentsNextPageToken.isNotEmpty;
+  bool get isLoadingAttachments => _isLoadingAttachments;
   bool get isLoadingMoreAttachments => _isLoadingMoreAttachments;
   bool get didLoadAttachments => _didLoadAttachments;
   int get attachmentTotalCount => _attachmentsTotalCount > 0
@@ -131,32 +128,10 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
     try {
-      try {
-        _masters = await _loadWorkHistoryMastersUseCase.execute();
-      } catch (_) {
-        _masters = null;
-      }
-      try {
-        _equipment = await _listEquipmentLookupUseCase.execute();
-      } catch (_) {
-        _equipment = const [];
-      }
-      try {
-        final detail = await _jobAdminUseCase.getJobDetail(jobId: jobId);
-        _applyDetail(detail);
-      } catch (_) {
-        final options = await _listJobPassesUseCase.execute(jobId: jobId);
-        _passes = [
-          for (final pass in options)
-            JobPassDetail(
-              passId: pass.passId,
-              passNo: pass.passNo,
-              kind: PassKind.unknown,
-              startedAt: pass.startedAt,
-              endedAt: pass.endedAt,
-            ),
-        ];
-      }
+      await Future.wait([
+        _loadMasters(),
+        _loadJobDetail(),
+      ]);
       if (_job == null) {
         _hasError = true;
         _errorMessage = '작업을 찾지 못했습니다.';
@@ -169,6 +144,33 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<void> _loadMasters() async {
+    try {
+      _masters = await _loadWorkHistoryMastersUseCase.execute();
+    } catch (_) {
+      _masters = null;
+    }
+  }
+
+  Future<void> _loadJobDetail() async {
+    try {
+      final detail = await _jobAdminUseCase.getJobDetail(jobId: jobId);
+      _applyDetail(detail);
+    } catch (_) {
+      final options = await _listJobPassesUseCase.execute(jobId: jobId);
+      _passes = [
+        for (final pass in options)
+          JobPassDetail(
+            passId: pass.passId,
+            passNo: pass.passNo,
+            kind: PassKind.unknown,
+            startedAt: pass.startedAt,
+            endedAt: pass.endedAt,
+          ),
+      ];
     }
   }
 
@@ -188,6 +190,8 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     _attachmentsMoreVersion++;
     _attachmentsNextPageToken = '';
     _isLoadingMoreAttachments = false;
+    _isLoadingAttachments = true;
+    notifyListeners();
     try {
       final page = await _listAssetLookupPageUseCase.execute(
         kindCode: '',
@@ -209,6 +213,9 @@ class JobLookupDetailViewModel extends ChangeNotifier {
       _errorMessage = error.toString();
       _attachments = const [];
       _attachmentsNextPageToken = '';
+    } finally {
+      _isLoadingAttachments = false;
+      notifyListeners();
     }
   }
 
