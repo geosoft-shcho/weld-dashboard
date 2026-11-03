@@ -8,7 +8,9 @@ import '../../../domain/entities/job_detail.dart';
 import '../../../domain/entities/work_history_catalog.dart';
 import '../../../domain/entities/work_history_item.dart';
 import '../../../domain/entities/work_history_project_filter.dart';
+import '../../../domain/entities/work_history_query.dart';
 import '../../../domain/entities/worker.dart';
+import '../../../domain/entities/worker_kind.dart';
 import '../../../domain/use_cases/job_admin_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
@@ -16,17 +18,13 @@ import '../../../domain/use_cases/list_upload_formats_use_case.dart';
 import '../../../domain/use_cases/upload_asset_queue_use_case.dart';
 import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../domain/use_cases/list_job_passes_use_case.dart';
-import '../../../domain/use_cases/load_work_detail_catalog_use_case.dart';
 import '../../../domain/use_cases/load_work_history_masters_use_case.dart';
-import '../../../domain/use_cases/query_work_detail_use_case.dart';
 
 enum JobLookupDetailTab { info, passes, attachments }
 
 class JobLookupDetailViewModel extends ChangeNotifier {
   JobLookupDetailViewModel({
     required this.jobId,
-    required LoadWorkDetailCatalogUseCase loadWorkDetailCatalogUseCase,
-    required QueryWorkDetailUseCase queryWorkDetailUseCase,
     required ListJobPassesUseCase listJobPassesUseCase,
     required ListAssetLookupPageUseCase listAssetLookupPageUseCase,
     required JobAdminUseCase jobAdminUseCase,
@@ -35,9 +33,7 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     required ListUploadFormatsUseCase listUploadFormatsUseCase,
     required UploadAssetUseCase uploadAssetUseCase,
     required UploadAssetQueueUseCase uploadAssetQueueUseCase,
-  }) : _loadWorkDetailCatalogUseCase = loadWorkDetailCatalogUseCase,
-       _queryWorkDetailUseCase = queryWorkDetailUseCase,
-       _listJobPassesUseCase = listJobPassesUseCase,
+  }) : _listJobPassesUseCase = listJobPassesUseCase,
        _listAssetLookupPageUseCase = listAssetLookupPageUseCase,
        _jobAdminUseCase = jobAdminUseCase,
        _loadWorkHistoryMastersUseCase = loadWorkHistoryMastersUseCase,
@@ -47,8 +43,6 @@ class JobLookupDetailViewModel extends ChangeNotifier {
        _uploadAssetQueueUseCase = uploadAssetQueueUseCase;
 
   final String jobId;
-  final LoadWorkDetailCatalogUseCase _loadWorkDetailCatalogUseCase;
-  final QueryWorkDetailUseCase _queryWorkDetailUseCase;
   final ListJobPassesUseCase _listJobPassesUseCase;
   final ListAssetLookupPageUseCase _listAssetLookupPageUseCase;
   final JobAdminUseCase _jobAdminUseCase;
@@ -69,6 +63,12 @@ class JobLookupDetailViewModel extends ChangeNotifier {
   bool _hasError = false;
   String _errorMessage = '';
   bool _didLoadAttachments = false;
+  String _attachmentsNextPageToken = '';
+  bool _isLoadingMoreAttachments = false;
+  int _attachmentsTotalCount = 0;
+  int _attachmentsMoreVersion = 0;
+
+  static const int attachmentsPageSize = WorkHistoryQuery.BATCH_SIZE;
 
   WorkHistoryItem? get job => _job;
   JobDetail? get detail => _detail;
@@ -77,6 +77,12 @@ class JobLookupDetailViewModel extends ChangeNotifier {
   List<JobPassDetail> get passes => _passes;
   List<AssetLookupRow> get attachments => _attachments;
   List<Equipment> get equipment => _equipment;
+  bool get doesHaveMoreAttachments => _attachmentsNextPageToken.isNotEmpty;
+  bool get isLoadingMoreAttachments => _isLoadingMoreAttachments;
+  bool get didLoadAttachments => _didLoadAttachments;
+  int get attachmentTotalCount => _attachmentsTotalCount > 0
+      ? _attachmentsTotalCount
+      : (_detail?.attachmentCount ?? _job?.attachmentCount ?? 0);
 
   /// 올리기 다이얼로그용 — 잠긴 작업 하나와 그 패스들.
   List<WorkHistoryItem> get uploadJobs {
@@ -125,12 +131,6 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
     try {
-      final catalog = await _loadWorkDetailCatalogUseCase.execute(jobId: jobId);
-      final detail = _queryWorkDetailUseCase.execute(
-        catalog: catalog,
-        jobId: jobId,
-      );
-      _job = detail.job;
       try {
         _masters = await _loadWorkHistoryMastersUseCase.execute();
       } catch (_) {
@@ -142,8 +142,8 @@ class JobLookupDetailViewModel extends ChangeNotifier {
         _equipment = const [];
       }
       try {
-        _detail = await _jobAdminUseCase.getJobDetail(jobId: jobId);
-        _passes = _detail!.passes;
+        final detail = await _jobAdminUseCase.getJobDetail(jobId: jobId);
+        _applyDetail(detail);
       } catch (_) {
         final options = await _listJobPassesUseCase.execute(jobId: jobId);
         _passes = [
@@ -160,9 +160,6 @@ class JobLookupDetailViewModel extends ChangeNotifier {
       if (_job == null) {
         _hasError = true;
         _errorMessage = '작업을 찾지 못했습니다.';
-      }
-      if (_tab == JobLookupDetailTab.attachments) {
-        await _loadAttachments();
       }
     } catch (error) {
       _hasError = true;
@@ -188,6 +185,9 @@ class JobLookupDetailViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadAttachments() async {
+    _attachmentsMoreVersion++;
+    _attachmentsNextPageToken = '';
+    _isLoadingMoreAttachments = false;
     try {
       final page = await _listAssetLookupPageUseCase.execute(
         kindCode: '',
@@ -195,14 +195,64 @@ class JobLookupDetailViewModel extends ChangeNotifier {
         equipmentId: '',
         unattachedOnly: false,
         jobId: jobId,
-        pageSize: 200,
+        pageSize: attachmentsPageSize,
         pageToken: '',
       );
       _attachments = page.rows;
+      _attachmentsNextPageToken = page.nextPageToken;
+      if (page.totalCount > 0) {
+        _attachmentsTotalCount = page.totalCount;
+      }
       _didLoadAttachments = true;
+      _syncAttachmentCountToDetail();
     } catch (error) {
       _errorMessage = error.toString();
       _attachments = const [];
+      _attachmentsNextPageToken = '';
+    }
+  }
+
+  Future<void> didScrollAttachmentsNearEnd() async {
+    if (!doesHaveMoreAttachments ||
+        _isLoading ||
+        _isLoadingMoreAttachments ||
+        !_didLoadAttachments) {
+      return;
+    }
+    final version = ++_attachmentsMoreVersion;
+    final pageToken = _attachmentsNextPageToken;
+    _isLoadingMoreAttachments = true;
+    notifyListeners();
+    try {
+      final page = await _listAssetLookupPageUseCase.execute(
+        kindCode: '',
+        query: '',
+        equipmentId: '',
+        unattachedOnly: false,
+        jobId: jobId,
+        pageSize: attachmentsPageSize,
+        pageToken: pageToken,
+      );
+      if (version != _attachmentsMoreVersion) {
+        return;
+      }
+      final existing = {for (final row in _attachments) row.assetId};
+      _attachments = [
+        ..._attachments,
+        for (final row in page.rows)
+          if (!existing.contains(row.assetId)) row,
+      ];
+      _attachmentsNextPageToken = page.nextPageToken;
+      if (page.totalCount > 0) {
+        _attachmentsTotalCount = page.totalCount;
+      }
+    } catch (_) {
+      // 이어 받기 실패는 이미 받은 목록을 유지한다.
+    } finally {
+      if (version == _attachmentsMoreVersion) {
+        _isLoadingMoreAttachments = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -213,7 +263,7 @@ class JobLookupDetailViewModel extends ChangeNotifier {
       original: original,
       draft: draft,
     );
-    _applyDetail(updated);
+    _applyDetail(_withPreservedAttachmentCount(updated));
     notifyListeners();
     return updated;
   }
@@ -268,52 +318,96 @@ class JobLookupDetailViewModel extends ChangeNotifier {
 
   Future<void> _reloadDetail() async {
     final updated = await _jobAdminUseCase.getJobDetail(jobId: jobId);
-    _applyDetail(updated);
+    _applyDetail(_withPreservedAttachmentCount(updated));
     notifyListeners();
   }
 
   Future<void> _reloadAttachments() async {
     _didLoadAttachments = false;
     await _loadAttachments();
-    final detail = _detail;
-    if (detail != null) {
-      _applyDetail(
-        JobDetail(
-          jobId: detail.jobId,
-          jobKey: detail.jobKey,
-          commonKey: detail.commonKey,
-          projectId: detail.projectId,
-          projectNo: detail.projectNo,
-          unitNo: detail.unitNo,
-          itemCode: detail.itemCode,
-          itemName: detail.itemName,
-          jointNo: detail.jointNo,
-          jobName: detail.jobName,
-          itemNo: detail.itemNo,
-          operationNo: detail.operationNo,
-          material: detail.material,
-          outerDiameterMm: detail.outerDiameterMm,
-          thicknessMm: detail.thicknessMm,
-          workerId: detail.workerId,
-          workerName: detail.workerName,
-          startedAt: detail.startedAt,
-          endedAt: detail.endedAt,
-          reportSetId: detail.reportSetId,
-          activeReportSetId: detail.activeReportSetId,
-          hasReport: detail.hasReport,
-          attachmentCount: _attachments.length,
-          passes: detail.passes,
-        ),
-      );
-    }
     notifyListeners();
+  }
+
+  void _syncAttachmentCountToDetail() {
+    final detail = _detail;
+    if (detail == null) {
+      return;
+    }
+    final count = _attachmentsTotalCount > 0
+        ? _attachmentsTotalCount
+        : detail.attachmentCount;
+    if (count == detail.attachmentCount) {
+      return;
+    }
+    _applyDetail(
+      JobDetail(
+        jobId: detail.jobId,
+        jobKey: detail.jobKey,
+        commonKey: detail.commonKey,
+        projectId: detail.projectId,
+        projectNo: detail.projectNo,
+        unitNo: detail.unitNo,
+        itemCode: detail.itemCode,
+        itemName: detail.itemName,
+        jointNo: detail.jointNo,
+        jobName: detail.jobName,
+        itemNo: detail.itemNo,
+        operationNo: detail.operationNo,
+        material: detail.material,
+        outerDiameterMm: detail.outerDiameterMm,
+        thicknessMm: detail.thicknessMm,
+        workerId: detail.workerId,
+        workerName: detail.workerName,
+        startedAt: detail.startedAt,
+        endedAt: detail.endedAt,
+        reportSetId: detail.reportSetId,
+        activeReportSetId: detail.activeReportSetId,
+        hasReport: detail.hasReport,
+        attachmentCount: count,
+        passes: detail.passes,
+      ),
+    );
+  }
+
+  JobDetail _withPreservedAttachmentCount(JobDetail updated) {
+    final count = _attachmentsTotalCount > 0
+        ? _attachmentsTotalCount
+        : (_detail?.attachmentCount ?? updated.attachmentCount);
+    if (count == updated.attachmentCount) {
+      return updated;
+    }
+    return JobDetail(
+      jobId: updated.jobId,
+      jobKey: updated.jobKey,
+      commonKey: updated.commonKey,
+      projectId: updated.projectId,
+      projectNo: updated.projectNo,
+      unitNo: updated.unitNo,
+      itemCode: updated.itemCode,
+      itemName: updated.itemName,
+      jointNo: updated.jointNo,
+      jobName: updated.jobName,
+      itemNo: updated.itemNo,
+      operationNo: updated.operationNo,
+      material: updated.material,
+      outerDiameterMm: updated.outerDiameterMm,
+      thicknessMm: updated.thicknessMm,
+      workerId: updated.workerId,
+      workerName: updated.workerName,
+      startedAt: updated.startedAt,
+      endedAt: updated.endedAt,
+      reportSetId: updated.reportSetId,
+      activeReportSetId: updated.activeReportSetId,
+      hasReport: updated.hasReport,
+      attachmentCount: count,
+      passes: updated.passes,
+    );
   }
 
   void _applyDetail(JobDetail detail) {
     _detail = detail;
     _passes = detail.passes;
     final old = _job;
-    if (old == null) return;
     _job = WorkHistoryItem(
       jobId: detail.jobId,
       jobKey: detail.jobKey,
@@ -326,15 +420,24 @@ class JobLookupDetailViewModel extends ChangeNotifier {
       hasReport: detail.hasReport,
       workerId: detail.workerId,
       workerName: detail.workerName.isEmpty
-          ? old.workerName
+          ? (old?.workerName ?? '')
           : detail.workerName,
-      workerKind: old.workerKind,
-      equipmentId: old.equipmentId,
-      equipmentName: old.equipmentName,
+      workerKind: old?.workerKind ?? WorkerKind.unknown,
+      equipmentId: old?.equipmentId ?? '',
+      equipmentName: old?.equipmentName ?? '',
       workedAt: detail.startedAt,
       passCount: detail.passes.length,
       attachmentCount: detail.attachmentCount,
-      passes: old.passes,
+      passes: old?.passes ??
+          [
+            for (final pass in detail.passes)
+              JobPassOption(
+                passId: pass.passId,
+                passNo: pass.passNo,
+                startedAt: pass.startedAt,
+                endedAt: pass.endedAt,
+              ),
+          ],
     );
   }
 

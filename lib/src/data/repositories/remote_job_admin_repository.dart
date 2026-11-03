@@ -20,10 +20,6 @@ class RemoteJobAdminRepository implements JobAdminRepository {
       work_pb.GetJobRequest(jobId: protoId(jobId)),
     );
     final job = response.job;
-    final attachments = await _mediaTag.assetService.listAssets(
-      asset_pb.ListAssetsRequest(pageSize: 1)
-        ..job = asset_pb.AssetJobFilter(jobId: protoId(jobId)),
-    );
     return JobDetail(
       jobId: idText(job.jobId),
       jobKey: job.jobKey,
@@ -49,7 +45,7 @@ class RemoteJobAdminRepository implements JobAdminRepository {
       reportSetId: idText(job.reportSetId),
       activeReportSetId: idText(job.activeReportSetId),
       hasReport: idText(job.activeReportSetId).isNotEmpty,
-      attachmentCount: attachments.totalCount,
+      attachmentCount: 0,
       passes: [
         for (final pass in response.passes)
           JobPassDetail(

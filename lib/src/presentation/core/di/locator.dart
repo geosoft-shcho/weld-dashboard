@@ -305,8 +305,6 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactoryParam<JobLookupDetailViewModel, String, void>(
     (jobId, _) => JobLookupDetailViewModel(
       jobId: jobId,
-      loadWorkDetailCatalogUseCase: locator(),
-      queryWorkDetailUseCase: locator(),
       listJobPassesUseCase: locator(),
       listAssetLookupPageUseCase: locator(),
       jobAdminUseCase: locator(),
