@@ -89,7 +89,8 @@ extension type ToolServiceClient (connect.Transport _transport) {
   ///            ASSET_UPLOADED는 보내지 않는다 — 파일을 올릴 때 서버가 스스로 만드는 후처리 실행의 표시다(보내면 InvalidArgument).
   /// 내장 도구(audio-extract·asset-postprocess·pdf-to-text)는 서버 안 워커가, 외부 도구(STT·포즈)는 서버가 그 도구의
   /// 서버에 보내 실행한다. 어느 쪽이든 부르는 방법은 같다.
-  ///   MANUAL 대상: pdf-to-text는 PDF 클립(원본 PDF를 추출 — 이미 성적서 세트가 있으면 already_exists),
+  ///   MANUAL 대상: pdf-to-text는 PDF 클립(원본 PDF를 추출 — 이미 성적서 세트가 있으면 지우고 다시 추출한다. 본인 품목이
+  ///   있거나 작업이 고른 세트가 있으면 아무것도 지우지 않고 실행이 FAILED),
   ///   audio-extract는 영상 Asset 또는 영상 클립(클립이면 원본 전체에서 뽑은 소리를 그 클립과 같은 구간에 오디오 클립으로 놓는다).
   ///   STT를 클립에 돌리면 그 클립 구간만 인식하고, 문장마다의 자막 클립을 그 클립이 있는 작업에만 그 클립 위치 기준으로
   ///   놓는다(클립을 옮겨 놓았어도 겹친다). Asset에 돌리면 그 파일이 붙은 작업마다 촬영 시각 기준으로 놓는다.
@@ -166,9 +167,9 @@ extension type ToolServiceClient (connect.Transport _transport) {
   }
 
   /// 서버 전체 대기열 — 기다리는(QUEUED)·도는(RUNNING) 실행 전부와 내장 도구 워커 수. 큐 모니터링 화면용으로 짧게 폴링한다.
-  /// 대기열: 내장 도구 하나(asset-postprocess·audio-extract·pdf-to-text, 서버 안 워커 local_workers개가 동시에 돎)와 외부 도구
-  /// 서버(endpoint)마다 하나(STT·포즈, 서버마다 한 건씩 보냄). 모두 오래된 것부터 꺼내지만 서버마다 따로라, 바쁜 서버를 기다리는
-  /// 실행보다 뒤에 들어온 다른 서버의 실행이 먼저 시작할 수 있다. 끝난 실행은 ListRuns로 본다.
+  /// 대기열: 후처리 "postprocess"(PDF를 뺀 asset-postprocess — 올린 사람이 기다린다), 작업 "work"(audio-extract · pdf-to-text · PDF 후처리),
+  /// 외부 도구 서버(endpoint)마다 하나(STT·포즈, 서버마다 한 건씩 보냄). 대기열마다 오래된 것부터 따로 꺼내 뒤에 들어온 다른 대기열의
+  /// 실행이 먼저 시작할 수 있다. 끝난 실행은 ListRuns로 본다.
   Future<mediatagtoolv1tool.GetQueueResponse> getQueue(
     mediatagtoolv1tool.GetQueueRequest input, {
     connect.Headers? headers,

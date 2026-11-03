@@ -27,8 +27,6 @@ abstract class MediaComposeServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $4.ListTimelinesRequest request);
   $async.Future<$4.UpdateTimelineResponse> updateTimeline(
       $pb.ServerContext ctx, $4.UpdateTimelineRequest request);
-  $async.Future<$4.ChangeTimelineStatusResponse> changeTimelineStatus(
-      $pb.ServerContext ctx, $4.ChangeTimelineStatusRequest request);
   $async.Future<$4.DeleteTimelineResponse> deleteTimeline(
       $pb.ServerContext ctx, $4.DeleteTimelineRequest request);
   $async.Future<$4.CreateTrackResponse> createTrack(
@@ -54,8 +52,6 @@ abstract class MediaComposeServiceBase extends $pb.GeneratedService {
         return $4.ListTimelinesRequest();
       case 'UpdateTimeline':
         return $4.UpdateTimelineRequest();
-      case 'ChangeTimelineStatus':
-        return $4.ChangeTimelineStatusRequest();
       case 'DeleteTimeline':
         return $4.DeleteTimelineRequest();
       case 'CreateTrack':
@@ -86,9 +82,6 @@ abstract class MediaComposeServiceBase extends $pb.GeneratedService {
         return listTimelines(ctx, request as $4.ListTimelinesRequest);
       case 'UpdateTimeline':
         return updateTimeline(ctx, request as $4.UpdateTimelineRequest);
-      case 'ChangeTimelineStatus':
-        return changeTimelineStatus(
-            ctx, request as $4.ChangeTimelineStatusRequest);
       case 'DeleteTimeline':
         return deleteTimeline(ctx, request as $4.DeleteTimelineRequest);
       case 'CreateTrack':

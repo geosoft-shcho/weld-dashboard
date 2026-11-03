@@ -14,34 +14,8 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
-class TimelineStatus extends $pb.ProtobufEnum {
-  static const TimelineStatus TIMELINE_STATUS_UNSPECIFIED =
-      TimelineStatus._(0, _omitEnumNames ? '' : 'TIMELINE_STATUS_UNSPECIFIED');
-  static const TimelineStatus TIMELINE_STATUS_DRAFT =
-      TimelineStatus._(1, _omitEnumNames ? '' : 'TIMELINE_STATUS_DRAFT');
-  static const TimelineStatus TIMELINE_STATUS_SUGGESTED =
-      TimelineStatus._(2, _omitEnumNames ? '' : 'TIMELINE_STATUS_SUGGESTED');
-  static const TimelineStatus TIMELINE_STATUS_CONFIRMED =
-      TimelineStatus._(3, _omitEnumNames ? '' : 'TIMELINE_STATUS_CONFIRMED');
-  static const TimelineStatus TIMELINE_STATUS_REJECTED =
-      TimelineStatus._(4, _omitEnumNames ? '' : 'TIMELINE_STATUS_REJECTED');
-
-  static const $core.List<TimelineStatus> values = <TimelineStatus>[
-    TIMELINE_STATUS_UNSPECIFIED,
-    TIMELINE_STATUS_DRAFT,
-    TIMELINE_STATUS_SUGGESTED,
-    TIMELINE_STATUS_CONFIRMED,
-    TIMELINE_STATUS_REJECTED,
-  ];
-
-  static final $core.List<TimelineStatus?> _byValue =
-      $pb.ProtobufEnum.$_initByValueList(values, 4);
-  static TimelineStatus? valueOf($core.int value) =>
-      value < 0 || value >= _byValue.length ? null : _byValue[value];
-
-  const TimelineStatus._(super.value, super.name);
-}
-
+/// 타임라인 상태. 화면의 작업 흐름 표시용이고 서버는 이 값으로 아무것도 거르지 않는다(임베딩 대상도 상태와 무관 —
+/// 타임라인 단위 임베딩은 없다). 화면이 흐름을 쓰지 않으면 무시해도 된다.
 /// Clip이 무엇을 가리키는지(화면이 어떤 렌더러로 그릴지).
 class ClipKind extends $pb.ProtobufEnum {
   static const ClipKind CLIP_KIND_UNSPECIFIED =

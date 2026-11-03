@@ -13,7 +13,6 @@ void main() {
       timeline: compose_pb.Timeline(
         jobId: Int64(1),
         name: '용접',
-        status: compose_pb.TimelineStatus.TIMELINE_STATUS_DRAFT,
       ),
       tracks: [
         compose_pb.Track(
@@ -57,7 +56,6 @@ void main() {
     );
 
     expect(timeline.name, '용접');
-    expect(timeline.status, JobTimelineStatus.draft);
     expect(timeline.tracks, hasLength(1));
     expect(timeline.tracks.single.name, '영상');
     final clip = timeline.tracks.single.clips.single;

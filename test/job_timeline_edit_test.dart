@@ -20,7 +20,6 @@ import 'package:weld_dashboard/src/domain/repositories/label_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/tool_run_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/work_detail_repository.dart';
 import 'package:weld_dashboard/src/domain/timeline_time.dart';
-import 'package:weld_dashboard/src/domain/use_cases/change_timeline_status_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
@@ -297,7 +296,6 @@ void main() {
       endNs: '2000000000',
     );
 
-    expect(viewModel.timelineStatus, JobTimelineStatus.draft);
     expect(viewModel.timelineTracks.single.name, '영상');
     expect(viewModel.timelineHint, '구간이 겹칩니다.');
     expect(repository.getCount, 1);
@@ -306,32 +304,6 @@ void main() {
     expect(repository.lastEndNs, '2000000000');
   });
 
-  test('aborted status change reloads the timeline', () async {
-    final repository = _ScriptedTimelineRepository(_loadedTimeline());
-    final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
-    repository
-      ..failure = const JobTimelineException(
-        '먼저 바뀌었습니다.',
-        failure: JobTimelineFailure.aborted,
-      )
-      ..nextTimeline = const JobTimeline(
-        jobId: 'job-1',
-        name: '최신',
-        status: JobTimelineStatus.confirmed,
-        tracks: [],
-      );
-
-    await viewModel.changeTimelineStatus(JobTimelineStatus.suggested);
-
-    expect(viewModel.timelineStatus, JobTimelineStatus.confirmed);
-    expect(viewModel.timelineHint, contains('다시 불러왔습니다'));
-    expect(viewModel.timelineHint, contains('먼저 바뀌었습니다'));
-    expect(repository.changeCount, 1);
-    expect(repository.lastFromStatus, JobTimelineStatus.draft);
-    expect(repository.lastToStatus, JobTimelineStatus.suggested);
-    expect(repository.getCount, 2);
-  });
 
   test('unchanged timeline save skips UpdateTimeline', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
@@ -397,8 +369,7 @@ void main() {
     repository.nextTimeline = const JobTimeline(
       jobId: 'job-1',
       name: '',
-      status: JobTimelineStatus.draft,
-      tracks: [],
+        tracks: [],
     );
 
     final message = await viewModel.didDeleteTimeline();
@@ -431,8 +402,7 @@ void main() {
     repository.nextTimeline = const JobTimeline(
       jobId: 'job-1',
       name: '작업',
-      status: JobTimelineStatus.draft,
-      tracks: [],
+        tracks: [],
     );
     viewModel.didSelectSampleClip('clip-1');
 
@@ -613,20 +583,6 @@ void main() {
     expect(viewModel.takeCreatedClipNotice(), isNull);
   });
 
-  test('status choice sends a different status', () async {
-    final repository = _ScriptedTimelineRepository(_loadedTimeline());
-    final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
-
-    await viewModel.didChooseTimelineStatus(JobTimelineStatus.draft);
-    expect(repository.changeCount, 0);
-
-    await viewModel.didChooseTimelineStatus(JobTimelineStatus.confirmed);
-
-    expect(repository.changeCount, 1);
-    expect(repository.lastFromStatus, JobTimelineStatus.draft);
-    expect(repository.lastToStatus, JobTimelineStatus.confirmed);
-  });
 
   testWidgets('server clip delete asks before the request', (tester) async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
@@ -636,8 +592,7 @@ void main() {
     repository.nextTimeline = const JobTimeline(
       jobId: 'job-1',
       name: '작업',
-      status: JobTimelineStatus.draft,
-      tracks: [],
+        tracks: [],
     );
     await tester.pumpWidget(_board(viewModel));
 
@@ -664,27 +619,6 @@ void main() {
     expect(viewModel.selectedClipId, isEmpty);
   });
 
-  testWidgets(
-    'status choices stay in the toolbar',
-    (tester) async {
-      final repository = _ScriptedTimelineRepository(_loadedTimeline());
-      final viewModel = _viewModel(repository);
-      await tester.runAsync(() => viewModel.loadAttachments());
-      await tester.pumpWidget(_board(viewModel));
-
-      await tester.tap(find.text('상태 초안'));
-      await tester.pump();
-      expect(find.text('확정'), findsOneWidget);
-      expect(repository.changeCount, 0);
-
-      await tester.tap(find.text('확정'));
-      await tester.pump();
-      expect(repository.changeCount, 1);
-      expect(repository.lastToStatus, JobTimelineStatus.confirmed);
-      expect(find.text('확정'), findsNothing);
-    },
-    skip: true, // 보드 헤더에서 상태 메뉴(_statusMenu)가 주석 처리됨
-  );
 
   testWidgets('track buttons call the open track actions', (tester) async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
@@ -1880,7 +1814,6 @@ JobTimeline _twoClipTimeline({
   return JobTimeline(
     jobId: 'job-1',
     name: '작업',
-    status: JobTimelineStatus.draft,
     tracks: [
       TimelineTrack(
         trackId: 'track-video',
@@ -1922,7 +1855,6 @@ JobTimeline _manyTrackTimeline() {
   return JobTimeline(
     jobId: 'job-1',
     name: '작업',
-    status: JobTimelineStatus.draft,
     tracks: [
       for (var index = 0; index < 24; index++)
         TimelineTrack(
@@ -2080,7 +2012,6 @@ JobTimeline _loadedTimeline() {
   return const JobTimeline(
     jobId: 'job-1',
     name: '작업',
-    status: JobTimelineStatus.draft,
     tracks: [
       TimelineTrack(
         trackId: 'track-video',
@@ -2121,7 +2052,6 @@ VideoMultimodalViewModel _viewModel(
     createClipUseCase: CreateClipUseCase(repository),
     updateClipUseCase: UpdateClipUseCase(repository),
     deleteClipUseCase: DeleteClipUseCase(repository),
-    changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(repository),
     updateTimelineUseCase: UpdateTimelineUseCase(repository),
     deleteTimelineUseCase: DeleteTimelineUseCase(repository),
     toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
@@ -2296,15 +2226,6 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
     throw StateError('unused');
   }
 
-  @override
-  Future<void> changeTimelineStatus({
-    required String jobId,
-    required JobTimelineStatus fromStatus,
-    required JobTimelineStatus toStatus,
-  }) {
-    writeCount += 1;
-    throw StateError('unused');
-  }
 
   @override
   Future<void> updateTimeline({
@@ -2347,7 +2268,6 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
   int updateCount = 0;
   int deleteCount = 0;
   String? lastDeletedClipId;
-  int changeCount = 0;
   int updateTimelineCount = 0;
   String? lastUpdatedTimelineName;
   String? lastUpdatedTimelineDescription;
@@ -2379,8 +2299,6 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
   String? lastStartNs;
   String? lastEndNs;
   String? lastTrackId;
-  JobTimelineStatus? lastFromStatus;
-  JobTimelineStatus? lastToStatus;
   final List<String> getClipIds = [];
   final List<Completer<ClipDetail>> clipGates = [];
   bool holdClipDetail = false;
@@ -2521,21 +2439,6 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
     lastDeletedClipId = clipId;
   }
 
-  @override
-  Future<void> changeTimelineStatus({
-    required String jobId,
-    required JobTimelineStatus fromStatus,
-    required JobTimelineStatus toStatus,
-  }) async {
-    changeCount += 1;
-    lastFromStatus = fromStatus;
-    lastToStatus = toStatus;
-    final error = failure;
-    failure = null;
-    if (error != null) {
-      throw error;
-    }
-  }
 
   @override
   Future<void> updateTimeline({
@@ -2555,7 +2458,6 @@ class _ScriptedTimelineRepository implements JobTimelineRepository {
       jobId: current.jobId,
       name: name ?? current.name,
       description: description ?? current.description,
-      status: current.status,
       tracks: current.tracks,
       overlays: current.overlays,
     );

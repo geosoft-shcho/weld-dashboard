@@ -44,7 +44,7 @@ extension type MediaComposeServiceClient (connect.Transport _transport) {
     );
   }
 
-  /// name, description, labels
+  /// name, description
   Future<mediatagcomposev1compose.UpdateTimelineResponse> updateTimeline(
     mediatagcomposev1compose.UpdateTimelineRequest input, {
     connect.Headers? headers,
@@ -54,24 +54,6 @@ extension type MediaComposeServiceClient (connect.Transport _transport) {
   }) {
     return connect.Client(_transport).unary(
       specs.MediaComposeService.updateTimeline,
-      input,
-      signal: signal,
-      headers: headers,
-      onHeader: onHeader,
-      onTrailer: onTrailer,
-    );
-  }
-
-  /// 현재 상태가 from_status일 때만 바꾼다. 아니면 Aborted(다른 요청이 먼저 바꿈).
-  Future<mediatagcomposev1compose.ChangeTimelineStatusResponse> changeTimelineStatus(
-    mediatagcomposev1compose.ChangeTimelineStatusRequest input, {
-    connect.Headers? headers,
-    connect.AbortSignal? signal,
-    Function(connect.Headers)? onHeader,
-    Function(connect.Headers)? onTrailer,
-  }) {
-    return connect.Client(_transport).unary(
-      specs.MediaComposeService.changeTimelineStatus,
       input,
       signal: signal,
       headers: headers,

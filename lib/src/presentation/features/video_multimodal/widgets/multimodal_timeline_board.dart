@@ -39,7 +39,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   double _trackedPlayhead = -1;
   String _trackedClipId = '';
   TimelineClipEdit? _edit;
-  bool _isStatusChoicesOpen = false;
 
   VideoMultimodalViewModel get viewModel => widget.viewModel;
 
@@ -406,8 +405,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                 onPressed: canEditTrack ? _confirmDeleteTrack : null,
               ),
             ),
-            // 임시 메뉴 비활성화
-            // _statusMenu(),
           ],
         ),
       ),
@@ -446,40 +443,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _statusMenu() {
-    final current = viewModel.timelineStatus;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _tool(
-          '상태 ${_timelineStatusLabel(current)}',
-          selected: _isStatusChoicesOpen,
-          onPressed: () {
-            setState(() => _isStatusChoicesOpen = !_isStatusChoicesOpen);
-          },
-        ),
-        if (_isStatusChoicesOpen)
-          for (final status in const [
-            JobTimelineStatus.draft,
-            JobTimelineStatus.suggested,
-            JobTimelineStatus.confirmed,
-            JobTimelineStatus.rejected,
-          ])
-            if (status != current)
-              Padding(
-                padding: const EdgeInsets.only(left: 2),
-                child: _tool(
-                  _timelineStatusLabel(status),
-                  onPressed: () {
-                    setState(() => _isStatusChoicesOpen = false);
-                    viewModel.didChooseTimelineStatus(status);
-                  },
-                ),
-              ),
-      ],
     );
   }
 
@@ -1322,20 +1285,5 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     }
     return clip.attachmentId.isNotEmpty &&
         clip.attachmentId == (viewModel.selectedBar?.attachmentId ?? '');
-  }
-}
-
-String _timelineStatusLabel(JobTimelineStatus status) {
-  switch (status) {
-    case JobTimelineStatus.draft:
-      return '초안';
-    case JobTimelineStatus.suggested:
-      return '제안';
-    case JobTimelineStatus.confirmed:
-      return '확정';
-    case JobTimelineStatus.rejected:
-      return '거절';
-    case JobTimelineStatus.unspecified:
-      return '상태 없음';
   }
 }

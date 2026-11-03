@@ -61,6 +61,42 @@ class AssetKind extends $pb.ProtobufEnum {
   const AssetKind._(super.value, super.name);
 }
 
+/// ToolRun.status(mediatag.tool.v1.RunStatus)와 같은 값 — tool.proto가 이 파일을 불러 그 enum을 쓰지 못해 따로 둔다.
+class PostprocessStatus extends $pb.ProtobufEnum {
+  static const PostprocessStatus POSTPROCESS_STATUS_UNSPECIFIED =
+      PostprocessStatus._(
+          0, _omitEnumNames ? '' : 'POSTPROCESS_STATUS_UNSPECIFIED');
+  static const PostprocessStatus POSTPROCESS_STATUS_QUEUED =
+      PostprocessStatus._(1, _omitEnumNames ? '' : 'POSTPROCESS_STATUS_QUEUED');
+  static const PostprocessStatus POSTPROCESS_STATUS_RUNNING =
+      PostprocessStatus._(
+          2, _omitEnumNames ? '' : 'POSTPROCESS_STATUS_RUNNING');
+  static const PostprocessStatus POSTPROCESS_STATUS_SUCCEEDED =
+      PostprocessStatus._(
+          3, _omitEnumNames ? '' : 'POSTPROCESS_STATUS_SUCCEEDED');
+  static const PostprocessStatus POSTPROCESS_STATUS_FAILED =
+      PostprocessStatus._(4, _omitEnumNames ? '' : 'POSTPROCESS_STATUS_FAILED');
+  static const PostprocessStatus POSTPROCESS_STATUS_CANCELED =
+      PostprocessStatus._(
+          5, _omitEnumNames ? '' : 'POSTPROCESS_STATUS_CANCELED');
+
+  static const $core.List<PostprocessStatus> values = <PostprocessStatus>[
+    POSTPROCESS_STATUS_UNSPECIFIED,
+    POSTPROCESS_STATUS_QUEUED,
+    POSTPROCESS_STATUS_RUNNING,
+    POSTPROCESS_STATUS_SUCCEEDED,
+    POSTPROCESS_STATUS_FAILED,
+    POSTPROCESS_STATUS_CANCELED,
+  ];
+
+  static final $core.List<PostprocessStatus?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 5);
+  static PostprocessStatus? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const PostprocessStatus._(super.value, super.name);
+}
+
 class DuplicateDecision extends $pb.ProtobufEnum {
   static const DuplicateDecision DUPLICATE_DECISION_UNSPECIFIED =
       DuplicateDecision._(

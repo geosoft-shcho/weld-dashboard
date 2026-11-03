@@ -26,79 +26,18 @@ export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
 
 export 'compose.pbenum.dart';
 
-class LabelRef extends $pb.GeneratedMessage {
-  factory LabelRef({
-    $fixnum.Int64? valueId,
-  }) {
-    final result = create();
-    if (valueId != null) result.valueId = valueId;
-    return result;
-  }
-
-  LabelRef._();
-
-  factory LabelRef.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory LabelRef.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'LabelRef',
-      package:
-          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
-      createEmptyInstance: create)
-    ..aInt64(2, _omitFieldNames ? '' : 'valueId')
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  LabelRef clone() => LabelRef()..mergeFromMessage(this);
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  LabelRef copyWith(void Function(LabelRef) updates) =>
-      super.copyWith((message) => updates(message as LabelRef)) as LabelRef;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static LabelRef create() => LabelRef._();
-  @$core.override
-  LabelRef createEmptyInstance() => create();
-  static $pb.PbList<LabelRef> createRepeated() => $pb.PbList<LabelRef>();
-  @$core.pragma('dart2js:noInline')
-  static LabelRef getDefault() =>
-      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<LabelRef>(create);
-  static LabelRef? _defaultInstance;
-
-  @$pb.TagNumber(2)
-  $fixnum.Int64 get valueId => $_getI64(0);
-  @$pb.TagNumber(2)
-  set valueId($fixnum.Int64 value) => $_setInt64(0, value);
-  @$pb.TagNumber(2)
-  $core.bool hasValueId() => $_has(0);
-  @$pb.TagNumber(2)
-  void clearValueId() => $_clearField(2);
-}
-
 class Timeline extends $pb.GeneratedMessage {
   factory Timeline({
     $fixnum.Int64? jobId,
     $core.String? name,
-    TimelineStatus? status,
     $core.String? description,
-    $core.Iterable<LabelRef>? labels,
-    $0.Timestamp? embeddedAt,
     $0.Timestamp? createdAt,
     $0.Timestamp? updatedAt,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
     if (name != null) result.name = name;
-    if (status != null) result.status = status;
     if (description != null) result.description = description;
-    if (labels != null) result.labels.addAll(labels);
-    if (embeddedAt != null) result.embeddedAt = embeddedAt;
     if (createdAt != null) result.createdAt = createdAt;
     if (updatedAt != null) result.updatedAt = updatedAt;
     return result;
@@ -120,15 +59,7 @@ class Timeline extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'jobId')
     ..aOS(2, _omitFieldNames ? '' : 'name')
-    ..e<TimelineStatus>(3, _omitFieldNames ? '' : 'status', $pb.PbFieldType.OE,
-        defaultOrMaker: TimelineStatus.TIMELINE_STATUS_UNSPECIFIED,
-        valueOf: TimelineStatus.valueOf,
-        enumValues: TimelineStatus.values)
     ..aOS(4, _omitFieldNames ? '' : 'description')
-    ..pc<LabelRef>(5, _omitFieldNames ? '' : 'labels', $pb.PbFieldType.PM,
-        subBuilder: LabelRef.create)
-    ..aOM<$0.Timestamp>(6, _omitFieldNames ? '' : 'embeddedAt',
-        subBuilder: $0.Timestamp.create)
     ..aOM<$0.Timestamp>(7, _omitFieldNames ? '' : 'createdAt',
         subBuilder: $0.Timestamp.create)
     ..aOM<$0.Timestamp>(8, _omitFieldNames ? '' : 'updatedAt',
@@ -172,59 +103,36 @@ class Timeline extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearName() => $_clearField(2);
 
-  @$pb.TagNumber(3)
-  TimelineStatus get status => $_getN(2);
-  @$pb.TagNumber(3)
-  set status(TimelineStatus value) => $_setField(3, value);
-  @$pb.TagNumber(3)
-  $core.bool hasStatus() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearStatus() => $_clearField(3);
-
   @$pb.TagNumber(4)
-  $core.String get description => $_getSZ(3);
+  $core.String get description => $_getSZ(2);
   @$pb.TagNumber(4)
-  set description($core.String value) => $_setString(3, value);
+  set description($core.String value) => $_setString(2, value);
   @$pb.TagNumber(4)
-  $core.bool hasDescription() => $_has(3);
+  $core.bool hasDescription() => $_has(2);
   @$pb.TagNumber(4)
   void clearDescription() => $_clearField(4);
 
-  @$pb.TagNumber(5)
-  $pb.PbList<LabelRef> get labels => $_getList(4);
-
-  @$pb.TagNumber(6)
-  $0.Timestamp get embeddedAt => $_getN(5);
-  @$pb.TagNumber(6)
-  set embeddedAt($0.Timestamp value) => $_setField(6, value);
-  @$pb.TagNumber(6)
-  $core.bool hasEmbeddedAt() => $_has(5);
-  @$pb.TagNumber(6)
-  void clearEmbeddedAt() => $_clearField(6);
-  @$pb.TagNumber(6)
-  $0.Timestamp ensureEmbeddedAt() => $_ensure(5);
-
   @$pb.TagNumber(7)
-  $0.Timestamp get createdAt => $_getN(6);
+  $0.Timestamp get createdAt => $_getN(3);
   @$pb.TagNumber(7)
   set createdAt($0.Timestamp value) => $_setField(7, value);
   @$pb.TagNumber(7)
-  $core.bool hasCreatedAt() => $_has(6);
+  $core.bool hasCreatedAt() => $_has(3);
   @$pb.TagNumber(7)
   void clearCreatedAt() => $_clearField(7);
   @$pb.TagNumber(7)
-  $0.Timestamp ensureCreatedAt() => $_ensure(6);
+  $0.Timestamp ensureCreatedAt() => $_ensure(3);
 
   @$pb.TagNumber(8)
-  $0.Timestamp get updatedAt => $_getN(7);
+  $0.Timestamp get updatedAt => $_getN(4);
   @$pb.TagNumber(8)
   set updatedAt($0.Timestamp value) => $_setField(8, value);
   @$pb.TagNumber(8)
-  $core.bool hasUpdatedAt() => $_has(7);
+  $core.bool hasUpdatedAt() => $_has(4);
   @$pb.TagNumber(8)
   void clearUpdatedAt() => $_clearField(8);
   @$pb.TagNumber(8)
-  $0.Timestamp ensureUpdatedAt() => $_ensure(7);
+  $0.Timestamp ensureUpdatedAt() => $_ensure(4);
 }
 
 class Track extends $pb.GeneratedMessage {
@@ -1131,13 +1039,11 @@ class GetTimelineResponse extends $pb.GeneratedMessage {
 class ListTimelinesRequest extends $pb.GeneratedMessage {
   factory ListTimelinesRequest({
     $core.String? projectNo,
-    TimelineStatus? status,
     $core.int? pageSize,
     $core.String? pageToken,
   }) {
     final result = create();
     if (projectNo != null) result.projectNo = projectNo;
-    if (status != null) result.status = status;
     if (pageSize != null) result.pageSize = pageSize;
     if (pageToken != null) result.pageToken = pageToken;
     return result;
@@ -1158,10 +1064,6 @@ class ListTimelinesRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'projectNo')
-    ..e<TimelineStatus>(2, _omitFieldNames ? '' : 'status', $pb.PbFieldType.OE,
-        defaultOrMaker: TimelineStatus.TIMELINE_STATUS_UNSPECIFIED,
-        valueOf: TimelineStatus.valueOf,
-        enumValues: TimelineStatus.values)
     ..a<$core.int>(3, _omitFieldNames ? '' : 'pageSize', $pb.PbFieldType.O3)
     ..aOS(4, _omitFieldNames ? '' : 'pageToken')
     ..hasRequiredFields = false;
@@ -1197,30 +1099,21 @@ class ListTimelinesRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   void clearProjectNo() => $_clearField(1);
 
-  @$pb.TagNumber(2)
-  TimelineStatus get status => $_getN(1);
-  @$pb.TagNumber(2)
-  set status(TimelineStatus value) => $_setField(2, value);
-  @$pb.TagNumber(2)
-  $core.bool hasStatus() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearStatus() => $_clearField(2);
-
   @$pb.TagNumber(3)
-  $core.int get pageSize => $_getIZ(2);
+  $core.int get pageSize => $_getIZ(1);
   @$pb.TagNumber(3)
-  set pageSize($core.int value) => $_setSignedInt32(2, value);
+  set pageSize($core.int value) => $_setSignedInt32(1, value);
   @$pb.TagNumber(3)
-  $core.bool hasPageSize() => $_has(2);
+  $core.bool hasPageSize() => $_has(1);
   @$pb.TagNumber(3)
   void clearPageSize() => $_clearField(3);
 
   @$pb.TagNumber(4)
-  $core.String get pageToken => $_getSZ(3);
+  $core.String get pageToken => $_getSZ(2);
   @$pb.TagNumber(4)
-  set pageToken($core.String value) => $_setString(3, value);
+  set pageToken($core.String value) => $_setString(2, value);
   @$pb.TagNumber(4)
-  $core.bool hasPageToken() => $_has(3);
+  $core.bool hasPageToken() => $_has(2);
   @$pb.TagNumber(4)
   void clearPageToken() => $_clearField(4);
 }
@@ -1417,163 +1310,6 @@ class UpdateTimelineResponse extends $pb.GeneratedMessage {
   static UpdateTimelineResponse getDefault() => _defaultInstance ??=
       $pb.GeneratedMessage.$_defaultFor<UpdateTimelineResponse>(create);
   static UpdateTimelineResponse? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  Timeline get timeline => $_getN(0);
-  @$pb.TagNumber(1)
-  set timeline(Timeline value) => $_setField(1, value);
-  @$pb.TagNumber(1)
-  $core.bool hasTimeline() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearTimeline() => $_clearField(1);
-  @$pb.TagNumber(1)
-  Timeline ensureTimeline() => $_ensure(0);
-}
-
-class ChangeTimelineStatusRequest extends $pb.GeneratedMessage {
-  factory ChangeTimelineStatusRequest({
-    $fixnum.Int64? jobId,
-    TimelineStatus? fromStatus,
-    TimelineStatus? toStatus,
-  }) {
-    final result = create();
-    if (jobId != null) result.jobId = jobId;
-    if (fromStatus != null) result.fromStatus = fromStatus;
-    if (toStatus != null) result.toStatus = toStatus;
-    return result;
-  }
-
-  ChangeTimelineStatusRequest._();
-
-  factory ChangeTimelineStatusRequest.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory ChangeTimelineStatusRequest.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'ChangeTimelineStatusRequest',
-      package:
-          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
-      createEmptyInstance: create)
-    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
-    ..e<TimelineStatus>(
-        2, _omitFieldNames ? '' : 'fromStatus', $pb.PbFieldType.OE,
-        defaultOrMaker: TimelineStatus.TIMELINE_STATUS_UNSPECIFIED,
-        valueOf: TimelineStatus.valueOf,
-        enumValues: TimelineStatus.values)
-    ..e<TimelineStatus>(
-        3, _omitFieldNames ? '' : 'toStatus', $pb.PbFieldType.OE,
-        defaultOrMaker: TimelineStatus.TIMELINE_STATUS_UNSPECIFIED,
-        valueOf: TimelineStatus.valueOf,
-        enumValues: TimelineStatus.values)
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ChangeTimelineStatusRequest clone() =>
-      ChangeTimelineStatusRequest()..mergeFromMessage(this);
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ChangeTimelineStatusRequest copyWith(
-          void Function(ChangeTimelineStatusRequest) updates) =>
-      super.copyWith(
-              (message) => updates(message as ChangeTimelineStatusRequest))
-          as ChangeTimelineStatusRequest;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static ChangeTimelineStatusRequest create() =>
-      ChangeTimelineStatusRequest._();
-  @$core.override
-  ChangeTimelineStatusRequest createEmptyInstance() => create();
-  static $pb.PbList<ChangeTimelineStatusRequest> createRepeated() =>
-      $pb.PbList<ChangeTimelineStatusRequest>();
-  @$core.pragma('dart2js:noInline')
-  static ChangeTimelineStatusRequest getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<ChangeTimelineStatusRequest>(create);
-  static ChangeTimelineStatusRequest? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $fixnum.Int64 get jobId => $_getI64(0);
-  @$pb.TagNumber(1)
-  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
-  @$pb.TagNumber(1)
-  $core.bool hasJobId() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearJobId() => $_clearField(1);
-
-  @$pb.TagNumber(2)
-  TimelineStatus get fromStatus => $_getN(1);
-  @$pb.TagNumber(2)
-  set fromStatus(TimelineStatus value) => $_setField(2, value);
-  @$pb.TagNumber(2)
-  $core.bool hasFromStatus() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearFromStatus() => $_clearField(2);
-
-  @$pb.TagNumber(3)
-  TimelineStatus get toStatus => $_getN(2);
-  @$pb.TagNumber(3)
-  set toStatus(TimelineStatus value) => $_setField(3, value);
-  @$pb.TagNumber(3)
-  $core.bool hasToStatus() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearToStatus() => $_clearField(3);
-}
-
-class ChangeTimelineStatusResponse extends $pb.GeneratedMessage {
-  factory ChangeTimelineStatusResponse({
-    Timeline? timeline,
-  }) {
-    final result = create();
-    if (timeline != null) result.timeline = timeline;
-    return result;
-  }
-
-  ChangeTimelineStatusResponse._();
-
-  factory ChangeTimelineStatusResponse.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory ChangeTimelineStatusResponse.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'ChangeTimelineStatusResponse',
-      package:
-          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
-      createEmptyInstance: create)
-    ..aOM<Timeline>(1, _omitFieldNames ? '' : 'timeline',
-        subBuilder: Timeline.create)
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ChangeTimelineStatusResponse clone() =>
-      ChangeTimelineStatusResponse()..mergeFromMessage(this);
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  ChangeTimelineStatusResponse copyWith(
-          void Function(ChangeTimelineStatusResponse) updates) =>
-      super.copyWith(
-              (message) => updates(message as ChangeTimelineStatusResponse))
-          as ChangeTimelineStatusResponse;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static ChangeTimelineStatusResponse create() =>
-      ChangeTimelineStatusResponse._();
-  @$core.override
-  ChangeTimelineStatusResponse createEmptyInstance() => create();
-  static $pb.PbList<ChangeTimelineStatusResponse> createRepeated() =>
-      $pb.PbList<ChangeTimelineStatusResponse>();
-  @$core.pragma('dart2js:noInline')
-  static ChangeTimelineStatusResponse getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<ChangeTimelineStatusResponse>(create);
-  static ChangeTimelineStatusResponse? _defaultInstance;
 
   @$pb.TagNumber(1)
   Timeline get timeline => $_getN(0);
@@ -3140,17 +2876,11 @@ class MediaComposeServiceApi {
       _client.invoke<ListTimelinesResponse>(ctx, 'MediaComposeService',
           'ListTimelines', request, ListTimelinesResponse());
 
-  /// name, description, labels
+  /// name, description
   $async.Future<UpdateTimelineResponse> updateTimeline(
           $pb.ClientContext? ctx, UpdateTimelineRequest request) =>
       _client.invoke<UpdateTimelineResponse>(ctx, 'MediaComposeService',
           'UpdateTimeline', request, UpdateTimelineResponse());
-
-  /// 현재 상태가 from_status일 때만 바꾼다. 아니면 Aborted(다른 요청이 먼저 바꿈).
-  $async.Future<ChangeTimelineStatusResponse> changeTimelineStatus(
-          $pb.ClientContext? ctx, ChangeTimelineStatusRequest request) =>
-      _client.invoke<ChangeTimelineStatusResponse>(ctx, 'MediaComposeService',
-          'ChangeTimelineStatus', request, ChangeTimelineStatusResponse());
 
   /// 편집 초기화: 타임라인과 트랙·클립의 행을 실제로 지운다(되돌릴 수 없음. 작업·첨부는 그대로).
   $async.Future<DeleteTimelineResponse> deleteTimeline(

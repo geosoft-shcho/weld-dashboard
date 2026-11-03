@@ -227,6 +227,7 @@ const ToolRun$json = {
       '6': '.google.protobuf.Timestamp',
       '10': 'startedAt'
     },
+    {'1': 'queue', '3': 19, '4': 1, '5': 9, '10': 'queue'},
   ],
   '9': [
     {'1': 4, '2': 5},
@@ -248,7 +249,8 @@ final $typed_data.Uint8List toolRunDescriptor = $convert.base64Decode(
     'ZWRSZW1haW5pbmdTZWNvbmRzEiMKDWF0dGVtcHRfY291bnQYDyABKAVSDGF0dGVtcHRDb3VudB'
     'IoChBvdXRwdXRfYXNzZXRfaWRzGBAgAygDUg5vdXRwdXRBc3NldElkcxIzCgZ0YXJnZXQYESAB'
     'KAsyGy5tZWRpYXRhZy50b29sLnYxLlJ1blRhcmdldFIGdGFyZ2V0EjkKCnN0YXJ0ZWRfYXQYEi'
-    'ABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wUglzdGFydGVkQXRKBAgEEAU=');
+    'ABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wUglzdGFydGVkQXQSFAoFcXVldWUYEyAB'
+    'KAlSBXF1ZXVlSgQIBBAF');
 
 @$core.Deprecated('Use runTargetDescriptor instead')
 const RunTarget$json = {
@@ -571,13 +573,35 @@ const GetQueueResponse$json = {
       '10': 'runs'
     },
     {'1': 'local_workers', '3': 2, '4': 1, '5': 5, '10': 'localWorkers'},
+    {
+      '1': 'workers_by_queue',
+      '3': 3,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.tool.v1.GetQueueResponse.WorkersByQueueEntry',
+      '10': 'workersByQueue'
+    },
   ],
+  '3': [GetQueueResponse_WorkersByQueueEntry$json],
+};
+
+@$core.Deprecated('Use getQueueResponseDescriptor instead')
+const GetQueueResponse_WorkersByQueueEntry$json = {
+  '1': 'WorkersByQueueEntry',
+  '2': [
+    {'1': 'key', '3': 1, '4': 1, '5': 9, '10': 'key'},
+    {'1': 'value', '3': 2, '4': 1, '5': 5, '10': 'value'},
+  ],
+  '7': {'7': true},
 };
 
 /// Descriptor for `GetQueueResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List getQueueResponseDescriptor = $convert.base64Decode(
     'ChBHZXRRdWV1ZVJlc3BvbnNlEi0KBHJ1bnMYASADKAsyGS5tZWRpYXRhZy50b29sLnYxLlRvb2'
-    'xSdW5SBHJ1bnMSIwoNbG9jYWxfd29ya2VycxgCIAEoBVIMbG9jYWxXb3JrZXJz');
+    'xSdW5SBHJ1bnMSIwoNbG9jYWxfd29ya2VycxgCIAEoBVIMbG9jYWxXb3JrZXJzEmAKEHdvcmtl'
+    'cnNfYnlfcXVldWUYAyADKAsyNi5tZWRpYXRhZy50b29sLnYxLkdldFF1ZXVlUmVzcG9uc2UuV2'
+    '9ya2Vyc0J5UXVldWVFbnRyeVIOd29ya2Vyc0J5UXVldWUaQQoTV29ya2Vyc0J5UXVldWVFbnRy'
+    'eRIQCgNrZXkYASABKAlSA2tleRIUCgV2YWx1ZRgCIAEoBVIFdmFsdWU6AjgB');
 
 @$core.Deprecated('Use cancelRunRequestDescriptor instead')
 const CancelRunRequest$json = {
@@ -688,6 +712,8 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.tool.v1.CancelRunResponse': CancelRunResponse$json,
   '.mediatag.tool.v1.GetQueueRequest': GetQueueRequest$json,
   '.mediatag.tool.v1.GetQueueResponse': GetQueueResponse$json,
+  '.mediatag.tool.v1.GetQueueResponse.WorkersByQueueEntry':
+      GetQueueResponse_WorkersByQueueEntry$json,
 };
 
 /// Descriptor for `ToolService`. Decode as a `google.protobuf.ServiceDescriptorProto`.

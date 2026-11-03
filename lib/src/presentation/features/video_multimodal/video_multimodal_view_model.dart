@@ -14,7 +14,6 @@ import '../../../domain/timeline_clip_playback.dart';
 import '../../../domain/timeline_time.dart';
 import '../../../domain/use_cases/ask_question_use_case.dart';
 import '../../../domain/use_cases/get_session_history_use_case.dart';
-import '../../../domain/use_cases/change_timeline_status_use_case.dart';
 import '../../../domain/use_cases/create_clip_use_case.dart';
 import '../../../domain/use_cases/create_track_use_case.dart';
 import '../../../domain/use_cases/delete_clip_use_case.dart';
@@ -56,7 +55,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required this._createClipUseCase,
     required this._updateClipUseCase,
     required this._deleteClipUseCase,
-    required this._changeTimelineStatusUseCase,
     required this._updateTimelineUseCase,
     required this._deleteTimelineUseCase,
     required this._toolRunUseCase,
@@ -101,7 +99,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final CreateClipUseCase _createClipUseCase;
   final UpdateClipUseCase _updateClipUseCase;
   final DeleteClipUseCase _deleteClipUseCase;
-  final ChangeTimelineStatusUseCase _changeTimelineStatusUseCase;
   final UpdateTimelineUseCase _updateTimelineUseCase;
   final DeleteTimelineUseCase _deleteTimelineUseCase;
   final ToolRunUseCase _toolRunUseCase;
@@ -225,7 +222,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get hasNotice => _noticeText.isNotEmpty;
   List<WorkAttachment> get attachments => List.unmodifiable(_attachments);
   List<TimelineTrack> get timelineTracks => List.unmodifiable(_timeline.tracks);
-  JobTimelineStatus get timelineStatus => _timeline.status;
   List<TimelineClip> get timelineClips => [
     for (final track in _timeline.tracks) ...track.clips,
   ];
@@ -2702,20 +2698,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return _timelineHint.isEmpty ? fallback : _timelineHint;
   }
 
-  Future<void> changeTimelineStatus(JobTimelineStatus toStatus) {
-    if (toStatus == _timeline.status) {
-      return Future.value();
-    }
-    return _commitServerWrite(
-      () => _changeTimelineStatusUseCase.execute(
-        jobId: jobId,
-        fromStatus: _timeline.status,
-        toStatus: toStatus,
-      ),
-      changedTrackCount: _changedTimelineTrackCount(),
-    );
-  }
-
   Future<void> didSubmitNewTimelineTrack(String name) async {
     final trimmed = name.trim();
     if (trimmed.isEmpty) {
@@ -2986,10 +2968,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       );
     }
     return Future.value();
-  }
-
-  Future<void> didChooseTimelineStatus(JobTimelineStatus toStatus) {
-    return changeTimelineStatus(toStatus);
   }
 
   void didTapSelectTool() {

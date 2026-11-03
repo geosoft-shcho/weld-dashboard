@@ -29,6 +29,8 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $3.GetAssetRequest request);
   $async.Future<$3.UpdateAssetResponse> updateAsset(
       $pb.ServerContext ctx, $3.UpdateAssetRequest request);
+  $async.Future<$3.RetryPostprocessResponse> retryPostprocess(
+      $pb.ServerContext ctx, $3.RetryPostprocessRequest request);
   $async.Future<$3.DeleteAssetResponse> deleteAsset(
       $pb.ServerContext ctx, $3.DeleteAssetRequest request);
   $async.Future<$3.ListDuplicateAssetsResponse> listDuplicateAssets(
@@ -54,6 +56,8 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
         return $3.GetAssetRequest();
       case 'UpdateAsset':
         return $3.UpdateAssetRequest();
+      case 'RetryPostprocess':
+        return $3.RetryPostprocessRequest();
       case 'DeleteAsset':
         return $3.DeleteAssetRequest();
       case 'ListDuplicateAssets':
@@ -85,6 +89,8 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
         return getAsset(ctx, request as $3.GetAssetRequest);
       case 'UpdateAsset':
         return updateAsset(ctx, request as $3.UpdateAssetRequest);
+      case 'RetryPostprocess':
+        return retryPostprocess(ctx, request as $3.RetryPostprocessRequest);
       case 'DeleteAsset':
         return deleteAsset(ctx, request as $3.DeleteAssetRequest);
       case 'ListDuplicateAssets':

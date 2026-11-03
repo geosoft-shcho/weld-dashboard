@@ -45,6 +45,7 @@ class Asset extends $pb.GeneratedMessage {
     $core.Iterable<DisplayField>? display,
     $core.String? subject,
     $core.String? situation,
+    PostprocessRun? postprocess,
   }) {
     final result = create();
     if (assetId != null) result.assetId = assetId;
@@ -65,6 +66,7 @@ class Asset extends $pb.GeneratedMessage {
     if (display != null) result.display.addAll(display);
     if (subject != null) result.subject = subject;
     if (situation != null) result.situation = situation;
+    if (postprocess != null) result.postprocess = postprocess;
     return result;
   }
 
@@ -108,6 +110,8 @@ class Asset extends $pb.GeneratedMessage {
         subBuilder: DisplayField.create)
     ..aOS(17, _omitFieldNames ? '' : 'subject')
     ..aOS(18, _omitFieldNames ? '' : 'situation')
+    ..aOM<PostprocessRun>(19, _omitFieldNames ? '' : 'postprocess',
+        subBuilder: PostprocessRun.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -185,6 +189,8 @@ class Asset extends $pb.GeneratedMessage {
 
   /// kind별 실측값(해상도·fps·채널 등). 영상·음성에는 start_time_ns가 있다 — 파일에 적힌 첫 프레임·샘플의 시각(ns).
   /// 잘라 낸 영상은 0이 아니어서 브라우저의 video.currentTime이 이 값부터 시작한다. 화면은 start_time_ns + Asset 축 위치로 찾아간다.
+  /// 음성에는 waveform_url이 있을 수 있다(응답 전용, content_url처럼 /files/… — 저장하지 말 것). 내용은 {"interval_ms": 10, "max_amplitudes": [...]}이고
+  /// max_amplitudes[i]는 Asset 축 i × interval_ms부터 한 구간의 최대 진폭(0~1, 1 = 16비트 전체 범위)이다. 없으면 파형 없이 그린다.
   @$pb.TagNumber(7)
   $0.Struct get properties => $_getN(6);
   @$pb.TagNumber(7)
@@ -295,6 +301,105 @@ class Asset extends $pb.GeneratedMessage {
   $core.bool hasSituation() => $_has(17);
   @$pb.TagNumber(18)
   void clearSituation() => $_clearField(18);
+
+  /// 응답 전용: 이 Asset의 마지막 후처리(asset-postprocess) 실행. 후처리가 없는 Asset(파생 · 일괄 적재)은 비어 있다.
+  /// FAILED면 RetryPostprocess로 다시 돌린다 — 이미 한 단계는 건너뛴다.
+  @$pb.TagNumber(19)
+  PostprocessRun get postprocess => $_getN(18);
+  @$pb.TagNumber(19)
+  set postprocess(PostprocessRun value) => $_setField(19, value);
+  @$pb.TagNumber(19)
+  $core.bool hasPostprocess() => $_has(18);
+  @$pb.TagNumber(19)
+  void clearPostprocess() => $_clearField(19);
+  @$pb.TagNumber(19)
+  PostprocessRun ensurePostprocess() => $_ensure(18);
+}
+
+/// 마지막 후처리 실행 요약. 자세한 것은 ToolService.GetRun(run_id).
+class PostprocessRun extends $pb.GeneratedMessage {
+  factory PostprocessRun({
+    $fixnum.Int64? runId,
+    PostprocessStatus? status,
+    $core.String? errorMessage,
+  }) {
+    final result = create();
+    if (runId != null) result.runId = runId;
+    if (status != null) result.status = status;
+    if (errorMessage != null) result.errorMessage = errorMessage;
+    return result;
+  }
+
+  PostprocessRun._();
+
+  factory PostprocessRun.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory PostprocessRun.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'PostprocessRun',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'runId')
+    ..e<PostprocessStatus>(
+        2, _omitFieldNames ? '' : 'status', $pb.PbFieldType.OE,
+        defaultOrMaker: PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED,
+        valueOf: PostprocessStatus.valueOf,
+        enumValues: PostprocessStatus.values)
+    ..aOS(3, _omitFieldNames ? '' : 'errorMessage')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PostprocessRun clone() => PostprocessRun()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  PostprocessRun copyWith(void Function(PostprocessRun) updates) =>
+      super.copyWith((message) => updates(message as PostprocessRun))
+          as PostprocessRun;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static PostprocessRun create() => PostprocessRun._();
+  @$core.override
+  PostprocessRun createEmptyInstance() => create();
+  static $pb.PbList<PostprocessRun> createRepeated() =>
+      $pb.PbList<PostprocessRun>();
+  @$core.pragma('dart2js:noInline')
+  static PostprocessRun getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<PostprocessRun>(create);
+  static PostprocessRun? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get runId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set runId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRunId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRunId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  PostprocessStatus get status => $_getN(1);
+  @$pb.TagNumber(2)
+  set status(PostprocessStatus value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasStatus() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearStatus() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get errorMessage => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set errorMessage($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasErrorMessage() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearErrorMessage() => $_clearField(3);
 }
 
 class DisplayField extends $pb.GeneratedMessage {
@@ -620,6 +725,7 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     $core.bool? unattachedOnly,
     $core.String? query,
     AssetJobFilter? job,
+    PostprocessStatus? postprocessStatus,
   }) {
     final result = create();
     if (pageSize != null) result.pageSize = pageSize;
@@ -631,6 +737,7 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     if (unattachedOnly != null) result.unattachedOnly = unattachedOnly;
     if (query != null) result.query = query;
     if (job != null) result.job = job;
+    if (postprocessStatus != null) result.postprocessStatus = postprocessStatus;
     return result;
   }
 
@@ -661,6 +768,11 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     ..aOS(8, _omitFieldNames ? '' : 'query')
     ..aOM<AssetJobFilter>(9, _omitFieldNames ? '' : 'job',
         subBuilder: AssetJobFilter.create)
+    ..e<PostprocessStatus>(
+        10, _omitFieldNames ? '' : 'postprocessStatus', $pb.PbFieldType.OE,
+        defaultOrMaker: PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED,
+        valueOf: PostprocessStatus.valueOf,
+        enumValues: PostprocessStatus.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -766,6 +878,15 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
   void clearJob() => $_clearField(9);
   @$pb.TagNumber(9)
   AssetJobFilter ensureJob() => $_ensure(8);
+
+  @$pb.TagNumber(10)
+  PostprocessStatus get postprocessStatus => $_getN(9);
+  @$pb.TagNumber(10)
+  set postprocessStatus(PostprocessStatus value) => $_setField(10, value);
+  @$pb.TagNumber(10)
+  $core.bool hasPostprocessStatus() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearPostprocessStatus() => $_clearField(10);
 }
 
 /// 이 조건에 맞는 작업에 직접 첨부(job_asset)된 Asset. 부모만 붙은 파생은 안 나온다(ListJobs.asset_id와 같은 기준).
@@ -1298,6 +1419,124 @@ class UpdateAssetResponse extends $pb.GeneratedMessage {
   $core.bool hasReplaceRunId() => $_has(1);
   @$pb.TagNumber(2)
   void clearReplaceRunId() => $_clearField(2);
+}
+
+class RetryPostprocessRequest extends $pb.GeneratedMessage {
+  factory RetryPostprocessRequest({
+    $fixnum.Int64? assetId,
+  }) {
+    final result = create();
+    if (assetId != null) result.assetId = assetId;
+    return result;
+  }
+
+  RetryPostprocessRequest._();
+
+  factory RetryPostprocessRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory RetryPostprocessRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RetryPostprocessRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'assetId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RetryPostprocessRequest clone() =>
+      RetryPostprocessRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RetryPostprocessRequest copyWith(
+          void Function(RetryPostprocessRequest) updates) =>
+      super.copyWith((message) => updates(message as RetryPostprocessRequest))
+          as RetryPostprocessRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static RetryPostprocessRequest create() => RetryPostprocessRequest._();
+  @$core.override
+  RetryPostprocessRequest createEmptyInstance() => create();
+  static $pb.PbList<RetryPostprocessRequest> createRepeated() =>
+      $pb.PbList<RetryPostprocessRequest>();
+  @$core.pragma('dart2js:noInline')
+  static RetryPostprocessRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RetryPostprocessRequest>(create);
+  static RetryPostprocessRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get assetId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set assetId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasAssetId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearAssetId() => $_clearField(1);
+}
+
+class RetryPostprocessResponse extends $pb.GeneratedMessage {
+  factory RetryPostprocessResponse({
+    $fixnum.Int64? runId,
+  }) {
+    final result = create();
+    if (runId != null) result.runId = runId;
+    return result;
+  }
+
+  RetryPostprocessResponse._();
+
+  factory RetryPostprocessResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory RetryPostprocessResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RetryPostprocessResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'runId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RetryPostprocessResponse clone() =>
+      RetryPostprocessResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RetryPostprocessResponse copyWith(
+          void Function(RetryPostprocessResponse) updates) =>
+      super.copyWith((message) => updates(message as RetryPostprocessResponse))
+          as RetryPostprocessResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static RetryPostprocessResponse create() => RetryPostprocessResponse._();
+  @$core.override
+  RetryPostprocessResponse createEmptyInstance() => create();
+  static $pb.PbList<RetryPostprocessResponse> createRepeated() =>
+      $pb.PbList<RetryPostprocessResponse>();
+  @$core.pragma('dart2js:noInline')
+  static RetryPostprocessResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RetryPostprocessResponse>(create);
+  static RetryPostprocessResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get runId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set runId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasRunId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearRunId() => $_clearField(1);
 }
 
 class DeleteAssetRequest extends $pb.GeneratedMessage {
@@ -2829,6 +3068,13 @@ class AssetServiceApi {
           $pb.ClientContext? ctx, UpdateAssetRequest request) =>
       _client.invoke<UpdateAssetResponse>(
           ctx, 'AssetService', 'UpdateAsset', request, UpdateAssetResponse());
+
+  /// 후처리(파일 처리와, 아직 놓지 않은 첨부의 자동 배치)를 다시 건다. 이미 기다리거나 도는 중이면 새로 걸지 않고 그 실행 번호를 준다.
+  /// 재시도는 도구 번호를 찾아 StartRun하지 말고 이것을 쓴다. 진행은 Asset.postprocess 또는 ToolService.GetRun(run_id)로 본다.
+  $async.Future<RetryPostprocessResponse> retryPostprocess(
+          $pb.ClientContext? ctx, RetryPostprocessRequest request) =>
+      _client.invoke<RetryPostprocessResponse>(ctx, 'AssetService',
+          'RetryPostprocess', request, RetryPostprocessResponse());
 
   /// 행과 저장된 파일을 실제로 지운다(되돌릴 수 없음).
   /// 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.

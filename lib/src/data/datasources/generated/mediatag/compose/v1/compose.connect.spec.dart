@@ -26,20 +26,12 @@ abstract final class MediaComposeService {
     mediatagcomposev1compose.ListTimelinesResponse.new,
   );
 
-  /// name, description, labels
+  /// name, description
   static const updateTimeline = connect.Spec(
     '/$name/UpdateTimeline',
     connect.StreamType.unary,
     mediatagcomposev1compose.UpdateTimelineRequest.new,
     mediatagcomposev1compose.UpdateTimelineResponse.new,
-  );
-
-  /// 현재 상태가 from_status일 때만 바꾼다. 아니면 Aborted(다른 요청이 먼저 바꿈).
-  static const changeTimelineStatus = connect.Spec(
-    '/$name/ChangeTimelineStatus',
-    connect.StreamType.unary,
-    mediatagcomposev1compose.ChangeTimelineStatusRequest.new,
-    mediatagcomposev1compose.ChangeTimelineStatusResponse.new,
   );
 
   /// 편집 초기화: 타임라인과 트랙·클립의 행을 실제로 지운다(되돌릴 수 없음. 작업·첨부는 그대로).

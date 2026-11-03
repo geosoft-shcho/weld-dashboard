@@ -2450,6 +2450,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.google.protobuf.ListValue': $3.ListValue$json,
   '.mediatag.asset.v1.Provenance': $2.Provenance$json,
   '.mediatag.asset.v1.DisplayField': $2.DisplayField$json,
+  '.mediatag.asset.v1.PostprocessRun': $2.PostprocessRun$json,
   '.mediatag.work.v1.TimeRange': TimeRange$json,
   '.mediatag.work.v1.GetPassWaveformRequest': GetPassWaveformRequest$json,
   '.mediatag.work.v1.GetPassWaveformResponse': GetPassWaveformResponse$json,

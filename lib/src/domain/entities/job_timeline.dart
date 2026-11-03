@@ -1,5 +1,3 @@
-enum JobTimelineStatus { unspecified, draft, suggested, confirmed, rejected }
-
 enum TimelineClipKind {
   unspecified,
   video,
@@ -103,7 +101,6 @@ class JobTimeline {
     required this.tracks,
     this.description = '',
     this.overlays = const [],
-    this.status = JobTimelineStatus.unspecified,
   });
 
   static const empty = JobTimeline(jobId: '', name: '', tracks: []);
@@ -111,7 +108,6 @@ class JobTimeline {
   final String jobId;
   final String name;
   final String description;
-  final JobTimelineStatus status;
   final List<TimelineTrack> tracks;
   final List<TimelineOverlay> overlays;
 

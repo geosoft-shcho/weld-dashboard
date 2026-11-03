@@ -17,7 +17,6 @@ import 'package:weld_dashboard/src/domain/repositories/job_timeline_repository.d
 import 'package:weld_dashboard/src/domain/repositories/label_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/tool_run_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/work_detail_repository.dart';
-import 'package:weld_dashboard/src/domain/use_cases/change_timeline_status_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_track_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_clip_use_case.dart';
@@ -420,7 +419,6 @@ VideoMultimodalViewModel _viewModel(
     createClipUseCase: CreateClipUseCase(timeline),
     updateClipUseCase: UpdateClipUseCase(timeline),
     deleteClipUseCase: DeleteClipUseCase(timeline),
-    changeTimelineStatusUseCase: ChangeTimelineStatusUseCase(timeline),
     updateTimelineUseCase: UpdateTimelineUseCase(timeline),
     deleteTimelineUseCase: DeleteTimelineUseCase(timeline),
     toolRunUseCase: ToolRunUseCase(_IdleToolRunRepository()),
@@ -662,12 +660,6 @@ class _CountingTimelineRepository implements JobTimelineRepository {
   @override
   Future<void> deleteClip({required String clipId}) async {}
 
-  @override
-  Future<void> changeTimelineStatus({
-    required String jobId,
-    required JobTimelineStatus fromStatus,
-    required JobTimelineStatus toStatus,
-  }) async {}
 
   @override
   Future<void> updateTimeline({

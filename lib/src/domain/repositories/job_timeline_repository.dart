@@ -50,12 +50,6 @@ abstract class JobTimelineRepository {
 
   Future<void> deleteClip({required String clipId});
 
-  Future<void> changeTimelineStatus({
-    required String jobId,
-    required JobTimelineStatus fromStatus,
-    required JobTimelineStatus toStatus,
-  });
-
   Future<void> updateTimeline({
     required String jobId,
     String? name,

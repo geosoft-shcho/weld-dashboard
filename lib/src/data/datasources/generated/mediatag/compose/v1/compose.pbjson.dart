@@ -19,25 +19,6 @@ import '../../../google/protobuf/struct.pbjson.dart' as $1;
 import '../../../google/protobuf/timestamp.pbjson.dart' as $0;
 import '../../asset/v1/asset.pbjson.dart' as $2;
 
-@$core.Deprecated('Use timelineStatusDescriptor instead')
-const TimelineStatus$json = {
-  '1': 'TimelineStatus',
-  '2': [
-    {'1': 'TIMELINE_STATUS_UNSPECIFIED', '2': 0},
-    {'1': 'TIMELINE_STATUS_DRAFT', '2': 1},
-    {'1': 'TIMELINE_STATUS_SUGGESTED', '2': 2},
-    {'1': 'TIMELINE_STATUS_CONFIRMED', '2': 3},
-    {'1': 'TIMELINE_STATUS_REJECTED', '2': 4},
-  ],
-};
-
-/// Descriptor for `TimelineStatus`. Decode as a `google.protobuf.EnumDescriptorProto`.
-final $typed_data.Uint8List timelineStatusDescriptor = $convert.base64Decode(
-    'Cg5UaW1lbGluZVN0YXR1cxIfChtUSU1FTElORV9TVEFUVVNfVU5TUEVDSUZJRUQQABIZChVUSU'
-    '1FTElORV9TVEFUVVNfRFJBRlQQARIdChlUSU1FTElORV9TVEFUVVNfU1VHR0VTVEVEEAISHQoZ'
-    'VElNRUxJTkVfU1RBVFVTX0NPTkZJUk1FRBADEhwKGFRJTUVMSU5FX1NUQVRVU19SRUpFQ1RFRB'
-    'AE');
-
 @$core.Deprecated('Use clipKindDescriptor instead')
 const ClipKind$json = {
   '1': 'ClipKind',
@@ -82,53 +63,13 @@ final $typed_data.Uint8List clipTargetKindDescriptor = $convert.base64Decode(
     'Cg5DbGlwVGFyZ2V0S2luZBIgChxDTElQX1RBUkdFVF9LSU5EX1VOU1BFQ0lGSUVEEAASGQoVQ0'
     'xJUF9UQVJHRVRfS0lORF9DTElQEAESGgoWQ0xJUF9UQVJHRVRfS0lORF9BU1NFVBAC');
 
-@$core.Deprecated('Use labelRefDescriptor instead')
-const LabelRef$json = {
-  '1': 'LabelRef',
-  '2': [
-    {'1': 'value_id', '3': 2, '4': 1, '5': 3, '10': 'valueId'},
-  ],
-  '9': [
-    {'1': 1, '2': 2},
-  ],
-  '10': ['vocab_key'],
-};
-
-/// Descriptor for `LabelRef`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List labelRefDescriptor = $convert.base64Decode(
-    'CghMYWJlbFJlZhIZCgh2YWx1ZV9pZBgCIAEoA1IHdmFsdWVJZEoECAEQAlIJdm9jYWJfa2V5');
-
 @$core.Deprecated('Use timelineDescriptor instead')
 const Timeline$json = {
   '1': 'Timeline',
   '2': [
     {'1': 'job_id', '3': 1, '4': 1, '5': 3, '10': 'jobId'},
     {'1': 'name', '3': 2, '4': 1, '5': 9, '10': 'name'},
-    {
-      '1': 'status',
-      '3': 3,
-      '4': 1,
-      '5': 14,
-      '6': '.mediatag.compose.v1.TimelineStatus',
-      '10': 'status'
-    },
     {'1': 'description', '3': 4, '4': 1, '5': 9, '10': 'description'},
-    {
-      '1': 'labels',
-      '3': 5,
-      '4': 3,
-      '5': 11,
-      '6': '.mediatag.compose.v1.LabelRef',
-      '10': 'labels'
-    },
-    {
-      '1': 'embedded_at',
-      '3': 6,
-      '4': 1,
-      '5': 11,
-      '6': '.google.protobuf.Timestamp',
-      '10': 'embeddedAt'
-    },
     {
       '1': 'created_at',
       '3': 7,
@@ -146,17 +87,21 @@ const Timeline$json = {
       '10': 'updatedAt'
     },
   ],
+  '9': [
+    {'1': 3, '2': 4},
+    {'1': 5, '2': 6},
+    {'1': 6, '2': 7},
+  ],
+  '10': ['status', 'labels', 'embedded_at'],
 };
 
 /// Descriptor for `Timeline`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List timelineDescriptor = $convert.base64Decode(
-    'CghUaW1lbGluZRIVCgZqb2JfaWQYASABKANSBWpvYklkEhIKBG5hbWUYAiABKAlSBG5hbWUSOw'
-    'oGc3RhdHVzGAMgASgOMiMubWVkaWF0YWcuY29tcG9zZS52MS5UaW1lbGluZVN0YXR1c1IGc3Rh'
-    'dHVzEiAKC2Rlc2NyaXB0aW9uGAQgASgJUgtkZXNjcmlwdGlvbhI1CgZsYWJlbHMYBSADKAsyHS'
-    '5tZWRpYXRhZy5jb21wb3NlLnYxLkxhYmVsUmVmUgZsYWJlbHMSOwoLZW1iZWRkZWRfYXQYBiAB'
-    'KAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wUgplbWJlZGRlZEF0EjkKCmNyZWF0ZWRfYX'
-    'QYByABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wUgljcmVhdGVkQXQSOQoKdXBkYXRl'
-    'ZF9hdBgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdA==');
+    'CghUaW1lbGluZRIVCgZqb2JfaWQYASABKANSBWpvYklkEhIKBG5hbWUYAiABKAlSBG5hbWUSIA'
+    'oLZGVzY3JpcHRpb24YBCABKAlSC2Rlc2NyaXB0aW9uEjkKCmNyZWF0ZWRfYXQYByABKAsyGi5n'
+    'b29nbGUucHJvdG9idWYuVGltZXN0YW1wUgljcmVhdGVkQXQSOQoKdXBkYXRlZF9hdBgIIAEoCz'
+    'IaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdEoECAMQBEoECAUQBkoECAYQ'
+    'B1IGc3RhdHVzUgZsYWJlbHNSC2VtYmVkZGVkX2F0');
 
 @$core.Deprecated('Use trackDescriptor instead')
 const Track$json = {
@@ -522,25 +467,20 @@ const ListTimelinesRequest$json = {
   '1': 'ListTimelinesRequest',
   '2': [
     {'1': 'project_no', '3': 1, '4': 1, '5': 9, '10': 'projectNo'},
-    {
-      '1': 'status',
-      '3': 2,
-      '4': 1,
-      '5': 14,
-      '6': '.mediatag.compose.v1.TimelineStatus',
-      '10': 'status'
-    },
     {'1': 'page_size', '3': 3, '4': 1, '5': 5, '10': 'pageSize'},
     {'1': 'page_token', '3': 4, '4': 1, '5': 9, '10': 'pageToken'},
   ],
+  '9': [
+    {'1': 2, '2': 3},
+  ],
+  '10': ['status'],
 };
 
 /// Descriptor for `ListTimelinesRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listTimelinesRequestDescriptor = $convert.base64Decode(
-    'ChRMaXN0VGltZWxpbmVzUmVxdWVzdBIdCgpwcm9qZWN0X25vGAEgASgJUglwcm9qZWN0Tm8SOw'
-    'oGc3RhdHVzGAIgASgOMiMubWVkaWF0YWcuY29tcG9zZS52MS5UaW1lbGluZVN0YXR1c1IGc3Rh'
-    'dHVzEhsKCXBhZ2Vfc2l6ZRgDIAEoBVIIcGFnZVNpemUSHQoKcGFnZV90b2tlbhgEIAEoCVIJcG'
-    'FnZVRva2Vu');
+    'ChRMaXN0VGltZWxpbmVzUmVxdWVzdBIdCgpwcm9qZWN0X25vGAEgASgJUglwcm9qZWN0Tm8SGw'
+    'oJcGFnZV9zaXplGAMgASgFUghwYWdlU2l6ZRIdCgpwYWdlX3Rva2VuGAQgASgJUglwYWdlVG9r'
+    'ZW5KBAgCEANSBnN0YXR1cw==');
 
 @$core.Deprecated('Use listTimelinesResponseDescriptor instead')
 const ListTimelinesResponse$json = {
@@ -613,58 +553,6 @@ final $typed_data.Uint8List updateTimelineResponseDescriptor =
     $convert.base64Decode(
         'ChZVcGRhdGVUaW1lbGluZVJlc3BvbnNlEjkKCHRpbWVsaW5lGAEgASgLMh0ubWVkaWF0YWcuY2'
         '9tcG9zZS52MS5UaW1lbGluZVIIdGltZWxpbmU=');
-
-@$core.Deprecated('Use changeTimelineStatusRequestDescriptor instead')
-const ChangeTimelineStatusRequest$json = {
-  '1': 'ChangeTimelineStatusRequest',
-  '2': [
-    {'1': 'job_id', '3': 1, '4': 1, '5': 3, '10': 'jobId'},
-    {
-      '1': 'from_status',
-      '3': 2,
-      '4': 1,
-      '5': 14,
-      '6': '.mediatag.compose.v1.TimelineStatus',
-      '10': 'fromStatus'
-    },
-    {
-      '1': 'to_status',
-      '3': 3,
-      '4': 1,
-      '5': 14,
-      '6': '.mediatag.compose.v1.TimelineStatus',
-      '10': 'toStatus'
-    },
-  ],
-};
-
-/// Descriptor for `ChangeTimelineStatusRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List changeTimelineStatusRequestDescriptor = $convert.base64Decode(
-    'ChtDaGFuZ2VUaW1lbGluZVN0YXR1c1JlcXVlc3QSFQoGam9iX2lkGAEgASgDUgVqb2JJZBJECg'
-    'tmcm9tX3N0YXR1cxgCIAEoDjIjLm1lZGlhdGFnLmNvbXBvc2UudjEuVGltZWxpbmVTdGF0dXNS'
-    'CmZyb21TdGF0dXMSQAoJdG9fc3RhdHVzGAMgASgOMiMubWVkaWF0YWcuY29tcG9zZS52MS5UaW'
-    '1lbGluZVN0YXR1c1IIdG9TdGF0dXM=');
-
-@$core.Deprecated('Use changeTimelineStatusResponseDescriptor instead')
-const ChangeTimelineStatusResponse$json = {
-  '1': 'ChangeTimelineStatusResponse',
-  '2': [
-    {
-      '1': 'timeline',
-      '3': 1,
-      '4': 1,
-      '5': 11,
-      '6': '.mediatag.compose.v1.Timeline',
-      '10': 'timeline'
-    },
-  ],
-};
-
-/// Descriptor for `ChangeTimelineStatusResponse`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List changeTimelineStatusResponseDescriptor =
-    $convert.base64Decode(
-        'ChxDaGFuZ2VUaW1lbGluZVN0YXR1c1Jlc3BvbnNlEjkKCHRpbWVsaW5lGAEgASgLMh0ubWVkaW'
-        'F0YWcuY29tcG9zZS52MS5UaW1lbGluZVIIdGltZWxpbmU=');
 
 @$core.Deprecated('Use deleteTimelineRequestDescriptor instead')
 const DeleteTimelineRequest$json = {
@@ -1149,11 +1037,6 @@ const $core.Map<$core.String, $core.dynamic> MediaComposeServiceBase$json = {
       '3': '.mediatag.compose.v1.UpdateTimelineResponse'
     },
     {
-      '1': 'ChangeTimelineStatus',
-      '2': '.mediatag.compose.v1.ChangeTimelineStatusRequest',
-      '3': '.mediatag.compose.v1.ChangeTimelineStatusResponse'
-    },
-    {
       '1': 'DeleteTimeline',
       '2': '.mediatag.compose.v1.DeleteTimelineRequest',
       '3': '.mediatag.compose.v1.DeleteTimelineResponse'
@@ -1202,7 +1085,6 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.compose.v1.GetTimelineRequest': GetTimelineRequest$json,
   '.mediatag.compose.v1.GetTimelineResponse': GetTimelineResponse$json,
   '.mediatag.compose.v1.Timeline': Timeline$json,
-  '.mediatag.compose.v1.LabelRef': LabelRef$json,
   '.google.protobuf.Timestamp': $0.Timestamp$json,
   '.mediatag.compose.v1.Track': Track$json,
   '.mediatag.compose.v1.Clip': Clip$json,
@@ -1216,15 +1098,12 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.asset.v1.Asset': $2.Asset$json,
   '.mediatag.asset.v1.Provenance': $2.Provenance$json,
   '.mediatag.asset.v1.DisplayField': $2.DisplayField$json,
+  '.mediatag.asset.v1.PostprocessRun': $2.PostprocessRun$json,
   '.mediatag.compose.v1.ListTimelinesRequest': ListTimelinesRequest$json,
   '.mediatag.compose.v1.ListTimelinesResponse': ListTimelinesResponse$json,
   '.mediatag.compose.v1.UpdateTimelineRequest': UpdateTimelineRequest$json,
   '.google.protobuf.FieldMask': $3.FieldMask$json,
   '.mediatag.compose.v1.UpdateTimelineResponse': UpdateTimelineResponse$json,
-  '.mediatag.compose.v1.ChangeTimelineStatusRequest':
-      ChangeTimelineStatusRequest$json,
-  '.mediatag.compose.v1.ChangeTimelineStatusResponse':
-      ChangeTimelineStatusResponse$json,
   '.mediatag.compose.v1.DeleteTimelineRequest': DeleteTimelineRequest$json,
   '.mediatag.compose.v1.DeleteTimelineResponse': DeleteTimelineResponse$json,
   '.mediatag.compose.v1.CreateTrackRequest': CreateTrackRequest$json,
@@ -1250,24 +1129,21 @@ final $typed_data.Uint8List mediaComposeServiceDescriptor = $convert.base64Decod
     'UmVzcG9uc2USZgoNTGlzdFRpbWVsaW5lcxIpLm1lZGlhdGFnLmNvbXBvc2UudjEuTGlzdFRpbW'
     'VsaW5lc1JlcXVlc3QaKi5tZWRpYXRhZy5jb21wb3NlLnYxLkxpc3RUaW1lbGluZXNSZXNwb25z'
     'ZRJpCg5VcGRhdGVUaW1lbGluZRIqLm1lZGlhdGFnLmNvbXBvc2UudjEuVXBkYXRlVGltZWxpbm'
-    'VSZXF1ZXN0GisubWVkaWF0YWcuY29tcG9zZS52MS5VcGRhdGVUaW1lbGluZVJlc3BvbnNlEnsK'
-    'FENoYW5nZVRpbWVsaW5lU3RhdHVzEjAubWVkaWF0YWcuY29tcG9zZS52MS5DaGFuZ2VUaW1lbG'
-    'luZVN0YXR1c1JlcXVlc3QaMS5tZWRpYXRhZy5jb21wb3NlLnYxLkNoYW5nZVRpbWVsaW5lU3Rh'
-    'dHVzUmVzcG9uc2USaQoORGVsZXRlVGltZWxpbmUSKi5tZWRpYXRhZy5jb21wb3NlLnYxLkRlbG'
-    'V0ZVRpbWVsaW5lUmVxdWVzdBorLm1lZGlhdGFnLmNvbXBvc2UudjEuRGVsZXRlVGltZWxpbmVS'
-    'ZXNwb25zZRJgCgtDcmVhdGVUcmFjaxInLm1lZGlhdGFnLmNvbXBvc2UudjEuQ3JlYXRlVHJhY2'
-    'tSZXF1ZXN0GigubWVkaWF0YWcuY29tcG9zZS52MS5DcmVhdGVUcmFja1Jlc3BvbnNlEmAKC1Vw'
-    'ZGF0ZVRyYWNrEicubWVkaWF0YWcuY29tcG9zZS52MS5VcGRhdGVUcmFja1JlcXVlc3QaKC5tZW'
-    'RpYXRhZy5jb21wb3NlLnYxLlVwZGF0ZVRyYWNrUmVzcG9uc2USYAoLRGVsZXRlVHJhY2sSJy5t'
-    'ZWRpYXRhZy5jb21wb3NlLnYxLkRlbGV0ZVRyYWNrUmVxdWVzdBooLm1lZGlhdGFnLmNvbXBvc2'
-    'UudjEuRGVsZXRlVHJhY2tSZXNwb25zZRJdCgpDcmVhdGVDbGlwEiYubWVkaWF0YWcuY29tcG9z'
-    'ZS52MS5DcmVhdGVDbGlwUmVxdWVzdBonLm1lZGlhdGFnLmNvbXBvc2UudjEuQ3JlYXRlQ2xpcF'
-    'Jlc3BvbnNlElQKB0dldENsaXASIy5tZWRpYXRhZy5jb21wb3NlLnYxLkdldENsaXBSZXF1ZXN0'
-    'GiQubWVkaWF0YWcuY29tcG9zZS52MS5HZXRDbGlwUmVzcG9uc2USXQoKVXBkYXRlQ2xpcBImLm'
-    '1lZGlhdGFnLmNvbXBvc2UudjEuVXBkYXRlQ2xpcFJlcXVlc3QaJy5tZWRpYXRhZy5jb21wb3Nl'
-    'LnYxLlVwZGF0ZUNsaXBSZXNwb25zZRJdCgpEZWxldGVDbGlwEiYubWVkaWF0YWcuY29tcG9zZS'
-    '52MS5EZWxldGVDbGlwUmVxdWVzdBonLm1lZGlhdGFnLmNvbXBvc2UudjEuRGVsZXRlQ2xpcFJl'
-    'c3BvbnNl');
+    'VSZXF1ZXN0GisubWVkaWF0YWcuY29tcG9zZS52MS5VcGRhdGVUaW1lbGluZVJlc3BvbnNlEmkK'
+    'DkRlbGV0ZVRpbWVsaW5lEioubWVkaWF0YWcuY29tcG9zZS52MS5EZWxldGVUaW1lbGluZVJlcX'
+    'Vlc3QaKy5tZWRpYXRhZy5jb21wb3NlLnYxLkRlbGV0ZVRpbWVsaW5lUmVzcG9uc2USYAoLQ3Jl'
+    'YXRlVHJhY2sSJy5tZWRpYXRhZy5jb21wb3NlLnYxLkNyZWF0ZVRyYWNrUmVxdWVzdBooLm1lZG'
+    'lhdGFnLmNvbXBvc2UudjEuQ3JlYXRlVHJhY2tSZXNwb25zZRJgCgtVcGRhdGVUcmFjaxInLm1l'
+    'ZGlhdGFnLmNvbXBvc2UudjEuVXBkYXRlVHJhY2tSZXF1ZXN0GigubWVkaWF0YWcuY29tcG9zZS'
+    '52MS5VcGRhdGVUcmFja1Jlc3BvbnNlEmAKC0RlbGV0ZVRyYWNrEicubWVkaWF0YWcuY29tcG9z'
+    'ZS52MS5EZWxldGVUcmFja1JlcXVlc3QaKC5tZWRpYXRhZy5jb21wb3NlLnYxLkRlbGV0ZVRyYW'
+    'NrUmVzcG9uc2USXQoKQ3JlYXRlQ2xpcBImLm1lZGlhdGFnLmNvbXBvc2UudjEuQ3JlYXRlQ2xp'
+    'cFJlcXVlc3QaJy5tZWRpYXRhZy5jb21wb3NlLnYxLkNyZWF0ZUNsaXBSZXNwb25zZRJUCgdHZX'
+    'RDbGlwEiMubWVkaWF0YWcuY29tcG9zZS52MS5HZXRDbGlwUmVxdWVzdBokLm1lZGlhdGFnLmNv'
+    'bXBvc2UudjEuR2V0Q2xpcFJlc3BvbnNlEl0KClVwZGF0ZUNsaXASJi5tZWRpYXRhZy5jb21wb3'
+    'NlLnYxLlVwZGF0ZUNsaXBSZXF1ZXN0GicubWVkaWF0YWcuY29tcG9zZS52MS5VcGRhdGVDbGlw'
+    'UmVzcG9uc2USXQoKRGVsZXRlQ2xpcBImLm1lZGlhdGFnLmNvbXBvc2UudjEuRGVsZXRlQ2xpcF'
+    'JlcXVlc3QaJy5tZWRpYXRhZy5jb21wb3NlLnYxLkRlbGV0ZUNsaXBSZXNwb25zZQ==');
 
 const $core.Map<$core.String, $core.dynamic> LabelServiceBase$json = {
   '1': 'LabelService',

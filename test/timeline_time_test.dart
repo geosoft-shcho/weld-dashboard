@@ -100,14 +100,6 @@ class _ThrowingTimelineRepository implements JobTimelineRepository {
     throw StateError('unused');
   }
 
-  @override
-  Future<void> changeTimelineStatus({
-    required String jobId,
-    required JobTimelineStatus fromStatus,
-    required JobTimelineStatus toStatus,
-  }) {
-    throw StateError('unused');
-  }
 
   @override
   Future<void> updateTimeline({

@@ -45,6 +45,15 @@ abstract final class AssetService {
     mediatagassetv1asset.UpdateAssetResponse.new,
   );
 
+  /// 후처리(파일 처리와, 아직 놓지 않은 첨부의 자동 배치)를 다시 건다. 이미 기다리거나 도는 중이면 새로 걸지 않고 그 실행 번호를 준다.
+  /// 재시도는 도구 번호를 찾아 StartRun하지 말고 이것을 쓴다. 진행은 Asset.postprocess 또는 ToolService.GetRun(run_id)로 본다.
+  static const retryPostprocess = connect.Spec(
+    '/$name/RetryPostprocess',
+    connect.StreamType.unary,
+    mediatagassetv1asset.RetryPostprocessRequest.new,
+    mediatagassetv1asset.RetryPostprocessResponse.new,
+  );
+
   /// 행과 저장된 파일을 실제로 지운다(되돌릴 수 없음).
   /// 첨부(job_asset)·파생 부모(다른 Asset의 parent_asset_id)·성적서 원본으로 쓰이는 Asset은 FailedPrecondition.
   static const deleteAsset = connect.Spec(

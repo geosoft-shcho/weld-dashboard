@@ -180,49 +180,6 @@ compose_pb.DeleteTimelineRequest buildDeleteTimelineRequest({
   return compose_pb.DeleteTimelineRequest(jobId: protoId(jobId));
 }
 
-compose_pb.ChangeTimelineStatusRequest buildChangeTimelineStatusRequest({
-  required String jobId,
-  required JobTimelineStatus fromStatus,
-  required JobTimelineStatus toStatus,
-}) {
-  return compose_pb.ChangeTimelineStatusRequest(
-    jobId: protoId(jobId),
-    fromStatus: protoTimelineStatusFrom(fromStatus),
-    toStatus: protoTimelineStatusFrom(toStatus),
-  );
-}
-
-JobTimelineStatus jobTimelineStatusFromProto(TimelineStatus status) {
-  switch (status) {
-    case TimelineStatus.TIMELINE_STATUS_DRAFT:
-      return JobTimelineStatus.draft;
-    case TimelineStatus.TIMELINE_STATUS_SUGGESTED:
-      return JobTimelineStatus.suggested;
-    case TimelineStatus.TIMELINE_STATUS_CONFIRMED:
-      return JobTimelineStatus.confirmed;
-    case TimelineStatus.TIMELINE_STATUS_REJECTED:
-      return JobTimelineStatus.rejected;
-    case TimelineStatus.TIMELINE_STATUS_UNSPECIFIED:
-      return JobTimelineStatus.unspecified;
-  }
-  return JobTimelineStatus.unspecified;
-}
-
-TimelineStatus protoTimelineStatusFrom(JobTimelineStatus status) {
-  switch (status) {
-    case JobTimelineStatus.draft:
-      return TimelineStatus.TIMELINE_STATUS_DRAFT;
-    case JobTimelineStatus.suggested:
-      return TimelineStatus.TIMELINE_STATUS_SUGGESTED;
-    case JobTimelineStatus.confirmed:
-      return TimelineStatus.TIMELINE_STATUS_CONFIRMED;
-    case JobTimelineStatus.rejected:
-      return TimelineStatus.TIMELINE_STATUS_REJECTED;
-    case JobTimelineStatus.unspecified:
-      return TimelineStatus.TIMELINE_STATUS_UNSPECIFIED;
-  }
-}
-
 ClipKind protoClipKindFrom(TimelineClipKind kind) {
   switch (kind) {
     case TimelineClipKind.video:

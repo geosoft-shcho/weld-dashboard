@@ -90,7 +90,6 @@ import '../../../domain/use_cases/get_session_history_use_case.dart';
 import '../../../domain/use_cases/list_collected_nodes_use_case.dart';
 import '../../../domain/use_cases/load_job_project_id_use_case.dart';
 import '../../../domain/use_cases/get_report_set_use_case.dart';
-import '../../../domain/use_cases/change_timeline_status_use_case.dart';
 import '../../../domain/use_cases/create_clip_use_case.dart';
 import '../../../domain/use_cases/create_track_use_case.dart';
 import '../../../domain/use_cases/delete_clip_use_case.dart';
@@ -333,7 +332,6 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactory(() => CreateClipUseCase(locator()));
   locator.registerFactory(() => UpdateClipUseCase(locator()));
   locator.registerFactory(() => DeleteClipUseCase(locator()));
-  locator.registerFactory(() => ChangeTimelineStatusUseCase(locator()));
   locator.registerFactory(() => UpdateTimelineUseCase(locator()));
   locator.registerFactory(() => DeleteTimelineUseCase(locator()));
   locator.registerLazySingleton<ToolRunRepository>(
@@ -387,7 +385,6 @@ void setupLocator({required bool pdfrxReady}) {
       createClipUseCase: locator(),
       updateClipUseCase: locator(),
       deleteClipUseCase: locator(),
-      changeTimelineStatusUseCase: locator(),
       updateTimelineUseCase: locator(),
       deleteTimelineUseCase: locator(),
       toolRunUseCase: locator(),

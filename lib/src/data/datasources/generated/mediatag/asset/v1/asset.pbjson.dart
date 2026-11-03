@@ -45,6 +45,26 @@ final $typed_data.Uint8List assetKindDescriptor = $convert.base64Decode(
     'VENMT1VEEAgSFwoTQVNTRVRfS0lORF9PQ1JfSlNPThAJEhUKEUFTU0VUX0tJTkRfUkVHSU9OEA'
     'o=');
 
+@$core.Deprecated('Use postprocessStatusDescriptor instead')
+const PostprocessStatus$json = {
+  '1': 'PostprocessStatus',
+  '2': [
+    {'1': 'POSTPROCESS_STATUS_UNSPECIFIED', '2': 0},
+    {'1': 'POSTPROCESS_STATUS_QUEUED', '2': 1},
+    {'1': 'POSTPROCESS_STATUS_RUNNING', '2': 2},
+    {'1': 'POSTPROCESS_STATUS_SUCCEEDED', '2': 3},
+    {'1': 'POSTPROCESS_STATUS_FAILED', '2': 4},
+    {'1': 'POSTPROCESS_STATUS_CANCELED', '2': 5},
+  ],
+};
+
+/// Descriptor for `PostprocessStatus`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List postprocessStatusDescriptor = $convert.base64Decode(
+    'ChFQb3N0cHJvY2Vzc1N0YXR1cxIiCh5QT1NUUFJPQ0VTU19TVEFUVVNfVU5TUEVDSUZJRUQQAB'
+    'IdChlQT1NUUFJPQ0VTU19TVEFUVVNfUVVFVUVEEAESHgoaUE9TVFBST0NFU1NfU1RBVFVTX1JV'
+    'Tk5JTkcQAhIgChxQT1NUUFJPQ0VTU19TVEFUVVNfU1VDQ0VFREVEEAMSHQoZUE9TVFBST0NFU1'
+    'NfU1RBVFVTX0ZBSUxFRBAEEh8KG1BPU1RQUk9DRVNTX1NUQVRVU19DQU5DRUxFRBAF');
+
 @$core.Deprecated('Use duplicateDecisionDescriptor instead')
 const DuplicateDecision$json = {
   '1': 'DuplicateDecision',
@@ -133,6 +153,14 @@ const Asset$json = {
     },
     {'1': 'subject', '3': 17, '4': 1, '5': 9, '10': 'subject'},
     {'1': 'situation', '3': 18, '4': 1, '5': 9, '10': 'situation'},
+    {
+      '1': 'postprocess',
+      '3': 19,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.asset.v1.PostprocessRun',
+      '10': 'postprocess'
+    },
   ],
   '8': [
     {'1': '_duration_ns'},
@@ -154,7 +182,31 @@ final $typed_data.Uint8List assetDescriptor = $convert.base64Decode(
     'Y2VfcGF0aBgNIAEoCVIKc291cmNlUGF0aBIfCgtjaGlsZF9jb3VudBgPIAEoBVIKY2hpbGRDb3'
     'VudBI5CgdkaXNwbGF5GBAgAygLMh8ubWVkaWF0YWcuYXNzZXQudjEuRGlzcGxheUZpZWxkUgdk'
     'aXNwbGF5EhgKB3N1YmplY3QYESABKAlSB3N1YmplY3QSHAoJc2l0dWF0aW9uGBIgASgJUglzaX'
-    'R1YXRpb25CDgoMX2R1cmF0aW9uX25z');
+    'R1YXRpb24SQwoLcG9zdHByb2Nlc3MYEyABKAsyIS5tZWRpYXRhZy5hc3NldC52MS5Qb3N0cHJv'
+    'Y2Vzc1J1blILcG9zdHByb2Nlc3NCDgoMX2R1cmF0aW9uX25z');
+
+@$core.Deprecated('Use postprocessRunDescriptor instead')
+const PostprocessRun$json = {
+  '1': 'PostprocessRun',
+  '2': [
+    {'1': 'run_id', '3': 1, '4': 1, '5': 3, '10': 'runId'},
+    {
+      '1': 'status',
+      '3': 2,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.asset.v1.PostprocessStatus',
+      '10': 'status'
+    },
+    {'1': 'error_message', '3': 3, '4': 1, '5': 9, '10': 'errorMessage'},
+  ],
+};
+
+/// Descriptor for `PostprocessRun`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List postprocessRunDescriptor = $convert.base64Decode(
+    'Cg5Qb3N0cHJvY2Vzc1J1bhIVCgZydW5faWQYASABKANSBXJ1bklkEjwKBnN0YXR1cxgCIAEoDj'
+    'IkLm1lZGlhdGFnLmFzc2V0LnYxLlBvc3Rwcm9jZXNzU3RhdHVzUgZzdGF0dXMSIwoNZXJyb3Jf'
+    'bWVzc2FnZRgDIAEoCVIMZXJyb3JNZXNzYWdl');
 
 @$core.Deprecated('Use displayFieldDescriptor instead')
 const DisplayField$json = {
@@ -264,6 +316,14 @@ const ListAssetsRequest$json = {
       '6': '.mediatag.asset.v1.AssetJobFilter',
       '10': 'job'
     },
+    {
+      '1': 'postprocess_status',
+      '3': 10,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.asset.v1.PostprocessStatus',
+      '10': 'postprocessStatus'
+    },
   ],
 };
 
@@ -275,7 +335,8 @@ final $typed_data.Uint8List listAssetsRequestDescriptor = $convert.base64Decode(
     'RJZBIbCglmaWxlX25hbWUYBSABKAlSCGZpbGVOYW1lEiEKDGVxdWlwbWVudF9pZBgGIAEoA1IL'
     'ZXF1aXBtZW50SWQSJwoPdW5hdHRhY2hlZF9vbmx5GAcgASgIUg51bmF0dGFjaGVkT25seRIUCg'
     'VxdWVyeRgIIAEoCVIFcXVlcnkSMwoDam9iGAkgASgLMiEubWVkaWF0YWcuYXNzZXQudjEuQXNz'
-    'ZXRKb2JGaWx0ZXJSA2pvYg==');
+    'ZXRKb2JGaWx0ZXJSA2pvYhJTChJwb3N0cHJvY2Vzc19zdGF0dXMYCiABKA4yJC5tZWRpYXRhZy'
+    '5hc3NldC52MS5Qb3N0cHJvY2Vzc1N0YXR1c1IRcG9zdHByb2Nlc3NTdGF0dXM=');
 
 @$core.Deprecated('Use assetJobFilterDescriptor instead')
 const AssetJobFilter$json = {
@@ -446,6 +507,32 @@ const UpdateAssetResponse$json = {
 final $typed_data.Uint8List updateAssetResponseDescriptor = $convert.base64Decode(
     'ChNVcGRhdGVBc3NldFJlc3BvbnNlEi4KBWFzc2V0GAEgASgLMhgubWVkaWF0YWcuYXNzZXQudj'
     'EuQXNzZXRSBWFzc2V0EiQKDnJlcGxhY2VfcnVuX2lkGAIgASgDUgxyZXBsYWNlUnVuSWQ=');
+
+@$core.Deprecated('Use retryPostprocessRequestDescriptor instead')
+const RetryPostprocessRequest$json = {
+  '1': 'RetryPostprocessRequest',
+  '2': [
+    {'1': 'asset_id', '3': 1, '4': 1, '5': 3, '10': 'assetId'},
+  ],
+};
+
+/// Descriptor for `RetryPostprocessRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List retryPostprocessRequestDescriptor =
+    $convert.base64Decode(
+        'ChdSZXRyeVBvc3Rwcm9jZXNzUmVxdWVzdBIZCghhc3NldF9pZBgBIAEoA1IHYXNzZXRJZA==');
+
+@$core.Deprecated('Use retryPostprocessResponseDescriptor instead')
+const RetryPostprocessResponse$json = {
+  '1': 'RetryPostprocessResponse',
+  '2': [
+    {'1': 'run_id', '3': 1, '4': 1, '5': 3, '10': 'runId'},
+  ],
+};
+
+/// Descriptor for `RetryPostprocessResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List retryPostprocessResponseDescriptor =
+    $convert.base64Decode(
+        'ChhSZXRyeVBvc3Rwcm9jZXNzUmVzcG9uc2USFQoGcnVuX2lkGAEgASgDUgVydW5JZA==');
 
 @$core.Deprecated('Use deleteAssetRequestDescriptor instead')
 const DeleteAssetRequest$json = {
@@ -885,6 +972,11 @@ const $core.Map<$core.String, $core.dynamic> AssetServiceBase$json = {
       '3': '.mediatag.asset.v1.UpdateAssetResponse'
     },
     {
+      '1': 'RetryPostprocess',
+      '2': '.mediatag.asset.v1.RetryPostprocessRequest',
+      '3': '.mediatag.asset.v1.RetryPostprocessResponse'
+    },
+    {
       '1': 'DeleteAsset',
       '2': '.mediatag.asset.v1.DeleteAssetRequest',
       '3': '.mediatag.asset.v1.DeleteAssetResponse'
@@ -937,6 +1029,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.google.protobuf.Timestamp': $1.Timestamp$json,
   '.mediatag.asset.v1.Provenance': Provenance$json,
   '.mediatag.asset.v1.DisplayField': DisplayField$json,
+  '.mediatag.asset.v1.PostprocessRun': PostprocessRun$json,
   '.mediatag.asset.v1.ListAssetsRequest': ListAssetsRequest$json,
   '.mediatag.asset.v1.AssetJobFilter': AssetJobFilter$json,
   '.mediatag.asset.v1.ListAssetsResponse': ListAssetsResponse$json,
@@ -947,6 +1040,8 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.asset.v1.UpdateAssetRequest': UpdateAssetRequest$json,
   '.google.protobuf.FieldMask': $2.FieldMask$json,
   '.mediatag.asset.v1.UpdateAssetResponse': UpdateAssetResponse$json,
+  '.mediatag.asset.v1.RetryPostprocessRequest': RetryPostprocessRequest$json,
+  '.mediatag.asset.v1.RetryPostprocessResponse': RetryPostprocessResponse$json,
   '.mediatag.asset.v1.DeleteAssetRequest': DeleteAssetRequest$json,
   '.mediatag.asset.v1.DeleteAssetResponse': DeleteAssetResponse$json,
   '.mediatag.asset.v1.ListDuplicateAssetsRequest':
@@ -983,17 +1078,19 @@ final $typed_data.Uint8List assetServiceDescriptor = $convert.base64Decode(
     'ZXNwb25zZRJTCghHZXRBc3NldBIiLm1lZGlhdGFnLmFzc2V0LnYxLkdldEFzc2V0UmVxdWVzdB'
     'ojLm1lZGlhdGFnLmFzc2V0LnYxLkdldEFzc2V0UmVzcG9uc2USXAoLVXBkYXRlQXNzZXQSJS5t'
     'ZWRpYXRhZy5hc3NldC52MS5VcGRhdGVBc3NldFJlcXVlc3QaJi5tZWRpYXRhZy5hc3NldC52MS'
-    '5VcGRhdGVBc3NldFJlc3BvbnNlElwKC0RlbGV0ZUFzc2V0EiUubWVkaWF0YWcuYXNzZXQudjEu'
-    'RGVsZXRlQXNzZXRSZXF1ZXN0GiYubWVkaWF0YWcuYXNzZXQudjEuRGVsZXRlQXNzZXRSZXNwb2'
-    '5zZRJ0ChNMaXN0RHVwbGljYXRlQXNzZXRzEi0ubWVkaWF0YWcuYXNzZXQudjEuTGlzdER1cGxp'
-    'Y2F0ZUFzc2V0c1JlcXVlc3QaLi5tZWRpYXRhZy5hc3NldC52MS5MaXN0RHVwbGljYXRlQXNzZX'
-    'RzUmVzcG9uc2USegoVUmVzb2x2ZUR1cGxpY2F0ZUdyb3VwEi8ubWVkaWF0YWcuYXNzZXQudjEu'
-    'UmVzb2x2ZUR1cGxpY2F0ZUdyb3VwUmVxdWVzdBowLm1lZGlhdGFnLmFzc2V0LnYxLlJlc29sdm'
-    'VEdXBsaWNhdGVHcm91cFJlc3BvbnNlElwKC01lcmdlQXNzZXRzEiUubWVkaWF0YWcuYXNzZXQu'
-    'djEuTWVyZ2VBc3NldHNSZXF1ZXN0GiYubWVkaWF0YWcuYXNzZXQudjEuTWVyZ2VBc3NldHNSZX'
-    'Nwb25zZRJuChFMaXN0VXBsb2FkRm9ybWF0cxIrLm1lZGlhdGFnLmFzc2V0LnYxLkxpc3RVcGxv'
-    'YWRGb3JtYXRzUmVxdWVzdBosLm1lZGlhdGFnLmFzc2V0LnYxLkxpc3RVcGxvYWRGb3JtYXRzUm'
-    'VzcG9uc2USXAoLQXR0YWNoQXNzZXQSJS5tZWRpYXRhZy5hc3NldC52MS5BdHRhY2hBc3NldFJl'
-    'cXVlc3QaJi5tZWRpYXRhZy5hc3NldC52MS5BdHRhY2hBc3NldFJlc3BvbnNlElwKC0RldGFjaE'
-    'Fzc2V0EiUubWVkaWF0YWcuYXNzZXQudjEuRGV0YWNoQXNzZXRSZXF1ZXN0GiYubWVkaWF0YWcu'
-    'YXNzZXQudjEuRGV0YWNoQXNzZXRSZXNwb25zZQ==');
+    '5VcGRhdGVBc3NldFJlc3BvbnNlEmsKEFJldHJ5UG9zdHByb2Nlc3MSKi5tZWRpYXRhZy5hc3Nl'
+    'dC52MS5SZXRyeVBvc3Rwcm9jZXNzUmVxdWVzdBorLm1lZGlhdGFnLmFzc2V0LnYxLlJldHJ5UG'
+    '9zdHByb2Nlc3NSZXNwb25zZRJcCgtEZWxldGVBc3NldBIlLm1lZGlhdGFnLmFzc2V0LnYxLkRl'
+    'bGV0ZUFzc2V0UmVxdWVzdBomLm1lZGlhdGFnLmFzc2V0LnYxLkRlbGV0ZUFzc2V0UmVzcG9uc2'
+    'USdAoTTGlzdER1cGxpY2F0ZUFzc2V0cxItLm1lZGlhdGFnLmFzc2V0LnYxLkxpc3REdXBsaWNh'
+    'dGVBc3NldHNSZXF1ZXN0Gi4ubWVkaWF0YWcuYXNzZXQudjEuTGlzdER1cGxpY2F0ZUFzc2V0c1'
+    'Jlc3BvbnNlEnoKFVJlc29sdmVEdXBsaWNhdGVHcm91cBIvLm1lZGlhdGFnLmFzc2V0LnYxLlJl'
+    'c29sdmVEdXBsaWNhdGVHcm91cFJlcXVlc3QaMC5tZWRpYXRhZy5hc3NldC52MS5SZXNvbHZlRH'
+    'VwbGljYXRlR3JvdXBSZXNwb25zZRJcCgtNZXJnZUFzc2V0cxIlLm1lZGlhdGFnLmFzc2V0LnYx'
+    'Lk1lcmdlQXNzZXRzUmVxdWVzdBomLm1lZGlhdGFnLmFzc2V0LnYxLk1lcmdlQXNzZXRzUmVzcG'
+    '9uc2USbgoRTGlzdFVwbG9hZEZvcm1hdHMSKy5tZWRpYXRhZy5hc3NldC52MS5MaXN0VXBsb2Fk'
+    'Rm9ybWF0c1JlcXVlc3QaLC5tZWRpYXRhZy5hc3NldC52MS5MaXN0VXBsb2FkRm9ybWF0c1Jlc3'
+    'BvbnNlElwKC0F0dGFjaEFzc2V0EiUubWVkaWF0YWcuYXNzZXQudjEuQXR0YWNoQXNzZXRSZXF1'
+    'ZXN0GiYubWVkaWF0YWcuYXNzZXQudjEuQXR0YWNoQXNzZXRSZXNwb25zZRJcCgtEZXRhY2hBc3'
+    'NldBIlLm1lZGlhdGFnLmFzc2V0LnYxLkRldGFjaEFzc2V0UmVxdWVzdBomLm1lZGlhdGFnLmFz'
+    'c2V0LnYxLkRldGFjaEFzc2V0UmVzcG9uc2U=');

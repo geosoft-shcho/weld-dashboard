@@ -138,12 +138,6 @@ class _JsonRepository implements JobTimelineRepository {
   @override
   Future<void> deleteClip({required String clipId}) async {}
 
-  @override
-  Future<void> changeTimelineStatus({
-    required String jobId,
-    required JobTimelineStatus fromStatus,
-    required JobTimelineStatus toStatus,
-  }) async {}
 
   @override
   Future<void> updateTimeline({
