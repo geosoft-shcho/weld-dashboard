@@ -62,6 +62,7 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
       loadFormats: _viewModel.loadUploadFormats,
       pickFiles: _viewModel.pickUploadFiles,
       uploadQueue: _viewModel.uploadAssetQueue,
+      retryPostprocess: _viewModel.retryPostprocess,
     );
     if (result == null || !result.hasSuccess || !mounted) return;
     await _run(_viewModel.didFinishUpload);

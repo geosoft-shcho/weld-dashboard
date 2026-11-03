@@ -21,6 +21,13 @@ typedef AssetUploadQueueRunner =
       required String situation,
     });
 
+typedef AssetRetryPostprocessRunner =
+    Future<AssetUploadQueueItem> Function({
+      required String assetId,
+      required AssetUploadQueueItem base,
+      required void Function(AssetUploadQueueItem item) onItemUpdated,
+    });
+
 const _stepLabels = {
   'properties': '파일 속성',
   'duration': '길이',
@@ -39,6 +46,7 @@ Future<AssetUploadBatchResult?> showAssetUploadDialog(
   required Future<AssetUploadFormats> Function() loadFormats,
   required Future<List<CameraRecordingFile>> Function() pickFiles,
   required AssetUploadQueueRunner uploadQueue,
+  required AssetRetryPostprocessRunner retryPostprocess,
 }) {
   return showDialog<AssetUploadBatchResult>(
     context: context,
@@ -51,6 +59,7 @@ Future<AssetUploadBatchResult?> showAssetUploadDialog(
       loadFormats: loadFormats,
       pickFiles: pickFiles,
       uploadQueue: uploadQueue,
+      retryPostprocess: retryPostprocess,
     ),
   );
 }
@@ -82,6 +91,7 @@ class _AssetUploadDialog extends StatefulWidget {
     required this.loadFormats,
     required this.pickFiles,
     required this.uploadQueue,
+    required this.retryPostprocess,
   });
 
   final List<WorkHistoryItem> jobs;
@@ -92,6 +102,7 @@ class _AssetUploadDialog extends StatefulWidget {
   final Future<AssetUploadFormats> Function() loadFormats;
   final Future<List<CameraRecordingFile>> Function() pickFiles;
   final AssetUploadQueueRunner uploadQueue;
+  final AssetRetryPostprocessRunner retryPostprocess;
 
   @override
   State<_AssetUploadDialog> createState() => _AssetUploadDialogState();
@@ -286,6 +297,43 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
       }
     }
     return null;
+  }
+
+  Future<void> _didTapRetryPostprocess(_DraftRow row) async {
+    final progress = row.progress;
+    final assetId = progress?.result?.assetId ?? '';
+    if (progress == null ||
+        progress.status != AssetUploadItemStatus.postprocessFailed ||
+        assetId.isEmpty ||
+        _isUploading) {
+      return;
+    }
+    setState(() {
+      _isUploading = true;
+      _error = '';
+    });
+    try {
+      await widget.retryPostprocess(
+        assetId: assetId,
+        base: progress,
+        onItemUpdated: (item) {
+          if (!mounted) {
+            return;
+          }
+          setState(() {
+            row.progress = item;
+          });
+        },
+      );
+    } catch (error) {
+      if (mounted) {
+        setState(() => _error = error.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
   }
 
   Future<void> _didTapUpload() async {
@@ -709,6 +757,17 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
                 child: Text(
                   progress.message,
                   style: TextStyle(fontSize: 12, color: Colors.red),
+                ),
+              ),
+            if (progress.status == AssetUploadItemStatus.postprocessFailed &&
+                (progress.result?.assetId ?? '').isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Button(
+                  onPressed: _isUploading
+                      ? null
+                      : () => _didTapRetryPostprocess(row),
+                  child: const Text('후처리 다시 걸기'),
                 ),
               ),
           ],

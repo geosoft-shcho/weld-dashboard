@@ -10,6 +10,7 @@ import '../datasources/asset_multipart_upload.dart';
 import '../datasources/asset_tus_upload.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
 import '../datasources/remote/media_tag_data_source.dart';
+import 'proto_id.dart';
 
 typedef AssetMultipartUpload =
     Future<String> Function({
@@ -224,6 +225,27 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
       url: _mediaTag.resolveContentUrl('/assets'),
       jsonBody: jsonBody,
     );
+  }
+
+  @override
+  Future<String> retryPostprocess({required String assetId}) async {
+    if (!_hasId(assetId)) {
+      throw const AssetUploadException('다시 걸 에셋 번호가 없습니다.');
+    }
+    try {
+      final response = await _mediaTag.assetService.retryPostprocess(
+        asset_pb.RetryPostprocessRequest(assetId: protoId(assetId)),
+      );
+      final runId = idText(response.runId);
+      if (runId.isEmpty) {
+        throw const AssetUploadException('후처리 재시도 응답에 실행 번호가 없습니다.');
+      }
+      return runId;
+    } on AssetUploadException {
+      rethrow;
+    } catch (error) {
+      throw AssetUploadException(error.toString());
+    }
   }
 
   bool _hasId(String id) => id.isNotEmpty && id != '0';

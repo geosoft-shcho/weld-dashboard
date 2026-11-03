@@ -133,6 +133,45 @@ class UploadAssetQueueUseCase {
     }
   }
 
+  /// 후처리 실패 뒤 `RetryPostprocess`로 다시 걸고 `GetRun`으로 이어 본다.
+  Future<AssetUploadQueueItem> retryPostprocess({
+    required String assetId,
+    required AssetUploadQueueItem base,
+    required void Function(AssetUploadQueueItem item) onItemUpdated,
+  }) async {
+    var latest = base;
+    void publish(AssetUploadQueueItem item) {
+      latest = item;
+      onItemUpdated(item);
+    }
+
+    try {
+      final runId = await _uploadRepository.retryPostprocess(assetId: assetId);
+      final queued = base.copyWith(
+        status: AssetUploadItemStatus.postprocessQueued,
+        message: '',
+        result: AssetUploadResult(
+          assetId: base.result?.assetId ?? assetId,
+          fileName: base.result?.fileName ?? base.fileName,
+          runId: runId,
+          warnings: base.result?.warnings ?? const [],
+          duplicateAssetIds: base.result?.duplicateAssetIds ?? const [],
+        ),
+        progressPercent: 0,
+      );
+      publish(queued);
+      await _waitForPostprocess(runId: runId, base: queued, publish: publish);
+      return latest;
+    } catch (error) {
+      final failed = base.copyWith(
+        status: AssetUploadItemStatus.postprocessFailed,
+        message: error.toString(),
+      );
+      publish(failed);
+      return failed;
+    }
+  }
+
   Future<void> _waitForPostprocess({
     required String runId,
     required AssetUploadQueueItem base,

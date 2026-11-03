@@ -390,6 +390,18 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     );
   }
 
+  Future<AssetUploadQueueItem> retryPostprocess({
+    required String assetId,
+    required AssetUploadQueueItem base,
+    required void Function(AssetUploadQueueItem item) onItemUpdated,
+  }) {
+    return _uploadAssetQueueUseCase.retryPostprocess(
+      assetId: assetId,
+      base: base,
+      onItemUpdated: onItemUpdated,
+    );
+  }
+
   Future<void> didFinishUpload() async {
     await _reloadAttachments();
   }

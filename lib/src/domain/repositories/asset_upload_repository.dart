@@ -36,4 +36,7 @@ abstract class AssetUploadRepository {
     String situation = '',
     String fallbackFileName = '',
   });
+
+  /// 실패한 후처리를 다시 건다. 반환값은 실행 번호(runId).
+  Future<String> retryPostprocess({required String assetId});
 }

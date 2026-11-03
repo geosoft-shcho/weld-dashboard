@@ -212,6 +212,7 @@ class AssetLookupViewModel extends ChangeNotifier {
     _reloadListAssets();
   }
 
+
   void didSelectEquipment(String equipmentId) {
     if (_equipmentId == equipmentId) {
       return;
@@ -386,6 +387,18 @@ class AssetLookupViewModel extends ChangeNotifier {
       onItemUpdated: onItemUpdated,
       subject: subject,
       situation: situation,
+    );
+  }
+
+  Future<AssetUploadQueueItem> retryPostprocess({
+    required String assetId,
+    required AssetUploadQueueItem base,
+    required void Function(AssetUploadQueueItem item) onItemUpdated,
+  }) {
+    return _uploadAssetQueueUseCase.retryPostprocess(
+      assetId: assetId,
+      base: base,
+      onItemUpdated: onItemUpdated,
     );
   }
 
