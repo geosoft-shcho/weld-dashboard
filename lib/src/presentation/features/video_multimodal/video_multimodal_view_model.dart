@@ -2208,6 +2208,13 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
+    if (isSpeechToText && !_ensureSpeechToTextClipSelected()) {
+      _inferencePhase = InferencePanelPhase.failed;
+      _inferenceMessage =
+          'STT는 음성 클립을 대상으로 실행하세요. 녹화 음성을 선택한 뒤 다시 실행하세요.';
+      notifyListeners();
+      return;
+    }
     _inferencePhase = InferencePanelPhase.queued;
     notifyListeners();
     try {
@@ -2777,6 +2784,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final existing = _findAssetClip(assetId);
     if (existing != null && existing.trackId == trackId) {
       if (existing.startNs == range.startNs && existing.endNs == range.endNs) {
+        _selectPlacedRecordingClip(assetId, isVideo: isVideo);
         return;
       }
       final didMove = await updateTimelineClip(
@@ -2789,6 +2797,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
           _timelineHint.isEmpty ? '녹화 클립 위치를 맞추지 못했습니다.' : _timelineHint,
         );
       }
+      _selectPlacedRecordingClip(assetId, isVideo: isVideo);
       return;
     }
     if (existing != null) {
@@ -2803,6 +2812,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
           _timelineHint.isEmpty ? '녹화 트랙으로 옮기지 못했습니다.' : _timelineHint,
         );
       }
+      _selectPlacedRecordingClip(assetId, isVideo: isVideo);
       return;
     }
     final didSave = await createTimelineClip(
@@ -2820,6 +2830,50 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         _timelineHint.isEmpty ? '녹화 클립을 만들지 못했습니다.' : _timelineHint,
       );
     }
+    _selectPlacedRecordingClip(assetId, isVideo: isVideo);
+  }
+
+  void _selectPlacedRecordingClip(String assetId, {required bool isVideo}) {
+    if (isVideo || _isClosed) {
+      return;
+    }
+    final clip = _findAssetClip(assetId);
+    if (clip == null || clip.clipId.isEmpty) {
+      return;
+    }
+    _selectedClipId = clip.clipId;
+    notifyListeners();
+  }
+
+  /// STT는 음성 클립 대상. 영상/미선택이면 녹화 음성(또는 아무 음성) 클립으로 맞춘다.
+  bool _ensureSpeechToTextClipSelected() {
+    final selected = _timelineClip(_selectedClipId);
+    if (selected != null && selected.kind == TimelineClipKind.audio) {
+      return true;
+    }
+    final recordingTrackId = _trackIdByName(RECORDING_AUDIO_TRACK_NAME);
+    if (recordingTrackId != null) {
+      for (final track in _timeline.tracks) {
+        if (track.trackId != recordingTrackId) {
+          continue;
+        }
+        for (final clip in track.clips) {
+          if (clip.kind == TimelineClipKind.audio && clip.clipId.isNotEmpty) {
+            _selectedClipId = clip.clipId;
+            return true;
+          }
+        }
+      }
+    }
+    for (final track in _timeline.tracks) {
+      for (final clip in track.clips) {
+        if (clip.kind == TimelineClipKind.audio && clip.clipId.isNotEmpty) {
+          _selectedClipId = clip.clipId;
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   ({
@@ -3604,7 +3658,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   void _rememberOpenRun(ToolRunSnapshot run) {
     _activeRunId = run.runId;
-    _inferenceMessage = '';
+    _inferenceMessage = run.status == ToolRunStatus.queued
+        ? run.queueWaitLabel
+        : '';
     _inferenceProgressPercent = run.progressPercent;
     _inferenceRemainingSeconds = run.estimatedRemainingSeconds;
     _inferencePhase = run.status == ToolRunStatus.running

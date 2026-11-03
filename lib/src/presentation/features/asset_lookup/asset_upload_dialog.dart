@@ -778,6 +778,10 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
 
   String _statusLine(AssetUploadQueueItem progress) {
     final label = progress.status.label;
+    if (progress.status == AssetUploadItemStatus.postprocessQueued &&
+        progress.message.isNotEmpty) {
+      return progress.message;
+    }
     if (progress.status == AssetUploadItemStatus.postprocessRunning &&
         progress.progressPercent > 0) {
       return '$label ${progress.progressPercent.round()}%';

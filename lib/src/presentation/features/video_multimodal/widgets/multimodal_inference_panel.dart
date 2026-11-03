@@ -96,7 +96,7 @@ class MultimodalInferencePanel extends StatelessWidget {
                           children: [
                             Text(viewModel.inferenceModelName),
                             const SizedBox(height: 8),
-                            Text(_phaseLabel(phase)),
+                            Text(_phaseLine(phase, viewModel.inferenceMessage)),
                             if (phase == InferencePanelPhase.failed &&
                                 viewModel.inferenceMessage.isNotEmpty) ...[
                               const SizedBox(height: 8),
@@ -134,10 +134,13 @@ class MultimodalInferencePanel extends StatelessWidget {
     );
   }
 
-  String _phaseLabel(InferencePanelPhase phase) {
+  String _phaseLine(InferencePanelPhase phase, String message) {
     switch (phase) {
       case InferencePanelPhase.queued:
-        return '대기';
+        if (message.isEmpty) {
+          return '대기';
+        }
+        return '대기 · $message';
       case InferencePanelPhase.running:
         return '진행';
       case InferencePanelPhase.failed:

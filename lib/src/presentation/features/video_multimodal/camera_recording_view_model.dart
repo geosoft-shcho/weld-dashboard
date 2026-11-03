@@ -278,15 +278,22 @@ class CameraRecordingViewModel extends ChangeNotifier {
     _publish();
     while (!_isDisposed) {
       final run = await _toolRunUseCase.getRun(runId: runId);
-      if (run.status == ToolRunStatus.succeeded) {
+      if (run.status == ToolRunStatus.queued) {
+        final detail = run.queueWaitLabel;
+        noticeText = detail.isEmpty
+            ? '업로드한 파일을 처리하고 있습니다.'
+            : '후처리 대기 · $detail';
+        _publish();
+      } else if (run.status == ToolRunStatus.running) {
+        noticeText = '업로드한 파일을 처리하고 있습니다.';
+        _publish();
+      } else if (run.status == ToolRunStatus.succeeded) {
         return;
-      }
-      if (run.status == ToolRunStatus.failed) {
+      } else if (run.status == ToolRunStatus.failed) {
         throw AssetUploadException(
           run.errorMessage.isEmpty ? '파일 후처리에 실패했습니다.' : run.errorMessage,
         );
-      }
-      if (run.status == ToolRunStatus.canceled) {
+      } else if (run.status == ToolRunStatus.canceled) {
         throw const AssetUploadException('파일 후처리가 취소되었습니다.');
       }
       await Future<void>.delayed(const Duration(seconds: 1));

@@ -182,13 +182,17 @@ class UploadAssetQueueUseCase {
       switch (run.status) {
         case ToolRunStatus.queued:
           publish(
-            base.copyWith(status: AssetUploadItemStatus.postprocessQueued),
+            base.copyWith(
+              status: AssetUploadItemStatus.postprocessQueued,
+              message: _postprocessQueuedMessage(run),
+            ),
           );
         case ToolRunStatus.running:
           publish(
             base.copyWith(
               status: AssetUploadItemStatus.postprocessRunning,
               progressPercent: run.progressPercent,
+              message: '',
             ),
           );
         case ToolRunStatus.succeeded:
@@ -215,5 +219,13 @@ class UploadAssetQueueUseCase {
       }
       await Future<void>.delayed(const Duration(seconds: 1));
     }
+  }
+
+  String _postprocessQueuedMessage(ToolRunSnapshot run) {
+    final detail = run.queueWaitLabel;
+    if (detail.isEmpty) {
+      return '후처리 대기';
+    }
+    return '후처리 대기 · $detail';
   }
 }

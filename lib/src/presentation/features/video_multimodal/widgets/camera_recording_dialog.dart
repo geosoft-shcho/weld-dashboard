@@ -242,8 +242,21 @@ class _CameraRecordingCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        if (viewModel.isUploading) const ProgressBar(),
-                        if (viewModel.isUploading) const SizedBox(height: 12),
+                        if (viewModel.isUploading) ...[
+                          const ProgressBar(),
+                          if (viewModel.noticeText.isNotEmpty) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              viewModel.noticeText,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: theme.resources
+                                    .textFillColorSecondary,
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 12),
+                        ],
                         Wrap(
                           spacing: 8,
                           runSpacing: 8,

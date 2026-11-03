@@ -26,6 +26,9 @@ class ToolRunSnapshot {
     required this.errorMessage,
     this.progressPercent = 0,
     this.estimatedRemainingSeconds = 0,
+    this.queue = '',
+    this.queuePosition = 0,
+    this.queueLength = 0,
   });
 
   final String runId;
@@ -34,9 +37,34 @@ class ToolRunSnapshot {
   final String errorMessage;
   final double progressPercent;
   final int estimatedRemainingSeconds;
+  final String queue;
+  final int queuePosition;
+  final int queueLength;
 
   bool get isInProgress {
     return status == ToolRunStatus.queued || status == ToolRunStatus.running;
+  }
+
+  /// 대기열 표시용. 예: `후처리 · 1/3`
+  String get queueWaitLabel {
+    final name = switch (queue.trim()) {
+      'postprocess' => '후처리',
+      'work' => '작업',
+      '' => '',
+      final value => value,
+    };
+    final parts = <String>[];
+    if (name.isNotEmpty) {
+      parts.add(name);
+    }
+    if (queuePosition > 0) {
+      if (queueLength > 0) {
+        parts.add('$queuePosition/$queueLength');
+      } else {
+        parts.add('$queuePosition');
+      }
+    }
+    return parts.join(' · ');
   }
 }
 

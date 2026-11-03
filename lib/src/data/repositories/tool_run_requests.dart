@@ -202,6 +202,9 @@ ToolRunSnapshot toolRunSnapshotFrom(tool_pb.ToolRun run) {
     errorMessage: run.errorMessage,
     progressPercent: run.progressPercent,
     estimatedRemainingSeconds: run.estimatedRemainingSeconds,
+    queue: run.queue.trim(),
+    queuePosition: run.queuePosition,
+    queueLength: run.queueLength,
   );
 }
 
