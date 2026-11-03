@@ -120,7 +120,6 @@ class _JobLookupDetailBody extends StatelessWidget {
         JobDetailTabsBar(
           selectedTab: viewModel.tab,
           passCount: viewModel.passes.length,
-          attachmentCount: job.attachmentCount,
           onSelectTab: viewModel.didSelectTab,
         ),
         const SizedBox(height: 12),

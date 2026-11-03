@@ -10,13 +10,11 @@ class JobDetailTabsBar extends StatelessWidget {
     super.key,
     required this.selectedTab,
     required this.passCount,
-    required this.attachmentCount,
     required this.onSelectTab,
   });
 
   final JobLookupDetailTab selectedTab;
   final int passCount;
-  final int attachmentCount;
   final ValueChanged<JobLookupDetailTab> onSelectTab;
 
   static final Color _LINE = AppTheme.STATUS_OFF.withValues(alpha: 0.45);
@@ -36,7 +34,7 @@ class JobDetailTabsBar extends StatelessWidget {
           children: [
             _tab(JobLookupDetailTab.info, '기본 정보'),
             _tab(JobLookupDetailTab.passes, '패스 $passCount'),
-            _tab(JobLookupDetailTab.attachments, '첨부 $attachmentCount'),
+            _tab(JobLookupDetailTab.attachments, '첨부'),
           ],
         ),
       ),

@@ -22,7 +22,7 @@ class JobPassTab extends StatelessWidget {
         JobDetailActionBar(
           items: [
             CommandBarButton(
-              icon: const Icon(FluentIcons.add),
+              icon: const Icon(FluentIcons.add, size: 12),
               label: const CommandBarLabel('패스 추가'),
               onPressed: detail == null
                   ? null

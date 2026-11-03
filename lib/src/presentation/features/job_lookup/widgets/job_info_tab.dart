@@ -219,12 +219,12 @@ class _JobInfoTabState extends State<JobInfoTab> {
         JobDetailActionBar(
           items: [
             CommandBarButton(
-              icon: const Icon(FluentIcons.save),
+              icon: const Icon(FluentIcons.save, size: 12),
               label: const CommandBarLabel('저장'),
               onPressed: _isSaving ? null : _didTapSave,
             ),
             CommandBarButton(
-              icon: const Icon(FluentIcons.delete),
+              icon: const Icon(FluentIcons.delete, size: 12),
               label: const CommandBarLabel('작업 지우기'),
               onPressed: _isSaving ? null : _didTapDelete,
             ),

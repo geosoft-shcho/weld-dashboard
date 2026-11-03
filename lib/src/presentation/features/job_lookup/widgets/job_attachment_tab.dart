@@ -1,15 +1,23 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../domain/entities/asset_lookup_kind.dart';
-import '../../../core/themes/app_theme.dart';
-import '../../../core/widgets/section_empty_placeholder.dart';
-import '../../../core/widgets/command_bar_widget_item.dart';
-import '../../../core/widgets/screen_command_bar.dart';
-import '../../asset_lookup/asset_upload_dialog.dart';
 import '../../../../domain/entities/asset_lookup_row.dart';
+import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/screen_command_bar.dart';
+import '../../../core/widgets/section_empty_placeholder.dart';
+import '../../../navigation/app_coordinator.dart';
+import '../../asset_lookup/asset_upload_dialog.dart';
 import '../job_lookup_detail_view_model.dart';
 import 'job_detail_action_bar.dart';
 import 'job_detail_text_input.dart';
+
+const double _kAttachmentColId = 70;
+const double _kAttachmentColKind = 90;
+const double _kAttachmentColPostprocess = 120;
+const double _kAttachmentColPass = 130;
+const double _kAttachmentColActionsGap = 4;
+const double _kAttachmentColActions = 72;
 
 class JobAttachmentTab extends StatefulWidget {
   const JobAttachmentTab({super.key, required this.viewModel});
@@ -157,117 +165,175 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        JobDetailActionBar(
-          items: [
-            CommandBarWidgetItem(
-              child: FilledButton(
+    return NotificationListener<ScrollNotification>(
+      onNotification: (notification) {
+        if (notification.metrics.extentAfter < 240) {
+          _viewModel.didScrollAttachmentsNearEnd();
+        }
+        return false;
+      },
+      child: ListView(
+        children: [
+          JobDetailActionBar(
+            leading: _viewModel.didLoadAttachments
+                ? Text('전체 첨부 ${_viewModel.attachmentTotalCount}건')
+                : null,
+            items: [
+              CommandBarButton(
+                icon: const Icon(FluentIcons.upload, size: 12),
+                label: const CommandBarLabel('에셋 올리기'),
                 onPressed: _isWorking ? null : _didTapUploadToJob,
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(FluentIcons.upload, size: 14),
-                    SizedBox(width: 6),
-                    Text('에셋 올리기'),
-                  ],
-                ),
+              ),
+              CommandBarButton(
+                icon: const Icon(FluentIcons.attach, size: 12),
+                label: const CommandBarLabel('에셋 붙이기(첨부만)'),
+                onPressed: _isWorking ? null : _didTapAttach,
+              ),
+            ],
+          ),
+          if (_error.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(_error, style: TextStyle(color: Colors.red)),
+          ],
+          if (_isWorking) ...[
+            const SizedBox(height: 12),
+            const Center(child: ProgressRing()),
+          ],
+          const SizedBox(height: 12),
+          if (_viewModel.attachments.isEmpty)
+            const SectionEmptyPlaceholder(
+              title: '첨부가 없습니다',
+              message: '이 작업에 올리거나 이미 있는 에셋을 붙일 수 있습니다.',
+            )
+          else
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.SURFACE_RAISED,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: const Color(0xFF3E424A)),
+              ),
+              child: Column(
+                children: [
+                  const _JobAttachmentTableHeader(),
+                  for (final row in _viewModel.attachments)
+                    DecoratedBox(
+                      decoration: const BoxDecoration(
+                        border: Border(
+                          bottom: BorderSide(color: Color(0xFF3E424A)),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: _kAttachmentColId,
+                              child: Text(row.assetId),
+                            ),
+                            SizedBox(
+                              width: _kAttachmentColKind,
+                              child: Text(
+                                AssetLookupKindOption.labelOf(row.kindCode),
+                              ),
+                            ),
+                            Expanded(
+                              child: Text(
+                                row.fileName,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            SizedBox(
+                              width: _kAttachmentColPostprocess,
+                              child: _JobAttachmentPostprocessCell(
+                                postprocess: row.postprocess,
+                              ),
+                            ),
+                            SizedBox(
+                              width: _kAttachmentColPass,
+                              child: _passCombo(
+                                value: _passIdOf(row),
+                                onChanged: (value) {
+                                  if (value == null) return;
+                                  _run(
+                                    () => _viewModel.changeAttachmentPass(
+                                      assetId: row.assetId,
+                                      passId: value,
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                            const SizedBox(width: _kAttachmentColActionsGap),
+                            SizedBox(
+                              width: _kAttachmentColActions,
+                              child: Row(
+                                children: [
+                                  SizedBox(
+                                    width: 36,
+                                    child: Tooltip(
+                                      message: '에셋 상세',
+                                      useMousePosition: false,
+                                      style: const TooltipThemeData(
+                                        verticalOffset: 6,
+                                        preferBelow: true,
+                                      ),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          FluentIcons.open_file,
+                                          size: 14,
+                                        ),
+                                        onPressed:
+                                            _isWorking || row.assetId.isEmpty
+                                            ? null
+                                            : () => context
+                                                  .read<AppCoordinator>()
+                                                  .didTapOpenAssetDetail(
+                                                    row.assetId,
+                                                  ),
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: 36,
+                                    child: Tooltip(
+                                      message: '에셋 떼기',
+                                      useMousePosition: false,
+                                      style: const TooltipThemeData(
+                                        verticalOffset: 6,
+                                        preferBelow: true,
+                                      ),
+                                      child: IconButton(
+                                        icon: const Icon(
+                                          FluentIcons.remove_link,
+                                          size: 14,
+                                        ),
+                                        onPressed: _isWorking
+                                            ? null
+                                            : () => _run(
+                                                () => _viewModel.detachAsset(
+                                                  row.assetId,
+                                                ),
+                                              ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ),
-            CommandBarButton(
-              icon: const Icon(FluentIcons.attach),
-              label: const CommandBarLabel('에셋 붙이기(첨부만)'),
-              onPressed: _isWorking ? null : _didTapAttach,
-            ),
+          if (_viewModel.isLoadingMoreAttachments) ...[
+            const SizedBox(height: 12),
+            const Center(child: ProgressRing()),
           ],
-        ),
-        if (_error.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(_error, style: TextStyle(color: Colors.red)),
         ],
-        if (_isWorking) ...[
-          const SizedBox(height: 12),
-          const Center(child: ProgressRing()),
-        ],
-        const SizedBox(height: 12),
-        if (_viewModel.attachments.isEmpty)
-          const SectionEmptyPlaceholder(
-            title: '첨부가 없습니다',
-            message: '이 작업에 올리거나 이미 있는 에셋을 붙일 수 있습니다.',
-          )
-        else
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppTheme.SURFACE_RAISED,
-              borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: const Color(0xFF3E424A)),
-            ),
-            child: Column(
-              children: [
-                const _JobAttachmentTableHeader(),
-                for (final row in _viewModel.attachments)
-                  DecoratedBox(
-                    decoration: const BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(color: Color(0xFF3E424A)),
-                      ),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 6),
-                      child: Row(
-                        children: [
-                          SizedBox(width: 70, child: Text(row.assetId)),
-                          SizedBox(
-                            width: 90,
-                            child: Text(
-                              AssetLookupKindOption.labelOf(row.kindCode),
-                            ),
-                          ),
-                          Expanded(
-                            child: Text(
-                              row.fileName,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          SizedBox(
-                            width: 130,
-                            child: _passCombo(
-                              value: _passIdOf(row),
-                              onChanged: (value) {
-                                if (value == null) return;
-                                _run(
-                                  () => _viewModel.changeAttachmentPass(
-                                    assetId: row.assetId,
-                                    passId: value,
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Tooltip(
-                            message: '떼기',
-                            child: IconButton(
-                              icon: const Icon(
-                                FluentIcons.remove_link,
-                                size: 14,
-                              ),
-                              onPressed: _isWorking
-                                  ? null
-                                  : () => _run(
-                                      () => _viewModel.detachAsset(row.assetId),
-                                    ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-      ],
+      ),
     );
   }
 }
@@ -287,15 +353,83 @@ class _JobAttachmentTableHeader extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            SizedBox(width: 70, child: Text('번호', style: headerStyle)),
-            SizedBox(width: 90, child: Text('종류', style: headerStyle)),
+            SizedBox(
+              width: _kAttachmentColId,
+              child: Text('번호', style: headerStyle),
+            ),
+            SizedBox(
+              width: _kAttachmentColKind,
+              child: Text('종류', style: headerStyle),
+            ),
             Expanded(child: Text('파일', style: headerStyle)),
-            SizedBox(width: 130, child: Text('패스', style: headerStyle)),
-            SizedBox(width: 4),
-            SizedBox(width: 30),
+            SizedBox(
+              width: _kAttachmentColPostprocess,
+              child: Text('후처리', style: headerStyle),
+            ),
+            SizedBox(
+              width: _kAttachmentColPass,
+              child: Text('패스', style: headerStyle),
+            ),
+            SizedBox(width: _kAttachmentColActionsGap),
+            SizedBox(
+              width: _kAttachmentColActions,
+              child: Text('기능', style: headerStyle),
+            ),
           ],
         ),
       ),
     );
+  }
+}
+
+class _JobAttachmentPostprocessCell extends StatelessWidget {
+  const _JobAttachmentPostprocessCell({required this.postprocess});
+
+  final AssetPostprocessSummary postprocess;
+
+  @override
+  Widget build(BuildContext context) {
+    if (postprocess.isEmpty) {
+      return Text(
+        '—',
+        style: TextStyle(
+          fontSize: 12,
+          color: Colors.white.withValues(alpha: 0.55),
+        ),
+      );
+    }
+    final label = AssetPostprocessStatusOption.labelOf(postprocess.statusCode);
+    final isFailed = postprocess.isFailed;
+    final isCanceled = postprocess.statusCode == 'canceled';
+    final emphasize = isFailed || isCanceled;
+    final color = isFailed
+        ? Colors.red
+        : isCanceled
+        ? const Color(0xFFE8A838)
+        : null;
+    final content = Row(
+      children: [
+        if (emphasize) ...[
+          Icon(
+            isFailed ? FluentIcons.error_badge : FluentIcons.warning,
+            size: 12,
+            color: color,
+          ),
+          const SizedBox(width: 4),
+        ],
+        Flexible(
+          child: Text(
+            label,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 12, color: color),
+          ),
+        ),
+      ],
+    );
+    final reason = postprocess.errorMessage.trim();
+    if (!emphasize || reason.isEmpty) {
+      return content;
+    }
+    return Tooltip(message: reason, child: content);
   }
 }
