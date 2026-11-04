@@ -46,7 +46,6 @@ import 'video_caption.dart';
 import 'video_overlay_clock.dart';
 import 'video_overlay_frame.dart';
 import 'video_overlay_json.dart';
-import 'playhead_covering_log.dart';
 import 'timeline_clip_helpers.dart';
 import 'timeline_playhead_clock.dart';
 import 'video_playback_rate.dart';
@@ -126,7 +125,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final Duration toolRunPoll;
 
   final TimelinePlayheadClock _playhead = TimelinePlayheadClock();
-  final PlayheadCoveringLog _playheadCoveringLog = PlayheadCoveringLog();
   final PosePlaybackLog _posePlaybackLog = PosePlaybackLog();
   int _seekToken = 0;
   VideoMultimodalSide _side = VideoMultimodalSide.none;
@@ -1404,7 +1402,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _seekToken += 1;
     _playbackToken += 1;
     _syncPlayheadClock();
-    _logPlayheadCovering(reason: 'seek');
     notifyListeners();
   }
 
@@ -1412,7 +1409,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (_playhead.wantsPlayback) {
       _playhead.pause();
       _playbackToken += 1;
-      _logPlayheadCovering(reason: 'pause');
       notifyListeners();
       return;
     }
@@ -1421,7 +1417,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _playbackToken += 1;
     _seekToken += 1;
     _syncPlayheadClock();
-    _logPlayheadCovering(reason: 'play');
     notifyListeners();
   }
 
@@ -1454,37 +1449,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final coveringId = clip?.clipId ?? '';
     final coveringChanged = coveringId != _coveringVideoClipId;
     _coveringVideoClipId = coveringId;
-    if (coveringChanged) {
-      _logPlayheadCovering(clip: clip, reason: 'covering_changed');
-    } else {
-      _logPlayheadCovering(clip: clip, reason: 'tick', throttle: true);
-    }
     if (coveringChanged || _doesPrimaryCoveringNeedStepSeek()) {
       _seekToken += 1;
     }
-  }
-
-  void _logPlayheadCovering({
-    TimelineClip? clip,
-    required String reason,
-    bool throttle = false,
-  }) {
-    final resolved = clip ?? _primaryCoveringVideoClip();
-    final bar = resolved == null ? null : _videoBarFromClip(resolved);
-    _playheadCoveringLog.log(
-      reason: reason,
-      playheadSeconds: playheadSeconds,
-      spanSeconds: spanSeconds,
-      wantsPlayback: _playhead.wantsPlayback,
-      modeLabel: monitoredTrackIds.isNotEmpty
-          ? 'monitor focus=$focusedMonitorTrackId'
-          : 'selected/active',
-      clip: resolved,
-      seekMs: bar == null ? -1 : fileSeekMilliseconds(bar),
-      rate: bar == null ? 0 : playbackRateFor(bar),
-      step: bar != null && doesPlaybackUseStepSeek(bar),
-      throttle: throttle,
-    );
   }
 
   TimelineClip? _primaryCoveringVideoClip() {
