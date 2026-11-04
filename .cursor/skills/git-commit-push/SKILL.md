@@ -19,7 +19,9 @@ description: >-
 
 - `git config`, `--no-verify`, `--no-gpg-sign`, `git commit --amend`(사용자 커밋 프로토콜이 허용하는 경우가 아니면), `main`/`master`에 강제 푸시는 하지 않는다
 - `git rebase -i`, `git add -i`는 쓰지 않는다
-- `.env`, 자격 증명, 키, 비밀 파일은 커밋하지 않는다. 있으면 알리고 제외한다
+- `.env`, 자격 증명, 키, 토큰, 비밀 파일은 커밋하지 않는다. 있으면 알리고 제외한다
+- 채팅·프롬프트에 시크릿·키를 붙여 넣지 않는다. diff에 자격 증명·불필요한 프로덕션 비밀 하드코딩이 있으면 커밋하지 않고 수정을 요구한다
+- 기능 구현(work-prompt) 직후 커밋 요청이면, 이번 대화에서 `./scripts/agent_check.sh`를 실행해 통과한 뒤에만 커밋한다. 미실행·실패면 커밋하지 않고 알린다. 문서·규칙만 바뀐 커밋은 `agent_check`를 강제하지 않는다
 - 커밋할 내용이 없으면 빈 커밋을 만들지 않는다
 - 푸시는 `git push` (업스트림이 없으면 `git push -u origin HEAD`). `--force`는 쓰지 않는다
 

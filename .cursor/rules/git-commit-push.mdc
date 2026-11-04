@@ -3,4 +3,4 @@ description: 사용자가 커밋·푸시를 요청하면 변경 소스를 확인
 alwaysApply: true
 ---
 
-사용자가 커밋, 푸시, 커밋푸시, git commit, git push를 요청하면 `.cursor/skills/git-commit-push/SKILL.md`를 따른다. 요청 없이 커밋하거나 푸시하지 않는다. 커밋 전에는 변경된 소스의 diff를 읽고, 파일 수가 아니라 목적별로 나눠 각각 커밋한다. 목적이 하나면 커밋은 하나다. https://github.com/geosoft-co-kr/guidelines.git 는 워킹 트리에 두지 않고 수정·편집·커밋·푸시하지 않는다. 올리지 않을 파일은 워킹 트리에서 되돌려 변경사항에 남기지 않는다.
+사용자가 커밋, 푸시, 커밋푸시, git commit, git push를 요청하면 `.cursor/skills/git-commit-push/SKILL.md`를 따른다. 요청 없이 커밋하거나 푸시하지 않는다. 커밋 전에는 변경된 소스의 diff를 읽고, 파일 수가 아니라 목적별로 나눠 각각 커밋한다. 목적이 하나면 커밋은 하나다. 기능 구현 직후 커밋이면 `./scripts/agent_check.sh` 미통과·미실행 시 커밋하지 않는다. `.env`·자격 증명·키·시크릿은 커밋하지 않는다. https://github.com/geosoft-co-kr/guidelines.git 는 워킹 트리에 두지 않고 수정·편집·커밋·푸시하지 않는다. 올리지 않을 파일은 워킹 트리에서 되돌려 변경사항에 남기지 않는다.
