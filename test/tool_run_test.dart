@@ -39,6 +39,7 @@ import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/label_roots_session_cache.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_dialogs.dart';
 
@@ -283,7 +284,7 @@ void main() {
     final viewModel = _viewModel(tools);
     addTearDown(viewModel.dispose);
 
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     expect(viewModel.inferencePhase, InferencePanelPhase.queued);
     expect(viewModel.inferenceModelName, 'pose');
@@ -295,7 +296,7 @@ void main() {
     final viewModel = _viewModel(tools);
     addTearDown(viewModel.dispose);
 
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didSelectSampleClip('10');
     await viewModel.didStartInference(toolId: '7', toolName: 'pose');
 
@@ -312,7 +313,7 @@ void main() {
     );
     addTearDown(viewModel.dispose);
 
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didTapBar('20');
     await viewModel.didStartInference(toolId: '7', toolName: 'pose');
 
@@ -328,7 +329,7 @@ void main() {
     );
     addTearDown(viewModel.dispose);
 
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didTapBar('20');
     await viewModel.didStartInference(
       toolId: '1',
@@ -436,6 +437,7 @@ VideoMultimodalViewModel _viewModel(
   WorkDetailRepository? workDetail,
 }) {
   final timelineRepository = timeline ?? _QuietTimelineRepository();
+  LabelRootsSessionCache.clear();
   return VideoMultimodalViewModel(
     listHistoryWorkAttachmentsUseCase: ListHistoryWorkAttachmentsUseCase(
       workDetail ?? _EmptyWorkDetailRepository(),

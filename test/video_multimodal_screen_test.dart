@@ -35,6 +35,7 @@ import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
 import 'package:weld_dashboard/src/presentation/core/di/locator.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/label_roots_session_cache.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_screen.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
 import 'package:weld_dashboard/src/presentation/navigation/app_coordinator.dart';
@@ -42,6 +43,7 @@ import 'package:weld_dashboard/src/presentation/navigation/app_coordinator.dart'
 void main() {
   setUp(() async {
     await locator.reset();
+    LabelRootsSessionCache.clear();
     locator.registerFactoryParam<VideoMultimodalViewModel, String, void>((
       jobId,
       _,

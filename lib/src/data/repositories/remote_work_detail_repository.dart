@@ -53,7 +53,7 @@ class RemoteWorkDetailRepository implements WorkDetailRepository {
     if (jobId.isEmpty) {
       return const [];
     }
-    final request = asset_pb.ListAssetsRequest(pageSize: 200);
+    final request = asset_pb.ListAssetsRequest(pageSize: 50);
     request.job = asset_pb.AssetJobFilter(jobId: protoId(jobId));
     final response = await _mediaTag.assetService.listAssets(request);
     final attachments = <WorkAttachment>[];

@@ -35,6 +35,7 @@ import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/label_roots_session_cache.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_side_panel.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/timeline_board_helpers.dart';
@@ -283,7 +284,7 @@ void main() {
         _clip(clipId: 'video-1', playbackUrl: mediaUrl),
       ]),
     );
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didTapToggleAsk();
 
     viewModel.didTapCitation(
@@ -322,7 +323,7 @@ void main() {
         ),
       ]),
     );
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     viewModel.didTapCitation(
       const AskCitation(
@@ -344,7 +345,7 @@ void main() {
         _clip(clipId: 'video-1', playbackUrl: 'http://media.example/video.mp4'),
       ]),
     );
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didSelectSampleClip('video-1');
     expect(viewModel.selectedClipId, 'video-1');
     expect(viewModel.isPropertiesOpen, isTrue);
@@ -374,7 +375,7 @@ void main() {
         ),
       ]),
     );
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didTapToggleAsk();
     viewModel.didTapCitation(
       const AskCitation(
@@ -391,7 +392,7 @@ void main() {
 
   test('a citation without a video does not change playback', () async {
     final viewModel = _viewModel(_ScriptedAsk(), projectId: '42');
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didTapCitation(
       const AskCitation(
         startSeconds: 1946,
@@ -408,7 +409,7 @@ void main() {
   testWidgets('the ask field and send button share a height', (tester) async {
     final viewModel = _viewModel(_ScriptedAsk(), projectId: '42');
     addTearDown(viewModel.dispose);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     await viewModel.didTapToggleAsk();
 
     await tester.pumpWidget(
@@ -434,7 +435,7 @@ void main() {
     final asks = _ScriptedAsk();
     final viewModel = _viewModel(asks, projectId: '42');
     addTearDown(viewModel.dispose);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     await viewModel.didTapToggleAsk();
     await viewModel.didSendAsk('용접 장면');
 
@@ -462,7 +463,7 @@ void main() {
       ..next = const AskAnswer(answer: '답만 있습니다.', sessionId: 's1');
     final viewModel = _viewModel(asks, projectId: '42');
     addTearDown(viewModel.dispose);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     await viewModel.didTapToggleAsk();
     await viewModel.didSendAsk('질문');
 
@@ -827,6 +828,7 @@ VideoMultimodalViewModel _viewModel(
 }) {
   final repository = timelineRepository ?? _IdleTimeline(timeline);
   final workDetail = _ProjectWorkDetail(projectId);
+  LabelRootsSessionCache.clear();
   return VideoMultimodalViewModel(
     listHistoryWorkAttachmentsUseCase: ListHistoryWorkAttachmentsUseCase(
       workDetail,

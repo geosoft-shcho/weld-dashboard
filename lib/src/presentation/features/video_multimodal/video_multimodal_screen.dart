@@ -22,7 +22,7 @@ class VideoMultimodalScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) =>
-          locator<VideoMultimodalViewModel>(param1: jobId)..loadAttachments(),
+          locator<VideoMultimodalViewModel>(param1: jobId)..openTimeline(),
       child: const _VideoMultimodalBody(),
     );
   }
@@ -58,7 +58,7 @@ class _VideoMultimodalBody extends StatelessWidget {
                     content: Text(viewModel.errorMessage),
                     severity: InfoBarSeverity.error,
                     action: Button(
-                      onPressed: viewModel.loadAttachments,
+                      onPressed: viewModel.openTimeline,
                       child: const Text('다시 시도'),
                     ),
                   ),
@@ -118,7 +118,7 @@ class _VideoMultimodalBody extends StatelessWidget {
                         top: viewModel.cameraRecordingOffsetY,
                         child: CameraRecordingOverlay(
                           jobId: viewModel.jobId,
-                          onUploaded: viewModel.loadAttachments,
+                          onUploaded: viewModel.openTimeline,
                           onRecordingPlaced:
                               viewModel.didPlaceUploadedRecording,
                           onClose: viewModel.didCloseCameraRecording,

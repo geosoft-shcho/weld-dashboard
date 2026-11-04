@@ -39,6 +39,7 @@ import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
 import 'package:weld_dashboard/src/presentation/core/themes/app_theme.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/label_roots_session_cache.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_side_panel.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_studio_palette.dart';
@@ -335,7 +336,7 @@ void main() {
     final viewModel = _viewModel(labels, timeline);
     addTearDown(viewModel.dispose);
 
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     expect(labels.listCount, 1);
     expect(viewModel.labelForClip(viewModel.timelineClips.single), '메모');
     expect(viewModel.clipCaption(viewModel.timelineClips.single), '메모');
@@ -407,6 +408,7 @@ VideoMultimodalViewModel _viewModel(
   _ScriptedLabels labels,
   _CountingTimelineRepository timeline,
 ) {
+  LabelRootsSessionCache.clear();
   return VideoMultimodalViewModel(
     listHistoryWorkAttachmentsUseCase: ListHistoryWorkAttachmentsUseCase(
       _EmptyWorkDetailRepository(),

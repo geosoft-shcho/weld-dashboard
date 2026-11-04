@@ -41,6 +41,7 @@ import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_track_use_case.dart';
+import 'package:weld_dashboard/src/presentation/features/video_multimodal/label_roots_session_cache.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/video_multimodal_view_model.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/multimodal_timeline_board.dart';
 
@@ -284,7 +285,7 @@ void main() {
   test('overlap keeps the timeline already on screen', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     repository.failure = const JobTimelineException(
       '구간이 겹칩니다.',
       failure: JobTimelineFailure.failedPrecondition,
@@ -308,7 +309,7 @@ void main() {
   test('unchanged timeline save skips UpdateTimeline', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     final emptyName = await viewModel.didSaveTimeline(
       name: '  ',
@@ -327,7 +328,7 @@ void main() {
   test('timeline save sends only the changed name and reloads', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     final message = await viewModel.didSaveTimeline(
       name: '수정',
@@ -345,7 +346,7 @@ void main() {
   test('timeline save keeps the server message when the write fails', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     repository.failure = const JobTimelineException(
       '저장 거절',
       failure: JobTimelineFailure.invalidArgument,
@@ -364,7 +365,7 @@ void main() {
   test('timeline delete reloads and clears the selected clip', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didSelectSampleClip('clip-1');
     repository.nextTimeline = const JobTimeline(
       jobId: 'job-1',
@@ -385,7 +386,7 @@ void main() {
   test('server clip resize sends only the changed endpoint', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     await viewModel.didCommitClipRange('clip-1', 1, 10);
 
@@ -398,7 +399,7 @@ void main() {
   test('deleting a server clip refreshes from the server', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     repository.nextTimeline = const JobTimeline(
       jobId: 'job-1',
       name: '작업',
@@ -416,7 +417,7 @@ void main() {
   test('track add sends only the typed name', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     await viewModel.didSubmitNewTimelineTrack('  ');
     expect(repository.createTrackCount, 0);
@@ -433,7 +434,7 @@ void main() {
   test('track edit without a selected server clip does nothing', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     await viewModel.didSubmitTimelineTrackName('카메라');
     await viewModel.didTapDeleteSelectedTimelineTrack();
@@ -445,7 +446,7 @@ void main() {
   test('renaming uses the selected server track id and name only', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didSelectSampleClip('clip-1');
 
     await viewModel.didSubmitTimelineTrackName('영상');
@@ -466,7 +467,7 @@ void main() {
       repository,
       workDetail: _VideoAttachmentRepository(),
     );
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     await viewModel.didDropAsset(
       dragData: '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}asset-9',
@@ -505,7 +506,7 @@ void main() {
         clipKind: TimelineClipKind.timeseries,
       ),
     );
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     await viewModel.didDropAsset(
       dragData: '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}asset-9',
@@ -524,7 +525,7 @@ void main() {
       repository,
       workDetail: const _VideoAttachmentRepository(durationNs: '2000000000'),
     );
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     await viewModel.didDropAsset(
       dragData: '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}asset-9',
@@ -549,7 +550,7 @@ void main() {
       repository,
       workDetail: _VideoAttachmentRepository(),
     );
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     const dragData = '${VideoMultimodalViewModel.ASSET_DRAG_PREFIX}asset-9';
 
     await viewModel.didDropAsset(
@@ -587,7 +588,7 @@ void main() {
   testWidgets('server clip delete asks before the request', (tester) async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await tester.runAsync(() => viewModel.loadAttachments());
+    await tester.runAsync(() => viewModel.openTimeline());
     viewModel.didSelectSampleClip('clip-1');
     repository.nextTimeline = const JobTimeline(
       jobId: 'job-1',
@@ -623,7 +624,7 @@ void main() {
   testWidgets('track buttons call the open track actions', (tester) async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await tester.runAsync(() => viewModel.loadAttachments());
+    await tester.runAsync(() => viewModel.openTimeline());
     await tester.pumpWidget(_board(viewModel));
 
     await tester.enterText(
@@ -676,7 +677,7 @@ void main() {
   test('two server clips create a relation track and clip', () async {
     final repository = _ScriptedTimelineRepository(_twoClipTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     repository.nextTimeline = _twoClipTimeline(
       extraTracks: const [
         TimelineTrack(
@@ -736,7 +737,7 @@ void main() {
       ),
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didTapToggleRelationMode();
     await viewModel.didTapClipForRelation('clip-2');
     await viewModel.didTapClipForRelation('clip-1');
@@ -751,7 +752,7 @@ void main() {
   test('the same clip twice does not write a relation', () async {
     final repository = _ScriptedTimelineRepository(_twoClipTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didTapToggleRelationMode();
     await viewModel.didTapClipForRelation('clip-1');
     await viewModel.didTapClipForRelation('clip-1');
@@ -773,7 +774,7 @@ void main() {
       ),
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didTapToggleRelationMode();
     await viewModel.didTapClipForRelation('clip-1');
     await viewModel.didTapClipForRelation('clip-2');
@@ -788,7 +789,7 @@ void main() {
   test('a clip outside the timeline does not write a relation', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didTapToggleRelationMode();
 
     expect(await viewModel.didTapClipForRelation('missing'), isFalse);
@@ -800,7 +801,7 @@ void main() {
   test('clip selection outside relation mode does not write', () async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     expect(await viewModel.didTapClipForRelation('clip-1'), isFalse);
     expect(repository.createClipCount, 0);
@@ -812,7 +813,7 @@ void main() {
   testWidgets('relation banner cancels without a write', (tester) async {
     final repository = _ScriptedTimelineRepository(_loadedTimeline());
     final viewModel = _viewModel(repository);
-    await tester.runAsync(() => viewModel.loadAttachments());
+    await tester.runAsync(() => viewModel.openTimeline());
     await tester.pumpWidget(_board(viewModel));
 
     await tester.tap(find.text('클립 관계'));
@@ -830,7 +831,7 @@ void main() {
   testWidgets('a created relation clip shows a kind dialog', (tester) async {
     final repository = _ScriptedTimelineRepository(_twoClipTimeline());
     final viewModel = _viewModel(repository);
-    await tester.runAsync(() => viewModel.loadAttachments());
+    await tester.runAsync(() => viewModel.openTimeline());
     repository.nextTimeline = _twoClipTimeline(
       extraTracks: const [
         TimelineTrack(
@@ -867,7 +868,7 @@ void main() {
       repository,
       workDetail: _VideoAttachmentRepository(),
     );
-    await tester.runAsync(() => viewModel.loadAttachments());
+    await tester.runAsync(() => viewModel.openTimeline());
     await tester.pumpWidget(_board(viewModel));
 
     final target = tester.widget<DragTarget<String>>(
@@ -897,7 +898,7 @@ void main() {
   ) async {
     final repository = _ScriptedTimelineRepository(_manyTrackTimeline());
     final viewModel = _viewModel(repository);
-    await tester.runAsync(() => viewModel.loadAttachments());
+    await tester.runAsync(() => viewModel.openTimeline());
     await tester.binding.setSurfaceSize(const Size(800, 600));
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(_board(viewModel));
@@ -933,7 +934,7 @@ void main() {
           ),
         ),
       );
-      await tester.runAsync(() => viewModel.loadAttachments());
+      await tester.runAsync(() => viewModel.openTimeline());
       await tester.pumpWidget(_board(viewModel));
       final ruler = find.byWidgetPredicate(
         (widget) =>
@@ -965,7 +966,7 @@ void main() {
       final repository = _ScriptedTimelineRepository(_pairTimeline());
       repository.holdClipDetail = true;
       final viewModel = _viewModel(repository);
-      await viewModel.loadAttachments();
+      await viewModel.openTimeline();
 
       viewModel.didSelectSampleClip('clip-a');
       viewModel.didSelectSampleClip('clip-b');
@@ -1012,7 +1013,7 @@ void main() {
       failure: JobTimelineFailure.notFound,
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     viewModel.didSelectSampleClip('clip-1');
     await Future<void>.delayed(Duration.zero);
@@ -1042,7 +1043,7 @@ void main() {
         timelineEndNs: '390083999999',
       );
       final viewModel = _viewModel(repository);
-      await viewModel.loadAttachments();
+      await viewModel.openTimeline();
 
       viewModel.didSelectSampleClip('9764');
       await Future<void>.delayed(Duration.zero);
@@ -1084,7 +1085,7 @@ void main() {
       ),
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     viewModel.didTapTogglePlayback();
     viewModel.didSeekToSeconds(10);
@@ -1127,7 +1128,7 @@ void main() {
       ),
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     viewModel.didSeekToSeconds(10);
 
@@ -1146,7 +1147,7 @@ void main() {
       ),
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didTapTogglePlayback();
 
     viewModel.didSeekToSeconds(390.084);
@@ -1175,7 +1176,7 @@ void main() {
       ),
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didSeekToSeconds(110);
     viewModel.didTapTogglePlayback();
     viewModel.didSeekToSeconds(120);
@@ -1266,7 +1267,7 @@ void main() {
       ),
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
     viewModel.didSeekToSeconds(28);
 
     expect(viewModel.activeVideoBar?.mediaUrl, depthUrl);
@@ -1376,7 +1377,7 @@ void main() {
       ),
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     viewModel.didSeekToSeconds(10);
     expect(viewModel.playheadSeconds, closeTo(10, 0.0001));
@@ -1429,7 +1430,7 @@ void main() {
       );
       repository.contentByUrl[poseUrl] = _poseBody(time: 3);
       final viewModel = _viewModel(repository);
-      await viewModel.loadAttachments();
+      await viewModel.openTimeline();
 
       viewModel.didSelectSampleClip('pose-1');
       await Future<void>.delayed(Duration.zero);
@@ -1469,7 +1470,7 @@ void main() {
         targetAssetContentUrl: 'http://media.example/video.mp4',
       );
       final viewModel = _viewModel(repository);
-      await viewModel.loadAttachments();
+      await viewModel.openTimeline();
 
       viewModel.didSelectSampleClip('pose-1');
       await Future<void>.delayed(Duration.zero);
@@ -1500,7 +1501,7 @@ void main() {
         targetAssetContentUrl: 'http://media.example/video.mp4',
       );
       final viewModel = _viewModel(repository);
-      await viewModel.loadAttachments();
+      await viewModel.openTimeline();
 
       viewModel.didSelectSampleClip('pose-1');
       await Future<void>.delayed(Duration.zero);
@@ -1531,7 +1532,7 @@ void main() {
       targetTimelineEndNs: '30000000000',
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     viewModel.didSelectSampleClip('pose-1');
     await Future<void>.delayed(Duration.zero);
@@ -1574,7 +1575,7 @@ void main() {
     );
     repository.contentByUrl[poseUrl] = _poseBody(time: 1);
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     viewModel.didSelectSampleClip('pose-1');
     await Future<void>.delayed(Duration.zero);
@@ -1613,7 +1614,7 @@ void main() {
       );
       repository.contentByUrl[poseUrl] = _poseBody(time: 1);
       final viewModel = _viewModel(repository);
-      await viewModel.loadAttachments();
+      await viewModel.openTimeline();
 
       viewModel.didSelectSampleClip('pose-1');
       await Future<void>.delayed(Duration.zero);
@@ -1656,7 +1657,7 @@ void main() {
     final poseBody = Completer<String>();
     repository.contentGatesByUrl[poseUrl] = poseBody;
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     viewModel.didSelectSampleClip('pose-1');
     await Future<void>.delayed(Duration.zero);
@@ -1774,7 +1775,7 @@ void main() {
       targetAssetContentUrl: targetUrl,
     );
     final viewModel = _viewModel(repository);
-    await viewModel.loadAttachments();
+    await viewModel.openTimeline();
 
     expect(viewModel.activeVideoBar?.attachmentId, '3065');
     expect(viewModel.activeVideoOverlayFrames, isEmpty);
@@ -2040,6 +2041,7 @@ VideoMultimodalViewModel _viewModel(
   _ScriptedTimelineRepository repository, {
   WorkDetailRepository? workDetail,
 }) {
+  LabelRootsSessionCache.clear();
   return VideoMultimodalViewModel(
     listHistoryWorkAttachmentsUseCase: ListHistoryWorkAttachmentsUseCase(
       workDetail ?? _EmptyWorkDetailRepository(),
