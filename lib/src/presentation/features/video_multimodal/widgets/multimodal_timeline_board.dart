@@ -1,7 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
-import '../../../../domain/entities/job_timeline.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_dialogs.dart';
@@ -1045,22 +1044,29 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       final rawDurationMs = ((range.endSeconds - range.startSeconds) * 1000)
           .round();
       final durationMs = rawDurationMs < 1 ? 1 : rawDurationMs;
-      final chart = clip.kind == TimelineClipKind.audio
-          ? AudioClipChart(
-              amplitudes: viewModel.audioAmplitudes,
-              isLoading: viewModel.isAudioChartLoading,
-              errorMessage: viewModel.audioChartError,
-              durationMs: durationMs,
-              selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
-              onTimeTapMs: viewModel.didTapAudioChartTime,
-            )
-          : TimeseriesClipChart(
-              series: viewModel.timeseriesSeries,
-              isLoading: viewModel.isTimeseriesChartLoading,
-              errorMessage: viewModel.timeseriesChartError,
-              selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
-              onTimeTapMs: viewModel.didTapTimeseriesChartTime,
-            );
+      final chartKind = clipChartKindOf(clip.kind);
+      final Widget chart;
+      switch (chartKind) {
+        case ClipChartKind.audio:
+          chart = AudioClipChart(
+            amplitudes: viewModel.audioAmplitudes,
+            isLoading: viewModel.isAudioChartLoading,
+            errorMessage: viewModel.audioChartError,
+            durationMs: durationMs,
+            selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
+            onTimeTapMs: viewModel.didTapAudioChartTime,
+          );
+        case ClipChartKind.timeseries:
+          chart = TimeseriesClipChart(
+            series: viewModel.timeseriesSeries,
+            isLoading: viewModel.isTimeseriesChartLoading,
+            errorMessage: viewModel.timeseriesChartError,
+            selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
+            onTimeTapMs: viewModel.didTapTimeseriesChartTime,
+          );
+        case null:
+          chart = const SizedBox.shrink();
+      }
       return Positioned(
         left: left,
         top: 0,

@@ -3,15 +3,20 @@ import 'package:flutter/material.dart';
 import '../../../../domain/clip_file_position.dart';
 import '../../../../domain/entities/job_timeline.dart';
 import '../../../../domain/timeline_time.dart';
+import '../clip_chart_kind.dart';
 import '../pose_board_marks.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_studio_palette.dart';
 
+export '../clip_chart_kind.dart'
+    show
+        ClipChartKind,
+        TIMELINE_AUDIO_CHART_HEIGHT,
+        TIMELINE_TIMESERIES_CHART_HEIGHT,
+        clipChartKindOf;
 export '../pose_board_marks.dart' show PoseBoardMark;
 
 const double TIMELINE_TRACK_LANE_HEIGHT = 28;
-const double TIMELINE_TIMESERIES_CHART_HEIGHT = 240;
-const double TIMELINE_AUDIO_CHART_HEIGHT = 60;
 
 class TimelineBoardRow {
   const TimelineBoardRow({
@@ -212,9 +217,10 @@ List<TimelineBoardRow> buildTimelineBoardRows(
         showsAiBadge: clips.any((clip) => clip.showsToolMark),
         laneCount: _laneCount(lanes),
         isChartExpanded: expandedClip != null,
-        expandedChartHeight: expandedClip?.kind == TimelineClipKind.audio
-            ? TIMELINE_AUDIO_CHART_HEIGHT
-            : TIMELINE_TIMESERIES_CHART_HEIGHT,
+        expandedChartHeight:
+            clipChartKindOf(expandedClip?.kind ?? TimelineClipKind.unspecified)
+                    ?.expandedHeight ??
+                TIMELINE_TIMESERIES_CHART_HEIGHT,
         clips: [
           for (final clip in clips)
             TimelineBoardClip(

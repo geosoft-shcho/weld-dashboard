@@ -32,6 +32,9 @@ import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
 import '../../../domain/use_cases/update_timeline_use_case.dart';
 import '../../../domain/use_cases/update_track_use_case.dart';
+import 'clip_chart_kind.dart';
+import 'clip_chart_session.dart';
+import 'clip_detail_cache.dart';
 import 'pose_board_marks.dart';
 import 'video_caption.dart';
 import 'video_overlay_clock.dart';
@@ -135,6 +138,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool _isClipDetailLoading = false;
   String _clipDetailMessage = '';
   ClipDetail? _clipDetail;
+  final ClipDetailCache _clipDetailCache = ClipDetailCache();
   TimelineClip? _playbackVideoClip;
   /// 비영상 선택 시 대상 영상이 없을 때 스테이지에 남겨 둘 직전 영상.
   TimelineClip? _retainedStageVideoClip;
@@ -184,16 +188,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final List<String> _monitoredTrackIds = [];
   String _focusedMonitorTrackId = '';
   static const int MAX_MONITORED_TRACK_COUNT = 4;
-  String _chartExpandedClipId = '';
-  int _timeseriesChartEpoch = 0;
-  bool _isTimeseriesChartLoading = false;
-  String _timeseriesChartError = '';
-  WaveformSeriesBundle _timeseriesSeries =
-      LoadTimeseriesWaveformUseCase.emptySeries;
-  int _audioChartEpoch = 0;
-  bool _isAudioChartLoading = false;
-  String _audioChartError = '';
-  List<double> _audioAmplitudes = const [];
+  final ClipChartSession _chartSession = ClipChartSession();
   DateTime _lastMonitorDebugAt = DateTime.fromMillisecondsSinceEpoch(0);
   static const Duration _MONITOR_DEBUG_INTERVAL = Duration(seconds: 2);
   DateTime _lastDriftSeekAt = DateTime.fromMillisecondsSinceEpoch(0);
@@ -505,26 +500,25 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  String get chartExpandedClipId => _chartExpandedClipId;
-  bool get isTimeseriesChartLoading => _isTimeseriesChartLoading;
-  String get timeseriesChartError => _timeseriesChartError;
-  WaveformSeriesBundle get timeseriesSeries => _timeseriesSeries;
-  bool get isAudioChartLoading => _isAudioChartLoading;
-  String get audioChartError => _audioChartError;
-  List<double> get audioAmplitudes => _audioAmplitudes;
+  String get chartExpandedClipId => _chartSession.clipId;
+  ClipChartKind? get expandedChartKind => _chartSession.kind;
+  bool get isTimeseriesChartLoading => _chartSession.isTimeseriesLoading;
+  String get timeseriesChartError => _chartSession.timeseriesError;
+  WaveformSeriesBundle get timeseriesSeries => _chartSession.timeseriesSeries;
+  bool get isAudioChartLoading => _chartSession.isAudioLoading;
+  String get audioChartError => _chartSession.audioError;
+  List<double> get audioAmplitudes => _chartSession.audioAmplitudes;
 
-  bool trackHasTimeseries(String trackId) {
-    for (final clip in _timeline.clips) {
-      if (clip.trackId == trackId && clip.kind == TimelineClipKind.timeseries) {
-        return true;
-      }
-    }
-    return false;
-  }
+  bool trackHasTimeseries(String trackId) =>
+      _trackHasChartKind(trackId, ClipChartKind.timeseries);
 
-  bool trackHasAudio(String trackId) {
+  bool trackHasAudio(String trackId) =>
+      _trackHasChartKind(trackId, ClipChartKind.audio);
+
+  bool _trackHasChartKind(String trackId, ClipChartKind chartKind) {
     for (final clip in _timeline.clips) {
-      if (clip.trackId == trackId && clip.kind == TimelineClipKind.audio) {
+      if (clip.trackId == trackId &&
+          clipChartKindOf(clip.kind) == chartKind) {
         return true;
       }
     }
@@ -544,10 +538,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   bool isTimeseriesChartExpanded(String clipId) =>
-      clipId.isNotEmpty && clipId == _chartExpandedClipId;
+      clipId.isNotEmpty && clipId == _chartSession.clipId;
 
   int? get timeseriesSelectedTimeMs {
-    final clip = _timelineClip(_chartExpandedClipId);
+    final clip = _timelineClip(_chartSession.clipId);
     if (clip == null) {
       return null;
     }
@@ -561,61 +555,38 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didTapToggleTimeseriesChart(String trackId) {
-    if (trackId.isEmpty || !trackHasTimeseries(trackId)) {
-      return;
-    }
-    final selected = _timelineClip(_selectedClipId);
-    TimelineClip? target;
-    if (selected != null &&
-        selected.trackId == trackId &&
-        selected.kind == TimelineClipKind.timeseries) {
-      target = selected;
-    } else {
-      target = _coveringClipOnTrack(
-        trackId,
-        playheadSeconds,
-        TimelineClipKind.timeseries,
-      );
-      target ??= _firstClipOnTrack(trackId, TimelineClipKind.timeseries);
-    }
-    if (target == null) {
-      return;
-    }
-    if (_chartExpandedClipId == target.clipId) {
-      _collapseChart();
-      notifyListeners();
-      return;
-    }
-    _expandTimeseriesChart(target);
+    _didTapToggleChart(trackId, ClipChartKind.timeseries);
   }
 
   void didTapToggleAudioChart(String trackId) {
-    if (trackId.isEmpty || !trackHasAudio(trackId)) {
+    _didTapToggleChart(trackId, ClipChartKind.audio);
+  }
+
+  void _didTapToggleChart(String trackId, ClipChartKind chartKind) {
+    if (trackId.isEmpty || !_trackHasChartKind(trackId, chartKind)) {
       return;
     }
+    final timelineKind = chartKind.timelineKind;
     final selected = _timelineClip(_selectedClipId);
     TimelineClip? target;
     if (selected != null &&
         selected.trackId == trackId &&
-        selected.kind == TimelineClipKind.audio) {
+        clipChartKindOf(selected.kind) == chartKind) {
       target = selected;
     } else {
-      target = _coveringClipOnTrack(
-        trackId,
-        playheadSeconds,
-        TimelineClipKind.audio,
-      );
-      target ??= _firstClipOnTrack(trackId, TimelineClipKind.audio);
+      target = _coveringClipOnTrack(trackId, playheadSeconds, timelineKind);
+      target ??= _firstClipOnTrack(trackId, timelineKind);
     }
     if (target == null) {
       return;
     }
-    if (_chartExpandedClipId == target.clipId) {
+    if (_chartSession.clipId == target.clipId) {
       _collapseChart();
       notifyListeners();
       return;
     }
-    _expandAudioChart(target);
+    _prepareChart(target, chartKind);
+    unawaited(_loadClipDetail(target.clipId));
   }
 
   void didTapTimeseriesChartTime(int timeMs) {
@@ -627,7 +598,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void _didSeekChartTime(int timeMs) {
-    final clip = _timelineClip(_chartExpandedClipId);
+    final clip = _timelineClip(_chartSession.clipId);
     if (clip == null) {
       return;
     }
@@ -672,47 +643,47 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return best;
   }
 
-  void _expandTimeseriesChart(TimelineClip clip) {
-    _clearAudioChartState();
-    _chartExpandedClipId = clip.clipId;
-    _selectedClipId = clip.clipId;
-    unawaited(_loadTimeseriesChart(clip));
-    notifyListeners();
+  void _prepareChartIfNeeded(TimelineClip clip) {
+    final chartKind = clipChartKindOf(clip.kind);
+    if (chartKind == null) {
+      _collapseChart();
+      return;
+    }
+    if (_chartSession.clipId == clip.clipId) {
+      return;
+    }
+    _prepareChart(clip, chartKind);
   }
 
-  void _expandAudioChart(TimelineClip clip) {
-    _clearTimeseriesChartState();
-    _chartExpandedClipId = clip.clipId;
+  /// 차트 UI만 연다. GetClip은 호출하지 않는다.
+  void _prepareChart(TimelineClip clip, ClipChartKind chartKind) {
+    _chartSession.prepare(clipId: clip.clipId, kind: chartKind);
     _selectedClipId = clip.clipId;
-    unawaited(_loadAudioChart(clip));
     notifyListeners();
   }
 
   void _collapseChart() {
-    _chartExpandedClipId = '';
-    _clearTimeseriesChartState();
-    _clearAudioChartState();
+    _chartSession.collapse();
   }
 
-  void _clearTimeseriesChartState() {
-    _timeseriesChartEpoch += 1;
-    _isTimeseriesChartLoading = false;
-    _timeseriesChartError = '';
-    _timeseriesSeries = LoadTimeseriesWaveformUseCase.emptySeries;
+  void _loadChartFor(TimelineClip clip, ClipDetail detail) {
+    final chartKind = clipChartKindOf(clip.kind);
+    if (chartKind == null || _chartSession.clipId != clip.clipId) {
+      return;
+    }
+    switch (chartKind) {
+      case ClipChartKind.audio:
+        unawaited(_loadAudioChart(clip, detail));
+      case ClipChartKind.timeseries:
+        unawaited(_loadTimeseriesChart(clip, detail));
+    }
   }
 
-  void _clearAudioChartState() {
-    _audioChartEpoch += 1;
-    _isAudioChartLoading = false;
-    _audioChartError = '';
-    _audioAmplitudes = const [];
-  }
-
-  Future<void> _loadTimeseriesChart(TimelineClip clip) async {
-    final epoch = ++_timeseriesChartEpoch;
-    _isTimeseriesChartLoading = true;
-    _timeseriesChartError = '';
-    _timeseriesSeries = LoadTimeseriesWaveformUseCase.emptySeries;
+  Future<void> _loadTimeseriesChart(
+    TimelineClip clip,
+    ClipDetail detail,
+  ) async {
+    final epoch = _chartSession.beginLoad();
     notifyListeners();
     _logTimeseries(
       'request',
@@ -722,82 +693,67 @@ class VideoMultimodalViewModel extends ChangeNotifier {
           'urlLen=${clip.contentUrl.length}',
     );
     if (clip.contentUrl.isEmpty) {
-      if (epoch != _timeseriesChartEpoch || _isClosed) {
+      if (!_chartSession.isCurrentEpoch(epoch) || _isClosed) {
         return;
       }
-      _isTimeseriesChartLoading = false;
-      _timeseriesChartError = '파형 주소가 없습니다';
+      _chartSession.isLoading = false;
+      _chartSession.error = '파형 주소가 없습니다';
       _logTimeseries('skip_empty_url', clip: clip);
       notifyListeners();
       return;
     }
     try {
-      final detail = await _getClipUseCase.execute(clipId: clip.clipId);
       final load = await _loadTimeseriesWaveformUseCase.execute(
         contentUrl: clip.contentUrl,
         channelNames: detail.channelNames,
       );
-      if (epoch != _timeseriesChartEpoch || _isClosed) {
+      if (!_chartSession.isCurrentEpoch(epoch) || _isClosed) {
         _logTimeseries('stale', clip: clip, detail: 'epoch=$epoch');
         return;
       }
-      _timeseriesSeries = load.series;
+      _chartSession.timeseriesSeries = load.series;
       if (!load.series.doesHaveAnySeries) {
-        _timeseriesChartError = '파형 데이터 없음';
+        _chartSession.error = '파형 데이터 없음';
       }
       _logTimeseriesLoad(clip, load);
     } catch (error) {
-      if (epoch != _timeseriesChartEpoch || _isClosed) {
+      if (!_chartSession.isCurrentEpoch(epoch) || _isClosed) {
         return;
       }
-      _timeseriesChartError = error.toString();
-      _timeseriesSeries = LoadTimeseriesWaveformUseCase.emptySeries;
+      _chartSession.error = error.toString();
+      _chartSession.timeseriesSeries = LoadTimeseriesWaveformUseCase.emptySeries;
       _logTimeseries('error', clip: clip, detail: '$error');
     } finally {
-      if (epoch == _timeseriesChartEpoch && !_isClosed) {
-        _isTimeseriesChartLoading = false;
+      if (_chartSession.isCurrentEpoch(epoch) && !_isClosed) {
+        _chartSession.isLoading = false;
         notifyListeners();
       }
     }
   }
 
-  Future<void> _loadAudioChart(TimelineClip clip) async {
-    final epoch = ++_audioChartEpoch;
-    _isAudioChartLoading = true;
-    _audioChartError = '';
-    _audioAmplitudes = const [];
+  Future<void> _loadAudioChart(TimelineClip clip, ClipDetail detail) async {
+    final epoch = _chartSession.beginLoad();
     notifyListeners();
     try {
-      var waveformUrl = '';
-      var sourceStartNs = '';
-      var sourceEndNs = '';
-      try {
-        final detail = await _getClipUseCase.execute(clipId: clip.clipId);
-        waveformUrl = detail.waveformUrl;
-        sourceStartNs = detail.sourceStartNs;
-        sourceEndNs = detail.sourceEndNs;
-      } catch (_) {
-        // waveform_url 없으면 파형 없이 표시한다.
-      }
       final load = await _loadAudioWaveformUseCase.execute(
-        waveformUrl: waveformUrl,
-        sourceStartNs: sourceStartNs,
-        sourceEndNs: sourceEndNs,
+        waveformUrl: detail.waveformUrl,
+        sourceStartNs: detail.sourceStartNs,
+        sourceEndNs: detail.sourceEndNs,
       );
-      if (epoch != _audioChartEpoch || _isClosed) {
+      if (!_chartSession.isCurrentEpoch(epoch) || _isClosed) {
         return;
       }
-      _audioAmplitudes = load.amplitudes;
-      _audioChartError = load.errorMessage;
+      _chartSession.audioAmplitudes = load.amplitudes;
+      _chartSession.error = load.errorMessage;
     } catch (error) {
-      if (epoch != _audioChartEpoch || _isClosed) {
+      if (!_chartSession.isCurrentEpoch(epoch) || _isClosed) {
         return;
       }
-      _audioChartError = error.toString();
-      _audioAmplitudes = const [];
+      _chartSession.error = error.toString();
+      _chartSession.audioAmplitudes = const [];
     } finally {
-      if (epoch == _audioChartEpoch && !_isClosed) {
-        _isAudioChartLoading = false;
+      if (_chartSession.isCurrentEpoch(epoch) && !_isClosed) {
+        _chartSession.isLoading = false;
         notifyListeners();
       }
     }
@@ -1313,47 +1269,35 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _retainedStageVideoClip = retainStageVideo ? previousVideo : null;
     _showsMissingTargetVideoBanner = false;
     _side = VideoMultimodalSide.properties;
-    if (timelineClip.kind == TimelineClipKind.timeseries) {
-      if (_chartExpandedClipId != clipId) {
-        _expandTimeseriesChart(timelineClip);
-      }
-    } else if (timelineClip.kind == TimelineClipKind.audio) {
-      if (_chartExpandedClipId != clipId) {
-        _expandAudioChart(timelineClip);
-      }
-    } else {
-      _collapseChart();
-    }
+    _prepareChartIfNeeded(timelineClip);
     didSeekToSeconds(secondsFromNanoseconds(timelineClip.startNanoseconds));
     unawaited(_loadClipDetail(clipId));
   }
 
   Future<void> _loadClipDetail(String clipId) async {
     final epoch = ++_clipDetailEpoch;
-    _isClipDetailLoading = true;
     _clipDetailMessage = '';
+    final cached = _clipDetailCache.get(clipId);
+    if (cached != null) {
+      _isClipDetailLoading = false;
+      _clipDetail = cached;
+      notifyListeners();
+      await _applyLoadedClipDetail(cached, epoch);
+      return;
+    }
+    _isClipDetailLoading = true;
     _clipDetail = null;
     notifyListeners();
     try {
-      final detail = await _getClipUseCase.execute(clipId: clipId);
+      final detail = await _clipDetailCache.getOrLoad(
+        clipId,
+        () => _getClipUseCase.execute(clipId: clipId),
+      );
       if (epoch != _clipDetailEpoch || _isClosed) {
         return;
       }
       _clipDetail = detail;
-      if (detail.isPose) {
-        _retainedStageVideoClip = null;
-        _showsMissingTargetVideoBanner = false;
-        await _startPosePlayback(detail, epoch);
-      } else if (detail.isVideo) {
-        _retainedStageVideoClip = null;
-        _showsMissingTargetVideoBanner = false;
-        _startVideoRange(detail);
-      } else {
-        _startTargetVideoPlayback(detail);
-      }
-      if (epoch != _clipDetailEpoch || _isClosed) {
-        return;
-      }
+      await _applyLoadedClipDetail(detail, epoch);
     } on JobTimelineException catch (error) {
       if (epoch != _clipDetailEpoch || _isClosed) {
         return;
@@ -1370,6 +1314,35 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       if (_clipDetail?.isPose == true) {
         debugPrint('[POSE] clipId=$clipId failed: $error');
       }
+    }
+    if (epoch != _clipDetailEpoch || _isClosed) {
+      return;
+    }
+    _isClipDetailLoading = false;
+    if (_chartSession.clipId == clipId) {
+      _chartSession.isLoading = false;
+    }
+    notifyListeners();
+  }
+
+  Future<void> _applyLoadedClipDetail(ClipDetail detail, int epoch) async {
+    if (detail.isPose) {
+      _retainedStageVideoClip = null;
+      _showsMissingTargetVideoBanner = false;
+      await _startPosePlayback(detail, epoch);
+    } else if (detail.isVideo) {
+      _retainedStageVideoClip = null;
+      _showsMissingTargetVideoBanner = false;
+      _startVideoRange(detail);
+    } else {
+      _startTargetVideoPlayback(detail);
+    }
+    if (epoch != _clipDetailEpoch || _isClosed) {
+      return;
+    }
+    final clip = _timelineClip(detail.clipId);
+    if (clip != null) {
+      _loadChartFor(clip, detail);
     }
     _isClipDetailLoading = false;
     notifyListeners();
@@ -3309,6 +3282,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   Future<bool> _replaceTimelineFromServer({required bool clearHint}) async {
     try {
       _timeline = await _getJobTimelineUseCase.execute(jobId: jobId);
+      _clipDetailCache.clear();
       _overlayEpoch += 1;
       await _loadOverlayBodies();
       if (clearHint) {
