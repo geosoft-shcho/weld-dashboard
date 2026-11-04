@@ -153,8 +153,8 @@ class SidePanelAccentButton extends StatelessWidget {
       onPressed: onPressed,
       style: TextButton.styleFrom(
         backgroundColor: MultimodalStudioPalette.PANEL_ACCENT,
-        foregroundColor: const fluent.Color.fromARGB(255, 18, 13, 13),
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+        foregroundColor: const fluent.Color.fromARGB(255, 56, 56, 56),
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
         minimumSize: Size.zero,
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),

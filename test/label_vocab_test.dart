@@ -34,6 +34,9 @@ import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case
 import 'package:weld_dashboard/src/domain/use_cases/load_audio_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_timeseries_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/list_asset_lookup_page_use_case.dart';
+import 'package:weld_dashboard/src/domain/repositories/asset_lookup_repository.dart';
+import 'package:weld_dashboard/src/domain/entities/asset_lookup_row.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
@@ -413,6 +416,9 @@ VideoMultimodalViewModel _viewModel(
     listHistoryWorkAttachmentsUseCase: ListHistoryWorkAttachmentsUseCase(
       _EmptyWorkDetailRepository(),
     ),
+    listAssetLookupPageUseCase: ListAssetLookupPageUseCase(
+      _IdleAssetLookupRepository(),
+    ),
     getJobTimelineUseCase: GetJobTimelineUseCase(timeline),
     getClipUseCase: GetClipUseCase(timeline),
     createTrackUseCase: CreateTrackUseCase(timeline),
@@ -710,4 +716,49 @@ class _MemoryAskSessionStore implements AskSessionStore {
   Future<void> clearSessionId({required String jobId}) async {
     values.remove(jobId.trim());
   }
+}
+
+class _IdleAssetLookupRepository implements AssetLookupRepository {
+  @override
+  Future<AssetLookupPage> listAssets({
+    required String kindCode,
+    required String query,
+    required String equipmentId,
+    required bool unattachedOnly,
+    String jobId = '',
+    String projectId = '',
+    String projectItemId = '',
+    String workerId = '',
+    String unitNo = '',
+    String itemCode = '',
+    String jointNo = '',
+    int passNo = 0,
+    bool sharedOnly = false,
+    DateTime? startedFrom,
+    DateTime? startedTo,
+    String postprocessStatusCode = '',
+    required int pageSize,
+    required String pageToken,
+  }) async {
+    return const AssetLookupPage(rows: [], nextPageToken: '', totalCount: 0);
+  }
+
+  @override
+  Future<List<JobPassOption>> listJobPasses({required String jobId}) async =>
+      const [];
+
+  @override
+  Future<AssetLookupRow?> getAsset({required String assetId}) async => null;
+
+  @override
+  Future<String> updateAsset({
+    required String assetId,
+    required String subject,
+    required String situation,
+    DateTime? recordedAt,
+    required List<String> changedFields,
+  }) async => '';
+
+  @override
+  Future<String> readContent({required String url}) async => '';
 }

@@ -379,6 +379,7 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactoryParam<VideoMultimodalViewModel, String, void>(
     (jobId, _) => VideoMultimodalViewModel(
       listHistoryWorkAttachmentsUseCase: locator(),
+      listAssetLookupPageUseCase: locator(),
       getJobTimelineUseCase: locator(),
       getClipUseCase: locator(),
       createTrackUseCase: locator(),

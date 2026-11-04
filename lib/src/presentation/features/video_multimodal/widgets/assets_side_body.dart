@@ -16,7 +16,7 @@ const Map<WorkAttachmentType, Color> _DOT_COLOR = {
   WorkAttachmentType.text: Color(0xFF888888),
 };
 
-class AssetsSideBody extends StatelessWidget {
+class AssetsSideBody extends StatefulWidget {
   const AssetsSideBody({
     super.key,
     required this.viewModel,
@@ -27,16 +27,54 @@ class AssetsSideBody extends StatelessWidget {
   final VoidCallback onClose;
 
   @override
+  State<AssetsSideBody> createState() => _AssetsSideBodyState();
+}
+
+class _AssetsSideBodyState extends State<AssetsSideBody> {
+  late final TextEditingController _searchController;
+
+  VideoMultimodalViewModel get viewModel => widget.viewModel;
+  VoidCallback get onClose => widget.onClose;
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController = TextEditingController(
+      text: viewModel.assetsSearchQuery,
+    );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _resetAssets() async {
+    _searchController.clear();
+    await viewModel.didTapResetAssets();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final query = viewModel.assetsSearchQuery.trim().toLowerCase();
-    final visible = [
-      for (final attachment in viewModel.attachments)
-        if (query.isEmpty || attachment.fileName.toLowerCase().contains(query))
-          attachment,
-    ];
     return SidePanelFrame(
       head: _head(),
-      body: ListView(children: [_assetTable(visible)]),
+      body: ColoredBox(
+        color: MultimodalStudioPalette.PANEL_PAPER,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SidePanelDataRow([
+              SidePanelDataCell('', flex: 1, isHeader: true),
+              SidePanelDataCell('이름', isHeader: true, flex: 4),
+              SidePanelDataCell('유형', isHeader: true, flex: 4),
+              SidePanelDataCell('길이', isHeader: true, flex: 2),
+            ], isHeader: true),
+            Expanded(child: _tableBody()),
+          ],
+        ),
+      ),
+      foot: _pager(),
     );
   }
 
@@ -44,6 +82,7 @@ class AssetsSideBody extends StatelessWidget {
     return SidePanelHead(
       onClose: onClose,
       leading: TextField(
+        controller: _searchController,
         style: sidePanelFieldTextStyle,
         cursorColor: MultimodalStudioPalette.PANEL_ACCENT,
         decoration: sidePanelFieldDecoration('검색…').copyWith(
@@ -60,39 +99,94 @@ class AssetsSideBody extends StatelessWidget {
         onChanged: viewModel.didChangeAssetsSearch,
       ),
       actions: [
-        // SidePanelAccentButton(
-        //   label: 'Import',
-        //   onPressed: () => viewModel.didShowNotice('Import는 다음 단계에서 연결됩니다.'),
-        // ),
+        SidePanelAccentButton(
+          label: '초기화',
+          onPressed: viewModel.isLoadingAssetsPage ? null : _resetAssets,
+        ),
       ],
     );
   }
 
-  Widget _assetTable(List<WorkAttachment> visible) {
-    return ColoredBox(
-      color: MultimodalStudioPalette.PANEL_PAPER,
-      child: Column(
+  Widget _tableBody() {
+    final rows = viewModel.assetsPageRows;
+    if (viewModel.isLoadingAssetsPage && rows.isEmpty) {
+      return const Center(
+        child: SizedBox(
+          width: 18,
+          height: 18,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
+      );
+    }
+    if (rows.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.all(12),
+        child: Text(
+          '에셋이 없습니다.',
+          style: TextStyle(
+            color: MultimodalStudioPalette.PANEL_MUTED,
+            fontSize: 11,
+          ),
+        ),
+      );
+    }
+    return ListView.builder(
+      itemCount: rows.length,
+      itemBuilder: (context, index) => _assetRow(rows[index]),
+    );
+  }
+
+  Widget _pager() {
+    final pageCount = viewModel.assetsPageCount;
+    final current = viewModel.assetsPageIndex;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      decoration: const BoxDecoration(
+        color: MultimodalStudioPalette.PANEL_PAPER,
+        border: Border(
+          top: BorderSide(color: MultimodalStudioPalette.PANEL_LINE),
+        ),
+      ),
+      child: Row(
         children: [
-          const SidePanelDataRow([
-            SidePanelDataCell('', flex: 1, isHeader: true),
-            SidePanelDataCell('이름', isHeader: true, flex: 4),
-            SidePanelDataCell('유형', isHeader: true, flex: 4),
-            SidePanelDataCell('길이', isHeader: true, flex: 2),
-          ], isHeader: true),
-          if (visible.isEmpty)
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: Text(
-                '에셋이 없습니다.',
-                style: TextStyle(
-                  color: MultimodalStudioPalette.PANEL_MUTED,
-                  fontSize: 11,
-                ),
-              ),
-            )
-          else
-            for (final attachment in visible) _assetRow(attachment),
+          Text(
+            viewModel.isLoadingAssetsPage
+                ? '불러오는 중…'
+                : '${viewModel.assetsTotalCount}개',
+            style: const TextStyle(
+              color: MultimodalStudioPalette.PANEL_MUTED,
+              fontSize: 11,
+            ),
+          ),
+          const Spacer(),
+          for (var page = 1; page <= pageCount; page++) ...[
+            if (page > 1) const SizedBox(width: 4),
+            _pageButton(page: page, isSelected: page == current),
+          ],
         ],
+      ),
+    );
+  }
+
+  Widget _pageButton({required int page, required bool isSelected}) {
+    return SizedBox(
+      height: 24,
+      child: TextButton(
+        onPressed: isSelected || viewModel.isLoadingAssetsPage
+            ? null
+            : () => viewModel.didSelectAssetsPage(page),
+        style: TextButton.styleFrom(
+          minimumSize: const Size(28, 24),
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          foregroundColor: isSelected
+              ? MultimodalStudioPalette.PANEL_ACCENT
+              : MultimodalStudioPalette.PANEL_INK,
+          textStyle: TextStyle(
+            fontSize: 11,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+          ),
+        ),
+        child: Text('$page'),
       ),
     );
   }
@@ -105,7 +199,9 @@ class AssetsSideBody extends StatelessWidget {
         viewModel.selectedAttachment?.attachmentId == attachment.attachmentId;
     final row = SidePanelDataRow(
       [
-        SidePanelDataCell.dot(_DOT_COLOR[attachment.fileType]!),
+        SidePanelDataCell.dot(
+          _DOT_COLOR[attachment.fileType] ?? const Color(0xFF888888),
+        ),
         SidePanelDataCell(attachment.fileName, flex: 4),
         SidePanelDataCell(
           WorkAttachmentType.extensionOf(attachment.fileName),

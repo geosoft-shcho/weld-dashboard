@@ -24,6 +24,8 @@ import '../../../domain/entities/timeseries_waveform_load.dart';
 import '../../../domain/entities/waveform_series_bundle.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
 import '../../../domain/use_cases/label_use_case.dart';
+import '../../../domain/entities/asset_lookup_row.dart';
+import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
 import '../../../domain/use_cases/load_job_project_id_use_case.dart';
 import '../../../domain/use_cases/load_audio_waveform_use_case.dart';
@@ -55,6 +57,7 @@ export 'video_multimodal_models.dart';
 class VideoMultimodalViewModel extends ChangeNotifier {
   VideoMultimodalViewModel({
     required this._listHistoryWorkAttachmentsUseCase,
+    required this._listAssetLookupPageUseCase,
     required this._getJobTimelineUseCase,
     required this._getClipUseCase,
     required this._createTrackUseCase,
@@ -86,6 +89,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const double MIN_CLIP_WIDTH = 6;
   static const double MIN_REGION_SECONDS = 0.1;
   static const double DEFAULT_TIMELESS_CLIP_SECONDS = 5;
+  static const int ASSETS_DEFAULT_PAGE_SIZE = 20;
   static const String ASSET_DRAG_PREFIX = 'asset:';
   static const String RELATION_TRACK_NAME = '관계';
   static const String LIKE_TRACK_NAME = '좋아요';
@@ -99,6 +103,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const String SERVER_EMPTY_EQUIPMENT_AUDIO_TRACK_NAME = '- · audio';
 
   final ListHistoryWorkAttachmentsUseCase _listHistoryWorkAttachmentsUseCase;
+  final ListAssetLookupPageUseCase _listAssetLookupPageUseCase;
   final GetJobTimelineUseCase _getJobTimelineUseCase;
   final GetClipUseCase _getClipUseCase;
   final CreateTrackUseCase _createTrackUseCase;
@@ -136,6 +141,13 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _noticeText = '';
   List<WorkAttachment> _attachments = const [];
   List<TemporaryAttachmentBar> _bars = const [];
+  List<WorkAttachment> _assetsPageRows = const [];
+  int _assetsPageIndex = 1;
+  int _assetsPageSize = ASSETS_DEFAULT_PAGE_SIZE;
+  int _assetsTotalCount = 0;
+  final Map<int, String> _assetsPageTokenByPage = <int, String>{1: ''};
+  bool _isLoadingAssetsPage = false;
+  int _assetsPageLoadEpoch = 0;
   JobTimeline _timeline = JobTimeline.empty;
   final Set<String> _hiddenAttachmentIds = {};
   final Set<String> _hiddenTrackIds = {};
@@ -226,6 +238,22 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String get noticeText => _noticeText;
   bool get hasNotice => _noticeText.isNotEmpty;
   List<WorkAttachment> get attachments => List.unmodifiable(_attachments);
+  List<WorkAttachment> get assetsPageRows => List.unmodifiable(_assetsPageRows);
+  int get assetsPageIndex => _assetsPageIndex;
+  int get assetsPageSize => _assetsPageSize;
+  int get assetsTotalCount => _assetsTotalCount;
+  bool get isLoadingAssetsPage => _isLoadingAssetsPage;
+  int get assetsPageCount {
+    if (_assetsPageSize < 1) {
+      return 1;
+    }
+    if (_assetsTotalCount <= 0) {
+      return 1;
+    }
+    final count = (_assetsTotalCount + _assetsPageSize - 1) ~/ _assetsPageSize;
+    return count < 1 ? 1 : count;
+  }
+
   List<TimelineTrack> get timelineTracks => List.unmodifiable(_timeline.tracks);
   List<TimelineClip> get timelineClips => [
     for (final track in _timeline.tracks) ...track.clips,
@@ -252,6 +280,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   WorkAttachment? get selectedAttachment {
     if (_selectedAttachmentId.isEmpty) {
       return null;
+    }
+    for (final attachment in _assetsPageRows) {
+      if (attachment.attachmentId == _selectedAttachmentId) {
+        return attachment;
+      }
     }
     for (final attachment in _attachments) {
       if (attachment.attachmentId == _selectedAttachmentId) {
@@ -530,6 +563,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _timeline = JobTimeline.empty;
       _attachments = const [];
       _bars = const [];
+      _resetAssetsPageState();
       _framesByAssetId.clear();
       _cuesByAssetId.clear();
       _poseBoardMarksByClipId.clear();
@@ -602,28 +636,13 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadSideAssets() async {
-    final log = _loadApiLog;
     _isLoadingAttachments = true;
     notifyListeners();
     try {
-      log?.step(
-        'ListAssets',
-        detail: 'Asset.ListAssets jobId filter pageSize=50',
-        phase: 'background',
-      );
-      _attachments = await _listHistoryWorkAttachmentsUseCase.execute(
-        jobId: jobId,
-      );
-      _bars = [
-        ...chainAttachmentBars(_attachments, WorkAttachmentType.video),
-        ...chainAttachmentBars(_attachments, WorkAttachmentType.audio),
-      ];
       _side = VideoMultimodalSide.assets;
-      log?.stepDone('ListAssets', detail: 'attachments=${_attachments.length}');
+      await _loadAssetsPage(1);
     } catch (error) {
-      log?.stepDone('ListAssets', error: error);
-      _attachments = const [];
-      _bars = const [];
+      _resetAssetsPageState();
       if (!_hasError) {
         _noticeText = error.toString();
       }
@@ -632,6 +651,184 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       if (!_isClosed) {
         notifyListeners();
       }
+    }
+  }
+
+  Future<void> didSelectAssetsPage(int page) async {
+    if (page < 1 || page == _assetsPageIndex || _isClosed || jobId.isEmpty) {
+      return;
+    }
+    await _loadAssetsPage(page);
+  }
+
+  Future<void> didTapResetAssets() async {
+    if (jobId.isEmpty || _isClosed || _isLoadingAssetsPage) {
+      return;
+    }
+    _assetsSearchQuery = '';
+    _resetAssetsPageCache();
+    notifyListeners();
+    await _loadAssetsPage(1);
+  }
+
+  Future<void> _loadAssetsPage(int page) async {
+    if (jobId.isEmpty || _isClosed) {
+      return;
+    }
+    final targetPage = page < 1 ? 1 : page;
+    final epoch = ++_assetsPageLoadEpoch;
+    _isLoadingAssetsPage = true;
+    notifyListeners();
+    try {
+      final token = await _ensureAssetsPageToken(targetPage);
+      if (epoch != _assetsPageLoadEpoch || _isClosed) {
+        return;
+      }
+      final log = _loadApiLog;
+      log?.step(
+        'ListAssetsPage',
+        detail:
+            'Asset.ListAssets jobId page=$targetPage '
+            'pageSize=$_assetsPageSize',
+        phase: 'background',
+      );
+      final result = await _listAssetLookupPageUseCase.execute(
+        kindCode: '',
+        query: _assetsSearchQuery.trim(),
+        equipmentId: '',
+        unattachedOnly: false,
+        jobId: jobId,
+        pageSize: _assetsPageSize,
+        pageToken: token,
+      );
+      if (epoch != _assetsPageLoadEpoch || _isClosed) {
+        return;
+      }
+      _assetsPageIndex = targetPage;
+      _assetsPageRows = [
+        for (final row in result.rows) _workAttachmentFromLookupRow(row),
+      ];
+      _attachments = _assetsPageRows;
+      _bars = [
+        ...chainAttachmentBars(_attachments, WorkAttachmentType.video),
+        ...chainAttachmentBars(_attachments, WorkAttachmentType.audio),
+      ];
+      if (result.totalCount > 0) {
+        _assetsTotalCount = result.totalCount;
+      } else if (result.rows.isEmpty && targetPage == 1) {
+        _assetsTotalCount = 0;
+      }
+      if (result.nextPageToken.isNotEmpty) {
+        _assetsPageTokenByPage[targetPage + 1] = result.nextPageToken;
+      }
+      log?.stepDone(
+        'ListAssetsPage',
+        detail:
+            'page=$targetPage rows=${_assetsPageRows.length} '
+            'total=$_assetsTotalCount',
+      );
+    } catch (error) {
+      if (epoch != _assetsPageLoadEpoch || _isClosed) {
+        return;
+      }
+      _loadApiLog?.stepDone('ListAssetsPage', error: error);
+      if (_noticeText.isEmpty) {
+        _noticeText = error.toString();
+      }
+    } finally {
+      if (epoch == _assetsPageLoadEpoch) {
+        _isLoadingAssetsPage = false;
+        if (!_isClosed) {
+          notifyListeners();
+        }
+      }
+    }
+  }
+
+  Future<String> _ensureAssetsPageToken(int page) async {
+    final cached = _assetsPageTokenByPage[page];
+    if (cached != null) {
+      return cached;
+    }
+    var knownPage = 1;
+    for (final entry in _assetsPageTokenByPage.entries) {
+      if (entry.key < page && entry.key > knownPage) {
+        knownPage = entry.key;
+      }
+    }
+    var cursorPage = knownPage;
+    while (cursorPage < page) {
+      final token = _assetsPageTokenByPage[cursorPage];
+      if (token == null) {
+        break;
+      }
+      final result = await _listAssetLookupPageUseCase.execute(
+        kindCode: '',
+        query: _assetsSearchQuery.trim(),
+        equipmentId: '',
+        unattachedOnly: false,
+        jobId: jobId,
+        pageSize: _assetsPageSize,
+        pageToken: token,
+      );
+      if (result.nextPageToken.isEmpty) {
+        _assetsPageTokenByPage[cursorPage + 1] = '';
+        break;
+      }
+      _assetsPageTokenByPage[cursorPage + 1] = result.nextPageToken;
+      if (result.totalCount > 0) {
+        _assetsTotalCount = result.totalCount;
+      }
+      cursorPage += 1;
+      if (_assetsPageTokenByPage.containsKey(page)) {
+        break;
+      }
+    }
+    return _assetsPageTokenByPage[page] ?? '';
+  }
+
+  void _resetAssetsPageCache() {
+    _assetsPageTokenByPage
+      ..clear()
+      ..[1] = '';
+    _assetsPageIndex = 1;
+    _assetsPageRows = const [];
+    _assetsTotalCount = 0;
+  }
+
+  void _resetAssetsPageState() {
+    _resetAssetsPageCache();
+    _assetsPageSize = ASSETS_DEFAULT_PAGE_SIZE;
+    _isLoadingAssetsPage = false;
+    _assetsPageLoadEpoch += 1;
+  }
+
+  WorkAttachment _workAttachmentFromLookupRow(AssetLookupRow row) {
+    return WorkAttachment(
+      attachmentId: row.assetId,
+      jobId: jobId,
+      fileType: _fileTypeFromKindCode(row.kindCode, row.fileName),
+      fileName: row.fileName,
+      note: '',
+      content: row.contentUrl,
+      durationNs: row.durationNs?.toString() ?? '',
+    );
+  }
+
+  WorkAttachmentType _fileTypeFromKindCode(String kindCode, String fileName) {
+    switch (kindCode) {
+      case 'video':
+        return WorkAttachmentType.video;
+      case 'audio':
+        return WorkAttachmentType.audio;
+      case 'image':
+        return WorkAttachmentType.image;
+      case 'document':
+        return WorkAttachmentType.fromFileName(fileName) ??
+            WorkAttachmentType.pdf;
+      default:
+        return WorkAttachmentType.fromFileName(fileName) ??
+            WorkAttachmentType.text;
     }
   }
 
@@ -1171,13 +1368,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didTapBar(String attachmentId) {
-    WorkAttachment? attachment;
-    for (final candidate in _attachments) {
-      if (candidate.attachmentId == attachmentId) {
-        attachment = candidate;
-        break;
-      }
-    }
+    WorkAttachment? attachment = _attachmentById(attachmentId);
     TemporaryAttachmentBar? bar;
     for (final candidate in _bars) {
       if (candidate.attachmentId == attachmentId) {
@@ -3353,6 +3544,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (attachmentId.isEmpty) {
       return null;
     }
+    for (final attachment in _assetsPageRows) {
+      if (attachment.attachmentId == attachmentId) {
+        return attachment;
+      }
+    }
     for (final attachment in _attachments) {
       if (attachment.attachmentId == attachmentId) {
         return attachment;
@@ -3644,8 +3840,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didChangeAssetsSearch(String query) {
-    _assetsSearchQuery = query;
+    final next = query;
+    if (next == _assetsSearchQuery) {
+      return;
+    }
+    _assetsSearchQuery = next;
+    _resetAssetsPageCache();
     notifyListeners();
+    _loadAssetsPage(1);
   }
 
   void didTapRefresh() {

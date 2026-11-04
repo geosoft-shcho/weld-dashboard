@@ -35,6 +35,9 @@ import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case
 import 'package:weld_dashboard/src/domain/use_cases/load_audio_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_timeseries_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/list_asset_lookup_page_use_case.dart';
+import 'package:weld_dashboard/src/domain/repositories/asset_lookup_repository.dart';
+import 'package:weld_dashboard/src/domain/entities/asset_lookup_row.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_clip_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_timeline_use_case.dart';
@@ -437,10 +440,14 @@ VideoMultimodalViewModel _viewModel(
   WorkDetailRepository? workDetail,
 }) {
   final timelineRepository = timeline ?? _QuietTimelineRepository();
+  final detail = workDetail ?? _EmptyWorkDetailRepository();
   LabelRootsSessionCache.clear();
   return VideoMultimodalViewModel(
     listHistoryWorkAttachmentsUseCase: ListHistoryWorkAttachmentsUseCase(
-      workDetail ?? _EmptyWorkDetailRepository(),
+      detail,
+    ),
+    listAssetLookupPageUseCase: ListAssetLookupPageUseCase(
+      _WorkDetailAssetLookupRepository(detail),
     ),
     getJobTimelineUseCase: GetJobTimelineUseCase(timelineRepository),
     getClipUseCase: GetClipUseCase(timelineRepository),
@@ -756,4 +763,76 @@ class _MemoryAskSessionStore implements AskSessionStore {
   Future<void> clearSessionId({required String jobId}) async {
     values.remove(jobId.trim());
   }
+}
+
+class _WorkDetailAssetLookupRepository implements AssetLookupRepository {
+  _WorkDetailAssetLookupRepository(this._workDetail);
+
+  final WorkDetailRepository _workDetail;
+
+  @override
+  Future<AssetLookupPage> listAssets({
+    required String kindCode,
+    required String query,
+    required String equipmentId,
+    required bool unattachedOnly,
+    String jobId = '',
+    String projectId = '',
+    String projectItemId = '',
+    String workerId = '',
+    String unitNo = '',
+    String itemCode = '',
+    String jointNo = '',
+    int passNo = 0,
+    bool sharedOnly = false,
+    DateTime? startedFrom,
+    DateTime? startedTo,
+    String postprocessStatusCode = '',
+    required int pageSize,
+    required String pageToken,
+  }) async {
+    final attachments = await _workDetail.listAttachments(jobId: jobId);
+    final rows = [
+      for (final attachment in attachments)
+        AssetLookupRow(
+          assetId: attachment.attachmentId,
+          kindCode: attachment.fileType == WorkAttachmentType.video
+              ? 'video'
+              : attachment.fileType == WorkAttachmentType.audio
+              ? 'audio'
+              : 'document',
+          fileName: attachment.fileName,
+          equipmentId: '',
+          sizeBytes: 0,
+          durationNs: int.tryParse(attachment.durationNs),
+          isDerived: false,
+          isAttached: true,
+          contentUrl: attachment.content,
+        ),
+    ];
+    return AssetLookupPage(
+      rows: rows,
+      nextPageToken: '',
+      totalCount: rows.length,
+    );
+  }
+
+  @override
+  Future<List<JobPassOption>> listJobPasses({required String jobId}) async =>
+      const [];
+
+  @override
+  Future<AssetLookupRow?> getAsset({required String assetId}) async => null;
+
+  @override
+  Future<String> updateAsset({
+    required String assetId,
+    required String subject,
+    required String situation,
+    DateTime? recordedAt,
+    required List<String> changedFields,
+  }) async => '';
+
+  @override
+  Future<String> readContent({required String url}) async => '';
 }
