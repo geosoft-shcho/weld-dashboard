@@ -221,11 +221,7 @@ void main() {
   test('ask response session id is stored by job', () async {
     final asks = _ScriptedAsk();
     final store = _MemoryAskSessionStore();
-    final viewModel = _viewModel(
-      asks,
-      projectId: '42',
-      askSessionStore: store,
-    );
+    final viewModel = _viewModel(asks, projectId: '42', askSessionStore: store);
     await viewModel.didSendAsk('용접 장면');
     expect(store.values['128'], 's1');
   });
@@ -240,11 +236,7 @@ void main() {
         AskHistoryMessage(isUser: false, text: '저장된 답변'),
       ],
     );
-    final viewModel = _viewModel(
-      asks,
-      projectId: '42',
-      askSessionStore: store,
-    );
+    final viewModel = _viewModel(asks, projectId: '42', askSessionStore: store);
     await viewModel.didTapToggleAsk();
     expect(asks.historyCalls, ['s1']);
     expect(viewModel.askTurns.first.text, '저장된 질문');
@@ -255,11 +247,7 @@ void main() {
     final asks = _ScriptedAsk();
     final store = _MemoryAskSessionStore()..values['128'] = 's1';
     asks.error = const AskException('세션이 없습니다.');
-    final viewModel = _viewModel(
-      asks,
-      projectId: '42',
-      askSessionStore: store,
-    );
+    final viewModel = _viewModel(asks, projectId: '42', askSessionStore: store);
     await viewModel.didTapToggleAsk();
     expect(store.values.containsKey('128'), isFalse);
     expect(viewModel.askTurns, isEmpty);
@@ -580,7 +568,27 @@ void main() {
     expect(timeline.clips.single.assetId, '55');
     expect(timeline.clips.single.startNs, '0');
     expect(timeline.clips.single.endNs, '5000000000');
+    expect(viewModel.vectorSaveNoticeTrackCount, isNull);
   });
+
+  test(
+    'refreshAfterRecordingUpload does not enter full-page loading',
+    () async {
+      final timeline = _RecordingTimeline(
+        const JobTimeline(jobId: '128', name: '작업', tracks: []),
+      );
+      final viewModel = _viewModel(
+        _ScriptedAsk(),
+        projectId: '42',
+        timelineRepository: timeline,
+      );
+
+      final refresh = viewModel.refreshAfterRecordingUpload();
+      expect(viewModel.isLoading, isFalse);
+      await refresh;
+      expect(viewModel.isLoading, isFalse);
+    },
+  );
 
   test('an uploaded audio without a clip gets a recording track', () async {
     final timeline = _RecordingTimeline(
@@ -598,6 +606,45 @@ void main() {
     expect(timeline.clips, hasLength(1));
     expect(timeline.clips.single.kind, TimelineClipKind.audio);
     expect(timeline.clips.single.assetId, '77');
+  });
+
+  test('a second uploaded video gets a separate recording track', () async {
+    final timeline = _RecordingTimeline(
+      JobTimeline(
+        jobId: '128',
+        name: '작업',
+        tracks: [
+          TimelineTrack(
+            trackId: 'track-1',
+            name: '녹화 영상',
+            order: 0,
+            clips: [
+              _clip(
+                clipId: 'clip-1',
+                assetId: '55',
+                startNs: '0',
+                endNs: '5000000000',
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timelineRepository: timeline,
+    );
+
+    await viewModel.didPlaceUploadedRecording(assetId: '66', isVideo: true);
+
+    expect(timeline.trackNames, ['녹화 영상 2']);
+    expect(timeline.clips, hasLength(1));
+    expect(timeline.clips.single.assetId, '66');
+    expect(timeline.current.tracks.map((track) => track.name), [
+      '녹화 영상',
+      '녹화 영상 2',
+    ]);
   });
 
   test(
@@ -836,7 +883,9 @@ VideoMultimodalViewModel _viewModel(
     listHistoryWorkAttachmentsUseCase: ListHistoryWorkAttachmentsUseCase(
       workDetail,
     ),
-    listAssetLookupPageUseCase: ListAssetLookupPageUseCase(_IdleAssetLookupRepository()),
+    listAssetLookupPageUseCase: ListAssetLookupPageUseCase(
+      _IdleAssetLookupRepository(),
+    ),
     getJobTimelineUseCase: GetJobTimelineUseCase(repository),
     getClipUseCase: GetClipUseCase(repository),
     createTrackUseCase: CreateTrackUseCase(repository),
@@ -890,7 +939,9 @@ class _ScriptedAsk implements AskRepository {
   }
 
   @override
-  Future<AskSessionHistory> getSessionHistory({required String sessionId}) async {
+  Future<AskSessionHistory> getSessionHistory({
+    required String sessionId,
+  }) async {
     historyCalls.add(sessionId);
     final failure = error;
     if (failure != null) {
@@ -984,7 +1035,6 @@ class _IdleTimeline implements JobTimelineRepository {
 
   @override
   Future<void> deleteClip({required String clipId}) async {}
-
 
   @override
   Future<void> updateTimeline({
@@ -1293,7 +1343,6 @@ class _IdleToolRunRepository implements ToolRunRepository {
     throw StateError('unused');
   }
 }
-
 
 class _MemoryAskSessionStore implements AskSessionStore {
   final Map<String, String> values = {};

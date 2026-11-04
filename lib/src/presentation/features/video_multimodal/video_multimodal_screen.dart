@@ -84,8 +84,10 @@ class _VideoMultimodalBody extends StatelessWidget {
                             builder: (context, constraints) {
                               final maxBoardHeight =
                                   (constraints.maxHeight - 100).clamp(
-                                    VideoMultimodalViewModel.MIN_TIMELINE_HEIGHT,
-                                    VideoMultimodalViewModel.MAX_TIMELINE_HEIGHT,
+                                    VideoMultimodalViewModel
+                                        .MIN_TIMELINE_HEIGHT,
+                                    VideoMultimodalViewModel
+                                        .MAX_TIMELINE_HEIGHT,
                                   );
                               return Column(
                                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -118,7 +120,7 @@ class _VideoMultimodalBody extends StatelessWidget {
                         top: viewModel.cameraRecordingOffsetY,
                         child: CameraRecordingOverlay(
                           jobId: viewModel.jobId,
-                          onUploaded: viewModel.openTimeline,
+                          onUploaded: viewModel.refreshAfterRecordingUpload,
                           onRecordingPlaced:
                               viewModel.didPlaceUploadedRecording,
                           onClose: viewModel.didCloseCameraRecording,

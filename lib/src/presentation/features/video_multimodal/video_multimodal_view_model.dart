@@ -2696,17 +2696,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (selected != null && selected.kind == TimelineClipKind.audio) {
       return true;
     }
-    final recordingTrackId = _trackIdByName(RECORDING_AUDIO_TRACK_NAME);
-    if (recordingTrackId != null) {
-      for (final track in _timeline.tracks) {
-        if (track.trackId != recordingTrackId) {
-          continue;
-        }
-        for (final clip in track.clips) {
-          if (clip.kind == TimelineClipKind.audio && clip.clipId.isNotEmpty) {
-            _selectedClipId = clip.clipId;
-            return true;
-          }
+    for (final track in _timeline.tracks) {
+      if (!_isRecordingTrackName(track.name, isVideo: false)) {
+        continue;
+      }
+      for (final clip in track.clips) {
+        if (clip.kind == TimelineClipKind.audio && clip.clipId.isNotEmpty) {
+          _selectedClipId = clip.clipId;
+          return true;
         }
       }
     }
@@ -2877,42 +2874,88 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<String?> _ensureTrackId(String name) async {
+  Future<String?> _ensureTrackId(
+    String name, {
+    bool announceVectorSave = true,
+  }) async {
     final existing = _trackIdByName(name);
     if (existing != null) {
       return existing;
     }
-    final didCreate = await createTimelineTrack(name: name);
+    final didCreate = await createTimelineTrack(
+      name: name,
+      announceVectorSave: announceVectorSave,
+    );
     if (!didCreate) {
       return null;
     }
     return _trackIdByName(name);
   }
 
-  /// 녹화 전용 트랙. 서버가 만든 `- · video`/`- · audio`는 이름만 바꾼다.
-  Future<String?> _ensureRecordingTrackId({required bool isVideo}) async {
-    final wanted = isVideo
+  /// 업로드마다 별도 녹화 트랙. 같은 asset이면 기존 녹화 트랙을 재사용한다.
+  Future<String?> _ensureRecordingTrackId({
+    required String assetId,
+    required bool isVideo,
+  }) async {
+    final existingClip = _findAssetClip(assetId);
+    if (existingClip != null &&
+        _isRecordingTrackName(
+          _trackName(existingClip.trackId),
+          isVideo: isVideo,
+        )) {
+      return existingClip.trackId;
+    }
+    final wanted = _nextRecordingTrackName(isVideo: isVideo);
+    if (!_hasRecordingTrack(isVideo: isVideo)) {
+      final placeholder = isVideo
+          ? SERVER_EMPTY_EQUIPMENT_VIDEO_TRACK_NAME
+          : SERVER_EMPTY_EQUIPMENT_AUDIO_TRACK_NAME;
+      final placeholderId = _trackIdByName(placeholder);
+      if (placeholderId != null) {
+        final didRename = await _commitServerWrite(
+          () =>
+              _updateTrackUseCase.execute(trackId: placeholderId, name: wanted),
+          changedTrackCount: 1,
+          announceVectorSave: false,
+        );
+        if (!didRename) {
+          return null;
+        }
+        return _trackIdByName(wanted) ?? placeholderId;
+      }
+    }
+    return _ensureTrackId(wanted, announceVectorSave: false);
+  }
+
+  String _nextRecordingTrackName({required bool isVideo}) {
+    final base = isVideo
         ? RECORDING_VIDEO_TRACK_NAME
         : RECORDING_AUDIO_TRACK_NAME;
-    final existing = _trackIdByName(wanted);
-    if (existing != null) {
-      return existing;
+    if (_trackIdByName(base) == null) {
+      return base;
     }
-    final placeholder = isVideo
-        ? SERVER_EMPTY_EQUIPMENT_VIDEO_TRACK_NAME
-        : SERVER_EMPTY_EQUIPMENT_AUDIO_TRACK_NAME;
-    final placeholderId = _trackIdByName(placeholder);
-    if (placeholderId != null) {
-      final didRename = await _commitServerWrite(
-        () => _updateTrackUseCase.execute(trackId: placeholderId, name: wanted),
-        changedTrackCount: 1,
-      );
-      if (!didRename) {
-        return null;
+    var index = 2;
+    while (_trackIdByName('$base $index') != null) {
+      index += 1;
+    }
+    return '$base $index';
+  }
+
+  bool _hasRecordingTrack({required bool isVideo}) {
+    for (final track in _timeline.tracks) {
+      if (_isRecordingTrackName(track.name, isVideo: isVideo)) {
+        return true;
       }
-      return _trackIdByName(wanted) ?? placeholderId;
     }
-    return _ensureTrackId(wanted);
+    return false;
+  }
+
+  bool _isRecordingTrackName(String name, {required bool isVideo}) {
+    final trimmed = name.trim();
+    final base = isVideo
+        ? RECORDING_VIDEO_TRACK_NAME
+        : RECORDING_AUDIO_TRACK_NAME;
+    return trimmed == base || trimmed.startsWith('$base ');
   }
 
   String? _trackIdByName(String name) {
@@ -2950,6 +2993,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required String name,
     int? order,
     bool? isVisible,
+    bool announceVectorSave = true,
   }) {
     return _commitServerWrite(
       () => _createTrackUseCase.execute(
@@ -2959,6 +3003,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         isVisible: isVisible,
       ),
       changedTrackCount: 1,
+      announceVectorSave: announceVectorSave,
     );
   }
 
@@ -2999,6 +3044,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     String sourceStartNs = '',
     String sourceEndNs = '',
     String sourceLimitNs = '',
+    bool announceVectorSave = true,
   }) {
     return _commitServerWrite(
       () => _createClipUseCase.execute(
@@ -3016,6 +3062,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         sourceLimitNs: sourceLimitNs,
       ),
       changedTrackCount: 1,
+      announceVectorSave: announceVectorSave,
     );
   }
 
@@ -3028,6 +3075,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     String? labelValueId,
     String? description,
     bool? isReviewed,
+    bool announceVectorSave = true,
   }) {
     final clip = _timelineClip(clipId);
     if (clip == null) {
@@ -3079,6 +3127,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         clipId,
         nextTrackId: nextTrackId,
       ),
+      announceVectorSave: announceVectorSave,
     );
   }
 
@@ -3191,7 +3240,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (_isClosed) {
       return;
     }
-    final trackId = await _ensureRecordingTrackId(isVideo: isVideo);
+    final trackId = await _ensureRecordingTrackId(
+      assetId: assetId,
+      isVideo: isVideo,
+    );
     if (trackId == null) {
       throw JobTimelineException(
         _timelineHint.isEmpty ? '녹화 트랙을 만들 수 없습니다.' : _timelineHint,
@@ -3218,6 +3270,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         clipId: existing.clipId,
         startNs: range.startNs,
         endNs: range.endNs,
+        announceVectorSave: false,
       );
       if (!didMove) {
         throw JobTimelineException(
@@ -3233,6 +3286,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         trackId: trackId,
         startNs: range.startNs,
         endNs: range.endNs,
+        announceVectorSave: false,
       );
       if (!didMove) {
         throw JobTimelineException(
@@ -3251,6 +3305,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       sourceStartNs: range.sourceStartNs,
       sourceEndNs: range.sourceEndNs,
       sourceLimitNs: range.sourceLimitNs,
+      announceVectorSave: false,
     );
     if (!didSave) {
       throw JobTimelineException(
@@ -3258,6 +3313,18 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       );
     }
     _selectPlacedRecordingClip(assetId, isVideo: isVideo);
+  }
+
+  /// 녹화 업로드 완료 후 타임라인·Assets만 갱신. 전체 로딩 오버레이는 쓰지 않는다.
+  Future<void> refreshAfterRecordingUpload() async {
+    if (_isClosed || jobId.isEmpty) {
+      return;
+    }
+    await _replaceTimelineFromServer(clearHint: false);
+    if (_isClosed) {
+      return;
+    }
+    await _loadSideAssets();
   }
 
   void _selectPlacedRecordingClip(String assetId, {required bool isVideo}) {
@@ -3650,6 +3717,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   Future<bool> _commitServerWrite(
     Future<void> Function() write, {
     required int changedTrackCount,
+    bool announceVectorSave = true,
   }) async {
     if (_isSavingTimeline || jobId.isEmpty) {
       return false;
@@ -3667,7 +3735,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         return false;
       }
       didSave = await _replaceTimelineFromServer(clearHint: true);
-      if (didSave) {
+      if (didSave && announceVectorSave) {
         _vectorSaveTrackCount = changedTrackCount < 1 ? 1 : changedTrackCount;
       }
       return didSave;

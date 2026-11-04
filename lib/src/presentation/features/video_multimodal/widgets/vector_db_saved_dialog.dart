@@ -75,7 +75,14 @@ class _VectorDbSavedDialogState extends State<_VectorDbSavedDialog>
         ),
         actions: [
           FilledButton(
-            onPressed: isComplete ? () => Navigator.pop(context) : null,
+            onPressed: isComplete
+                ? () {
+                    final navigator = Navigator.of(context);
+                    if (navigator.canPop()) {
+                      navigator.pop();
+                    }
+                  }
+                : null,
             child: const Text('확인'),
           ),
         ],
