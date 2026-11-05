@@ -140,7 +140,7 @@ message ToolRun {
   reserved 4;                   // 예전 target_id(글자, 접두어로 종류 구분)
   RunStatus status = 5;
   string external_job_id = 6;   // pull 패턴일 때 외부 시스템의 job id
-  string error_code = 7;        // FAILED일 때
+  string error_code = 7;        // FAILED · CANCELED일 때(취소는 canceled)
   string error_message = 8;
   google.protobuf.Timestamp created_at = 9;
   google.protobuf.Timestamp updated_at = 10;
