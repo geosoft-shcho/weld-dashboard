@@ -4,6 +4,7 @@ import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_multimodal_view_model.dart';
 import 'ask_side_body.dart';
 import 'assets_side_body.dart';
+import 'comments_side_body.dart';
 import 'labels_side_body.dart';
 import 'multimodal_studio_palette.dart';
 import 'properties_side_body.dart';
@@ -24,6 +25,7 @@ class MultimodalSidePanel extends StatelessWidget {
       VideoMultimodalSide.ask => 360.0,
       VideoMultimodalSide.assets => 360.0,
       VideoMultimodalSide.properties => 360.0,
+      VideoMultimodalSide.comments => 360.0,
       _ => 320.0,
     };
     return WorkDetailMaterialScope(
@@ -45,6 +47,10 @@ class MultimodalSidePanel extends StatelessWidget {
               onClose: onClose,
             ),
             VideoMultimodalSide.labels => LabelsSideBody(
+              viewModel: viewModel,
+              onClose: onClose,
+            ),
+            VideoMultimodalSide.comments => CommentsSideBody(
               viewModel: viewModel,
               onClose: onClose,
             ),

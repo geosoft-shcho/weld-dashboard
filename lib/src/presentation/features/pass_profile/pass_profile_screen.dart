@@ -162,8 +162,14 @@ class _PassProfileReady extends StatelessWidget {
     final jobId = context.select<PassProfileViewModel, String>(
       (viewModel) => viewModel.jobId,
     );
+    final passId = context.select<PassProfileViewModel, String>(
+      (viewModel) => viewModel.selectedPassId,
+    );
     return CameraRecordingScope(
       jobId: jobId,
+      passId: passId,
+      capturesScreenComment: true,
+      commentScreen: 'pass',
       builder: (context, recordButton) {
         return ListView(
           children: [

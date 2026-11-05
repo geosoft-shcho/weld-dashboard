@@ -50,6 +50,10 @@ import '../../../domain/use_cases/start_camera_recording_use_case.dart';
 import '../../../domain/use_cases/stop_camera_recording_use_case.dart';
 import '../../../domain/use_cases/list_upload_formats_use_case.dart';
 import '../../../domain/use_cases/upload_asset_queue_use_case.dart';
+import '../../../domain/use_cases/create_screen_comment_use_case.dart';
+import '../../../domain/use_cases/delete_screen_comment_use_case.dart';
+import '../../../domain/use_cases/list_screen_comments_use_case.dart';
+import '../../../domain/use_cases/update_screen_comment_use_case.dart';
 import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../../data/datasources/local/auth_session_local_data_source.dart';
@@ -135,6 +139,7 @@ import '../../../domain/use_cases/resolve_latest_quality_issue_use_case.dart';
 import '../../features/app_shell/shell_view_model.dart';
 import '../../features/collection_monitoring/collection_monitoring_view_model.dart';
 import '../../features/video_multimodal/camera_recording_view_model.dart';
+import '../../features/video_multimodal/screen_comment_list_view_model.dart';
 import '../../features/video_multimodal/video_multimodal_view_model.dart';
 import '../../features/pass_profile/pass_profile_args.dart';
 import '../../features/pass_profile/pass_profile_view_model.dart';
@@ -166,6 +171,18 @@ void setupLocator({required bool pdfrxReady}) {
     () => RemoteAssetUploadRepository(locator()),
   );
   locator.registerFactory(() => UploadAssetUseCase(locator()));
+  locator.registerFactory(() => CreateScreenCommentUseCase(locator()));
+  locator.registerFactory(() => ListScreenCommentsUseCase(locator()));
+  locator.registerFactory(() => UpdateScreenCommentUseCase(locator()));
+  locator.registerFactory(() => DeleteScreenCommentUseCase(locator()));
+  locator.registerFactoryParam<ScreenCommentListViewModel, String, void>(
+    (jobId, _) => ScreenCommentListViewModel(
+      listScreenCommentsUseCase: locator(),
+      updateScreenCommentUseCase: locator(),
+      deleteScreenCommentUseCase: locator(),
+      jobId: jobId,
+    ),
+  );
   locator.registerFactory(
     () => UploadAssetQueueUseCase(
       locator<AssetUploadRepository>(),
@@ -370,7 +387,12 @@ void setupLocator({required bool pdfrxReady}) {
       ),
       uploadAssetUseCase: locator(),
       toolRunUseCase: locator(),
+      createScreenCommentUseCase: locator(),
       jobId: args.jobId,
+      passId: args.passId,
+      capturesScreenComment: args.capturesScreenComment,
+      onRecordingStarted: args.onRecordingStarted,
+      takeScreenCommentContext: args.takeScreenCommentContext,
       onUploaded: args.onUploaded,
       onRecordingPlaced: args.onRecordingPlaced,
       onUploadCompleted: args.onUploadCompleted,

@@ -181,8 +181,14 @@ class _QualityIssueReady extends StatelessWidget {
     final jobId = context.select<QualityIssueViewModel, String>(
       (viewModel) => viewModel.jobId,
     );
+    final passId = context.select<QualityIssueViewModel, String>(
+      (viewModel) => viewModel.selectedPassId,
+    );
     return CameraRecordingScope(
       jobId: jobId,
+      passId: passId,
+      capturesScreenComment: true,
+      commentScreen: 'quality',
       builder: (context, recordButton) {
         return ListView(
           children: [

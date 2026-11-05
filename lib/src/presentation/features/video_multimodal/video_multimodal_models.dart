@@ -1,6 +1,6 @@
 import '../../../domain/entities/ask_answer.dart';
 
-enum VideoMultimodalSide { none, assets, properties, ask, labels }
+enum VideoMultimodalSide { none, assets, properties, ask, labels, comments }
 
 class CreatedClipNotice {
   const CreatedClipNotice({required this.kindLabel, required this.body});

@@ -811,6 +811,23 @@ void main() {
     },
   );
 
+  test('screen comment capture starts at t_ms 0 on multimodal', () {
+    final viewModel = _viewModel(
+      _ScriptedAsk(),
+      projectId: '42',
+      timelineRepository: _RecordingTimeline(
+        const JobTimeline(jobId: '128', name: '작업', tracks: []),
+      ),
+    );
+
+    viewModel.didBeginScreenCommentCapture();
+    final row = viewModel.takeScreenCommentContext().single;
+
+    expect(row['t_ms'], 0);
+    expect(row['screen'], 'multimodal');
+    expect(row['job_id'], 128);
+  });
+
   test('an object row outside the list scrolls to that row', () {
     expect(
       revealOffsetForObjectRow(

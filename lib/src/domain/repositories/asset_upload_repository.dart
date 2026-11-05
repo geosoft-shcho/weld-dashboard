@@ -1,5 +1,6 @@
 import '../entities/asset_upload.dart';
 import '../entities/camera_recording.dart';
+import '../entities/screen_comment.dart';
 
 abstract class AssetUploadRepository {
   Future<AssetUploadResult> upload({
@@ -39,4 +40,23 @@ abstract class AssetUploadRepository {
 
   /// 실패한 후처리를 다시 건다. 반환값은 실행 번호(runId).
   Future<String> retryPostprocess({required String assetId});
+
+  Future<ScreenComment> createScreenComment({
+    required String jobId,
+    String passId = '',
+    required String audioAssetId,
+    String videoAssetId = '',
+    String body = '',
+    required DateTime startedAt,
+    required List<Map<String, Object?>> context,
+  });
+
+  Future<List<ScreenComment>> listScreenComments({required String jobId});
+
+  Future<ScreenComment> updateScreenComment({
+    required String commentId,
+    required String body,
+  });
+
+  Future<void> deleteScreenComment({required String commentId});
 }

@@ -7,6 +7,7 @@ import '../../../domain/entities/camera_recording.dart';
 import '../../../domain/entities/camera_recording_exception.dart';
 import '../../../domain/entities/asset_upload.dart';
 import '../../../domain/entities/tool_run.dart';
+import '../../../domain/use_cases/create_screen_comment_use_case.dart';
 import '../../../domain/use_cases/prepare_camera_recording_use_case.dart';
 import '../../../domain/use_cases/read_camera_preview_handle_use_case.dart';
 import '../../../domain/use_cases/release_camera_recording_use_case.dart';
@@ -23,13 +24,21 @@ class CameraRecordingArgs {
     required this.onUploaded,
     required this.onRecordingPlaced,
     this.onUploadCompleted,
+    this.passId = '',
+    this.capturesScreenComment = false,
+    this.onRecordingStarted,
+    this.takeScreenCommentContext,
   });
 
   final String jobId;
+  final String passId;
   final Future<void> Function() onUploaded;
   final Future<void> Function({required String assetId, required bool isVideo})
   onRecordingPlaced;
   final Future<void> Function()? onUploadCompleted;
+  final bool capturesScreenComment;
+  final void Function()? onRecordingStarted;
+  final List<Map<String, Object?>> Function()? takeScreenCommentContext;
 }
 
 class CameraRecordingViewModel extends ChangeNotifier {
@@ -39,13 +48,20 @@ class CameraRecordingViewModel extends ChangeNotifier {
     required this._stopCameraRecordingUseCase,
     required this._releaseCameraRecordingUseCase,
     required this._readCameraPreviewHandleUseCase,
-    required this._uploadAssetUseCase,
-    required this._toolRunUseCase,
+    required UploadAssetUseCase uploadAssetUseCase,
+    required ToolRunUseCase toolRunUseCase,
+    required CreateScreenCommentUseCase createScreenCommentUseCase,
     required this.jobId,
+    this.passId = '',
     required this.onUploaded,
     required this.onRecordingPlaced,
     this.onUploadCompleted,
-  });
+    this.capturesScreenComment = false,
+    this.onRecordingStarted,
+    this.takeScreenCommentContext,
+  }) : _uploadAssetUseCase = uploadAssetUseCase,
+       _toolRunUseCase = toolRunUseCase,
+       _createScreenCommentUseCase = createScreenCommentUseCase;
 
   final PrepareCameraRecordingUseCase _prepareCameraRecordingUseCase;
   final StartCameraRecordingUseCase _startCameraRecordingUseCase;
@@ -54,11 +70,18 @@ class CameraRecordingViewModel extends ChangeNotifier {
   final ReadCameraPreviewHandleUseCase _readCameraPreviewHandleUseCase;
   final UploadAssetUseCase _uploadAssetUseCase;
   final ToolRunUseCase _toolRunUseCase;
+  final CreateScreenCommentUseCase _createScreenCommentUseCase;
   final String jobId;
+  final String passId;
   final Future<void> Function() onUploaded;
   final Future<void> Function({required String assetId, required bool isVideo})
   onRecordingPlaced;
   final Future<void> Function()? onUploadCompleted;
+  final bool capturesScreenComment;
+  final void Function()? onRecordingStarted;
+  final List<Map<String, Object?>> Function()? takeScreenCommentContext;
+
+  String commentBody = '';
 
   CameraRecordingPhase phase = CameraRecordingPhase.preparing;
   String noticeText = '';
@@ -91,6 +114,10 @@ class CameraRecordingViewModel extends ChangeNotifier {
       (!videoUploaded || !audioUploaded);
 
   bool get canRetry => phase == CameraRecordingPhase.failed;
+
+  void didChangeCommentBody(String value) {
+    commentBody = value;
+  }
 
   Future<void> prepare() async {
     phase = CameraRecordingPhase.preparing;
@@ -127,6 +154,7 @@ class CameraRecordingViewModel extends ChangeNotifier {
       recording = null;
       videoUploaded = false;
       audioUploaded = false;
+      onRecordingStarted?.call();
       noticeText = '녹화 중입니다.';
       isNoticeError = false;
     } catch (error) {
@@ -167,8 +195,12 @@ class CameraRecordingViewModel extends ChangeNotifier {
 
     final errors = <String>[];
     final warnings = <String>[];
+    String? videoAssetId;
+    String? audioAssetId;
+    var videoPlaced = true;
+    var audioPlaced = true;
     if (!videoUploaded) {
-      final assetId = await _uploadFile(
+      videoAssetId = await _uploadFile(
         label: '영상',
         file: value.video,
         recordedAt: value.recordedAt,
@@ -176,15 +208,15 @@ class CameraRecordingViewModel extends ChangeNotifier {
         errors: errors,
         warnings: warnings,
       );
-      await _placeUploaded(
-        assetId: assetId,
+      videoPlaced = await _placeUploaded(
+        assetId: videoAssetId,
         isVideo: true,
         label: '영상',
         errors: errors,
       );
     }
     if (!audioUploaded) {
-      final assetId = await _uploadFile(
+      audioAssetId = await _uploadFile(
         label: '음성',
         file: value.audio,
         recordedAt: value.recordedAt,
@@ -192,10 +224,23 @@ class CameraRecordingViewModel extends ChangeNotifier {
         errors: errors,
         warnings: warnings,
       );
-      await _placeUploaded(
-        assetId: assetId,
+      audioPlaced = await _placeUploaded(
+        assetId: audioAssetId,
         isVideo: false,
         label: '음성',
+        errors: errors,
+      );
+    }
+    if (capturesScreenComment &&
+        audioAssetId != null &&
+        audioAssetId.isNotEmpty &&
+        audioPlaced &&
+        videoPlaced &&
+        errors.isEmpty) {
+      await _createScreenComment(
+        audioAssetId: audioAssetId,
+        videoAssetId: videoAssetId ?? '',
+        startedAt: value.recordedAt,
         errors: errors,
       );
     }
@@ -254,19 +299,47 @@ class CameraRecordingViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _placeUploaded({
+  Future<bool> _placeUploaded({
     required String? assetId,
     required bool isVideo,
     required String label,
     required List<String> errors,
   }) async {
     if (assetId == null || assetId.isEmpty || _isDisposed) {
-      return;
+      return false;
     }
     try {
       await onRecordingPlaced(assetId: assetId, isVideo: isVideo);
+      return true;
     } catch (error) {
       errors.add('$label 타임라인 배치 실패: ${_message(error)}');
+      return false;
+    }
+  }
+
+  Future<void> _createScreenComment({
+    required String audioAssetId,
+    required String videoAssetId,
+    required DateTime startedAt,
+    required List<String> errors,
+  }) async {
+    try {
+      final context =
+          takeScreenCommentContext?.call() ??
+          [
+            {'t_ms': 0, 'screen': 'multimodal'},
+          ];
+      await _createScreenCommentUseCase.execute(
+        jobId: jobId,
+        passId: passId,
+        audioAssetId: audioAssetId,
+        videoAssetId: videoAssetId,
+        body: commentBody.trim(),
+        startedAt: startedAt,
+        context: context,
+      );
+    } catch (error) {
+      errors.add('화면 코멘트 실패: ${_message(error)}');
     }
   }
 

@@ -240,4 +240,80 @@ extension type AssetServiceClient (connect.Transport _transport) {
       onTrailer: onTrailer,
     );
   }
+
+  /// 화면 코멘트 = 웹캠 녹화 1회(tacit docs/설계/화면 코멘트(웹캠 녹화) 설계.md). 녹화를 POST /assets로 올린 뒤 만든다.
+  /// 만들면 서버가 음성에 STT를 건다(stt_run_id) — 화면은 기다리지 않고 ListComments의 stt로 상태를 본다.
+  /// 녹화가 같은 작업에 첨부되지 않았거나, 음성 · 영상 종류가 틀리거나, context 모양이 틀리면 InvalidArgument.
+  /// STT를 맡기지 못해도(도구 꺼짐 등) 코멘트는 만들고 stt_run_id가 0이다.
+  Future<mediatagassetv1asset.CreateCommentResponse> createComment(
+    mediatagassetv1asset.CreateCommentRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.AssetService.createComment,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
+  /// 글(body)만 고친다. 녹화 · context는 고치지 않는다.
+  Future<mediatagassetv1asset.UpdateCommentResponse> updateComment(
+    mediatagassetv1asset.UpdateCommentRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.AssetService.updateComment,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
+  /// 작업(패스)의 코멘트, 또는 그 에셋을 연 채(context의 media) 남긴 코멘트. 만든 순서 거꾸로(최신 먼저).
+  Future<mediatagassetv1asset.ListCommentsResponse> listComments(
+    mediatagassetv1asset.ListCommentsRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.AssetService.listComments,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
+  /// 코멘트 행을 실제로 지운다. 녹화 에셋은 남는다(첨부된 파일). 녹화를 지우려면 이것부터 — DeleteAsset · DetachAsset은
+  /// 코멘트가 쓰는 녹화면 FailedPrecondition이다.
+  Future<mediatagassetv1asset.DeleteCommentResponse> deleteComment(
+    mediatagassetv1asset.DeleteCommentRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.AssetService.deleteComment,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
 }

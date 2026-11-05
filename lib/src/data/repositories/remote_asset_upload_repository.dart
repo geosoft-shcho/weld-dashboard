@@ -1,13 +1,18 @@
 import 'dart:convert';
 import 'dart:typed_data';
 
+import 'package:fixnum/fixnum.dart';
+
 import '../../domain/entities/asset_upload.dart';
 import '../../domain/entities/camera_recording.dart';
+import '../../domain/entities/screen_comment.dart';
 import '../../domain/repositories/asset_upload_repository.dart';
 import '../datasources/asset_file_picker.dart';
 import '../datasources/asset_json_post.dart';
 import '../datasources/asset_multipart_upload.dart';
 import '../datasources/asset_tus_upload.dart';
+import '../datasources/generated/google/protobuf/struct.pb.dart';
+import '../datasources/generated/google/protobuf/timestamp.pb.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
 import '../datasources/remote/media_tag_data_source.dart';
 import 'proto_id.dart';
@@ -149,7 +154,8 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
       if (_hasId(jobId)) 'jobId': jobId,
       if (_hasId(passId)) 'passId': passId,
       if (_hasId(equipmentId)) 'equipmentId': equipmentId,
-      if (timeOrigin != null) 'timeOrigin': timeOrigin.toUtc().toIso8601String(),
+      if (timeOrigin != null)
+        'timeOrigin': timeOrigin.toUtc().toIso8601String(),
       if (subjectText.isNotEmpty) 'subject': subjectText,
       if (situationText.isNotEmpty) 'situation': situationText,
     });
@@ -246,6 +252,122 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     } catch (error) {
       throw AssetUploadException(error.toString());
     }
+  }
+
+  @override
+  Future<ScreenComment> createScreenComment({
+    required String jobId,
+    String passId = '',
+    required String audioAssetId,
+    String videoAssetId = '',
+    String body = '',
+    required DateTime startedAt,
+    required List<Map<String, Object?>> context,
+  }) async {
+    final rows = ListValue();
+    rows.mergeFromProto3Json(context);
+    try {
+      final response = await _mediaTag.assetService.createComment(
+        asset_pb.CreateCommentRequest(
+          jobId: protoId(jobId),
+          passId: protoId(passId),
+          audioAssetId: protoId(audioAssetId),
+          videoAssetId: protoId(videoAssetId),
+          body: body.trim(),
+          startedAt: Timestamp.fromDateTime(startedAt.toUtc()),
+          context: rows,
+        ),
+      );
+      return _screenComment(response.comment);
+    } on AssetUploadException {
+      rethrow;
+    } catch (error) {
+      throw AssetUploadException(error.toString());
+    }
+  }
+
+  @override
+  Future<List<ScreenComment>> listScreenComments({
+    required String jobId,
+  }) async {
+    try {
+      final response = await _mediaTag.assetService.listComments(
+        asset_pb.ListCommentsRequest(jobId: protoId(jobId), pageSize: 50),
+      );
+      return [for (final comment in response.comments) _screenComment(comment)];
+    } catch (error) {
+      throw AssetUploadException(error.toString());
+    }
+  }
+
+  @override
+  Future<ScreenComment> updateScreenComment({
+    required String commentId,
+    required String body,
+  }) async {
+    try {
+      final response = await _mediaTag.assetService.updateComment(
+        asset_pb.UpdateCommentRequest(
+          commentId: protoId(commentId),
+          body: body.trim(),
+        ),
+      );
+      return _screenComment(response.comment);
+    } on AssetUploadException {
+      rethrow;
+    } catch (error) {
+      throw AssetUploadException(error.toString());
+    }
+  }
+
+  @override
+  Future<void> deleteScreenComment({required String commentId}) async {
+    try {
+      await _mediaTag.assetService.deleteComment(
+        asset_pb.DeleteCommentRequest(commentId: protoId(commentId)),
+      );
+    } on AssetUploadException {
+      rethrow;
+    } catch (error) {
+      throw AssetUploadException(error.toString());
+    }
+  }
+
+  ScreenComment _screenComment(asset_pb.Comment comment) {
+    final hasRun = comment.hasStt() && comment.stt.runId != Int64.ZERO;
+    final rawContext = comment.context.toProto3Json();
+    final playback = screenCommentPlayback(
+      rawContext is List ? rawContext : const [],
+    );
+    return ScreenComment(
+      commentId: idText(comment.commentId),
+      body: comment.body.trim(),
+      sttLabel: screenCommentSttLabel(
+        hasRun ? _sttKind(comment.stt.status) : ScreenCommentSttKind.missing,
+      ),
+      sttMessage: hasRun ? comment.stt.errorMessage.trim() : '',
+      playClipId: playback.clipId,
+      playheadNs: playback.playheadNs,
+      videoAssetId: idText(comment.videoAssetId),
+    );
+  }
+
+  ScreenCommentSttKind _sttKind(asset_pb.PostprocessStatus status) {
+    switch (status) {
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_QUEUED:
+        return ScreenCommentSttKind.queued;
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_RUNNING:
+        return ScreenCommentSttKind.running;
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_SUCCEEDED:
+        return ScreenCommentSttKind.succeeded;
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_FAILED:
+        return ScreenCommentSttKind.failed;
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_CANCELED:
+        return ScreenCommentSttKind.canceled;
+      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED:
+        return ScreenCommentSttKind.missing;
+    }
+    return ScreenCommentSttKind.missing;
   }
 
   bool _hasId(String id) => id.isNotEmpty && id != '0';

@@ -2010,6 +2010,7 @@ class MergeCounts extends $pb.GeneratedMessage {
     $core.int? children,
     $core.int? reportRefs,
     $core.int? toolRuns,
+    $core.int? comments,
   }) {
     final result = create();
     if (attachments != null) result.attachments = attachments;
@@ -2017,6 +2018,7 @@ class MergeCounts extends $pb.GeneratedMessage {
     if (children != null) result.children = children;
     if (reportRefs != null) result.reportRefs = reportRefs;
     if (toolRuns != null) result.toolRuns = toolRuns;
+    if (comments != null) result.comments = comments;
     return result;
   }
 
@@ -2039,6 +2041,7 @@ class MergeCounts extends $pb.GeneratedMessage {
     ..a<$core.int>(3, _omitFieldNames ? '' : 'children', $pb.PbFieldType.O3)
     ..a<$core.int>(4, _omitFieldNames ? '' : 'reportRefs', $pb.PbFieldType.O3)
     ..a<$core.int>(5, _omitFieldNames ? '' : 'toolRuns', $pb.PbFieldType.O3)
+    ..a<$core.int>(6, _omitFieldNames ? '' : 'comments', $pb.PbFieldType.O3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2105,6 +2108,15 @@ class MergeCounts extends $pb.GeneratedMessage {
   $core.bool hasToolRuns() => $_has(4);
   @$pb.TagNumber(5)
   void clearToolRuns() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.int get comments => $_getIZ(5);
+  @$pb.TagNumber(6)
+  set comments($core.int value) => $_setSignedInt32(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasComments() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearComments() => $_clearField(6);
 }
 
 class DuplicateResolution extends $pb.GeneratedMessage {
@@ -3038,6 +3050,816 @@ class UploadFormat extends $pb.GeneratedMessage {
   $pb.PbList<$core.String> get steps => $_getList(6);
 }
 
+/// 화면 코멘트. 타임라인 시각과 관계없다.
+class Comment extends $pb.GeneratedMessage {
+  factory Comment({
+    $fixnum.Int64? commentId,
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? passId,
+    $core.String? body,
+    $fixnum.Int64? audioAssetId,
+    $fixnum.Int64? videoAssetId,
+    $0.ListValue? context,
+    $1.Timestamp? startedAt,
+    $1.Timestamp? createdAt,
+    $1.Timestamp? updatedAt,
+    PostprocessRun? stt,
+    $fixnum.Int64? subtitleAssetId,
+  }) {
+    final result = create();
+    if (commentId != null) result.commentId = commentId;
+    if (jobId != null) result.jobId = jobId;
+    if (passId != null) result.passId = passId;
+    if (body != null) result.body = body;
+    if (audioAssetId != null) result.audioAssetId = audioAssetId;
+    if (videoAssetId != null) result.videoAssetId = videoAssetId;
+    if (context != null) result.context = context;
+    if (startedAt != null) result.startedAt = startedAt;
+    if (createdAt != null) result.createdAt = createdAt;
+    if (updatedAt != null) result.updatedAt = updatedAt;
+    if (stt != null) result.stt = stt;
+    if (subtitleAssetId != null) result.subtitleAssetId = subtitleAssetId;
+    return result;
+  }
+
+  Comment._();
+
+  factory Comment.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory Comment.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'Comment',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'commentId')
+    ..aInt64(2, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(3, _omitFieldNames ? '' : 'passId')
+    ..aOS(4, _omitFieldNames ? '' : 'body')
+    ..aInt64(5, _omitFieldNames ? '' : 'audioAssetId')
+    ..aInt64(6, _omitFieldNames ? '' : 'videoAssetId')
+    ..aOM<$0.ListValue>(7, _omitFieldNames ? '' : 'context',
+        subBuilder: $0.ListValue.create)
+    ..aOM<$1.Timestamp>(8, _omitFieldNames ? '' : 'startedAt',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(9, _omitFieldNames ? '' : 'createdAt',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(10, _omitFieldNames ? '' : 'updatedAt',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<PostprocessRun>(11, _omitFieldNames ? '' : 'stt',
+        subBuilder: PostprocessRun.create)
+    ..aInt64(12, _omitFieldNames ? '' : 'subtitleAssetId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Comment clone() => Comment()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  Comment copyWith(void Function(Comment) updates) =>
+      super.copyWith((message) => updates(message as Comment)) as Comment;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static Comment create() => Comment._();
+  @$core.override
+  Comment createEmptyInstance() => create();
+  static $pb.PbList<Comment> createRepeated() => $pb.PbList<Comment>();
+  @$core.pragma('dart2js:noInline')
+  static Comment getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Comment>(create);
+  static Comment? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get commentId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set commentId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasCommentId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCommentId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get jobId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set jobId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasJobId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearJobId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get passId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set passId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasPassId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearPassId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get body => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set body($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasBody() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearBody() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get audioAssetId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set audioAssetId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasAudioAssetId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearAudioAssetId() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get videoAssetId => $_getI64(5);
+  @$pb.TagNumber(6)
+  set videoAssetId($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasVideoAssetId() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearVideoAssetId() => $_clearField(6);
+
+  /// 녹화 중 보던 페이지 상태의 줄들. 줄마다 {t_ms, screen, job_id?, pass_id?, media?, range?, selected?, view?}
+  /// — t_ms(녹화 기준 ms, 첫 줄 0) · screen(quality | pass | multimodal …)은 필수. media = {asset_id, locator}(locator는
+  /// Clip source_locator와 같은 규칙), range = {start_ns, end_ns}(작업 시간축), selected = [{clip_id} | {inspection:{table, id}}],
+  /// view = 보여 준 방식(키 목록은 설계 §2). 서버는 이 모양만 본다.
+  @$pb.TagNumber(7)
+  $0.ListValue get context => $_getN(6);
+  @$pb.TagNumber(7)
+  set context($0.ListValue value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasContext() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearContext() => $_clearField(7);
+  @$pb.TagNumber(7)
+  $0.ListValue ensureContext() => $_ensure(6);
+
+  @$pb.TagNumber(8)
+  $1.Timestamp get startedAt => $_getN(7);
+  @$pb.TagNumber(8)
+  set startedAt($1.Timestamp value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasStartedAt() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearStartedAt() => $_clearField(8);
+  @$pb.TagNumber(8)
+  $1.Timestamp ensureStartedAt() => $_ensure(7);
+
+  @$pb.TagNumber(9)
+  $1.Timestamp get createdAt => $_getN(8);
+  @$pb.TagNumber(9)
+  set createdAt($1.Timestamp value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasCreatedAt() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearCreatedAt() => $_clearField(9);
+  @$pb.TagNumber(9)
+  $1.Timestamp ensureCreatedAt() => $_ensure(8);
+
+  @$pb.TagNumber(10)
+  $1.Timestamp get updatedAt => $_getN(9);
+  @$pb.TagNumber(10)
+  set updatedAt($1.Timestamp value) => $_setField(10, value);
+  @$pb.TagNumber(10)
+  $core.bool hasUpdatedAt() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearUpdatedAt() => $_clearField(10);
+  @$pb.TagNumber(10)
+  $1.Timestamp ensureUpdatedAt() => $_ensure(9);
+
+  /// 응답 전용: 만들 때 건 STT 실행(모양은 후처리 실행 요약과 같다). 못 맡겼으면 비어 있다.
+  @$pb.TagNumber(11)
+  PostprocessRun get stt => $_getN(10);
+  @$pb.TagNumber(11)
+  set stt(PostprocessRun value) => $_setField(11, value);
+  @$pb.TagNumber(11)
+  $core.bool hasStt() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearStt() => $_clearField(11);
+  @$pb.TagNumber(11)
+  PostprocessRun ensureStt() => $_ensure(10);
+
+  @$pb.TagNumber(12)
+  $fixnum.Int64 get subtitleAssetId => $_getI64(11);
+  @$pb.TagNumber(12)
+  set subtitleAssetId($fixnum.Int64 value) => $_setInt64(11, value);
+  @$pb.TagNumber(12)
+  $core.bool hasSubtitleAssetId() => $_has(11);
+  @$pb.TagNumber(12)
+  void clearSubtitleAssetId() => $_clearField(12);
+}
+
+class CreateCommentRequest extends $pb.GeneratedMessage {
+  factory CreateCommentRequest({
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? passId,
+    $core.String? body,
+    $fixnum.Int64? audioAssetId,
+    $fixnum.Int64? videoAssetId,
+    $0.ListValue? context,
+    $1.Timestamp? startedAt,
+  }) {
+    final result = create();
+    if (jobId != null) result.jobId = jobId;
+    if (passId != null) result.passId = passId;
+    if (body != null) result.body = body;
+    if (audioAssetId != null) result.audioAssetId = audioAssetId;
+    if (videoAssetId != null) result.videoAssetId = videoAssetId;
+    if (context != null) result.context = context;
+    if (startedAt != null) result.startedAt = startedAt;
+    return result;
+  }
+
+  CreateCommentRequest._();
+
+  factory CreateCommentRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory CreateCommentRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'CreateCommentRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(2, _omitFieldNames ? '' : 'passId')
+    ..aOS(3, _omitFieldNames ? '' : 'body')
+    ..aInt64(4, _omitFieldNames ? '' : 'audioAssetId')
+    ..aInt64(5, _omitFieldNames ? '' : 'videoAssetId')
+    ..aOM<$0.ListValue>(6, _omitFieldNames ? '' : 'context',
+        subBuilder: $0.ListValue.create)
+    ..aOM<$1.Timestamp>(7, _omitFieldNames ? '' : 'startedAt',
+        subBuilder: $1.Timestamp.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateCommentRequest clone() =>
+      CreateCommentRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateCommentRequest copyWith(void Function(CreateCommentRequest) updates) =>
+      super.copyWith((message) => updates(message as CreateCommentRequest))
+          as CreateCommentRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static CreateCommentRequest create() => CreateCommentRequest._();
+  @$core.override
+  CreateCommentRequest createEmptyInstance() => create();
+  static $pb.PbList<CreateCommentRequest> createRepeated() =>
+      $pb.PbList<CreateCommentRequest>();
+  @$core.pragma('dart2js:noInline')
+  static CreateCommentRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<CreateCommentRequest>(create);
+  static CreateCommentRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get jobId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasJobId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearJobId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get passId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set passId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasPassId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPassId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get body => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set body($core.String value) => $_setString(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasBody() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearBody() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get audioAssetId => $_getI64(3);
+  @$pb.TagNumber(4)
+  set audioAssetId($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasAudioAssetId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearAudioAssetId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get videoAssetId => $_getI64(4);
+  @$pb.TagNumber(5)
+  set videoAssetId($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasVideoAssetId() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearVideoAssetId() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $0.ListValue get context => $_getN(5);
+  @$pb.TagNumber(6)
+  set context($0.ListValue value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasContext() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearContext() => $_clearField(6);
+  @$pb.TagNumber(6)
+  $0.ListValue ensureContext() => $_ensure(5);
+
+  @$pb.TagNumber(7)
+  $1.Timestamp get startedAt => $_getN(6);
+  @$pb.TagNumber(7)
+  set startedAt($1.Timestamp value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasStartedAt() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearStartedAt() => $_clearField(7);
+  @$pb.TagNumber(7)
+  $1.Timestamp ensureStartedAt() => $_ensure(6);
+}
+
+class CreateCommentResponse extends $pb.GeneratedMessage {
+  factory CreateCommentResponse({
+    Comment? comment,
+  }) {
+    final result = create();
+    if (comment != null) result.comment = comment;
+    return result;
+  }
+
+  CreateCommentResponse._();
+
+  factory CreateCommentResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory CreateCommentResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'CreateCommentResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aOM<Comment>(1, _omitFieldNames ? '' : 'comment',
+        subBuilder: Comment.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateCommentResponse clone() =>
+      CreateCommentResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateCommentResponse copyWith(
+          void Function(CreateCommentResponse) updates) =>
+      super.copyWith((message) => updates(message as CreateCommentResponse))
+          as CreateCommentResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static CreateCommentResponse create() => CreateCommentResponse._();
+  @$core.override
+  CreateCommentResponse createEmptyInstance() => create();
+  static $pb.PbList<CreateCommentResponse> createRepeated() =>
+      $pb.PbList<CreateCommentResponse>();
+  @$core.pragma('dart2js:noInline')
+  static CreateCommentResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<CreateCommentResponse>(create);
+  static CreateCommentResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Comment get comment => $_getN(0);
+  @$pb.TagNumber(1)
+  set comment(Comment value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasComment() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearComment() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Comment ensureComment() => $_ensure(0);
+}
+
+class UpdateCommentRequest extends $pb.GeneratedMessage {
+  factory UpdateCommentRequest({
+    $fixnum.Int64? commentId,
+    $core.String? body,
+  }) {
+    final result = create();
+    if (commentId != null) result.commentId = commentId;
+    if (body != null) result.body = body;
+    return result;
+  }
+
+  UpdateCommentRequest._();
+
+  factory UpdateCommentRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory UpdateCommentRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'UpdateCommentRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'commentId')
+    ..aOS(2, _omitFieldNames ? '' : 'body')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateCommentRequest clone() =>
+      UpdateCommentRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateCommentRequest copyWith(void Function(UpdateCommentRequest) updates) =>
+      super.copyWith((message) => updates(message as UpdateCommentRequest))
+          as UpdateCommentRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UpdateCommentRequest create() => UpdateCommentRequest._();
+  @$core.override
+  UpdateCommentRequest createEmptyInstance() => create();
+  static $pb.PbList<UpdateCommentRequest> createRepeated() =>
+      $pb.PbList<UpdateCommentRequest>();
+  @$core.pragma('dart2js:noInline')
+  static UpdateCommentRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UpdateCommentRequest>(create);
+  static UpdateCommentRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get commentId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set commentId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasCommentId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCommentId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get body => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set body($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasBody() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearBody() => $_clearField(2);
+}
+
+class UpdateCommentResponse extends $pb.GeneratedMessage {
+  factory UpdateCommentResponse({
+    Comment? comment,
+  }) {
+    final result = create();
+    if (comment != null) result.comment = comment;
+    return result;
+  }
+
+  UpdateCommentResponse._();
+
+  factory UpdateCommentResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory UpdateCommentResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'UpdateCommentResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aOM<Comment>(1, _omitFieldNames ? '' : 'comment',
+        subBuilder: Comment.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateCommentResponse clone() =>
+      UpdateCommentResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateCommentResponse copyWith(
+          void Function(UpdateCommentResponse) updates) =>
+      super.copyWith((message) => updates(message as UpdateCommentResponse))
+          as UpdateCommentResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UpdateCommentResponse create() => UpdateCommentResponse._();
+  @$core.override
+  UpdateCommentResponse createEmptyInstance() => create();
+  static $pb.PbList<UpdateCommentResponse> createRepeated() =>
+      $pb.PbList<UpdateCommentResponse>();
+  @$core.pragma('dart2js:noInline')
+  static UpdateCommentResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UpdateCommentResponse>(create);
+  static UpdateCommentResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  Comment get comment => $_getN(0);
+  @$pb.TagNumber(1)
+  set comment(Comment value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasComment() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearComment() => $_clearField(1);
+  @$pb.TagNumber(1)
+  Comment ensureComment() => $_ensure(0);
+}
+
+/// 셋 중 하나: job_id(+pass_id) 또는 asset_id.
+class ListCommentsRequest extends $pb.GeneratedMessage {
+  factory ListCommentsRequest({
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? passId,
+    $fixnum.Int64? assetId,
+    $core.int? pageSize,
+    $core.String? pageToken,
+  }) {
+    final result = create();
+    if (jobId != null) result.jobId = jobId;
+    if (passId != null) result.passId = passId;
+    if (assetId != null) result.assetId = assetId;
+    if (pageSize != null) result.pageSize = pageSize;
+    if (pageToken != null) result.pageToken = pageToken;
+    return result;
+  }
+
+  ListCommentsRequest._();
+
+  factory ListCommentsRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListCommentsRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListCommentsRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(2, _omitFieldNames ? '' : 'passId')
+    ..aInt64(3, _omitFieldNames ? '' : 'assetId')
+    ..a<$core.int>(4, _omitFieldNames ? '' : 'pageSize', $pb.PbFieldType.O3)
+    ..aOS(5, _omitFieldNames ? '' : 'pageToken')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListCommentsRequest clone() => ListCommentsRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListCommentsRequest copyWith(void Function(ListCommentsRequest) updates) =>
+      super.copyWith((message) => updates(message as ListCommentsRequest))
+          as ListCommentsRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListCommentsRequest create() => ListCommentsRequest._();
+  @$core.override
+  ListCommentsRequest createEmptyInstance() => create();
+  static $pb.PbList<ListCommentsRequest> createRepeated() =>
+      $pb.PbList<ListCommentsRequest>();
+  @$core.pragma('dart2js:noInline')
+  static ListCommentsRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListCommentsRequest>(create);
+  static ListCommentsRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get jobId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set jobId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasJobId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearJobId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get passId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set passId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasPassId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPassId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get assetId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set assetId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasAssetId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearAssetId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.int get pageSize => $_getIZ(3);
+  @$pb.TagNumber(4)
+  set pageSize($core.int value) => $_setSignedInt32(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasPageSize() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearPageSize() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.String get pageToken => $_getSZ(4);
+  @$pb.TagNumber(5)
+  set pageToken($core.String value) => $_setString(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasPageToken() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearPageToken() => $_clearField(5);
+}
+
+class ListCommentsResponse extends $pb.GeneratedMessage {
+  factory ListCommentsResponse({
+    $core.Iterable<Comment>? comments,
+    $core.String? nextPageToken,
+  }) {
+    final result = create();
+    if (comments != null) result.comments.addAll(comments);
+    if (nextPageToken != null) result.nextPageToken = nextPageToken;
+    return result;
+  }
+
+  ListCommentsResponse._();
+
+  factory ListCommentsResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListCommentsResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListCommentsResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..pc<Comment>(1, _omitFieldNames ? '' : 'comments', $pb.PbFieldType.PM,
+        subBuilder: Comment.create)
+    ..aOS(2, _omitFieldNames ? '' : 'nextPageToken')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListCommentsResponse clone() =>
+      ListCommentsResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListCommentsResponse copyWith(void Function(ListCommentsResponse) updates) =>
+      super.copyWith((message) => updates(message as ListCommentsResponse))
+          as ListCommentsResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListCommentsResponse create() => ListCommentsResponse._();
+  @$core.override
+  ListCommentsResponse createEmptyInstance() => create();
+  static $pb.PbList<ListCommentsResponse> createRepeated() =>
+      $pb.PbList<ListCommentsResponse>();
+  @$core.pragma('dart2js:noInline')
+  static ListCommentsResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListCommentsResponse>(create);
+  static ListCommentsResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<Comment> get comments => $_getList(0);
+
+  @$pb.TagNumber(2)
+  $core.String get nextPageToken => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set nextPageToken($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasNextPageToken() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearNextPageToken() => $_clearField(2);
+}
+
+class DeleteCommentRequest extends $pb.GeneratedMessage {
+  factory DeleteCommentRequest({
+    $fixnum.Int64? commentId,
+  }) {
+    final result = create();
+    if (commentId != null) result.commentId = commentId;
+    return result;
+  }
+
+  DeleteCommentRequest._();
+
+  factory DeleteCommentRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DeleteCommentRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DeleteCommentRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'commentId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteCommentRequest clone() =>
+      DeleteCommentRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteCommentRequest copyWith(void Function(DeleteCommentRequest) updates) =>
+      super.copyWith((message) => updates(message as DeleteCommentRequest))
+          as DeleteCommentRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DeleteCommentRequest create() => DeleteCommentRequest._();
+  @$core.override
+  DeleteCommentRequest createEmptyInstance() => create();
+  static $pb.PbList<DeleteCommentRequest> createRepeated() =>
+      $pb.PbList<DeleteCommentRequest>();
+  @$core.pragma('dart2js:noInline')
+  static DeleteCommentRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DeleteCommentRequest>(create);
+  static DeleteCommentRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get commentId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set commentId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasCommentId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCommentId() => $_clearField(1);
+}
+
+class DeleteCommentResponse extends $pb.GeneratedMessage {
+  factory DeleteCommentResponse() => create();
+
+  DeleteCommentResponse._();
+
+  factory DeleteCommentResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DeleteCommentResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DeleteCommentResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
+      createEmptyInstance: create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteCommentResponse clone() =>
+      DeleteCommentResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DeleteCommentResponse copyWith(
+          void Function(DeleteCommentResponse) updates) =>
+      super.copyWith((message) => updates(message as DeleteCommentResponse))
+          as DeleteCommentResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DeleteCommentResponse create() => DeleteCommentResponse._();
+  @$core.override
+  DeleteCommentResponse createEmptyInstance() => create();
+  static $pb.PbList<DeleteCommentResponse> createRepeated() =>
+      $pb.PbList<DeleteCommentResponse>();
+  @$core.pragma('dart2js:noInline')
+  static DeleteCommentResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DeleteCommentResponse>(create);
+  static DeleteCommentResponse? _defaultInstance;
+}
+
 class AssetServiceApi {
   final $pb.RpcClient _client;
 
@@ -3129,6 +3951,34 @@ class AssetServiceApi {
           $pb.ClientContext? ctx, DetachAssetRequest request) =>
       _client.invoke<DetachAssetResponse>(
           ctx, 'AssetService', 'DetachAsset', request, DetachAssetResponse());
+
+  /// 화면 코멘트 = 웹캠 녹화 1회(tacit docs/설계/화면 코멘트(웹캠 녹화) 설계.md). 녹화를 POST /assets로 올린 뒤 만든다.
+  /// 만들면 서버가 음성에 STT를 건다(stt_run_id) — 화면은 기다리지 않고 ListComments의 stt로 상태를 본다.
+  /// 녹화가 같은 작업에 첨부되지 않았거나, 음성 · 영상 종류가 틀리거나, context 모양이 틀리면 InvalidArgument.
+  /// STT를 맡기지 못해도(도구 꺼짐 등) 코멘트는 만들고 stt_run_id가 0이다.
+  $async.Future<CreateCommentResponse> createComment(
+          $pb.ClientContext? ctx, CreateCommentRequest request) =>
+      _client.invoke<CreateCommentResponse>(ctx, 'AssetService',
+          'CreateComment', request, CreateCommentResponse());
+
+  /// 글(body)만 고친다. 녹화 · context는 고치지 않는다.
+  $async.Future<UpdateCommentResponse> updateComment(
+          $pb.ClientContext? ctx, UpdateCommentRequest request) =>
+      _client.invoke<UpdateCommentResponse>(ctx, 'AssetService',
+          'UpdateComment', request, UpdateCommentResponse());
+
+  /// 작업(패스)의 코멘트, 또는 그 에셋을 연 채(context의 media) 남긴 코멘트. 만든 순서 거꾸로(최신 먼저).
+  $async.Future<ListCommentsResponse> listComments(
+          $pb.ClientContext? ctx, ListCommentsRequest request) =>
+      _client.invoke<ListCommentsResponse>(
+          ctx, 'AssetService', 'ListComments', request, ListCommentsResponse());
+
+  /// 코멘트 행을 실제로 지운다. 녹화 에셋은 남는다(첨부된 파일). 녹화를 지우려면 이것부터 — DeleteAsset · DetachAsset은
+  /// 코멘트가 쓰는 녹화면 FailedPrecondition이다.
+  $async.Future<DeleteCommentResponse> deleteComment(
+          $pb.ClientContext? ctx, DeleteCommentRequest request) =>
+      _client.invoke<DeleteCommentResponse>(ctx, 'AssetService',
+          'DeleteComment', request, DeleteCommentResponse());
 }
 
 const $core.bool _omitFieldNames =

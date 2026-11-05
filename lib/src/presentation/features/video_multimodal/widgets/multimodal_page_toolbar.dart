@@ -107,6 +107,13 @@ class MultimodalPageToolbar extends StatelessWidget {
                         selected: viewModel.isLabelsOpen,
                         onPressed: viewModel.didTapToggleLabels,
                       ),
+                      _ToolbarButton(
+                        icon: FluentIcons.comment,
+                        label: '코멘트',
+                        enabled: !locked,
+                        selected: viewModel.isCommentsOpen,
+                        onPressed: viewModel.didTapToggleComments,
+                      ),
                     ],
                   ),
                   _group(

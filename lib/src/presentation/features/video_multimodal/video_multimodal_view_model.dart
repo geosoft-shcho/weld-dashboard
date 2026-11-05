@@ -178,7 +178,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _coveringVideoClipId = '';
   InferencePanelPhase _inferencePhase = InferencePanelPhase.hidden;
   bool _isCameraRecordingOpen = false;
+  bool _isCapturingScreenComment = false;
+  DateTime? _screenCommentStartedAt;
+  final List<Map<String, Object?>> _screenCommentRows = [];
   bool _isCameraRecordingMinimized = false;
+  int _commentListReloadCount = 0;
   double _cameraRecordingOffsetX = 24;
   double _cameraRecordingOffsetY = 24;
   bool _isInferenceMinimized = false;
@@ -208,8 +212,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   static const int MAX_MONITORED_TRACK_COUNT = 4;
   final ClipChartSession _chartSession = ClipChartSession();
   MultimodalLoadApiLog? _loadApiLog;
-  DateTime _lastMonitorDebugAt = DateTime.fromMillisecondsSinceEpoch(0);
-  static const Duration _MONITOR_DEBUG_INTERVAL = Duration(seconds: 2);
   DateTime _lastDriftSeekAt = DateTime.fromMillisecondsSinceEpoch(0);
   static const Duration _DRIFT_SEEK_COOLDOWN = Duration(milliseconds: 500);
   double _timelineBoardHeight = MIN_TIMELINE_HEIGHT;
@@ -227,6 +229,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get isPropertiesOpen => _side == VideoMultimodalSide.properties;
   bool get isAskOpen => _side == VideoMultimodalSide.ask;
   bool get isLabelsOpen => _side == VideoMultimodalSide.labels;
+  bool get isCommentsOpen => _side == VideoMultimodalSide.comments;
   bool get isTrackMenuOpen => _isTrackMenuOpen;
   bool get isLoading => _isLoading;
   bool get isLoadingAttachments => _isLoadingAttachments;
@@ -459,6 +462,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   int? get vectorSaveNoticeTrackCount => _vectorSaveTrackCount;
   bool get isCameraRecordingOpen => _isCameraRecordingOpen;
   bool get isCameraRecordingMinimized => _isCameraRecordingMinimized;
+  int get commentListReloadCount => _commentListReloadCount;
   double get cameraRecordingOffsetX => _cameraRecordingOffsetX;
   double get cameraRecordingOffsetY => _cameraRecordingOffsetY;
   bool get isInferenceMinimized => _isInferenceMinimized;
@@ -978,6 +982,70 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     unawaited(_loadClipDetail(clipId));
   }
 
+  /// 코멘트가 가리키는 클립을 고르고, 그 시각의 영상을 재생한다.
+  /// 클립이 타임라인에 없으면 같은 영상의 클립을 찾는다.
+  void didPlayCommentTarget({
+    required String clipId,
+    int? playheadNs,
+    String videoAssetId = '',
+  }) {
+    final selected = _timelineClip(clipId);
+    final assetClip = _videoClipForAsset(videoAssetId);
+    final clip = selected ?? assetClip;
+    if (clip == null) {
+      _noticeText = '재생할 영상을 찾지 못했습니다.';
+      notifyListeners();
+      return;
+    }
+    _selectedClipId = clip.clipId;
+    _showsMissingTargetVideoBanner = false;
+    _clearPosePlayback();
+    final seconds = playheadNs == null
+        ? secondsFromNanoseconds(clip.startNanoseconds)
+        : secondsFromNanoseconds('$playheadNs');
+    if (clip.kind != TimelineClipKind.video) {
+      _retainedStageVideoClip = _coveringVideoAt(seconds) ?? assetClip;
+    }
+    _playhead.seekTo(
+      seconds,
+      spanSeconds: spanSeconds,
+      resumeIfWasPlaying: false,
+    );
+    _playhead.play(spanSeconds: spanSeconds);
+    _coveringVideoClipId = '';
+    _playbackToken += 1;
+    _seekToken += 1;
+    _syncPlayheadClock();
+    _noteScreenCommentChange();
+    notifyListeners();
+  }
+
+  TimelineClip? _videoClipForAsset(String assetId) {
+    if (assetId.isEmpty) {
+      return null;
+    }
+    for (final track in _timeline.tracks) {
+      for (final clip in track.clips) {
+        if (clip.assetId == assetId && clip.kind == TimelineClipKind.video) {
+          return clip;
+        }
+      }
+    }
+    return null;
+  }
+
+  TimelineClip? _coveringVideoAt(double seconds) {
+    for (final clip in timelineClips) {
+      if (clip.kind != TimelineClipKind.video ||
+          clip.playbackUrl.isEmpty ||
+          !doesClipCoverSeconds(clip, seconds)) {
+        continue;
+      }
+      return clip;
+    }
+    return null;
+  }
+
   Future<void> _loadClipDetail(String clipId) async {
     final epoch = ++_clipDetailEpoch;
     _clipDetailMessage = '';
@@ -1402,6 +1470,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _seekToken += 1;
     _playbackToken += 1;
     _syncPlayheadClock();
+    _noteScreenCommentChange();
     notifyListeners();
   }
 
@@ -1409,6 +1478,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (_playhead.wantsPlayback) {
       _playhead.pause();
       _playbackToken += 1;
+      _noteScreenCommentChange();
       notifyListeners();
       return;
     }
@@ -1417,6 +1487,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _playbackToken += 1;
     _seekToken += 1;
     _syncPlayheadClock();
+    _noteScreenCommentChange();
     notifyListeners();
   }
 
@@ -2638,6 +2709,89 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void didBeginScreenCommentCapture() {
+    _isCapturingScreenComment = true;
+    _screenCommentStartedAt = DateTime.now();
+    _screenCommentRows
+      ..clear()
+      ..add(_screenCommentRow(0));
+  }
+
+  List<Map<String, Object?>> takeScreenCommentContext() {
+    if (_screenCommentRows.isEmpty) {
+      return [_screenCommentRow(0)];
+    }
+    return [
+      for (final row in _screenCommentRows) Map<String, Object?>.from(row),
+    ];
+  }
+
+  void _noteScreenCommentChange() {
+    if (!_isCapturingScreenComment || _screenCommentStartedAt == null) {
+      return;
+    }
+    final elapsed = DateTime.now().difference(_screenCommentStartedAt!);
+    final tMs = elapsed.inMilliseconds < 0 ? 0 : elapsed.inMilliseconds;
+    final row = _screenCommentRow(tMs);
+    final previous = _screenCommentRows.last;
+    if (_screenCommentSignature(previous) == _screenCommentSignature(row)) {
+      return;
+    }
+    _screenCommentRows.add(row);
+  }
+
+  String _screenCommentSignature(Map<String, Object?> row) {
+    return '${row['range']}|${row['selected']}|${row['view']}';
+  }
+
+  Map<String, Object?> _screenCommentRow(int tMs) {
+    final nanoseconds = nanosecondsFromSeconds(playheadSeconds);
+    final point = int.tryParse(nanoseconds) ?? 0;
+    final row = <String, Object?>{
+      't_ms': tMs,
+      'screen': 'multimodal',
+      'range': {'start_ns': point, 'end_ns': point},
+    };
+    final job = int.tryParse(jobId);
+    if (job != null) {
+      row['job_id'] = job;
+    }
+    final clip = _timelineClip(_selectedClipId);
+    final clipId = int.tryParse(clip?.clipId ?? '');
+    if (clipId != null) {
+      row['selected'] = [
+        {'clip_id': clipId},
+      ];
+    }
+    final tracks = <int>[];
+    for (final trackId in monitoredTrackIds) {
+      final value = int.tryParse(trackId);
+      if (value != null) {
+        tracks.add(value);
+      }
+    }
+    final view = <String, Object?>{
+      'playing': wantsPlayback,
+      'speed': timelinePlaybackRate,
+    };
+    if (tracks.isNotEmpty) {
+      view['tracks'] = tracks;
+    }
+    final panel = switch (_side) {
+      VideoMultimodalSide.assets => 'assets',
+      VideoMultimodalSide.properties => 'properties',
+      VideoMultimodalSide.labels => 'labels',
+      VideoMultimodalSide.ask => 'ask',
+      VideoMultimodalSide.comments => 'comments',
+      VideoMultimodalSide.none => null,
+    };
+    if (panel != null) {
+      view['panel'] = panel;
+    }
+    row['view'] = view;
+    return row;
+  }
+
   void didCloseInference() {
     _toolRunEpoch += 1;
     _activeRunId = '';
@@ -3287,6 +3441,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (_isClosed || jobId.isEmpty) {
       return;
     }
+    _commentListReloadCount += 1;
+    notifyListeners();
     await _replaceTimelineFromServer(clearHint: false);
     if (_isClosed) {
       return;
@@ -3897,6 +4053,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _toggleSide(VideoMultimodalSide.properties);
   }
 
+  void didTapToggleComments() {
+    _toggleSide(VideoMultimodalSide.comments);
+  }
+
   /// 보드 상단 핸들을 위로 끌면 커지고, 아래로 끌면 줄어든다.
   void didDragTimelineBoardHeight(double deltaDy, {required double maxHeight}) {
     final limit = maxHeight.clamp(MIN_TIMELINE_HEIGHT, MAX_TIMELINE_HEIGHT);
@@ -3920,6 +4080,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   void _toggleSide(VideoMultimodalSide next) {
     _side = _side == next ? VideoMultimodalSide.none : next;
     _isTrackMenuOpen = false;
+    _noteScreenCommentChange();
     notifyListeners();
   }
 
@@ -3928,6 +4089,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return;
     }
     _side = VideoMultimodalSide.none;
+    _noteScreenCommentChange();
     notifyListeners();
   }
 

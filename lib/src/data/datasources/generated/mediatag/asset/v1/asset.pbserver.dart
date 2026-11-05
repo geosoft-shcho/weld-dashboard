@@ -45,6 +45,14 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $3.AttachAssetRequest request);
   $async.Future<$3.DetachAssetResponse> detachAsset(
       $pb.ServerContext ctx, $3.DetachAssetRequest request);
+  $async.Future<$3.CreateCommentResponse> createComment(
+      $pb.ServerContext ctx, $3.CreateCommentRequest request);
+  $async.Future<$3.UpdateCommentResponse> updateComment(
+      $pb.ServerContext ctx, $3.UpdateCommentRequest request);
+  $async.Future<$3.ListCommentsResponse> listComments(
+      $pb.ServerContext ctx, $3.ListCommentsRequest request);
+  $async.Future<$3.DeleteCommentResponse> deleteComment(
+      $pb.ServerContext ctx, $3.DeleteCommentRequest request);
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
@@ -72,6 +80,14 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
         return $3.AttachAssetRequest();
       case 'DetachAsset':
         return $3.DetachAssetRequest();
+      case 'CreateComment':
+        return $3.CreateCommentRequest();
+      case 'UpdateComment':
+        return $3.UpdateCommentRequest();
+      case 'ListComments':
+        return $3.ListCommentsRequest();
+      case 'DeleteComment':
+        return $3.DeleteCommentRequest();
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }
@@ -107,6 +123,14 @@ abstract class AssetServiceBase extends $pb.GeneratedService {
         return attachAsset(ctx, request as $3.AttachAssetRequest);
       case 'DetachAsset':
         return detachAsset(ctx, request as $3.DetachAssetRequest);
+      case 'CreateComment':
+        return createComment(ctx, request as $3.CreateCommentRequest);
+      case 'UpdateComment':
+        return updateComment(ctx, request as $3.UpdateCommentRequest);
+      case 'ListComments':
+        return listComments(ctx, request as $3.ListCommentsRequest);
+      case 'DeleteComment':
+        return deleteComment(ctx, request as $3.DeleteCommentRequest);
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }

@@ -3,6 +3,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/di/locator.dart';
+import '../../../core/widgets/lookup_search_field.dart';
 import '../camera_recording_view_model.dart';
 import 'vector_db_saved_dialog.dart';
 
@@ -13,6 +14,10 @@ class CameraRecordingOverlay extends StatelessWidget {
     required this.onUploaded,
     required this.onRecordingPlaced,
     this.onUploadCompleted,
+    this.passId = '',
+    this.capturesScreenComment = false,
+    this.onRecordingStarted,
+    this.takeScreenCommentContext,
     required this.onClose,
     required this.isMinimized,
     required this.onMove,
@@ -23,10 +28,14 @@ class CameraRecordingOverlay extends StatelessWidget {
   static const double PREVIEW_HEIGHT = 180;
 
   final String jobId;
+  final String passId;
   final Future<void> Function() onUploaded;
   final Future<void> Function({required String assetId, required bool isVideo})
   onRecordingPlaced;
   final Future<void> Function()? onUploadCompleted;
+  final bool capturesScreenComment;
+  final void Function()? onRecordingStarted;
+  final List<Map<String, Object?>> Function()? takeScreenCommentContext;
   final VoidCallback onClose;
   final bool isMinimized;
   final void Function(double dx, double dy) onMove;
@@ -38,9 +47,13 @@ class CameraRecordingOverlay extends StatelessWidget {
       create: (_) => locator<CameraRecordingViewModel>(
         param1: CameraRecordingArgs(
           jobId: jobId,
+          passId: passId,
           onUploaded: onUploaded,
           onRecordingPlaced: onRecordingPlaced,
           onUploadCompleted: onUploadCompleted,
+          capturesScreenComment: capturesScreenComment,
+          onRecordingStarted: onRecordingStarted,
+          takeScreenCommentContext: takeScreenCommentContext,
         ),
       )..prepare(),
       child: _CameraRecordingCard(
@@ -58,9 +71,15 @@ class CameraRecordingScope extends StatefulWidget {
     super.key,
     required this.jobId,
     required this.builder,
+    this.passId = '',
+    this.capturesScreenComment = false,
+    this.commentScreen = '',
   });
 
   final String jobId;
+  final String passId;
+  final bool capturesScreenComment;
+  final String commentScreen;
   final Widget Function(BuildContext context, Widget recordButton) builder;
 
   @override
@@ -75,12 +94,27 @@ class _CameraRecordingScopeState extends State<CameraRecordingScope> {
   bool _isMinimized = false;
   double _offsetX = _START_X;
   double _offsetY = _START_Y;
+  String _openedPassId = '';
 
   void _open() {
     setState(() {
       _isOpen = true;
       _isMinimized = false;
+      _openedPassId = widget.passId;
     });
+  }
+
+  List<Map<String, Object?>> _takeScreenCommentContext() {
+    final row = <String, Object?>{'t_ms': 0, 'screen': widget.commentScreen};
+    final jobId = int.tryParse(widget.jobId);
+    if (jobId != null) {
+      row['job_id'] = jobId;
+    }
+    final passId = int.tryParse(_openedPassId);
+    if (passId != null && passId != 0) {
+      row['pass_id'] = passId;
+    }
+    return [row];
   }
 
   Future<void> _showVectorSaved() async {
@@ -114,6 +148,11 @@ class _CameraRecordingScopeState extends State<CameraRecordingScope> {
             top: _offsetY,
             child: CameraRecordingOverlay(
               jobId: widget.jobId,
+              passId: int.tryParse(_openedPassId) == null ? '' : _openedPassId,
+              capturesScreenComment: widget.capturesScreenComment,
+              takeScreenCommentContext: widget.capturesScreenComment
+                  ? _takeScreenCommentContext
+                  : null,
               onUploaded: () async {},
               onRecordingPlaced:
                   ({required String assetId, required bool isVideo}) async {},
@@ -242,6 +281,14 @@ class _CameraRecordingCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
+                        if (viewModel.capturesScreenComment) ...[
+                          LookupSearchField(
+                            value: viewModel.commentBody,
+                            hintText: '녹화에 덧붙일 글 (없어도 됩니다)',
+                            onChanged: viewModel.didChangeCommentBody,
+                          ),
+                          const SizedBox(height: 12),
+                        ],
                         if (viewModel.isUploading) ...[
                           const ProgressBar(),
                           if (viewModel.noticeText.isNotEmpty) ...[
@@ -250,8 +297,7 @@ class _CameraRecordingCard extends StatelessWidget {
                               viewModel.noticeText,
                               style: TextStyle(
                                 fontSize: 12,
-                                color: theme.resources
-                                    .textFillColorSecondary,
+                                color: theme.resources.textFillColorSecondary,
                               ),
                             ),
                           ],

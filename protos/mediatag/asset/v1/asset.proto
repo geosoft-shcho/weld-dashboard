@@ -11,6 +11,7 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-11-04  geosoft-Server: 화면 코멘트(웹캠 녹화) — CreateComment · UpdateComment · ListComments · DeleteComment, MergeCounts.comments
 //   2026-11-02  geosoft-Server: RetryPostprocess — 도구 번호 없이 에셋의 후처리를 다시 건다
 //   2026-10-27  geosoft-Server: Asset.postprocess(마지막 후처리 실행 — 실패한 것을 찾아 다시 돌림), ListAssetsRequest.postprocess_status
 //   2026-10-26  geosoft-Server: UpdateAsset recorded_at(시각 바로잡기 — 자동 배치 클립을 다시 놓음, replace_run_id)
@@ -94,6 +95,19 @@ service AssetService {
   rpc AttachAsset(AttachAssetRequest) returns (AttachAssetResponse);
   // Clip이나 매칭된 성적서 세트가 쓰는 첨부면 FailedPrecondition.
   rpc DetachAsset(DetachAssetRequest) returns (DetachAssetResponse);
+
+  // 화면 코멘트 = 웹캠 녹화 1회(tacit docs/설계/화면 코멘트(웹캠 녹화) 설계.md). 녹화를 POST /assets로 올린 뒤 만든다.
+  // 만들면 서버가 음성에 STT를 건다(stt_run_id) — 화면은 기다리지 않고 ListComments의 stt로 상태를 본다.
+  // 녹화가 같은 작업에 첨부되지 않았거나, 음성 · 영상 종류가 틀리거나, context 모양이 틀리면 InvalidArgument.
+  // STT를 맡기지 못해도(도구 꺼짐 등) 코멘트는 만들고 stt_run_id가 0이다.
+  rpc CreateComment(CreateCommentRequest) returns (CreateCommentResponse);
+  // 글(body)만 고친다. 녹화 · context는 고치지 않는다.
+  rpc UpdateComment(UpdateCommentRequest) returns (UpdateCommentResponse);
+  // 작업(패스)의 코멘트, 또는 그 에셋을 연 채(context의 media) 남긴 코멘트. 만든 순서 거꾸로(최신 먼저).
+  rpc ListComments(ListCommentsRequest) returns (ListCommentsResponse);
+  // 코멘트 행을 실제로 지운다. 녹화 에셋은 남는다(첨부된 파일). 녹화를 지우려면 이것부터 — DeleteAsset · DetachAsset은
+  // 코멘트가 쓰는 녹화면 FailedPrecondition이다.
+  rpc DeleteComment(DeleteCommentRequest) returns (DeleteCommentResponse);
 }
 
 // 소비(렌더링) 방식 기준 분류. 엔티티.md §6.1 + ocr_json. DB CHECK와 같은 목록.
@@ -287,6 +301,7 @@ message MergeCounts {
   int32 children = 3;     // 파생 자식
   int32 report_refs = 4;  // 성적서 세트 · 문서
   int32 tool_runs = 5;    // 이 사본을 대상으로 한 도구 실행
+  int32 comments = 6;     // 이 사본을 녹화로 쓰거나 context에서 연(media) 코멘트
 }
 
 enum DuplicateDecision {
@@ -366,3 +381,67 @@ message UploadFormat {
   repeated string steps = 7;       // 올린 뒤 도는 후처리: properties, duration, normalize, timeline, report
   reserved 8; // 옛 processing_profile — 성적서인지는 올리는 사람이 고르지 않고 글자 인식 결과로 정한다
 }
+
+// 화면 코멘트. 타임라인 시각과 관계없다.
+message Comment {
+  int64 comment_id = 1;
+  int64 job_id = 2;         // 0 = 작업 없는 화면에서 남김
+  int64 pass_id = 3;        // 0 = 작업 전체
+  string body = 4;          // 녹화에 덧붙인 글. 없으면 빈값
+  int64 audio_asset_id = 5; // 코멘트를 만든 웹캠 녹화(음성). 필수
+  int64 video_asset_id = 6; // 〃 (영상). 0 = 음성만
+  // 녹화 중 보던 페이지 상태의 줄들. 줄마다 {t_ms, screen, job_id?, pass_id?, media?, range?, selected?, view?}
+  // — t_ms(녹화 기준 ms, 첫 줄 0) · screen(quality | pass | multimodal …)은 필수. media = {asset_id, locator}(locator는
+  // Clip source_locator와 같은 규칙), range = {start_ns, end_ns}(작업 시간축), selected = [{clip_id} | {inspection:{table, id}}],
+  // view = 보여 준 방식(키 목록은 설계 §2). 서버는 이 모양만 본다.
+  google.protobuf.ListValue context = 7;
+  google.protobuf.Timestamp started_at = 8; // 녹화 시작(= 파일들의 timeOrigin)
+  google.protobuf.Timestamp created_at = 9;
+  google.protobuf.Timestamp updated_at = 10;
+  // 응답 전용: 만들 때 건 STT 실행(모양은 후처리 실행 요약과 같다). 못 맡겼으면 비어 있다.
+  PostprocessRun stt = 11;
+  int64 subtitle_asset_id = 12; // 응답 전용: STT 결과 자막(음성의 파생 Asset). 아직 없으면 0
+}
+
+message CreateCommentRequest {
+  int64 job_id = 1;          // 녹화를 시작한 화면의 작업. 0 = 작업 없음
+  int64 pass_id = 2;         // 0 = 작업 전체. 그 작업의 패스여야 한다
+  string body = 3;
+  int64 audio_asset_id = 4;  // 필수, kind = audio
+  int64 video_asset_id = 5;  // 선택, kind = video
+  google.protobuf.ListValue context = 6; // 필수, 한 줄 이상
+  google.protobuf.Timestamp started_at = 7; // 필수
+}
+
+message CreateCommentResponse {
+  Comment comment = 1;
+}
+
+message UpdateCommentRequest {
+  int64 comment_id = 1;
+  string body = 2; // 빈 글이면 지운다
+}
+
+message UpdateCommentResponse {
+  Comment comment = 1;
+}
+
+// 셋 중 하나: job_id(+pass_id) 또는 asset_id.
+message ListCommentsRequest {
+  int64 job_id = 1;
+  int64 pass_id = 2;   // job_id와 함께. 0이면 작업 전체(패스 코멘트 포함)
+  int64 asset_id = 3;  // 그 에셋을 media로 연 줄이 있는 코멘트
+  int32 page_size = 4; // 기본 50, 최대 200
+  string page_token = 5;
+}
+
+message ListCommentsResponse {
+  repeated Comment comments = 1;
+  string next_page_token = 2;
+}
+
+message DeleteCommentRequest {
+  int64 comment_id = 1;
+}
+
+message DeleteCommentResponse {}

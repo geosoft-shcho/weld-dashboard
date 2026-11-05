@@ -123,6 +123,11 @@ class _VideoMultimodalBody extends StatelessWidget {
                           onUploaded: viewModel.refreshAfterRecordingUpload,
                           onRecordingPlaced:
                               viewModel.didPlaceUploadedRecording,
+                          capturesScreenComment: true,
+                          onRecordingStarted:
+                              viewModel.didBeginScreenCommentCapture,
+                          takeScreenCommentContext:
+                              viewModel.takeScreenCommentContext,
                           onClose: viewModel.didCloseCameraRecording,
                           isMinimized: viewModel.isCameraRecordingMinimized,
                           onMove: viewModel.didMoveCameraRecording,

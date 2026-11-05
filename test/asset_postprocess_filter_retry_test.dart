@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/domain/entities/asset_lookup_row.dart';
 import 'package:weld_dashboard/src/domain/entities/asset_upload.dart';
+import 'package:weld_dashboard/src/domain/entities/screen_comment.dart';
 import 'package:weld_dashboard/src/domain/entities/camera_recording.dart';
 import 'package:weld_dashboard/src/domain/entities/equipment.dart';
 import 'package:weld_dashboard/src/domain/entities/job_draft.dart';
@@ -311,6 +312,37 @@ class _FakeUploadRepository implements AssetUploadRepository {
     required DateTime timeOrigin,
     required CameraRecordingFile file,
   }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ScreenComment> createScreenComment({
+    required String jobId,
+    String passId = '',
+    required String audioAssetId,
+    String videoAssetId = '',
+    String body = '',
+    required DateTime startedAt,
+    required List<Map<String, Object?>> context,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<ScreenComment>> listScreenComments({required String jobId}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<ScreenComment> updateScreenComment({
+    required String commentId,
+    required String body,
+  }) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> deleteScreenComment({required String commentId}) {
     throw UnimplementedError();
   }
 

@@ -686,6 +686,7 @@ const MergeCounts$json = {
     {'1': 'children', '3': 3, '4': 1, '5': 5, '10': 'children'},
     {'1': 'report_refs', '3': 4, '4': 1, '5': 5, '10': 'reportRefs'},
     {'1': 'tool_runs', '3': 5, '4': 1, '5': 5, '10': 'toolRuns'},
+    {'1': 'comments', '3': 6, '4': 1, '5': 5, '10': 'comments'},
   ],
 };
 
@@ -693,7 +694,8 @@ const MergeCounts$json = {
 final $typed_data.Uint8List mergeCountsDescriptor = $convert.base64Decode(
     'CgtNZXJnZUNvdW50cxIgCgthdHRhY2htZW50cxgBIAEoBVILYXR0YWNobWVudHMSFAoFY2xpcH'
     'MYAiABKAVSBWNsaXBzEhoKCGNoaWxkcmVuGAMgASgFUghjaGlsZHJlbhIfCgtyZXBvcnRfcmVm'
-    'cxgEIAEoBVIKcmVwb3J0UmVmcxIbCgl0b29sX3J1bnMYBSABKAVSCHRvb2xSdW5z');
+    'cxgEIAEoBVIKcmVwb3J0UmVmcxIbCgl0b29sX3J1bnMYBSABKAVSCHRvb2xSdW5zEhoKCGNvbW'
+    '1lbnRzGAYgASgFUghjb21tZW50cw==');
 
 @$core.Deprecated('Use duplicateResolutionDescriptor instead')
 const DuplicateResolution$json = {
@@ -948,6 +950,231 @@ final $typed_data.Uint8List uploadFormatDescriptor = $convert.base64Decode(
     '9vcmlnaW5fcmVxdWlyZWQYBiABKAhSEnRpbWVPcmlnaW5SZXF1aXJlZBIUCgVzdGVwcxgHIAMo'
     'CVIFc3RlcHNKBAgIEAk=');
 
+@$core.Deprecated('Use commentDescriptor instead')
+const Comment$json = {
+  '1': 'Comment',
+  '2': [
+    {'1': 'comment_id', '3': 1, '4': 1, '5': 3, '10': 'commentId'},
+    {'1': 'job_id', '3': 2, '4': 1, '5': 3, '10': 'jobId'},
+    {'1': 'pass_id', '3': 3, '4': 1, '5': 3, '10': 'passId'},
+    {'1': 'body', '3': 4, '4': 1, '5': 9, '10': 'body'},
+    {'1': 'audio_asset_id', '3': 5, '4': 1, '5': 3, '10': 'audioAssetId'},
+    {'1': 'video_asset_id', '3': 6, '4': 1, '5': 3, '10': 'videoAssetId'},
+    {
+      '1': 'context',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.ListValue',
+      '10': 'context'
+    },
+    {
+      '1': 'started_at',
+      '3': 8,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'startedAt'
+    },
+    {
+      '1': 'created_at',
+      '3': 9,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'createdAt'
+    },
+    {
+      '1': 'updated_at',
+      '3': 10,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'updatedAt'
+    },
+    {
+      '1': 'stt',
+      '3': 11,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.asset.v1.PostprocessRun',
+      '10': 'stt'
+    },
+    {
+      '1': 'subtitle_asset_id',
+      '3': 12,
+      '4': 1,
+      '5': 3,
+      '10': 'subtitleAssetId'
+    },
+  ],
+};
+
+/// Descriptor for `Comment`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List commentDescriptor = $convert.base64Decode(
+    'CgdDb21tZW50Eh0KCmNvbW1lbnRfaWQYASABKANSCWNvbW1lbnRJZBIVCgZqb2JfaWQYAiABKA'
+    'NSBWpvYklkEhcKB3Bhc3NfaWQYAyABKANSBnBhc3NJZBISCgRib2R5GAQgASgJUgRib2R5EiQK'
+    'DmF1ZGlvX2Fzc2V0X2lkGAUgASgDUgxhdWRpb0Fzc2V0SWQSJAoOdmlkZW9fYXNzZXRfaWQYBi'
+    'ABKANSDHZpZGVvQXNzZXRJZBI0Cgdjb250ZXh0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLkxp'
+    'c3RWYWx1ZVIHY29udGV4dBI5CgpzdGFydGVkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLl'
+    'RpbWVzdGFtcFIJc3RhcnRlZEF0EjkKCmNyZWF0ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9i'
+    'dWYuVGltZXN0YW1wUgljcmVhdGVkQXQSOQoKdXBkYXRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm'
+    '90b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdBIzCgNzdHQYCyABKAsyIS5tZWRpYXRhZy5hc3Nl'
+    'dC52MS5Qb3N0cHJvY2Vzc1J1blIDc3R0EioKEXN1YnRpdGxlX2Fzc2V0X2lkGAwgASgDUg9zdW'
+    'J0aXRsZUFzc2V0SWQ=');
+
+@$core.Deprecated('Use createCommentRequestDescriptor instead')
+const CreateCommentRequest$json = {
+  '1': 'CreateCommentRequest',
+  '2': [
+    {'1': 'job_id', '3': 1, '4': 1, '5': 3, '10': 'jobId'},
+    {'1': 'pass_id', '3': 2, '4': 1, '5': 3, '10': 'passId'},
+    {'1': 'body', '3': 3, '4': 1, '5': 9, '10': 'body'},
+    {'1': 'audio_asset_id', '3': 4, '4': 1, '5': 3, '10': 'audioAssetId'},
+    {'1': 'video_asset_id', '3': 5, '4': 1, '5': 3, '10': 'videoAssetId'},
+    {
+      '1': 'context',
+      '3': 6,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.ListValue',
+      '10': 'context'
+    },
+    {
+      '1': 'started_at',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'startedAt'
+    },
+  ],
+};
+
+/// Descriptor for `CreateCommentRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List createCommentRequestDescriptor = $convert.base64Decode(
+    'ChRDcmVhdGVDb21tZW50UmVxdWVzdBIVCgZqb2JfaWQYASABKANSBWpvYklkEhcKB3Bhc3NfaW'
+    'QYAiABKANSBnBhc3NJZBISCgRib2R5GAMgASgJUgRib2R5EiQKDmF1ZGlvX2Fzc2V0X2lkGAQg'
+    'ASgDUgxhdWRpb0Fzc2V0SWQSJAoOdmlkZW9fYXNzZXRfaWQYBSABKANSDHZpZGVvQXNzZXRJZB'
+    'I0Cgdjb250ZXh0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLkxpc3RWYWx1ZVIHY29udGV4dBI5'
+    'CgpzdGFydGVkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcFIJc3RhcnRlZE'
+    'F0');
+
+@$core.Deprecated('Use createCommentResponseDescriptor instead')
+const CreateCommentResponse$json = {
+  '1': 'CreateCommentResponse',
+  '2': [
+    {
+      '1': 'comment',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.asset.v1.Comment',
+      '10': 'comment'
+    },
+  ],
+};
+
+/// Descriptor for `CreateCommentResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List createCommentResponseDescriptor = $convert.base64Decode(
+    'ChVDcmVhdGVDb21tZW50UmVzcG9uc2USNAoHY29tbWVudBgBIAEoCzIaLm1lZGlhdGFnLmFzc2'
+    'V0LnYxLkNvbW1lbnRSB2NvbW1lbnQ=');
+
+@$core.Deprecated('Use updateCommentRequestDescriptor instead')
+const UpdateCommentRequest$json = {
+  '1': 'UpdateCommentRequest',
+  '2': [
+    {'1': 'comment_id', '3': 1, '4': 1, '5': 3, '10': 'commentId'},
+    {'1': 'body', '3': 2, '4': 1, '5': 9, '10': 'body'},
+  ],
+};
+
+/// Descriptor for `UpdateCommentRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List updateCommentRequestDescriptor = $convert.base64Decode(
+    'ChRVcGRhdGVDb21tZW50UmVxdWVzdBIdCgpjb21tZW50X2lkGAEgASgDUgljb21tZW50SWQSEg'
+    'oEYm9keRgCIAEoCVIEYm9keQ==');
+
+@$core.Deprecated('Use updateCommentResponseDescriptor instead')
+const UpdateCommentResponse$json = {
+  '1': 'UpdateCommentResponse',
+  '2': [
+    {
+      '1': 'comment',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.asset.v1.Comment',
+      '10': 'comment'
+    },
+  ],
+};
+
+/// Descriptor for `UpdateCommentResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List updateCommentResponseDescriptor = $convert.base64Decode(
+    'ChVVcGRhdGVDb21tZW50UmVzcG9uc2USNAoHY29tbWVudBgBIAEoCzIaLm1lZGlhdGFnLmFzc2'
+    'V0LnYxLkNvbW1lbnRSB2NvbW1lbnQ=');
+
+@$core.Deprecated('Use listCommentsRequestDescriptor instead')
+const ListCommentsRequest$json = {
+  '1': 'ListCommentsRequest',
+  '2': [
+    {'1': 'job_id', '3': 1, '4': 1, '5': 3, '10': 'jobId'},
+    {'1': 'pass_id', '3': 2, '4': 1, '5': 3, '10': 'passId'},
+    {'1': 'asset_id', '3': 3, '4': 1, '5': 3, '10': 'assetId'},
+    {'1': 'page_size', '3': 4, '4': 1, '5': 5, '10': 'pageSize'},
+    {'1': 'page_token', '3': 5, '4': 1, '5': 9, '10': 'pageToken'},
+  ],
+};
+
+/// Descriptor for `ListCommentsRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listCommentsRequestDescriptor = $convert.base64Decode(
+    'ChNMaXN0Q29tbWVudHNSZXF1ZXN0EhUKBmpvYl9pZBgBIAEoA1IFam9iSWQSFwoHcGFzc19pZB'
+    'gCIAEoA1IGcGFzc0lkEhkKCGFzc2V0X2lkGAMgASgDUgdhc3NldElkEhsKCXBhZ2Vfc2l6ZRgE'
+    'IAEoBVIIcGFnZVNpemUSHQoKcGFnZV90b2tlbhgFIAEoCVIJcGFnZVRva2Vu');
+
+@$core.Deprecated('Use listCommentsResponseDescriptor instead')
+const ListCommentsResponse$json = {
+  '1': 'ListCommentsResponse',
+  '2': [
+    {
+      '1': 'comments',
+      '3': 1,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.asset.v1.Comment',
+      '10': 'comments'
+    },
+    {'1': 'next_page_token', '3': 2, '4': 1, '5': 9, '10': 'nextPageToken'},
+  ],
+};
+
+/// Descriptor for `ListCommentsResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listCommentsResponseDescriptor = $convert.base64Decode(
+    'ChRMaXN0Q29tbWVudHNSZXNwb25zZRI2Cghjb21tZW50cxgBIAMoCzIaLm1lZGlhdGFnLmFzc2'
+    'V0LnYxLkNvbW1lbnRSCGNvbW1lbnRzEiYKD25leHRfcGFnZV90b2tlbhgCIAEoCVINbmV4dFBh'
+    'Z2VUb2tlbg==');
+
+@$core.Deprecated('Use deleteCommentRequestDescriptor instead')
+const DeleteCommentRequest$json = {
+  '1': 'DeleteCommentRequest',
+  '2': [
+    {'1': 'comment_id', '3': 1, '4': 1, '5': 3, '10': 'commentId'},
+  ],
+};
+
+/// Descriptor for `DeleteCommentRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List deleteCommentRequestDescriptor = $convert.base64Decode(
+    'ChREZWxldGVDb21tZW50UmVxdWVzdBIdCgpjb21tZW50X2lkGAEgASgDUgljb21tZW50SWQ=');
+
+@$core.Deprecated('Use deleteCommentResponseDescriptor instead')
+const DeleteCommentResponse$json = {
+  '1': 'DeleteCommentResponse',
+};
+
+/// Descriptor for `DeleteCommentResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List deleteCommentResponseDescriptor =
+    $convert.base64Decode('ChVEZWxldGVDb21tZW50UmVzcG9uc2U=');
+
 const $core.Map<$core.String, $core.dynamic> AssetServiceBase$json = {
   '1': 'AssetService',
   '2': [
@@ -1011,6 +1238,26 @@ const $core.Map<$core.String, $core.dynamic> AssetServiceBase$json = {
       '2': '.mediatag.asset.v1.DetachAssetRequest',
       '3': '.mediatag.asset.v1.DetachAssetResponse'
     },
+    {
+      '1': 'CreateComment',
+      '2': '.mediatag.asset.v1.CreateCommentRequest',
+      '3': '.mediatag.asset.v1.CreateCommentResponse'
+    },
+    {
+      '1': 'UpdateComment',
+      '2': '.mediatag.asset.v1.UpdateCommentRequest',
+      '3': '.mediatag.asset.v1.UpdateCommentResponse'
+    },
+    {
+      '1': 'ListComments',
+      '2': '.mediatag.asset.v1.ListCommentsRequest',
+      '3': '.mediatag.asset.v1.ListCommentsResponse'
+    },
+    {
+      '1': 'DeleteComment',
+      '2': '.mediatag.asset.v1.DeleteCommentRequest',
+      '3': '.mediatag.asset.v1.DeleteCommentResponse'
+    },
   ],
 };
 
@@ -1067,6 +1314,15 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.asset.v1.JobAsset': JobAsset$json,
   '.mediatag.asset.v1.DetachAssetRequest': DetachAssetRequest$json,
   '.mediatag.asset.v1.DetachAssetResponse': DetachAssetResponse$json,
+  '.mediatag.asset.v1.CreateCommentRequest': CreateCommentRequest$json,
+  '.mediatag.asset.v1.CreateCommentResponse': CreateCommentResponse$json,
+  '.mediatag.asset.v1.Comment': Comment$json,
+  '.mediatag.asset.v1.UpdateCommentRequest': UpdateCommentRequest$json,
+  '.mediatag.asset.v1.UpdateCommentResponse': UpdateCommentResponse$json,
+  '.mediatag.asset.v1.ListCommentsRequest': ListCommentsRequest$json,
+  '.mediatag.asset.v1.ListCommentsResponse': ListCommentsResponse$json,
+  '.mediatag.asset.v1.DeleteCommentRequest': DeleteCommentRequest$json,
+  '.mediatag.asset.v1.DeleteCommentResponse': DeleteCommentResponse$json,
 };
 
 /// Descriptor for `AssetService`. Decode as a `google.protobuf.ServiceDescriptorProto`.
@@ -1093,4 +1349,11 @@ final $typed_data.Uint8List assetServiceDescriptor = $convert.base64Decode(
     'BvbnNlElwKC0F0dGFjaEFzc2V0EiUubWVkaWF0YWcuYXNzZXQudjEuQXR0YWNoQXNzZXRSZXF1'
     'ZXN0GiYubWVkaWF0YWcuYXNzZXQudjEuQXR0YWNoQXNzZXRSZXNwb25zZRJcCgtEZXRhY2hBc3'
     'NldBIlLm1lZGlhdGFnLmFzc2V0LnYxLkRldGFjaEFzc2V0UmVxdWVzdBomLm1lZGlhdGFnLmFz'
-    'c2V0LnYxLkRldGFjaEFzc2V0UmVzcG9uc2U=');
+    'c2V0LnYxLkRldGFjaEFzc2V0UmVzcG9uc2USYgoNQ3JlYXRlQ29tbWVudBInLm1lZGlhdGFnLm'
+    'Fzc2V0LnYxLkNyZWF0ZUNvbW1lbnRSZXF1ZXN0GigubWVkaWF0YWcuYXNzZXQudjEuQ3JlYXRl'
+    'Q29tbWVudFJlc3BvbnNlEmIKDVVwZGF0ZUNvbW1lbnQSJy5tZWRpYXRhZy5hc3NldC52MS5VcG'
+    'RhdGVDb21tZW50UmVxdWVzdBooLm1lZGlhdGFnLmFzc2V0LnYxLlVwZGF0ZUNvbW1lbnRSZXNw'
+    'b25zZRJfCgxMaXN0Q29tbWVudHMSJi5tZWRpYXRhZy5hc3NldC52MS5MaXN0Q29tbWVudHNSZX'
+    'F1ZXN0GicubWVkaWF0YWcuYXNzZXQudjEuTGlzdENvbW1lbnRzUmVzcG9uc2USYgoNRGVsZXRl'
+    'Q29tbWVudBInLm1lZGlhdGFnLmFzc2V0LnYxLkRlbGV0ZUNvbW1lbnRSZXF1ZXN0GigubWVkaW'
+    'F0YWcuYXNzZXQudjEuRGVsZXRlQ29tbWVudFJlc3BvbnNl');
