@@ -103,20 +103,6 @@ class CollectionTimelineHost extends StatelessWidget {
         return false;
     }
   }
-
-  String _badge(CollectionBoard board) {
-    final timeline = board.timeline;
-    switch (timeline.viewKind) {
-      case TimelineViewKind.day:
-        final row = timeline.focusedRow;
-        return '하루 타임라인 · 1대만 · ${timeline.focusedEquipmentId} · ${row?.equipmentName ?? ''} · ${row?.lineName ?? ''}';
-      case TimelineViewKind.roadmap:
-        return '로드맵 · 이정표 카드, 길이는 안 그림';
-      case TimelineViewKind.resource:
-      case TimelineViewKind.auto:
-        return '리소스 · X=시간, 빈 장비 행 유지, 막대=지속시간';
-    }
-  }
 }
 
 class _BoardView extends StatelessWidget {

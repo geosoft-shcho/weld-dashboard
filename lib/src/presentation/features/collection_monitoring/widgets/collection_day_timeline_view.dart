@@ -73,14 +73,4 @@ class CollectionDayTimelineView extends StatelessWidget {
       ),
     );
   }
-
-  NeonPlannerDayDensity _densityOf(double zoomHours) {
-    if (zoomHours <= 0.25) {
-      return NeonPlannerDayDensity.spacious;
-    }
-    if (zoomHours <= 1) {
-      return NeonPlannerDayDensity.comfortable;
-    }
-    return NeonPlannerDayDensity.compact;
-  }
 }

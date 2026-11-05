@@ -3,7 +3,6 @@ import 'package:fluent_ui/fluent_ui.dart';
 import '../../../../domain/entities/work_attachment.dart';
 import '../../../../domain/entities/work_attachment_type.dart';
 import '../work_detail_view_model.dart';
-import 'work_detail_image_viewer.dart';
 
 class WorkDetailOverview extends StatelessWidget {
   const WorkDetailOverview({super.key, required this.viewModel});
