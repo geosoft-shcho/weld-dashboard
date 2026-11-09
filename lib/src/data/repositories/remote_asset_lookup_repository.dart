@@ -1,7 +1,6 @@
 import 'dart:convert';
 
 import 'package:fixnum/fixnum.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/asset_lookup_row.dart';
 import '../../domain/repositories/asset_lookup_repository.dart';
@@ -77,20 +76,7 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
         asset_pb.PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED) {
       request.postprocessStatus = postprocessStatus;
     }
-    if (kDebugMode) {
-      debugPrint('[AssetLookup] request ${request.toProto3Json()}');
-    }
     final response = await _mediaTag.assetService.listAssets(request);
-    if (kDebugMode) {
-      final names = [
-        for (final asset in response.assets.take(5)) asset.fileName,
-      ];
-      debugPrint(
-        '[AssetLookup] response count=${response.assets.length} '
-        'total=${response.totalCount} next=${response.nextPageToken} '
-        'passIds=${response.passIds.length} first=$names',
-      );
-    }
     final hasJob = jobId.isNotEmpty;
     return AssetLookupPage(
       rows: [
