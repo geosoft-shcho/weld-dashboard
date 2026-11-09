@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
+import '../../../data/datasources/remote/media_files_debug_log.dart';
 import '../../../domain/clip_file_position.dart';
 import '../../../domain/entities/ask_answer.dart';
 import '../../../domain/entities/job_timeline.dart';
@@ -20,7 +21,6 @@ import '../../../domain/use_cases/delete_clip_use_case.dart';
 import '../../../domain/use_cases/delete_timeline_use_case.dart';
 import '../../../domain/use_cases/delete_track_use_case.dart';
 import '../../../domain/use_cases/get_clip_use_case.dart';
-import '../../../domain/entities/timeseries_waveform_load.dart';
 import '../../../domain/entities/waveform_series_bundle.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
 import '../../../domain/use_cases/label_use_case.dart';
@@ -38,10 +38,9 @@ import 'attachment_bar_helpers.dart';
 import 'clip_chart_kind.dart';
 import 'clip_chart_session.dart';
 import 'clip_detail_cache.dart';
+import 'clip_detail_load_gate.dart';
 import 'label_roots_session_cache.dart';
-import 'multimodal_load_api_log.dart';
 import 'pose_board_marks.dart';
-import 'pose_playback_log.dart';
 import 'video_caption.dart';
 import 'video_overlay_clock.dart';
 import 'video_overlay_frame.dart';
@@ -125,7 +124,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final Duration toolRunPoll;
 
   final TimelinePlayheadClock _playhead = TimelinePlayheadClock();
-  final PosePlaybackLog _posePlaybackLog = PosePlaybackLog();
   int _seekToken = 0;
   VideoMultimodalSide _side = VideoMultimodalSide.none;
   bool _isTrackMenuOpen = false;
@@ -156,6 +154,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _clipDetailMessage = '';
   ClipDetail? _clipDetail;
   final ClipDetailCache _clipDetailCache = ClipDetailCache();
+  final ClipDetailLoadGate _clipDetailLoadGate = ClipDetailLoadGate();
   TimelineClip? _playbackVideoClip;
 
   /// 비영상 선택 시 대상 영상이 없을 때 스테이지에 남겨 둘 직전 영상.
@@ -203,6 +202,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   int _overlayEpoch = 0;
   final Map<String, List<VideoOverlayFrame>> _framesByAssetId = {};
   final Map<String, List<VideoCaption>> _cuesByAssetId = {};
+  final Map<String, Future<void>> _framesInflight = {};
+  final Map<String, Future<void>> _cuesInflight = {};
   final Map<String, List<PoseBoardMark>> _poseBoardMarksByClipId = {};
   final List<SampleLayerSummary> _sampleLayers = const [];
 
@@ -211,7 +212,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String _focusedMonitorTrackId = '';
   static const int MAX_MONITORED_TRACK_COUNT = 4;
   final ClipChartSession _chartSession = ClipChartSession();
-  MultimodalLoadApiLog? _loadApiLog;
   DateTime _lastDriftSeekAt = DateTime.fromMillisecondsSinceEpoch(0);
   static const Duration _DRIFT_SEEK_COOLDOWN = Duration(milliseconds: 500);
   double _timelineBoardHeight = MIN_TIMELINE_HEIGHT;
@@ -553,8 +553,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   /// GetTimeline까지 블로킹한 뒤 보드를 그리고, 첨·라벨·도구·오버레이는 백그라운드.
   Future<void> openTimeline() async {
-    final log = MultimodalLoadApiLog()..begin(jobId);
-    _loadApiLog = log;
+    MediaFilesDebugLog.beginInitialLoad(jobId: jobId);
     _isLoading = true;
     _hasError = false;
     _errorMessage = '';
@@ -566,57 +565,35 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _attachments = const [];
       _bars = const [];
       _resetAssetsPageState();
-      _framesByAssetId.clear();
-      _cuesByAssetId.clear();
-      _poseBoardMarksByClipId.clear();
+      _clearOverlayBodies();
       _noticeText = '작업을 열지 못했습니다.';
       _isLoading = false;
       notifyListeners();
-      log.end();
-      _loadApiLog = null;
       return;
     }
-    final timelineOk = await _fetchGetTimeline(log);
+    final timelineOk = await _fetchGetTimeline();
     _isLoading = false;
     notifyListeners();
-    log.blockingDone();
     if (!timelineOk || _isClosed) {
-      log.end();
-      _loadApiLog = null;
       return;
     }
     await _loadOpenTimelineBackground();
-    _loadApiLog = null;
   }
 
-  Future<bool> _fetchGetTimeline(MultimodalLoadApiLog log) async {
+  Future<bool> _fetchGetTimeline() async {
     try {
-      log.step(
-        'GetTimeline',
-        detail: 'Compose.GetTimeline include_assets',
-        phase: 'blocking',
-      );
       _timeline = await _getJobTimelineUseCase.execute(jobId: jobId);
       final name = _timeline.name.trim();
       if (_workName.isEmpty && name.isNotEmpty) {
         _workName = name;
       }
-      log.stepDone(
-        'GetTimeline',
-        detail:
-            'tracks=${_timeline.tracks.length} '
-            'clips=${_timeline.clips.length} '
-            'overlays=${_timeline.overlays.length}',
-      );
       return true;
     } on JobTimelineException catch (error) {
-      log.stepDone('GetTimeline', error: error.message);
       _hasError = true;
       _errorMessage = error.message;
       _timeline = JobTimeline.empty;
       return false;
     } catch (error) {
-      log.stepDone('GetTimeline', error: error);
       _hasError = true;
       _errorMessage = error.toString();
       _timeline = JobTimeline.empty;
@@ -625,7 +602,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   Future<void> _loadOpenTimelineBackground() async {
-    final log = _loadApiLog;
     await Future.wait<void>([
       _loadSideAssets(),
       _ensureLabels(),
@@ -633,7 +609,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     ]);
     if (!_isClosed) {
       notifyListeners();
-      log?.backgroundDone();
     }
   }
 
@@ -641,7 +616,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _isLoadingAttachments = true;
     notifyListeners();
     try {
-      _side = VideoMultimodalSide.assets;
       await _loadAssetsPage(1);
     } catch (error) {
       _resetAssetsPageState();
@@ -686,14 +660,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       if (epoch != _assetsPageLoadEpoch || _isClosed) {
         return;
       }
-      final log = _loadApiLog;
-      log?.step(
-        'ListAssetsPage',
-        detail:
-            'Asset.ListAssets jobId page=$targetPage '
-            'pageSize=$_assetsPageSize',
-        phase: 'background',
-      );
       final result = await _listAssetLookupPageUseCase.execute(
         kindCode: '',
         query: _assetsSearchQuery.trim(),
@@ -723,17 +689,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       if (result.nextPageToken.isNotEmpty) {
         _assetsPageTokenByPage[targetPage + 1] = result.nextPageToken;
       }
-      log?.stepDone(
-        'ListAssetsPage',
-        detail:
-            'page=$targetPage rows=${_assetsPageRows.length} '
-            'total=$_assetsTotalCount',
-      );
     } catch (error) {
       if (epoch != _assetsPageLoadEpoch || _isClosed) {
         return;
       }
-      _loadApiLog?.stepDone('ListAssetsPage', error: error);
       if (_noticeText.isEmpty) {
         _noticeText = error.toString();
       }
@@ -973,8 +932,15 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         timelineClip.kind != TimelineClipKind.video &&
         timelineClip.kind != TimelineClipKind.pose;
     _selectedClipId = clipId;
-    _clearPosePlayback();
-    _retainedStageVideoClip = retainStageVideo ? previousVideo : null;
+    _clearPoseOverlayOnly();
+    if (timelineClip.kind == TimelineClipKind.pose) {
+      _playbackVideoClip = null;
+      _playbackToken += 1;
+    } else if (retainStageVideo) {
+      _retainedStageVideoClip = previousVideo;
+    } else {
+      _retainedStageVideoClip = null;
+    }
     _showsMissingTargetVideoBanner = false;
     _side = VideoMultimodalSide.properties;
     _prepareChartIfNeeded(timelineClip);
@@ -1051,8 +1017,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _clipDetailMessage = '';
     final cached = _clipDetailCache.get(clipId);
     if (cached != null) {
-      _isClipDetailLoading = false;
+      _clipDetailLoadGate.clearPending();
       _clipDetail = cached;
+      _isClipDetailLoading = false;
       notifyListeners();
       await _applyLoadedClipDetail(cached, epoch);
       return;
@@ -1060,6 +1027,42 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _isClipDetailLoading = true;
     _clipDetail = null;
     notifyListeners();
+    if (!_clipDetailLoadGate.tryBegin(clipId)) {
+      return;
+    }
+    try {
+      await _fetchClipDetailNetwork(clipId, epoch);
+      while (!_isClosed) {
+        final pending = _clipDetailLoadGate.takePendingMatching(_selectedClipId);
+        if (pending == null) {
+          break;
+        }
+        final pendingEpoch = _clipDetailEpoch;
+        final pendingCached = _clipDetailCache.get(pending);
+        if (pendingCached != null) {
+          if (pendingEpoch != _clipDetailEpoch ||
+              _isClosed ||
+              pending != _selectedClipId) {
+            continue;
+          }
+          _clipDetail = pendingCached;
+          _isClipDetailLoading = false;
+          notifyListeners();
+          await _applyLoadedClipDetail(pendingCached, pendingEpoch);
+          continue;
+        }
+        await _fetchClipDetailNetwork(pending, pendingEpoch);
+      }
+    } finally {
+      _clipDetailLoadGate.end();
+      final leftover = _clipDetailLoadGate.takeLeftover();
+      if (leftover != null && !_isClosed) {
+        unawaited(_loadClipDetail(leftover));
+      }
+    }
+  }
+
+  Future<void> _fetchClipDetailNetwork(String clipId, int epoch) async {
     try {
       final detail = await _clipDetailCache.getOrLoad(
         clipId,
@@ -1068,39 +1071,51 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       if (epoch != _clipDetailEpoch || _isClosed) {
         return;
       }
+      if (detail.clipId != _selectedClipId) {
+        return;
+      }
       _clipDetail = detail;
+      _isClipDetailLoading = false;
+      notifyListeners();
       await _applyLoadedClipDetail(detail, epoch);
     } on JobTimelineException catch (error) {
       if (epoch != _clipDetailEpoch || _isClosed) {
         return;
       }
-      _clipDetailMessage = error.message;
-      if (_clipDetail?.isPose == true) {
-        _posePlaybackLog.failed(clipId: clipId, message: error.message);
+      if (clipId != _selectedClipId) {
+        return;
       }
+      _clipDetailMessage = error.message;
+      _isClipDetailLoading = false;
+      notifyListeners();
     } catch (error) {
       if (epoch != _clipDetailEpoch || _isClosed) {
         return;
       }
-      _clipDetailMessage = error.toString();
-      if (_clipDetail?.isPose == true) {
-        _posePlaybackLog.failed(clipId: clipId, message: error);
+      if (clipId != _selectedClipId) {
+        return;
       }
+      _clipDetailMessage = error.toString();
+      _isClipDetailLoading = false;
+      notifyListeners();
     }
-    if (epoch != _clipDetailEpoch || _isClosed) {
-      return;
-    }
-    _isClipDetailLoading = false;
-    if (_chartSession.clipId == clipId) {
-      _chartSession.isLoading = false;
-    }
-    notifyListeners();
   }
 
   Future<void> _applyLoadedClipDetail(ClipDetail detail, int epoch) async {
     final clip = _timelineClip(detail.clipId);
-    if (clip != null) {
+    final needsPoseBody =
+        detail.isPose || clip?.kind == TimelineClipKind.pose;
+    if (clip != null && needsPoseBody) {
       await _ensureOverlayBodiesForSelection(clip, detail: detail);
+    } else if (clip != null) {
+      unawaited(
+        _ensureOverlayBodiesForSelection(clip, detail: detail).then((_) {
+          if (epoch != _clipDetailEpoch || _isClosed) {
+            return;
+          }
+          notifyListeners();
+        }),
+      );
     }
     if (epoch != _clipDetailEpoch || _isClosed) {
       return;
@@ -1122,7 +1137,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (clip != null) {
       _loadChartFor(clip, detail);
     }
-    _isClipDetailLoading = false;
     notifyListeners();
   }
 
@@ -1143,8 +1157,13 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (!isOpenNanosecondInterval(startNs, endNs)) {
       return;
     }
-    _playbackToken += 1;
-    didSeekToSeconds(secondsFromNanoseconds(startNs), resumePlayback: true);
+    // 타임라인 covering이 이미 같은 URL이면 token만 올리지 않고 시크.
+    final active = _activeVideoClip();
+    if (active != null && active.playbackUrl == clip.playbackUrl) {
+      didSeekToSeconds(secondsFromNanoseconds(startNs), resumePlayback: true);
+      return;
+    }
+    _bindStageVideo(clip, seekStartNs: startNs);
   }
 
   /// 비영상 클립의 GetClip 대상 영상(targetClip+targetAsset)을 스테이지에 올린다.
@@ -1157,18 +1176,32 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _showsMissingTargetVideoBanner = false;
     _retainedStageVideoClip = null;
     final seekStartNs = overlaySeekStartNs(detail, video);
-    _playbackVideoClip = video;
-    _playbackToken += 1;
-    didSeekToSeconds(secondsFromNanoseconds(seekStartNs), resumePlayback: true);
+    _bindStageVideo(video, seekStartNs: seekStartNs);
+  }
+
+  /// 같은 playbackUrl이면 클립·token을 갈아끼우지 않고 시크만 한다.
+  void _bindStageVideo(TimelineClip video, {required String seekStartNs}) {
+    final currentUrl = _playbackVideoClip?.playbackUrl ?? '';
+    final activeUrl = _activeVideoClip()?.playbackUrl ?? '';
+    final sameUrl =
+        video.playbackUrl.isNotEmpty &&
+        (video.playbackUrl == currentUrl || video.playbackUrl == activeUrl);
+    if (!sameUrl) {
+      _playbackVideoClip = video;
+      _playbackToken += 1;
+    } else if (_playbackVideoClip == null ||
+        _playbackVideoClip!.playbackUrl != video.playbackUrl) {
+      // covering만 같고 playback 슬롯이 비었으면 슬롯만 맞춘다(token 유지).
+      _playbackVideoClip = video;
+    }
+    didSeekToSeconds(
+      secondsFromNanoseconds(seekStartNs),
+      resumePlayback: true,
+    );
   }
 
   TimelineClip? _targetVideoClipFromDetail(ClipDetail detail) {
     if (!detail.hasTargetClip || detail.targetClipKind != 'VIDEO') {
-      return null;
-    }
-    if (!detail.hasTargetAsset ||
-        !detail.isTargetAssetVideo ||
-        detail.targetAssetContentUrl.isEmpty) {
       return null;
     }
     if (!isOpenNanosecondInterval(
@@ -1178,27 +1211,44 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return null;
     }
     final placed = _timelineClip(detail.targetClipId);
+    final playbackUrl = placed != null && placed.playbackUrl.isNotEmpty
+        ? placed.playbackUrl
+        : detail.targetAssetContentUrl;
+    if (playbackUrl.isEmpty) {
+      return null;
+    }
+    if (placed == null &&
+        (!detail.hasTargetAsset || !detail.isTargetAssetVideo)) {
+      return null;
+    }
     return TimelineClip(
       clipId: detail.targetClipId,
       trackId: placed?.trackId ?? '',
       kind: TimelineClipKind.video,
-      startNs: detail.targetTimelineStartNs,
-      endNs: detail.targetTimelineEndNs,
-      assetId: detail.targetAssetId,
-      fileName: detail.targetAssetFileName,
-      playbackUrl: detail.targetAssetContentUrl,
+      startNs: detail.targetTimelineStartNs.isNotEmpty
+          ? detail.targetTimelineStartNs
+          : (placed?.startNs ?? ''),
+      endNs: detail.targetTimelineEndNs.isNotEmpty
+          ? detail.targetTimelineEndNs
+          : (placed?.endNs ?? ''),
+      assetId: placed != null && placed.assetId.isNotEmpty
+          ? placed.assetId
+          : detail.targetAssetId,
+      fileName: placed != null && placed.fileName.isNotEmpty
+          ? placed.fileName
+          : detail.targetAssetFileName,
+      playbackUrl: playbackUrl,
       description: '',
       showsToolBadge: false,
       sourceStartNs: placed?.sourceStartNs ?? '',
       sourceEndNs: placed?.sourceEndNs ?? '',
       assetDurationNs: placed?.assetDurationNs ?? '',
       assetStartTimeNs: placed?.assetStartTimeNs ?? '',
+      waveformUrl: placed?.waveformUrl ?? '',
     );
   }
 
   Future<void> _startPosePlayback(ClipDetail pose, int epoch) async {
-    _posePlaybackLog.begin(pose);
-    _posePlaybackLog.target(pose);
     if (!pose.hasAsset) {
       _failPose(pose, '포즈 클립이 가리키는 파일이 없습니다.');
       return;
@@ -1211,7 +1261,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _failPose(pose, '포즈의 대상 클립이 영상이 아닙니다.');
       return;
     }
-    if (pose.assetContentUrl.isEmpty) {
+    final poseJsonUrl = _poseJsonUrl(pose);
+    if (poseJsonUrl.isEmpty) {
       _failPose(pose, '포즈 좌표 파일 주소가 없습니다.');
       return;
     }
@@ -1220,38 +1271,15 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return;
     }
 
-    if (!pose.hasTargetAsset) {
+    final video = _targetVideoClipFromDetail(pose);
+    if (video == null || video.playbackUrl.isEmpty) {
       _failPose(pose, '포즈의 대상 영상 파일이 없습니다.');
       return;
     }
-    if (pose.targetAssetContentUrl.isEmpty) {
-      _failPose(pose, '대상 영상의 재생 주소가 없습니다.');
-      return;
-    }
-    if (!isOpenNanosecondInterval(
-      pose.targetTimelineStartNs,
-      pose.targetTimelineEndNs,
-    )) {
+    if (!isOpenNanosecondInterval(video.startNs, video.endNs)) {
       _failPose(pose, '대상 영상의 시간 구간이 올바르지 않습니다.');
       return;
     }
-    final placed = _timelineClip(pose.targetClipId);
-    final video = TimelineClip(
-      clipId: pose.targetClipId,
-      trackId: placed?.trackId ?? '',
-      kind: TimelineClipKind.video,
-      startNs: pose.targetTimelineStartNs,
-      endNs: pose.targetTimelineEndNs,
-      assetId: pose.targetAssetId,
-      fileName: pose.targetAssetFileName,
-      playbackUrl: pose.targetAssetContentUrl,
-      description: '',
-      showsToolBadge: false,
-      sourceStartNs: placed?.sourceStartNs ?? '',
-      sourceEndNs: placed?.sourceEndNs ?? '',
-      assetDurationNs: placed?.assetDurationNs ?? '',
-      assetStartTimeNs: placed?.assetStartTimeNs ?? '',
-    );
 
     final poseOverlapsVideo = doTimelineIntervalsOverlap(
       pose.timelineStartNs,
@@ -1263,26 +1291,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         ? pose.timelineStartNs
         : video.startNs;
     final overlayEndNs = poseOverlapsVideo ? pose.timelineEndNs : video.endNs;
-    if (!poseOverlapsVideo) {
-      _posePlaybackLog.alignToVideoStart();
-    }
+    _bindStageVideo(video, seekStartNs: overlayStartNs);
 
-    _playbackVideoClip = video;
-    _playbackToken += 1;
-    didSeekToSeconds(
-      secondsFromNanoseconds(overlayStartNs),
-      resumePlayback: true,
-    );
-
-    _posePlaybackLog.loadingContent(assetId: pose.assetId);
-    await _ensurePoseFrames(assetId: pose.assetId, url: pose.assetContentUrl);
+    await _ensurePoseFrames(assetId: pose.assetId, url: poseJsonUrl);
     if (epoch != _clipDetailEpoch || _isClosed) {
-      _posePlaybackLog.staleIgnored(clipId: pose.clipId);
       return;
     }
     final frames =
         _framesByAssetId[pose.assetId] ?? const <VideoOverlayFrame>[];
-    _posePlaybackLog.contentLoaded(clipId: pose.clipId, frames: frames.length);
     if (frames.isEmpty) {
       _failPose(pose, '포즈 좌표 파일을 읽지 못했거나 표시할 좌표가 없습니다.');
       return;
@@ -1290,53 +1306,30 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _selectedPoseOverlay = TimelineOverlay(
       assetId: pose.assetId,
       kind: TimelineOverlayKind.pose,
-      contentUrl: pose.assetContentUrl,
+      contentUrl: poseJsonUrl,
       timelineStartNs: overlayStartNs,
       timelineEndNs: overlayEndNs,
       sourceStartNs: pose.sourceStartNs,
       sourceEndNs: pose.sourceEndNs,
     );
     _selectedPoseFrames = frames;
-    final visibleFrames = activeVideoOverlayFrames;
-    final videoBar = activeVideoBar;
-    final localMs = videoBar == null
-        ? -1
-        : ((playheadSeconds - videoBar.startSeconds) * 1000).round();
-    final position = Duration(milliseconds: localMs < 0 ? 0 : localMs);
-    var hits = 0;
-    var boxCount = 0;
-    var pointCount = 0;
-    var boneCount = 0;
-    for (final frame in visibleFrames) {
-      boxCount += frame.boxes.length;
-      pointCount += frame.points.length;
-      boneCount += frame.bones.length;
-      if (localMs >= 0 && frame.contains(position)) {
-        hits += 1;
-      }
+  }
+
+  /// 타임라인 overlay·pose 클립 URL을 우선하고, 없을 때만 GetClip asset URL.
+  String _poseJsonUrl(ClipDetail pose) {
+    final fromOverlay = _overlayContentUrl(pose.assetId);
+    if (fromOverlay != null && fromOverlay.isNotEmpty) {
+      return fromOverlay;
     }
-    final first = visibleFrames.isEmpty ? null : visibleFrames.first;
-    _posePlaybackLog.overlayReady(
-      clipId: pose.clipId,
-      mappedFrames: visibleFrames.length,
-      alignedToVideo: !poseOverlapsVideo,
-    );
-    _posePlaybackLog.drawSource(
-      clipId: pose.clipId,
-      boxes: boxCount,
-      points: pointCount,
-      bones: boneCount,
-      firstRangeMs:
-          '${first?.start.inMilliseconds ?? '-'}-${first?.end.inMilliseconds ?? '-'}ms',
-      playheadLocalMs: localMs,
-      hitsAtPlayhead: hits,
-      hasVideoBar: videoBar != null,
-    );
+    final poseClip = _timelineClip(pose.clipId);
+    if (poseClip != null && poseClip.playbackUrl.isNotEmpty) {
+      return poseClip.playbackUrl;
+    }
+    return pose.assetContentUrl;
   }
 
   void _failPose(ClipDetail pose, String message) {
     _clipDetailMessage = message;
-    _posePlaybackLog.failed(clipId: pose.clipId, message: message);
   }
 
   TimelineClip? _activeVideoClip() {
@@ -1418,6 +1411,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   void _dropClipDetail() {
     _clipDetailEpoch += 1;
     _isClipDetailLoading = false;
+    _clipDetailLoadGate.clearPending();
     _clipDetailMessage = '';
     _clipDetail = null;
     _retainedStageVideoClip = null;
@@ -1425,10 +1419,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _clearPosePlayback();
   }
 
-  void _clearPosePlayback() {
-    _playbackVideoClip = null;
+  void _clearPoseOverlayOnly() {
     _selectedPoseOverlay = null;
     _selectedPoseFrames = const [];
+  }
+
+  void _clearPosePlayback() {
+    _clearPoseOverlayOnly();
+    _playbackVideoClip = null;
     _playhead.pause();
     _playbackToken += 1;
   }
@@ -1551,9 +1549,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       final assetId = detail != null && detail.assetId.isNotEmpty
           ? detail.assetId
           : clip.assetId;
-      final url = detail != null && detail.assetContentUrl.isNotEmpty
-          ? detail.assetContentUrl
-          : clip.playbackUrl;
+      final url = detail != null
+          ? _poseJsonUrl(detail)
+          : (_overlayContentUrl(clip.assetId) ?? clip.playbackUrl);
       await _ensurePoseFrames(assetId: assetId, url: url);
       return;
     }
@@ -1609,13 +1607,28 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (_framesByAssetId.containsKey(assetId)) {
       return;
     }
-    final epoch = _overlayEpoch;
-    final body = await _getJobTimelineUseCase.readContent(url: url);
-    if (epoch != _overlayEpoch || _isClosed) {
+    final pending = _framesInflight[assetId];
+    if (pending != null) {
+      await pending;
       return;
     }
-    _framesByAssetId[assetId] = parsePoseOverlay(body);
-    _rebuildPoseBoardMarks();
+    final epoch = _overlayEpoch;
+    final future = () async {
+      final body = await _getJobTimelineUseCase.readContent(url: url);
+      if (epoch != _overlayEpoch || _isClosed) {
+        return;
+      }
+      _framesByAssetId[assetId] = parsePoseOverlay(body);
+      _rebuildPoseBoardMarks();
+    }();
+    _framesInflight[assetId] = future;
+    try {
+      await future;
+    } finally {
+      if (identical(_framesInflight[assetId], future)) {
+        _framesInflight.remove(assetId);
+      }
+    }
   }
 
   Future<void> _ensureSubtitleCues({
@@ -1628,12 +1641,35 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (_cuesByAssetId.containsKey(assetId)) {
       return;
     }
-    final epoch = _overlayEpoch;
-    final body = await _getJobTimelineUseCase.readContent(url: url);
-    if (epoch != _overlayEpoch || _isClosed) {
+    final pending = _cuesInflight[assetId];
+    if (pending != null) {
+      await pending;
       return;
     }
-    _cuesByAssetId[assetId] = parseSubtitleCues(body);
+    final epoch = _overlayEpoch;
+    final future = () async {
+      final body = await _getJobTimelineUseCase.readContent(url: url);
+      if (epoch != _overlayEpoch || _isClosed) {
+        return;
+      }
+      _cuesByAssetId[assetId] = parseSubtitleCues(body);
+    }();
+    _cuesInflight[assetId] = future;
+    try {
+      await future;
+    } finally {
+      if (identical(_cuesInflight[assetId], future)) {
+        _cuesInflight.remove(assetId);
+      }
+    }
+  }
+
+  void _clearOverlayBodies() {
+    _framesByAssetId.clear();
+    _cuesByAssetId.clear();
+    _framesInflight.clear();
+    _cuesInflight.clear();
+    _poseBoardMarksByClipId.clear();
   }
 
   Future<void> _ensureSubtitleOverlaysOverlapping({
@@ -1645,8 +1681,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return;
     }
     final pending = <Future<void>>[];
+    final queuedAssetIds = <String>{};
     for (final overlay in _timeline.overlays) {
       if (overlay.kind != TimelineOverlayKind.subtitle) {
+        continue;
+      }
+      if (overlay.assetId.isEmpty) {
         continue;
       }
       if (!doTimelineIntervalsOverlap(
@@ -1655,6 +1695,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         startNs,
         endNs,
       )) {
+        continue;
+      }
+      if (!queuedAssetIds.add(overlay.assetId)) {
         continue;
       }
       pending.add(
@@ -1914,20 +1957,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   ) async {
     final epoch = _chartSession.beginLoad();
     notifyListeners();
-    _logTimeseries(
-      'request',
-      clip: clip,
-      detail:
-          'urlEmpty=${clip.contentUrl.isEmpty} '
-          'urlLen=${clip.contentUrl.length}',
-    );
     if (clip.contentUrl.isEmpty) {
       if (!_chartSession.isCurrentEpoch(epoch) || _isClosed) {
         return;
       }
       _chartSession.isLoading = false;
       _chartSession.error = '파형 주소가 없습니다';
-      _logTimeseries('skip_empty_url', clip: clip);
       notifyListeners();
       return;
     }
@@ -1937,14 +1972,12 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         channelNames: detail.channelNames,
       );
       if (!_chartSession.isCurrentEpoch(epoch) || _isClosed) {
-        _logTimeseries('stale', clip: clip, detail: 'epoch=$epoch');
         return;
       }
       _chartSession.timeseriesSeries = load.series;
       if (!load.series.doesHaveAnySeries) {
         _chartSession.error = '파형 데이터 없음';
       }
-      _logTimeseriesLoad(clip, load);
     } catch (error) {
       if (!_chartSession.isCurrentEpoch(epoch) || _isClosed) {
         return;
@@ -1952,7 +1985,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _chartSession.error = error.toString();
       _chartSession.timeseriesSeries =
           LoadTimeseriesWaveformUseCase.emptySeries;
-      _logTimeseries('error', clip: clip, detail: '$error');
     } finally {
       if (_chartSession.isCurrentEpoch(epoch) && !_isClosed) {
         _chartSession.isLoading = false;
@@ -1964,11 +1996,20 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   Future<void> _loadAudioChart(TimelineClip clip, ClipDetail detail) async {
     final epoch = _chartSession.beginLoad();
     notifyListeners();
+    final waveformUrl = clip.waveformUrl.isNotEmpty
+        ? clip.waveformUrl
+        : detail.waveformUrl;
+    final sourceStartNs = detail.sourceStartNs.isNotEmpty
+        ? detail.sourceStartNs
+        : clip.sourceStartNs;
+    final sourceEndNs = detail.sourceEndNs.isNotEmpty
+        ? detail.sourceEndNs
+        : clip.sourceEndNs;
     try {
       final load = await _loadAudioWaveformUseCase.execute(
-        waveformUrl: detail.waveformUrl,
-        sourceStartNs: detail.sourceStartNs,
-        sourceEndNs: detail.sourceEndNs,
+        waveformUrl: waveformUrl,
+        sourceStartNs: sourceStartNs,
+        sourceEndNs: sourceEndNs,
       );
       if (!_chartSession.isCurrentEpoch(epoch) || _isClosed) {
         return;
@@ -1987,68 +2028,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         notifyListeners();
       }
     }
-  }
-
-  void _logTimeseriesLoad(TimelineClip clip, TimeseriesWaveformLoad load) {
-    final points = load.series.robot;
-    final first = points.isEmpty ? null : points.first;
-    final last = points.isEmpty ? null : points.last;
-    var currentCount = 0;
-    var voltageCount = 0;
-    var speedCount = 0;
-    var rpmCount = 0;
-    for (final point in points) {
-      if (point.currentA != null) {
-        currentCount += 1;
-      }
-      if (point.voltageV != null) {
-        voltageCount += 1;
-      }
-      if (point.speedValue != null) {
-        speedCount += 1;
-      }
-      if (point.rotationSpeedRpm != null) {
-        rpmCount += 1;
-      }
-    }
-    _logTimeseries(
-      'response',
-      clip: clip,
-      detail:
-          'bodyLen=${load.bodyLength} lines=${load.lineCount} '
-          'headers=${load.headers.join('|')} '
-          'match(time=${load.matchedTimeHeader},'
-          'current=${load.matchedCurrentHeader},'
-          'voltage=${load.matchedVoltageHeader},'
-          'speed=${load.matchedSpeedHeader},'
-          'rpm=${load.matchedRpmHeader}) '
-          'rawPoints=${load.rawPointCount} points=${load.pointCount} '
-          'filled(current=$currentCount,voltage=$voltageCount,'
-          'speed=$speedCount,rpm=$rpmCount) '
-          'rangeMs=${first?.timeMs ?? '-'}..${last?.timeMs ?? '-'} '
-          'sample(t=${first?.timeMs},I=${first?.currentA},'
-          'V=${first?.voltageV},S=${first?.speedValue},'
-          'rpm=${first?.rotationSpeedRpm})',
-    );
-  }
-
-  void _logTimeseries(
-    String phase, {
-    required TimelineClip clip,
-    String detail = '',
-  }) {
-    if (!kDebugMode) {
-      return;
-    }
-    debugPrint(
-      '[TIMESERIES] $phase clipId=${clip.clipId} trackId=${clip.trackId} '
-      'assetId=${clip.assetId} file=${clip.fileName} '
-      'kind=${clip.kind} '
-      'timeline=${clip.startNs}..${clip.endNs} '
-      'source=${clip.sourceStartNs}..${clip.sourceEndNs} '
-      'url=${clip.contentUrl}'
-      '${detail.isEmpty ? '' : ' $detail'}',
-    );
   }
 
   void didTapFocusMonitorSlot(String trackId) {
@@ -2143,25 +2122,17 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (jobId.isEmpty || _projectId.isNotEmpty) {
       return;
     }
-    final log = _loadApiLog;
-    log?.step('GetJob', detail: 'Work.GetJob → projectId', phase: 'background');
     try {
       final projectId = await _loadJobProjectIdUseCase.execute(jobId: jobId);
       if (!_isClosed && projectId.isNotEmpty) {
         _projectId = projectId;
       }
-      log?.stepDone(
-        'GetJob',
-        detail: 'projectId=${projectId.isEmpty ? '(empty)' : projectId}',
-      );
     } catch (error) {
-      log?.stepDone('GetJob', error: error);
       return;
     }
   }
 
   void didTapCitation(AskCitation citation) {
-    _logCitationClipMatch(citation);
     _selectCitationClip(citation);
     if (_citationVideo(citation) == null) {
       _noticeText = '이 근거 영상을 열 수 없습니다.';
@@ -2295,21 +2266,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       }
     }
     return null;
-  }
-
-  void _logCitationClipMatch(AskCitation citation) {
-    if (!kDebugMode) {
-      return;
-    }
-    final matched = citation.segmentId.isEmpty
-        ? null
-        : _timelineClip(citation.segmentId);
-    final clipIds = [for (final clip in timelineClips) clip.clipId].join(', ');
-    debugPrint(
-      'citation segmentId=${citation.segmentId} '
-      'matchedClipId=${matched?.clipId ?? ''} '
-      'clipIds=[$clipIds]',
-    );
   }
 
   void _selectCitationClip(AskCitation citation) {
@@ -2539,21 +2495,17 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   Future<void> loadLabelSections() => _ensureLabels();
   Future<void> _ensureLabels() async {
     final epoch = ++_labelEpoch;
-    final log = _loadApiLog;
     final cached = LabelRootsSessionCache.roots;
     if (cached != null) {
-      log?.step('ListLabels', detail: 'cache hit', phase: 'background');
       if (epoch != _labelEpoch || _isClosed) {
         return;
       }
       _labelRoots = List<LabelNode>.from(cached);
       _isLoadingLabels = false;
       _labelMessage = '';
-      log?.stepDone('ListLabels', detail: 'roots=${_labelRoots.length} cache');
       notifyListeners();
       return;
     }
-    log?.step('ListLabels', detail: 'Label.ListLabels', phase: 'background');
     _isLoadingLabels = true;
     _labelMessage = '';
     notifyListeners();
@@ -2564,19 +2516,16 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       }
       _labelRoots = roots;
       LabelRootsSessionCache.put(roots);
-      log?.stepDone('ListLabels', detail: 'roots=${roots.length}');
     } on LabelException catch (error) {
       if (epoch != _labelEpoch || _isClosed) {
         return;
       }
       _labelMessage = error.message;
-      log?.stepDone('ListLabels', error: error.message);
     } catch (error) {
       if (epoch != _labelEpoch || _isClosed) {
         return;
       }
       _labelMessage = error.toString();
-      log?.stepDone('ListLabels', error: error);
     } finally {
       if (epoch == _labelEpoch && !_isClosed) {
         _isLoadingLabels = false;
@@ -2850,14 +2799,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (jobId.isEmpty || _inferencePhase != InferencePanelPhase.hidden) {
       return;
     }
-    final log = _loadApiLog;
-    log?.step('ListRuns', detail: 'Tool.ListRuns jobId', phase: 'background');
     late final List<ToolRunSnapshot> runs;
     try {
       runs = await _toolRunUseCase.listJobRuns(jobId: jobId);
-      log?.stepDone('ListRuns', detail: 'runs=${runs.length}');
     } catch (error) {
-      log?.stepDone('ListRuns', error: error);
       rethrow;
     }
     if (_inferencePhase != InferencePanelPhase.hidden) {
@@ -3896,9 +3841,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _timeline = await _getJobTimelineUseCase.execute(jobId: jobId);
       _clipDetailCache.clear();
       _overlayEpoch += 1;
-      _framesByAssetId.clear();
-      _cuesByAssetId.clear();
-      _poseBoardMarksByClipId.clear();
+      _clearOverlayBodies();
       if (clearHint) {
         _timelineHint = '';
       }
@@ -4046,7 +3989,14 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   void didTapToggleAssets() {
+    final willOpen = _side != VideoMultimodalSide.assets;
     _toggleSide(VideoMultimodalSide.assets);
+    if (willOpen &&
+        _assetsPageRows.isEmpty &&
+        !_isLoadingAssetsPage &&
+        jobId.isNotEmpty) {
+      unawaited(_loadAssetsPage(1));
+    }
   }
 
   void didTapToggleProperties() {
@@ -4132,6 +4082,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _isClosed = true;
+    _clipDetailLoadGate.clearPending();
     _playhead.dispose();
     _clipDetailEpoch += 1;
     _toolRunEpoch += 1;
