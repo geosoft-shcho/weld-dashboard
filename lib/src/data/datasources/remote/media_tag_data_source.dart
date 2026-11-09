@@ -13,6 +13,7 @@ import '../generated/mediatag/tool/v1/tool.connect.client.dart';
 import '../generated/mediatag/work/v1/work.connect.client.dart';
 import '../generated/tacittag/rag/v2/rag.connect.client.dart';
 import 'dashboard_http_client.dart';
+import 'media_files_debug_log.dart';
 
 class MediaTagDataSource {
   MediaTagDataSource({String? baseUrl}) : baseUrl = _resolveBaseUrl(baseUrl) {
@@ -54,21 +55,39 @@ class MediaTagDataSource {
       final end = endByte == null ? '' : '$endByte';
       headers.add('range', 'bytes=$startByte-$end');
     }
-    final response = await createDashboardHttpClient()(
-      connect.HttpRequest(url, 'GET', headers, null, null),
-    );
-    if (response.status != 200 && response.status != 206) {
-      throw StateError('content ${response.status}');
+    final startedAt = DateTime.now();
+    MediaFilesDebugLog.fetchStart(source: 'readBytes', url: url);
+    try {
+      final response = await createDashboardHttpClient()(
+        connect.HttpRequest(url, 'GET', headers, null, null),
+      );
+      if (response.status != 200 && response.status != 206) {
+        throw StateError('content ${response.status}');
+      }
+      final chunks = await response.body.toList();
+      final length = chunks.fold<int>(0, (sum, chunk) => sum + chunk.length);
+      final bytes = Uint8List(length);
+      var offset = 0;
+      for (final chunk in chunks) {
+        bytes.setRange(offset, offset + chunk.length, chunk);
+        offset += chunk.length;
+      }
+      MediaFilesDebugLog.fetchDone(
+        source: 'readBytes',
+        url: url,
+        elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
+        bytes: bytes.length,
+      );
+      return bytes;
+    } catch (error) {
+      MediaFilesDebugLog.fetchDone(
+        source: 'readBytes',
+        url: url,
+        elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
+        error: error,
+      );
+      rethrow;
     }
-    final chunks = await response.body.toList();
-    final length = chunks.fold<int>(0, (sum, chunk) => sum + chunk.length);
-    final bytes = Uint8List(length);
-    var offset = 0;
-    for (final chunk in chunks) {
-      bytes.setRange(offset, offset + chunk.length, chunk);
-      offset += chunk.length;
-    }
-    return bytes;
   }
 
   String resolveContentUrl(String path) {

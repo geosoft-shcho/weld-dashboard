@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:just_audio/just_audio.dart';
 
+import '../../../../data/datasources/remote/media_files_debug_log.dart';
 import '../../../../domain/timeline_clip_playback.dart';
 import '../video_playback_rate.dart';
 
@@ -32,13 +33,19 @@ class MultimodalTimelineAudioPlayer extends StatefulWidget {
 
 class _MultimodalTimelineAudioPlayerState
     extends State<MultimodalTimelineAudioPlayer> {
+  static const Duration _urlDebounce = Duration(milliseconds: 200);
+
   final AudioPlayer _player = AudioPlayer();
   String _loadedUrl = '';
+  String _desiredUrl = '';
   bool _openInFlight = false;
+  Timer? _urlDebounceTimer;
+  bool _forceSeekAfterOpen = false;
 
   @override
   void initState() {
     super.initState();
+    _desiredUrl = widget.mediaUrl;
     unawaited(_sync());
   }
 
@@ -50,27 +57,56 @@ class _MultimodalTimelineAudioPlayerState
     final playChanged = oldWidget.wantsPlayback != widget.wantsPlayback ||
         oldWidget.playbackToken != widget.playbackToken ||
         oldWidget.playbackRate != widget.playbackRate;
-    if (urlChanged || seekChanged || playChanged) {
-      unawaited(_sync(forceSeek: urlChanged || seekChanged));
+    if (urlChanged) {
+      _desiredUrl = widget.mediaUrl;
+      _forceSeekAfterOpen = true;
+      _scheduleUrlSync();
       return;
     }
-    if (widget.wantsPlayback && widget.mediaUrl.isNotEmpty) {
+    if (seekChanged || playChanged) {
+      unawaited(_sync(forceSeek: seekChanged));
+      return;
+    }
+    if (widget.wantsPlayback &&
+        widget.mediaUrl.isNotEmpty &&
+        _loadedUrl == widget.mediaUrl) {
       unawaited(_seekIfDrifted());
     }
   }
 
   @override
   void dispose() {
+    _urlDebounceTimer?.cancel();
     unawaited(_player.dispose());
     super.dispose();
   }
 
-  Future<void> _sync({bool forceSeek = false}) async {
-    final url = widget.mediaUrl;
+  void _scheduleUrlSync() {
+    final url = _desiredUrl;
     if (url.isEmpty) {
-      _loadedUrl = '';
+      _urlDebounceTimer?.cancel();
+      unawaited(_sync(forceSeek: false));
+      return;
+    }
+    if (url == _loadedUrl) {
+      _urlDebounceTimer?.cancel();
+      unawaited(_sync(forceSeek: _forceSeekAfterOpen));
+      return;
+    }
+    _urlDebounceTimer?.cancel();
+    _urlDebounceTimer = Timer(_urlDebounce, () {
+      if (!mounted) {
+        return;
+      }
+      unawaited(_sync(forceSeek: true));
+    });
+  }
+
+  Future<void> _sync({bool forceSeek = false}) async {
+    final url = _desiredUrl;
+    if (url.isEmpty) {
       try {
-        await _player.stop();
+        await _player.pause();
       } catch (_) {}
       return;
     }
@@ -79,25 +115,59 @@ class _MultimodalTimelineAudioPlayerState
         return;
       }
       _openInFlight = true;
+      final openUrl = url;
+      final startedAt = DateTime.now();
+      MediaFilesDebugLog.fetchStart(source: 'audio_open', url: openUrl);
       try {
-        if (url.startsWith('http://') || url.startsWith('https://')) {
-          await _player.setUrl(url);
+        if (openUrl.startsWith('http://') || openUrl.startsWith('https://')) {
+          await _player.setUrl(openUrl);
         } else {
-          await _player.setAsset(url);
+          await _player.setAsset(openUrl);
         }
-        _loadedUrl = url;
+        MediaFilesDebugLog.fetchDone(
+          source: 'audio_open',
+          url: openUrl,
+          elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
+        );
+        _loadedUrl = openUrl;
       } catch (error) {
+        MediaFilesDebugLog.fetchDone(
+          source: 'audio_open',
+          url: openUrl,
+          elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
+          error: error,
+        );
         debugPrint('[AUDIO] open failed: $error');
         _loadedUrl = '';
         _openInFlight = false;
+        if (mounted && _desiredUrl.isNotEmpty && _desiredUrl != openUrl) {
+          unawaited(_sync(forceSeek: true));
+        }
         return;
       }
       _openInFlight = false;
       forceSeek = true;
+      if (!mounted) {
+        return;
+      }
+      if (_desiredUrl != openUrl) {
+        if (_desiredUrl.isEmpty) {
+          try {
+            await _player.pause();
+          } catch (_) {}
+          return;
+        }
+        if (_desiredUrl != _loadedUrl) {
+          unawaited(_sync(forceSeek: true));
+          return;
+        }
+      }
     }
-    if (!mounted || widget.mediaUrl != url) {
+    if (!mounted || _desiredUrl != url) {
       return;
     }
+    final shouldForceSeek = forceSeek || _forceSeekAfterOpen;
+    _forceSeekAfterOpen = false;
     final rate = browserPlaybackRate(widget.playbackRate) ?? 1.0;
     try {
       if ((_player.speed - rate).abs() >= 0.01) {
@@ -109,18 +179,18 @@ class _MultimodalTimelineAudioPlayerState
         await _player.setSpeed(1);
       } catch (_) {}
     }
-    if (!mounted || widget.mediaUrl != url) {
+    if (!mounted || _desiredUrl != url) {
       return;
     }
-    if (forceSeek || doesRequireStepSeek(widget.playbackRate)) {
+    if (shouldForceSeek || doesRequireStepSeek(widget.playbackRate)) {
       await _seekTo(widget.seekToMs);
     } else {
       await _seekIfDrifted();
     }
-    if (!mounted || widget.mediaUrl != url) {
+    if (!mounted || _desiredUrl != url) {
       return;
     }
-    if (!widget.wantsPlayback) {
+    if (!widget.wantsPlayback || widget.mediaUrl.isEmpty) {
       await _player.pause();
       return;
     }
@@ -134,7 +204,7 @@ class _MultimodalTimelineAudioPlayerState
   }
 
   Future<void> _seekIfDrifted() async {
-    if (_loadedUrl.isEmpty || _loadedUrl != widget.mediaUrl) {
+    if (_loadedUrl.isEmpty || _loadedUrl != _desiredUrl) {
       return;
     }
     final currentSeconds = _player.position.inMilliseconds / 1000.0;

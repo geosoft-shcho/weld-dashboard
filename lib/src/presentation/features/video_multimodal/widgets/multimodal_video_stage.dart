@@ -232,7 +232,7 @@ class MultimodalVideoStage extends StatelessWidget {
     return ColoredBox(
       color: AppTheme.SURFACE,
       child: MultimodalVideoPlayer(
-        key: ValueKey('$trackId|$mediaUrl'),
+        key: ValueKey(trackId.isEmpty ? 'legacy' : trackId),
         mediaUrl: mediaUrl,
         seekToMs: seekToMs,
         playbackRate: playbackRate,

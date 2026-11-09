@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:chewie/chewie.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../../data/datasources/remote/media_files_debug_log.dart';
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_caption.dart';
@@ -61,6 +63,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   Timer? _clockTimer;
   VoidCallback? _clockListener;
   String _errorText = '';
+  String _loadedMediaUrl = '';
   bool _leftTarget = false;
   bool _pullingFromEnd = false;
   int _openGeneration = 0;
@@ -141,11 +144,28 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   }
 
   Future<void> _open() async {
+    final source = widget.mediaUrl;
+    if (source.isEmpty) {
+      _loadedMediaUrl = '';
+      _cancelSeek();
+      _release();
+      if (mounted) {
+        setState(() => _errorText = '');
+      }
+      return;
+    }
+    if (source == _loadedMediaUrl && _videoController != null) {
+      _leftTarget = false;
+      unawaited(_seekAndApply(widget.seekToken));
+      return;
+    }
     final generation = ++_openGeneration;
     _cancelSeek();
     _release();
+    _loadedMediaUrl = '';
     setState(() => _errorText = '');
-    final source = widget.mediaUrl;
+    final startedAt = DateTime.now();
+    MediaFilesDebugLog.fetchStart(source: 'video_open', url: source);
     final videoController =
         source.startsWith('http://') || source.startsWith('https://')
         ? VideoPlayerController.networkUrl(Uri.parse(source))
@@ -153,6 +173,12 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     try {
       await videoController.initialize();
     } catch (error) {
+      MediaFilesDebugLog.fetchDone(
+        source: 'video_open',
+        url: source,
+        elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
+        error: error,
+      );
       await videoController.dispose();
       if (mounted && generation == _openGeneration) {
         setState(() => _errorText = error.toString());
@@ -160,10 +186,22 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       return;
     }
     if (!mounted || generation != _openGeneration) {
+      MediaFilesDebugLog.fetchDone(
+        source: 'video_open',
+        url: source,
+        elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
+        error: 'stale',
+      );
       await videoController.dispose();
       return;
     }
+    MediaFilesDebugLog.fetchDone(
+      source: 'video_open',
+      url: source,
+      elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
+    );
     final chewieController = _createChewie(videoController, widget.captions);
+    _loadedMediaUrl = source;
     setState(() {
       _videoController = videoController;
       _chewieController = chewieController;
