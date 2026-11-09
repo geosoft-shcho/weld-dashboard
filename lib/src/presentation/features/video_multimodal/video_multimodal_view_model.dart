@@ -47,6 +47,7 @@ import 'video_overlay_frame.dart';
 import 'video_overlay_json.dart';
 import 'timeline_clip_helpers.dart';
 import 'timeline_playhead_clock.dart';
+import 'timeline_span_debug_log.dart';
 import 'video_playback_rate.dart';
 import 'video_subtitle_text.dart';
 import 'video_multimodal_models.dart';
@@ -400,19 +401,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     return (local * 1000).round();
   }
 
-  double get spanSeconds {
-    var end = 0.0;
-    for (final clip in timelineClips) {
-      final clipEnd = secondsFromNanoseconds(clip.endNanoseconds);
-      if (clipEnd > end) {
-        end = clipEnd;
-      }
-    }
-    if (end <= 0) {
-      return EMPTY_SPAN_SECONDS;
-    }
-    return end;
-  }
+  double get spanSeconds => timelineSpanSecondsFromClips(
+    timelineClips,
+    emptySpanSeconds: EMPTY_SPAN_SECONDS,
+  );
 
   String get playheadLabel => formatPlayheadClock(playheadSeconds);
   String get spanLabel => formatPlayheadClock(spanSeconds);
@@ -587,6 +579,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       if (_workName.isEmpty && name.isNotEmpty) {
         _workName = name;
       }
+      _playhead.clampToSpan(spanSeconds);
+      _debugLogTimelineSpan('fetchGetTimeline');
       return true;
     } on JobTimelineException catch (error) {
       _hasError = true;
@@ -3418,7 +3412,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final attachment = _attachmentById(assetId);
     final durationNs = attachment?.durationNs.trim() ?? '';
     final hasDuration = durationNs.isNotEmpty && durationNs != '0';
-    final startSeconds = playheadSeconds < 0 ? 0.0 : playheadSeconds;
+    final span = spanSeconds;
+    final startSeconds = playheadSeconds < 0
+        ? 0.0
+        : playheadSeconds.clamp(0.0, span);
     final startNs = nanosecondsFromSeconds(startSeconds);
     final String endNs;
     final String sourceStartNs;
@@ -3842,6 +3839,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _clipDetailCache.clear();
       _overlayEpoch += 1;
       _clearOverlayBodies();
+      _playhead.clampToSpan(spanSeconds);
+      _debugLogTimelineSpan('replaceTimelineFromServer');
       if (clearHint) {
         _timelineHint = '';
       }
@@ -3853,6 +3852,17 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _timelineHint = error.toString();
       return false;
     }
+  }
+
+  void _debugLogTimelineSpan(String source) {
+    TimelineSpanDebugLog.log(
+      source: source,
+      jobId: jobId,
+      clips: timelineClips,
+      spanSeconds: spanSeconds,
+      spanLabel: spanLabel,
+      playheadLabel: playheadLabel,
+    );
   }
 
   void didCommitBarRange(

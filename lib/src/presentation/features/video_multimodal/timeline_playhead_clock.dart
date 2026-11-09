@@ -112,7 +112,10 @@ class TimelinePlayheadClock {
 }
 
 String formatPlayheadClock(double seconds) {
-  final whole = seconds.floor().clamp(0, 86400);
+  if (seconds.isNaN || seconds.isInfinite || seconds <= 0) {
+    return '0:00:00';
+  }
+  final whole = seconds.floor();
   final hours = whole ~/ 3600;
   final minutes = (whole % 3600) ~/ 60;
   final remain = whole % 60;

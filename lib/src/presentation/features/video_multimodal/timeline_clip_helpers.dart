@@ -84,3 +84,68 @@ String timelineClipKindLabel(TimelineClipKind kind) {
       return '클립';
   }
 }
+
+/// 클립 end 중 최대 초. 미디어(영상·음성·assetDur) span 밖에 떨어진 클립은 제외.
+double timelineSpanSecondsFromClips(
+  Iterable<TimelineClip> clips, {
+  double emptySpanSeconds = 60,
+}) {
+  var mediaEnd = 0.0;
+  for (final clip in clips) {
+    final resolved = _resolvedClipEndSeconds(clip);
+    if (!_isMediaSpanAnchor(clip) || resolved.endSeconds <= mediaEnd) {
+      continue;
+    }
+    mediaEnd = resolved.endSeconds;
+  }
+  var end = mediaEnd;
+  for (final clip in clips) {
+    final resolved = _resolvedClipEndSeconds(clip);
+    if (mediaEnd > 0 && resolved.startSeconds > mediaEnd + 60) {
+      continue;
+    }
+    if (resolved.endSeconds > end) {
+      end = resolved.endSeconds;
+    }
+  }
+  if (end <= 0) {
+    return emptySpanSeconds;
+  }
+  return end;
+}
+
+bool doesClipCountTowardTimelineSpan(
+  TimelineClip clip, {
+  required double mediaEndSeconds,
+}) {
+  if (mediaEndSeconds <= 0) {
+    return true;
+  }
+  final start = secondsFromNanoseconds(clip.startNanoseconds);
+  return start <= mediaEndSeconds + 60;
+}
+
+({double startSeconds, double endSeconds, bool repaired})
+_resolvedClipEndSeconds(TimelineClip clip) {
+  final startSeconds = secondsFromNanoseconds(clip.startNanoseconds);
+  var endSeconds = secondsFromNanoseconds(clip.endNanoseconds);
+  final assetDur = secondsFromNanoseconds(clip.assetDurationNs);
+  var repaired = false;
+  if (assetDur > 0 && endSeconds - startSeconds > assetDur * 2 + 60) {
+    endSeconds = startSeconds + assetDur;
+    repaired = true;
+  }
+  return (
+    startSeconds: startSeconds,
+    endSeconds: endSeconds,
+    repaired: repaired,
+  );
+}
+
+bool _isMediaSpanAnchor(TimelineClip clip) {
+  if (secondsFromNanoseconds(clip.assetDurationNs) > 0) {
+    return true;
+  }
+  return clip.kind == TimelineClipKind.video ||
+      clip.kind == TimelineClipKind.audio;
+}
