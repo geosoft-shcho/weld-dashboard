@@ -1,13 +1,18 @@
 import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
 
-import 'clip_detail_sections.dart';
+import '../timeline_playhead_clock.dart';
 import '../video_multimodal_view_model.dart';
+import 'clip_detail_sections.dart';
 import 'multimodal_studio_palette.dart';
 import 'side_panel_chrome.dart';
 
 class PropertiesSideBody extends StatelessWidget {
-  const PropertiesSideBody({super.key, required this.viewModel, required this.onClose});
+  const PropertiesSideBody({
+    super.key,
+    required this.viewModel,
+    required this.onClose,
+  });
 
   final VideoMultimodalViewModel viewModel;
   final VoidCallback onClose;
@@ -60,19 +65,49 @@ class PropertiesSideBody extends StatelessWidget {
                 ],
               ),
             )
-          else if (viewModel.isClipDetailLoading)
-            const Padding(
-              padding: EdgeInsets.all(12),
-              child: SizedBox(
-                width: double.infinity,
-                child: fluent.ProgressBar(strokeWidth: 2),
+          else ...[
+            SidePanelSectionLabel('타임라인'),
+            _timelineSummary(clip),
+            if (viewModel.isClipDetailLoading)
+              const Padding(
+                padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Text(
+                      '상세 불러오는 중',
+                      style: TextStyle(
+                        color: MultimodalStudioPalette.PANEL_MUTED,
+                        fontSize: 11,
+                      ),
+                    ),
+                    SizedBox(height: 6),
+                    fluent.ProgressBar(strokeWidth: 2),
+                  ],
+                ),
               ),
-            )
-          else
-            ..._clipDetailChildren(),
+            if (!viewModel.isClipDetailLoading) ..._clipDetailChildren(),
+          ],
         ],
       ),
       foot: const SidePanelFootNote('타임라인에서 고른 클립과 같은 시각의 수집값입니다.'),
+    );
+  }
+
+  Widget _timelineSummary(TimelineSampleClip clip) {
+    final range =
+        '${formatPlayheadClock(clip.startSeconds)} – '
+        '${formatPlayheadClock(clip.endSeconds)}';
+    return _PropertyTable(
+      rows: [
+        ClipDetailRow(label: '클립 번호', value: clip.clipId),
+        ClipDetailRow(label: '트랙', value: clip.trackLabel),
+        ClipDetailRow(
+          label: '캡션',
+          value: clip.text.isEmpty ? '—' : clip.text,
+        ),
+        ClipDetailRow(label: '구간', value: range),
+      ],
     );
   }
 

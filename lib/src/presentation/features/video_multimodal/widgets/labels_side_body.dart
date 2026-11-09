@@ -157,13 +157,20 @@ class _LabelsSideBodyState extends State<LabelsSideBody> {
           if (widget.viewModel.isLoadingLabels &&
               widget.viewModel.labelRoots.isEmpty)
             const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(
-                child: SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                ),
+              padding: EdgeInsets.fromLTRB(12, 12, 12, 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    '라벨 불러오는 중',
+                    style: TextStyle(
+                      color: MultimodalStudioPalette.PANEL_MUTED,
+                      fontSize: 11,
+                    ),
+                  ),
+                  SizedBox(height: 6),
+                  fluent.ProgressBar(strokeWidth: 2),
+                ],
               ),
             ),
           if (!widget.viewModel.isLoadingLabels &&

@@ -274,30 +274,6 @@ class _ScreenCommentTileState extends State<_ScreenCommentTile> {
                   children: [
                     const Spacer(),
                     Tooltip(
-                      message: '저장',
-                      child: IconButton(
-                        icon: const Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              FluentIcons.save,
-                              size: 14,
-                              color: AppTheme.STATUS_OK,
-                            ),
-                            SizedBox(width: 4),
-                            Text(
-                              '저장',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: AppTheme.STATUS_OK,
-                              ),
-                            ),
-                          ],
-                        ),
-                        onPressed: widget.isBusy ? null : _didTapSave,
-                      ),
-                    ),
-                    Tooltip(
                       message: '삭제',
                       child: IconButton(
                         icon: const Row(
@@ -319,6 +295,20 @@ class _ScreenCommentTileState extends State<_ScreenCommentTile> {
                           ],
                         ),
                         onPressed: widget.isBusy ? null : _didTapDelete,
+                      ),
+                    ),
+                    Tooltip(
+                      message: '저장',
+                      child: IconButton(
+                        icon: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(FluentIcons.save),
+                            SizedBox(width: 4),
+                            Text('저장', style: TextStyle(fontSize: 12)),
+                          ],
+                        ),
+                        onPressed: widget.isBusy ? null : _didTapSave,
                       ),
                     ),
                   ],
