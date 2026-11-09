@@ -406,6 +406,9 @@ TimelineClip? _clipFrom(
   final asset = assetsById[assetId];
   final contentUrl = asset == null ? '' : asset.contentUrl;
   final provenance = clip.hasProvenance() ? clip.provenance : null;
+  final rawWaveformUrl = asset == null
+      ? ''
+      : waveformUrlFromProperties(asset.properties);
   return TimelineClip(
     clipId: clipId,
     trackId: trackId,
@@ -429,6 +432,9 @@ TimelineClip? _clipFrom(
     assetStartTimeNs: clip.hasSource() && clip.source.hasAssetStartTimeNs()
         ? clip.source.assetStartTimeNs.toString()
         : '',
+    waveformUrl: rawWaveformUrl.isEmpty
+        ? ''
+        : resolveContentUrl(rawWaveformUrl),
     showsToolBadge:
         provenance != null &&
         (idText(provenance.runId).isNotEmpty ||

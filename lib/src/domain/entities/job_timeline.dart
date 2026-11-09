@@ -31,6 +31,7 @@ class TimelineClip {
     this.sourceEndNs = '',
     this.assetDurationNs = '',
     this.assetStartTimeNs = '',
+    this.waveformUrl = '',
   });
 
   final String clipId;
@@ -48,6 +49,9 @@ class TimelineClip {
   final String sourceEndNs;
   final String assetDurationNs;
   final String assetStartTimeNs;
+
+  /// GetTimeline asset.properties.waveform_url (해석된 주소).
+  final String waveformUrl;
 
   String get startNanoseconds => startNs;
   String get endNanoseconds => endNs;
