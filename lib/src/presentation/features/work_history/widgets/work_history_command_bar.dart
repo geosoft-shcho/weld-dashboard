@@ -405,7 +405,14 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
           const SizedBox(width: 8),
           Button(
             onPressed: () => showWorkJobCreateDialog(context, widget.viewModel),
-            child: const Text('새 작업'),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(FluentIcons.add, size: 14),
+                SizedBox(width: 6),
+                const Text('새 작업'),
+              ],
+            ),
           ),
         ],
       ),
