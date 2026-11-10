@@ -139,15 +139,28 @@ class LookupDetailSectionTitle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(top: 20, bottom: 8),
-      child: Row(
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+      padding: const EdgeInsets.only(top: 24, bottom: 8),
+      child: DecoratedBox(
+        decoration: const BoxDecoration(
+          border: Border(
+            top: BorderSide(color: Color(0xFF3E424A)),
           ),
-          if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-        ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: Row(
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+            ],
+          ),
+        ),
       ),
     );
   }
