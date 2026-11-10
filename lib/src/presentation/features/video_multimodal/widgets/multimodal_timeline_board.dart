@@ -899,9 +899,11 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   }
 
   Widget _tracks(List<TimelineBoardRow> rows) {
-    final width = viewModel.trackWidth;
     return LayoutBuilder(
       builder: (context, constraints) {
+        final width = viewModel.trackWidth > constraints.maxWidth
+            ? viewModel.trackWidth
+            : constraints.maxWidth;
         return Listener(
           behavior: HitTestBehavior.translucent,
           onPointerDown: (event) => _seekRuler(event.localPosition),
