@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'dart:ui' show FontFeature, PointerDeviceKind;
+
 import 'package:flutter/material.dart';
 
 import '../../work_detail/widgets/work_detail_material_scope.dart';
@@ -38,6 +39,10 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   double _trackedPlayhead = -1;
   String _trackedClipId = '';
   TimelineClipEdit? _edit;
+  bool _isRulerDragging = false;
+  int? _rulerPointer;
+  bool _rulerDidPan = false;
+  double _rulerDragDistance = 0;
 
   VideoMultimodalViewModel get viewModel => widget.viewModel;
 
@@ -874,28 +879,75 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     );
   }
 
-  void _seekRuler(Offset localInViewport) {
-    if (localInViewport.dy < 0 || localInViewport.dy > _RULER_HEIGHT) {
-      return;
-    }
-    final scroll = _scrollController.hasClients
-        ? _scrollController.offset
-        : 0.0;
-    final contentX = localInViewport.dx + scroll;
+  void _seekRulerAtContentX(double contentX) {
     final rawSeconds = contentX / viewModel.pixelsPerSecond;
     final seconds = rawSeconds.clamp(0.0, viewModel.spanSeconds);
-    final before = viewModel.playheadSeconds;
     viewModel.didSeekToSeconds(seconds);
-    if (!kDebugMode) {
+  }
+
+  void _panRulerBy(double deltaDx) {
+    if (!_scrollController.hasClients) {
       return;
     }
-    debugPrint(
-      '[RULER] x=${contentX.toStringAsFixed(1)} '
-      'scroll=${scroll.toStringAsFixed(1)} '
-      'raw=${rawSeconds.toStringAsFixed(3)}s '
-      'playhead ${before.toStringAsFixed(3)}s -> '
-      '${viewModel.playheadSeconds.toStringAsFixed(3)}s',
+    final position = _scrollController.position;
+    final next = (_scrollController.offset - deltaDx).clamp(
+      position.minScrollExtent,
+      position.maxScrollExtent,
     );
+    if ((next - _scrollController.offset).abs() < 0.01) {
+      return;
+    }
+    _scrollController.jumpTo(next);
+  }
+
+  void _onRulerPointerDown(PointerDownEvent event) {
+    _rulerPointer = event.pointer;
+    _rulerDidPan = false;
+    _rulerDragDistance = 0;
+    setState(() => _isRulerDragging = true);
+  }
+
+  void _onRulerPointerMove(PointerMoveEvent event) {
+    if (_rulerPointer != event.pointer) {
+      return;
+    }
+    _rulerDragDistance += event.delta.dx.abs();
+    if (_rulerDragDistance < 2 && !_rulerDidPan) {
+      return;
+    }
+    final before = _scrollController.hasClients
+        ? _scrollController.offset
+        : 0.0;
+    _panRulerBy(event.delta.dx);
+    final after = _scrollController.hasClients
+        ? _scrollController.offset
+        : 0.0;
+    if ((after - before).abs() > 0.01) {
+      _rulerDidPan = true;
+    }
+  }
+
+  void _onRulerPointerUp(PointerUpEvent event) {
+    if (_rulerPointer != event.pointer) {
+      return;
+    }
+    if (!_rulerDidPan) {
+      _seekRulerAtContentX(event.localPosition.dx);
+    }
+    _rulerPointer = null;
+    _rulerDidPan = false;
+    _rulerDragDistance = 0;
+    setState(() => _isRulerDragging = false);
+  }
+
+  void _onRulerPointerCancel(PointerCancelEvent event) {
+    if (_rulerPointer != event.pointer) {
+      return;
+    }
+    _rulerPointer = null;
+    _rulerDidPan = false;
+    _rulerDragDistance = 0;
+    setState(() => _isRulerDragging = false);
   }
 
   Widget _tracks(List<TimelineBoardRow> rows) {
@@ -904,9 +956,13 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         final width = viewModel.trackWidth > constraints.maxWidth
             ? viewModel.trackWidth
             : constraints.maxWidth;
-        return Listener(
-          behavior: HitTestBehavior.translucent,
-          onPointerDown: (event) => _seekRuler(event.localPosition),
+        return ScrollConfiguration(
+          behavior: ScrollConfiguration.of(context).copyWith(
+            dragDevices: {
+              PointerDeviceKind.touch,
+              PointerDeviceKind.trackpad,
+            },
+          ),
           child: SingleChildScrollView(
             controller: _scrollController,
             scrollDirection: Axis.horizontal,
@@ -970,11 +1026,23 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
 
   Widget _ruler(double width) {
     final span = viewModel.spanSeconds;
-    return CustomPaint(
-      size: Size(width, _RULER_HEIGHT),
-      painter: TimelineRulerPainter(
-        spanSeconds: span,
-        pixelsPerSecond: viewModel.pixelsPerSecond,
+    return MouseRegion(
+      cursor: _isRulerDragging
+          ? SystemMouseCursors.grabbing
+          : SystemMouseCursors.grab,
+      child: Listener(
+        behavior: HitTestBehavior.opaque,
+        onPointerDown: _onRulerPointerDown,
+        onPointerMove: _onRulerPointerMove,
+        onPointerUp: _onRulerPointerUp,
+        onPointerCancel: _onRulerPointerCancel,
+        child: CustomPaint(
+          size: Size(width, _RULER_HEIGHT),
+          painter: TimelineRulerPainter(
+            spanSeconds: span,
+            pixelsPerSecond: viewModel.pixelsPerSecond,
+          ),
+        ),
       ),
     );
   }
