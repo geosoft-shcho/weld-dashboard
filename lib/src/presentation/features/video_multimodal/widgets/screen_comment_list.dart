@@ -158,10 +158,11 @@ class _ScreenCommentTileState extends State<_ScreenCommentTile> {
 
   @override
   Widget build(BuildContext context) {
-    final body = widget.comment.body.isEmpty ? '말만' : widget.comment.body;
+    final body = widget.comment.body.isEmpty ? '코멘트 없음' : widget.comment.body;
     final status = widget.comment.sttLabel;
+    final sttStatusLabel = 'STT · $status';
     final statusMessage = widget.comment.sttMessage.isEmpty
-        ? status
+        ? sttStatusLabel
         : widget.comment.sttMessage;
     final color = _statusColor(status);
     final canPlay = widget.onPlay != null && widget.comment.canPlay;
@@ -196,8 +197,6 @@ class _ScreenCommentTileState extends State<_ScreenCommentTile> {
           child: Expander(
             header: Row(
               children: [
-                _StatusMark(label: status, color: color),
-                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     body,
@@ -212,7 +211,7 @@ class _ScreenCommentTileState extends State<_ScreenCommentTile> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const Text(
-                  '상태',
+                  'STT 상태',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
                 ),
                 const SizedBox(height: 4),
@@ -334,27 +333,6 @@ BuildContext _fluentDialogContext(BuildContext context) {
     return false;
   });
   return host ?? context;
-}
-
-class _StatusMark extends StatelessWidget {
-  const _StatusMark({required this.label, required this.color});
-
-  final String label;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.18),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-        child: Text(label, style: TextStyle(color: color, fontSize: 12)),
-      ),
-    );
-  }
 }
 
 Color _statusColor(String label) {
