@@ -322,6 +322,19 @@ class CameraRecordingViewModel extends ChangeNotifier {
     _publish();
     if (didFinish && !_isDisposed) {
       await onUploadCompleted?.call();
+      if (_isDisposed) {
+        return;
+      }
+      final doneNotice = noticeText;
+      await prepare();
+      if (_isDisposed) {
+        return;
+      }
+      if (phase == CameraRecordingPhase.ready) {
+        noticeText = '$doneNotice 다시 녹화하려면 시작을 누르세요.';
+        isNoticeError = false;
+        _publish();
+      }
     }
   }
 

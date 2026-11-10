@@ -128,6 +128,10 @@ void main() {
       expect(upload.createdBody, '설명');
       expect(viewModel.noticeText, contains('타임라인에 올렸습니다'));
       expect(viewModel.noticeText, contains('코멘트도 등록되었습니다'));
+      expect(viewModel.noticeText, contains('다시 녹화하려면 시작을 누르세요'));
+      expect(viewModel.phase, CameraRecordingPhase.ready);
+      expect(viewModel.recording, isNull);
+      expect(viewModel.canStart, isTrue);
     },
   );
 
