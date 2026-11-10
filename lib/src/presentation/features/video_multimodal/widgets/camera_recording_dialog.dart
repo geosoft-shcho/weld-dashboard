@@ -2,8 +2,17 @@ import 'package:camera/camera.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
+import '../../../../domain/entities/asset_upload.dart';
+import '../../../../domain/entities/equipment.dart';
+import '../../../../domain/entities/work_history_item.dart';
+import '../../../../domain/entities/work_history_query.dart';
+import '../../../../domain/use_cases/list_equipment_lookup_use_case.dart';
+import '../../../../domain/use_cases/list_upload_formats_use_case.dart';
+import '../../../../domain/use_cases/list_work_history_page_use_case.dart';
+import '../../../../domain/use_cases/upload_asset_queue_use_case.dart';
+import '../../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../core/di/locator.dart';
-import '../../../core/widgets/lookup_search_field.dart';
+import '../../asset_lookup/asset_upload_dialog.dart';
 import '../camera_recording_view_model.dart';
 import 'vector_db_saved_dialog.dart';
 
@@ -187,6 +196,132 @@ class _CameraRecordingCard extends StatelessWidget {
   final void Function(double dx, double dy) onMove;
   final VoidCallback onToggleMinimized;
 
+  Future<void> _didTapUpload(BuildContext context) async {
+    final viewModel = context.read<CameraRecordingViewModel>();
+    if (!viewModel.canUpload) {
+      return;
+    }
+    final recording = viewModel.recording;
+    if (recording == null) {
+      return;
+    }
+    final files = viewModel.pendingUploadFiles();
+    if (files.isEmpty) {
+      return;
+    }
+
+    viewModel.didBeginPreparingUploadDialog();
+
+    List<WorkHistoryItem> jobs;
+    List<Equipment> equipment;
+    try {
+      final jobsPage = await locator<ListWorkHistoryPageUseCase>().execute(
+        query: WorkHistoryQuery.initial(),
+        pageSize: 200,
+        pageToken: '',
+      );
+      equipment = await locator<ListEquipmentLookupUseCase>().execute();
+      jobs = _ensureJobInList(jobsPage.items, viewModel.jobId);
+    } catch (error) {
+      if (!context.mounted) {
+        return;
+      }
+      viewModel.didFailPreparingUploadDialog(error.toString());
+      return;
+    }
+
+    if (!context.mounted) {
+      return;
+    }
+    viewModel.didReadyUploadDialog();
+
+    final uploadAsset = locator<UploadAssetUseCase>();
+    final uploadQueue = locator<UploadAssetQueueUseCase>();
+    final batch = await showAssetUploadDialog(
+      context,
+      jobs: jobs,
+      equipment: equipment,
+      initialJobId: viewModel.jobId,
+      initialPassId: viewModel.passId,
+      lockJob: true,
+      filesLocked: true,
+      timelineSaveMode: true,
+      showScreenCommentField: viewModel.capturesScreenComment,
+      initialFiles: files,
+      initialTimeOrigin: recording.recordedAt,
+      loadFormats: () => locator<ListUploadFormatsUseCase>().execute(),
+      pickFiles: () => uploadAsset.pickFiles(),
+      uploadQueue:
+          ({
+            required String jobId,
+            required String passId,
+            required String equipmentId,
+            required List<AssetUploadQueueEntry> entries,
+            required void Function(AssetUploadQueueItem item) onItemUpdated,
+            required String subject,
+            required String situation,
+          }) {
+            return uploadQueue.execute(
+              jobId: jobId,
+              passId: passId,
+              equipmentId: equipmentId,
+              entries: entries,
+              onItemUpdated: onItemUpdated,
+              subject: subject,
+              situation: situation,
+            );
+          },
+      retryPostprocess:
+          ({
+            required String assetId,
+            required AssetUploadQueueItem base,
+            required void Function(AssetUploadQueueItem item) onItemUpdated,
+          }) {
+            return uploadQueue.retryPostprocess(
+              assetId: assetId,
+              base: base,
+              onItemUpdated: onItemUpdated,
+            );
+          },
+    );
+    if (batch == null || !batch.hasSuccess || !context.mounted) {
+      return;
+    }
+    await viewModel.didFinishAssetUpload(batch);
+  }
+
+  List<WorkHistoryItem> _ensureJobInList(
+    List<WorkHistoryItem> jobs,
+    String jobId,
+  ) {
+    if (jobId.isEmpty) {
+      return jobs;
+    }
+    for (final job in jobs) {
+      if (job.jobId == jobId) {
+        return jobs;
+      }
+    }
+    return [
+      WorkHistoryItem(
+        jobId: jobId,
+        commonKey: '작업 $jobId',
+        projectNo: '',
+        unitNo: '',
+        itemCode: '',
+        itemName: '',
+        workerId: '',
+        workerName: '',
+        equipmentId: '',
+        equipmentName: '',
+        workedAt: null,
+        passCount: 0,
+        attachmentCount: 0,
+      ),
+      ...jobs,
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<CameraRecordingViewModel>();
@@ -227,7 +362,23 @@ class _CameraRecordingCard extends StatelessWidget {
                             size: 16,
                           ),
                           const SizedBox(width: 6),
-                          const Expanded(child: Text('카메라 녹화')),
+                          const Expanded(
+                            child: Text(
+                              '카메라 녹화',
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          if (viewModel.recordingElapsedLabel.isNotEmpty) ...[
+                            Text(
+                              '● 녹화 중  ${viewModel.recordingElapsedLabel}',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.red,
+                              ),
+                            ),
+                            const SizedBox(width: 4),
+                          ],
                           IconButton(
                             icon: Icon(
                               isMinimized
@@ -281,14 +432,6 @@ class _CameraRecordingCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 12),
-                        if (viewModel.capturesScreenComment) ...[
-                          LookupSearchField(
-                            value: viewModel.commentBody,
-                            hintText: '녹화에 덧붙일 글 (없어도 됩니다)',
-                            onChanged: viewModel.didChangeCommentBody,
-                          ),
-                          const SizedBox(height: 12),
-                        ],
                         if (viewModel.isUploading) ...[
                           const ProgressBar(),
                           if (viewModel.noticeText.isNotEmpty) ...[
@@ -321,13 +464,13 @@ class _CameraRecordingCard extends StatelessWidget {
                             ),
                             FilledButton(
                               onPressed: viewModel.canUpload
-                                  ? viewModel.didTapUpload
+                                  ? () => _didTapUpload(context)
                                   : null,
                               child: Text(
                                 viewModel.videoUploaded &&
                                         viewModel.audioUploaded
-                                    ? '업로드 완료'
-                                    : '녹화 파일 업로드',
+                                    ? '저장 완료'
+                                    : '타임라인에 올리기',
                               ),
                             ),
                             if (viewModel.canRetry)

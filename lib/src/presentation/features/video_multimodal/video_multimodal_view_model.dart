@@ -184,7 +184,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool _isCameraRecordingMinimized = false;
   int _commentListReloadCount = 0;
   double _cameraRecordingOffsetX = 24;
-  double _cameraRecordingOffsetY = 24;
+  double _cameraRecordingOffsetY = 56;
   bool _isInferenceMinimized = false;
   double _inferenceOffsetX = 24;
   double _inferenceOffsetY = 24;
@@ -1027,7 +1027,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     try {
       await _fetchClipDetailNetwork(clipId, epoch);
       while (!_isClosed) {
-        final pending = _clipDetailLoadGate.takePendingMatching(_selectedClipId);
+        final pending = _clipDetailLoadGate.takePendingMatching(
+          _selectedClipId,
+        );
         if (pending == null) {
           break;
         }
@@ -1097,8 +1099,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   Future<void> _applyLoadedClipDetail(ClipDetail detail, int epoch) async {
     final clip = _timelineClip(detail.clipId);
-    final needsPoseBody =
-        detail.isPose || clip?.kind == TimelineClipKind.pose;
+    final needsPoseBody = detail.isPose || clip?.kind == TimelineClipKind.pose;
     if (clip != null && needsPoseBody) {
       await _ensureOverlayBodiesForSelection(clip, detail: detail);
     } else if (clip != null) {
@@ -1188,10 +1189,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       // covering만 같고 playback 슬롯이 비었으면 슬롯만 맞춘다(token 유지).
       _playbackVideoClip = video;
     }
-    didSeekToSeconds(
-      secondsFromNanoseconds(seekStartNs),
-      resumePlayback: true,
-    );
+    didSeekToSeconds(secondsFromNanoseconds(seekStartNs), resumePlayback: true);
   }
 
   TimelineClip? _targetVideoClipFromDetail(ClipDetail detail) {

@@ -108,9 +108,23 @@ class AssetUploadQueueItem {
 class AssetUploadBatchResult {
   const AssetUploadBatchResult({
     required this.items,
+    this.screenCommentBody = '',
   });
 
   final List<AssetUploadQueueItem> items;
+
+  /// 녹화→타임라인 저장 시 화면 코멘트(CreateComment) body. 에셋 조회 올리기는 비움.
+  final String screenCommentBody;
+
+  AssetUploadBatchResult copyWith({
+    List<AssetUploadQueueItem>? items,
+    String? screenCommentBody,
+  }) {
+    return AssetUploadBatchResult(
+      items: items ?? this.items,
+      screenCommentBody: screenCommentBody ?? this.screenCommentBody,
+    );
+  }
 
   List<AssetUploadResult> get succeeded {
     return [

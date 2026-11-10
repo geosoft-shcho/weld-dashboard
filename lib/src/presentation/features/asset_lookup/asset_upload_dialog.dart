@@ -47,6 +47,11 @@ Future<AssetUploadBatchResult?> showAssetUploadDialog(
   required Future<List<CameraRecordingFile>> Function() pickFiles,
   required AssetUploadQueueRunner uploadQueue,
   required AssetRetryPostprocessRunner retryPostprocess,
+  List<CameraRecordingFile> initialFiles = const [],
+  DateTime? initialTimeOrigin,
+  bool filesLocked = false,
+  bool timelineSaveMode = false,
+  bool showScreenCommentField = false,
 }) {
   return showDialog<AssetUploadBatchResult>(
     context: context,
@@ -60,6 +65,11 @@ Future<AssetUploadBatchResult?> showAssetUploadDialog(
       pickFiles: pickFiles,
       uploadQueue: uploadQueue,
       retryPostprocess: retryPostprocess,
+      initialFiles: initialFiles,
+      initialTimeOrigin: initialTimeOrigin,
+      filesLocked: filesLocked,
+      timelineSaveMode: timelineSaveMode,
+      showScreenCommentField: showScreenCommentField,
     ),
   );
 }
@@ -92,6 +102,11 @@ class _AssetUploadDialog extends StatefulWidget {
     required this.pickFiles,
     required this.uploadQueue,
     required this.retryPostprocess,
+    this.initialFiles = const [],
+    this.initialTimeOrigin,
+    this.filesLocked = false,
+    this.timelineSaveMode = false,
+    this.showScreenCommentField = false,
   });
 
   final List<WorkHistoryItem> jobs;
@@ -103,6 +118,11 @@ class _AssetUploadDialog extends StatefulWidget {
   final Future<List<CameraRecordingFile>> Function() pickFiles;
   final AssetUploadQueueRunner uploadQueue;
   final AssetRetryPostprocessRunner retryPostprocess;
+  final List<CameraRecordingFile> initialFiles;
+  final DateTime? initialTimeOrigin;
+  final bool filesLocked;
+  final bool timelineSaveMode;
+  final bool showScreenCommentField;
 
   @override
   State<_AssetUploadDialog> createState() => _AssetUploadDialogState();
@@ -113,6 +133,8 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
       TextEditingController();
   final TextEditingController _subjectController = TextEditingController();
   final TextEditingController _situationController = TextEditingController();
+  final TextEditingController _screenCommentController =
+      TextEditingController();
 
   final List<_DraftRow> _rows = [];
   AssetUploadFormats? _formats;
@@ -133,6 +155,22 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
         ? ''
         : widget.initialPassId;
     _passes = _passesOf(_jobId);
+    final timeText = widget.initialTimeOrigin == null
+        ? ''
+        : _timeText(widget.initialTimeOrigin!);
+    if (timeText.isNotEmpty) {
+      _commonTimeOriginController.text = timeText;
+    }
+    for (final file in widget.initialFiles) {
+      _idSeq += 1;
+      _rows.add(
+        _DraftRow(
+          localId: '$_idSeq',
+          file: file,
+          timeOriginController: TextEditingController(text: timeText),
+        ),
+      );
+    }
     _loadFormats();
   }
 
@@ -148,10 +186,20 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
     _commonTimeOriginController.dispose();
     _subjectController.dispose();
     _situationController.dispose();
+    _screenCommentController.dispose();
     for (final row in _rows) {
       row.dispose();
     }
     super.dispose();
+  }
+
+  AssetUploadBatchResult _resultWithComment(AssetUploadBatchResult batch) {
+    if (!widget.showScreenCommentField) {
+      return batch;
+    }
+    return batch.copyWith(
+      screenCommentBody: _screenCommentController.text.trim(),
+    );
   }
 
   Future<void> _loadFormats() async {
@@ -183,6 +231,9 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
   }
 
   Future<void> _didTapPickFiles() async {
+    if (widget.filesLocked) {
+      return;
+    }
     try {
       final files = await widget.pickFiles();
       if (!mounted || files.isEmpty) {
@@ -212,7 +263,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
   }
 
   void _didRemoveRow(_DraftRow row) {
-    if (_isUploading) {
+    if (_isUploading || widget.filesLocked) {
       return;
     }
     setState(() {
@@ -388,7 +439,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
       }
       setState(() {
         _isUploading = false;
-        _batchResult = result;
+        _batchResult = _resultWithComment(result);
       });
     } catch (error) {
       if (mounted) {
@@ -403,7 +454,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
   void _didTapClose() {
     final batch = _batchResult;
     if (batch != null && batch.hasSuccess) {
-      Navigator.of(context).pop(batch);
+      Navigator.of(context).pop(_resultWithComment(batch));
       return;
     }
     Navigator.of(context).pop();
@@ -414,8 +465,10 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final title = widget.timelineSaveMode ? '타임라인에 올리기' : '에셋 올리기';
+    final primaryLabel = widget.timelineSaveMode ? '저장' : '올리기';
     return ContentDialog(
-      title: const Text('에셋 올리기'),
+      title: Text(title),
       constraints: const BoxConstraints(maxWidth: 720, maxHeight: 760),
       content: SizedBox(
         width: 680,
@@ -477,13 +530,14 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
         ),
         if (_canCloseWithResult)
           FilledButton(
-            onPressed: () => Navigator.of(context).pop(_batchResult),
+            onPressed: () =>
+                Navigator.of(context).pop(_resultWithComment(_batchResult!)),
             child: const Text('완료'),
           )
         else
           FilledButton(
             onPressed: _isUploading ? null : _didTapUpload,
-            child: Text(_isUploading ? '올리는 중…' : '올리기'),
+            child: Text(_isUploading ? '올리는 중…' : primaryLabel),
           ),
       ],
     );
@@ -510,6 +564,17 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
             enabled: !_isUploading,
           ),
         ),
+        if (widget.showScreenCommentField) ...[
+          const SizedBox(height: 12),
+          InfoLabel(
+            label: '화면 코멘트',
+            child: _MultilineTextInput(
+              controller: _screenCommentController,
+              hintText: '화면 코멘트 글 (없어도 됩니다)',
+              enabled: !_isUploading,
+            ),
+          ),
+        ],
         const SizedBox(height: 12),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -664,11 +729,12 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
   Widget _buildQueueHeader() {
     return Row(
       children: [
-        Button(
-          onPressed: _isUploading ? null : _didTapPickFiles,
-          child: const Text('파일 고르기'),
-        ),
-        const SizedBox(width: 8),
+        if (!widget.filesLocked)
+          Button(
+            onPressed: _isUploading ? null : _didTapPickFiles,
+            child: const Text('파일 고르기'),
+          ),
+        if (!widget.filesLocked) const SizedBox(width: 8),
         Text(
           _rows.isEmpty ? '선택한 파일 없음' : '${_rows.length}개 파일',
           style: const TextStyle(fontSize: 12),
@@ -703,7 +769,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              if (!_isUploading)
+              if (!_isUploading && !widget.filesLocked)
                 IconButton(
                   icon: const Icon(FluentIcons.chrome_close, size: 12),
                   onPressed: () => _didRemoveRow(row),

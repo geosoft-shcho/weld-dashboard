@@ -4,10 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/domain/entities/asset_upload.dart';
 import 'package:weld_dashboard/src/domain/entities/camera_recording.dart';
 import 'package:weld_dashboard/src/domain/entities/screen_comment.dart';
-import 'package:weld_dashboard/src/domain/entities/tool_run.dart';
 import 'package:weld_dashboard/src/domain/repositories/asset_upload_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/camera_recording_repository.dart';
-import 'package:weld_dashboard/src/domain/repositories/tool_run_repository.dart';
 import 'package:weld_dashboard/src/domain/use_cases/create_screen_comment_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/delete_screen_comment_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_screen_comments_use_case.dart';
@@ -18,9 +16,35 @@ import 'package:weld_dashboard/src/domain/use_cases/read_camera_preview_handle_u
 import 'package:weld_dashboard/src/domain/use_cases/release_camera_recording_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/start_camera_recording_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/stop_camera_recording_use_case.dart';
-import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
-import 'package:weld_dashboard/src/domain/use_cases/upload_asset_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/camera_recording_view_model.dart';
+
+AssetUploadBatchResult _recordingBatch({String screenCommentBody = ''}) {
+  return AssetUploadBatchResult(
+    items: const [
+      AssetUploadQueueItem(
+        localId: '1',
+        fileName: 'video.webm',
+        status: AssetUploadItemStatus.completed,
+        result: AssetUploadResult(
+          assetId: '55',
+          fileName: 'video.webm',
+          runId: '',
+        ),
+      ),
+      AssetUploadQueueItem(
+        localId: '2',
+        fileName: 'audio.webm',
+        status: AssetUploadItemStatus.completed,
+        result: AssetUploadResult(
+          assetId: '77',
+          fileName: 'audio.webm',
+          runId: '',
+        ),
+      ),
+    ],
+    screenCommentBody: screenCommentBody,
+  );
+}
 
 void main() {
   test('screen comment stt labels', () {
@@ -71,8 +95,6 @@ void main() {
         stopCameraRecordingUseCase: StopCameraRecordingUseCase(camera),
         releaseCameraRecordingUseCase: ReleaseCameraRecordingUseCase(camera),
         readCameraPreviewHandleUseCase: ReadCameraPreviewHandleUseCase(camera),
-        uploadAssetUseCase: UploadAssetUseCase(upload),
-        toolRunUseCase: ToolRunUseCase(_IdleTools()),
         createScreenCommentUseCase: CreateScreenCommentUseCase(upload),
         jobId: '128',
         onUploaded: () async {},
@@ -95,16 +117,17 @@ void main() {
           fileName: 'audio.webm',
         ),
       );
-      viewModel.commentBody = '설명';
-
-      await viewModel.didTapUpload();
+      await viewModel.didFinishAssetUpload(
+        _recordingBatch(screenCommentBody: '설명'),
+      );
 
       expect(upload.createCount, 1);
       expect(upload.createdContext, context);
       expect(upload.createdAudioAssetId, '77');
       expect(upload.createdVideoAssetId, '55');
       expect(upload.createdBody, '설명');
-      expect(viewModel.noticeText, contains('업로드가 완료'));
+      expect(viewModel.noticeText, contains('타임라인에 올렸습니다'));
+      expect(viewModel.noticeText, contains('코멘트도 등록되었습니다'));
     },
   );
 
@@ -119,8 +142,6 @@ void main() {
         stopCameraRecordingUseCase: StopCameraRecordingUseCase(camera),
         releaseCameraRecordingUseCase: ReleaseCameraRecordingUseCase(camera),
         readCameraPreviewHandleUseCase: ReadCameraPreviewHandleUseCase(camera),
-        uploadAssetUseCase: UploadAssetUseCase(upload),
-        toolRunUseCase: ToolRunUseCase(_IdleTools()),
         createScreenCommentUseCase: CreateScreenCommentUseCase(upload),
         jobId: '128',
         onUploaded: () async {},
@@ -142,7 +163,7 @@ void main() {
         ),
       );
 
-      await viewModel.didTapUpload();
+      await viewModel.didFinishAssetUpload(_recordingBatch());
 
       expect(upload.createCount, 0);
     },
@@ -160,8 +181,6 @@ void main() {
       stopCameraRecordingUseCase: StopCameraRecordingUseCase(camera),
       releaseCameraRecordingUseCase: ReleaseCameraRecordingUseCase(camera),
       readCameraPreviewHandleUseCase: ReadCameraPreviewHandleUseCase(camera),
-      uploadAssetUseCase: UploadAssetUseCase(upload),
-      toolRunUseCase: ToolRunUseCase(_IdleTools()),
       createScreenCommentUseCase: CreateScreenCommentUseCase(upload),
       jobId: '128',
       passId: '9',
@@ -186,7 +205,7 @@ void main() {
       ),
     );
 
-    await viewModel.didTapUpload();
+    await viewModel.didFinishAssetUpload(_recordingBatch());
 
     expect(upload.createCount, 1);
     expect(upload.createdPassId, '9');
@@ -292,11 +311,13 @@ class _CommentUpload implements AssetUploadRepository {
     required String jobId,
     required DateTime timeOrigin,
     required CameraRecordingFile file,
-  }) async {
-    return AssetUploadResult(
-      assetId: file.mimeType.startsWith('audio') ? '77' : '55',
-      fileName: file.fileName,
-      runId: '',
+  }) {
+    return uploadFile(
+      jobId: jobId,
+      passId: '',
+      equipmentId: '',
+      timeOrigin: timeOrigin,
+      file: file,
     );
   }
 
@@ -335,7 +356,13 @@ class _CommentUpload implements AssetUploadRepository {
     String subject = '',
     String situation = '',
     void Function(double progressPercent)? onProgress,
-  }) => throw UnimplementedError();
+  }) async {
+    return AssetUploadResult(
+      assetId: file.mimeType.startsWith('audio') ? '77' : '55',
+      fileName: file.fileName,
+      runId: '',
+    );
+  }
 }
 
 class _IdleCamera implements CameraRecordingRepository {
@@ -353,30 +380,4 @@ class _IdleCamera implements CameraRecordingRepository {
 
   @override
   Future<CameraRecording> stop() => throw UnimplementedError();
-}
-
-class _IdleTools implements ToolRunRepository {
-  @override
-  Future<ToolRunSnapshot> cancelRun({required String runId}) =>
-      throw UnimplementedError();
-
-  @override
-  Future<ToolRunSnapshot> getRun({required String runId}) =>
-      throw UnimplementedError();
-
-  @override
-  Future<List<InferenceTool>> listEnabledTools({
-    bool includeDisabled = false,
-  }) => throw UnimplementedError();
-
-  @override
-  Future<List<ToolRunSnapshot>> listJobRuns({required String jobId}) =>
-      throw UnimplementedError();
-
-  @override
-  Future<ToolRunSnapshot> startRun({
-    required String toolId,
-    required ToolRunTargetKind kind,
-    required String targetId,
-  }) => throw UnimplementedError();
 }

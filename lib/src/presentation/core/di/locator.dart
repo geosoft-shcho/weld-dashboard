@@ -385,8 +385,6 @@ void setupLocator({required bool pdfrxReady}) {
       readCameraPreviewHandleUseCase: ReadCameraPreviewHandleUseCase(
         repository,
       ),
-      uploadAssetUseCase: locator(),
-      toolRunUseCase: locator(),
       createScreenCommentUseCase: locator(),
       jobId: args.jobId,
       passId: args.passId,
