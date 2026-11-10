@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:flutter/material.dart'
     show InputDecoration, OutlineInputBorder, TextField;
@@ -79,10 +81,7 @@ class _AssetLookupDetailBody extends StatelessWidget {
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 12),
-        AssetPreviewPane(
-          asset: asset,
-          readContent: viewModel.readContent,
-        ),
+        AssetPreviewPane(asset: asset, readContent: viewModel.readContent),
         const SizedBox(height: 12),
         DecoratedBox(
           decoration: BoxDecoration(
@@ -138,9 +137,7 @@ class _AssetLookupDetailBody extends StatelessWidget {
                       ? null
                       : () => _didTapRetryPostprocess(context, viewModel),
                   child: Text(
-                    viewModel.isRetryingPostprocess
-                        ? '다시 거는 중…'
-                        : '후처리 다시 걸기',
+                    viewModel.isRetryingPostprocess ? '다시 거는 중…' : '후처리 다시 걸기',
                   ),
                 )
               : null,
@@ -164,33 +161,31 @@ class _AssetLookupDetailBody extends StatelessWidget {
               ),
               (
                 '실행 번호',
-                asset.postprocess.runId.isEmpty
-                    ? '—'
-                    : asset.postprocess.runId,
+                asset.postprocess.runId.isEmpty ? '—' : asset.postprocess.runId,
               ),
               if (asset.postprocess.errorMessage.isNotEmpty)
                 ('사유', asset.postprocess.errorMessage),
             ],
           ),
-        const LookupDetailSectionTitle('정보'),
-        LookupDetailKvGrid(
-          entries: [
-            ('장비', viewModel.equipmentNameOf(asset.equipmentId)),
-            for (final field in asset.displayFields)
-              (field.label, field.value),
-            ('크기', DashboardFormatters.byteSize(asset.sizeBytes)),
-            ('길이', DashboardFormatters.durationFromNs(asset.durationNs)),
-            ('파생', '${asset.childCount}개'),
-          ],
-        ),
-        if (asset.propertiesJson.isNotEmpty)
+        if (asset.displayFields.isNotEmpty) ...[
+          const LookupDetailSectionTitle('정보'),
+          LookupDetailKvGrid(
+            entries: [
+              for (final field in asset.displayFields)
+                (field.label, field.value),
+            ],
+          ),
+        ],
+        if (asset.propertiesJson.isNotEmpty) ...[
+          const SizedBox(height: 8),
           Expander(
             header: const Text('원래 properties 보기'),
             content: SelectableText(
-              asset.propertiesJson,
+              _prettyPropertiesJson(asset.propertiesJson),
               style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
             ),
           ),
+        ],
         const SizedBox(height: 8),
         if (asset.provenanceSummary.isNotEmpty)
           InfoBar(
@@ -237,7 +232,6 @@ class _AssetLookupDetailBody extends StatelessWidget {
       ],
     );
   }
-
 }
 
 Future<void> _didTapRetryPostprocess(
@@ -351,9 +345,7 @@ Future<void> _didTapEditSubjectSituation(
                                   : timeText.replaceFirst(' ', 'T'),
                             );
                             if (recordedAt == null) {
-                              throw ArgumentError(
-                                '기록 시각 형식이 올바르지 않습니다.',
-                              );
+                              throw ArgumentError('기록 시각 형식이 올바르지 않습니다.');
                             }
                           }
                           await viewModel.updateSubjectSituation(
@@ -458,5 +450,14 @@ class _MultilineTextInput extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+String _prettyPropertiesJson(String propertiesJson) {
+  try {
+    final decoded = jsonDecode(propertiesJson);
+    return const JsonEncoder.withIndent('  ').convert(decoded);
+  } on FormatException {
+    return propertiesJson;
   }
 }
