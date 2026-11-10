@@ -6,6 +6,7 @@ import '../../../../domain/entities/work_history_item.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../navigation/app_coordinator.dart';
+import '../../auth/auth_session_view_model.dart';
 import '../work_history_view_model.dart';
 
 class WorkHistoryTable extends StatefulWidget {
@@ -141,7 +142,7 @@ class _HeaderRow extends StatelessWidget {
             _Cell('패스', flex: 6, isHeader: true),
             _Cell('첨부', flex: 6, isHeader: true),
             _Cell('성적서', flex: 8, isHeader: true),
-            _Cell('', flex: 16, isHeader: true),
+            _Cell('바로가기', flex: 10, isHeader: true),
           ],
         ),
       ),
@@ -212,24 +213,37 @@ class _DataRow extends StatelessWidget {
                 ),
               ),
               Expanded(
-                flex: 16,
-                child: Wrap(
-                  spacing: 4,
-                  runSpacing: 4,
-                  children: [
-                    Button(
-                      onPressed: () => _openDetail(context),
-                      child: const Text('상세'),
-                    ),
-                    Button(
-                      onPressed: () => _openPassProfile(context),
-                      child: const Text('프로파일'),
-                    ),
-                    Button(
-                      onPressed: () => _openQuality(context),
-                      child: const Text('품질'),
-                    ),
-                  ],
+                flex: 10,
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _ActionIcon(
+                        tooltip: '작업 상세',
+                        icon: FluentIcons.red_eye,
+                        onPressed: () => _openDetail(context),
+                      ),
+                      _ActionIcon(
+                        tooltip: '패스 프로파일',
+                        icon: FluentIcons.line_chart,
+                        onPressed: () => _openPassProfile(context),
+                      ),
+                      _ActionIcon(
+                        tooltip: '품질 이슈',
+                        icon: FluentIcons.report_document,
+                        onPressed: () => _openQuality(context),
+                      ),
+                      if (context.select<AuthSessionViewModel, bool>(
+                        (auth) => auth.canAccessVideoMultimodal,
+                      ))
+                        _ActionIcon(
+                          tooltip: '비디오 멀티모달',
+                          icon: FluentIcons.video,
+                          onPressed: () => _openVideoMultimodal(context),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -263,7 +277,18 @@ class _DataRow extends StatelessWidget {
     );
   }
 
+  void _openVideoMultimodal(BuildContext context) {
+    viewModel.didSelectRow(item.jobId);
+    context.read<AppCoordinator>().didTapOpenVideoMultimodal(
+      context,
+      jobId: item.jobId,
+    );
+  }
+
   void _showMenu(BuildContext context) {
+    final canOpenVideo = context
+        .read<AuthSessionViewModel>()
+        .canAccessVideoMultimodal;
     showDialog(
       context: context,
       builder: (dialogContext) {
@@ -296,6 +321,16 @@ class _DataRow extends StatelessWidget {
                 },
                 child: const Text('품질'),
               ),
+              if (canOpenVideo) ...[
+                const SizedBox(height: 8),
+                Button(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    _openVideoMultimodal(context);
+                  },
+                  child: const Text('비디오 멀티모달'),
+                ),
+              ],
             ],
           ),
           actions: [
@@ -306,6 +341,28 @@ class _DataRow extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _ActionIcon extends StatelessWidget {
+  const _ActionIcon({
+    required this.tooltip,
+    required this.icon,
+    required this.onPressed,
+  });
+
+  final String tooltip;
+  final IconData icon;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      useMousePosition: false,
+      style: const TooltipThemeData(verticalOffset: 6, preferBelow: true),
+      child: IconButton(icon: Icon(icon, size: 14), onPressed: onPressed),
     );
   }
 }

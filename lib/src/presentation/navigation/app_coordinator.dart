@@ -387,7 +387,13 @@ class AppCoordinator extends ChangeNotifier {
     didTapOpenQualityIssue(commonKey: commonKey, jobId: jobId, viaDetail: true);
   }
 
-  void didTapOpenVideoMultimodal(BuildContext context) {
+  void didTapOpenVideoMultimodal(
+    BuildContext context, {
+    String jobId = '',
+  }) {
+    if (jobId.isNotEmpty) {
+      _jobId = jobId;
+    }
     if (_jobId.isEmpty || !canAccessVideoMultimodal) {
       return;
     }
