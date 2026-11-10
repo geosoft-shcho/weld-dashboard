@@ -63,39 +63,54 @@ class JobPassTab extends StatelessWidget {
                       padding: const EdgeInsets.symmetric(vertical: 6),
                       child: Row(
                         children: [
-                          SizedBox(
-                            width: 130,
+                          Expanded(
+                            flex: 3,
                             child: Text(
                               '${pass.passNo}패스${pass.passNo == 1 ? ' 초층' : ''} · ${pass.kind.label}',
                             ),
                           ),
                           Expanded(
+                            flex: 1,
                             child: Text(
                               DashboardFormatters.dateTime(pass.startedAt),
                             ),
                           ),
                           Expanded(
+                            flex: 1,
                             child: Text(
                               DashboardFormatters.dateTime(pass.endedAt),
                             ),
                           ),
-                          Tooltip(
-                            message: '수정',
-                            child: IconButton(
-                              icon: const Icon(FluentIcons.edit, size: 14),
-                              onPressed: () => showJobPassDialog(
-                                context,
-                                viewModel: viewModel,
-                                original: pass,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Tooltip(
-                            message: '지우기',
-                            child: IconButton(
-                              icon: const Icon(FluentIcons.delete, size: 14),
-                              onPressed: () => _didTapDelete(context, pass),
+                          SizedBox(
+                            width: _passActionColWidth,
+                            child: Row(
+                              children: [
+                                Tooltip(
+                                  message: '수정',
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      FluentIcons.edit,
+                                      size: 14,
+                                    ),
+                                    onPressed: () => showJobPassDialog(
+                                      context,
+                                      viewModel: viewModel,
+                                      original: pass,
+                                    ),
+                                  ),
+                                ),
+                                Tooltip(
+                                  message: '지우기',
+                                  child: IconButton(
+                                    icon: const Icon(
+                                      FluentIcons.delete,
+                                      size: 14,
+                                    ),
+                                    onPressed: () =>
+                                        _didTapDelete(context, pass),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
@@ -155,6 +170,8 @@ class JobPassTab extends StatelessWidget {
   }
 }
 
+const double _passActionColWidth = 72;
+
 class _JobPassTableHeader extends StatelessWidget {
   const _JobPassTableHeader();
 
@@ -170,10 +187,13 @@ class _JobPassTableHeader extends StatelessWidget {
         padding: EdgeInsets.symmetric(vertical: 8),
         child: Row(
           children: [
-            SizedBox(width: 130, child: Text('패스', style: headerStyle)),
-            Expanded(child: Text('시작', style: headerStyle)),
-            Expanded(child: Text('종료', style: headerStyle)),
-            SizedBox(width: 64),
+            Expanded(flex: 3, child: Text('패스', style: headerStyle)),
+            Expanded(flex: 1, child: Text('시작', style: headerStyle)),
+            Expanded(flex: 1, child: Text('종료', style: headerStyle)),
+            SizedBox(
+              width: _passActionColWidth,
+              child: Text('기능', style: headerStyle),
+            ),
           ],
         ),
       ),
