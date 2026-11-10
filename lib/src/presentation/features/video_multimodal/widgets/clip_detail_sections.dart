@@ -91,6 +91,9 @@ const _FIELD_LABELS = {
   'targetAsset.kind': '종류',
   'targetAsset.fileName': '파일 이름',
   'targetAsset.contentUrl': '내용 주소',
+  'targetAsset.subject': '주제',
+  'targetAsset.situation': '상황',
+  'targetAsset.postprocess.status': '후처리 상태',
 };
 
 List<ClipDetailSection> groupClipDetailFields(List<ClipField> fields) {
@@ -118,7 +121,8 @@ List<ClipDetailSection> groupClipDetailFields(List<ClipField> fields) {
     if (rows.isEmpty) {
       continue;
     }
-    if (title == '관계' && rows.every((row) => row.value == '—')) {
+    if ((title == '관계' || title == '만든 실행') &&
+        rows.every((row) => row.value == '—')) {
       continue;
     }
     sections.add(ClipDetailSection(title: title, rows: rows));

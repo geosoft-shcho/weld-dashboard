@@ -2,9 +2,11 @@ import 'dart:convert';
 
 import 'package:fixnum/fixnum.dart';
 
+import '../../domain/entities/asset_lookup_row.dart';
 import '../../domain/entities/job_timeline.dart';
 import '../datasources/generated/google/protobuf/struct.pb.dart';
 import '../datasources/generated/google/protobuf/timestamp.pb.dart';
+import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_msg;
 import '../datasources/generated/mediatag/asset/v1/asset.pbenum.dart'
     as asset_pb;
 import '../datasources/generated/mediatag/compose/v1/compose.pb.dart'
@@ -66,14 +68,6 @@ ClipDetail clipDetailFromResponse(
     add('provenance.toolVersion', _text(provenance.toolVersion));
     add('provenance.targetKind', _enumLabel(provenance.targetKind.name));
     add('provenance.targetId', _targetId(provenance));
-  } else {
-    add('provenance.confidence', _dash);
-    add('provenance.reviewed', _dash);
-    add('provenance.runId', _dash);
-    add('provenance.toolId', _dash);
-    add('provenance.toolVersion', _dash);
-    add('provenance.targetKind', _dash);
-    add('provenance.targetId', _dash);
   }
   add('embeddedAt', _time(clip.hasEmbeddedAt(), clip.embeddedAt));
   add('createdAt', _time(clip.hasCreatedAt(), clip.createdAt));
@@ -104,23 +98,19 @@ ClipDetail clipDetailFromResponse(
     add('asset.recordedAt', _time(asset.hasRecordedAt(), asset.recordedAt));
     add('asset.durationNs', _ns(asset.hasDurationNs(), asset.durationNs));
     if (asset.hasProvenance()) {
-      final provenance = asset.provenance;
-      add('asset.provenance.operation', _text(provenance.operation));
-      add('asset.provenance.runId', _id(provenance.runId));
-      add('asset.provenance.toolId', _id(provenance.toolId));
-      add('asset.provenance.toolVersion', _text(provenance.toolVersion));
+      final assetProvenance = asset.provenance;
+      add('asset.provenance.operation', _text(assetProvenance.operation));
+      add('asset.provenance.runId', _id(assetProvenance.runId));
+      add('asset.provenance.toolId', _id(assetProvenance.toolId));
+      add('asset.provenance.toolVersion', _text(assetProvenance.toolVersion));
       add(
         'asset.provenance.parameters',
-        _struct(provenance.hasParameters(), provenance.parameters),
+        _struct(assetProvenance.hasParameters(), assetProvenance.parameters),
       );
-      add('asset.provenance.parentAssetId', _id(provenance.parentAssetId));
-    } else {
-      add('asset.provenance.operation', _dash);
-      add('asset.provenance.runId', _dash);
-      add('asset.provenance.toolId', _dash);
-      add('asset.provenance.toolVersion', _dash);
-      add('asset.provenance.parameters', _dash);
-      add('asset.provenance.parentAssetId', _dash);
+      add(
+        'asset.provenance.parentAssetId',
+        _id(assetProvenance.parentAssetId),
+      );
     }
     add('asset.contentUrl', _text(asset.contentUrl));
     add('asset.childCount', '${asset.childCount}');
@@ -152,6 +142,9 @@ ClipDetail clipDetailFromResponse(
     add('targetAsset.kind', _enumLabel(target.kind.name));
     add('targetAsset.fileName', _text(target.fileName));
     add('targetAsset.contentUrl', _text(target.contentUrl));
+    add('targetAsset.subject', _text(target.subject));
+    add('targetAsset.situation', _text(target.situation));
+    add('targetAsset.postprocess.status', _postprocessStatusLabel(target));
   } else {
     add('targetAsset', _none);
   }
@@ -265,6 +258,22 @@ String _enumLabel(String name) {
     return rest == 'UNSPECIFIED' ? '미지정' : rest;
   }
   return name;
+}
+
+String _postprocessStatusLabel(asset_msg.Asset asset) {
+  if (!asset.hasPostprocess()) {
+    return _dash;
+  }
+  final name = asset.postprocess.status.name;
+  const prefix = 'POSTPROCESS_STATUS_';
+  if (!name.startsWith(prefix)) {
+    return name;
+  }
+  final code = name.substring(prefix.length).toLowerCase();
+  if (code == 'unspecified') {
+    return _dash;
+  }
+  return AssetPostprocessStatusOption.labelOf(code);
 }
 
 String _targetId(compose_pb.ClipProvenance provenance) {

@@ -135,7 +135,7 @@ void main() {
     expect(detail.isVideo, isFalse);
     expect(detail.valueOf('kind'), 'TAG');
     expect(detail.valueOf('source.assetId'), '—');
-    expect(detail.valueOf('provenance.targetKind'), '—');
+    expect(detail.valueOf('provenance.targetKind'), isEmpty);
     expect(detail.valueOf('asset'), '가리키는 파일 없음');
   });
 
@@ -199,6 +199,12 @@ void main() {
           kind: asset_pb.AssetKind.ASSET_KIND_VIDEO,
           fileName: 'target.mp4',
           contentUrl: '/files/target.mp4',
+          subject: '화면 코멘트 1',
+          situation: '품질 이슈 · 작업 388',
+          postprocess: asset_pb.PostprocessRun(
+            runId: Int64(9),
+            status: asset_pb.PostprocessStatus.POSTPROCESS_STATUS_SUCCEEDED,
+          ),
         ),
       ),
       resolveContentUrl: (url) => 'http://host$url',
@@ -221,6 +227,9 @@ void main() {
     expect(detail.targetAssetContentUrl, 'http://host/files/target.mp4');
     expect(detail.valueOf('targetClip.kind'), 'VIDEO');
     expect(detail.valueOf('targetAsset.fileName'), 'target.mp4');
+    expect(detail.valueOf('targetAsset.subject'), '화면 코멘트 1');
+    expect(detail.valueOf('targetAsset.situation'), '품질 이슈 · 작업 388');
+    expect(detail.valueOf('targetAsset.postprocess.status'), '완료');
   });
 
   test('pose target keeps its kind and rejects zero ids', () {
@@ -306,6 +315,7 @@ void main() {
     expect(_row(sections, '파일 구간', '파일 번호'), '—');
     expect(_row(sections, '클립 파일', '상태'), '가리키는 파일 없음');
     expect(sections.any((section) => section.title == '관계'), isFalse);
+    expect(sections.any((section) => section.title == '만든 실행'), isFalse);
   });
 
   test('a relation clip shows the two clip numbers', () {
