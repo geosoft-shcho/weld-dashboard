@@ -114,11 +114,6 @@ class MultimodalPageToolbar extends StatelessWidget {
                         selected: viewModel.isCommentsOpen,
                         onPressed: viewModel.didTapToggleComments,
                       ),
-                    ],
-                  ),
-                  _group(
-                    theme,
-                    children: [
                       _ToolbarButton(
                         icon: FluentIcons.chat,
                         label: '질문',
@@ -126,19 +121,18 @@ class MultimodalPageToolbar extends StatelessWidget {
                         selected: viewModel.isAskOpen,
                         onPressed: viewModel.didTapToggleAsk,
                       ),
+                    ],
+                  ),
+                  _group(
+                    theme,
+                    children: [
                       _ToolbarButton(
                         icon: FluentIcons.auto_enhance_on,
-                        label: '추론',
+                        label: '추론 모델/작업 도구',
                         enabled: !locked,
                         onPressed: () =>
                             showMultimodalInferencePicker(context, viewModel),
                       ),
-                    ],
-                  ),
-
-                  _group(
-                    theme,
-                    children: [
                       _ToolbarButton(
                         icon: FluentIcons.video,
                         label: '녹화',
