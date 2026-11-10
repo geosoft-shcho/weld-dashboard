@@ -82,7 +82,7 @@ class _ProjectLookupBody extends StatelessWidget {
       ],
       body: CatalogLookupTable(
         headers: const ['공사 번호', '이름', '현장 · 발주처', '호기 · 품목', '작업'],
-        columnFlexes: const [12, 18, 16, 28, 8],
+        columnFlexes: const [12, 28, 16, 18, 8],
         emptyTitle: '조건에 맞는 공사가 없습니다',
         isLoadingMore: viewModel.isLoadingMore,
         onNearEnd: viewModel.didScrollNearEnd,
