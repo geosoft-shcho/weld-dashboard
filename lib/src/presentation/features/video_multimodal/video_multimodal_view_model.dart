@@ -2,7 +2,6 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
-import '../../../data/datasources/remote/media_files_debug_log.dart';
 import '../../../domain/clip_file_position.dart';
 import '../../../domain/entities/ask_answer.dart';
 import '../../../domain/entities/job_timeline.dart';
@@ -47,7 +46,6 @@ import 'video_overlay_frame.dart';
 import 'video_overlay_json.dart';
 import 'timeline_clip_helpers.dart';
 import 'timeline_playhead_clock.dart';
-import 'timeline_span_debug_log.dart';
 import 'video_playback_rate.dart';
 import 'video_subtitle_text.dart';
 import 'video_multimodal_models.dart';
@@ -545,7 +543,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   /// GetTimeline까지 블로킹한 뒤 보드를 그리고, 첨·라벨·도구·오버레이는 백그라운드.
   Future<void> openTimeline() async {
-    MediaFilesDebugLog.beginInitialLoad(jobId: jobId);
     _isLoading = true;
     _hasError = false;
     _errorMessage = '';
@@ -580,7 +577,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
         _workName = name;
       }
       _playhead.clampToSpan(spanSeconds);
-      _debugLogTimelineSpan('fetchGetTimeline');
       return true;
     } on JobTimelineException catch (error) {
       _hasError = true;
@@ -3838,7 +3834,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _overlayEpoch += 1;
       _clearOverlayBodies();
       _playhead.clampToSpan(spanSeconds);
-      _debugLogTimelineSpan('replaceTimelineFromServer');
       if (clearHint) {
         _timelineHint = '';
       }
@@ -3850,17 +3845,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _timelineHint = error.toString();
       return false;
     }
-  }
-
-  void _debugLogTimelineSpan(String source) {
-    TimelineSpanDebugLog.log(
-      source: source,
-      jobId: jobId,
-      clips: timelineClips,
-      spanSeconds: spanSeconds,
-      spanLabel: spanLabel,
-      playheadLabel: playheadLabel,
-    );
   }
 
   void didCommitBarRange(

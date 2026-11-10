@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:just_audio/just_audio.dart';
 
-import '../../../../data/datasources/remote/media_files_debug_log.dart';
 import '../../../../domain/timeline_clip_playback.dart';
 import '../video_playback_rate.dart';
 
@@ -116,28 +115,14 @@ class _MultimodalTimelineAudioPlayerState
       }
       _openInFlight = true;
       final openUrl = url;
-      final startedAt = DateTime.now();
-      MediaFilesDebugLog.fetchStart(source: 'audio_open', url: openUrl);
       try {
         if (openUrl.startsWith('http://') || openUrl.startsWith('https://')) {
           await _player.setUrl(openUrl);
         } else {
           await _player.setAsset(openUrl);
         }
-        MediaFilesDebugLog.fetchDone(
-          source: 'audio_open',
-          url: openUrl,
-          elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
-        );
         _loadedUrl = openUrl;
-      } catch (error) {
-        MediaFilesDebugLog.fetchDone(
-          source: 'audio_open',
-          url: openUrl,
-          elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
-          error: error,
-        );
-        debugPrint('[AUDIO] open failed: $error');
+      } catch (_) {
         _loadedUrl = '';
         _openInFlight = false;
         if (mounted && _desiredUrl.isNotEmpty && _desiredUrl != openUrl) {
@@ -173,8 +158,7 @@ class _MultimodalTimelineAudioPlayerState
       if ((_player.speed - rate).abs() >= 0.01) {
         await _player.setSpeed(rate);
       }
-    } catch (error) {
-      debugPrint('[AUDIO] setSpeed failed: $error');
+    } catch (_) {
       try {
         await _player.setSpeed(1);
       } catch (_) {}
@@ -197,9 +181,7 @@ class _MultimodalTimelineAudioPlayerState
     if (!_player.playing) {
       try {
         await _player.play();
-      } catch (error) {
-        debugPrint('[AUDIO] play failed: $error');
-      }
+      } catch (_) {}
     }
   }
 
@@ -222,9 +204,7 @@ class _MultimodalTimelineAudioPlayerState
     final ms = milliseconds < 0 ? 0 : milliseconds;
     try {
       await _player.seek(Duration(milliseconds: ms));
-    } catch (error) {
-      debugPrint('[AUDIO] seek failed: $error');
-    }
+    } catch (_) {}
   }
 
   @override

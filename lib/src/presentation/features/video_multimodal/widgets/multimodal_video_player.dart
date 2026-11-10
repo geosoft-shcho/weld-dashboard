@@ -1,12 +1,10 @@
 import 'dart:async';
 
 import 'package:chewie/chewie.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../../../data/datasources/remote/media_files_debug_log.dart';
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_caption.dart';
@@ -164,8 +162,6 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     _release();
     _loadedMediaUrl = '';
     setState(() => _errorText = '');
-    final startedAt = DateTime.now();
-    MediaFilesDebugLog.fetchStart(source: 'video_open', url: source);
     final videoController =
         source.startsWith('http://') || source.startsWith('https://')
         ? VideoPlayerController.networkUrl(Uri.parse(source))
@@ -173,12 +169,6 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     try {
       await videoController.initialize();
     } catch (error) {
-      MediaFilesDebugLog.fetchDone(
-        source: 'video_open',
-        url: source,
-        elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
-        error: error,
-      );
       await videoController.dispose();
       if (mounted && generation == _openGeneration) {
         setState(() => _errorText = error.toString());
@@ -186,20 +176,9 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       return;
     }
     if (!mounted || generation != _openGeneration) {
-      MediaFilesDebugLog.fetchDone(
-        source: 'video_open',
-        url: source,
-        elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
-        error: 'stale',
-      );
       await videoController.dispose();
       return;
     }
-    MediaFilesDebugLog.fetchDone(
-      source: 'video_open',
-      url: source,
-      elapsedMs: DateTime.now().difference(startedAt).inMilliseconds,
-    );
     final chewieController = _createChewie(videoController, widget.captions);
     _loadedMediaUrl = source;
     setState(() {
@@ -213,9 +192,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       }
       _watch(videoController);
       await _applyPlaybackRate(videoController);
-    } catch (error) {
-      debugPrint('[VIDEO] playback setup failed: $error');
-    }
+    } catch (_) {}
   }
 
   ChewieController _createChewie(
@@ -435,18 +412,12 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     final stepSeek =
         widget.usesStepSeek || doesRequireStepSeek(requestedRate);
     if (stepSeek) {
-      debugPrint(
-        '[VIDEO] step-seek mode: '
-        'url=${widget.mediaUrl} requested=$requestedRate',
-      );
       try {
         await controller.setVolume(0);
         if ((controller.value.playbackSpeed - 1).abs() >= 0.01) {
           await controller.setPlaybackSpeed(1);
         }
-      } catch (error) {
-        debugPrint('[VIDEO] step-seek setup failed: $error');
-      }
+      } catch (_) {}
       if (!mounted || _videoController != controller) {
         return;
       }
@@ -460,17 +431,11 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       if ((controller.value.playbackSpeed - rate).abs() >= 0.01) {
         await controller.setPlaybackSpeed(rate);
       }
-    } catch (error) {
-      debugPrint(
-        '[VIDEO] playback rate failed: '
-        'url=${widget.mediaUrl} requested=$requestedRate error=$error',
-      );
+    } catch (_) {
       if ((controller.value.playbackSpeed - 1).abs() >= 0.01) {
         try {
           await controller.setPlaybackSpeed(1);
-        } catch (fallbackError) {
-          debugPrint('[VIDEO] playback rate fallback failed: $fallbackError');
-        }
+        } catch (_) {}
       }
     }
     if (!mounted || _videoController != controller) {

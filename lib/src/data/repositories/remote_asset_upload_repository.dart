@@ -14,7 +14,6 @@ import '../datasources/asset_tus_upload.dart';
 import '../datasources/generated/google/protobuf/struct.pb.dart';
 import '../datasources/generated/google/protobuf/timestamp.pb.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
-import '../datasources/remote/asset_upload_debug_log.dart';
 import '../datasources/remote/media_tag_data_source.dart';
 import 'proto_id.dart';
 
@@ -121,12 +120,6 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     final useTus = file.bytes.length >= tusMinBytes;
     if (useTus) {
       try {
-        AssetUploadDebugLog.post(
-          transport: 'tus',
-          fileName: file.fileName,
-          metadata: metadata,
-          url: assetsUrl,
-        );
         return await uploadAssetTus(
           endpoint: _mediaTag.resolveContentUrl('/uploads/'),
           assetsUrl: assetsUrl,
@@ -139,12 +132,6 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
         // 비웹 등 — multipart로 이어 간다.
       }
     }
-    AssetUploadDebugLog.post(
-      transport: 'multipart',
-      fileName: file.fileName,
-      metadata: metadata,
-      url: assetsUrl,
-    );
     return _upload(
       url: assetsUrl,
       metadata: metadata,
@@ -232,12 +219,6 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
             as Map<String, dynamic>,
       };
       final metadataJson = jsonEncode(metadata);
-      AssetUploadDebugLog.post(
-        transport: 'register',
-        fileName: fallbackFileName,
-        metadata: metadataJson,
-        url: _mediaTag.resolveContentUrl('/assets'),
-      );
       final body = await _postJsonAssets(metadataJson);
       return _resultFrom(body, fallbackFileName);
     } on AssetUploadException {
