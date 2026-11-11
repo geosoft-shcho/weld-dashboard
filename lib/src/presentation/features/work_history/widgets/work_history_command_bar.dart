@@ -353,7 +353,6 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
               ),
             ),
           ),
-          CommandBarWidgetItem(child: const Spacer()),
           CommandBarWidgetItem(
             child: Padding(
               padding: const EdgeInsets.only(top: 24),
