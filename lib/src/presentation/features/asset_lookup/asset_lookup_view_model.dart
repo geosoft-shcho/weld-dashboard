@@ -32,6 +32,7 @@ class AssetLookupViewModel extends ChangeNotifier {
        _uploadAssetQueueUseCase = uploadAssetQueueUseCase;
 
   static const int pageSize = WorkHistoryQuery.BATCH_SIZE;
+  static const int filterCatalogPageSize = WorkHistoryQuery.BATCH_SIZE;
 
   final ListAssetLookupPageUseCase _listAssetLookupPageUseCase;
   final ListEquipmentLookupUseCase _listEquipmentLookupUseCase;
@@ -50,6 +51,7 @@ class AssetLookupViewModel extends ChangeNotifier {
   List<Equipment> _equipment = const [];
   List<WorkHistoryItem> _jobs = const [];
   String _jobsNextPageToken = '';
+  int _jobsTotalCount = 0;
   List<JobPassOption> _passes = const [];
   List<AssetLookupRow> _rows = const [];
   String _nextPageToken = '';
@@ -73,6 +75,20 @@ class AssetLookupViewModel extends ChangeNotifier {
   List<WorkHistoryItem> get jobs => _jobs;
   List<JobPassOption> get passes => _passes;
   bool get doesHaveMoreJobs => _jobsNextPageToken.isNotEmpty;
+  int get jobsLoadedPage {
+    if (_jobs.isEmpty) {
+      return 0;
+    }
+    return (_jobs.length / filterCatalogPageSize).ceil();
+  }
+
+  int get jobsTotalPages {
+    if (_jobsTotalCount <= 0) {
+      return jobsLoadedPage;
+    }
+    final pages = (_jobsTotalCount / filterCatalogPageSize).ceil();
+    return pages < 1 ? 1 : pages;
+  }
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
   bool get hasError => _hasError;
@@ -133,19 +149,8 @@ class AssetLookupViewModel extends ChangeNotifier {
     _hasError = false;
     _errorMessage = '';
     notifyListeners();
+    final catalogsFuture = _loadFilterCatalogs(version);
     try {
-      final equipment = await _listEquipmentLookupUseCase.execute();
-      final jobs = await _listWorkHistoryPageUseCase.execute(
-        query: WorkHistoryQuery.initial(),
-        pageSize: 200,
-        pageToken: '',
-      );
-      if (version != _loadVersion) {
-        return;
-      }
-      _equipment = equipment;
-      _jobs = jobs.items;
-      _jobsNextPageToken = jobs.nextPageToken;
       await _reloadRows(version);
     } catch (error) {
       if (version != _loadVersion) {
@@ -160,6 +165,36 @@ class AssetLookupViewModel extends ChangeNotifier {
         notifyListeners();
       }
     }
+    await catalogsFuture;
+  }
+
+  Future<void> _loadFilterCatalogs(int version) async {
+    try {
+      final equipmentFuture = _listEquipmentLookupUseCase.executePage(
+        pageSize: filterCatalogPageSize,
+        pageToken: '',
+      );
+      final jobsFuture = _listWorkHistoryPageUseCase.execute(
+        query: WorkHistoryQuery.initial(),
+        pageSize: filterCatalogPageSize,
+        pageToken: '',
+      );
+      final equipmentPage = await equipmentFuture;
+      final jobsPage = await jobsFuture;
+      if (version != _loadVersion) {
+        return;
+      }
+      _equipment = equipmentPage.items;
+      _jobs = jobsPage.items;
+      _jobsNextPageToken = jobsPage.nextPageToken;
+      _jobsTotalCount = jobsPage.totalCount;
+      if (_jobId.isNotEmpty) {
+        _passes = passesOf(_jobId);
+      }
+      notifyListeners();
+    } catch (_) {
+      // 필터 카탈로그 실패는 표를 유지한다.
+    }
   }
 
   Future<void> didTapLoadMoreJobs() async {
@@ -170,7 +205,7 @@ class AssetLookupViewModel extends ChangeNotifier {
     try {
       final page = await _listWorkHistoryPageUseCase.execute(
         query: WorkHistoryQuery.initial(),
-        pageSize: 200,
+        pageSize: filterCatalogPageSize,
         pageToken: _jobsNextPageToken,
       );
       if (version != _loadVersion) {
@@ -183,6 +218,7 @@ class AssetLookupViewModel extends ChangeNotifier {
           if (!existing.contains(job.jobId)) job,
       ];
       _jobsNextPageToken = page.nextPageToken;
+      _jobsTotalCount = page.totalCount;
       notifyListeners();
     } catch (error) {
       if (version != _loadVersion) {
