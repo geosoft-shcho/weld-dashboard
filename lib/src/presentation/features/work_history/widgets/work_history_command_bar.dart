@@ -402,18 +402,6 @@ class _WorkHistoryCommandBarState extends State<WorkHistoryCommandBar> {
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Button(
-            onPressed: () => showWorkJobCreateDialog(context, widget.viewModel),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(FluentIcons.add, size: 14),
-                SizedBox(width: 6),
-                const Text('새 작업'),
-              ],
-            ),
-          ),
         ],
       ),
     );
@@ -511,14 +499,22 @@ class WorkHistoryFilterChips extends StatelessWidget {
             runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              Text(
+                '작업 검색 결과 ${DashboardFormatters.count(board.totalCount)}건',
+                style: const TextStyle(fontSize: 12),
+              ),
+              const Text('|', style: TextStyle(fontSize: 12)),
               const Text('필터', style: TextStyle(fontSize: 12)),
               ...chips,
             ],
           ),
         ),
-        Text(
-          '검색 결과 ${DashboardFormatters.count(board.totalCount)}건',
-          style: const TextStyle(fontSize: 12),
+        FilledButton(
+          onPressed: () => showWorkJobCreateDialog(context, viewModel),
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [Text('+ 새 작업')],
+          ),
         ),
       ],
     );
