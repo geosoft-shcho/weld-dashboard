@@ -28,14 +28,24 @@ class CollectionResourceTimelineView extends StatefulWidget {
 
 class _CollectionResourceTimelineViewState
     extends State<CollectionResourceTimelineView> {
+  static const double _rowHeight = 64;
+  static const double _timeHeaderHeight = 48;
+
   late final TimelineController<CollectionEvent> _controller;
   late final ScrollController _horizontalController;
+  late final ScrollController _verticalController;
+  late final ScrollController _stickyVerticalController;
+  bool _isSyncingVertical = false;
 
   @override
   void initState() {
     super.initState();
     _controller = TimelineController<CollectionEvent>();
     _horizontalController = ScrollController()..addListener(_didScroll);
+    _verticalController = ScrollController()
+      ..addListener(_syncStickyFromTimeline);
+    _stickyVerticalController = ScrollController()
+      ..addListener(_syncTimelineFromSticky);
     _syncSelection();
   }
 
@@ -51,12 +61,45 @@ class _CollectionResourceTimelineViewState
   @override
   void dispose() {
     _horizontalController.removeListener(_didScroll);
+    _verticalController.removeListener(_syncStickyFromTimeline);
+    _stickyVerticalController.removeListener(_syncTimelineFromSticky);
     _horizontalController.dispose();
+    _verticalController.dispose();
+    _stickyVerticalController.dispose();
     _controller.dispose();
     super.dispose();
   }
 
   void _didScroll() => setState(() {});
+
+  void _syncStickyFromTimeline() {
+    _jumpVertical(
+      source: _verticalController,
+      target: _stickyVerticalController,
+    );
+  }
+
+  void _syncTimelineFromSticky() {
+    _jumpVertical(
+      source: _stickyVerticalController,
+      target: _verticalController,
+    );
+  }
+
+  void _jumpVertical({
+    required ScrollController source,
+    required ScrollController target,
+  }) {
+    if (_isSyncingVertical || !source.hasClients || !target.hasClients) {
+      return;
+    }
+    if (target.offset == source.offset) {
+      return;
+    }
+    _isSyncingVertical = true;
+    target.jumpTo(source.offset);
+    _isSyncingVertical = false;
+  }
 
   void _syncSelection() {
     final selectedEventId = widget.board.timeline.selectedEventId;
@@ -171,6 +214,7 @@ class _CollectionResourceTimelineViewState
                 now: nowOnDate,
                 timelineController: _controller,
                 horizontalController: _horizontalController,
+                verticalController: _verticalController,
                 dataRevision: Object.hash(
                   query.snapshotAt,
                   query.zoomHours,
@@ -186,8 +230,9 @@ class _CollectionResourceTimelineViewState
                 startHour: startHour,
                 endHour: endHour,
                 pixelsPerMinute: pixelsPerMinute,
-                rowHeight: 64,
+                rowHeight: _rowHeight,
                 resourceColumnWidth: resourceColumnWidth,
+                timeHeaderHeight: _timeHeaderHeight,
                 showCapacityConflicts: false,
                 interactions: const TimelineInteractionConfig(
                   enableDragging: false,
@@ -195,9 +240,23 @@ class _CollectionResourceTimelineViewState
                   enableKeyboard: false,
                 ),
                 resourceHeaderLabel: timeline.resourceHeaderLabel,
-                resourceHeaderBuilder: _buildResourceHeader,
+                resourceHeaderBuilder: _buildEmptyResourceHeader,
                 onEntryTap: _handleEntryTap,
                 itemBuilder: _buildEntry,
+              ),
+              Positioned(
+                left: 0,
+                top: 0,
+                bottom: 0,
+                width: resourceColumnWidth,
+                child: _StickyResourceColumn(
+                  label: timeline.resourceHeaderLabel,
+                  timeHeaderHeight: _timeHeaderHeight,
+                  rowHeight: _rowHeight,
+                  verticalController: _stickyVerticalController,
+                  resources: resources,
+                  headerBuilder: _buildResourceHeader,
+                ),
               ),
               if (nowLeft != null)
                 Positioned(
@@ -212,6 +271,13 @@ class _CollectionResourceTimelineViewState
         },
       ),
     );
+  }
+
+  Widget _buildEmptyResourceHeader(
+    BuildContext context,
+    TimelineResource resource,
+  ) {
+    return const SizedBox.expand();
   }
 
   Widget _buildResourceHeader(BuildContext context, TimelineResource resource) {
@@ -239,10 +305,10 @@ class _CollectionResourceTimelineViewState
             children: [
               Text(
                 resource.label,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+                overflow: TextOverflow.visible,
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -318,6 +384,78 @@ class _CollectionResourceTimelineViewState
             style: const TextStyle(fontSize: 11, color: AppTheme.INK),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _StickyResourceColumn extends StatelessWidget {
+  const _StickyResourceColumn({
+    required this.label,
+    required this.timeHeaderHeight,
+    required this.rowHeight,
+    required this.verticalController,
+    required this.resources,
+    required this.headerBuilder,
+  });
+
+  final String label;
+  final double timeHeaderHeight;
+  final double rowHeight;
+  final ScrollController verticalController;
+  final List<TimelineResource> resources;
+  final TimelineResourceHeaderBuilder headerBuilder;
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: AppTheme.SURFACE_RAISED,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            height: timeHeaderHeight,
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: Color(0xFF3E424A)),
+                  right: BorderSide(color: Color(0xFF3E424A)),
+                ),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: AppTheme.INK,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Expanded(
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                border: Border(right: BorderSide(color: Color(0xFF3E424A))),
+              ),
+              child: ListView.builder(
+                controller: verticalController,
+                itemExtent: rowHeight,
+                itemCount: resources.length,
+                itemBuilder: (context, index) {
+                  return headerBuilder(context, resources[index]);
+                },
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
