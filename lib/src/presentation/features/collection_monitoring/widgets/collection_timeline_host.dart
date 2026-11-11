@@ -31,23 +31,20 @@ class CollectionTimelineHost extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 상하 여백을 반영하고 내부 Row의 가로 여백을 바르게 수정한 코드 예시
             Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 8), // 위아래 여백 설정
+              padding: const EdgeInsets.only(top: 8, bottom: 8),
               child: Row(
-                crossAxisAlignment:
-                    CrossAxisAlignment.center, // Toolbar와 Legend의 세로 정렬 맞춤
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Expanded(
                     child: _Toolbar(viewModel: viewModel, board: board),
                   ),
-                  const SizedBox(width: 8), // 가로 간격으로 수정
+                  const SizedBox(width: 8),
                   const _Legend(),
-                  const SizedBox(width: 4), // 가로 간격으로 수정
+                  const SizedBox(width: 4),
                 ],
               ),
             ),
-            // Text(_badge(board), style: const TextStyle(fontSize: 12)),
             if (_doesShowDrillCrumbs) ...[
               const SizedBox(height: 8),
               _DrillCrumbs(viewModel: viewModel, board: board),

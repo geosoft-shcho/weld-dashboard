@@ -17,7 +17,7 @@ class CollectionTimelineInspector extends StatelessWidget {
     if (node == null) {
       return const Padding(
         padding: EdgeInsets.all(12),
-        child: Text('노드를 선택하세요'),
+        child: Text('타임라인에서 항목을 선택하세요'),
       );
     }
     final fields = _fieldsOf(node);
