@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../../domain/entities/asset_lookup_kind.dart';
 import '../../../domain/entities/asset_lookup_row.dart';
+import '../../core/browser_open_url.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
@@ -137,6 +138,11 @@ class _AssetLookupDetailBody extends StatelessWidget {
       subtitle: '',
       onBack: coordinator.didTapBackFromLookupDetail,
       actions: [
+        if (asset != null && asset.contentUrl.isNotEmpty)
+          Button(
+            onPressed: () => openBrowserUrl(asset.contentUrl),
+            child: const Text('내려받기'),
+          ),
         Button(
           onPressed: asset == null
               ? null

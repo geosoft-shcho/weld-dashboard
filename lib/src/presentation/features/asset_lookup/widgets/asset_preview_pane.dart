@@ -188,7 +188,7 @@ String _unsupportedMessage(AssetLookupRow asset) {
 }
 
 bool _canOpenUnsupported(AssetLookupRow asset) {
-  return asset.kindCode == 'document' && asset.contentUrl.isNotEmpty;
+  return asset.contentUrl.isNotEmpty;
 }
 
 String _extensionOf(String fileName) {
