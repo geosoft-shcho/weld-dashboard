@@ -141,6 +141,9 @@ class _AssetLookupDetailBody extends StatelessWidget {
           onPressed: asset == null
               ? null
               : () => _didTapDelete(context, asset, viewModel, coordinator),
+          style: ButtonStyle(
+            foregroundColor: WidgetStateProperty.all(const Color(0xFFE85D5D)),
+          ),
           child: const Text('지우기'),
         ),
       ],
