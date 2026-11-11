@@ -990,17 +990,13 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                     ],
                   ),
                   Positioned(
-                    left: viewModel.playheadSeconds * viewModel.pixelsPerSecond,
+                    left:
+                        viewModel.playheadSeconds * viewModel.pixelsPerSecond -
+                        6,
                     top: 0,
                     bottom: 0,
-                    child: const IgnorePointer(
-                      child: SizedBox(
-                        width: 2,
-                        child: ColoredBox(
-                          color: MultimodalStudioPalette.DANGER,
-                        ),
-                      ),
-                    ),
+                    width: 12,
+                    child: const IgnorePointer(child: _PlayheadMarker()),
                   ),
                   for (final marker in viewModel.markerSeconds)
                     Positioned(
@@ -1361,5 +1357,50 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     }
     return clip.attachmentId.isNotEmpty &&
         clip.attachmentId == (viewModel.selectedBar?.attachmentId ?? '');
+  }
+}
+
+/// 재생 위치 세로선 + 상단 역삼각형(수집 모니터링 NowMarker와 동일 형태).
+class _PlayheadMarker extends StatelessWidget {
+  const _PlayheadMarker();
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        CustomPaint(
+          size: const Size(12, 8),
+          painter: const _PlayheadCaretPainter(
+            color: MultimodalStudioPalette.DANGER,
+          ),
+        ),
+        Expanded(
+          child: Center(
+            child: Container(width: 2, color: MultimodalStudioPalette.DANGER),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PlayheadCaretPainter extends CustomPainter {
+  const _PlayheadCaretPainter({required this.color});
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..close();
+    canvas.drawPath(path, Paint()..color = color);
+  }
+
+  @override
+  bool shouldRepaint(covariant _PlayheadCaretPainter oldDelegate) {
+    return oldDelegate.color != color;
   }
 }
