@@ -91,6 +91,7 @@ class CollectedNode {
     required this.startedAt,
     required this.endedAt,
     required this.contentUrl,
+    this.assetId = '',
     this.segments = const [],
   });
 
@@ -107,7 +108,10 @@ class CollectedNode {
   final DateTime? startedAt;
   final DateTime? endedAt;
   final String contentUrl;
+  final String assetId;
   final List<CollectedTimeRange> segments;
 
-  String get nodeKey => '${path.key}|$label|$contentUrl';
+  bool get isAssetNode => assetId.isNotEmpty || contentUrl.isNotEmpty;
+
+  String get nodeKey => '${path.key}|$label|$contentUrl|$assetId';
 }

@@ -369,6 +369,7 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
           : null,
       endedAt: node.hasEndedAt() ? node.endedAt.toDateTime().toLocal() : null,
       contentUrl: node.hasAsset() ? node.asset.contentUrl : '',
+      assetId: node.hasAsset() ? idText(node.asset.assetId) : '',
       segments: [
         for (final segment in node.segments)
           CollectedTimeRange(

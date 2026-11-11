@@ -1,7 +1,9 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../domain/entities/collected_node.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
+import '../../../navigation/app_coordinator.dart';
 import '../collection_monitoring_view_model.dart';
 
 class CollectionTimelineInspector extends StatelessWidget {
@@ -19,14 +21,42 @@ class CollectionTimelineInspector extends StatelessWidget {
       );
     }
     final fields = _fieldsOf(node);
+    final detail = _detailActionOf(node);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            node.label.isEmpty ? '미지정' : node.label,
-            style: const TextStyle(fontWeight: FontWeight.w600),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  node.label.isEmpty ? '미지정' : node.label,
+                  style: const TextStyle(fontWeight: FontWeight.w600),
+                ),
+              ),
+              if (detail != null)
+                Tooltip(
+                  message: detail.tooltip,
+                  useMousePosition: false,
+                  style: const TooltipThemeData(
+                    verticalOffset: 6,
+                    preferBelow: true,
+                  ),
+                  child: IconButton(
+                    icon: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(FluentIcons.red_eye),
+                        SizedBox(width: 4),
+                        Text('자세히', style: TextStyle(fontSize: 12)),
+                      ],
+                    ),
+                    onPressed: () => _openDetail(context, node, detail),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 8),
           for (final field in fields) ...[
@@ -36,6 +66,65 @@ class CollectionTimelineInspector extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _openDetail(
+    BuildContext context,
+    CollectedNode node,
+    _DetailAction detail,
+  ) async {
+    final coordinator = context.read<AppCoordinator>();
+    switch (detail.kind) {
+      case _DetailKind.equipment:
+        coordinator.didTapOpenEquipmentDetail(node.path.equipmentId);
+      case _DetailKind.worker:
+        coordinator.didTapOpenWorkerDetail(node.path.workerId);
+      case _DetailKind.project:
+        final projectId = await viewModel.resolveProjectId(node.path.projectNo);
+        if (!context.mounted || projectId == null || projectId.isEmpty) {
+          return;
+        }
+        coordinator.didTapOpenProjectDetail(projectId);
+      case _DetailKind.job:
+        coordinator.didTapOpenWorkDetail(context, jobId: node.path.jobId);
+      case _DetailKind.asset:
+        coordinator.didTapOpenAssetDetail(node.assetId);
+    }
+  }
+
+  _DetailAction? _detailActionOf(CollectedNode node) {
+    final path = node.path;
+    if (node.assetId.isNotEmpty) {
+      return const _DetailAction(kind: _DetailKind.asset, tooltip: '에셋 상세');
+    }
+    switch (path.level) {
+      case CollectedNodeLevel.equipment:
+        if (path.equipmentId.isEmpty) {
+          return null;
+        }
+        return const _DetailAction(
+          kind: _DetailKind.equipment,
+          tooltip: '장비 상세',
+        );
+      case CollectedNodeLevel.worker:
+        if (path.workerId.isEmpty) {
+          return null;
+        }
+        return const _DetailAction(kind: _DetailKind.worker, tooltip: '작업자 상세');
+      case CollectedNodeLevel.project:
+        if (path.projectNo.isEmpty) {
+          return null;
+        }
+        return const _DetailAction(kind: _DetailKind.project, tooltip: '공사 상세');
+      case CollectedNodeLevel.job:
+        if (path.jobId.isEmpty || node.isAssetNode) {
+          return null;
+        }
+        return const _DetailAction(kind: _DetailKind.job, tooltip: '작업 상세');
+      case CollectedNodeLevel.item:
+      case CollectedNodeLevel.unspecified:
+        return null;
+    }
   }
 
   List<(String, String)> _fieldsOf(CollectedNode node) {
@@ -119,6 +208,15 @@ class CollectionTimelineInspector extends StatelessWidget {
     }
     return '$minutes분';
   }
+}
+
+enum _DetailKind { equipment, worker, project, job, asset }
+
+class _DetailAction {
+  const _DetailAction({required this.kind, required this.tooltip});
+
+  final _DetailKind kind;
+  final String tooltip;
 }
 
 class _NodeField extends StatelessWidget {

@@ -501,6 +501,7 @@ void setupLocator({required bool pdfrxReady}) {
     () => CollectionMonitoringViewModel(
       listCollectedNodesUseCase: locator(),
       presentCollectionNodesUseCase: locator(),
+      listProjectLookupUseCase: locator(),
       onAfterBoardLoaded: locator<AppCoordinator>().didRefreshDashboardData,
     ),
   );

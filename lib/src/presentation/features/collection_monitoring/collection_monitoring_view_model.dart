@@ -8,18 +8,22 @@ import '../../../domain/entities/collection_board_query.dart';
 import '../../../domain/entities/kpi_card_kind.dart';
 import '../../../domain/entities/timeline_view_kind.dart';
 import '../../../domain/use_cases/list_collected_nodes_use_case.dart';
+import '../../../domain/use_cases/list_project_lookup_use_case.dart';
 import '../../../domain/use_cases/present_collection_nodes_use_case.dart';
 
 class CollectionMonitoringViewModel extends ChangeNotifier {
   CollectionMonitoringViewModel({
     required ListCollectedNodesUseCase listCollectedNodesUseCase,
     required PresentCollectionNodesUseCase presentCollectionNodesUseCase,
+    required ListProjectLookupUseCase listProjectLookupUseCase,
     this.onAfterBoardLoaded,
   }) : _listCollectedNodesUseCase = listCollectedNodesUseCase,
-       _presentCollectionNodesUseCase = presentCollectionNodesUseCase;
+       _presentCollectionNodesUseCase = presentCollectionNodesUseCase,
+       _listProjectLookupUseCase = listProjectLookupUseCase;
 
   final ListCollectedNodesUseCase _listCollectedNodesUseCase;
   final PresentCollectionNodesUseCase _presentCollectionNodesUseCase;
+  final ListProjectLookupUseCase _listProjectLookupUseCase;
   final ValueChanged<DateTime>? onAfterBoardLoaded;
 
   CollectionBoardQuery _query = CollectionBoardQuery.initial();
@@ -120,6 +124,23 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     return _nodesByParentKey[parent.key] ?? const [];
   }
 
+  List<CollectedNode> cachedChildrenOf(CollectedNodePath parent) {
+    return List.unmodifiable(_nodesByParentKey[parent.key] ?? const []);
+  }
+
+  Future<String?> resolveProjectId(String projectNo) async {
+    if (projectNo.isEmpty) {
+      return null;
+    }
+    final page = await _listProjectLookupUseCase.execute(query: projectNo);
+    for (final project in page.items) {
+      if (project.projectNo == projectNo && project.projectId.isNotEmpty) {
+        return project.projectId;
+      }
+    }
+    return null;
+  }
+
   CollectedNode? ancestorAt(CollectedNodeLevel level) {
     for (final node in _ancestors) {
       if (node.path.level == level) {
@@ -174,6 +195,14 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       }
     }
     if (selected == null) {
+      for (final node in _nodes) {
+        if (node.nodeKey == nodeKey) {
+          selected = node;
+          break;
+        }
+      }
+    }
+    if (selected == null) {
       return;
     }
     if (!selected.hasChildren) {
@@ -204,11 +233,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       didSelectRow(nodeKey);
       return;
     }
-    if (_ancestors.any((node) => node.nodeKey == chosen.nodeKey)) {
-      return;
-    }
-    _ancestors.add(chosen);
-    loadBoard();
+    didSelectLevelNode(chosen.path.level, chosen.nodeKey);
   }
 
   void didTapAncestor(int keepCount) {

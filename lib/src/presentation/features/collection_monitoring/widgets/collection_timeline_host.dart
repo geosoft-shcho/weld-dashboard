@@ -1,6 +1,8 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+import '../../../../domain/entities/collected_node.dart';
 import '../../../../domain/entities/collection_board.dart';
+import '../../../../domain/entities/collection_timeline.dart';
 import '../../../../domain/entities/timeline_view_kind.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
@@ -48,7 +50,7 @@ class CollectionTimelineHost extends StatelessWidget {
             // Text(_badge(board), style: const TextStyle(fontSize: 12)),
             if (_doesShowDrillCrumbs) ...[
               const SizedBox(height: 8),
-              _DrillCrumbs(viewModel: viewModel),
+              _DrillCrumbs(viewModel: viewModel, board: board),
             ],
             const SizedBox(height: 8),
             Expanded(
@@ -129,28 +131,62 @@ class _BoardView extends StatelessWidget {
 }
 
 class _DrillCrumbs extends StatelessWidget {
-  const _DrillCrumbs({required this.viewModel});
+  const _DrillCrumbs({required this.viewModel, required this.board});
 
   final CollectionMonitoringViewModel viewModel;
+  final CollectionBoard board;
 
   @override
   Widget build(BuildContext context) {
+    final ancestors = viewModel.ancestors;
+    final rootPath = CollectedNodePath.root(viewModel.collectedView);
+    final currentParent = ancestors.isEmpty ? rootPath : ancestors.last.path;
     final crumbs = <Widget>[
       Button(
         onPressed: () => viewModel.didTapAncestor(0),
-        child: const Text('수집'),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(_viewRootLabelOf(viewModel.collectedView)),
+            const SizedBox(width: 6),
+            Text(
+              _pathCountLabel(
+                children: viewModel.cachedChildrenOf(rootPath),
+                timeline: board.timeline,
+                doesShowEventCount: currentParent == rootPath,
+              ),
+            ),
+          ],
+        ),
       ),
     ];
-    final ancestors = viewModel.ancestors;
     for (var index = 0; index < ancestors.length; index++) {
-      final label = ancestors[index].label.isEmpty
-          ? '미지정'
-          : ancestors[index].label;
+      final node = ancestors[index];
+      final label = node.label.isEmpty ? '미지정' : node.label;
       crumbs.add(const Text('›'));
       crumbs.add(
         Button(
           onPressed: () => viewModel.didTapAncestor(index + 1),
-          child: Text(label),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _LevelBadge(label: _levelLabelOf(node.path.level)),
+              const SizedBox(width: 6),
+              Text(label),
+              const SizedBox(width: 6),
+              Text(
+                _pathCountLabel(
+                  children: viewModel.cachedChildrenOf(node.path),
+                  timeline: board.timeline,
+                  doesShowEventCount: currentParent == node.path,
+                ),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppTheme.ACCENT_STEEL,
+                ),
+              ),
+            ],
+          ),
         ),
       );
     }
@@ -161,6 +197,52 @@ class _DrillCrumbs extends StatelessWidget {
       children: crumbs,
     );
   }
+}
+
+class _LevelBadge extends StatelessWidget {
+  const _LevelBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppTheme.ACCENT_STEEL.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: const Color(0xFF3E424A)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.ACCENT_STEEL,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _levelLabelOf(CollectedNodeLevel level) {
+  return switch (level) {
+    CollectedNodeLevel.equipment => '장비',
+    CollectedNodeLevel.worker => '작업자',
+    CollectedNodeLevel.project => '공사',
+    CollectedNodeLevel.item => '품목',
+    CollectedNodeLevel.job => '작업',
+    CollectedNodeLevel.unspecified => '전체',
+  };
+}
+
+String _viewRootLabelOf(CollectedNodeView view) {
+  return switch (view) {
+    CollectedNodeView.equipment => '장비별',
+    CollectedNodeView.worker => '작업자별',
+  };
 }
 
 class _Toolbar extends StatelessWidget {
@@ -211,14 +293,44 @@ class _Toolbar extends StatelessWidget {
             isSelected: query.zoomHours == option.$1,
             onPressed: () => viewModel.didSelectZoom(option.$1),
           ),
-        Text(
-          timeline.eventCount == 0
-              ? '0건'
-              : '${DashboardFormatters.count(timeline.eventCount)}건 · ${timeline.equipmentCount}대',
-        ),
       ],
     );
   }
+}
+
+String _pathCountLabel({
+  required List<CollectedNode> children,
+  required CollectionTimeline timeline,
+  required bool doesShowEventCount,
+}) {
+  final nodeCount = children.length;
+  final unit = _childCountUnitOf(children);
+  final nodeLabel = '${DashboardFormatters.count(nodeCount)}$unit';
+  if (!doesShowEventCount || nodeCount == 0) {
+    return nodeLabel;
+  }
+  final eventCount = timeline.eventCount;
+  if (eventCount == 0 || eventCount == nodeCount) {
+    return nodeLabel;
+  }
+  return '$nodeLabel · ${DashboardFormatters.count(eventCount)}구간';
+}
+
+String _childCountUnitOf(List<CollectedNode> children) {
+  if (children.isEmpty) {
+    return '건';
+  }
+  if (children.every((node) => node.contentUrl.isNotEmpty)) {
+    return '개';
+  }
+  return switch (children.first.path.level) {
+    CollectedNodeLevel.equipment => '대',
+    CollectedNodeLevel.worker => '명',
+    CollectedNodeLevel.project ||
+    CollectedNodeLevel.item ||
+    CollectedNodeLevel.job ||
+    CollectedNodeLevel.unspecified => '건',
+  };
 }
 
 class _ViewButton extends StatelessWidget {
