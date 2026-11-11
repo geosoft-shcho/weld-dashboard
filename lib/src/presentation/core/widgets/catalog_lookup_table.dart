@@ -33,6 +33,53 @@ class CatalogLookupFrame extends StatelessWidget {
   }
 }
 
+/// 카탈로그 조회 필터 줄 끝의 조회·초기화. pending/미적용 표시는 두지 않는다.
+class CatalogLookupFilterActions extends StatelessWidget {
+  const CatalogLookupFilterActions({
+    super.key,
+    required this.onQuery,
+    required this.onReset,
+  });
+
+  final VoidCallback onQuery;
+  final VoidCallback onReset;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          FilledButton(
+            onPressed: onQuery,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(FluentIcons.search, size: 14),
+                SizedBox(width: 6),
+                Text('조회'),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Button(
+            onPressed: onReset,
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(FluentIcons.clear_filter, size: 14),
+                SizedBox(width: 6),
+                Text('초기화'),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class LookupTableHeader extends StatelessWidget {
   const LookupTableHeader({
     super.key,

@@ -24,6 +24,7 @@ class EquipmentLookupViewModel extends ChangeNotifier {
   int _totalCount = 0;
   bool _isLoading = false;
   bool _isLoadingMore = false;
+  bool _hasLoaded = false;
   bool _hasError = false;
   String _errorMessage = '';
   int _loadVersion = 0;
@@ -33,6 +34,7 @@ class EquipmentLookupViewModel extends ChangeNotifier {
   bool get includeInactive => _includeInactive;
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
+  bool get hasLoaded => _hasLoaded;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
   int get totalCount => _totalCount;
@@ -89,6 +91,18 @@ class EquipmentLookupViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  void didTapQuery() {
+    _queryDebounce?.cancel();
+    _reload(reset: true);
+  }
+
+  void didTapReset() {
+    _queryDebounce?.cancel();
+    _queryText = '';
+    _includeInactive = false;
+    _reload(reset: true);
+  }
+
   Future<void> _reload({required bool reset}) async {
     final version = reset ? ++_loadVersion : _loadVersion;
     if (reset) {
@@ -113,6 +127,7 @@ class EquipmentLookupViewModel extends ChangeNotifier {
       _equipment = reset ? page.items : [..._equipment, ...page.items];
       _nextPageToken = page.nextPageToken;
       _totalCount = page.totalCount;
+      _hasLoaded = true;
     } catch (error) {
       if (version != _loadVersion) {
         return;

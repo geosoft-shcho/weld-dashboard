@@ -37,15 +37,17 @@ class _EquipmentLookupBody extends StatelessWidget {
   }
 
   Widget _content(BuildContext context, EquipmentLookupViewModel viewModel) {
-    if (viewModel.isLoading && viewModel.visibleEquipment.isEmpty) {
-      return const Center(child: ProgressRing());
-    }
-    if (viewModel.hasError) {
-      return QueryFailurePane(
-        title: '조회 실패',
-        message: viewModel.errorMessage,
-        onRetry: viewModel.load,
-      );
+    if (!viewModel.hasLoaded) {
+      if (viewModel.isLoading) {
+        return const Center(child: ProgressRing());
+      }
+      if (viewModel.hasError) {
+        return QueryFailurePane(
+          title: '조회 실패',
+          message: viewModel.errorMessage,
+          onRetry: viewModel.load,
+        );
+      }
     }
     return CatalogLookupFrame(
       tableHeader: LookupTableHeader(
@@ -77,6 +79,10 @@ class _EquipmentLookupBody extends StatelessWidget {
               }
             },
           ),
+        ),
+        CatalogLookupFilterActions(
+          onQuery: viewModel.didTapQuery,
+          onReset: viewModel.didTapReset,
         ),
       ],
       body: CatalogLookupTable(

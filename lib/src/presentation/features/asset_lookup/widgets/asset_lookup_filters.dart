@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../domain/entities/asset_lookup_kind.dart';
 import '../../../../domain/entities/asset_lookup_row.dart';
 import '../../../../domain/entities/work_history_item.dart';
-import '../../../core/formatters/dashboard_formatters.dart';
+import '../../../core/widgets/catalog_lookup_table.dart';
 import '../../../core/widgets/lookup_search_field.dart';
 import '../asset_lookup_view_model.dart';
 
@@ -150,6 +150,10 @@ class AssetLookupFilters extends StatelessWidget {
                     }
                   },
           ),
+        ),
+        CatalogLookupFilterActions(
+          onQuery: viewModel.didTapQuery,
+          onReset: viewModel.didTapReset,
         ),
       ],
     );

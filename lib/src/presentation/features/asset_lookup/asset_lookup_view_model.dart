@@ -18,18 +18,13 @@ import '../../../domain/use_cases/upload_asset_use_case.dart';
 
 class AssetLookupViewModel extends ChangeNotifier {
   AssetLookupViewModel({
-    required ListAssetLookupPageUseCase listAssetLookupPageUseCase,
-    required ListEquipmentLookupUseCase listEquipmentLookupUseCase,
-    required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
-    required ListUploadFormatsUseCase listUploadFormatsUseCase,
-    required UploadAssetUseCase uploadAssetUseCase,
-    required UploadAssetQueueUseCase uploadAssetQueueUseCase,
-  }) : _listAssetLookupPageUseCase = listAssetLookupPageUseCase,
-       _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
-       _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase,
-       _listUploadFormatsUseCase = listUploadFormatsUseCase,
-       _uploadAssetUseCase = uploadAssetUseCase,
-       _uploadAssetQueueUseCase = uploadAssetQueueUseCase;
+    required this._listAssetLookupPageUseCase,
+    required this._listEquipmentLookupUseCase,
+    required this._listWorkHistoryPageUseCase,
+    required this._listUploadFormatsUseCase,
+    required this._uploadAssetUseCase,
+    required this._uploadAssetQueueUseCase,
+  });
 
   static const int pageSize = WorkHistoryQuery.BATCH_SIZE;
   static const int filterCatalogPageSize = WorkHistoryQuery.BATCH_SIZE;
@@ -58,6 +53,7 @@ class AssetLookupViewModel extends ChangeNotifier {
   int _totalCount = 0;
   bool _isLoading = false;
   bool _isLoadingMore = false;
+  bool _hasLoaded = false;
   bool _hasError = false;
   String _errorMessage = '';
   int _loadVersion = 0;
@@ -91,6 +87,7 @@ class AssetLookupViewModel extends ChangeNotifier {
   }
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
+  bool get hasLoaded => _hasLoaded;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
   int get totalCount => _totalCount;
@@ -271,6 +268,24 @@ class AssetLookupViewModel extends ChangeNotifier {
       return;
     }
     _unattachedOnly = value;
+    _reloadListAssets();
+  }
+
+  void didTapQuery() {
+    _fileNameDebounce?.cancel();
+    _reloadListAssets();
+  }
+
+  void didTapReset() {
+    _fileNameDebounce?.cancel();
+    _kindCode = '';
+    _fileNameText = '';
+    _equipmentId = '';
+    _jobId = '';
+    _passId = '';
+    _postprocessStatusCode = '';
+    _unattachedOnly = false;
+    _passes = const [];
     _reloadListAssets();
   }
 
@@ -490,6 +505,7 @@ class AssetLookupViewModel extends ChangeNotifier {
     _rows = page.rows;
     _nextPageToken = page.nextPageToken;
     _totalCount = page.totalCount;
+    _hasLoaded = true;
   }
 
   @override

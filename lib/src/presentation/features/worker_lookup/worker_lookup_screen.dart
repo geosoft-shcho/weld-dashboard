@@ -38,15 +38,17 @@ class _WorkerLookupBody extends StatelessWidget {
   }
 
   Widget _content(BuildContext context, WorkerLookupViewModel viewModel) {
-    if (viewModel.isLoading && viewModel.visibleWorkers.isEmpty) {
-      return const Center(child: ProgressRing());
-    }
-    if (viewModel.hasError) {
-      return QueryFailurePane(
-        title: '조회 실패',
-        message: viewModel.errorMessage,
-        onRetry: viewModel.load,
-      );
+    if (!viewModel.hasLoaded) {
+      if (viewModel.isLoading) {
+        return const Center(child: ProgressRing());
+      }
+      if (viewModel.hasError) {
+        return QueryFailurePane(
+          title: '조회 실패',
+          message: viewModel.errorMessage,
+          onRetry: viewModel.load,
+        );
+      }
     }
     return CatalogLookupFrame(
       tableHeader: LookupTableHeader(
@@ -96,6 +98,10 @@ class _WorkerLookupBody extends StatelessWidget {
               }
             },
           ),
+        ),
+        CatalogLookupFilterActions(
+          onQuery: viewModel.didTapQuery,
+          onReset: viewModel.didTapReset,
         ),
       ],
       body: CatalogLookupTable(

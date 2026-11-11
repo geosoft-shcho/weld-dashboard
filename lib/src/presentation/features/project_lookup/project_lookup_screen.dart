@@ -37,15 +37,17 @@ class _ProjectLookupBody extends StatelessWidget {
   }
 
   Widget _content(BuildContext context, ProjectLookupViewModel viewModel) {
-    if (viewModel.isLoading && viewModel.visibleProjects.isEmpty) {
-      return const Center(child: ProgressRing());
-    }
-    if (viewModel.hasError) {
-      return QueryFailurePane(
-        title: '조회 실패',
-        message: viewModel.errorMessage,
-        onRetry: viewModel.load,
-      );
+    if (!viewModel.hasLoaded) {
+      if (viewModel.isLoading) {
+        return const Center(child: ProgressRing());
+      }
+      if (viewModel.hasError) {
+        return QueryFailurePane(
+          title: '조회 실패',
+          message: viewModel.errorMessage,
+          onRetry: viewModel.load,
+        );
+      }
     }
     final projects = viewModel.visibleProjects;
     return CatalogLookupFrame(
@@ -78,6 +80,10 @@ class _ProjectLookupBody extends StatelessWidget {
               }
             },
           ),
+        ),
+        CatalogLookupFilterActions(
+          onQuery: viewModel.didTapQuery,
+          onReset: viewModel.didTapReset,
         ),
       ],
       body: CatalogLookupTable(
