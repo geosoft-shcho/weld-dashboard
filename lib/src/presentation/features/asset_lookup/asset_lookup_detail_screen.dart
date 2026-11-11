@@ -143,6 +143,7 @@ class _AssetLookupDetailBody extends StatelessWidget {
             onPressed: () => openBrowserUrl(asset.contentUrl),
             child: const Text('내려받기'),
           ),
+        const SizedBox(width: 8),
         Button(
           onPressed: asset == null
               ? null
