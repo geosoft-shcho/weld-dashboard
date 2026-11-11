@@ -35,5 +35,7 @@ abstract class AssetLookupRepository {
     required List<String> changedFields,
   });
 
+  Future<void> deleteAsset({required String assetId});
+
   Future<String> readContent({required String url});
 }

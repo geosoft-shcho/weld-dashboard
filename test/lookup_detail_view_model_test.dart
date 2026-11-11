@@ -433,6 +433,9 @@ class _FakeAssetLookupRepository implements AssetLookupRepository {
   }
 
   @override
+  Future<void> deleteAsset({required String assetId}) async {}
+
+  @override
   Future<String> updateAsset({
     required String assetId,
     required String subject,

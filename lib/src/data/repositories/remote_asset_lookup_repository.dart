@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:connectrpc/connect.dart';
 import 'package:fixnum/fixnum.dart';
 
 import '../../domain/entities/asset_lookup_row.dart';
@@ -233,6 +234,21 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     return idText(response.replaceRunId);
   }
 
+  @override
+  Future<void> deleteAsset({required String assetId}) async {
+    final id = protoIdOrNull(assetId);
+    if (id == null) {
+      throw ArgumentError('에셋 번호가 없습니다.');
+    }
+    try {
+      await _mediaTag.assetService.deleteAsset(
+        asset_pb.DeleteAssetRequest(assetId: id),
+      );
+    } on ConnectException catch (error) {
+      throw _assetWriteFailure(error);
+    }
+  }
+
   AssetLookupRow _rowFrom(
     asset_pb.Asset asset, {
     required bool isAttached,
@@ -372,6 +388,17 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     }
   }
 
+  Exception _assetWriteFailure(ConnectException error) {
+    switch (error.code) {
+      case Code.failedPrecondition:
+        return _WriteFailure(
+          '작업에 붙어 있거나 파생의 부모이거나 성적서 원본이면 지울 수 없습니다.',
+        );
+      default:
+        return error;
+    }
+  }
+
   String _kindCodeOf(asset_pb.AssetKind kind) {
     switch (kind) {
       case asset_pb.AssetKind.ASSET_KIND_VIDEO:
@@ -399,4 +426,13 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     }
     return '';
   }
+}
+
+class _WriteFailure implements Exception {
+  _WriteFailure(this.message);
+
+  final String message;
+
+  @override
+  String toString() => message;
 }

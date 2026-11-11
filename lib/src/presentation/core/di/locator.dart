@@ -12,6 +12,7 @@ import '../../../domain/repositories/worker_lookup_repository.dart';
 import '../../../domain/use_cases/get_asset_lookup_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/retry_asset_postprocess_use_case.dart';
+import '../../../domain/use_cases/delete_asset_use_case.dart';
 import '../../../domain/use_cases/update_asset_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_job_passes_use_case.dart';
@@ -246,6 +247,7 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => ListJobPassesUseCase(locator()));
   locator.registerLazySingleton(() => GetAssetLookupUseCase(locator()));
   locator.registerLazySingleton(() => UpdateAssetUseCase(locator()));
+  locator.registerLazySingleton(() => DeleteAssetUseCase(locator()));
   locator.registerLazySingleton(
     () => RetryAssetPostprocessUseCase(locator<AssetUploadRepository>()),
   );
@@ -315,6 +317,7 @@ void setupLocator({required bool pdfrxReady}) {
       listWorkHistoryPageUseCase: locator(),
       listEquipmentLookupUseCase: locator(),
       updateAssetUseCase: locator(),
+      deleteAssetUseCase: locator(),
       retryAssetPostprocessUseCase: locator(),
       toolRunUseCase: locator(),
     ),

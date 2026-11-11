@@ -35,6 +35,95 @@ class AssetLookupDetailScreen extends StatelessWidget {
 class _AssetLookupDetailBody extends StatelessWidget {
   const _AssetLookupDetailBody();
 
+  Future<void> _didTapDelete(
+    BuildContext context,
+    AssetLookupRow asset,
+    AssetLookupDetailViewModel viewModel,
+    AppCoordinator coordinator,
+  ) async {
+    final reasons = <String>[
+      if (asset.childCount > 0) '파생의 부모',
+      if (viewModel.jobs.isNotEmpty) '작업 첨부',
+    ];
+    if (reasons.isNotEmpty) {
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => ContentDialog(
+          title: const Text('이 에셋은 지울 수 없습니다'),
+          content: Text('${reasons.join(' · ')}입니다. 먼저 떼거나 파생을 지우세요.'),
+          actions: [
+            Button(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('닫기'),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    var error = '';
+    var busy = false;
+    final deleted = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return ContentDialog(
+              title: Text(
+                '에셋 ${asset.assetId}를 지울까요?',
+                style: const TextStyle(fontSize: 16),
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Text('행과 저장된 파일이 지워집니다. 되돌릴 수 없습니다.'),
+                  if (error.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    Text(error, style: TextStyle(color: Colors.red)),
+                  ],
+                ],
+              ),
+              actions: [
+                Button(
+                  onPressed: busy
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('취소'),
+                ),
+                FilledButton(
+                  onPressed: busy
+                      ? null
+                      : () async {
+                          setDialogState(() {
+                            busy = true;
+                            error = '';
+                          });
+                          try {
+                            await viewModel.deleteAsset();
+                            if (dialogContext.mounted) {
+                              Navigator.of(dialogContext).pop(true);
+                            }
+                          } catch (e) {
+                            setDialogState(() {
+                              busy = false;
+                              error = '$e';
+                            });
+                          }
+                        },
+                  child: const Text('지우기'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (deleted == true && context.mounted) {
+      coordinator.didTapBackFromLookupDetail();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final viewModel = context.watch<AssetLookupDetailViewModel>();
@@ -47,7 +136,14 @@ class _AssetLookupDetailBody extends StatelessWidget {
       title: asset == null ? '에셋 상세' : '$kindLabel ${asset.assetId}',
       subtitle: '',
       onBack: coordinator.didTapBackFromLookupDetail,
-      actions: [Button(onPressed: null, child: const Text('지우기'))],
+      actions: [
+        Button(
+          onPressed: asset == null
+              ? null
+              : () => _didTapDelete(context, asset, viewModel, coordinator),
+          child: const Text('지우기'),
+        ),
+      ],
       body: _body(context, viewModel, coordinator),
     );
   }

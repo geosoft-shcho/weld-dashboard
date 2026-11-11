@@ -5,6 +5,7 @@ import '../../../domain/entities/equipment.dart';
 import '../../../domain/entities/work_history_item.dart';
 import '../../../domain/entities/work_history_query.dart';
 import '../../../domain/entities/tool_run.dart';
+import '../../../domain/use_cases/delete_asset_use_case.dart';
 import '../../../domain/use_cases/get_asset_lookup_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_work_history_page_use_case.dart';
@@ -28,24 +29,21 @@ class AssetPostprocessRetryNotice {
 class AssetLookupDetailViewModel extends ChangeNotifier {
   AssetLookupDetailViewModel({
     required this.assetId,
-    required GetAssetLookupUseCase getAssetLookupUseCase,
-    required ListWorkHistoryPageUseCase listWorkHistoryPageUseCase,
-    required ListEquipmentLookupUseCase listEquipmentLookupUseCase,
-    required UpdateAssetUseCase updateAssetUseCase,
-    required RetryAssetPostprocessUseCase retryAssetPostprocessUseCase,
-    required ToolRunUseCase toolRunUseCase,
-  }) : _getAssetLookupUseCase = getAssetLookupUseCase,
-       _listWorkHistoryPageUseCase = listWorkHistoryPageUseCase,
-       _listEquipmentLookupUseCase = listEquipmentLookupUseCase,
-       _updateAssetUseCase = updateAssetUseCase,
-       _retryAssetPostprocessUseCase = retryAssetPostprocessUseCase,
-       _toolRunUseCase = toolRunUseCase;
+    required this._getAssetLookupUseCase,
+    required this._listWorkHistoryPageUseCase,
+    required this._listEquipmentLookupUseCase,
+    required this._updateAssetUseCase,
+    required this._deleteAssetUseCase,
+    required this._retryAssetPostprocessUseCase,
+    required this._toolRunUseCase,
+  });
 
   final String assetId;
   final GetAssetLookupUseCase _getAssetLookupUseCase;
   final ListWorkHistoryPageUseCase _listWorkHistoryPageUseCase;
   final ListEquipmentLookupUseCase _listEquipmentLookupUseCase;
   final UpdateAssetUseCase _updateAssetUseCase;
+  final DeleteAssetUseCase _deleteAssetUseCase;
   final RetryAssetPostprocessUseCase _retryAssetPostprocessUseCase;
   final ToolRunUseCase _toolRunUseCase;
 
@@ -110,6 +108,10 @@ class AssetLookupDetailViewModel extends ChangeNotifier {
       await _waitReplaceRun(replaceRunId);
     }
     await load();
+  }
+
+  Future<void> deleteAsset() {
+    return _deleteAssetUseCase.execute(assetId: assetId);
   }
 
   Future<void> _waitReplaceRun(String runId) async {

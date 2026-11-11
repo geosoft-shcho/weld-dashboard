@@ -2619,6 +2619,9 @@ class _IdleAssetLookupRepository implements AssetLookupRepository {
   Future<AssetLookupRow?> getAsset({required String assetId}) async => null;
 
   @override
+  Future<void> deleteAsset({required String assetId}) async {}
+
+  @override
   Future<String> updateAsset({
     required String assetId,
     required String subject,

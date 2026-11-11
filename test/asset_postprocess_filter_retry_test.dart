@@ -22,6 +22,7 @@ import 'package:weld_dashboard/src/domain/use_cases/list_equipment_lookup_use_ca
 import 'package:weld_dashboard/src/domain/use_cases/list_work_history_page_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/retry_asset_postprocess_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/delete_asset_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/update_asset_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/asset_lookup/asset_lookup_detail_view_model.dart';
 
@@ -72,6 +73,7 @@ void main() {
         _EmptyEquipmentRepository(),
       ),
       updateAssetUseCase: UpdateAssetUseCase(assets),
+      deleteAssetUseCase: DeleteAssetUseCase(assets),
       retryAssetPostprocessUseCase: RetryAssetPostprocessUseCase(upload),
       toolRunUseCase: ToolRunUseCase(tools),
     );
@@ -142,6 +144,7 @@ void main() {
         _EmptyEquipmentRepository(),
       ),
       updateAssetUseCase: UpdateAssetUseCase(assets),
+      deleteAssetUseCase: DeleteAssetUseCase(assets),
       retryAssetPostprocessUseCase: RetryAssetPostprocessUseCase(upload),
       toolRunUseCase: ToolRunUseCase(tools),
     );
@@ -207,6 +210,9 @@ class _RecordingAssetLookupRepository implements AssetLookupRepository {
   Future<AssetLookupRow?> getAsset({required String assetId}) async => null;
 
   @override
+  Future<void> deleteAsset({required String assetId}) async {}
+
+  @override
   Future<String> updateAsset({
     required String assetId,
     required String subject,
@@ -253,6 +259,9 @@ class _FakeAssetLookupRepository implements AssetLookupRepository {
 
   @override
   Future<AssetLookupRow?> getAsset({required String assetId}) async => asset;
+
+  @override
+  Future<void> deleteAsset({required String assetId}) async {}
 
   @override
   Future<String> updateAsset({
