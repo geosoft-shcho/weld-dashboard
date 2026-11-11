@@ -96,9 +96,20 @@ class AssetLookupFilters extends StatelessWidget {
         ),
         InfoLabel(
           label: '작업',
-          child: Button(
-            onPressed: () => _didTapPickJob(context, viewModel),
-            child: Text(_selectedJobLabel(viewModel, jobId)),
+          child: SizedBox(
+            width: 250,
+            child: Button(
+              onPressed: () => _didTapPickJob(context, viewModel),
+              child: SizedBox(
+                width: double.infinity,
+                child: Text(
+                  _selectedJobLabel(viewModel, jobId),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.left,
+                ),
+              ),
+            ),
           ),
         ),
         InfoLabel(
@@ -169,7 +180,7 @@ String _selectedJobLabel(AssetLookupViewModel viewModel, String jobId) {
 
 String _jobLabel(WorkHistoryItem job) {
   final joint = job.jointNo.isEmpty ? '' : ' · ${job.jointNo}';
-  return '${job.commonKey}$joint · ${DashboardFormatters.dateTime(job.workedAt)}';
+  return '${job.commonKey}$joint';
 }
 
 Future<void> _didTapPickJob(
