@@ -3,37 +3,68 @@ import 'package:fluent_ui/fluent_ui.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 
-class QualityVideoHost extends StatelessWidget {
+class QualityVideoHost extends StatefulWidget {
   const QualityVideoHost({
     super.key,
     required this.videoFile,
     this.seekToMs,
     this.seekToken = 0,
+    this.displayName = '',
   });
 
   final String videoFile;
   final int? seekToMs;
   final int seekToken;
+  final String displayName;
 
-  static const double VIEWPORT_MIN_HEIGHT = 320;
+  @override
+  State<QualityVideoHost> createState() => _QualityVideoHostState();
+}
+
+class _QualityVideoHostState extends State<QualityVideoHost> {
+  static const double VIEWPORT_MIN_HEIGHT = 540;
+  static const String UNAVAILABLE_MESSAGE = '현장 영상이 연동되지 않았습니다.';
+
+  String? _assetPath;
+
+  @override
+  void initState() {
+    super.initState();
+    _prepare();
+  }
+
+  @override
+  void didUpdateWidget(covariant QualityVideoHost oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.videoFile != widget.videoFile) {
+      _prepare();
+    }
+  }
+
+  void _prepare() {
+    final path = widget.videoFile.trim();
+    if (path.isEmpty) {
+      _assetPath = null;
+      return;
+    }
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      _assetPath = path;
+      return;
+    }
+    _assetPath = resolveQualityVideoAssetPath(path);
+  }
 
   @override
   Widget build(BuildContext context) {
-    final path = videoFile.trim();
-    if (path.isEmpty) {
-      return _slot(
-        child: const Center(
-          child: Padding(
-            padding: EdgeInsets.all(16),
-            child: Text('현장 영상이 연동되지 않았습니다.', textAlign: TextAlign.center),
-          ),
-        ),
-      );
+    final videoFile = widget.videoFile.trim();
+    if (videoFile.isEmpty) {
+      return _unavailableSlot();
     }
-    final assetPath = path.startsWith('http://') || path.startsWith('https://')
-        ? path
-        : resolveQualityVideoAssetPath(path);
-    final displayName = qualityVideoDisplayName(path);
+    final providedName = widget.displayName.trim();
+    final displayName = providedName.isEmpty
+        ? qualityVideoDisplayName(videoFile)
+        : providedName;
+    final assetPath = _assetPath;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -48,7 +79,7 @@ class QualityVideoHost extends StatelessWidget {
                   color: AppTheme.ACCENT_STEEL.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(3),
                 ),
-                child: const Text('video_player + chewie · QualityVideoHost'),
+                child: const Text('현장 영상'),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -62,29 +93,53 @@ class QualityVideoHost extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 8),
-        _slot(
-          child: assetPath == null
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(16),
-                    child: Text(
-                      '연결된 영상 파일을 찾을 수 없습니다',
-                      textAlign: TextAlign.center,
-                    ),
-                  ),
-                )
-              : WorkDetailChewieStage(
-                  key: ValueKey(assetPath),
-                  assetPath: assetPath,
-                  seekToMs: seekToMs,
-                  seekToken: seekToken,
+        if (assetPath == null)
+          _viewport(
+            child: const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Text(
+                  '연결된 영상 파일을 찾을 수 없습니다',
+                  textAlign: TextAlign.center,
                 ),
+              ),
+            ),
+          )
+        else
+          _viewport(
+            child: WorkDetailChewieStage(
+              key: ValueKey(assetPath),
+              assetPath: assetPath,
+              seekToMs: widget.seekToMs,
+              seekToken: widget.seekToken,
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _unavailableSlot() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          color: AppTheme.SURFACE_RAISED,
+          child: const Text('현장 영상'),
+        ),
+        _viewport(
+          child: const Center(
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: Text(UNAVAILABLE_MESSAGE, textAlign: TextAlign.center),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _slot({required Widget child}) {
+  Widget _viewport({required Widget child}) {
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: VIEWPORT_MIN_HEIGHT),
       child: SizedBox(

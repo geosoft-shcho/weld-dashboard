@@ -15,11 +15,13 @@ class QualityScanPdf {
     required this.reportSetId,
     required this.url,
     required this.setPageStart,
+    this.fileName = '',
   });
 
   final String reportSetId;
   final String url;
   final int? setPageStart;
+  final String fileName;
 }
 
 class QualityInspectionRow {

@@ -449,7 +449,7 @@ String _mediaKey(QualityIssueViewModel viewModel) {
     ].join(','),
     [
       for (final pdf in viewModel.reportPdfs)
-        '${pdf.reportSetId}|${pdf.url}|${pdf.setPageStart ?? ''}',
+        '${pdf.reportSetId}|${pdf.url}|${pdf.fileName}|${pdf.setPageStart ?? ''}',
     ].join(','),
     '${viewModel.pendingSeekToMs ?? ''}',
     '${viewModel.chartTimeNs ?? ''}',

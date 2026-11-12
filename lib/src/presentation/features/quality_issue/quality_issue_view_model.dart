@@ -302,11 +302,16 @@ class QualityIssueViewModel extends ChangeNotifier {
             reportSetId: detail.summary.reportSetId,
             url: detail.pdfUrl,
             setPageStart: detail.summary.pageStart,
+            fileName: detail.pdfFileName,
           ),
         );
       } catch (_) {
         pdfs.add(
-          QualityScanPdf(reportSetId: reportSetId, url: '', setPageStart: null),
+          QualityScanPdf(
+            reportSetId: reportSetId,
+            url: '',
+            setPageStart: null,
+          ),
         );
       }
     }

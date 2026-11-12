@@ -47,12 +47,14 @@ class ReportSetDetail {
     required this.sections,
     required this.reviews,
     required this.pdfUrl,
+    this.pdfFileName = '',
   });
 
   final ReportSetSummary summary;
   final List<ReportSectionBody> sections;
   final List<ReportReviewRow> reviews;
   final String pdfUrl;
+  final String pdfFileName;
 }
 
 class ReportSectionBody {

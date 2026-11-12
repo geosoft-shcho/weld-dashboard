@@ -59,6 +59,7 @@ class RemoteReportSetRepository implements ReportSetRepository {
     final response = await _loadSet(reportSetId);
     final set = response.reportSet;
     final summary = _summaryFrom(set);
+    final splitPdf = await _resolveSplitPdf(set);
     return ReportSetDetail(
       summary: summary,
       sections: [
@@ -66,7 +67,8 @@ class RemoteReportSetRepository implements ReportSetRepository {
           _sectionFrom(section, summary.pageStart),
       ],
       reviews: [for (final review in response.reviews) _reviewFrom(review)],
-      pdfUrl: await _resolveSplitPdfUrl(set),
+      pdfUrl: splitPdf.url,
+      pdfFileName: splitPdf.fileName,
     );
   }
 
@@ -112,14 +114,19 @@ class RemoteReportSetRepository implements ReportSetRepository {
     }
   }
 
-  Future<String> _resolveSplitPdfUrl(report_pb.ReportSet set) async {
+  Future<({String url, String fileName})> _resolveSplitPdf(
+    report_pb.ReportSet set,
+  ) async {
     if (idText(set.splitAssetId).isEmpty) {
-      return '';
+      return (url: '', fileName: '');
     }
     final response = await _mediaTag.assetService.getAsset(
       asset_pb.GetAssetRequest(assetId: set.splitAssetId),
     );
-    return _mediaTag.resolveContentUrl(response.asset.contentUrl);
+    return (
+      url: _mediaTag.resolveContentUrl(response.asset.contentUrl),
+      fileName: response.asset.fileName,
+    );
   }
 
   ReportSetSummary _summaryFrom(report_pb.ReportSet set) {

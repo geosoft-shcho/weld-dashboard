@@ -10,11 +10,13 @@ class PaperScanHost extends StatefulWidget {
     required this.scanFile,
     required this.scanPages,
     this.initialPage,
+    this.displayName = '',
   });
 
   final String scanFile;
   final int scanPages;
   final int? initialPage;
+  final String displayName;
 
   @override
   State<PaperScanHost> createState() => _PaperScanHostState();
@@ -61,7 +63,10 @@ class _PaperScanHostState extends State<PaperScanHost> {
     if (scanFile.isEmpty) {
       return _unavailableSlot();
     }
-    final displayName = paperScanDisplayName(scanFile);
+    final providedName = widget.displayName.trim();
+    final displayName = providedName.isEmpty
+        ? paperScanDisplayName(scanFile)
+        : providedName;
     final source = _source;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -77,7 +82,7 @@ class _PaperScanHostState extends State<PaperScanHost> {
                   color: AppTheme.ACCENT_STEEL.withValues(alpha: 0.25),
                   borderRadius: BorderRadius.circular(3),
                 ),
-                child: const Text('pdfrx · PaperScanHost'),
+                child: const Text('페이퍼 원본'),
               ),
               const SizedBox(width: 10),
               Expanded(
@@ -124,7 +129,7 @@ class _PaperScanHostState extends State<PaperScanHost> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
           color: AppTheme.SURFACE_RAISED,
-          child: const Text('pdfrx · PaperScanHost'),
+          child: const Text('페이퍼 원본'),
         ),
         _viewport(
           child: const Center(

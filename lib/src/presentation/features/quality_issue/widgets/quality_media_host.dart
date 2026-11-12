@@ -158,6 +158,7 @@ class QualityMediaHost extends StatelessWidget {
             key: ValueKey('${data.qualityResultId}-pdf-$activeIndex'),
             scanFile: selectedFile.url,
             scanPages: selectedFile.pageCount,
+            displayName: selectedFile.displayName,
           ),
           const SizedBox(height: 12),
           QualityPaperMeta(group: data),
@@ -167,6 +168,7 @@ class QualityMediaHost extends StatelessWidget {
             videoFile: selectedFile.url,
             seekToMs: seekToMs,
             seekToken: seekToken,
+            displayName: selectedFile.displayName,
           ),
       ],
     );
@@ -177,7 +179,7 @@ class QualityMediaHost extends StatelessWidget {
       for (final pdf in reportPdfs)
         _MediaEntry(
           id: 'report:${pdf.reportSetId}',
-          label: _fileLabel(pdf.url, '성적서'),
+          label: pdf.fileName.trim().isEmpty ? '성적서' : pdf.fileName.trim(),
           url: pdf.url,
           isVideo: false,
           initialPage: pdf.reportSetId == selectedReportSetId
@@ -211,13 +213,6 @@ class QualityMediaHost extends StatelessWidget {
     return entries.isEmpty ? '' : entries.first.id;
   }
 
-  static String _fileLabel(String url, String fallback) {
-    final name = Uri.tryParse(url)?.pathSegments.lastOrNull ?? '';
-    if (name.isEmpty) {
-      return fallback;
-    }
-    return name;
-  }
 }
 
 class _MediaEntry {
@@ -323,6 +318,7 @@ class _MediaStrip extends StatelessWidget {
                 ? videoSeekMs
                 : null,
             seekToken: selected.id == 'asset:$videoSeekAssetId' ? seekToken : 0,
+            displayName: selected.label,
           )
         else
           PaperScanHost(
@@ -330,6 +326,7 @@ class _MediaStrip extends StatelessWidget {
             scanFile: selected.url,
             scanPages: 0,
             initialPage: selected.initialPage,
+            displayName: selected.label,
           ),
       ],
     );
@@ -436,6 +433,7 @@ class _ReportPdfView extends StatelessWidget {
       scanFile: pdf.url,
       scanPages: 0,
       initialPage: page,
+      displayName: pdf.fileName,
     );
   }
 }
