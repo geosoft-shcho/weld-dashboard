@@ -514,8 +514,13 @@ class _QualityResultsSection extends StatelessWidget {
         .select<QualityIssueViewModel, List<QualityResultReport>>(
           (viewModel) => viewModel.qualityReports,
         );
+    final selectedReportSetId = context
+        .select<QualityIssueViewModel, String?>(
+          (viewModel) => viewModel.selectedReportSetId,
+        );
     return QualityResultsTables(
       reports: reports,
+      selectedReportSetId: selectedReportSetId,
       onSelectInspection: (reportSetId, pageStart) {
         context.read<QualityIssueViewModel>().didSelectInspection(
           reportSetId: reportSetId,
