@@ -1,13 +1,10 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
-import '../../../../domain/entities/channel_compare_stats.dart';
 import '../../../core/themes/app_theme.dart';
 
-/// Channel × compare-pair table for master vs beginner / master vs robot.
+/// 비교 지표 표. 평균 차이·유사도는 서버 연동 전 플레이스홀더.
 class PassCompareSummary extends StatelessWidget {
-  const PassCompareSummary({super.key, required this.stats});
-
-  final ChannelCompareStats stats;
+  const PassCompareSummary({super.key});
 
   static final Color _BORDER = AppTheme.STATUS_OFF.withValues(alpha: 0.35);
 
@@ -24,12 +21,12 @@ class PassCompareSummary extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const Text(
-            '비교 요약',
+            '비교 지표',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 2),
           const Text(
-            '로드된 시계열에서 계산',
+            '서버 미구현',
             style: TextStyle(fontSize: 11, color: AppTheme.STATUS_OFF),
           ),
           const SizedBox(height: 10),
@@ -37,8 +34,8 @@ class PassCompareSummary extends StatelessWidget {
             border: TableBorder.all(color: _BORDER, width: 1),
             columnWidths: const {
               0: IntrinsicColumnWidth(),
-              1: FlexColumnWidth(1),
-              2: FlexColumnWidth(1),
+              1: FlexColumnWidth(3),
+              2: IntrinsicColumnWidth(),
             },
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             children: [
@@ -47,62 +44,32 @@ class PassCompareSummary extends StatelessWidget {
                   color: AppTheme.SURFACE.withValues(alpha: 0.55),
                 ),
                 children: const [
-                  _HeadCell(''),
-                  _HeadCell('명장 vs 작업자'),
-                  _HeadCell('명장 vs 로봇'),
+                  _HeadCell('항목'),
+                  _HeadCell('설명'),
+                  _HeadCell('값'),
                 ],
               ),
-              _dataRow(
-                '전류',
-                stats.currentBeginner,
-                stats.currentRobot,
-                1,
+              const TableRow(
+                children: [
+                  _BodyCell('평균 차이', isLabel: true),
+                  _BodyCell(
+                    '아크 켜진 전체 구간의 명장 평균 대비 상대 평균이 얼마나 다른지 (예: 전류 +5.8A)',
+                  ),
+                  _BodyCell('—'),
+                ],
               ),
-              _dataRow(
-                '전압',
-                stats.voltageBeginner,
-                stats.voltageRobot,
-                2,
-              ),
-              _dataRow(
-                '속도',
-                stats.speedBeginner,
-                stats.speedRobot,
-                2,
-              ),
-              _dataRow(
-                '회전 속도',
-                stats.rotationBeginner,
-                stats.rotationRobot,
-                3,
+              const TableRow(
+                children: [
+                  _BodyCell('유사도', isLabel: true),
+                  _BodyCell('두 파형 모양이 얼마나 닮았는지 (값이 높을수록 비슷)'),
+                  _BodyCell('—'),
+                ],
               ),
             ],
           ),
         ],
       ),
     );
-  }
-
-  TableRow _dataRow(
-    String channel,
-    DiffStat beginner,
-    DiffStat robot,
-    int digits,
-  ) {
-    return TableRow(
-      children: [
-        _BodyCell(channel, isLabel: true),
-        _BodyCell(_fmt(beginner, digits)),
-        _BodyCell(_fmt(robot, digits)),
-      ],
-    );
-  }
-
-  String _fmt(DiffStat stat, int digits) {
-    if (!stat.isComparable) {
-      return '비교 불가';
-    }
-    return '평균 ${stat.mean!.toStringAsFixed(digits)}\n최대 ${stat.max!.toStringAsFixed(digits)}';
   }
 }
 
@@ -143,6 +110,7 @@ class _BodyCell extends StatelessWidget {
           fontSize: 12,
           fontWeight: isLabel ? FontWeight.w600 : FontWeight.w400,
           height: 1.35,
+          color: isLabel ? null : AppTheme.STATUS_OFF,
         ),
       ),
     );

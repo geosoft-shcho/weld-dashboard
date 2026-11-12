@@ -1,7 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
-import '../../../domain/entities/channel_compare_stats.dart';
 import '../../../domain/entities/comparison_job_candidate.dart';
 import '../../../domain/entities/pass_joint_context.dart';
 import '../../../domain/entities/quality_link.dart';
@@ -183,7 +182,15 @@ class _PassProfileReady extends StatelessWidget {
             const SizedBox(height: 12),
             const _PassLegendSection(),
             const SizedBox(height: 8),
-            const _PassChartPane(),
+            const Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(flex: 8, child: _PassChartPane()),
+                SizedBox(width: 16),
+                Expanded(flex: 2, child: PassCompareSummary()),
+              ],
+            ),
+            const SizedBox(height: 16),
           ],
         );
       },
@@ -374,38 +381,19 @@ class _PassChartPane extends StatelessWidget {
           InfoBar(title: Text(banner), severity: InfoBarSeverity.info),
           const SizedBox(height: 8),
         ],
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final charts = WaveformChannelCharts(
-              series: snapshot.series,
-              links: snapshot.links,
-              showMaster: snapshot.showMaster,
-              showBeginner: snapshot.showBeginner,
-              showRobot: snapshot.showRobot,
-              onBandTap: (linkId) => _openQualityIssue(
-                context,
-                commonKey: snapshot.commonKey,
-                jobId: snapshot.jobId,
-                passId: snapshot.passId,
-                linkId: linkId,
-              ),
-            );
-            final summary = PassCompareSummary(stats: snapshot.stats);
-            if (constraints.maxWidth >= 960) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(flex: 8, child: charts),
-                  const SizedBox(width: 16),
-                  Expanded(flex: 2, child: summary),
-                ],
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [charts, const SizedBox(height: 12), summary],
-            );
-          },
+        WaveformChannelCharts(
+          series: snapshot.series,
+          links: snapshot.links,
+          showMaster: snapshot.showMaster,
+          showBeginner: snapshot.showBeginner,
+          showRobot: snapshot.showRobot,
+          onBandTap: (linkId) => _openQualityIssue(
+            context,
+            commonKey: snapshot.commonKey,
+            jobId: snapshot.jobId,
+            passId: snapshot.passId,
+            linkId: linkId,
+          ),
         ),
       ],
     );
@@ -509,7 +497,6 @@ class _ChartSnapshot {
   const _ChartSnapshot({
     required this.series,
     required this.links,
-    required this.stats,
     required this.showMaster,
     required this.showBeginner,
     required this.showRobot,
@@ -533,16 +520,6 @@ class _ChartSnapshot {
             robot: [],
           ),
       links: board?.links ?? const [],
-      stats:
-          board?.compareStats ??
-          ChannelCompareStats.fromSeries(
-            const WaveformSeriesBundle(
-              masterProfileId: '',
-              master: [],
-              beginner: [],
-              robot: [],
-            ),
-          ),
       showMaster: viewModel.showMaster,
       showBeginner: viewModel.showBeginner,
       showRobot: viewModel.showRobot,
@@ -557,7 +534,6 @@ class _ChartSnapshot {
 
   final WaveformSeriesBundle series;
   final List<QualityLink> links;
-  final ChannelCompareStats stats;
   final bool showMaster;
   final bool showBeginner;
   final bool showRobot;
@@ -573,7 +549,6 @@ class _ChartSnapshot {
     return other is _ChartSnapshot &&
         other.series == series &&
         other.links == links &&
-        other.stats == stats &&
         other.showMaster == showMaster &&
         other.showBeginner == showBeginner &&
         other.showRobot == showRobot &&
@@ -589,7 +564,6 @@ class _ChartSnapshot {
   int get hashCode => Object.hash(
     series,
     links,
-    stats,
     showMaster,
     showBeginner,
     showRobot,
