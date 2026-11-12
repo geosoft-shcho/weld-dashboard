@@ -1,18 +1,16 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
-import '../../../domain/entities/comparison_job_candidate.dart';
 import '../../../domain/entities/quality_link.dart';
 import '../../../domain/entities/quality_result_report.dart';
 import '../../../domain/entities/waveform_series_bundle.dart';
 import '../../core/di/locator.dart';
-import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/pass_context_bar.dart';
 import '../../core/widgets/query_failure_pane.dart';
 import '../../core/widgets/waveform_channel_charts.dart';
+import '../../core/widgets/waveform_control_toolbar.dart';
 import '../../navigation/app_coordinator.dart';
-import '../pass_profile/widgets/pass_legend_toolbar.dart';
 import '../pass_profile/widgets/pass_tabs_bar.dart';
 import '../video_multimodal/widgets/camera_recording_dialog.dart';
 import 'quality_issue_args.dart';
@@ -75,50 +73,6 @@ class _QualityIssueBody extends StatelessWidget {
     final mode = context.select<QualityIssueViewModel, _QualityPageMode>(
       _pageMode,
     );
-    // ScreenCommandBar(
-    //   title: coordinator.pageTitle,
-    //   primaryItems: [
-    //     if (coordinator.canPopWorkHistoryStack)
-    //       CommandBarButton(
-    //         icon: const Icon(FluentIcons.back),
-    //         label: CommandBarLabel(
-    //           _stepBackLabel(coordinator.previousWorkHistoryStack),
-    //         ),
-    //         onPressed: () =>
-    //             coordinator.didTapBackFromQualityIssue(context),
-    //       ),
-    //     CommandBarButton(
-    //       icon: const Icon(FluentIcons.history),
-    //       label: const CommandBarLabel('작업 이력'),
-    //       onPressed: () =>
-    //           coordinator.didTapBackToWorkHistory(context),
-    //     ),
-    //     CommandBarButton(
-    //       icon: const Icon(FluentIcons.line_chart),
-    //       label: const CommandBarLabel('패스 프로파일'),
-    //       onPressed: !canOpenPassProfile
-    //           ? null
-    //           : () {
-    //               final passId =
-    //                   board.selectedPass?.passId ??
-    //                   board.selectedGroup?.passId;
-    //               if (coordinator.isQualityIssuePaneSelected) {
-    //                 coordinator.didTapOpenPassProfileFromPane(
-    //                   commonKey: board.commonKey,
-    //                   jobId: board.jobId,
-    //                   passId: passId,
-    //                 );
-    //                 return;
-    //               }
-    //               coordinator.didTapOpenPassProfile(
-    //                 commonKey: board.commonKey,
-    //                 jobId: board.jobId,
-    //                 passId: passId,
-    //               );
-    //             },
-    //     ),
-    //   ],
-    // ),
     return ColoredBox(
       color: AppTheme.SURFACE,
       child: SizedBox.expand(
@@ -198,9 +152,7 @@ class _QualityIssueReady extends StatelessWidget {
             const SizedBox(height: 12),
             const _QualityTabsSection(),
             const SizedBox(height: 12),
-            const _QualityComparisonJob(),
-            const SizedBox(height: 12),
-            const _QualityLegendSection(),
+            const _QualityWaveformToolbar(),
             const SizedBox(height: 12),
             const _QualityContentProgress(),
             const _QualityContentError(),
@@ -246,8 +198,8 @@ class _QualityTabsSection extends StatelessWidget {
   }
 }
 
-class _QualityComparisonJob extends StatelessWidget {
-  const _QualityComparisonJob();
+class _QualityWaveformToolbar extends StatelessWidget {
+  const _QualityWaveformToolbar();
 
   @override
   Widget build(BuildContext context) {
@@ -257,109 +209,20 @@ class _QualityComparisonJob extends StatelessWidget {
     final notice = context.select<QualityIssueViewModel, String>(
       (viewModel) => viewModel.waveformNotice,
     );
-    context.select<QualityIssueViewModel, String>(_comparisonKey);
-    final viewModel = context.read<QualityIssueViewModel>();
-    final selectedJobId = viewModel.selectedComparisonJobId;
-    final jobs = viewModel.comparisonJobs;
-    final knownIds = {for (final job in jobs) job.jobId};
-    final comparisonValue = knownIds.contains(selectedJobId)
-        ? selectedJobId
-        : '';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            const Text('비교 작업'),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ComboBox<String>(
-                value: comparisonValue,
-                isExpanded: true,
-                items: [
-                  const ComboBoxItem(value: '', child: Text('비교 없음')),
-                  for (final job in jobs)
-                    ComboBoxItem(
-                      value: job.jobId,
-                      child: Text(
-                        _comparisonJobLabel(job),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                ],
-                onTap: viewModel.didOpenComparisonJobs,
-                onChanged: (value) {
-                  if (value != null) {
-                    viewModel.didSelectComparisonJob(value);
-                  }
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            const Text('파형 기준'),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 160,
-              child: ComboBox<String>(
-                value: normalize,
-                items: const [
-                  ComboBoxItem(value: 'raw', child: Text('원본')),
-                  ComboBoxItem(value: 'dtw', child: Text('DTW 정규화')),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    context.read<QualityIssueViewModel>().didSelectNormalize(
-                      value,
-                    );
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
-        if (notice.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          InfoBar(title: Text(notice), severity: InfoBarSeverity.info),
-        ],
-        if (viewModel.comparisonError.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            viewModel.comparisonError,
-            style: const TextStyle(color: AppTheme.STATUS_ERROR),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-String _comparisonKey(QualityIssueViewModel viewModel) {
-  return [
-    viewModel.selectedComparisonJobId,
-    viewModel.comparisonError,
-    for (final job in viewModel.comparisonJobs)
-      '${job.jobId}|${job.workerKind}',
-  ].join('\u001f');
-}
-
-String _comparisonJobLabel(ComparisonJobCandidate job) {
-  final worker = job.workerName.isEmpty ? '작업자 없음' : job.workerName;
-  final role = DashboardFormatters.workerKindLabel(job.workerKind);
-  final title = job.jobKey.isEmpty ? '작업' : job.jobKey;
-  return '$title · $worker · $role · ${DashboardFormatters.dateTime(job.startedAt)} · ${job.passCount}패스';
-}
-
-class _QualityLegendSection extends StatelessWidget {
-  const _QualityLegendSection();
-
-  @override
-  Widget build(BuildContext context) {
+    context.select<QualityIssueViewModel, String>(_waveformToolbarKey);
     final selection = context.select<QualityIssueViewModel, _LegendSelection>(
       _LegendSelection.from,
     );
     final viewModel = context.read<QualityIssueViewModel>();
-    return PassLegendToolbar(
+    return WaveformControlToolbar(
+      jobs: viewModel.comparisonJobs,
+      selectedJobId: viewModel.selectedComparisonJobId,
+      normalize: normalize,
+      comparisonError: viewModel.comparisonError,
+      notice: notice,
+      onOpenJobs: viewModel.didOpenComparisonJobs,
+      onSelectJob: viewModel.didSelectComparisonJob,
+      onSelectNormalize: viewModel.didSelectNormalize,
       showMaster: selection.showMaster,
       showBeginner: selection.showBeginner,
       showRobot: selection.showRobot,
@@ -369,9 +232,19 @@ class _QualityLegendSection extends StatelessWidget {
       onToggleBeginner: viewModel.didTapToggleBeginner,
       onToggleRobot: viewModel.didTapToggleRobot,
       onSelectMasterProfile: (_) {},
-      isEmpty: selection.isEmpty,
+      legendIsEmpty: selection.isEmpty,
     );
   }
+}
+
+String _waveformToolbarKey(QualityIssueViewModel viewModel) {
+  return [
+    viewModel.selectedComparisonJobId,
+    viewModel.comparisonError,
+    viewModel.waveformNotice,
+    for (final job in viewModel.comparisonJobs)
+      '${job.jobId}|${job.workerKind}',
+  ].join('\u001f');
 }
 
 class _QualityContentProgress extends StatelessWidget {
@@ -514,10 +387,9 @@ class _QualityResultsSection extends StatelessWidget {
         .select<QualityIssueViewModel, List<QualityResultReport>>(
           (viewModel) => viewModel.qualityReports,
         );
-    final selectedReportSetId = context
-        .select<QualityIssueViewModel, String?>(
-          (viewModel) => viewModel.selectedReportSetId,
-        );
+    final selectedReportSetId = context.select<QualityIssueViewModel, String?>(
+      (viewModel) => viewModel.selectedReportSetId,
+    );
     return QualityResultsTables(
       reports: reports,
       selectedReportSetId: selectedReportSetId,

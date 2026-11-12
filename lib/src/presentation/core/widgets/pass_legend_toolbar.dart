@@ -1,7 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
-import '../../../core/themes/app_theme.dart';
-import '../../../core/widgets/section_empty_placeholder.dart';
+import '../themes/app_theme.dart';
+import 'section_empty_placeholder.dart';
 
 class PassLegendToolbar extends StatelessWidget {
   const PassLegendToolbar({

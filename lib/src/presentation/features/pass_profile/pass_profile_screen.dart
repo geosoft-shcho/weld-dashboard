@@ -1,22 +1,20 @@
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
-import '../../../domain/entities/comparison_job_candidate.dart';
 import '../../../domain/entities/pass_joint_context.dart';
 import '../../../domain/entities/quality_link.dart';
 import '../../../domain/entities/waveform_series_bundle.dart';
 import '../../core/di/locator.dart';
-import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/pass_context_bar.dart';
 import '../../core/widgets/query_failure_pane.dart';
 import '../../core/widgets/waveform_channel_charts.dart';
+import '../../core/widgets/waveform_control_toolbar.dart';
 import '../../navigation/app_coordinator.dart';
 import '../video_multimodal/widgets/camera_recording_dialog.dart';
 import 'pass_profile_args.dart';
 import 'pass_profile_view_model.dart';
 import 'widgets/pass_compare_summary.dart';
-import 'widgets/pass_legend_toolbar.dart';
 import 'widgets/pass_tabs_bar.dart';
 
 class PassProfileScreen extends StatelessWidget {
@@ -68,37 +66,6 @@ class _PassProfileBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mode = context.select<PassProfileViewModel, _PassPageMode>(_pageMode);
-    // ScreenCommandBar(
-    //   title: coordinator.pageTitle,
-    //   primaryItems: [
-    //     if (coordinator.canPopWorkHistoryStack)
-    //       CommandBarButton(
-    //         icon: const Icon(FluentIcons.back),
-    //         label: CommandBarLabel(
-    //           _stepBackLabel(coordinator.previousWorkHistoryStack),
-    //         ),
-    //         onPressed: () =>
-    //             coordinator.didTapBackFromPassProfile(context),
-    //       ),
-    //     CommandBarButton(
-    //       icon: const Icon(FluentIcons.history),
-    //       label: const CommandBarLabel('작업 이력'),
-    //       onPressed: () => coordinator.didTapBackToWorkHistory(context),
-    //     ),
-    //     CommandBarButton(
-    //       icon: const Icon(FluentIcons.report_document),
-    //       label: const CommandBarLabel('이 패스 품질 이슈'),
-    //       onPressed: !canOpenQuality
-    //           ? null
-    //           : () => _didTapOpenQualityIssue(
-    //               coordinator,
-    //               commonKey: board.commonKey,
-    //               jobId: board.jobId,
-    //               passId: board.selectedPass?.passId,
-    //             ),
-    //     ),
-    //   ],
-    // ),
     return ColoredBox(
       color: AppTheme.SURFACE,
       child: SizedBox.expand(
@@ -178,10 +145,8 @@ class _PassProfileReady extends StatelessWidget {
             const SizedBox(height: 12),
             const _PassTabsSection(),
             const SizedBox(height: 12),
-            const _NormalizeCombo(),
+            const _PassWaveformToolbar(),
             const SizedBox(height: 12),
-            const _PassLegendSection(),
-            const SizedBox(height: 8),
             const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -231,114 +196,28 @@ class _PassTabsSection extends StatelessWidget {
   }
 }
 
-class _NormalizeCombo extends StatelessWidget {
-  const _NormalizeCombo();
+class _PassWaveformToolbar extends StatelessWidget {
+  const _PassWaveformToolbar();
 
   @override
   Widget build(BuildContext context) {
     final normalize = context.select<PassProfileViewModel, String>(
       (viewModel) => viewModel.normalize,
     );
-    context.select<PassProfileViewModel, String>(_comparisonKey);
-    final viewModel = context.read<PassProfileViewModel>();
-    final selectedJobId = viewModel.selectedComparisonJobId;
-    final jobs = viewModel.comparisonJobs;
-    final knownIds = {for (final job in jobs) job.jobId};
-    final comparisonValue = knownIds.contains(selectedJobId)
-        ? selectedJobId
-        : '';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            const Text('비교 작업'),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ComboBox<String>(
-                value: comparisonValue,
-                isExpanded: true,
-                items: [
-                  const ComboBoxItem(value: '', child: Text('비교 없음')),
-                  for (final job in jobs)
-                    ComboBoxItem(
-                      value: job.jobId,
-                      child: Text(
-                        _comparisonJobLabel(job),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                ],
-                onTap: viewModel.didOpenComparisonJobs,
-                onChanged: (value) {
-                  if (value != null) {
-                    viewModel.didSelectComparisonJob(value);
-                  }
-                },
-              ),
-            ),
-            const SizedBox(width: 16),
-            const Text('파형 기준'),
-            const SizedBox(width: 8),
-            SizedBox(
-              width: 160,
-              child: ComboBox<String>(
-                value: normalize,
-                items: const [
-                  ComboBoxItem(value: 'raw', child: Text('원본')),
-                  ComboBoxItem(value: 'dtw', child: Text('DTW 정규화')),
-                ],
-                onChanged: (value) {
-                  if (value != null) {
-                    context.read<PassProfileViewModel>().didSelectNormalize(
-                      value,
-                    );
-                  }
-                },
-              ),
-            ),
-          ],
-        ),
-        if (viewModel.comparisonError.isNotEmpty) ...[
-          const SizedBox(height: 8),
-          Text(
-            viewModel.comparisonError,
-            style: const TextStyle(color: AppTheme.STATUS_ERROR),
-          ),
-        ],
-      ],
-    );
-  }
-}
-
-String _comparisonKey(PassProfileViewModel viewModel) {
-  return [
-    viewModel.selectedComparisonJobId,
-    viewModel.comparisonError,
-    for (final job in viewModel.comparisonJobs)
-      '${job.jobId}|${job.workerKind}',
-  ].join('\u001f');
-}
-
-String _comparisonJobLabel(ComparisonJobCandidate job) {
-  final worker = job.workerName.isEmpty ? '작업자 없음' : job.workerName;
-  final role = DashboardFormatters.workerKindLabel(job.workerKind);
-  final title = job.jobKey.isEmpty ? '작업' : job.jobKey;
-  return '$title · $worker · $role · ${DashboardFormatters.dateTime(job.startedAt)} · ${job.passCount}패스';
-}
-
-class _PassLegendSection extends StatelessWidget {
-  const _PassLegendSection();
-
-  @override
-  Widget build(BuildContext context) {
+    context.select<PassProfileViewModel, String>(_waveformToolbarKey);
     final selection = context.select<PassProfileViewModel, _LegendSelection>(
       _LegendSelection.from,
     );
-    final board = context.read<PassProfileViewModel>().board;
     final viewModel = context.read<PassProfileViewModel>();
-    return PassLegendToolbar(
+    final board = viewModel.board;
+    return WaveformControlToolbar(
+      jobs: viewModel.comparisonJobs,
+      selectedJobId: viewModel.selectedComparisonJobId,
+      normalize: normalize,
+      comparisonError: viewModel.comparisonError,
+      onOpenJobs: viewModel.didOpenComparisonJobs,
+      onSelectJob: viewModel.didSelectComparisonJob,
+      onSelectNormalize: viewModel.didSelectNormalize,
       showMaster: selection.showMaster,
       showBeginner: selection.showBeginner,
       showRobot: selection.showRobot,
@@ -348,9 +227,18 @@ class _PassLegendSection extends StatelessWidget {
       onToggleBeginner: viewModel.didTapToggleBeginner,
       onToggleRobot: viewModel.didTapToggleRobot,
       onSelectMasterProfile: viewModel.didSelectMasterProfile,
-      isEmpty: selection.isEmpty,
+      legendIsEmpty: selection.isEmpty,
     );
   }
+}
+
+String _waveformToolbarKey(PassProfileViewModel viewModel) {
+  return [
+    viewModel.selectedComparisonJobId,
+    viewModel.comparisonError,
+    for (final job in viewModel.comparisonJobs)
+      '${job.jobId}|${job.workerKind}',
+  ].join('\u001f');
 }
 
 class _PassChartPane extends StatelessWidget {
