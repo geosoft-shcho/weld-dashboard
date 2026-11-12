@@ -367,7 +367,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
             masterProfileId: '',
             workerId: workerId,
             robotId: '',
-            timeMs: series.tOffsetNs[index].toInt(),
+            timeMs: (series.tOffsetNs[index].toDouble() / 1e6).round(),
             currentA: currentA,
             voltageV: voltageV,
             speedValue: speedValue,
