@@ -1124,10 +1124,13 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           );
         case ClipChartKind.timeseries:
           chart = TimeseriesClipChart(
+            key: ValueKey<String>('timeseries-chart-${clip.clipId}'),
             series: viewModel.timeseriesSeries,
             isLoading: viewModel.isTimeseriesChartLoading,
             errorMessage: viewModel.timeseriesChartError,
+            durationMs: durationMs,
             selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
+            selectedTimeLabel: viewModel.playheadLabel,
             onTimeTapMs: viewModel.didTapTimeseriesChartTime,
           );
         case null:
@@ -1138,17 +1141,14 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         top: 0,
         width: width < 160 ? 160 : width,
         height: row.height,
-        child: GestureDetector(
-          onTap: () => _selectClip(clip),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: MultimodalStudioPalette.GRAPE_400,
-                width: 1,
-              ),
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: MultimodalStudioPalette.GRAPE_400,
+              width: 1,
             ),
-            child: chart,
           ),
+          child: chart,
         ),
       );
     }

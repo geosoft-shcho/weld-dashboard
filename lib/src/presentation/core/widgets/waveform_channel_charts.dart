@@ -4,6 +4,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import '../../../domain/entities/quality_link.dart';
 import '../../../domain/entities/waveform_point.dart';
 import '../../../domain/entities/waveform_series_bundle.dart';
+import '../../features/video_multimodal/timeline_playhead_clock.dart';
 import '../themes/app_theme.dart';
 import 'waveform_material_scope.dart';
 
@@ -23,6 +24,9 @@ class WaveformChannelCharts extends StatelessWidget {
     this.onBandTap,
     this.onTimeTapMs,
     this.doesStartAtZero = false,
+    this.showAxisTitles = true,
+    this.axisMaxXMs,
+    this.selectedTimeLabel = '',
   });
 
   final WaveformSeriesBundle series;
@@ -35,15 +39,20 @@ class WaveformChannelCharts extends StatelessWidget {
   final BandTapHandler? onBandTap;
   final WaveformTimeTapHandler? onTimeTapMs;
   final bool doesStartAtZero;
+  final bool showAxisTitles;
+  final int? axisMaxXMs;
+  final String selectedTimeLabel;
 
   @override
   Widget build(BuildContext context) {
+    final gap = showAxisTitles ? 12.0 : 8.0;
     return WaveformMaterialScope(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _WaveformChannelChart(
-            title: '전류 (A)',
+            title: showAxisTitles ? '전류 (A)' : '전류',
+            valueUnit: 'A',
             series: series,
             links: links,
             showMaster: showMaster,
@@ -54,11 +63,15 @@ class WaveformChannelCharts extends StatelessWidget {
             onBandTap: onBandTap,
             onTimeTapMs: onTimeTapMs,
             doesStartAtZero: doesStartAtZero,
+            showAxisTitles: showAxisTitles,
+            axisMaxXMs: axisMaxXMs,
+            selectedTimeLabel: selectedTimeLabel,
             valueOf: (point) => point.currentA,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: gap),
           _WaveformChannelChart(
-            title: '전압 (V)',
+            title: showAxisTitles ? '전압 (V)' : '전압',
+            valueUnit: 'V',
             series: series,
             links: links,
             showMaster: showMaster,
@@ -69,11 +82,15 @@ class WaveformChannelCharts extends StatelessWidget {
             onBandTap: onBandTap,
             onTimeTapMs: onTimeTapMs,
             doesStartAtZero: doesStartAtZero,
+            showAxisTitles: showAxisTitles,
+            axisMaxXMs: axisMaxXMs,
+            selectedTimeLabel: selectedTimeLabel,
             valueOf: (point) => point.voltageV,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: gap),
           _WaveformChannelChart(
-            title: '속도 (m/min)',
+            title: showAxisTitles ? '속도 (m/min)' : '속도',
+            valueUnit: 'm/min',
             series: series,
             links: links,
             showMaster: showMaster,
@@ -84,11 +101,15 @@ class WaveformChannelCharts extends StatelessWidget {
             onBandTap: onBandTap,
             onTimeTapMs: onTimeTapMs,
             doesStartAtZero: doesStartAtZero,
+            showAxisTitles: showAxisTitles,
+            axisMaxXMs: axisMaxXMs,
+            selectedTimeLabel: selectedTimeLabel,
             valueOf: (point) => point.speedValue,
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: gap),
           _WaveformChannelChart(
-            title: '회전 속도 (rpm)',
+            title: showAxisTitles ? '회전 속도 (rpm)' : '회전 속도',
+            valueUnit: 'rpm',
             series: series,
             links: links,
             showMaster: showMaster,
@@ -99,6 +120,9 @@ class WaveformChannelCharts extends StatelessWidget {
             onBandTap: onBandTap,
             onTimeTapMs: onTimeTapMs,
             doesStartAtZero: doesStartAtZero,
+            showAxisTitles: showAxisTitles,
+            axisMaxXMs: axisMaxXMs,
+            selectedTimeLabel: selectedTimeLabel,
             valueOf: (point) => point.rotationSpeedRpm,
           ),
         ],
@@ -110,6 +134,7 @@ class WaveformChannelCharts extends StatelessWidget {
 class _WaveformChannelChart extends StatelessWidget {
   const _WaveformChannelChart({
     required this.title,
+    required this.valueUnit,
     required this.series,
     required this.links,
     required this.showMaster,
@@ -121,9 +146,13 @@ class _WaveformChannelChart extends StatelessWidget {
     this.onBandTap,
     this.onTimeTapMs,
     this.doesStartAtZero = false,
+    this.showAxisTitles = true,
+    this.axisMaxXMs,
+    this.selectedTimeLabel = '',
   });
 
   final String title;
+  final String valueUnit;
   final WaveformSeriesBundle series;
   final List<QualityLink> links;
   final bool showMaster;
@@ -135,6 +164,9 @@ class _WaveformChannelChart extends StatelessWidget {
   final BandTapHandler? onBandTap;
   final WaveformTimeTapHandler? onTimeTapMs;
   final bool doesStartAtZero;
+  final bool showAxisTitles;
+  final int? axisMaxXMs;
+  final String selectedTimeLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -149,13 +181,28 @@ class _WaveformChannelChart extends StatelessWidget {
       bars.add(_bar(series.robot, AppTheme.CHART_ROBOT));
     }
     final spots = [for (final bar in bars) ...bar.spots];
+    final chartHeight = showAxisTitles ? 140.0 : 96.0;
+    final plotPadding = showAxisTitles
+        ? const EdgeInsets.fromLTRB(8, 12, 12, 8)
+        : const EdgeInsets.fromLTRB(2, 4, 2, 4);
+    final cursorLabel = selectedTimeMs == null
+        ? ''
+        : (selectedTimeLabel.isNotEmpty
+            ? selectedTimeLabel
+            : formatPlayheadClock(selectedTimeMs! / 1000.0));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 6),
+        Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: showAxisTitles ? null : 11,
+          ),
+        ),
+        SizedBox(height: showAxisTitles ? 6 : 4),
         SizedBox(
-          height: 140,
+          height: chartHeight,
           child: DecoratedBox(
             decoration: BoxDecoration(
               color: AppTheme.CHART_PLOT,
@@ -164,8 +211,11 @@ class _WaveformChannelChart extends StatelessWidget {
             child: spots.isEmpty
                 ? const Center(child: Text('데이터 없음'))
                 : Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 12, 12, 8),
+                    padding: plotPadding,
                     child: LineChart(
+                      duration: showAxisTitles
+                          ? const Duration(milliseconds: 150)
+                          : Duration.zero,
                       LineChartData(
                         minX: _minX(spots),
                         maxX: _maxX(spots),
@@ -174,15 +224,16 @@ class _WaveformChannelChart extends StatelessWidget {
                         clipData: const FlClipData.all(),
                         gridData: const FlGridData(show: false),
                         borderData: FlBorderData(
-                          show: true,
+                          show: showAxisTitles,
                           border: Border.all(color: AppTheme.STATUS_OFF),
                         ),
+
                         titlesData: FlTitlesData(
                           topTitles: const AxisTitles(),
                           rightTitles: const AxisTitles(),
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
-                              showTitles: true,
+                              showTitles: showAxisTitles,
                               reservedSize: 40,
                               getTitlesWidget: (value, meta) {
                                 return Text(
@@ -194,14 +245,14 @@ class _WaveformChannelChart extends StatelessWidget {
                           ),
                           bottomTitles: AxisTitles(
                             sideTitles: SideTitles(
-                              showTitles: true,
-                              reservedSize: 22,
+                              showTitles: showAxisTitles,
+                              reservedSize: 44,
                               getTitlesWidget: (value, meta) {
                                 if (value != meta.min && value != meta.max) {
                                   return const SizedBox.shrink();
                                 }
                                 return Text(
-                                  '${value.toInt()}ms',
+                                  formatPlayheadClock(value / 1000.0),
                                   style: const TextStyle(fontSize: 11),
                                 );
                               },
@@ -240,14 +291,54 @@ class _WaveformChannelChart extends StatelessWidget {
                                     fontSize: 11,
                                     fontWeight: FontWeight.w600,
                                   ),
-                                  labelResolver: (_) => '$selectedTimeMs ms',
+                                  labelResolver: (_) => cursorLabel,
                                 ),
                               ),
                           ],
                         ),
                         lineBarsData: bars,
                         lineTouchData: LineTouchData(
-                          handleBuiltInTouches: false,
+                          enabled: true,
+                          handleBuiltInTouches: true,
+                          getTouchedSpotIndicator: (barData, spotIndexes) {
+                            final lineColor = barData.gradient?.colors.first ??
+                                barData.color ??
+                                AppTheme.CHART_CURSOR;
+                            return [
+                              for (final _ in spotIndexes)
+                                TouchedSpotIndicatorData(
+                                  FlLine(
+                                    color: lineColor,
+                                    strokeWidth: 1,
+                                  ),
+                                  FlDotData(
+                                    getDotPainter:
+                                        (spot, percent, bar, index) =>
+                                            FlDotCirclePainter(
+                                      radius: 5,
+                                      color: lineColor,
+                                      strokeWidth: 0,
+                                    ),
+                                  ),
+                                ),
+                            ];
+                          },
+                          touchTooltipData: LineTouchTooltipData(
+                            getTooltipItems: (touchedSpots) {
+                              return [
+                                for (final spot in touchedSpots)
+                                  LineTooltipItem(
+                                    't=${formatPlayheadClock(spot.x / 1000.0)}\n'
+                                    'y=${spot.y.toStringAsFixed(1)} $valueUnit',
+                                    const TextStyle(
+                                      color: Color(0xFFFFFFFF),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                              ];
+                            },
+                          ),
                           touchCallback: (event, response) {
                             if (onTimeTapMs == null && onBandTap == null) {
                               return;
@@ -320,6 +411,10 @@ class _WaveformChannelChart extends StatelessWidget {
       if (spot.x > max) {
         max = spot.x;
       }
+    }
+    final axisMax = axisMaxXMs;
+    if (axisMax != null && axisMax.toDouble() > max) {
+      return axisMax.toDouble();
     }
     return max;
   }
