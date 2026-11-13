@@ -49,22 +49,21 @@ class _WorkDetailBody extends StatelessWidget {
                 title: coordinator.pageTitle,
                 primaryItems: [
                   CommandBarButton(
-                    icon: const Icon(FluentIcons.back),
+                    icon: const Icon(FluentIcons.back, size: 12),
                     label: const CommandBarLabel('목록으로'),
                     onPressed: () =>
                         coordinator.didTapBackToWorkHistory(context),
                   ),
                   CommandBarButton(
-                    icon: const Icon(FluentIcons.video),
+                    icon: const Icon(FluentIcons.video, size: 12),
                     label: const CommandBarLabel('비디오 멀티모달'),
                     onPressed: job == null || !canOpenVideo
                         ? null
-                        : () =>
-                              coordinator.didTapOpenVideoMultimodal(context),
+                        : () => coordinator.didTapOpenVideoMultimodal(context),
                   ),
                   CommandBarButton(
-                    icon: const Icon(FluentIcons.line_chart),
-                    label: const CommandBarLabel('프로파일'),
+                    icon: const Icon(FluentIcons.line_chart, size: 12),
+                    label: const CommandBarLabel('패스별 프로파일'),
                     onPressed: job == null
                         ? null
                         : () => coordinator.didTapLeaveWorkDetailToPassProfile(
@@ -74,7 +73,7 @@ class _WorkDetailBody extends StatelessWidget {
                           ),
                   ),
                   CommandBarButton(
-                    icon: const Icon(FluentIcons.report_document),
+                    icon: const Icon(FluentIcons.report_document, size: 12),
                     label: const CommandBarLabel('품질 이슈'),
                     onPressed: job == null
                         ? null

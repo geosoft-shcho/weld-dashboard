@@ -65,6 +65,11 @@ class CommandBarLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(text, textAlign: TextAlign.start, softWrap: false);
+    return Text(
+      text,
+      textAlign: TextAlign.start,
+      softWrap: false,
+      style: TextStyle(fontSize: 12),
+    );
   }
 }
