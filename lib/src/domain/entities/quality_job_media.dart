@@ -25,3 +25,13 @@ class QualityJobMedia {
     return name;
   }
 }
+
+class QualityJobMediaPage {
+  const QualityJobMediaPage({
+    required this.items,
+    this.nextPageToken = '',
+  });
+
+  final List<QualityJobMedia> items;
+  final String nextPageToken;
+}

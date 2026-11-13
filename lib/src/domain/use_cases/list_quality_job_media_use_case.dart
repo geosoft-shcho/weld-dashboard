@@ -6,13 +6,18 @@ class ListQualityJobMediaUseCase {
 
   final QualityJobMediaRepository _repository;
 
-  Future<List<QualityJobMedia>> execute({
+  Future<QualityJobMediaPage> execute({
     required String jobId,
-    required String passId,
+    String passId = '',
+    String pageToken = '',
   }) {
-    if (jobId.isEmpty || passId.isEmpty) {
-      return Future.value(const []);
+    if (jobId.isEmpty) {
+      return Future.value(const QualityJobMediaPage(items: []));
     }
-    return _repository.listJobMedia(jobId: jobId, passId: passId);
+    return _repository.listJobMedia(
+      jobId: jobId,
+      passId: passId,
+      pageToken: pageToken,
+    );
   }
 }

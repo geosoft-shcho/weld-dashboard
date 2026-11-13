@@ -334,10 +334,6 @@ class _QualityMediaSection extends StatelessWidget {
     final viewModel = context.read<QualityIssueViewModel>();
     return QualityMediaHost(
       group: viewModel.board?.selectedGroup,
-      selectedTab: viewModel.selectedMediaTab,
-      selectedMediaIndex: viewModel.selectedMediaIndex,
-      onSelectTab: viewModel.didSelectMediaTab,
-      onSelectMediaIndex: viewModel.didSelectMediaIndex,
       reportPdfs: viewModel.reportPdfs,
       selectedReportSetId: viewModel.selectedReportSetId,
       reportPdfPage: viewModel.reportPdfPage,
@@ -345,7 +341,9 @@ class _QualityMediaSection extends StatelessWidget {
       selectedJobMediaId: viewModel.selectedJobMediaId,
       focusedMediaId: viewModel.focusedMediaId,
       onSelectFocusedMedia: viewModel.didSelectFocusedMedia,
-      seekToMs: viewModel.pendingSeekToMs,
+      hasMoreJobMedia: viewModel.hasMoreJobMedia,
+      isLoadingMoreJobMedia: viewModel.isLoadingMoreJobMedia,
+      onLoadMoreJobMedia: viewModel.didTapLoadMoreJobMedia,
       seekToken: viewModel.seekToken,
       videoSeekMs: viewModel.videoSeekMs,
       videoSeekAssetId: viewModel.videoSeekAssetId,
@@ -437,8 +435,6 @@ String _mediaKey(QualityIssueViewModel viewModel) {
   ].join(',');
   return [
     group?.qualityResultId ?? '',
-    viewModel.selectedMediaTab.label,
-    '${viewModel.selectedMediaIndex}',
     viewModel.selectedReportSetId ?? '',
     '${viewModel.reportPdfPage}',
     viewModel.selectedJobMediaId,
@@ -457,6 +453,8 @@ String _mediaKey(QualityIssueViewModel viewModel) {
     viewModel.videoSeekAssetId,
     viewModel.videoSeekNotice,
     '${viewModel.seekToken}',
+    '${viewModel.hasMoreJobMedia}',
+    '${viewModel.isLoadingMoreJobMedia}',
     media,
   ].join('\u001f');
 }

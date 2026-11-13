@@ -7,17 +7,23 @@ import 'proto_id.dart';
 class RemoteQualityJobMediaRepository implements QualityJobMediaRepository {
   RemoteQualityJobMediaRepository(this._mediaTag);
 
+  static const int PAGE_SIZE = 50;
+
   final MediaTagDataSource _mediaTag;
 
   @override
-  Future<List<QualityJobMedia>> listJobMedia({
+  Future<QualityJobMediaPage> listJobMedia({
     required String jobId,
-    required String passId,
+    String passId = '',
+    String pageToken = '',
   }) async {
-    if (jobId.isEmpty || passId.isEmpty) {
-      return const [];
+    if (jobId.isEmpty) {
+      return const QualityJobMediaPage(items: []);
     }
-    final request = asset_pb.ListAssetsRequest(pageSize: 200);
+    final request = asset_pb.ListAssetsRequest(
+      pageSize: PAGE_SIZE,
+      pageToken: pageToken,
+    );
     request.job = asset_pb.AssetJobFilter(jobId: protoId(jobId));
     final response = await _mediaTag.assetService.listAssets(request);
     final pdfs = <QualityJobMedia>[];
@@ -30,7 +36,7 @@ class RemoteQualityJobMediaRepository implements QualityJobMediaRepository {
       final attachedPassId = response.passIds.containsKey(asset.assetId)
           ? idText(response.passIds[asset.assetId]!)
           : '';
-      if (attachedPassId != passId) {
+      if (passId.isNotEmpty && attachedPassId != passId) {
         continue;
       }
       final isVideo = asset.kind == asset_pb.AssetKind.ASSET_KIND_VIDEO;
@@ -54,7 +60,10 @@ class RemoteQualityJobMediaRepository implements QualityJobMediaRepository {
         pdfs.add(media);
       }
     }
-    return [...pdfs, ...videos];
+    return QualityJobMediaPage(
+      items: [...pdfs, ...videos],
+      nextPageToken: response.nextPageToken,
+    );
   }
 
   bool _isPdf(asset_pb.Asset asset) {

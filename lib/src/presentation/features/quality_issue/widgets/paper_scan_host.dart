@@ -10,13 +10,11 @@ class PaperScanHost extends StatefulWidget {
     required this.scanFile,
     required this.scanPages,
     this.initialPage,
-    this.displayName = '',
   });
 
   final String scanFile;
   final int scanPages;
   final int? initialPage;
-  final String displayName;
 
   @override
   State<PaperScanHost> createState() => _PaperScanHostState();
@@ -63,83 +61,39 @@ class _PaperScanHostState extends State<PaperScanHost> {
     if (scanFile.isEmpty) {
       return _unavailableSlot();
     }
-    final providedName = widget.displayName.trim();
-    final displayName = providedName.isEmpty
-        ? paperScanDisplayName(scanFile)
-        : providedName;
     final source = _source;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          color: AppTheme.SURFACE_RAISED,
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppTheme.ACCENT_STEEL.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: const Text('페이퍼 원본'),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  displayName,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+    if (source == null) {
+      return _viewport(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              _unsupportedReason ?? '연결된 스캔 파일을 찾을 수 없습니다',
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        if (source == null)
-          _viewport(
-            child: Center(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  _unsupportedReason ?? '연결된 스캔 파일을 찾을 수 없습니다',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          )
-        else
-          PdfrxDocumentViewer(
-            key: ValueKey(scanFile),
-            source: source,
-            initialPage: widget.initialPage,
-            backgroundColor: AppTheme.SURFACE_RAISED,
-            fallbackPageCount: widget.scanPages,
-            expandViewport: false,
-            viewportHeight: VIEWPORT_MIN_HEIGHT,
-          ),
-      ],
+      );
+    }
+    return PdfrxDocumentViewer(
+      key: ValueKey(scanFile),
+      source: source,
+      initialPage: widget.initialPage,
+      backgroundColor: AppTheme.SURFACE_RAISED,
+      fallbackPageCount: widget.scanPages,
+      expandViewport: false,
+      viewportHeight: VIEWPORT_MIN_HEIGHT,
     );
   }
 
   Widget _unavailableSlot() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          color: AppTheme.SURFACE_RAISED,
-          child: const Text('페이퍼 원본'),
+    return _viewport(
+      child: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(UNAVAILABLE_MESSAGE, textAlign: TextAlign.center),
         ),
-        _viewport(
-          child: const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(UNAVAILABLE_MESSAGE, textAlign: TextAlign.center),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -152,14 +106,6 @@ class _PaperScanHostState extends State<PaperScanHost> {
       ),
     );
   }
-}
-
-String paperScanDisplayName(String path) {
-  final base = path.split('/').last;
-  if (base == 'connection-beam-ndt.pdf' || base == 'connection_beam_ndt.pdf') {
-    return 'CONNECTION BEAM 검사 및 NDT리포트.pdf';
-  }
-  return base;
 }
 
 /// 기존 호출부 호환용. 새 코드는 [resolvePdfrxDocumentSource]를 쓴다.

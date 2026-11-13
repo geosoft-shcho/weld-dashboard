@@ -4,9 +4,6 @@ import '../../../domain/entities/comparison_job_candidate.dart';
 import '../../../domain/entities/pass_waveform_catalog.dart';
 import '../../../domain/entities/quality_issue_board.dart';
 import '../../../domain/entities/quality_job_media.dart';
-import '../../../domain/entities/quality_media.dart';
-import '../../../domain/entities/quality_media_tab.dart';
-import '../../../domain/entities/quality_result_group.dart';
 import '../../../domain/entities/quality_result_report.dart';
 import '../../../domain/entities/series_role.dart';
 import '../../../domain/entities/waveform_row.dart';
@@ -63,6 +60,10 @@ class QualityIssueViewModel extends ChangeNotifier {
   List<QualityResultReport> _qualityReports = const [];
   List<QualityScanPdf> _reportPdfs = const [];
   List<QualityJobMedia> _jobMedia = const [];
+  List<QualityJobMedia>? _jobMediaCache;
+  String _jobMediaCacheJobId = '';
+  String _jobMediaNextPageToken = '';
+  bool _isLoadingMoreJobMedia = false;
   String _selectedJobMediaId = '';
   String _focusedMediaId = '';
   String? _selectedReportSetId;
@@ -76,8 +77,6 @@ class QualityIssueViewModel extends ChangeNotifier {
   String _comparisonError = '';
   bool _isComparisonPageLoading = false;
   String _linkId;
-  QualityMediaTab _selectedMediaTab = QualityMediaTab.pdf;
-  int _selectedMediaIndex = 0;
   int? _pendingSeekToMs;
   int? _chartTimeNs;
   int? _videoSeekMs;
@@ -100,6 +99,8 @@ class QualityIssueViewModel extends ChangeNotifier {
   List<QualityResultReport> get qualityReports => _qualityReports;
   List<QualityScanPdf> get reportPdfs => _reportPdfs;
   List<QualityJobMedia> get jobMedia => _jobMedia;
+  bool get hasMoreJobMedia => _jobMediaNextPageToken.isNotEmpty;
+  bool get isLoadingMoreJobMedia => _isLoadingMoreJobMedia;
   String get selectedJobMediaId => _selectedJobMediaId;
   String get focusedMediaId => _focusedMediaId;
   String? get selectedReportSetId => _selectedReportSetId;
@@ -111,8 +112,6 @@ class QualityIssueViewModel extends ChangeNotifier {
   String get comparisonError => _comparisonError;
   String get normalize => _normalize;
   String get waveformNotice => _catalog?.waveformNotice ?? '';
-  QualityMediaTab get selectedMediaTab => _selectedMediaTab;
-  int get selectedMediaIndex => _selectedMediaIndex;
   int? get pendingSeekToMs => _pendingSeekToMs;
   int? get chartTimeNs => _chartTimeNs;
   int? get videoSeekMs => _videoSeekMs;
@@ -130,115 +129,100 @@ class QualityIssueViewModel extends ChangeNotifier {
   String get selectedLinkId => _linkId;
 
   Future<void> loadBoard() {
-    return _loadCatalog(isPageLoad: true);
+    return _loadCatalog();
   }
 
   Future<void> _reloadPassContent() {
-    return _loadCatalog(isPageLoad: false);
+    return _reloadComparisonWaveform();
   }
 
-  Future<void> _loadCatalog({required bool isPageLoad}) async {
+  Future<void> _loadCatalog() async {
     final version = ++_loadVersion;
-    if (isPageLoad) {
-      _isLoading = true;
-      _isContentLoading = false;
-      _hasError = false;
-      _errorMessage = '';
-      _contentError = '';
-      _didLoadQualityResults = false;
-      _qualityReports = const [];
-      _reportPdfs = const [];
-      _selectedReportSetId = null;
-      _reportPdfPage = 1;
-      _jobMedia = const [];
-      _selectedJobMediaId = '';
-      _focusedMediaId = '';
-      _clearVideoSeek();
-      _clearComparison();
-    } else {
-      _isContentLoading = true;
-      _contentError = '';
-    }
+    _isLoading = true;
+    _isContentLoading = false;
+    _hasError = false;
+    _errorMessage = '';
+    _contentError = '';
+    _didLoadQualityResults = false;
+    _qualityReports = const [];
+    _reportPdfs = const [];
+    _selectedReportSetId = null;
+    _reportPdfPage = 1;
+    _jobMedia = const [];
+    _jobMediaCache = null;
+    _jobMediaCacheJobId = '';
+    _jobMediaNextPageToken = '';
+    _isLoadingMoreJobMedia = false;
+    _selectedJobMediaId = '';
+    _focusedMediaId = '';
+    _clearVideoSeek();
+    _clearComparison();
     notifyListeners();
     try {
-      if (isPageLoad) {
-        _qualityReports = await _listQualityResultsUseCase.execute(
+      final loaded = await Future.wait<Object>([
+        _listQualityResultsUseCase.execute(jobId: jobId),
+        _loadPassWaveformCatalogUseCase.execute(
+          commonKey: commonKey,
           jobId: jobId,
-        );
-        _didLoadQualityResults = jobId.isNotEmpty;
-        if (version != _loadVersion) {
-          return;
-        }
-        _reportPdfs = await _loadReportPdfs(_qualityReports);
-        _selectFirstInspection();
-      }
-      final catalog = await _loadPassWaveformCatalogUseCase.execute(
-        commonKey: commonKey,
-        jobId: jobId,
-        passId: _passId,
-        normalize: _normalize,
-      );
+          passId: _passId,
+          normalize: _normalize,
+        ),
+      ]);
       if (version != _loadVersion) {
         return;
       }
+      _qualityReports = loaded[0] as List<QualityResultReport>;
+      _didLoadQualityResults = jobId.isNotEmpty;
+      final catalog = loaded[1] as PassWaveformCatalog;
+      final pdfsFuture = _loadReportPdfs(_qualityReports);
       _catalog = catalog;
       _applyLoadedNormalize(catalog);
-      if (isPageLoad) {
-        _revealTargetSeries(catalog.waveformRows);
-      }
+      _revealTargetSeries(catalog.waveformRows);
       _applyQuery();
-      if (isPageLoad) {
-        final passId = _passIdForMedia();
-        if (_passId.isEmpty && passId.isNotEmpty) {
-          _passId = passId;
-          _applyQuery();
-        }
-        await _loadJobMediaForPass(_passId);
-        if (version != _loadVersion) {
-          return;
-        }
-        _clearComparison();
-        await _loadComparisonJobPage(version: version, pageToken: '');
+      final passId = _passIdForMedia();
+      if (_passId.isEmpty && passId.isNotEmpty) {
+        _passId = passId;
+        _applyQuery();
       }
+      final mediaFuture = _loadJobMediaForPass(_passId);
+      _reportPdfs = await pdfsFuture;
+      if (version != _loadVersion) {
+        return;
+      }
+      _selectFirstInspection();
+      await mediaFuture;
+      if (version != _loadVersion) {
+        return;
+      }
+      _clearComparison();
+      await _loadComparisonJobPage(version: version, pageToken: '');
       final boardPassId = _board?.selectedPass?.passId ?? '';
       final loadedPassId =
-          catalog.waveformRows.firstOrNull?.passId ??
-          catalog.passes.firstOrNull?.passId ??
+          _catalog?.waveformRows.firstOrNull?.passId ??
+          _catalog?.passes.firstOrNull?.passId ??
           '';
       if (boardPassId.isNotEmpty && boardPassId != loadedPassId) {
-        if (isPageLoad) {
-          loadBoard();
-        } else {
-          _reloadPassContent();
-        }
+        _passId = boardPassId;
+        await _replaceCatalogWaveform(version: version);
       }
     } catch (error) {
       if (version != _loadVersion) {
         return;
       }
-      if (isPageLoad) {
-        if (_didLoadQualityResults) {
-          _contentError = error.toString();
-        } else {
-          _hasError = true;
-          _errorMessage = error.toString();
-          _board = null;
-          _qualityReports = const [];
-          _reportPdfs = const [];
-          _selectedReportSetId = null;
-          _clearComparison();
-        }
-      } else {
+      if (_didLoadQualityResults) {
         _contentError = error.toString();
-        _restoreSelectionFromBoard();
+      } else {
+        _hasError = true;
+        _errorMessage = error.toString();
+        _board = null;
+        _qualityReports = const [];
+        _reportPdfs = const [];
+        _selectedReportSetId = null;
+        _clearComparison();
       }
     } finally {
       if (version == _loadVersion) {
-        if (isPageLoad) {
-          _isLoading = false;
-        } else {
-          _isContentLoading = false;
-        }
+        _isLoading = false;
         notifyListeners();
       }
     }
@@ -273,49 +257,50 @@ class QualityIssueViewModel extends ChangeNotifier {
     final index = _reportPdfs.indexWhere(
       (pdf) => pdf.reportSetId == reportSetId,
     );
-    if (index >= 0) {
-      _selectedMediaIndex = index;
-    }
     _selectedReportSetId = reportSetId;
     _focusedMediaId = 'report:$reportSetId';
     final setPageStart = index >= 0 ? _reportPdfs[index].setPageStart : null;
     _reportPdfPage = _pageInSplitPdf(originalPage, setPageStart);
-    _selectedMediaTab = QualityMediaTab.pdf;
   }
 
   Future<List<QualityScanPdf>> _loadReportPdfs(
     List<QualityResultReport> reports,
   ) async {
-    final pdfs = <QualityScanPdf>[];
+    final reportSetIds = <String>[];
     final seen = <String>{};
     for (final report in reports) {
       final reportSetId = report.reportSetId;
       if (reportSetId.isEmpty || !seen.add(reportSetId)) {
         continue;
       }
-      try {
-        final detail = await _getReportSetUseCase.execute(
-          reportSetId: reportSetId,
-        );
-        pdfs.add(
-          QualityScanPdf(
-            reportSetId: detail.summary.reportSetId,
-            url: detail.pdfUrl,
-            setPageStart: detail.summary.pageStart,
-            fileName: detail.pdfFileName,
-          ),
-        );
-      } catch (_) {
-        pdfs.add(
-          QualityScanPdf(
-            reportSetId: reportSetId,
-            url: '',
-            setPageStart: null,
-          ),
-        );
-      }
+      reportSetIds.add(reportSetId);
     }
-    return pdfs;
+    if (reportSetIds.isEmpty) {
+      return const [];
+    }
+    return Future.wait([
+      for (final reportSetId in reportSetIds) _loadOneReportPdf(reportSetId),
+    ]);
+  }
+
+  Future<QualityScanPdf> _loadOneReportPdf(String reportSetId) async {
+    try {
+      final detail = await _getReportSetUseCase.execute(
+        reportSetId: reportSetId,
+      );
+      return QualityScanPdf(
+        reportSetId: detail.summary.reportSetId,
+        url: detail.pdfUrl,
+        setPageStart: detail.summary.pageStart,
+        fileName: detail.pdfFileName,
+      );
+    } catch (_) {
+      return QualityScanPdf(
+        reportSetId: reportSetId,
+        url: '',
+        setPageStart: null,
+      );
+    }
   }
 
   int _pageInSplitPdf(int? originalPage, int? setPageStart) {
@@ -344,7 +329,6 @@ class QualityIssueViewModel extends ChangeNotifier {
     _videoSeekNotice = '';
     _focusedMediaId = focusedMediaId;
     _selectedReportSetId = reportSetId;
-    _selectedMediaTab = QualityMediaTab.pdf;
     notifyListeners();
   }
 
@@ -485,11 +469,6 @@ class QualityIssueViewModel extends ChangeNotifier {
       return;
     }
     _pendingSeekToMs = clamped;
-    final group = _board?.selectedGroup;
-    if (_isMediaTabAvailable(QualityMediaTab.video, group)) {
-      _selectedMediaTab = QualityMediaTab.video;
-      _seekToken++;
-    }
     notifyListeners();
   }
 
@@ -562,32 +541,6 @@ class QualityIssueViewModel extends ChangeNotifier {
     _pendingSeekToMs = null;
   }
 
-  void didSelectMediaTab(QualityMediaTab tab) {
-    if (_selectedMediaTab == tab) {
-      return;
-    }
-    final group = _board?.selectedGroup;
-    if (!_isMediaTabAvailable(tab, group)) {
-      return;
-    }
-    _selectedMediaTab = tab;
-    _selectedMediaIndex = 0;
-    notifyListeners();
-  }
-
-  void didSelectMediaIndex(int index) {
-    final files =
-        _board?.selectedGroup?.media
-            .where((item) => item.type == _selectedMediaTab)
-            .toList() ??
-        const <QualityMedia>[];
-    if (index < 0 || index >= files.length || _selectedMediaIndex == index) {
-      return;
-    }
-    _selectedMediaIndex = index;
-    notifyListeners();
-  }
-
   void didTapToggleMaster(bool isOn) {
     _showMaster = isOn;
     notifyListeners();
@@ -613,8 +566,7 @@ class QualityIssueViewModel extends ChangeNotifier {
   }
 
   Future<void> _reloadComparisonWaveformAt(int version) async {
-    final catalog = _catalog;
-    if (catalog == null) {
+    if (_catalog == null) {
       if (version == _loadVersion) {
         _isContentLoading = false;
         notifyListeners();
@@ -624,40 +576,8 @@ class QualityIssueViewModel extends ChangeNotifier {
     _isContentLoading = true;
     _contentError = '';
     notifyListeners();
-    final item = catalog.historyItems.firstOrNull;
-    final comparisonPassId = _comparisonPasses.isEmpty
-        ? ''
-        : pairComparisonPassId(
-            targetPasses: catalog.passes,
-            selectedPassId: _passId,
-            comparisonPasses: _comparisonPasses,
-          );
     try {
-      final series = await _loadPassWaveformUseCase.execute(
-        passId: _passId,
-        commonKey: item?.commonKey.isNotEmpty == true
-            ? item!.commonKey
-            : commonKey,
-        workerId: item?.workerId ?? '',
-        comparisonPassId: comparisonPassId,
-        normalize: _normalize,
-      );
-      if (version != _loadVersion) {
-        return;
-      }
-      _catalog = PassWaveformCatalog(
-        passes: catalog.passes,
-        waveformRows: series.rows,
-        links: catalog.links,
-        qualityGroups: catalog.qualityGroups,
-        historyItems: catalog.historyItems,
-        workers: catalog.workers,
-        context: catalog.context,
-        waveformNotice: series.notice,
-        didFallBackToRaw: series.didFallBackToRaw,
-      );
-      _applyLoadedNormalize(_catalog!);
-      _applyQuery();
+      await _replaceCatalogWaveform(version: version);
     } catch (error) {
       if (version != _loadVersion) {
         return;
@@ -670,6 +590,46 @@ class QualityIssueViewModel extends ChangeNotifier {
         notifyListeners();
       }
     }
+  }
+
+  Future<void> _replaceCatalogWaveform({required int version}) async {
+    final catalog = _catalog;
+    if (catalog == null) {
+      return;
+    }
+    final item = catalog.historyItems.firstOrNull;
+    final comparisonPassId = _comparisonPasses.isEmpty
+        ? ''
+        : pairComparisonPassId(
+            targetPasses: catalog.passes,
+            selectedPassId: _passId,
+            comparisonPasses: _comparisonPasses,
+          );
+    final series = await _loadPassWaveformUseCase.execute(
+      passId: _passId,
+      commonKey: item?.commonKey.isNotEmpty == true
+          ? item!.commonKey
+          : commonKey,
+      workerId: item?.workerId ?? '',
+      comparisonPassId: comparisonPassId,
+      normalize: _normalize,
+    );
+    if (version != _loadVersion) {
+      return;
+    }
+    _catalog = PassWaveformCatalog(
+      passes: catalog.passes,
+      waveformRows: series.rows,
+      links: catalog.links,
+      qualityGroups: catalog.qualityGroups,
+      historyItems: catalog.historyItems,
+      workers: catalog.workers,
+      context: catalog.context,
+      waveformNotice: series.notice,
+      didFallBackToRaw: series.didFallBackToRaw,
+    );
+    _applyLoadedNormalize(_catalog!);
+    _applyQuery();
   }
 
   Future<void> _loadComparisonJobPage({
@@ -733,6 +693,36 @@ class QualityIssueViewModel extends ChangeNotifier {
     return first?.passId ?? '';
   }
 
+  Future<void> _ensureJobMediaCache() async {
+    if (jobId.isEmpty) {
+      _jobMediaCache = const [];
+      _jobMediaCacheJobId = '';
+      _jobMediaNextPageToken = '';
+      return;
+    }
+    if (_jobMediaCache != null && _jobMediaCacheJobId == jobId) {
+      return;
+    }
+    try {
+      final page = await _listQualityJobMediaUseCase.execute(jobId: jobId);
+      _jobMediaCache = page.items;
+      _jobMediaCacheJobId = jobId;
+      _jobMediaNextPageToken = page.nextPageToken;
+    } catch (_) {
+      _jobMediaCache = const [];
+      _jobMediaCacheJobId = jobId;
+      _jobMediaNextPageToken = '';
+    }
+  }
+
+  void _applyJobMediaPassFilter(String passId) {
+    final cache = _jobMediaCache ?? const <QualityJobMedia>[];
+    _jobMedia = [
+      for (final item in cache)
+        if (item.passId == passId) item,
+    ];
+  }
+
   Future<void> _loadJobMediaForPass(String passId) async {
     final version = ++_mediaLoadVersion;
     _jobMedia = const [];
@@ -747,27 +737,48 @@ class QualityIssueViewModel extends ChangeNotifier {
       notifyListeners();
       return;
     }
-    try {
-      final media = await _listQualityJobMediaUseCase.execute(
-        jobId: jobId,
-        passId: passId,
-      );
-      if (version != _mediaLoadVersion) {
-        return;
-      }
-      _jobMedia = media;
-      _syncJobMediaSelection();
-    } catch (_) {
-      if (version != _mediaLoadVersion) {
-        return;
-      }
-      _jobMedia = const [];
-      _selectedJobMediaId = '';
-      if (_focusedMediaId.startsWith('asset:')) {
-        _focusedMediaId = '';
-      }
+    await _ensureJobMediaCache();
+    if (version != _mediaLoadVersion) {
+      return;
     }
+    _applyJobMediaPassFilter(passId);
+    _syncJobMediaSelection();
     notifyListeners();
+  }
+
+  Future<void> didTapLoadMoreJobMedia() async {
+    final pageToken = _jobMediaNextPageToken;
+    if (pageToken.isEmpty || _isLoadingMoreJobMedia || jobId.isEmpty) {
+      return;
+    }
+    _isLoadingMoreJobMedia = true;
+    notifyListeners();
+    try {
+      final page = await _listQualityJobMediaUseCase.execute(
+        jobId: jobId,
+        pageToken: pageToken,
+      );
+      final existing = _jobMediaCache ?? const <QualityJobMedia>[];
+      final seen = {for (final item in existing) item.assetId};
+      final merged = [...existing];
+      for (final item in page.items) {
+        if (seen.add(item.assetId)) {
+          merged.add(item);
+        }
+      }
+      _jobMediaCache = merged;
+      _jobMediaCacheJobId = jobId;
+      _jobMediaNextPageToken = page.nextPageToken;
+      if (_passId.isNotEmpty) {
+        _applyJobMediaPassFilter(_passId);
+        _syncJobMediaSelection();
+      }
+    } catch (_) {
+      // 더보기 실패 시 기존 목록·token 유지
+    } finally {
+      _isLoadingMoreJobMedia = false;
+      notifyListeners();
+    }
   }
 
   void _syncJobMediaSelection() {
@@ -852,7 +863,6 @@ class QualityIssueViewModel extends ChangeNotifier {
     if (catalog == null) {
       return;
     }
-    final previousGroupId = _board?.selectedGroup?.qualityResultId;
     _board = _queryQualityIssueUseCase.execute(
       catalog: catalog,
       commonKey: commonKey,
@@ -862,48 +872,12 @@ class QualityIssueViewModel extends ChangeNotifier {
     );
     final board = _board;
     if (board != null) {
-      if (board.selectedGroup?.qualityResultId != previousGroupId) {
-        _selectedMediaIndex = 0;
-      }
       _passId =
           board.selectedPass?.passId ?? board.selectedGroup?.passId ?? _passId;
       _linkId = board.selectedLink?.linkId ?? _linkId;
-      final tab = _resolveMediaTab(
-        preferred: _selectedMediaTab,
-        group: board.selectedGroup,
-      );
-      if (tab != _selectedMediaTab) {
-        _selectedMediaIndex = 0;
-      }
-      _selectedMediaTab = tab;
       _syncJobMediaSelection();
-      final fileCount =
-          board.selectedGroup?.media.where((item) => item.type == tab).length ??
-          0;
-      if (_selectedMediaIndex >= fileCount) {
-        _selectedMediaIndex = 0;
-      }
     }
   }
-
-  QualityMediaTab _resolveMediaTab({
-    required QualityMediaTab preferred,
-    required QualityResultGroup? group,
-  }) {
-    if (_isMediaTabAvailable(preferred, group)) {
-      return preferred;
-    }
-    if (_isMediaTabAvailable(QualityMediaTab.pdf, group)) {
-      return QualityMediaTab.pdf;
-    }
-    if (_isMediaTabAvailable(QualityMediaTab.video, group)) {
-      return QualityMediaTab.video;
-    }
-    return QualityMediaTab.pdf;
-  }
-
-  bool _isMediaTabAvailable(QualityMediaTab tab, QualityResultGroup? group) =>
-      group?.media.any((item) => item.type == tab) ?? false;
 
   @override
   void dispose() {

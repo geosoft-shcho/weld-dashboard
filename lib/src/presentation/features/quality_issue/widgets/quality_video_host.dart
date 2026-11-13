@@ -9,13 +9,11 @@ class QualityVideoHost extends StatefulWidget {
     required this.videoFile,
     this.seekToMs,
     this.seekToken = 0,
-    this.displayName = '',
   });
 
   final String videoFile;
   final int? seekToMs;
   final int seekToken;
-  final String displayName;
 
   @override
   State<QualityVideoHost> createState() => _QualityVideoHostState();
@@ -60,82 +58,38 @@ class _QualityVideoHostState extends State<QualityVideoHost> {
     if (videoFile.isEmpty) {
       return _unavailableSlot();
     }
-    final providedName = widget.displayName.trim();
-    final displayName = providedName.isEmpty
-        ? qualityVideoDisplayName(videoFile)
-        : providedName;
     final assetPath = _assetPath;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          color: AppTheme.SURFACE_RAISED,
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: AppTheme.ACCENT_STEEL.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: const Text('현장 영상'),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  displayName,
-                  style: const TextStyle(fontWeight: FontWeight.w600),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
+    if (assetPath == null) {
+      return _viewport(
+        child: const Center(
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Text(
+              '연결된 영상 파일을 찾을 수 없습니다',
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
-        if (assetPath == null)
-          _viewport(
-            child: const Center(
-              child: Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  '연결된 영상 파일을 찾을 수 없습니다',
-                  textAlign: TextAlign.center,
-                ),
-              ),
-            ),
-          )
-        else
-          _viewport(
-            child: WorkDetailChewieStage(
-              key: ValueKey(assetPath),
-              assetPath: assetPath,
-              seekToMs: widget.seekToMs,
-              seekToken: widget.seekToken,
-            ),
-          ),
-      ],
+      );
+    }
+    return _viewport(
+      child: WorkDetailChewieStage(
+        key: ValueKey(assetPath),
+        assetPath: assetPath,
+        seekToMs: widget.seekToMs,
+        seekToken: widget.seekToken,
+      ),
     );
   }
 
   Widget _unavailableSlot() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          color: AppTheme.SURFACE_RAISED,
-          child: const Text('현장 영상'),
+    return _viewport(
+      child: const Center(
+        child: Padding(
+          padding: EdgeInsets.all(16),
+          child: Text(UNAVAILABLE_MESSAGE, textAlign: TextAlign.center),
         ),
-        _viewport(
-          child: const Center(
-            child: Padding(
-              padding: EdgeInsets.all(16),
-              child: Text(UNAVAILABLE_MESSAGE, textAlign: TextAlign.center),
-            ),
-          ),
-        ),
-      ],
+      ),
     );
   }
 
@@ -148,11 +102,6 @@ class _QualityVideoHostState extends State<QualityVideoHost> {
       ),
     );
   }
-}
-
-String qualityVideoDisplayName(String path) {
-  final base = path.split('/').last;
-  return base.isEmpty ? '현장 영상' : base;
 }
 
 String? resolveQualityVideoAssetPath(String videoFile) {
