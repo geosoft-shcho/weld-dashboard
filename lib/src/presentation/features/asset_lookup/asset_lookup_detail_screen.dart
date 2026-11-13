@@ -149,7 +149,7 @@ class _AssetLookupDetailBody extends StatelessWidget {
               ? null
               : () => _didTapDelete(context, asset, viewModel, coordinator),
           style: ButtonStyle(
-            foregroundColor: WidgetStateProperty.all(const Color(0xFFE85D5D)),
+            backgroundColor: WidgetStateProperty.all(AppTheme.STATUS_ERROR),
           ),
           child: const Text('지우기'),
         ),
