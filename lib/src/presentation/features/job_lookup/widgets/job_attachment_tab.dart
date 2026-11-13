@@ -1,3 +1,4 @@
+import 'package:connectrpc/connect.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
@@ -17,7 +18,7 @@ const double _kAttachmentColKind = 90;
 const double _kAttachmentColPostprocess = 120;
 const double _kAttachmentColPass = 130;
 const double _kAttachmentColActionsGap = 4;
-const double _kAttachmentColActions = 72;
+const double _kAttachmentColActions = 220;
 
 class JobAttachmentTab extends StatefulWidget {
   const JobAttachmentTab({super.key, required this.viewModel});
@@ -29,7 +30,6 @@ class JobAttachmentTab extends StatefulWidget {
 }
 
 class _JobAttachmentTabState extends State<JobAttachmentTab> {
-  String _error = '';
   bool _isWorking = false;
 
   JobLookupDetailViewModel get _viewModel => widget.viewModel;
@@ -45,15 +45,48 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
     return '';
   }
 
+  String _userFacingError(Object error) {
+    if (error is ConnectException) {
+      final message = error.message.trim();
+      if (message.isNotEmpty) return message;
+    }
+    return error.toString();
+  }
+
+  Future<void> _showErrorDialog(String title, String message) async {
+    if (!mounted) return;
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) => ContentDialog(
+        title: Text(title),
+        content: Text(message),
+        actions: [
+          Button(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('닫기'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _run(Future<void> Function() action) async {
-    setState(() {
-      _isWorking = true;
-      _error = '';
-    });
+    setState(() => _isWorking = true);
     try {
       await action();
     } catch (error) {
-      if (mounted) _error = error.toString();
+      await _showErrorDialog('요청을 처리할 수 없습니다', _userFacingError(error));
+    } finally {
+      if (mounted) setState(() => _isWorking = false);
+    }
+  }
+
+  Future<void> _didTapDetach(String assetId) async {
+    setState(() => _isWorking = true);
+    try {
+      await _viewModel.detachAsset(assetId);
+    } catch (error) {
+      await _showErrorDialog('첨부를 해제할 수 없습니다', _userFacingError(error));
     } finally {
       if (mounted) setState(() => _isWorking = false);
     }
@@ -141,7 +174,7 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
     final id = assetId.text.trim();
     if (confirmed != true) return;
     if (id.isEmpty || int.tryParse(id) == null) {
-      setState(() => _error = '에셋 번호를 숫자로 넣으세요.');
+      await _showErrorDialog('요청을 처리할 수 없습니다', '에셋 번호를 숫자로 넣으세요.');
       return;
     }
     await _run(() => _viewModel.attachAsset(assetId: id, passId: passId));
@@ -168,7 +201,10 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (_viewModel.isLoadingAttachments) const ProgressBar(),
+        if (_isWorking ||
+            _viewModel.isLoadingAttachments ||
+            _viewModel.isLoadingMoreAttachments)
+          const ProgressBar(),
         Expanded(
           child: NotificationListener<ScrollNotification>(
             onNotification: (notification) {
@@ -200,14 +236,6 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
                     ),
                   ],
                 ),
-                if (_error.isNotEmpty) ...[
-                  const SizedBox(height: 8),
-                  Text(_error, style: TextStyle(color: Colors.red)),
-                ],
-                if (_isWorking) ...[
-                  const SizedBox(height: 12),
-                  const Center(child: ProgressRing()),
-                ],
                 const SizedBox(height: 12),
                 if (_viewModel.isLoadingAttachments &&
                     _viewModel.attachments.isEmpty)
@@ -219,131 +247,133 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
                   )
                 else
                   Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.SURFACE_RAISED,
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: const Color(0xFF3E424A)),
-              ),
-              child: Column(
-                children: [
-                  const _JobAttachmentTableHeader(),
-                  for (final row in _viewModel.attachments)
-                    DecoratedBox(
-                      decoration: const BoxDecoration(
-                        border: Border(
-                          bottom: BorderSide(color: Color(0xFF3E424A)),
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: _kAttachmentColId,
-                              child: Text(row.assetId),
-                            ),
-                            SizedBox(
-                              width: _kAttachmentColKind,
-                              child: Text(
-                                AssetLookupKindOption.labelOf(row.kindCode),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.SURFACE_RAISED,
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: const Color(0xFF3E424A)),
+                    ),
+                    child: Column(
+                      children: [
+                        const _JobAttachmentTableHeader(),
+                        for (final row in _viewModel.attachments)
+                          DecoratedBox(
+                            decoration: const BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(color: Color(0xFF3E424A)),
                               ),
                             ),
-                            Expanded(
-                              child: Text(
-                                row.fileName,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            SizedBox(
-                              width: _kAttachmentColPostprocess,
-                              child: _JobAttachmentPostprocessCell(
-                                postprocess: row.postprocess,
-                              ),
-                            ),
-                            SizedBox(
-                              width: _kAttachmentColPass,
-                              child: _passCombo(
-                                value: _passIdOf(row),
-                                onChanged: (value) {
-                                  if (value == null) return;
-                                  _run(
-                                    () => _viewModel.changeAttachmentPass(
-                                      assetId: row.assetId,
-                                      passId: value,
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: _kAttachmentColActionsGap),
-                            SizedBox(
-                              width: _kAttachmentColActions,
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 6),
                               child: Row(
                                 children: [
                                   SizedBox(
-                                    width: 36,
-                                    child: Tooltip(
-                                      message: '에셋 상세',
-                                      useMousePosition: false,
-                                      style: const TooltipThemeData(
-                                        verticalOffset: 6,
-                                        preferBelow: true,
-                                      ),
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          FluentIcons.open_file,
-                                          size: 14,
-                                        ),
-                                        onPressed:
-                                            _isWorking || row.assetId.isEmpty
-                                            ? null
-                                            : () => context
-                                                  .read<AppCoordinator>()
-                                                  .didTapOpenAssetDetail(
-                                                    row.assetId,
-                                                  ),
+                                    width: _kAttachmentColId,
+                                    child: Text(row.assetId),
+                                  ),
+                                  SizedBox(
+                                    width: _kAttachmentColKind,
+                                    child: Text(
+                                      AssetLookupKindOption.labelOf(
+                                        row.kindCode,
                                       ),
                                     ),
                                   ),
+                                  Expanded(
+                                    child: Text(
+                                      row.fileName,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
                                   SizedBox(
-                                    width: 36,
-                                    child: Tooltip(
-                                      message: '에셋 떼기',
-                                      useMousePosition: false,
-                                      style: const TooltipThemeData(
-                                        verticalOffset: 6,
-                                        preferBelow: true,
-                                      ),
-                                      child: IconButton(
-                                        icon: const Icon(
-                                          FluentIcons.remove_link,
-                                          size: 14,
-                                        ),
-                                        onPressed: _isWorking
-                                            ? null
-                                            : () => _run(
-                                                () => _viewModel.detachAsset(
-                                                  row.assetId,
-                                                ),
+                                    width: _kAttachmentColPostprocess,
+                                    child: _JobAttachmentPostprocessCell(
+                                      postprocess: row.postprocess,
+                                    ),
+                                  ),
+                                  SizedBox(
+                                    width: _kAttachmentColPass,
+                                    child: _passCombo(
+                                      value: _passIdOf(row),
+                                      onChanged: (value) {
+                                        if (value == null) return;
+                                        _run(
+                                          () => _viewModel.changeAttachmentPass(
+                                            assetId: row.assetId,
+                                            passId: value,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(
+                                    width: _kAttachmentColActionsGap,
+                                  ),
+                                  SizedBox(
+                                    width: _kAttachmentColActions,
+                                    child: Row(
+                                      children: [
+                                        Button(
+                                          onPressed:
+                                              _isWorking || row.assetId.isEmpty
+                                              ? null
+                                              : () => context
+                                                    .read<AppCoordinator>()
+                                                    .didTapOpenAssetDetail(
+                                                      row.assetId,
+                                                    ),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                FluentIcons.red_eye,
+                                                size: 16,
                                               ),
-                                      ),
+                                              SizedBox(width: 6),
+                                              Text(
+                                                '자세히 보기',
+                                                style: TextStyle(fontSize: 12),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Button(
+                                          style: ButtonStyle(
+                                            backgroundColor:
+                                                WidgetStateProperty.all(
+                                                  AppTheme.STATUS_ERROR,
+                                                ),
+                                          ),
+                                          onPressed: _isWorking
+                                              ? null
+                                              : () =>
+                                                    _didTapDetach(row.assetId),
+                                          child: const Row(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              Icon(
+                                                FluentIcons.remove_link,
+                                                size: 16,
+                                              ),
+                                              SizedBox(width: 6),
+                                              Text(
+                                                '첨부 해제',
+                                                style: TextStyle(fontSize: 12),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
+                          ),
+                      ],
                     ),
-                ],
-              ),
-            ),
-                if (_viewModel.isLoadingMoreAttachments) ...[
-                  const SizedBox(height: 12),
-                  const Center(child: ProgressRing()),
-                ],
+                  ),
               ],
             ),
           ),
