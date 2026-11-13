@@ -134,15 +134,15 @@ class _HeaderRow extends StatelessWidget {
         padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Row(
           children: [
-            _Cell('공통키', flex: 16, isHeader: true),
-            _Cell('품목', flex: 16, isHeader: true),
-            _Cell('이음부', flex: 14, isHeader: true),
-            _Cell('작업자', flex: 10, isHeader: true),
-            _Cell('작업일시', flex: 14, isHeader: true),
-            _Cell('패스', flex: 6, isHeader: true),
-            _Cell('첨부', flex: 6, isHeader: true),
-            _Cell('성적서', flex: 8, isHeader: true),
-            _Cell('바로가기', flex: 10, isHeader: true),
+            _Cell('공통키', flex: 13, isHeader: true),
+            _Cell('품목', flex: 13, isHeader: true),
+            _Cell('이음부', flex: 11, isHeader: true),
+            _Cell('작업자', flex: 8, isHeader: true),
+            _Cell('작업일시', flex: 11, isHeader: true),
+            _Cell('패스', flex: 5, isHeader: true),
+            _Cell('첨부', flex: 5, isHeader: true),
+            _Cell('성적서', flex: 6, isHeader: true),
+            _Cell('바로가기', flex: 28, isHeader: true),
           ],
         ),
       ),
@@ -177,7 +177,7 @@ class _DataRow extends StatelessWidget {
           child: Row(
             children: [
               Expanded(
-                flex: 90,
+                flex: 72,
                 child: HoverButton(
                   onPressed: () => viewModel.didSelectRow(item.jobId),
                   builder: (context, states) {
@@ -190,22 +190,22 @@ class _DataRow extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          _Cell(item.commonKey, flex: 16),
-                          _Cell(_itemCell(item), flex: 16),
-                          _Cell(item.jointNo, flex: 14),
-                          _Cell(item.workerName, flex: 10),
+                          _Cell(item.commonKey, flex: 13),
+                          _Cell(_itemCell(item), flex: 13),
+                          _Cell(item.jointNo, flex: 11),
+                          _Cell(item.workerName, flex: 8),
                           _Cell(
                             DashboardFormatters.dateTime(item.workedAt),
-                            flex: 14,
+                            flex: 11,
                           ),
-                          _Cell('${item.passCount}', flex: 6),
+                          _Cell('${item.passCount}', flex: 5),
                           _Cell(
                             item.doesHaveAttachments
                                 ? '${item.attachmentCount}건'
                                 : '—',
-                            flex: 6,
+                            flex: 5,
                           ),
-                          _Cell(item.hasReport ? '있음' : '—', flex: 8),
+                          _Cell(item.hasReport ? '있음' : '—', flex: 6),
                         ],
                       ),
                     );
@@ -213,24 +213,25 @@ class _DataRow extends StatelessWidget {
                 ),
               ),
               Expanded(
-                flex: 10,
+                flex: 28,
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
+                  child: Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
                     children: [
                       _ActionIcon(
-                        tooltip: '작업 상세',
+                        label: '작업 상세',
                         icon: FluentIcons.red_eye,
                         onPressed: () => _openDetail(context),
                       ),
                       _ActionIcon(
-                        tooltip: '패스 프로파일',
+                        label: '패스 프로파일',
                         icon: FluentIcons.line_chart,
                         onPressed: () => _openPassProfile(context),
                       ),
                       _ActionIcon(
-                        tooltip: '품질 이슈',
+                        label: '품질 이슈',
                         icon: FluentIcons.report_document,
                         onPressed: () => _openQuality(context),
                       ),
@@ -238,7 +239,7 @@ class _DataRow extends StatelessWidget {
                         (auth) => auth.canAccessVideoMultimodal,
                       ))
                         _ActionIcon(
-                          tooltip: '비디오 멀티모달',
+                          label: '멀티모달',
                           icon: FluentIcons.video,
                           onPressed: () => _openVideoMultimodal(context),
                         ),
@@ -347,22 +348,27 @@ class _DataRow extends StatelessWidget {
 
 class _ActionIcon extends StatelessWidget {
   const _ActionIcon({
-    required this.tooltip,
+    required this.label,
     required this.icon,
     required this.onPressed,
   });
 
-  final String tooltip;
+  final String label;
   final IconData icon;
   final VoidCallback onPressed;
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      useMousePosition: false,
-      style: const TooltipThemeData(verticalOffset: 6, preferBelow: true),
-      child: IconButton(icon: Icon(icon, size: 14), onPressed: onPressed),
+    return Button(
+      onPressed: onPressed,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14),
+          const SizedBox(width: 6),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
     );
   }
 }
