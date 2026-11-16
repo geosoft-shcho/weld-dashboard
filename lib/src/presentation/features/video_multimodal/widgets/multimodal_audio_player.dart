@@ -7,8 +7,8 @@ import '../../../../domain/timeline_clip_playback.dart';
 import '../video_playback_rate.dart';
 
 /// 타임라인 `T`를 덮는 음성 클립 소리. UI 없음.
-class MultimodalTimelineAudioPlayer extends StatefulWidget {
-  const MultimodalTimelineAudioPlayer({
+class MultimodalAudioPlayer extends StatefulWidget {
+  const MultimodalAudioPlayer({
     super.key,
     required this.mediaUrl,
     required this.seekToMs,
@@ -28,12 +28,12 @@ class MultimodalTimelineAudioPlayer extends StatefulWidget {
   final bool isMuted;
 
   @override
-  State<MultimodalTimelineAudioPlayer> createState() =>
-      _MultimodalTimelineAudioPlayerState();
+  State<MultimodalAudioPlayer> createState() =>
+      _MultimodalAudioPlayerState();
 }
 
-class _MultimodalTimelineAudioPlayerState
-    extends State<MultimodalTimelineAudioPlayer> {
+class _MultimodalAudioPlayerState
+    extends State<MultimodalAudioPlayer> {
   static const Duration _urlDebounce = Duration(milliseconds: 200);
 
   final AudioPlayer _player = AudioPlayer();
@@ -51,7 +51,7 @@ class _MultimodalTimelineAudioPlayerState
   }
 
   @override
-  void didUpdateWidget(covariant MultimodalTimelineAudioPlayer oldWidget) {
+  void didUpdateWidget(covariant MultimodalAudioPlayer oldWidget) {
     super.didUpdateWidget(oldWidget);
     final urlChanged = oldWidget.mediaUrl != widget.mediaUrl;
     final seekChanged = oldWidget.seekToken != widget.seekToken;
