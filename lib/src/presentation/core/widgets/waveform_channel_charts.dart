@@ -51,8 +51,9 @@ class WaveformChannelCharts extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           _WaveformChannelChart(
-            title: showAxisTitles ? '전류 (A)' : '전류',
+            channelName: '전류',
             valueUnit: 'A',
+            accentColor: AppTheme.CHART_MASTER,
             series: series,
             links: links,
             showMaster: showMaster,
@@ -70,8 +71,9 @@ class WaveformChannelCharts extends StatelessWidget {
           ),
           SizedBox(height: gap),
           _WaveformChannelChart(
-            title: showAxisTitles ? '전압 (V)' : '전압',
+            channelName: '전압',
             valueUnit: 'V',
+            accentColor: AppTheme.STATUS_WARN,
             series: series,
             links: links,
             showMaster: showMaster,
@@ -89,8 +91,9 @@ class WaveformChannelCharts extends StatelessWidget {
           ),
           SizedBox(height: gap),
           _WaveformChannelChart(
-            title: showAxisTitles ? '속도 (m/min)' : '속도',
+            channelName: '속도',
             valueUnit: 'm/min',
+            accentColor: AppTheme.STATUS_OK,
             series: series,
             links: links,
             showMaster: showMaster,
@@ -108,8 +111,9 @@ class WaveformChannelCharts extends StatelessWidget {
           ),
           SizedBox(height: gap),
           _WaveformChannelChart(
-            title: showAxisTitles ? '회전 속도 (rpm)' : '회전 속도',
+            channelName: '회전 속도',
             valueUnit: 'rpm',
+            accentColor: AppTheme.CHART_ROBOT,
             series: series,
             links: links,
             showMaster: showMaster,
@@ -133,8 +137,9 @@ class WaveformChannelCharts extends StatelessWidget {
 
 class _WaveformChannelChart extends StatelessWidget {
   const _WaveformChannelChart({
-    required this.title,
+    required this.channelName,
     required this.valueUnit,
+    required this.accentColor,
     required this.series,
     required this.links,
     required this.showMaster,
@@ -151,8 +156,9 @@ class _WaveformChannelChart extends StatelessWidget {
     this.selectedTimeLabel = '',
   });
 
-  final String title;
+  final String channelName;
   final String valueUnit;
+  final Color accentColor;
   final WaveformSeriesBundle series;
   final List<QualityLink> links;
   final bool showMaster;
@@ -182,6 +188,7 @@ class _WaveformChannelChart extends StatelessWidget {
     }
     final spots = [for (final bar in bars) ...bar.spots];
     final chartHeight = showAxisTitles ? 140.0 : 96.0;
+    final panelPadding = showAxisTitles ? 12.0 : 8.0;
     final plotPadding = showAxisTitles
         ? const EdgeInsets.fromLTRB(8, 12, 12, 8)
         : const EdgeInsets.fromLTRB(2, 4, 2, 4);
@@ -190,29 +197,51 @@ class _WaveformChannelChart extends StatelessWidget {
         : (selectedTimeLabel.isNotEmpty
             ? selectedTimeLabel
             : formatPlayheadClock(selectedTimeMs! / 1000.0));
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          title,
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            fontSize: showAxisTitles ? null : 11,
-          ),
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(panelPadding),
+      decoration: BoxDecoration(
+        color: AppTheme.SURFACE_RAISED,
+        borderRadius: BorderRadius.circular(4),
+        border: Border(
+          left: BorderSide(color: accentColor, width: 3),
         ),
-        SizedBox(height: showAxisTitles ? 6 : 4),
-        SizedBox(
-          height: chartHeight,
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: AppTheme.CHART_PLOT,
-              borderRadius: BorderRadius.circular(4),
-            ),
-            child: spots.isEmpty
-                ? const Center(child: Text('데이터 없음'))
-                : Padding(
-                    padding: plotPadding,
-                    child: LineChart(
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              Text(
+                channelName,
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: showAxisTitles ? 14 : 11,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Text(
+                valueUnit,
+                style: TextStyle(
+                  fontSize: showAxisTitles ? 12 : 10,
+                  color: AppTheme.STATUS_OFF,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: showAxisTitles ? 8 : 4),
+          SizedBox(
+            height: chartHeight,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: AppTheme.CHART_PLOT,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: spots.isEmpty
+                  ? const Center(child: Text('데이터 없음'))
+                  : Padding(
+                      padding: plotPadding,
+                      child: LineChart(
                       duration: showAxisTitles
                           ? const Duration(milliseconds: 150)
                           : Duration.zero,
@@ -371,9 +400,10 @@ class _WaveformChannelChart extends StatelessWidget {
                       ),
                     ),
                   ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
