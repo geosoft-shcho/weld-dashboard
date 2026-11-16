@@ -25,6 +25,7 @@ class MultimodalVideoStage extends StatelessWidget {
           seekToken: viewModel.seekToken,
           playbackToken: viewModel.playbackToken,
           wantsPlayback: viewModel.wantsPlayback,
+          isMuted: viewModel.isCoveringAudioMuted,
         ),
       ],
     );
@@ -51,6 +52,7 @@ class MultimodalVideoStage extends StatelessWidget {
   /// 모니터 미선택 시: 기존과 같이 활성 트랙 영상 1칸.
   Widget _singleLegacy(FluentThemeData theme) {
     final video = viewModel.activeVideoBar;
+    final trackId = viewModel.activeVideoTrackId;
     final showBanner = viewModel.showsMissingTargetVideoBanner || video == null;
     return ColoredBox(
       color: AppTheme.SURFACE,
@@ -59,7 +61,7 @@ class MultimodalVideoStage extends StatelessWidget {
         children: [
           if (video != null)
             _player(
-              trackId: '',
+              trackId: trackId,
               mediaUrl: video.mediaUrl,
               seekToMs: viewModel.fileSeekMilliseconds(video),
               playbackRate: viewModel.playbackRateFor(video),
@@ -238,6 +240,7 @@ class MultimodalVideoStage extends StatelessWidget {
         playbackRate: playbackRate,
         contentEndMs: contentEndMs,
         usesStepSeek: usesStepSeek,
+        isAudioMuted: viewModel.isTrackAudioMuted(trackId),
         seekToken: viewModel.seekToken,
         playbackToken: viewModel.playbackToken,
         wantsPlayback: viewModel.wantsPlayback,

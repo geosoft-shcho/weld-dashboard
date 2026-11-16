@@ -317,6 +317,7 @@ String _stageBoardKey(VideoMultimodalViewModel viewModel) {
     viewModel.spanSeconds,
     viewModel.monitoredTrackIds.join(','),
     viewModel.focusedMonitorTrackId,
+    viewModel.mutedTrackIdsKey,
     viewModel.coveringAudioMediaUrl,
     viewModel.coveringAudioSeekMilliseconds,
     viewModel.chartExpandedClipId,

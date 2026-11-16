@@ -16,6 +16,7 @@ class MultimodalTimelineAudioPlayer extends StatefulWidget {
     required this.seekToken,
     required this.playbackToken,
     required this.wantsPlayback,
+    this.isMuted = false,
   });
 
   final String mediaUrl;
@@ -24,6 +25,7 @@ class MultimodalTimelineAudioPlayer extends StatefulWidget {
   final int seekToken;
   final int playbackToken;
   final bool wantsPlayback;
+  final bool isMuted;
 
   @override
   State<MultimodalTimelineAudioPlayer> createState() =>
@@ -55,7 +57,8 @@ class _MultimodalTimelineAudioPlayerState
     final seekChanged = oldWidget.seekToken != widget.seekToken;
     final playChanged = oldWidget.wantsPlayback != widget.wantsPlayback ||
         oldWidget.playbackToken != widget.playbackToken ||
-        oldWidget.playbackRate != widget.playbackRate;
+        oldWidget.playbackRate != widget.playbackRate ||
+        oldWidget.isMuted != widget.isMuted;
     if (urlChanged) {
       _desiredUrl = widget.mediaUrl;
       _forceSeekAfterOpen = true;
@@ -163,6 +166,9 @@ class _MultimodalTimelineAudioPlayerState
         await _player.setSpeed(1);
       } catch (_) {}
     }
+    try {
+      await _player.setVolume(widget.isMuted ? 0 : 1);
+    } catch (_) {}
     if (!mounted || _desiredUrl != url) {
       return;
     }

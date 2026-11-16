@@ -29,6 +29,7 @@ class MultimodalVideoPlayer extends StatefulWidget {
     required this.togglePlaybackHandler,
     this.contentEndMs,
     this.usesStepSeek = false,
+    this.isAudioMuted = false,
   });
 
   final String mediaUrl;
@@ -46,6 +47,8 @@ class MultimodalVideoPlayer extends StatefulWidget {
   final int? contentEndMs;
   /// 가이드 §6: 배속 0·범위 밖이면 재생 대신 시크만(소리 off).
   final bool usesStepSeek;
+  /// 트랙 라벨 mute. 스텝 시킹이 아닐 때만 volume에 반영.
+  final bool isAudioMuted;
 
   @override
   State<MultimodalVideoPlayer> createState() => _MultimodalVideoPlayerState();
@@ -97,7 +100,8 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     } else if (!didPause &&
         (oldWidget.playbackToken != widget.playbackToken ||
             oldWidget.playbackRate != widget.playbackRate ||
-            oldWidget.usesStepSeek != widget.usesStepSeek)) {
+            oldWidget.usesStepSeek != widget.usesStepSeek ||
+            oldWidget.isAudioMuted != widget.isAudioMuted)) {
       final playbackToken = widget.playbackToken;
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || widget.playbackToken != playbackToken) {
@@ -427,7 +431,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     }
     final rate = browserPlaybackRate(requestedRate) ?? 1;
     try {
-      await controller.setVolume(1);
+      await controller.setVolume(widget.isAudioMuted ? 0 : 1);
       if ((controller.value.playbackSpeed - rate).abs() >= 0.01) {
         await controller.setPlaybackSpeed(rate);
       }

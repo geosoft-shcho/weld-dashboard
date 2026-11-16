@@ -727,6 +727,23 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                 ),
               ),
             ),
+          if (viewModel.trackShowsAudioMuteToggle(row.trackId))
+            GestureDetector(
+              onTap: () =>
+                  viewModel.didTapToggleTrackAudioMute(row.trackId),
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4),
+                child: Icon(
+                  viewModel.isTrackAudioMuted(row.trackId)
+                      ? Icons.volume_off
+                      : Icons.volume_up,
+                  size: 14,
+                  color: viewModel.isTrackAudioMuted(row.trackId)
+                      ? MultimodalStudioPalette.GRAPE_700
+                      : MultimodalStudioPalette.SAND_600,
+                ),
+              ),
+            ),
           if (viewModel.isServerTimelineTrack(row.trackId) &&
               viewModel.trackHasTimeseries(row.trackId))
             GestureDetector(

@@ -209,6 +209,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   /// Stage에 동시에 보여 줄 비디오 트랙(최대 [MAX_MONITORED_TRACK_COUNT]).
   final List<String> _monitoredTrackIds = [];
   String _focusedMonitorTrackId = '';
+  /// 소리가 꺼진 트랙(영상·음성). 기본은 unmute.
+  final Set<String> _mutedTrackIds = {};
   static const int MAX_MONITORED_TRACK_COUNT = 4;
   final ClipChartSession _chartSession = ClipChartSession();
   DateTime _lastDriftSeekAt = DateTime.fromMillisecondsSinceEpoch(0);
@@ -353,6 +355,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   TemporaryAttachmentBar? get activeVideoBar =>
       _videoBarFromClip(_activeVideoClip());
+
+  /// legacy 1칸·mute용. 현재 활성 영상 클립의 트랙.
+  String get activeVideoTrackId => _activeVideoClip()?.trackId ?? '';
 
   /// 비영상 클립에 대상 영상이 없을 때 스테이지 하단 안내.
   bool get showsMissingTargetVideoBanner => _showsMissingTargetVideoBanner;
@@ -1730,6 +1735,36 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   bool isTrackMonitored(String trackId) => monitoredTrackIds.contains(trackId);
   bool isMonitorSlotFocused(String trackId) => focusedMonitorTrackId == trackId;
+  bool isTrackAudioMuted(String trackId) =>
+      trackId.isNotEmpty && _mutedTrackIds.contains(trackId);
+  /// Selector 키용. mute 토글 시 stage/보드 재빌드.
+  String get mutedTrackIdsKey {
+    final ids = _mutedTrackIds.toList()..sort();
+    return ids.join(',');
+  }
+
+  bool get isCoveringAudioMuted {
+    final trackId = coveringAudioClip?.trackId ?? '';
+    return isTrackAudioMuted(trackId);
+  }
+
+  /// 라벨 소리 아이콘: 서버 트랙에 영상 또는 음성 클립이 있을 때.
+  bool trackShowsAudioMuteToggle(String trackId) =>
+      isServerTimelineTrack(trackId) &&
+      (trackHasVideo(trackId) || trackHasAudio(trackId));
+
+  void didTapToggleTrackAudioMute(String trackId) {
+    if (trackId.isEmpty || !trackShowsAudioMuteToggle(trackId)) {
+      return;
+    }
+    if (_mutedTrackIds.contains(trackId)) {
+      _mutedTrackIds.remove(trackId);
+    } else {
+      _mutedTrackIds.add(trackId);
+    }
+    notifyListeners();
+  }
+
   String monitorTrackLabel(String trackId) {
     final name = _trackName(trackId).trim();
     if (name.isNotEmpty) {
