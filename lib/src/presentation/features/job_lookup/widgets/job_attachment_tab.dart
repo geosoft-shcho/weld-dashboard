@@ -82,6 +82,24 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
   }
 
   Future<void> _didTapDetach(String assetId) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => ContentDialog(
+        title: const Text('첨부를 해제할까요?'),
+        content: const Text('이 작업에서만 떼어냅니다. 에셋 자체는 남습니다.'),
+        actions: [
+          Button(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('해제'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
     setState(() => _isWorking = true);
     try {
       await _viewModel.detachAsset(assetId);
