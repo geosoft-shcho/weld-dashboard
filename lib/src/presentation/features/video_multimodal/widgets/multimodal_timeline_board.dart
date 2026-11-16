@@ -617,7 +617,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     color: MultimodalStudioPalette.SAND_600,
     fontSize: 9,
   );
-  // 좌우 패딩 + 색 상자 + AI 배지 + clip id 여유
+  // 좌우 패딩 + 아이콘 + AI 배지 + trackId 여유
   static const double _TRACK_LABEL_SIDE = 140;
 
   double _labelTextWidth(String text) {
@@ -687,16 +687,33 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   }
 
   Widget _trackLabelRow(TimelineBoardRow row) {
+    // 행·mute·모니터가 트랙 단위이므로 보조 식별자는 trackId. 클립 목록은 Tooltip.
+    final identity = row.trackId;
     if (row.clips.isEmpty) {
-      return _trackLabel(row);
+      return _trackLabel(row, identity: identity);
     }
     final clip = _rowSelection(row);
     final isSelected = row.clips.any(_isClipSelected);
-    final identity = row.clips.length == 1 ? row.clips.first.clipId : '';
     return GestureDetector(
       onTap: () => _selectClip(clip),
       child: _trackLabel(row, isSelected: isSelected, identity: identity),
     );
+  }
+
+  String _trackIdentityTooltip(TimelineBoardRow row) {
+    final trackLine = '트랙 ID: ${row.trackId}';
+    if (row.clips.isEmpty) {
+      return '$trackLine\n클립: 없음';
+    }
+    if (row.clips.length == 1) {
+      return '$trackLine\n클립 ID: ${row.clips.first.clipId}';
+    }
+    final lines = [
+      trackLine,
+      '클립 ID (${row.clips.length}):',
+      for (final clip in row.clips) '· ${clip.clipId}',
+    ];
+    return lines.join('\n');
   }
 
   Widget _trackLabel(
@@ -704,12 +721,49 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     bool isSelected = false,
     String identity = '',
   }) {
-    return Container(
-      height: row.height,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      color: isSelected ? MultimodalStudioPalette.GRAPE_100 : null,
-      child: Row(
-        children: [
+    return Tooltip(
+      message: _trackIdentityTooltip(row),
+      child: Container(
+        height: row.height,
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        color: isSelected ? MultimodalStudioPalette.GRAPE_100 : null,
+        child: Row(
+          children: [
+          Tooltip(
+            message: '트랙 가리기',
+            child: GestureDetector(
+              onTap: () => viewModel.didTapToggleTrackVisibility(row.trackId),
+              child: const Padding(
+                padding: EdgeInsets.only(right: 4),
+                child: Icon(
+                  Icons.check_box,
+                  size: 14,
+                  color: MultimodalStudioPalette.SAND_700,
+                ),
+              ),
+            ),
+          ),
+          if (viewModel.trackShowsAudioMuteToggle(row.trackId))
+            Tooltip(
+              message: viewModel.isTrackAudioMuted(row.trackId)
+                  ? '소리 켜기'
+                  : '소리 끄기',
+              child: GestureDetector(
+                onTap: () => viewModel.didTapToggleTrackAudioMute(row.trackId),
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 4),
+                  child: Icon(
+                    viewModel.isTrackAudioMuted(row.trackId)
+                        ? Icons.volume_off
+                        : Icons.volume_up,
+                    size: 14,
+                    color: viewModel.isTrackAudioMuted(row.trackId)
+                        ? MultimodalStudioPalette.GRAPE_700
+                        : MultimodalStudioPalette.SAND_600,
+                  ),
+                ),
+              ),
+            ),
           if (viewModel.isServerTimelineTrack(row.trackId) &&
               viewModel.trackHasVideo(row.trackId))
             GestureDetector(
@@ -722,23 +776,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                       : Icons.videocam_outlined,
                   size: 14,
                   color: viewModel.isTrackMonitored(row.trackId)
-                      ? MultimodalStudioPalette.GRAPE_700
-                      : MultimodalStudioPalette.SAND_600,
-                ),
-              ),
-            ),
-          if (viewModel.trackShowsAudioMuteToggle(row.trackId))
-            GestureDetector(
-              onTap: () =>
-                  viewModel.didTapToggleTrackAudioMute(row.trackId),
-              child: Padding(
-                padding: const EdgeInsets.only(right: 4),
-                child: Icon(
-                  viewModel.isTrackAudioMuted(row.trackId)
-                      ? Icons.volume_off
-                      : Icons.volume_up,
-                  size: 14,
-                  color: viewModel.isTrackAudioMuted(row.trackId)
                       ? MultimodalStudioPalette.GRAPE_700
                       : MultimodalStudioPalette.SAND_600,
                 ),
@@ -774,20 +811,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                 ),
               ),
             ),
-          Tooltip(
-            message: '트랙 가리기',
-            child: GestureDetector(
-              onTap: () => viewModel.didTapToggleTrackVisibility(row.trackId),
-              child: const Padding(
-                padding: EdgeInsets.only(right: 6),
-                child: Icon(
-                  Icons.check_box,
-                  size: 16,
-                  color: MultimodalStudioPalette.SAND_700,
-                ),
-              ),
-            ),
-          ),
           if (row.showsAiBadge)
             Container(
               margin: const EdgeInsets.only(right: 4),
@@ -824,7 +847,8 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
               ),
             ),
           ],
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -936,9 +960,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         ? _scrollController.offset
         : 0.0;
     _panRulerBy(event.delta.dx);
-    final after = _scrollController.hasClients
-        ? _scrollController.offset
-        : 0.0;
+    final after = _scrollController.hasClients ? _scrollController.offset : 0.0;
     if ((after - before).abs() > 0.01) {
       _rulerDidPan = true;
     }
@@ -975,10 +997,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             : constraints.maxWidth;
         return ScrollConfiguration(
           behavior: ScrollConfiguration.of(context).copyWith(
-            dragDevices: {
-              PointerDeviceKind.touch,
-              PointerDeviceKind.trackpad,
-            },
+            dragDevices: {PointerDeviceKind.touch, PointerDeviceKind.trackpad},
           ),
           child: SingleChildScrollView(
             controller: _scrollController,
