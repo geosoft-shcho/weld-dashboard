@@ -44,6 +44,7 @@ class QueryPassProfileUseCase {
             robot: [],
           ),
         ),
+        compareSummary: const [],
         banners: const [],
       );
     }
@@ -95,6 +96,7 @@ class QueryPassProfileUseCase {
       series: series,
       links: links,
       compareStats: ChannelCompareStats.fromSeries(series),
+      compareSummary: catalog.compareSummary,
       banners: banners,
     );
   }

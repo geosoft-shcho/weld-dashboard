@@ -6029,10 +6029,12 @@ class GetPassWaveformResponse extends $pb.GeneratedMessage {
   factory GetPassWaveformResponse({
     PassWaveform? target,
     PassWaveform? comparison,
+    $core.Iterable<WaveformChannelCompare>? compareSummary,
   }) {
     final result = create();
     if (target != null) result.target = target;
     if (comparison != null) result.comparison = comparison;
+    if (compareSummary != null) result.compareSummary.addAll(compareSummary);
     return result;
   }
 
@@ -6054,6 +6056,9 @@ class GetPassWaveformResponse extends $pb.GeneratedMessage {
         subBuilder: PassWaveform.create)
     ..aOM<PassWaveform>(2, _omitFieldNames ? '' : 'comparison',
         subBuilder: PassWaveform.create)
+    ..pc<WaveformChannelCompare>(
+        3, _omitFieldNames ? '' : 'compareSummary', $pb.PbFieldType.PM,
+        subBuilder: WaveformChannelCompare.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -6100,6 +6105,109 @@ class GetPassWaveformResponse extends $pb.GeneratedMessage {
   void clearComparison() => $_clearField(2);
   @$pb.TagNumber(2)
   PassWaveform ensureComparison() => $_ensure(1);
+
+  /// 채널별 비교 요약 — normalize = DTW이고 비교 패스가 있을 때만(DTW로 맞춘 채널마다 하나, 순서는 comparison 채널 순서).
+  @$pb.TagNumber(3)
+  $pb.PbList<WaveformChannelCompare> get compareSummary => $_getList(2);
+}
+
+class WaveformChannelCompare extends $pb.GeneratedMessage {
+  factory WaveformChannelCompare({
+    $core.String? name,
+    $core.String? unit,
+    $core.double? meanDiff,
+    $core.double? similarity,
+  }) {
+    final result = create();
+    if (name != null) result.name = name;
+    if (unit != null) result.unit = unit;
+    if (meanDiff != null) result.meanDiff = meanDiff;
+    if (similarity != null) result.similarity = similarity;
+    return result;
+  }
+
+  WaveformChannelCompare._();
+
+  factory WaveformChannelCompare.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory WaveformChannelCompare.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'WaveformChannelCompare',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'name')
+    ..aOS(2, _omitFieldNames ? '' : 'unit')
+    ..a<$core.double>(3, _omitFieldNames ? '' : 'meanDiff', $pb.PbFieldType.OD)
+    ..a<$core.double>(
+        4, _omitFieldNames ? '' : 'similarity', $pb.PbFieldType.OD)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  WaveformChannelCompare clone() =>
+      WaveformChannelCompare()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  WaveformChannelCompare copyWith(
+          void Function(WaveformChannelCompare) updates) =>
+      super.copyWith((message) => updates(message as WaveformChannelCompare))
+          as WaveformChannelCompare;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static WaveformChannelCompare create() => WaveformChannelCompare._();
+  @$core.override
+  WaveformChannelCompare createEmptyInstance() => create();
+  static $pb.PbList<WaveformChannelCompare> createRepeated() =>
+      $pb.PbList<WaveformChannelCompare>();
+  @$core.pragma('dart2js:noInline')
+  static WaveformChannelCompare getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<WaveformChannelCompare>(create);
+  static WaveformChannelCompare? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get name => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set name($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasName() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearName() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get unit => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set unit($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasUnit() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearUnit() => $_clearField(2);
+
+  /// mean(비교) − mean(대상), 실단위. 대상과 DTW로 맞춘 비교의 이 채널 전체 유효 샘플(NaN 제외, 화면용 줄이기 전)로 낸다.
+  /// 한쪽이라도 유효 샘플이 없으면 NaN
+  @$pb.TagNumber(3)
+  $core.double get meanDiff => $_getN(2);
+  @$pb.TagNumber(3)
+  set meanDiff($core.double value) => $_setDouble(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasMeanDiff() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearMeanDiff() => $_clearField(3);
+
+  /// 0~1, 높을수록 닮음. DTW 서버가 준 값(1/(1+dtw_distance)). 구 DTW 서버(점수를 안 줌)면 비어 있다 → 화면은 "-"
+  @$pb.TagNumber(4)
+  $core.double get similarity => $_getN(3);
+  @$pb.TagNumber(4)
+  set similarity($core.double value) => $_setDouble(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasSimilarity() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearSimilarity() => $_clearField(4);
 }
 
 class PassWaveform extends $pb.GeneratedMessage {

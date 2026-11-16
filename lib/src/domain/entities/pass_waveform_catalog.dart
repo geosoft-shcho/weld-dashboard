@@ -2,6 +2,7 @@ import 'quality_link.dart';
 import 'pass_joint_context.dart';
 import 'quality_result_group.dart';
 import 'weld_pass.dart';
+import 'waveform_channel_compare_summary.dart';
 import 'waveform_row.dart';
 import 'work_history_item.dart';
 import 'worker.dart';
@@ -15,6 +16,7 @@ class PassWaveformCatalog {
     required this.historyItems,
     required this.workers,
     this.context,
+    this.compareSummary = const [],
     this.waveformNotice = '',
     this.didFallBackToRaw = false,
   });
@@ -26,6 +28,7 @@ class PassWaveformCatalog {
   final List<WorkHistoryItem> historyItems;
   final List<Worker> workers;
   final PassJointContext? context;
+  final List<WaveformChannelCompareSummary> compareSummary;
   final String waveformNotice;
   final bool didFallBackToRaw;
 }

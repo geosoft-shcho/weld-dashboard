@@ -2,6 +2,7 @@ import 'channel_compare_stats.dart';
 import 'pass_joint_context.dart';
 import 'quality_link.dart';
 import 'weld_pass.dart';
+import 'waveform_channel_compare_summary.dart';
 import 'waveform_series_bundle.dart';
 
 class PassProfileBoard {
@@ -16,6 +17,7 @@ class PassProfileBoard {
     required this.series,
     required this.links,
     required this.compareStats,
+    this.compareSummary = const [],
     required this.banners,
   });
 
@@ -29,6 +31,7 @@ class PassProfileBoard {
   final WaveformSeriesBundle series;
   final List<QualityLink> links;
   final ChannelCompareStats compareStats;
+  final List<WaveformChannelCompareSummary> compareSummary;
   final List<String> banners;
 
   bool get doesHaveCommonKey => commonKey.isNotEmpty;

@@ -1,15 +1,38 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+import '../../../../domain/entities/waveform_channel_compare_summary.dart';
 import '../../../core/themes/app_theme.dart';
 
-/// 비교 지표 표. 평균 차이·유사도는 서버 연동 전 플레이스홀더.
+/// 서버 GetPassWaveform.compare_summary 채널별 평균 차이·유사도 표.
 class PassCompareSummary extends StatelessWidget {
-  const PassCompareSummary({super.key});
+  const PassCompareSummary({super.key, this.items = const []});
+
+  final List<WaveformChannelCompareSummary> items;
 
   static final Color _BORDER = AppTheme.STATUS_OFF.withValues(alpha: 0.35);
 
   @override
   Widget build(BuildContext context) {
+    final rows = items.isEmpty
+        ? const [
+            TableRow(
+              children: [
+                _BodyCell('-', isLabel: true),
+                _BodyCell('-'),
+                _BodyCell('-'),
+              ],
+            ),
+          ]
+        : [
+            for (final item in items)
+              TableRow(
+                children: [
+                  _BodyCell(item.channelName, isLabel: true),
+                  _BodyCell(_meanDiffText(item)),
+                  _BodyCell(_similarityText(item)),
+                ],
+              ),
+          ];
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(12),
@@ -24,18 +47,13 @@ class PassCompareSummary extends StatelessWidget {
             '비교 지표',
             style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
           ),
-          const SizedBox(height: 2),
-          const Text(
-            '서버 미구현',
-            style: TextStyle(fontSize: 11, color: AppTheme.STATUS_OFF),
-          ),
           const SizedBox(height: 10),
           Table(
             border: TableBorder.all(color: _BORDER, width: 1),
             columnWidths: const {
-              0: IntrinsicColumnWidth(),
+              0: FlexColumnWidth(3),
               1: FlexColumnWidth(3),
-              2: IntrinsicColumnWidth(),
+              2: FlexColumnWidth(2),
             },
             defaultVerticalAlignment: TableCellVerticalAlignment.middle,
             children: [
@@ -44,32 +62,39 @@ class PassCompareSummary extends StatelessWidget {
                   color: AppTheme.SURFACE.withValues(alpha: 0.55),
                 ),
                 children: const [
-                  _HeadCell('항목'),
-                  _HeadCell('설명'),
-                  _HeadCell('값'),
+                  _HeadCell('채널'),
+                  _HeadCell('평균 차이'),
+                  _HeadCell('유사도'),
                 ],
               ),
-              const TableRow(
-                children: [
-                  _BodyCell('평균 차이', isLabel: true),
-                  _BodyCell(
-                    '아크 켜진 전체 구간의 명장 평균 대비 상대 평균이 얼마나 다른지 (예: 전류 +5.8A)',
-                  ),
-                  _BodyCell('—'),
-                ],
-              ),
-              const TableRow(
-                children: [
-                  _BodyCell('유사도', isLabel: true),
-                  _BodyCell('두 파형 모양이 얼마나 닮았는지 (값이 높을수록 비슷)'),
-                  _BodyCell('—'),
-                ],
-              ),
+              ...rows,
             ],
           ),
         ],
       ),
     );
+  }
+
+  static String _meanDiffText(WaveformChannelCompareSummary item) {
+    final value = item.meanDiff;
+    if (value == null || value.isNaN) {
+      return '-';
+    }
+    final sign = value > 0 ? '+' : '';
+    final number = value.toStringAsFixed(1);
+    final unit = item.unit.trim();
+    if (unit.isEmpty) {
+      return '$sign$number';
+    }
+    return '$sign$number $unit';
+  }
+
+  static String _similarityText(WaveformChannelCompareSummary item) {
+    final value = item.similarity;
+    if (value == null || value.isNaN) {
+      return '-';
+    }
+    return value.toStringAsFixed(2);
   }
 }
 

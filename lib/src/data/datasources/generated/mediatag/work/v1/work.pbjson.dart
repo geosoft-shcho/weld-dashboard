@@ -2107,6 +2107,14 @@ const GetPassWaveformResponse$json = {
       '6': '.mediatag.work.v1.PassWaveform',
       '10': 'comparison'
     },
+    {
+      '1': 'compare_summary',
+      '3': 3,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.WaveformChannelCompare',
+      '10': 'compareSummary'
+    },
   ],
 };
 
@@ -2114,7 +2122,37 @@ const GetPassWaveformResponse$json = {
 final $typed_data.Uint8List getPassWaveformResponseDescriptor = $convert.base64Decode(
     'ChdHZXRQYXNzV2F2ZWZvcm1SZXNwb25zZRI2CgZ0YXJnZXQYASABKAsyHi5tZWRpYXRhZy53b3'
     'JrLnYxLlBhc3NXYXZlZm9ybVIGdGFyZ2V0Ej4KCmNvbXBhcmlzb24YAiABKAsyHi5tZWRpYXRh'
-    'Zy53b3JrLnYxLlBhc3NXYXZlZm9ybVIKY29tcGFyaXNvbg==');
+    'Zy53b3JrLnYxLlBhc3NXYXZlZm9ybVIKY29tcGFyaXNvbhJRCg9jb21wYXJlX3N1bW1hcnkYAy'
+    'ADKAsyKC5tZWRpYXRhZy53b3JrLnYxLldhdmVmb3JtQ2hhbm5lbENvbXBhcmVSDmNvbXBhcmVT'
+    'dW1tYXJ5');
+
+@$core.Deprecated('Use waveformChannelCompareDescriptor instead')
+const WaveformChannelCompare$json = {
+  '1': 'WaveformChannelCompare',
+  '2': [
+    {'1': 'name', '3': 1, '4': 1, '5': 9, '10': 'name'},
+    {'1': 'unit', '3': 2, '4': 1, '5': 9, '10': 'unit'},
+    {'1': 'mean_diff', '3': 3, '4': 1, '5': 1, '10': 'meanDiff'},
+    {
+      '1': 'similarity',
+      '3': 4,
+      '4': 1,
+      '5': 1,
+      '9': 0,
+      '10': 'similarity',
+      '17': true
+    },
+  ],
+  '8': [
+    {'1': '_similarity'},
+  ],
+};
+
+/// Descriptor for `WaveformChannelCompare`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List waveformChannelCompareDescriptor = $convert.base64Decode(
+    'ChZXYXZlZm9ybUNoYW5uZWxDb21wYXJlEhIKBG5hbWUYASABKAlSBG5hbWUSEgoEdW5pdBgCIA'
+    'EoCVIEdW5pdBIbCgltZWFuX2RpZmYYAyABKAFSCG1lYW5EaWZmEiMKCnNpbWlsYXJpdHkYBCAB'
+    'KAFIAFIKc2ltaWxhcml0eYgBAUINCgtfc2ltaWxhcml0eQ==');
 
 @$core.Deprecated('Use passWaveformDescriptor instead')
 const PassWaveform$json = {
@@ -2457,6 +2495,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.work.v1.PassWaveform': PassWaveform$json,
   '.mediatag.work.v1.WaveformSeries': WaveformSeries$json,
   '.mediatag.work.v1.WaveformChannel': WaveformChannel$json,
+  '.mediatag.work.v1.WaveformChannelCompare': WaveformChannelCompare$json,
 };
 
 /// Descriptor for `WorkService`. Decode as a `google.protobuf.ServiceDescriptorProto`.

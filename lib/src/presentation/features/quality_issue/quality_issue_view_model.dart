@@ -625,6 +625,7 @@ class QualityIssueViewModel extends ChangeNotifier {
       historyItems: catalog.historyItems,
       workers: catalog.workers,
       context: catalog.context,
+      compareSummary: series.compareSummary,
       waveformNotice: series.notice,
       didFallBackToRaw: series.didFallBackToRaw,
     );

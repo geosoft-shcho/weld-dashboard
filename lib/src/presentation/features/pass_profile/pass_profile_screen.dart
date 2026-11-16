@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../domain/entities/pass_joint_context.dart';
 import '../../../domain/entities/quality_link.dart';
+import '../../../domain/entities/waveform_channel_compare_summary.dart';
 import '../../../domain/entities/waveform_series_bundle.dart';
 import '../../core/di/locator.dart';
 import '../../core/themes/app_theme.dart';
@@ -147,12 +148,13 @@ class _PassProfileReady extends StatelessWidget {
             const SizedBox(height: 12),
             const _PassWaveformToolbar(),
             const SizedBox(height: 12),
+            const _PassWaveformNoticeStrip(),
             const Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(flex: 8, child: _PassChartPane()),
                 SizedBox(width: 16),
-                Expanded(flex: 2, child: PassCompareSummary()),
+                Expanded(flex: 2, child: _PassCompareSummaryPane()),
               ],
             ),
             const SizedBox(height: 16),
@@ -160,6 +162,51 @@ class _PassProfileReady extends StatelessWidget {
         );
       },
     );
+  }
+}
+
+class _PassWaveformNoticeStrip extends StatelessWidget {
+  const _PassWaveformNoticeStrip();
+
+  @override
+  Widget build(BuildContext context) {
+    final banners = context.select<PassProfileViewModel, List<String>>(
+      (viewModel) => viewModel.board?.banners ?? const [],
+    );
+    if (banners.isEmpty) {
+      return const SizedBox.shrink();
+    }
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: AppTheme.SURFACE_RAISED,
+          borderRadius: BorderRadius.circular(4),
+          border: const Border(
+            left: BorderSide(color: AppTheme.STATUS_ERROR, width: 3),
+          ),
+        ),
+        child: Text(
+          banners.join(' · '),
+          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
+        ),
+      ),
+    );
+  }
+}
+
+class _PassCompareSummaryPane extends StatelessWidget {
+  const _PassCompareSummaryPane();
+
+  @override
+  Widget build(BuildContext context) {
+    final items = context
+        .select<PassProfileViewModel, List<WaveformChannelCompareSummary>>(
+          (viewModel) => viewModel.board?.compareSummary ?? const [],
+        );
+    return PassCompareSummary(items: items);
   }
 }
 
@@ -263,10 +310,6 @@ class _PassChartPane extends StatelessWidget {
             content: Text(snapshot.seriesError),
             severity: InfoBarSeverity.error,
           ),
-          const SizedBox(height: 8),
-        ],
-        for (final banner in snapshot.banners) ...[
-          InfoBar(title: Text(banner), severity: InfoBarSeverity.info),
           const SizedBox(height: 8),
         ],
         WaveformChannelCharts(
@@ -390,7 +433,6 @@ class _ChartSnapshot {
     required this.showRobot,
     required this.isSeriesLoading,
     required this.seriesError,
-    required this.banners,
     required this.commonKey,
     required this.jobId,
     required this.passId,
@@ -413,7 +455,6 @@ class _ChartSnapshot {
       showRobot: viewModel.showRobot,
       isSeriesLoading: viewModel.isSeriesLoading,
       seriesError: viewModel.seriesError,
-      banners: board?.banners ?? const [],
       commonKey: board?.commonKey ?? '',
       jobId: board?.jobId ?? '',
       passId: board?.selectedPass?.passId ?? '',
@@ -427,7 +468,6 @@ class _ChartSnapshot {
   final bool showRobot;
   final bool isSeriesLoading;
   final String seriesError;
-  final List<String> banners;
   final String commonKey;
   final String jobId;
   final String passId;
@@ -442,7 +482,6 @@ class _ChartSnapshot {
         other.showRobot == showRobot &&
         other.isSeriesLoading == isSeriesLoading &&
         other.seriesError == seriesError &&
-        _sameBanners(other.banners, banners) &&
         other.commonKey == commonKey &&
         other.jobId == jobId &&
         other.passId == passId;
@@ -457,21 +496,8 @@ class _ChartSnapshot {
     showRobot,
     isSeriesLoading,
     seriesError,
-    Object.hashAll(banners),
     commonKey,
     jobId,
     passId,
   );
-}
-
-bool _sameBanners(List<String> left, List<String> right) {
-  if (left.length != right.length) {
-    return false;
-  }
-  for (var index = 0; index < left.length; index++) {
-    if (left[index] != right[index]) {
-      return false;
-    }
-  }
-  return true;
 }

@@ -5,6 +5,7 @@ import '../../domain/entities/pass_joint_context.dart';
 import '../../domain/entities/pass_waveform_catalog.dart';
 import '../../domain/entities/pass_waveform_series.dart';
 import '../../domain/entities/series_role.dart';
+import '../../domain/entities/waveform_channel_compare_summary.dart';
 import '../../domain/entities/waveform_row.dart';
 import '../../domain/entities/weld_pass.dart';
 import '../../domain/entities/work_history_item.dart';
@@ -79,6 +80,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     return PassWaveformCatalog(
       passes: passes,
       waveformRows: waveforms.rows,
+      compareSummary: waveforms.compareSummary,
       waveformNotice: waveforms.notice,
       didFallBackToRaw: waveforms.didFallBackToRaw,
       links: const [],
@@ -117,6 +119,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
     );
     return PassWaveformSeries(
       rows: waveforms.rows,
+      compareSummary: waveforms.compareSummary,
       notice: waveforms.notice,
       didFallBackToRaw: waveforms.didFallBackToRaw,
     );
@@ -226,6 +229,7 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
             commonKey: commonKey,
             workerId: workerId,
           ),
+          compareSummary: _compareSummaryFromResponse(response),
           notice: notice,
           didFallBackToRaw: didFallBackToRaw,
         );
@@ -266,6 +270,73 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
       request.comparisonPassId = comparisonId;
     }
     return request;
+  }
+
+  List<WaveformChannelCompareSummary> _compareSummaryFromResponse(
+    work_pb.GetPassWaveformResponse response,
+  ) {
+    final items = [
+      for (final item in response.compareSummary)
+        WaveformChannelCompareSummary(
+          channelName: _compareChannelLabel(item.name),
+          unit: item.unit,
+          meanDiff: item.meanDiff.isNaN ? null : item.meanDiff,
+          similarity: item.hasSimilarity() && !item.similarity.isNaN
+              ? item.similarity
+              : null,
+        ),
+    ];
+    final ranked = [
+      for (var index = 0; index < items.length; index++)
+        (index: index, item: items[index]),
+    ]..sort((left, right) {
+        final byChannel = _compareChannelOrder(
+          left.item.channelName,
+        ).compareTo(_compareChannelOrder(right.item.channelName));
+        if (byChannel != 0) {
+          return byChannel;
+        }
+        return left.index.compareTo(right.index);
+      });
+    return [for (final entry in ranked) entry.item];
+  }
+
+  /// WaveformChannelCharts와 동일: 전류 → 전압 → 속도 → 회전 속도. 그 외는 뒤.
+  int _compareChannelOrder(String channelName) {
+    switch (channelName) {
+      case '전류':
+        return 0;
+      case '전압':
+        return 1;
+      case '속도':
+        return 2;
+      case '회전 속도':
+        return 3;
+      default:
+        return 100;
+    }
+  }
+
+  /// `_rowsFromWaveform`과 같은 키 판별 → 차트 제목과 같은 한글.
+  String _compareChannelLabel(String name) {
+    switch (_channelKey(name)) {
+      case 'current_a':
+      case 'current_A':
+      case '전류_a':
+        return '전류';
+      case 'voltage_v':
+      case '전압_v':
+        return '전압';
+      case 'wire_feed_speed_mpm':
+      case 'wire_speed_mpm':
+      case '와이어송급속도_m_min':
+        return '속도';
+      case 'rotation_speed_rpm':
+      case 'rpm':
+        return '회전 속도';
+      default:
+        return name;
+    }
   }
 
   List<WaveformRow> _rowsFromResponse(
@@ -462,11 +533,13 @@ class RemotePassWaveformRepository implements PassWaveformRepository {
 class _WaveformLoad {
   const _WaveformLoad({
     required this.rows,
+    this.compareSummary = const [],
     this.notice = '',
     this.didFallBackToRaw = false,
   });
 
   final List<WaveformRow> rows;
+  final List<WaveformChannelCompareSummary> compareSummary;
   final String notice;
   final bool didFallBackToRaw;
 }
