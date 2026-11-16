@@ -7,9 +7,10 @@ import '../video_multimodal_view_model.dart';
 import 'multimodal_dialogs.dart';
 import 'multimodal_studio_palette.dart';
 import 'pose_board_mark_layer.dart';
-import 'audio_clip_chart.dart';
+import 'timeline_board_clip_bar.dart';
 import 'timeline_board_helpers.dart';
-import 'timeseries_clip_chart.dart';
+import 'timeline_board_toolbar.dart';
+import 'timeline_board_track_labels.dart';
 
 class MultimodalTimelineBoard extends StatefulWidget {
   const MultimodalTimelineBoard({
@@ -28,7 +29,6 @@ class MultimodalTimelineBoard extends StatefulWidget {
 
 class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   static const double _RULER_HEIGHT = 22;
-  static const double _EDIT_TOOL_HEIGHT = 28;
   final ScrollController _scrollController = ScrollController();
   final ScrollController _trackLabelScrollController = ScrollController();
   final ScrollController _trackScrollController = ScrollController();
@@ -279,7 +279,11 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       child: Stack(
         children: [
           _filled(rows),
-          if (viewModel.isTrackMenuOpen) _trackMenu(height),
+          if (viewModel.isTrackMenuOpen)
+            TimelineBoardTrackMenu(
+              viewModel: viewModel,
+              boardHeight: height,
+            ),
           Positioned(
             top: 0,
             left: 0,
@@ -308,570 +312,32 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _toolbar(),
-        _editTools(),
-        if (viewModel.isRelationMode) _relationBanner(),
+        TimelineBoardToolbar(
+          viewModel: viewModel,
+          newTrackNameController: _newTrackNameController,
+          trackNameController: _trackNameController,
+          onConfirmDeleteSelection: _confirmDeleteSelection,
+          onSubmitNewTrack: _submitNewTrack,
+          onConfirmDeleteTrack: _confirmDeleteTrack,
+        ),
         _header(),
         if (viewModel.hasTimelineHint) _hint(),
         Expanded(
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _trackLabels(rows),
+              TimelineBoardTrackLabels(
+                viewModel: viewModel,
+                rows: rows,
+                scrollController: _trackLabelScrollController,
+                onSelectClip: _selectClip,
+              ),
               Expanded(child: _tracks(rows)),
             ],
           ),
         ),
       ],
     );
-  }
-
-  Widget _toolbar() {
-    final viewModel = this.viewModel;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: const BoxDecoration(
-        color: MultimodalStudioPalette.SAND_0,
-        border: Border(
-          bottom: BorderSide(color: MultimodalStudioPalette.SAND_300),
-        ),
-      ),
-      child: Row(
-        children: [
-          _toolGroup([
-            _tool(
-              '클립 선택',
-              selected: !viewModel.isRelationMode,
-              onPressed: viewModel.didTapSelectTool,
-            ),
-            _tool(
-              '클립 관계',
-              selected: viewModel.isRelationMode,
-              onPressed: viewModel.didTapToggleRelationMode,
-            ),
-            _tool(
-              '클립 삭제',
-              onPressed: viewModel.canDeleteSelection
-                  ? _confirmDeleteSelection
-                  : null,
-            ),
-          ]),
-          const Spacer(),
-          _toolGroup([
-            _tool(
-              'Tracks',
-              selected: viewModel.isTrackMenuOpen,
-              onPressed: viewModel.didTapToggleTrackMenu,
-            ),
-            _tool('Marker', onPressed: viewModel.didTapAddMarker),
-            _tool('Labels', onPressed: viewModel.didTapToggleLabels),
-          ], isLast: true),
-        ],
-      ),
-    );
-  }
-
-  Widget _editTools() {
-    final canEditTrack = viewModel.canEditSelectedServerTrack;
-    return Material(
-      type: MaterialType.transparency,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(8, 0, 8, 4),
-        child: Wrap(
-          spacing: 4,
-          runSpacing: 4,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            _trackNameField(
-              key: const Key('new-timeline-track-name'),
-              controller: _newTrackNameController,
-              hint: '트랙 이름',
-            ),
-            _tool('트랙 추가', onPressed: _submitNewTrack),
-            _trackNameField(
-              key: const Key('selected-timeline-track-name'),
-              controller: _trackNameController,
-              hint: '선택한 트랙',
-              enabled: canEditTrack,
-            ),
-            _tool(
-              '트랙 수정',
-              onPressed: canEditTrack
-                  ? () => viewModel.didSubmitTimelineTrackName(
-                      _trackNameController.text,
-                    )
-                  : null,
-            ),
-            Tooltip(
-              message: '이 트랙의 클립도 함께 지워집니다.',
-              child: _tool(
-                '트랙 삭제',
-                onPressed: canEditTrack ? _confirmDeleteTrack : null,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _trackNameField({
-    required Key key,
-    required TextEditingController controller,
-    required String hint,
-    bool enabled = true,
-  }) {
-    return Container(
-      width: 180,
-      height: _EDIT_TOOL_HEIGHT,
-      alignment: Alignment.center,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      decoration: BoxDecoration(
-        border: Border.all(color: MultimodalStudioPalette.SAND_300),
-        borderRadius: BorderRadius.circular(3),
-      ),
-      child: TextField(
-        key: key,
-        controller: controller,
-        enabled: enabled,
-        cursorHeight: 14,
-        style: const TextStyle(fontSize: 11, height: 1.2),
-        decoration: InputDecoration(
-          isCollapsed: true,
-          border: InputBorder.none,
-          hintText: hint,
-          hintStyle: const TextStyle(
-            fontSize: 11,
-            height: 1.2,
-            color: MultimodalStudioPalette.SAND_600,
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _toolGroup(List<Widget> children, {bool isLast = false}) {
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        border: isLast
-            ? null
-            : const Border(
-                right: BorderSide(color: MultimodalStudioPalette.SAND_300),
-              ),
-      ),
-      child: Padding(
-        padding: EdgeInsets.only(right: isLast ? 0 : 8),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            for (var index = 0; index < children.length; index++) ...[
-              if (index > 0) const SizedBox(width: 2),
-              children[index],
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _tool(
-    String label, {
-    required VoidCallback? onPressed,
-    bool selected = false,
-  }) {
-    return SizedBox(
-      height: _EDIT_TOOL_HEIGHT,
-      child: TextButton(
-        onPressed: onPressed,
-        style: TextButton.styleFrom(
-          foregroundColor: selected
-              ? MultimodalStudioPalette.GRAPE_500
-              : MultimodalStudioPalette.SAND_900,
-          backgroundColor: selected
-              ? MultimodalStudioPalette.GRAPE_100
-              : Colors.transparent,
-          disabledForegroundColor: MultimodalStudioPalette.SAND_600,
-          side: BorderSide(
-            color: selected
-                ? MultimodalStudioPalette.GRAPE_500
-                : MultimodalStudioPalette.SAND_300,
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          minimumSize: const Size(0, _EDIT_TOOL_HEIGHT),
-          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-          visualDensity: VisualDensity.compact,
-          textStyle: const TextStyle(fontSize: 11, height: 1.2),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
-        ),
-        child: Text(label),
-      ),
-    );
-  }
-
-  Widget _relationBanner() {
-    return Container(
-      color: MultimodalStudioPalette.GRAPE_0,
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              viewModel.relationPrompt,
-              style: const TextStyle(
-                color: MultimodalStudioPalette.GRAPE_400,
-                fontSize: 11,
-              ),
-            ),
-          ),
-          TextButton(
-            onPressed: viewModel.didTapCancelRelationMode,
-            child: const Text('취소', style: TextStyle(fontSize: 11)),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _trackMenu(double boardHeight) {
-    const menuTop = 36.0;
-    const menuBottomPad = 8.0;
-    // icon 16 + gap 6 + horizontal padding 16
-    const rowChrome = 38.0;
-    final maxHeight = (boardHeight - menuTop - menuBottomPad).clamp(
-      120.0,
-      double.infinity,
-    );
-    final tracks = <({String key, String label})>[
-      for (final track in viewModel.timelineTracks)
-        (
-          key: track.trackId,
-          label: track.name.trim().isEmpty ? '트랙' : track.name.trim(),
-        ),
-    ];
-    var menuWidth = 96.0;
-    for (final track in tracks) {
-      final width = rowChrome + _labelTextWidth(track.label);
-      if (width > menuWidth) {
-        menuWidth = width;
-      }
-    }
-    return Positioned(
-      right: 12,
-      top: menuTop,
-      child: Material(
-        elevation: 6,
-        color: MultimodalStudioPalette.SAND_0,
-        child: ConstrainedBox(
-          constraints: BoxConstraints(
-            maxHeight: maxHeight,
-            maxWidth: menuWidth,
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(8),
-            child: ListView(
-              shrinkWrap: true,
-              padding: EdgeInsets.zero,
-              children: [
-                for (final track in tracks)
-                  InkWell(
-                    onTap: () =>
-                        viewModel.didTapToggleTrackVisibility(track.key),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 2),
-                      child: Row(
-                        children: [
-                          Icon(
-                            viewModel.isTrackVisible(track.key)
-                                ? Icons.check_box
-                                : Icons.check_box_outline_blank,
-                            size: 16,
-                            color: MultimodalStudioPalette.SAND_700,
-                          ),
-                          const SizedBox(width: 6),
-                          Expanded(
-                            child: Text(
-                              track.label,
-                              style: const TextStyle(
-                                color: MultimodalStudioPalette.SAND_900,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  static const TextStyle _TRACK_LABEL_STYLE = TextStyle(
-    fontSize: 11,
-    fontWeight: FontWeight.w500,
-  );
-  static const TextStyle _TRACK_IDENTITY_STYLE = TextStyle(
-    color: MultimodalStudioPalette.SAND_600,
-    fontSize: 9,
-  );
-  // 좌우 패딩 + 아이콘 + AI 배지 + trackId 여유
-  static const double _TRACK_LABEL_SIDE = 140;
-
-  double _labelTextWidth(String text) {
-    final painter = TextPainter(
-      text: TextSpan(text: text, style: _TRACK_LABEL_STYLE),
-      maxLines: 1,
-      textDirection: TextDirection.ltr,
-      textScaler: MediaQuery.textScalerOf(context),
-    )..layout();
-    final width = painter.width;
-    painter.dispose();
-    return width;
-  }
-
-  double _trackLabelsWidth(List<TimelineBoardRow> rows) {
-    var widest = _labelTextWidth('트랙 (${viewModel.timelineTracks.length})');
-    for (final row in rows) {
-      final width = _labelTextWidth(row.label);
-      if (width > widest) {
-        widest = width;
-      }
-    }
-    return widest + _TRACK_LABEL_SIDE;
-  }
-
-  Widget _trackLabels(List<TimelineBoardRow> rows) {
-    return Container(
-      width: _trackLabelsWidth(rows),
-      decoration: const BoxDecoration(
-        color: MultimodalStudioPalette.SAND_200,
-        border: Border(
-          right: BorderSide(color: MultimodalStudioPalette.SAND_300),
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          SizedBox(
-            height: 22,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '트랙 (${viewModel.timelineTracks.length})',
-                  style: const TextStyle(
-                    color: MultimodalStudioPalette.SAND_600,
-                    fontSize: 11,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              key: const Key('timeline-track-labels'),
-              controller: _trackLabelScrollController,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [for (final row in rows) _trackLabelRow(row)],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _trackLabelRow(TimelineBoardRow row) {
-    // 행·mute·모니터가 트랙 단위이므로 보조 식별자는 trackId. 클립 목록은 Tooltip.
-    final identity = row.trackId;
-    if (row.clips.isEmpty) {
-      return _trackLabel(row, identity: identity);
-    }
-    final clip = _rowSelection(row);
-    final isSelected = row.clips.any(_isClipSelected);
-    return GestureDetector(
-      onTap: () => _selectClip(clip),
-      child: _trackLabel(row, isSelected: isSelected, identity: identity),
-    );
-  }
-
-  String _trackIdentityTooltip(TimelineBoardRow row) {
-    final trackLine = '트랙 ID: ${row.trackId}';
-    if (row.clips.isEmpty) {
-      return '$trackLine\n클립: 없음';
-    }
-    if (row.clips.length == 1) {
-      return '$trackLine\n클립 ID: ${row.clips.first.clipId}';
-    }
-    final lines = [
-      trackLine,
-      '클립 ID (${row.clips.length}):',
-      for (final clip in row.clips) '· ${clip.clipId}',
-    ];
-    return lines.join('\n');
-  }
-
-  Widget _trackLabel(
-    TimelineBoardRow row, {
-    bool isSelected = false,
-    String identity = '',
-  }) {
-    return Tooltip(
-      message: _trackIdentityTooltip(row),
-      verticalOffset: 12,
-      child: Container(
-        height: row.height,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        color: isSelected ? MultimodalStudioPalette.GRAPE_100 : null,
-        child: Row(
-          children: [
-            Tooltip(
-              message: '트랙 가리기',
-              child: GestureDetector(
-                onTap: () => viewModel.didTapToggleTrackVisibility(row.trackId),
-                child: const Padding(
-                  padding: EdgeInsets.only(right: 4),
-                  child: Icon(
-                    Icons.check_box,
-                    size: 14,
-                    color: MultimodalStudioPalette.SAND_700,
-                  ),
-                ),
-              ),
-            ),
-
-            if (row.showsAiBadge)
-              Container(
-                margin: const EdgeInsets.only(right: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: MultimodalStudioPalette.GRAPE_0,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: const Text(
-                  'AI',
-                  style: TextStyle(
-                    color: MultimodalStudioPalette.GRAPE_700,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            Text(
-              row.label,
-              maxLines: 1,
-              softWrap: false,
-              style: _TRACK_LABEL_STYLE.copyWith(color: row.labelColor),
-            ),
-            if (identity.isNotEmpty) ...[
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  identity,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: _TRACK_IDENTITY_STYLE,
-                ),
-              ),
-            ],
-            const SizedBox(width: 4),
-            if (viewModel.isServerTimelineTrack(row.trackId) &&
-                viewModel.trackHasVideo(row.trackId))
-              _trackLabelCircleButton(
-                tooltip: viewModel.isTrackMonitored(row.trackId)
-                    ? '모니터 끄기'
-                    : '모니터 켜기',
-                icon: viewModel.isTrackMonitored(row.trackId)
-                    ? Icons.videocam
-                    : Icons.videocam_outlined,
-                iconColor: viewModel.isTrackMonitored(row.trackId)
-                    ? MultimodalStudioPalette.GRAPE_700
-                    : MultimodalStudioPalette.SAND_600,
-                onTap: () => viewModel.didTapMonitorTrack(row.trackId),
-              ),
-            if (viewModel.isServerTimelineTrack(row.trackId) &&
-                viewModel.trackHasTimeseries(row.trackId))
-              _trackLabelCircleButton(
-                tooltip: row.isChartExpanded ? '차트 접기' : '시계열 차트',
-                icon: Icons.show_chart,
-                iconColor: row.isChartExpanded
-                    ? MultimodalStudioPalette.GRAPE_700
-                    : MultimodalStudioPalette.SAND_600,
-                onTap: () => viewModel.didTapToggleTimeseriesChart(row.trackId),
-              ),
-            if (viewModel.isServerTimelineTrack(row.trackId) &&
-                viewModel.trackHasAudio(row.trackId))
-              _trackLabelCircleButton(
-                tooltip: row.isChartExpanded ? '차트 접기' : '음성 차트',
-                icon: Icons.show_chart,
-                iconColor: row.isChartExpanded
-                    ? MultimodalStudioPalette.GRAPE_700
-                    : MultimodalStudioPalette.SAND_600,
-                onTap: () => viewModel.didTapToggleAudioChart(row.trackId),
-              ),
-            if (viewModel.trackShowsAudioMuteToggle(row.trackId))
-              _trackLabelCircleButton(
-                tooltip: viewModel.isTrackAudioMuted(row.trackId)
-                    ? '소리 켜기'
-                    : '소리 끄기',
-                icon: viewModel.isTrackAudioMuted(row.trackId)
-                    ? Icons.volume_off
-                    : Icons.volume_up,
-                iconColor: viewModel.isTrackAudioMuted(row.trackId)
-                    ? MultimodalStudioPalette.CANTELOUPE_400
-                    : MultimodalStudioPalette.SAND_600,
-                onTap: () => viewModel.didTapToggleTrackAudioMute(row.trackId),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  /// 모니터·차트·소리 토글. 원 배경으로 버튼임을 드러낸다.
-  Widget _trackLabelCircleButton({
-    required IconData icon,
-    required Color iconColor,
-    required VoidCallback onTap,
-    required String tooltip,
-  }) {
-    return Tooltip(
-      message: tooltip,
-      verticalOffset: 12,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.only(right: 4),
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              color: MultimodalStudioPalette.SAND_300,
-              shape: BoxShape.circle,
-            ),
-            child: SizedBox(
-              width: 22,
-              height: 22,
-              child: Center(child: Icon(icon, size: 12, color: iconColor)),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  TimelineBoardClip _rowSelection(TimelineBoardRow row) {
-    for (final clip in row.clips) {
-      if (_isClipSelected(clip)) {
-        return clip;
-      }
-    }
-    return row.clips.first;
   }
 
   Widget _header() {
@@ -885,12 +351,12 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       ),
       child: Row(
         children: [
-          _tool(
+          TimelineBoardToolButton(
             viewModel.isVideoPlaying ? '❚❚' : '▶',
             onPressed: viewModel.didTapTogglePlayback,
           ),
           const SizedBox(width: 8),
-          _tool(
+          TimelineBoardToolButton(
             viewModel.timelinePlaybackRateLabel,
             onPressed: viewModel.didTapCycleTimelinePlaybackRate,
           ),
@@ -904,14 +370,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
             ),
           ),
           const Spacer(),
-          // const Text(
-          //   '속성 · ',
-          //   style: TextStyle(
-          //     color: MultimodalStudioPalette.SAND_600,
-          //     fontSize: 11,
-          //   ),
-          // ),
-          // _tool('툴바에서 열기', onPressed: viewModel.didTapToggleProperties),
         ],
       ),
     );
@@ -1102,7 +560,20 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         color: MultimodalStudioPalette.SAND_0,
         child: Stack(
           children: [
-            for (final clip in row.clips) _clip(clip, row),
+            for (final clip in row.clips)
+              TimelineBoardClipBar(
+                viewModel: viewModel,
+                clip: clip,
+                row: row,
+                edit: _edit,
+                isSelected: _isClipSelected(clip),
+                onTap: () => _selectClip(clip),
+                onBeginEdit: _beginEdit,
+                onMove: _moveEdit,
+                onResize: _resizeEdit,
+                onCommit: _commitEdit,
+                onClear: _clearEdit,
+              ),
             for (final clip in row.clips)
               if (clip.poseMarks.isNotEmpty)
                 ...buildPoseBoardMarkWidgets(
@@ -1137,164 +608,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           },
         );
       },
-    );
-  }
-
-  Widget _clip(TimelineBoardClip clip, TimelineBoardRow row) {
-    final range = _shownRange(clip);
-    final left = range.startSeconds * viewModel.pixelsPerSecond;
-    var width =
-        (range.endSeconds - range.startSeconds) * viewModel.pixelsPerSecond;
-    final minimum = VideoMultimodalViewModel.MIN_CLIP_WIDTH;
-    if (width < minimum) {
-      width = minimum;
-    }
-    final selected = _isClipSelected(clip);
-    final canEdit = rangeIdOf(clip).isNotEmpty && !clip.isChartExpanded;
-    if (canEdit && selected && width < 12) {
-      width = 12;
-    }
-    if (clip.isChartExpanded) {
-      final rawDurationMs = ((range.endSeconds - range.startSeconds) * 1000)
-          .round();
-      final durationMs = rawDurationMs < 1 ? 1 : rawDurationMs;
-      final chartKind = clipChartKindOf(clip.kind);
-      final Widget chart;
-      switch (chartKind) {
-        case ClipChartKind.audio:
-          chart = AudioClipChart(
-            amplitudes: viewModel.audioAmplitudes,
-            isLoading: viewModel.isAudioChartLoading,
-            errorMessage: viewModel.audioChartError,
-            durationMs: durationMs,
-            selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
-            onTimeTapMs: viewModel.didTapAudioChartTime,
-          );
-        case ClipChartKind.timeseries:
-          chart = TimeseriesClipChart(
-            key: ValueKey<String>('timeseries-chart-${clip.clipId}'),
-            series: viewModel.timeseriesSeries,
-            isLoading: viewModel.isTimeseriesChartLoading,
-            errorMessage: viewModel.timeseriesChartError,
-            durationMs: durationMs,
-            selectedTimeMs: viewModel.timeseriesSelectedTimeMs,
-            selectedTimeLabel: viewModel.playheadLabel,
-            onTimeTapMs: viewModel.didTapTimeseriesChartTime,
-          );
-        case null:
-          chart = const SizedBox.shrink();
-      }
-      return Positioned(
-        left: left,
-        top: 0,
-        width: width < 160 ? 160 : width,
-        height: row.height,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: MultimodalStudioPalette.GRAPE_400,
-              width: 1,
-            ),
-          ),
-          child: chart,
-        ),
-      );
-    }
-    return Positioned(
-      left: left,
-      top: 4 + clip.laneIndex * TIMELINE_TRACK_LANE_HEIGHT,
-      width: width,
-      height: 20,
-      child: GestureDetector(
-        onTap: () => _selectClip(clip),
-        onHorizontalDragStart: canEdit ? (_) => _beginEdit(clip) : null,
-        onHorizontalDragUpdate: canEdit
-            ? (details) => _moveEdit(
-                rangeIdOf(clip),
-                details.delta.dx / viewModel.pixelsPerSecond,
-              )
-            : null,
-        onHorizontalDragEnd: canEdit ? (_) => _commitEdit() : null,
-        onHorizontalDragCancel: canEdit ? () => _clearEdit() : null,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: clip.background,
-            borderRadius: BorderRadius.circular(4),
-            border: Border.all(
-              color: selected ? MultimodalStudioPalette.GRAPE_500 : clip.border,
-              width: 1,
-            ),
-          ),
-          child: Stack(
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                child: Text(
-                  clip.rateLabel.isEmpty
-                      ? clip.text
-                      : '${clip.text} ${clip.rateLabel}',
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: clip.foreground,
-                    fontSize: 11,
-                    height: 1.6,
-                    fontWeight: clip.hasLabel
-                        ? FontWeight.w700
-                        : FontWeight.w400,
-                  ),
-                ),
-              ),
-              if (canEdit && selected) ...[
-                Positioned(
-                  left: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 6,
-                  child: _resizeHandle(clip, isLeading: true),
-                ),
-                Positioned(
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: 6,
-                  child: _resizeHandle(clip, isLeading: false),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _resizeHandle(TimelineBoardClip clip, {required bool isLeading}) {
-    return GestureDetector(
-      onHorizontalDragStart: (_) => _beginEdit(clip),
-      onHorizontalDragUpdate: (details) => _resizeEdit(
-        rangeIdOf(clip),
-        details.delta.dx / viewModel.pixelsPerSecond,
-        isLeading: isLeading,
-      ),
-      onHorizontalDragEnd: (_) => _commitEdit(),
-      onHorizontalDragCancel: _clearEdit,
-      child: const MouseRegion(
-        cursor: SystemMouseCursors.resizeColumn,
-        child: ColoredBox(color: Color(0x66FFFFFF)),
-      ),
-    );
-  }
-
-  TimelineClipEdit _shownRange(TimelineBoardClip clip) {
-    final edit = _edit;
-    final rangeId = rangeIdOf(clip);
-    if (edit != null && edit.clipId == rangeId) {
-      return edit;
-    }
-    return TimelineClipEdit(
-      clipId: rangeId,
-      isBar: clip.clipId.isEmpty,
-      startSeconds: clip.startSeconds,
-      endSeconds: clip.endSeconds,
     );
   }
 
