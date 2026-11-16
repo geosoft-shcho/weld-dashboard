@@ -193,27 +193,36 @@ class _MultimodalDesktopControlsState extends State<MultimodalDesktopControls> {
                             ),
                             child: Row(
                               children: [
-                                _iconButton(
-                                  value.isPlaying
-                                      ? Icons.pause
-                                      : Icons.play_arrow,
-                                  _togglePlay,
-                                ),
-                                if (chewie.allowMuting)
-                                  _iconButton(
-                                    value.volume > 0
-                                        ? Icons.volume_up
-                                        : Icons.volume_off,
-                                    _toggleMute,
+                                Expanded(
+                                  child: Row(
+                                    children: [
+                                      _iconButton(
+                                        value.isPlaying
+                                            ? Icons.pause
+                                            : Icons.play_arrow,
+                                        _togglePlay,
+                                      ),
+                                      if (chewie.allowMuting)
+                                        _iconButton(
+                                          value.volume > 0
+                                              ? Icons.volume_up
+                                              : Icons.volume_off,
+                                          _toggleMute,
+                                        ),
+                                      Flexible(
+                                        child: Text(
+                                          '${_clock(value.position)} / ${_clock(value.duration)}',
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                Text(
-                                  '${_clock(value.position)} / ${_clock(value.duration)}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                  ),
                                 ),
-                                const Spacer(),
                                 if (chewie.allowFullScreen)
                                   _iconButton(
                                     chewie.isFullScreen

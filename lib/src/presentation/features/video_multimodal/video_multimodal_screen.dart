@@ -156,7 +156,9 @@ class _StageBoardHost extends StatelessWidget {
     final viewModel = context.read<VideoMultimodalViewModel>();
     return LayoutBuilder(
       builder: (context, constraints) {
-        final maxBoardHeight = (constraints.maxHeight - 100).clamp(
+        final maxBoardHeight = (constraints.maxHeight -
+                VideoMultimodalViewModel.MIN_STAGE_HEIGHT)
+            .clamp(
           VideoMultimodalViewModel.MIN_TIMELINE_HEIGHT,
           VideoMultimodalViewModel.MAX_TIMELINE_HEIGHT,
         );

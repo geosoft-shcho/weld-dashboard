@@ -79,6 +79,10 @@ class VideoMultimodalViewModel extends ChangeNotifier {
 
   static const double MIN_TIMELINE_HEIGHT = 320;
   static const double MAX_TIMELINE_HEIGHT = 720;
+
+  /// 타임라인 세로 드래그 시 stage 최소 높이.
+  /// 데스크탑 컨트롤: 패딩20×2 + 아이콘36×3 + 시간(`00:00 / 00:00`)100 — ellipsis 없이 필요한 가로.
+  static const double MIN_STAGE_HEIGHT = 248;
   static const double SIDE_WIDTH = 320;
   static const double DEFAULT_PIXELS_PER_SECOND = 10;
   static const double EMPTY_SPAN_SECONDS = 60;
@@ -209,6 +213,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   /// Stage에 동시에 보여 줄 비디오 트랙(최대 [MAX_MONITORED_TRACK_COUNT]).
   final List<String> _monitoredTrackIds = [];
   String _focusedMonitorTrackId = '';
+
   /// 소리가 꺼진 트랙(영상·음성). 기본은 unmute.
   final Set<String> _mutedTrackIds = {};
   static const int MAX_MONITORED_TRACK_COUNT = 4;
@@ -1737,6 +1742,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool isMonitorSlotFocused(String trackId) => focusedMonitorTrackId == trackId;
   bool isTrackAudioMuted(String trackId) =>
       trackId.isNotEmpty && _mutedTrackIds.contains(trackId);
+
   /// Selector 키용. mute 토글 시 stage/보드 재빌드.
   String get mutedTrackIdsKey {
     final ids = _mutedTrackIds.toList()..sort();
