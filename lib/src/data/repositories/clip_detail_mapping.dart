@@ -265,7 +265,7 @@ String _postprocessStatusLabel(asset_msg.Asset asset) {
     return _dash;
   }
   final name = asset.postprocess.status.name;
-  const prefix = 'POSTPROCESS_STATUS_';
+  const prefix = 'RUN_STATUS_';
   if (!name.startsWith(prefix)) {
     return name;
   }

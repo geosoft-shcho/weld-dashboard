@@ -6,6 +6,7 @@ import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:weld_dashboard/src/data/datasources/generated/mediatag/asset/v1/asset.pbenum.dart';
+import 'package:weld_dashboard/src/data/datasources/generated/mediatag/run/v1/run.pb.dart';
 import 'package:weld_dashboard/src/data/datasources/generated/mediatag/tool/v1/tool.pb.dart';
 import 'package:weld_dashboard/src/data/repositories/tool_run_requests.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
@@ -148,7 +149,7 @@ void main() {
     );
 
     final queued = toolRunSnapshotFrom(
-      ToolRun(
+      Run(
         runId: Int64(3),
         toolId: Int64(7),
         status: RunStatus.RUN_STATUS_QUEUED,
@@ -158,7 +159,7 @@ void main() {
     expect(queued.isInProgress, isTrue);
 
     final running = toolRunSnapshotFrom(
-      ToolRun(
+      Run(
         runId: Int64(4),
         toolId: Int64(7),
         status: RunStatus.RUN_STATUS_RUNNING,
@@ -533,6 +534,9 @@ class _ScriptedToolRuns implements ToolRunRepository {
       errorMessage: '',
     );
   }
+
+  @override
+  Future<List<ToolRunQueue>> getQueue() async => const [];
 }
 
 class _IdleLabelRepository implements LabelRepository {

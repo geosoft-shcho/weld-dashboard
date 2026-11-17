@@ -14,4 +14,6 @@ abstract class ToolRunRepository {
   Future<ToolRunSnapshot> getRun({required String runId});
 
   Future<ToolRunSnapshot> cancelRun({required String runId});
+
+  Future<List<ToolRunQueue>> getQueue();
 }

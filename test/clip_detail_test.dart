@@ -5,6 +5,10 @@ import 'package:weld_dashboard/src/data/datasources/generated/mediatag/asset/v1/
     as asset_pb;
 import 'package:weld_dashboard/src/data/datasources/generated/mediatag/compose/v1/compose.pb.dart'
     as compose_pb;
+import 'package:weld_dashboard/src/data/datasources/generated/mediatag/run/v1/run.pb.dart'
+    as run_pb;
+import 'package:weld_dashboard/src/data/datasources/generated/mediatag/run/v1/run.pbenum.dart'
+    as run_enum;
 import 'package:weld_dashboard/src/data/repositories/clip_detail_mapping.dart';
 import 'package:weld_dashboard/src/domain/entities/job_timeline.dart';
 import 'package:weld_dashboard/src/presentation/features/video_multimodal/widgets/clip_detail_sections.dart';
@@ -201,9 +205,10 @@ void main() {
           contentUrl: '/files/target.mp4',
           subject: '화면 코멘트 1',
           situation: '품질 이슈 · 작업 388',
-          postprocess: asset_pb.PostprocessRun(
+          postprocess: run_pb.Run(
             runId: Int64(9),
-            status: asset_pb.PostprocessStatus.POSTPROCESS_STATUS_SUCCEEDED,
+            stage: 'postprocess',
+            status: run_enum.RunStatus.RUN_STATUS_SUCCEEDED,
           ),
         ),
       ),

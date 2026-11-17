@@ -16,9 +16,10 @@ import 'dart:core' as $core;
 import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import '../../../google/protobuf/field_mask.pb.dart' as $2;
+import '../../../google/protobuf/field_mask.pb.dart' as $3;
 import '../../../google/protobuf/struct.pb.dart' as $0;
 import '../../../google/protobuf/timestamp.pb.dart' as $1;
+import '../../run/v1/run.pb.dart' as $2;
 import 'asset.pbenum.dart';
 
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
@@ -45,7 +46,7 @@ class Asset extends $pb.GeneratedMessage {
     $core.Iterable<DisplayField>? display,
     $core.String? subject,
     $core.String? situation,
-    PostprocessRun? postprocess,
+    $2.Run? postprocess,
   }) {
     final result = create();
     if (assetId != null) result.assetId = assetId;
@@ -110,8 +111,8 @@ class Asset extends $pb.GeneratedMessage {
         subBuilder: DisplayField.create)
     ..aOS(17, _omitFieldNames ? '' : 'subject')
     ..aOS(18, _omitFieldNames ? '' : 'situation')
-    ..aOM<PostprocessRun>(19, _omitFieldNames ? '' : 'postprocess',
-        subBuilder: PostprocessRun.create)
+    ..aOM<$2.Run>(19, _omitFieldNames ? '' : 'postprocess',
+        subBuilder: $2.Run.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -302,104 +303,19 @@ class Asset extends $pb.GeneratedMessage {
   @$pb.TagNumber(18)
   void clearSituation() => $_clearField(18);
 
-  /// 응답 전용: 이 Asset의 마지막 후처리(asset-postprocess) 실행. 후처리가 없는 Asset(파생 · 일괄 적재)은 비어 있다.
-  /// FAILED면 RetryPostprocess로 다시 돌린다 — 이미 한 단계는 건너뛴다.
+  /// 응답 전용: 이 Asset의 마지막 후처리 run — 후처리 단계 run이나 그 단계가 건 도구 run(성적서 PDF의 pdf-to-text) 중 마지막 것.
+  /// 요약만 채운다(run_id · stage 또는 tool_id · status · error_message) — 대기열 · 진행은 RunService.GetRun(run_id).
+  /// 후처리가 없는 Asset(파생 · 일괄 적재)은 비어 있다. FAILED면 RetryPostprocess로 다시 돌린다 — 이미 한 단계는 건너뛴다.
   @$pb.TagNumber(19)
-  PostprocessRun get postprocess => $_getN(18);
+  $2.Run get postprocess => $_getN(18);
   @$pb.TagNumber(19)
-  set postprocess(PostprocessRun value) => $_setField(19, value);
+  set postprocess($2.Run value) => $_setField(19, value);
   @$pb.TagNumber(19)
   $core.bool hasPostprocess() => $_has(18);
   @$pb.TagNumber(19)
   void clearPostprocess() => $_clearField(19);
   @$pb.TagNumber(19)
-  PostprocessRun ensurePostprocess() => $_ensure(18);
-}
-
-/// 마지막 후처리 실행 요약. 자세한 것은 ToolService.GetRun(run_id).
-class PostprocessRun extends $pb.GeneratedMessage {
-  factory PostprocessRun({
-    $fixnum.Int64? runId,
-    PostprocessStatus? status,
-    $core.String? errorMessage,
-  }) {
-    final result = create();
-    if (runId != null) result.runId = runId;
-    if (status != null) result.status = status;
-    if (errorMessage != null) result.errorMessage = errorMessage;
-    return result;
-  }
-
-  PostprocessRun._();
-
-  factory PostprocessRun.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory PostprocessRun.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'PostprocessRun',
-      package:
-          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
-      createEmptyInstance: create)
-    ..aInt64(1, _omitFieldNames ? '' : 'runId')
-    ..e<PostprocessStatus>(
-        2, _omitFieldNames ? '' : 'status', $pb.PbFieldType.OE,
-        defaultOrMaker: PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED,
-        valueOf: PostprocessStatus.valueOf,
-        enumValues: PostprocessStatus.values)
-    ..aOS(3, _omitFieldNames ? '' : 'errorMessage')
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  PostprocessRun clone() => PostprocessRun()..mergeFromMessage(this);
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  PostprocessRun copyWith(void Function(PostprocessRun) updates) =>
-      super.copyWith((message) => updates(message as PostprocessRun))
-          as PostprocessRun;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static PostprocessRun create() => PostprocessRun._();
-  @$core.override
-  PostprocessRun createEmptyInstance() => create();
-  static $pb.PbList<PostprocessRun> createRepeated() =>
-      $pb.PbList<PostprocessRun>();
-  @$core.pragma('dart2js:noInline')
-  static PostprocessRun getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<PostprocessRun>(create);
-  static PostprocessRun? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $fixnum.Int64 get runId => $_getI64(0);
-  @$pb.TagNumber(1)
-  set runId($fixnum.Int64 value) => $_setInt64(0, value);
-  @$pb.TagNumber(1)
-  $core.bool hasRunId() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearRunId() => $_clearField(1);
-
-  @$pb.TagNumber(2)
-  PostprocessStatus get status => $_getN(1);
-  @$pb.TagNumber(2)
-  set status(PostprocessStatus value) => $_setField(2, value);
-  @$pb.TagNumber(2)
-  $core.bool hasStatus() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearStatus() => $_clearField(2);
-
-  @$pb.TagNumber(3)
-  $core.String get errorMessage => $_getSZ(2);
-  @$pb.TagNumber(3)
-  set errorMessage($core.String value) => $_setString(2, value);
-  @$pb.TagNumber(3)
-  $core.bool hasErrorMessage() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearErrorMessage() => $_clearField(3);
+  $2.Run ensurePostprocess() => $_ensure(18);
 }
 
 class DisplayField extends $pb.GeneratedMessage {
@@ -725,7 +641,7 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     $core.bool? unattachedOnly,
     $core.String? query,
     AssetJobFilter? job,
-    PostprocessStatus? postprocessStatus,
+    $2.RunStatus? postprocessStatus,
   }) {
     final result = create();
     if (pageSize != null) result.pageSize = pageSize;
@@ -768,11 +684,11 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
     ..aOS(8, _omitFieldNames ? '' : 'query')
     ..aOM<AssetJobFilter>(9, _omitFieldNames ? '' : 'job',
         subBuilder: AssetJobFilter.create)
-    ..e<PostprocessStatus>(
+    ..e<$2.RunStatus>(
         10, _omitFieldNames ? '' : 'postprocessStatus', $pb.PbFieldType.OE,
-        defaultOrMaker: PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED,
-        valueOf: PostprocessStatus.valueOf,
-        enumValues: PostprocessStatus.values)
+        defaultOrMaker: $2.RunStatus.RUN_STATUS_UNSPECIFIED,
+        valueOf: $2.RunStatus.valueOf,
+        enumValues: $2.RunStatus.values)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -880,9 +796,9 @@ class ListAssetsRequest extends $pb.GeneratedMessage {
   AssetJobFilter ensureJob() => $_ensure(8);
 
   @$pb.TagNumber(10)
-  PostprocessStatus get postprocessStatus => $_getN(9);
+  $2.RunStatus get postprocessStatus => $_getN(9);
   @$pb.TagNumber(10)
-  set postprocessStatus(PostprocessStatus value) => $_setField(10, value);
+  set postprocessStatus($2.RunStatus value) => $_setField(10, value);
   @$pb.TagNumber(10)
   $core.bool hasPostprocessStatus() => $_has(9);
   @$pb.TagNumber(10)
@@ -1279,7 +1195,7 @@ class GetAssetResponse extends $pb.GeneratedMessage {
 class UpdateAssetRequest extends $pb.GeneratedMessage {
   factory UpdateAssetRequest({
     Asset? asset,
-    $2.FieldMask? updateMask,
+    $3.FieldMask? updateMask,
   }) {
     final result = create();
     if (asset != null) result.asset = asset;
@@ -1302,8 +1218,8 @@ class UpdateAssetRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
     ..aOM<Asset>(1, _omitFieldNames ? '' : 'asset', subBuilder: Asset.create)
-    ..aOM<$2.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $2.FieldMask.create)
+    ..aOM<$3.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $3.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1339,15 +1255,15 @@ class UpdateAssetRequest extends $pb.GeneratedMessage {
   Asset ensureAsset() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $2.FieldMask get updateMask => $_getN(1);
+  $3.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($2.FieldMask value) => $_setField(2, value);
+  set updateMask($3.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $2.FieldMask ensureUpdateMask() => $_ensure(1);
+  $3.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateAssetResponse extends $pb.GeneratedMessage {
@@ -3063,7 +2979,7 @@ class Comment extends $pb.GeneratedMessage {
     $1.Timestamp? startedAt,
     $1.Timestamp? createdAt,
     $1.Timestamp? updatedAt,
-    PostprocessRun? stt,
+    $2.Run? stt,
     $fixnum.Int64? subtitleAssetId,
   }) {
     final result = create();
@@ -3110,8 +3026,7 @@ class Comment extends $pb.GeneratedMessage {
         subBuilder: $1.Timestamp.create)
     ..aOM<$1.Timestamp>(10, _omitFieldNames ? '' : 'updatedAt',
         subBuilder: $1.Timestamp.create)
-    ..aOM<PostprocessRun>(11, _omitFieldNames ? '' : 'stt',
-        subBuilder: PostprocessRun.create)
+    ..aOM<$2.Run>(11, _omitFieldNames ? '' : 'stt', subBuilder: $2.Run.create)
     ..aInt64(12, _omitFieldNames ? '' : 'subtitleAssetId')
     ..hasRequiredFields = false;
 
@@ -3236,17 +3151,17 @@ class Comment extends $pb.GeneratedMessage {
   @$pb.TagNumber(10)
   $1.Timestamp ensureUpdatedAt() => $_ensure(9);
 
-  /// 응답 전용: 만들 때 건 STT 실행(모양은 후처리 실행 요약과 같다). 못 맡겼으면 비어 있다.
+  /// 응답 전용: 만들 때 건 STT run(요약 — run_id · tool_id · status · error_message, 자세한 것은 RunService.GetRun). 못 맡겼으면 비어 있다.
   @$pb.TagNumber(11)
-  PostprocessRun get stt => $_getN(10);
+  $2.Run get stt => $_getN(10);
   @$pb.TagNumber(11)
-  set stt(PostprocessRun value) => $_setField(11, value);
+  set stt($2.Run value) => $_setField(11, value);
   @$pb.TagNumber(11)
   $core.bool hasStt() => $_has(10);
   @$pb.TagNumber(11)
   void clearStt() => $_clearField(11);
   @$pb.TagNumber(11)
-  PostprocessRun ensureStt() => $_ensure(10);
+  $2.Run ensureStt() => $_ensure(10);
 
   @$pb.TagNumber(12)
   $fixnum.Int64 get subtitleAssetId => $_getI64(11);

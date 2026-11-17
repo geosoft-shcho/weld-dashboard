@@ -15,51 +15,31 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import 'tool.pb.dart' as $3;
+import 'tool.pb.dart' as $2;
 import 'tool.pbjson.dart';
 
 export 'tool.pb.dart';
 
 abstract class ToolServiceBase extends $pb.GeneratedService {
-  $async.Future<$3.ListToolsResponse> listTools(
-      $pb.ServerContext ctx, $3.ListToolsRequest request);
-  $async.Future<$3.CreateToolResponse> createTool(
-      $pb.ServerContext ctx, $3.CreateToolRequest request);
-  $async.Future<$3.UpdateToolResponse> updateTool(
-      $pb.ServerContext ctx, $3.UpdateToolRequest request);
-  $async.Future<$3.DeleteToolResponse> deleteTool(
-      $pb.ServerContext ctx, $3.DeleteToolRequest request);
-  $async.Future<$3.StartRunResponse> startRun(
-      $pb.ServerContext ctx, $3.StartRunRequest request);
-  $async.Future<$3.GetRunResponse> getRun(
-      $pb.ServerContext ctx, $3.GetRunRequest request);
-  $async.Future<$3.ListRunsResponse> listRuns(
-      $pb.ServerContext ctx, $3.ListRunsRequest request);
-  $async.Future<$3.CancelRunResponse> cancelRun(
-      $pb.ServerContext ctx, $3.CancelRunRequest request);
-  $async.Future<$3.GetQueueResponse> getQueue(
-      $pb.ServerContext ctx, $3.GetQueueRequest request);
+  $async.Future<$2.ListToolsResponse> listTools(
+      $pb.ServerContext ctx, $2.ListToolsRequest request);
+  $async.Future<$2.CreateToolResponse> createTool(
+      $pb.ServerContext ctx, $2.CreateToolRequest request);
+  $async.Future<$2.UpdateToolResponse> updateTool(
+      $pb.ServerContext ctx, $2.UpdateToolRequest request);
+  $async.Future<$2.DeleteToolResponse> deleteTool(
+      $pb.ServerContext ctx, $2.DeleteToolRequest request);
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
       case 'ListTools':
-        return $3.ListToolsRequest();
+        return $2.ListToolsRequest();
       case 'CreateTool':
-        return $3.CreateToolRequest();
+        return $2.CreateToolRequest();
       case 'UpdateTool':
-        return $3.UpdateToolRequest();
+        return $2.UpdateToolRequest();
       case 'DeleteTool':
-        return $3.DeleteToolRequest();
-      case 'StartRun':
-        return $3.StartRunRequest();
-      case 'GetRun':
-        return $3.GetRunRequest();
-      case 'ListRuns':
-        return $3.ListRunsRequest();
-      case 'CancelRun':
-        return $3.CancelRunRequest();
-      case 'GetQueue':
-        return $3.GetQueueRequest();
+        return $2.DeleteToolRequest();
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }
@@ -69,23 +49,13 @@ abstract class ToolServiceBase extends $pb.GeneratedService {
       $core.String methodName, $pb.GeneratedMessage request) {
     switch (methodName) {
       case 'ListTools':
-        return listTools(ctx, request as $3.ListToolsRequest);
+        return listTools(ctx, request as $2.ListToolsRequest);
       case 'CreateTool':
-        return createTool(ctx, request as $3.CreateToolRequest);
+        return createTool(ctx, request as $2.CreateToolRequest);
       case 'UpdateTool':
-        return updateTool(ctx, request as $3.UpdateToolRequest);
+        return updateTool(ctx, request as $2.UpdateToolRequest);
       case 'DeleteTool':
-        return deleteTool(ctx, request as $3.DeleteToolRequest);
-      case 'StartRun':
-        return startRun(ctx, request as $3.StartRunRequest);
-      case 'GetRun':
-        return getRun(ctx, request as $3.GetRunRequest);
-      case 'ListRuns':
-        return listRuns(ctx, request as $3.ListRunsRequest);
-      case 'CancelRun':
-        return cancelRun(ctx, request as $3.CancelRunRequest);
-      case 'GetQueue':
-        return getQueue(ctx, request as $3.GetQueueRequest);
+        return deleteTool(ctx, request as $2.DeleteToolRequest);
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }

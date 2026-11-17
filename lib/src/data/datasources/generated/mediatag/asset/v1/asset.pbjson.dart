@@ -14,9 +14,10 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
-import '../../../google/protobuf/field_mask.pbjson.dart' as $2;
+import '../../../google/protobuf/field_mask.pbjson.dart' as $3;
 import '../../../google/protobuf/struct.pbjson.dart' as $0;
 import '../../../google/protobuf/timestamp.pbjson.dart' as $1;
+import '../../run/v1/run.pbjson.dart' as $2;
 
 @$core.Deprecated('Use assetKindDescriptor instead')
 const AssetKind$json = {
@@ -44,26 +45,6 @@ final $typed_data.Uint8List assetKindDescriptor = $convert.base64Decode(
     'NVQlRJVExFEAYSGQoVQVNTRVRfS0lORF9USU1FU0VSSUVTEAcSGQoVQVNTRVRfS0lORF9QT0lO'
     'VENMT1VEEAgSFwoTQVNTRVRfS0lORF9PQ1JfSlNPThAJEhUKEUFTU0VUX0tJTkRfUkVHSU9OEA'
     'o=');
-
-@$core.Deprecated('Use postprocessStatusDescriptor instead')
-const PostprocessStatus$json = {
-  '1': 'PostprocessStatus',
-  '2': [
-    {'1': 'POSTPROCESS_STATUS_UNSPECIFIED', '2': 0},
-    {'1': 'POSTPROCESS_STATUS_QUEUED', '2': 1},
-    {'1': 'POSTPROCESS_STATUS_RUNNING', '2': 2},
-    {'1': 'POSTPROCESS_STATUS_SUCCEEDED', '2': 3},
-    {'1': 'POSTPROCESS_STATUS_FAILED', '2': 4},
-    {'1': 'POSTPROCESS_STATUS_CANCELED', '2': 5},
-  ],
-};
-
-/// Descriptor for `PostprocessStatus`. Decode as a `google.protobuf.EnumDescriptorProto`.
-final $typed_data.Uint8List postprocessStatusDescriptor = $convert.base64Decode(
-    'ChFQb3N0cHJvY2Vzc1N0YXR1cxIiCh5QT1NUUFJPQ0VTU19TVEFUVVNfVU5TUEVDSUZJRUQQAB'
-    'IdChlQT1NUUFJPQ0VTU19TVEFUVVNfUVVFVUVEEAESHgoaUE9TVFBST0NFU1NfU1RBVFVTX1JV'
-    'Tk5JTkcQAhIgChxQT1NUUFJPQ0VTU19TVEFUVVNfU1VDQ0VFREVEEAMSHQoZUE9TVFBST0NFU1'
-    'NfU1RBVFVTX0ZBSUxFRBAEEh8KG1BPU1RQUk9DRVNTX1NUQVRVU19DQU5DRUxFRBAF');
 
 @$core.Deprecated('Use duplicateDecisionDescriptor instead')
 const DuplicateDecision$json = {
@@ -158,7 +139,7 @@ const Asset$json = {
       '3': 19,
       '4': 1,
       '5': 11,
-      '6': '.mediatag.asset.v1.PostprocessRun',
+      '6': '.mediatag.run.v1.Run',
       '10': 'postprocess'
     },
   ],
@@ -182,31 +163,8 @@ final $typed_data.Uint8List assetDescriptor = $convert.base64Decode(
     'Y2VfcGF0aBgNIAEoCVIKc291cmNlUGF0aBIfCgtjaGlsZF9jb3VudBgPIAEoBVIKY2hpbGRDb3'
     'VudBI5CgdkaXNwbGF5GBAgAygLMh8ubWVkaWF0YWcuYXNzZXQudjEuRGlzcGxheUZpZWxkUgdk'
     'aXNwbGF5EhgKB3N1YmplY3QYESABKAlSB3N1YmplY3QSHAoJc2l0dWF0aW9uGBIgASgJUglzaX'
-    'R1YXRpb24SQwoLcG9zdHByb2Nlc3MYEyABKAsyIS5tZWRpYXRhZy5hc3NldC52MS5Qb3N0cHJv'
-    'Y2Vzc1J1blILcG9zdHByb2Nlc3NCDgoMX2R1cmF0aW9uX25z');
-
-@$core.Deprecated('Use postprocessRunDescriptor instead')
-const PostprocessRun$json = {
-  '1': 'PostprocessRun',
-  '2': [
-    {'1': 'run_id', '3': 1, '4': 1, '5': 3, '10': 'runId'},
-    {
-      '1': 'status',
-      '3': 2,
-      '4': 1,
-      '5': 14,
-      '6': '.mediatag.asset.v1.PostprocessStatus',
-      '10': 'status'
-    },
-    {'1': 'error_message', '3': 3, '4': 1, '5': 9, '10': 'errorMessage'},
-  ],
-};
-
-/// Descriptor for `PostprocessRun`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List postprocessRunDescriptor = $convert.base64Decode(
-    'Cg5Qb3N0cHJvY2Vzc1J1bhIVCgZydW5faWQYASABKANSBXJ1bklkEjwKBnN0YXR1cxgCIAEoDj'
-    'IkLm1lZGlhdGFnLmFzc2V0LnYxLlBvc3Rwcm9jZXNzU3RhdHVzUgZzdGF0dXMSIwoNZXJyb3Jf'
-    'bWVzc2FnZRgDIAEoCVIMZXJyb3JNZXNzYWdl');
+    'R1YXRpb24SNgoLcG9zdHByb2Nlc3MYEyABKAsyFC5tZWRpYXRhZy5ydW4udjEuUnVuUgtwb3N0'
+    'cHJvY2Vzc0IOCgxfZHVyYXRpb25fbnM=');
 
 @$core.Deprecated('Use displayFieldDescriptor instead')
 const DisplayField$json = {
@@ -321,7 +279,7 @@ const ListAssetsRequest$json = {
       '3': 10,
       '4': 1,
       '5': 14,
-      '6': '.mediatag.asset.v1.PostprocessStatus',
+      '6': '.mediatag.run.v1.RunStatus',
       '10': 'postprocessStatus'
     },
   ],
@@ -335,8 +293,8 @@ final $typed_data.Uint8List listAssetsRequestDescriptor = $convert.base64Decode(
     'RJZBIbCglmaWxlX25hbWUYBSABKAlSCGZpbGVOYW1lEiEKDGVxdWlwbWVudF9pZBgGIAEoA1IL'
     'ZXF1aXBtZW50SWQSJwoPdW5hdHRhY2hlZF9vbmx5GAcgASgIUg51bmF0dGFjaGVkT25seRIUCg'
     'VxdWVyeRgIIAEoCVIFcXVlcnkSMwoDam9iGAkgASgLMiEubWVkaWF0YWcuYXNzZXQudjEuQXNz'
-    'ZXRKb2JGaWx0ZXJSA2pvYhJTChJwb3N0cHJvY2Vzc19zdGF0dXMYCiABKA4yJC5tZWRpYXRhZy'
-    '5hc3NldC52MS5Qb3N0cHJvY2Vzc1N0YXR1c1IRcG9zdHByb2Nlc3NTdGF0dXM=');
+    'ZXRKb2JGaWx0ZXJSA2pvYhJJChJwb3N0cHJvY2Vzc19zdGF0dXMYCiABKA4yGi5tZWRpYXRhZy'
+    '5ydW4udjEuUnVuU3RhdHVzUhFwb3N0cHJvY2Vzc1N0YXR1cw==');
 
 @$core.Deprecated('Use assetJobFilterDescriptor instead')
 const AssetJobFilter$json = {
@@ -997,7 +955,7 @@ const Comment$json = {
       '3': 11,
       '4': 1,
       '5': 11,
-      '6': '.mediatag.asset.v1.PostprocessRun',
+      '6': '.mediatag.run.v1.Run',
       '10': 'stt'
     },
     {
@@ -1019,9 +977,9 @@ final $typed_data.Uint8List commentDescriptor = $convert.base64Decode(
     'c3RWYWx1ZVIHY29udGV4dBI5CgpzdGFydGVkX2F0GAggASgLMhouZ29vZ2xlLnByb3RvYnVmLl'
     'RpbWVzdGFtcFIJc3RhcnRlZEF0EjkKCmNyZWF0ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9i'
     'dWYuVGltZXN0YW1wUgljcmVhdGVkQXQSOQoKdXBkYXRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm'
-    '90b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdBIzCgNzdHQYCyABKAsyIS5tZWRpYXRhZy5hc3Nl'
-    'dC52MS5Qb3N0cHJvY2Vzc1J1blIDc3R0EioKEXN1YnRpdGxlX2Fzc2V0X2lkGAwgASgDUg9zdW'
-    'J0aXRsZUFzc2V0SWQ=');
+    '90b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdBImCgNzdHQYCyABKAsyFC5tZWRpYXRhZy5ydW4u'
+    'djEuUnVuUgNzdHQSKgoRc3VidGl0bGVfYXNzZXRfaWQYDCABKANSD3N1YnRpdGxlQXNzZXRJZA'
+    '==');
 
 @$core.Deprecated('Use createCommentRequestDescriptor instead')
 const CreateCommentRequest$json = {
@@ -1276,7 +1234,9 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.google.protobuf.Timestamp': $1.Timestamp$json,
   '.mediatag.asset.v1.Provenance': Provenance$json,
   '.mediatag.asset.v1.DisplayField': DisplayField$json,
-  '.mediatag.asset.v1.PostprocessRun': PostprocessRun$json,
+  '.mediatag.run.v1.Run': $2.Run$json,
+  '.mediatag.run.v1.RunTarget': $2.RunTarget$json,
+  '.mediatag.run.v1.RunWait': $2.RunWait$json,
   '.mediatag.asset.v1.ListAssetsRequest': ListAssetsRequest$json,
   '.mediatag.asset.v1.AssetJobFilter': AssetJobFilter$json,
   '.mediatag.asset.v1.ListAssetsResponse': ListAssetsResponse$json,
@@ -1285,7 +1245,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.asset.v1.GetAssetRequest': GetAssetRequest$json,
   '.mediatag.asset.v1.GetAssetResponse': GetAssetResponse$json,
   '.mediatag.asset.v1.UpdateAssetRequest': UpdateAssetRequest$json,
-  '.google.protobuf.FieldMask': $2.FieldMask$json,
+  '.google.protobuf.FieldMask': $3.FieldMask$json,
   '.mediatag.asset.v1.UpdateAssetResponse': UpdateAssetResponse$json,
   '.mediatag.asset.v1.RetryPostprocessRequest': RetryPostprocessRequest$json,
   '.mediatag.asset.v1.RetryPostprocessResponse': RetryPostprocessResponse$json,

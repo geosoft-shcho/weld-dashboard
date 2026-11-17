@@ -11,6 +11,8 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-11-16  geosoft-Server: Asset.postprocess · Comment.stt를 mediatag.run.v1.Run으로(PostprocessRun · PostprocessStatus 지움),
+//                ListAssetsRequest.postprocess_status는 RunStatus — 후처리는 단계 run이고 run 모양을 하나로
 //   2026-11-04  geosoft-Server: 화면 코멘트(웹캠 녹화) — CreateComment · UpdateComment · ListComments · DeleteComment, MergeCounts.comments
 //   2026-11-02  geosoft-Server: RetryPostprocess — 도구 번호 없이 에셋의 후처리를 다시 건다
 //   2026-10-27  geosoft-Server: Asset.postprocess(마지막 후처리 실행 — 실패한 것을 찾아 다시 돌림), ListAssetsRequest.postprocess_status
@@ -49,6 +51,7 @@ package mediatag.asset.v1;
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "mediatag/run/v1/run.proto";
 
 option go_package = "gen/protobuf/mediatag/asset/v1;assetv1";
 
@@ -149,26 +152,10 @@ message Asset {
   repeated DisplayField display = 16;
   string subject = 17;   // 주제 — 화면 업로드에서 사람이 적은 글(POST /assets metadata.subject). 없으면 빈값
   string situation = 18; // 상황 — 화면 업로드에서 사람이 적은 글(POST /assets metadata.situation). 없으면 빈값
-  // 응답 전용: 이 Asset의 마지막 후처리(asset-postprocess) 실행. 후처리가 없는 Asset(파생 · 일괄 적재)은 비어 있다.
-  // FAILED면 RetryPostprocess로 다시 돌린다 — 이미 한 단계는 건너뛴다.
-  PostprocessRun postprocess = 19;
-}
-
-// 마지막 후처리 실행 요약. 자세한 것은 ToolService.GetRun(run_id).
-message PostprocessRun {
-  int64 run_id = 1;
-  PostprocessStatus status = 2;
-  string error_message = 3; // FAILED일 때
-}
-
-// ToolRun.status(mediatag.tool.v1.RunStatus)와 같은 값 — tool.proto가 이 파일을 불러 그 enum을 쓰지 못해 따로 둔다.
-enum PostprocessStatus {
-  POSTPROCESS_STATUS_UNSPECIFIED = 0;
-  POSTPROCESS_STATUS_QUEUED = 1;
-  POSTPROCESS_STATUS_RUNNING = 2;
-  POSTPROCESS_STATUS_SUCCEEDED = 3;
-  POSTPROCESS_STATUS_FAILED = 4;
-  POSTPROCESS_STATUS_CANCELED = 5;
+  // 응답 전용: 이 Asset의 마지막 후처리 run — 후처리 단계 run이나 그 단계가 건 도구 run(성적서 PDF의 pdf-to-text) 중 마지막 것.
+  // 요약만 채운다(run_id · stage 또는 tool_id · status · error_message) — 대기열 · 진행은 RunService.GetRun(run_id).
+  // 후처리가 없는 Asset(파생 · 일괄 적재)은 비어 있다. FAILED면 RetryPostprocess로 다시 돌린다 — 이미 한 단계는 건너뛴다.
+  mediatag.run.v1.Run postprocess = 19;
 }
 
 message DisplayField {
@@ -179,7 +166,7 @@ message DisplayField {
 // 생성 경위. run_id·tool_id·tool_version은 셋 다 있거나 셋 다 없다(엔티티.md §6.2).
 message Provenance {
   string operation = 1;      // 'text_extraction', 'depth_colormap', 'stt' 등
-  int64 run_id = 2;          // 도구 실행 1건(ToolRun). 도구를 거치지 않았으면 0
+  int64 run_id = 2;          // 실행 1건(RunService의 Run). 도구를 거치지 않았으면 0
   int64 tool_id = 3;
   string tool_version = 4;
   reserved 5;                // 예전 input_asset_ids(부모 여럿) — 부모는 하나라 parent_asset_id로 바꿈
@@ -206,7 +193,7 @@ message ListAssetsRequest {
   bool unattached_only = 7;  // 어느 작업에도 첨부(job_asset)되지 않은 것 — 작업 미지정
   string query = 8;          // 부분 일치(대소문자 무시): 파일 이름 · 원본 위치. 숫자면 그 번호의 Asset도. 비면 전체
   AssetJobFilter job = 9;    // 작업으로 거른다. unattached_only와 함께 줄 수 없다
-  PostprocessStatus postprocess_status = 10; // 마지막 후처리가 이 상태인 것(FAILED면 다시 돌릴 것). UNSPECIFIED면 거르지 않는다
+  mediatag.run.v1.RunStatus postprocess_status = 10; // 마지막 후처리가 이 상태인 것(FAILED면 다시 돌릴 것). UNSPECIFIED면 거르지 않는다
 }
 
 // 이 조건에 맞는 작업에 직접 첨부(job_asset)된 Asset. 부모만 붙은 파생은 안 나온다(ListJobs.asset_id와 같은 기준).
@@ -398,8 +385,8 @@ message Comment {
   google.protobuf.Timestamp started_at = 8; // 녹화 시작(= 파일들의 timeOrigin)
   google.protobuf.Timestamp created_at = 9;
   google.protobuf.Timestamp updated_at = 10;
-  // 응답 전용: 만들 때 건 STT 실행(모양은 후처리 실행 요약과 같다). 못 맡겼으면 비어 있다.
-  PostprocessRun stt = 11;
+  // 응답 전용: 만들 때 건 STT run(요약 — run_id · tool_id · status · error_message, 자세한 것은 RunService.GetRun). 못 맡겼으면 비어 있다.
+  mediatag.run.v1.Run stt = 11;
   int64 subtitle_asset_id = 12; // 응답 전용: STT 결과 자막(음성의 파생 Asset). 아직 없으면 0
 }
 

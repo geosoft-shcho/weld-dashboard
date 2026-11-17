@@ -220,6 +220,9 @@ class _FakeToolRunRepository implements ToolRunRepository {
   }
 
   @override
+  Future<List<ToolRunQueue>> getQueue() async => const [];
+
+  @override
   Future<List<InferenceTool>> listEnabledTools({bool includeDisabled = false}) {
     throw UnimplementedError();
   }

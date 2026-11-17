@@ -331,6 +331,9 @@ class _IdleToolRunRepository implements ToolRunRepository {
   Future<ToolRunSnapshot> cancelRun({required String runId}) {
     throw StateError('unused');
   }
+
+  @override
+  Future<List<ToolRunQueue>> getQueue() async => const [];
 }
 
 

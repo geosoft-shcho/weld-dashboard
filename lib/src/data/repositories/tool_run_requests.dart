@@ -1,9 +1,11 @@
 import '../../domain/entities/tool_run.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pbenum.dart';
+import '../datasources/generated/mediatag/run/v1/run.pb.dart' as run_pb;
+import '../datasources/generated/mediatag/run/v1/run.pbenum.dart' as run_enum;
 import '../datasources/generated/mediatag/tool/v1/tool.pb.dart' as tool_pb;
 import 'proto_id.dart';
 
-tool_pb.StartRunRequest buildStartRunRequest({
+run_pb.StartRunRequest buildStartRunRequest({
   required String toolId,
   required ToolRunTargetKind kind,
   required String targetId,
@@ -15,49 +17,51 @@ tool_pb.StartRunRequest buildStartRunRequest({
   }
   switch (kind) {
     case ToolRunTargetKind.clip:
-      return tool_pb.StartRunRequest(
+      return run_pb.StartRunRequest(
         toolId: tool,
-        trigger: tool_pb.RunTrigger.RUN_TRIGGER_MANUAL,
-        target: tool_pb.RunTarget(clipId: target),
+        trigger: run_enum.RunTrigger.RUN_TRIGGER_MANUAL,
+        target: run_pb.RunTarget(clipId: target),
       );
     case ToolRunTargetKind.asset:
-      return tool_pb.StartRunRequest(
+      return run_pb.StartRunRequest(
         toolId: tool,
-        trigger: tool_pb.RunTrigger.RUN_TRIGGER_MANUAL,
-        target: tool_pb.RunTarget(assetId: target),
+        trigger: run_enum.RunTrigger.RUN_TRIGGER_MANUAL,
+        target: run_pb.RunTarget(assetId: target),
       );
     case ToolRunTargetKind.job:
-      return tool_pb.StartRunRequest(
+      return run_pb.StartRunRequest(
         toolId: tool,
-        trigger: tool_pb.RunTrigger.RUN_TRIGGER_AUTO_TAGGING,
-        target: tool_pb.RunTarget(jobId: target),
+        trigger: run_enum.RunTrigger.RUN_TRIGGER_AUTO_TAGGING,
+        target: run_pb.RunTarget(jobId: target),
       );
   }
 }
 
-tool_pb.ListRunsRequest buildListJobRunsRequest(String jobId) {
+run_pb.ListRunsRequest buildListJobRunsRequest(String jobId) {
   final id = protoIdOrNull(jobId);
   if (id == null) {
     throw const ToolRunException('작업을 열지 못했습니다.');
   }
-  return tool_pb.ListRunsRequest(target: tool_pb.RunTarget(jobId: id));
+  return run_pb.ListRunsRequest(target: run_pb.RunTarget(jobId: id));
 }
 
-tool_pb.GetRunRequest buildGetRunRequest(String runId) {
+run_pb.GetRunRequest buildGetRunRequest(String runId) {
   final id = protoIdOrNull(runId);
   if (id == null) {
     throw const ToolRunException('실행을 찾지 못했습니다.');
   }
-  return tool_pb.GetRunRequest(runId: id, waitForTerminal: false);
+  return run_pb.GetRunRequest(runId: id, waitForTerminal: false);
 }
 
-tool_pb.CancelRunRequest buildCancelRunRequest(String runId) {
+run_pb.CancelRunRequest buildCancelRunRequest(String runId) {
   final id = protoIdOrNull(runId);
   if (id == null) {
     throw const ToolRunException('실행을 찾지 못했습니다.');
   }
-  return tool_pb.CancelRunRequest(runId: id);
+  return run_pb.CancelRunRequest(runId: id);
 }
+
+run_pb.GetQueueRequest buildGetQueueRequest() => run_pb.GetQueueRequest();
 
 String inferenceToolSummary(tool_pb.Tool tool) {
   final pattern = _patternLabel(tool.pattern);
@@ -194,10 +198,12 @@ List<InferenceTool> enabledInferenceTools(
   return listed;
 }
 
-ToolRunSnapshot toolRunSnapshotFrom(tool_pb.ToolRun run) {
+ToolRunSnapshot toolRunSnapshotFrom(run_pb.Run run) {
+  final wait = run.hasWait() ? run.wait : null;
   return ToolRunSnapshot(
     runId: idText(run.runId),
-    toolId: idText(run.toolId),
+    toolId: run.hasToolId() ? idText(run.toolId) : '',
+    stage: run.hasStage() ? run.stage.trim() : '',
     status: _statusFrom(run.status),
     errorMessage: run.errorMessage,
     progressPercent: run.progressPercent,
@@ -205,21 +211,51 @@ ToolRunSnapshot toolRunSnapshotFrom(tool_pb.ToolRun run) {
     queue: run.queue.trim(),
     queuePosition: run.queuePosition,
     queueLength: run.queueLength,
+    waitReason: _waitReasonFrom(wait?.reason),
+    waitAhead: wait?.ahead ?? 0,
+    waitRunning: wait?.running ?? 0,
+    waitWorkers: wait?.workers ?? 0,
   );
 }
 
-ToolRunStatus _statusFrom(tool_pb.RunStatus status) {
-  if (status == tool_pb.RunStatus.RUN_STATUS_QUEUED) {
+ToolRunQueue toolRunQueueFrom(run_pb.Queue queue) {
+  return ToolRunQueue(
+    queue: queue.queue.trim(),
+    workers: queue.workers,
+    running: queue.running,
+    waiting: queue.waiting,
+    runs: [for (final run in queue.runs) toolRunSnapshotFrom(run)],
+  );
+}
+
+ToolRunStatus _statusFrom(run_enum.RunStatus status) {
+  if (status == run_enum.RunStatus.RUN_STATUS_QUEUED) {
     return ToolRunStatus.queued;
   }
-  if (status == tool_pb.RunStatus.RUN_STATUS_RUNNING) {
+  if (status == run_enum.RunStatus.RUN_STATUS_RUNNING) {
     return ToolRunStatus.running;
   }
-  if (status == tool_pb.RunStatus.RUN_STATUS_SUCCEEDED) {
+  if (status == run_enum.RunStatus.RUN_STATUS_SUCCEEDED) {
     return ToolRunStatus.succeeded;
   }
-  if (status == tool_pb.RunStatus.RUN_STATUS_CANCELED) {
+  if (status == run_enum.RunStatus.RUN_STATUS_CANCELED) {
     return ToolRunStatus.canceled;
   }
   return ToolRunStatus.failed;
+}
+
+ToolRunWaitReason _waitReasonFrom(run_enum.WaitReason? reason) {
+  if (reason == run_enum.WaitReason.WAIT_REASON_QUEUE_AHEAD) {
+    return ToolRunWaitReason.queueAhead;
+  }
+  if (reason == run_enum.WaitReason.WAIT_REASON_WORKERS_BUSY) {
+    return ToolRunWaitReason.workersBusy;
+  }
+  if (reason == run_enum.WaitReason.WAIT_REASON_RETRY) {
+    return ToolRunWaitReason.retry;
+  }
+  if (reason == run_enum.WaitReason.WAIT_REASON_DISPATCH_OFF) {
+    return ToolRunWaitReason.dispatchOff;
+  }
+  return ToolRunWaitReason.unspecified;
 }

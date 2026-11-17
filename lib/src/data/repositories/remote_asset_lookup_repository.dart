@@ -8,6 +8,7 @@ import '../../domain/repositories/asset_lookup_repository.dart';
 import '../datasources/generated/google/protobuf/field_mask.pb.dart';
 import '../datasources/generated/google/protobuf/timestamp.pb.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
+import '../datasources/generated/mediatag/run/v1/run.pbenum.dart' as run_pb;
 import '../datasources/generated/mediatag/work/v1/work.pb.dart' as work_pb;
 import '../datasources/remote/media_tag_data_source.dart';
 import 'proto_id.dart';
@@ -73,8 +74,7 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
       request.unattachedOnly = true;
     }
     final postprocessStatus = _postprocessStatusOf(postprocessStatusCode);
-    if (postprocessStatus !=
-        asset_pb.PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED) {
+    if (postprocessStatus != run_pb.RunStatus.RUN_STATUS_UNSPECIFIED) {
       request.postprocessStatus = postprocessStatus;
     }
     final response = await _mediaTag.assetService.listAssets(request);
@@ -318,36 +318,36 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
     );
   }
 
-  asset_pb.PostprocessStatus _postprocessStatusOf(String code) {
+  run_pb.RunStatus _postprocessStatusOf(String code) {
     switch (code) {
       case 'queued':
-        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_QUEUED;
+        return run_pb.RunStatus.RUN_STATUS_QUEUED;
       case 'running':
-        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_RUNNING;
+        return run_pb.RunStatus.RUN_STATUS_RUNNING;
       case 'succeeded':
-        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_SUCCEEDED;
+        return run_pb.RunStatus.RUN_STATUS_SUCCEEDED;
       case 'failed':
-        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_FAILED;
+        return run_pb.RunStatus.RUN_STATUS_FAILED;
       case 'canceled':
-        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_CANCELED;
+        return run_pb.RunStatus.RUN_STATUS_CANCELED;
       default:
-        return asset_pb.PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED;
+        return run_pb.RunStatus.RUN_STATUS_UNSPECIFIED;
     }
   }
 
-  String _postprocessStatusCodeOf(asset_pb.PostprocessStatus status) {
+  String _postprocessStatusCodeOf(run_pb.RunStatus status) {
     switch (status) {
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_QUEUED:
+      case run_pb.RunStatus.RUN_STATUS_QUEUED:
         return 'queued';
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_RUNNING:
+      case run_pb.RunStatus.RUN_STATUS_RUNNING:
         return 'running';
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_SUCCEEDED:
+      case run_pb.RunStatus.RUN_STATUS_SUCCEEDED:
         return 'succeeded';
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_FAILED:
+      case run_pb.RunStatus.RUN_STATUS_FAILED:
         return 'failed';
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_CANCELED:
+      case run_pb.RunStatus.RUN_STATUS_CANCELED:
         return 'canceled';
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED:
+      case run_pb.RunStatus.RUN_STATUS_UNSPECIFIED:
       default:
         return '';
     }

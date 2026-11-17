@@ -15,59 +15,59 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import 'compose.pb.dart' as $4;
+import 'compose.pb.dart' as $5;
 import 'compose.pbjson.dart';
 
 export 'compose.pb.dart';
 
 abstract class MediaComposeServiceBase extends $pb.GeneratedService {
-  $async.Future<$4.GetTimelineResponse> getTimeline(
-      $pb.ServerContext ctx, $4.GetTimelineRequest request);
-  $async.Future<$4.ListTimelinesResponse> listTimelines(
-      $pb.ServerContext ctx, $4.ListTimelinesRequest request);
-  $async.Future<$4.UpdateTimelineResponse> updateTimeline(
-      $pb.ServerContext ctx, $4.UpdateTimelineRequest request);
-  $async.Future<$4.DeleteTimelineResponse> deleteTimeline(
-      $pb.ServerContext ctx, $4.DeleteTimelineRequest request);
-  $async.Future<$4.CreateTrackResponse> createTrack(
-      $pb.ServerContext ctx, $4.CreateTrackRequest request);
-  $async.Future<$4.UpdateTrackResponse> updateTrack(
-      $pb.ServerContext ctx, $4.UpdateTrackRequest request);
-  $async.Future<$4.DeleteTrackResponse> deleteTrack(
-      $pb.ServerContext ctx, $4.DeleteTrackRequest request);
-  $async.Future<$4.CreateClipResponse> createClip(
-      $pb.ServerContext ctx, $4.CreateClipRequest request);
-  $async.Future<$4.GetClipResponse> getClip(
-      $pb.ServerContext ctx, $4.GetClipRequest request);
-  $async.Future<$4.UpdateClipResponse> updateClip(
-      $pb.ServerContext ctx, $4.UpdateClipRequest request);
-  $async.Future<$4.DeleteClipResponse> deleteClip(
-      $pb.ServerContext ctx, $4.DeleteClipRequest request);
+  $async.Future<$5.GetTimelineResponse> getTimeline(
+      $pb.ServerContext ctx, $5.GetTimelineRequest request);
+  $async.Future<$5.ListTimelinesResponse> listTimelines(
+      $pb.ServerContext ctx, $5.ListTimelinesRequest request);
+  $async.Future<$5.UpdateTimelineResponse> updateTimeline(
+      $pb.ServerContext ctx, $5.UpdateTimelineRequest request);
+  $async.Future<$5.DeleteTimelineResponse> deleteTimeline(
+      $pb.ServerContext ctx, $5.DeleteTimelineRequest request);
+  $async.Future<$5.CreateTrackResponse> createTrack(
+      $pb.ServerContext ctx, $5.CreateTrackRequest request);
+  $async.Future<$5.UpdateTrackResponse> updateTrack(
+      $pb.ServerContext ctx, $5.UpdateTrackRequest request);
+  $async.Future<$5.DeleteTrackResponse> deleteTrack(
+      $pb.ServerContext ctx, $5.DeleteTrackRequest request);
+  $async.Future<$5.CreateClipResponse> createClip(
+      $pb.ServerContext ctx, $5.CreateClipRequest request);
+  $async.Future<$5.GetClipResponse> getClip(
+      $pb.ServerContext ctx, $5.GetClipRequest request);
+  $async.Future<$5.UpdateClipResponse> updateClip(
+      $pb.ServerContext ctx, $5.UpdateClipRequest request);
+  $async.Future<$5.DeleteClipResponse> deleteClip(
+      $pb.ServerContext ctx, $5.DeleteClipRequest request);
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
       case 'GetTimeline':
-        return $4.GetTimelineRequest();
+        return $5.GetTimelineRequest();
       case 'ListTimelines':
-        return $4.ListTimelinesRequest();
+        return $5.ListTimelinesRequest();
       case 'UpdateTimeline':
-        return $4.UpdateTimelineRequest();
+        return $5.UpdateTimelineRequest();
       case 'DeleteTimeline':
-        return $4.DeleteTimelineRequest();
+        return $5.DeleteTimelineRequest();
       case 'CreateTrack':
-        return $4.CreateTrackRequest();
+        return $5.CreateTrackRequest();
       case 'UpdateTrack':
-        return $4.UpdateTrackRequest();
+        return $5.UpdateTrackRequest();
       case 'DeleteTrack':
-        return $4.DeleteTrackRequest();
+        return $5.DeleteTrackRequest();
       case 'CreateClip':
-        return $4.CreateClipRequest();
+        return $5.CreateClipRequest();
       case 'GetClip':
-        return $4.GetClipRequest();
+        return $5.GetClipRequest();
       case 'UpdateClip':
-        return $4.UpdateClipRequest();
+        return $5.UpdateClipRequest();
       case 'DeleteClip':
-        return $4.DeleteClipRequest();
+        return $5.DeleteClipRequest();
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }
@@ -77,27 +77,27 @@ abstract class MediaComposeServiceBase extends $pb.GeneratedService {
       $core.String methodName, $pb.GeneratedMessage request) {
     switch (methodName) {
       case 'GetTimeline':
-        return getTimeline(ctx, request as $4.GetTimelineRequest);
+        return getTimeline(ctx, request as $5.GetTimelineRequest);
       case 'ListTimelines':
-        return listTimelines(ctx, request as $4.ListTimelinesRequest);
+        return listTimelines(ctx, request as $5.ListTimelinesRequest);
       case 'UpdateTimeline':
-        return updateTimeline(ctx, request as $4.UpdateTimelineRequest);
+        return updateTimeline(ctx, request as $5.UpdateTimelineRequest);
       case 'DeleteTimeline':
-        return deleteTimeline(ctx, request as $4.DeleteTimelineRequest);
+        return deleteTimeline(ctx, request as $5.DeleteTimelineRequest);
       case 'CreateTrack':
-        return createTrack(ctx, request as $4.CreateTrackRequest);
+        return createTrack(ctx, request as $5.CreateTrackRequest);
       case 'UpdateTrack':
-        return updateTrack(ctx, request as $4.UpdateTrackRequest);
+        return updateTrack(ctx, request as $5.UpdateTrackRequest);
       case 'DeleteTrack':
-        return deleteTrack(ctx, request as $4.DeleteTrackRequest);
+        return deleteTrack(ctx, request as $5.DeleteTrackRequest);
       case 'CreateClip':
-        return createClip(ctx, request as $4.CreateClipRequest);
+        return createClip(ctx, request as $5.CreateClipRequest);
       case 'GetClip':
-        return getClip(ctx, request as $4.GetClipRequest);
+        return getClip(ctx, request as $5.GetClipRequest);
       case 'UpdateClip':
-        return updateClip(ctx, request as $4.UpdateClipRequest);
+        return updateClip(ctx, request as $5.UpdateClipRequest);
       case 'DeleteClip':
-        return deleteClip(ctx, request as $4.DeleteClipRequest);
+        return deleteClip(ctx, request as $5.DeleteClipRequest);
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }
@@ -110,21 +110,21 @@ abstract class MediaComposeServiceBase extends $pb.GeneratedService {
 }
 
 abstract class LabelServiceBase extends $pb.GeneratedService {
-  $async.Future<$4.ListLabelsResponse> listLabels(
-      $pb.ServerContext ctx, $4.ListLabelsRequest request);
-  $async.Future<$4.CreateLabelValueResponse> createLabelValue(
-      $pb.ServerContext ctx, $4.CreateLabelValueRequest request);
-  $async.Future<$4.UpdateLabelValueResponse> updateLabelValue(
-      $pb.ServerContext ctx, $4.UpdateLabelValueRequest request);
+  $async.Future<$5.ListLabelsResponse> listLabels(
+      $pb.ServerContext ctx, $5.ListLabelsRequest request);
+  $async.Future<$5.CreateLabelValueResponse> createLabelValue(
+      $pb.ServerContext ctx, $5.CreateLabelValueRequest request);
+  $async.Future<$5.UpdateLabelValueResponse> updateLabelValue(
+      $pb.ServerContext ctx, $5.UpdateLabelValueRequest request);
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
       case 'ListLabels':
-        return $4.ListLabelsRequest();
+        return $5.ListLabelsRequest();
       case 'CreateLabelValue':
-        return $4.CreateLabelValueRequest();
+        return $5.CreateLabelValueRequest();
       case 'UpdateLabelValue':
-        return $4.UpdateLabelValueRequest();
+        return $5.UpdateLabelValueRequest();
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }
@@ -134,11 +134,11 @@ abstract class LabelServiceBase extends $pb.GeneratedService {
       $core.String methodName, $pb.GeneratedMessage request) {
     switch (methodName) {
       case 'ListLabels':
-        return listLabels(ctx, request as $4.ListLabelsRequest);
+        return listLabels(ctx, request as $5.ListLabelsRequest);
       case 'CreateLabelValue':
-        return createLabelValue(ctx, request as $4.CreateLabelValueRequest);
+        return createLabelValue(ctx, request as $5.CreateLabelValueRequest);
       case 'UpdateLabelValue':
-        return updateLabelValue(ctx, request as $4.UpdateLabelValueRequest);
+        return updateLabelValue(ctx, request as $5.UpdateLabelValueRequest);
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }

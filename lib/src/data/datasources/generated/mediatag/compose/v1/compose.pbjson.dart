@@ -18,6 +18,7 @@ import '../../../google/protobuf/field_mask.pbjson.dart' as $3;
 import '../../../google/protobuf/struct.pbjson.dart' as $1;
 import '../../../google/protobuf/timestamp.pbjson.dart' as $0;
 import '../../asset/v1/asset.pbjson.dart' as $2;
+import '../../run/v1/run.pbjson.dart' as $4;
 
 @$core.Deprecated('Use clipKindDescriptor instead')
 const ClipKind$json = {
@@ -1098,7 +1099,9 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.asset.v1.Asset': $2.Asset$json,
   '.mediatag.asset.v1.Provenance': $2.Provenance$json,
   '.mediatag.asset.v1.DisplayField': $2.DisplayField$json,
-  '.mediatag.asset.v1.PostprocessRun': $2.PostprocessRun$json,
+  '.mediatag.run.v1.Run': $4.Run$json,
+  '.mediatag.run.v1.RunTarget': $4.RunTarget$json,
+  '.mediatag.run.v1.RunWait': $4.RunWait$json,
   '.mediatag.compose.v1.ListTimelinesRequest': ListTimelinesRequest$json,
   '.mediatag.compose.v1.ListTimelinesResponse': ListTimelinesResponse$json,
   '.mediatag.compose.v1.UpdateTimelineRequest': UpdateTimelineRequest$json,

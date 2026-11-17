@@ -36,7 +36,7 @@ class RemoteToolRunRepository implements ToolRunRepository {
     return _call(
       emptyMessage: '실행 목록을 불러오지 못했습니다.',
       call: () async {
-        final response = await _mediaTag.toolService.listRuns(
+        final response = await _mediaTag.runService.listRuns(
           buildListJobRunsRequest(jobId),
         );
         return [for (final run in response.runs) toolRunSnapshotFrom(run)];
@@ -53,7 +53,7 @@ class RemoteToolRunRepository implements ToolRunRepository {
     return _call(
       emptyMessage: '도구를 실행하지 못했습니다.',
       call: () async {
-        final response = await _mediaTag.toolService.startRun(
+        final response = await _mediaTag.runService.startRun(
           buildStartRunRequest(toolId: toolId, kind: kind, targetId: targetId),
         );
         return toolRunSnapshotFrom(response.run);
@@ -66,7 +66,7 @@ class RemoteToolRunRepository implements ToolRunRepository {
     return _call(
       emptyMessage: '실행 상태를 불러오지 못했습니다.',
       call: () async {
-        final response = await _mediaTag.toolService.getRun(
+        final response = await _mediaTag.runService.getRun(
           buildGetRunRequest(runId),
         );
         return toolRunSnapshotFrom(response.run);
@@ -79,10 +79,23 @@ class RemoteToolRunRepository implements ToolRunRepository {
     return _call(
       emptyMessage: '실행을 취소하지 못했습니다.',
       call: () async {
-        final response = await _mediaTag.toolService.cancelRun(
+        final response = await _mediaTag.runService.cancelRun(
           buildCancelRunRequest(runId),
         );
         return toolRunSnapshotFrom(response.run);
+      },
+    );
+  }
+
+  @override
+  Future<List<ToolRunQueue>> getQueue() {
+    return _call(
+      emptyMessage: '대기열을 불러오지 못했습니다.',
+      call: () async {
+        final response = await _mediaTag.runService.getQueue(
+          buildGetQueueRequest(),
+        );
+        return [for (final queue in response.queues) toolRunQueueFrom(queue)];
       },
     );
   }

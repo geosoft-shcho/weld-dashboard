@@ -14,6 +14,7 @@ import '../datasources/asset_tus_upload.dart';
 import '../datasources/generated/google/protobuf/struct.pb.dart';
 import '../datasources/generated/google/protobuf/timestamp.pb.dart';
 import '../datasources/generated/mediatag/asset/v1/asset.pb.dart' as asset_pb;
+import '../datasources/generated/mediatag/run/v1/run.pbenum.dart' as run_pb;
 import '../datasources/remote/media_tag_data_source.dart';
 import 'proto_id.dart';
 
@@ -354,19 +355,19 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     );
   }
 
-  ScreenCommentSttKind _sttKind(asset_pb.PostprocessStatus status) {
+  ScreenCommentSttKind _sttKind(run_pb.RunStatus status) {
     switch (status) {
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_QUEUED:
+      case run_pb.RunStatus.RUN_STATUS_QUEUED:
         return ScreenCommentSttKind.queued;
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_RUNNING:
+      case run_pb.RunStatus.RUN_STATUS_RUNNING:
         return ScreenCommentSttKind.running;
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_SUCCEEDED:
+      case run_pb.RunStatus.RUN_STATUS_SUCCEEDED:
         return ScreenCommentSttKind.succeeded;
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_FAILED:
+      case run_pb.RunStatus.RUN_STATUS_FAILED:
         return ScreenCommentSttKind.failed;
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_CANCELED:
+      case run_pb.RunStatus.RUN_STATUS_CANCELED:
         return ScreenCommentSttKind.canceled;
-      case asset_pb.PostprocessStatus.POSTPROCESS_STATUS_UNSPECIFIED:
+      case run_pb.RunStatus.RUN_STATUS_UNSPECIFIED:
         return ScreenCommentSttKind.missing;
     }
     return ScreenCommentSttKind.missing;
