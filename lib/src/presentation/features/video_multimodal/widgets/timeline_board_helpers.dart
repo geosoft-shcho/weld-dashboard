@@ -26,6 +26,7 @@ class TimelineBoardRow {
     required this.showsAiBadge,
     required this.clips,
     required this.laneCount,
+    this.isEnabled = true,
     this.isChartExpanded = false,
     this.expandedChartHeight = TIMELINE_TIMESERIES_CHART_HEIGHT,
   });
@@ -36,6 +37,8 @@ class TimelineBoardRow {
   final bool showsAiBadge;
   final List<TimelineBoardClip> clips;
   final int laneCount;
+  /// Tracks 체크와 동일. false면 행은 남고 dim/비활성 UI만 적용.
+  final bool isEnabled;
   final bool isChartExpanded;
   final double expandedChartHeight;
 
@@ -196,9 +199,6 @@ List<TimelineBoardRow> buildTimelineBoardRows(
 ) {
   final rows = <TimelineBoardRow>[];
   for (final track in viewModel.timelineTracks) {
-    if (!viewModel.isTrackVisible(track.trackId)) {
-      continue;
-    }
     final clips = track.clips;
     final lanes = assignClipLanes(clips);
     final expandedClipId = viewModel.chartExpandedClipId;
@@ -216,6 +216,7 @@ List<TimelineBoardRow> buildTimelineBoardRows(
         labelColor: MultimodalStudioPalette.SAND_700,
         showsAiBadge: clips.any((clip) => clip.showsToolMark),
         laneCount: _laneCount(lanes),
+        isEnabled: viewModel.isTrackVisible(track.trackId),
         isChartExpanded: expandedClip != null,
         expandedChartHeight:
             clipChartKindOf(expandedClip?.kind ?? TimelineClipKind.unspecified)

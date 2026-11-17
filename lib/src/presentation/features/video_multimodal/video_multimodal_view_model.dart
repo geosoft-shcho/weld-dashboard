@@ -3986,6 +3986,15 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   bool isTrackVisible(String trackId) => !_hiddenTrackIds.contains(trackId);
+
+  bool get areAllTracksEnabled {
+    for (final track in timelineTracks) {
+      if (!isTrackVisible(track.trackId)) {
+        return false;
+      }
+    }
+    return timelineTracks.isNotEmpty;
+  }
   CreatedClipNotice? takeCreatedClipNotice() {
     final notice = _createdClipNotice;
     _createdClipNotice = null;
@@ -4083,6 +4092,39 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _hiddenTrackIds.add(trackId);
     }
     notifyListeners();
+  }
+
+  void didTapEnableAllTracks() {
+    if (_hiddenTrackIds.isEmpty) {
+      return;
+    }
+    _hiddenTrackIds.clear();
+    notifyListeners();
+  }
+
+  void didTapDisableAllTracks() {
+    final trackIds = [for (final track in timelineTracks) track.trackId];
+    if (trackIds.isEmpty) {
+      return;
+    }
+    var changed = false;
+    for (final trackId in trackIds) {
+      if (_hiddenTrackIds.add(trackId)) {
+        changed = true;
+      }
+    }
+    if (!changed) {
+      return;
+    }
+    notifyListeners();
+  }
+
+  void didTapToggleAllTracks() {
+    if (areAllTracksEnabled) {
+      didTapDisableAllTracks();
+      return;
+    }
+    didTapEnableAllTracks();
   }
 
   void didTapToggleTrackMenu() {

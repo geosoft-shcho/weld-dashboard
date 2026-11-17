@@ -11,6 +11,7 @@ import 'timeline_board_clip_bar.dart';
 import 'timeline_board_helpers.dart';
 import 'timeline_board_toolbar.dart';
 import 'timeline_board_track_labels.dart';
+import 'timeline_board_track_tools.dart';
 
 class MultimodalTimelineBoard extends StatefulWidget {
   const MultimodalTimelineBoard({
@@ -280,10 +281,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
         children: [
           _filled(rows),
           if (viewModel.isTrackMenuOpen)
-            TimelineBoardTrackMenu(
-              viewModel: viewModel,
-              boardHeight: height,
-            ),
+            TimelineBoardTrackMenu(viewModel: viewModel, boardHeight: height),
           Positioned(
             top: 0,
             left: 0,
@@ -550,42 +548,48 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   }
 
   Widget _track(TimelineBoardRow row, double width) {
+    Widget content = Stack(
+      children: [
+        for (final clip in row.clips)
+          TimelineBoardClipBar(
+            viewModel: viewModel,
+            clip: clip,
+            row: row,
+            edit: _edit,
+            isSelected: _isClipSelected(clip),
+            onTap: () => _selectClip(clip),
+            onBeginEdit: _beginEdit,
+            onMove: _moveEdit,
+            onResize: _resizeEdit,
+            onCommit: _commitEdit,
+            onClear: _clearEdit,
+          ),
+        for (final clip in row.clips)
+          if (clip.poseMarks.isNotEmpty)
+            ...buildPoseBoardMarkWidgets(
+              clip: clip,
+              pixelsPerSecond: viewModel.pixelsPerSecond,
+              seekHandler: viewModel.didSeekToSeconds,
+            ),
+      ],
+    );
+    if (!row.isEnabled) {
+      content = IgnorePointer(child: Opacity(opacity: 0.4, child: content));
+    }
     final track = GestureDetector(
       behavior: HitTestBehavior.opaque,
-      onTapDown: (details) =>
-          viewModel.didSeekToSeconds(_secondsAt(details.localPosition.dx)),
+      onTapDown: row.isEnabled
+          ? (details) =>
+                viewModel.didSeekToSeconds(_secondsAt(details.localPosition.dx))
+          : null,
       child: Container(
         height: row.height,
         width: width,
         color: MultimodalStudioPalette.SAND_0,
-        child: Stack(
-          children: [
-            for (final clip in row.clips)
-              TimelineBoardClipBar(
-                viewModel: viewModel,
-                clip: clip,
-                row: row,
-                edit: _edit,
-                isSelected: _isClipSelected(clip),
-                onTap: () => _selectClip(clip),
-                onBeginEdit: _beginEdit,
-                onMove: _moveEdit,
-                onResize: _resizeEdit,
-                onCommit: _commitEdit,
-                onClear: _clearEdit,
-              ),
-            for (final clip in row.clips)
-              if (clip.poseMarks.isNotEmpty)
-                ...buildPoseBoardMarkWidgets(
-                  clip: clip,
-                  pixelsPerSecond: viewModel.pixelsPerSecond,
-                  seekHandler: viewModel.didSeekToSeconds,
-                ),
-          ],
-        ),
+        child: content,
       ),
     );
-    if (!viewModel.isServerTimelineTrack(row.trackId)) {
+    if (!viewModel.isServerTimelineTrack(row.trackId) || !row.isEnabled) {
       return track;
     }
     return Builder(

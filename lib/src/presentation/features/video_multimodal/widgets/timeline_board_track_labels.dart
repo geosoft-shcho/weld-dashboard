@@ -135,6 +135,94 @@ class TimelineBoardTrackLabels extends StatelessWidget {
     bool isSelected = false,
     String identity = '',
   }) {
+    final body = Row(
+      children: [
+        if (row.showsAiBadge)
+          Container(
+            margin: const EdgeInsets.only(right: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            decoration: BoxDecoration(
+              color: MultimodalStudioPalette.GRAPE_0,
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: const Text(
+              'AI',
+              style: TextStyle(
+                color: MultimodalStudioPalette.GRAPE_700,
+                fontSize: 9,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        Text(
+          row.label,
+          maxLines: 1,
+          softWrap: false,
+          style: _labelStyle.copyWith(color: row.labelColor),
+        ),
+        if (identity.isNotEmpty) ...[
+          const SizedBox(width: 4),
+          Flexible(
+            child: Text(
+              identity,
+              maxLines: 1,
+              softWrap: false,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.end,
+              style: _identityStyle,
+            ),
+          ),
+        ],
+        const SizedBox(width: 4),
+        if (viewModel.isServerTimelineTrack(row.trackId) &&
+            viewModel.trackHasVideo(row.trackId))
+          _circleButton(
+            tooltip: viewModel.isTrackMonitored(row.trackId)
+                ? '모니터 끄기'
+                : '모니터 켜기',
+            icon: viewModel.isTrackMonitored(row.trackId)
+                ? Icons.videocam
+                : Icons.videocam_outlined,
+            iconColor: viewModel.isTrackMonitored(row.trackId)
+                ? MultimodalStudioPalette.GRAPE_700
+                : MultimodalStudioPalette.SAND_600,
+            onTap: () => viewModel.didTapMonitorTrack(row.trackId),
+          ),
+        if (viewModel.isServerTimelineTrack(row.trackId) &&
+            viewModel.trackHasTimeseries(row.trackId))
+          _circleButton(
+            tooltip: row.isChartExpanded ? '차트 접기' : '시계열 차트',
+            icon: Icons.show_chart,
+            iconColor: row.isChartExpanded
+                ? MultimodalStudioPalette.GRAPE_700
+                : MultimodalStudioPalette.SAND_600,
+            onTap: () => viewModel.didTapToggleTimeseriesChart(row.trackId),
+          ),
+        if (viewModel.isServerTimelineTrack(row.trackId) &&
+            viewModel.trackHasAudio(row.trackId))
+          _circleButton(
+            tooltip: row.isChartExpanded ? '차트 접기' : '음성 차트',
+            icon: Icons.show_chart,
+            iconColor: row.isChartExpanded
+                ? MultimodalStudioPalette.GRAPE_700
+                : MultimodalStudioPalette.SAND_600,
+            onTap: () => viewModel.didTapToggleAudioChart(row.trackId),
+          ),
+        if (viewModel.trackShowsAudioMuteToggle(row.trackId))
+          _circleButton(
+            tooltip: viewModel.isTrackAudioMuted(row.trackId)
+                ? '소리 켜기'
+                : '소리 끄기',
+            icon: viewModel.isTrackAudioMuted(row.trackId)
+                ? Icons.volume_off
+                : Icons.volume_up,
+            iconColor: viewModel.isTrackAudioMuted(row.trackId)
+                ? MultimodalStudioPalette.CANTELOUPE_400
+                : MultimodalStudioPalette.SAND_600,
+            onTap: () => viewModel.didTapToggleTrackAudioMute(row.trackId),
+          ),
+      ],
+    );
     return Tooltip(
       message: _trackIdentityTooltip(row),
       verticalOffset: 12,
@@ -145,103 +233,28 @@ class TimelineBoardTrackLabels extends StatelessWidget {
         child: Row(
           children: [
             Tooltip(
-              message: '트랙 가리기',
+              message: row.isEnabled ? '트랙 끄기' : '트랙 켜기',
               child: GestureDetector(
                 onTap: () => viewModel.didTapToggleTrackVisibility(row.trackId),
-                child: const Padding(
-                  padding: EdgeInsets.only(right: 4),
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 4),
                   child: Icon(
-                    Icons.check_box,
+                    row.isEnabled
+                        ? Icons.check_box
+                        : Icons.check_box_outline_blank,
                     size: 14,
                     color: MultimodalStudioPalette.SAND_700,
                   ),
                 ),
               ),
             ),
-            if (row.showsAiBadge)
-              Container(
-                margin: const EdgeInsets.only(right: 4),
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                decoration: BoxDecoration(
-                  color: MultimodalStudioPalette.GRAPE_0,
-                  borderRadius: BorderRadius.circular(3),
-                ),
-                child: const Text(
-                  'AI',
-                  style: TextStyle(
-                    color: MultimodalStudioPalette.GRAPE_700,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            Text(
-              row.label,
-              maxLines: 1,
-              softWrap: false,
-              style: _labelStyle.copyWith(color: row.labelColor),
+            Expanded(
+              child: row.isEnabled
+                  ? body
+                  : IgnorePointer(
+                      child: Opacity(opacity: 0.4, child: body),
+                    ),
             ),
-            if (identity.isNotEmpty) ...[
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  identity,
-                  maxLines: 1,
-                  softWrap: false,
-                  overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.end,
-                  style: _identityStyle,
-                ),
-              ),
-            ],
-            const SizedBox(width: 4),
-            if (viewModel.isServerTimelineTrack(row.trackId) &&
-                viewModel.trackHasVideo(row.trackId))
-              _circleButton(
-                tooltip: viewModel.isTrackMonitored(row.trackId)
-                    ? '모니터 끄기'
-                    : '모니터 켜기',
-                icon: viewModel.isTrackMonitored(row.trackId)
-                    ? Icons.videocam
-                    : Icons.videocam_outlined,
-                iconColor: viewModel.isTrackMonitored(row.trackId)
-                    ? MultimodalStudioPalette.GRAPE_700
-                    : MultimodalStudioPalette.SAND_600,
-                onTap: () => viewModel.didTapMonitorTrack(row.trackId),
-              ),
-            if (viewModel.isServerTimelineTrack(row.trackId) &&
-                viewModel.trackHasTimeseries(row.trackId))
-              _circleButton(
-                tooltip: row.isChartExpanded ? '차트 접기' : '시계열 차트',
-                icon: Icons.show_chart,
-                iconColor: row.isChartExpanded
-                    ? MultimodalStudioPalette.GRAPE_700
-                    : MultimodalStudioPalette.SAND_600,
-                onTap: () => viewModel.didTapToggleTimeseriesChart(row.trackId),
-              ),
-            if (viewModel.isServerTimelineTrack(row.trackId) &&
-                viewModel.trackHasAudio(row.trackId))
-              _circleButton(
-                tooltip: row.isChartExpanded ? '차트 접기' : '음성 차트',
-                icon: Icons.show_chart,
-                iconColor: row.isChartExpanded
-                    ? MultimodalStudioPalette.GRAPE_700
-                    : MultimodalStudioPalette.SAND_600,
-                onTap: () => viewModel.didTapToggleAudioChart(row.trackId),
-              ),
-            if (viewModel.trackShowsAudioMuteToggle(row.trackId))
-              _circleButton(
-                tooltip: viewModel.isTrackAudioMuted(row.trackId)
-                    ? '소리 켜기'
-                    : '소리 끄기',
-                icon: viewModel.isTrackAudioMuted(row.trackId)
-                    ? Icons.volume_off
-                    : Icons.volume_up,
-                iconColor: viewModel.isTrackAudioMuted(row.trackId)
-                    ? MultimodalStudioPalette.CANTELOUPE_400
-                    : MultimodalStudioPalette.SAND_600,
-                onTap: () => viewModel.didTapToggleTrackAudioMute(row.trackId),
-              ),
           ],
         ),
       ),
