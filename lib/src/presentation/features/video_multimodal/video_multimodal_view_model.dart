@@ -902,6 +902,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     for (final clip in timelineClips) {
       if (clip.kind != TimelineClipKind.audio ||
           clip.playbackUrl.isEmpty ||
+          !isTrackVisible(clip.trackId) ||
           !doesClipCoverSeconds(clip, seconds)) {
         continue;
       }
@@ -1334,7 +1335,9 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     final selected = _timelineClip(_selectedClipId);
     if (selected != null && selected.kind != TimelineClipKind.video) {
       final playback = _playbackVideoClip;
-      if (playback != null && doesClipCoverSeconds(playback, playheadSeconds)) {
+      if (playback != null &&
+          isTrackVisible(playback.trackId) &&
+          doesClipCoverSeconds(playback, playheadSeconds)) {
         return playback;
       }
       if (selected.kind == TimelineClipKind.pose) {
@@ -1344,7 +1347,11 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       if (onTrack != null) {
         return onTrack;
       }
-      return _retainedStageVideoClip;
+      final retained = _retainedStageVideoClip;
+      if (retained != null && isTrackVisible(retained.trackId)) {
+        return retained;
+      }
+      return null;
     }
     return _videoOnSelectedTrack(playheadSeconds);
   }
@@ -1368,7 +1375,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   }
 
   TimelineClip? _coveringVideoOnTrack(String trackId, double seconds) {
-    if (trackId.isEmpty) {
+    if (trackId.isEmpty || !isTrackVisible(trackId)) {
       return null;
     }
     final covering = <TimelineClip>[];
@@ -4091,6 +4098,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     } else {
       _hiddenTrackIds.add(trackId);
     }
+    _coveringVideoClipId = '';
     notifyListeners();
   }
 
@@ -4099,6 +4107,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       return;
     }
     _hiddenTrackIds.clear();
+    _coveringVideoClipId = '';
     notifyListeners();
   }
 
@@ -4116,6 +4125,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     if (!changed) {
       return;
     }
+    _coveringVideoClipId = '';
     notifyListeners();
   }
 
