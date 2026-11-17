@@ -3,8 +3,10 @@ import 'package:weld_dashboard/src/domain/entities/asset_upload.dart';
 import 'package:weld_dashboard/src/domain/entities/screen_comment.dart';
 import 'package:weld_dashboard/src/domain/entities/camera_recording.dart';
 import 'package:weld_dashboard/src/domain/entities/tool_run.dart';
+import 'package:weld_dashboard/src/domain/entities/upload_trace.dart';
 import 'package:weld_dashboard/src/domain/repositories/asset_upload_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/tool_run_repository.dart';
+import 'package:weld_dashboard/src/domain/repositories/trace_repository.dart';
 import 'package:weld_dashboard/src/domain/use_cases/upload_asset_queue_use_case.dart';
 
 void main() {
@@ -34,7 +36,7 @@ void main() {
         ),
       ],
     );
-    final useCase = UploadAssetQueueUseCase(upload, tools);
+    final useCase = UploadAssetQueueUseCase(upload, tools, _FakeTraceRepository());
     final updates = <AssetUploadItemStatus>[];
 
     final result = await useCase.retryPostprocess(
@@ -71,7 +73,7 @@ void main() {
       error: const AssetUploadException('다시 걸 수 없음'),
     );
     final tools = _FakeToolRunRepository(snapshots: const []);
-    final useCase = UploadAssetQueueUseCase(upload, tools);
+    final useCase = UploadAssetQueueUseCase(upload, tools, _FakeTraceRepository());
     final updates = <AssetUploadQueueItem>[];
 
     final result = await useCase.retryPostprocess(
@@ -238,6 +240,18 @@ class _FakeToolRunRepository implements ToolRunRepository {
     required ToolRunTargetKind kind,
     required String targetId,
   }) {
+    throw UnimplementedError();
+  }
+}
+
+class _FakeTraceRepository implements TraceRepository {
+  @override
+  Future<List<TraceSnapshot>> listTraces({int pageSize = 50}) {
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<TraceSnapshot> getTrace({required String traceId}) {
     throw UnimplementedError();
   }
 }

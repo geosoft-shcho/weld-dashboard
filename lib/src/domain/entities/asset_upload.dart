@@ -5,6 +5,7 @@ class AssetUploadResult {
     required this.assetId,
     required this.fileName,
     required this.runId,
+    this.traceId = '',
     this.warnings = const [],
     this.duplicateAssetIds = const [],
   });
@@ -12,6 +13,7 @@ class AssetUploadResult {
   final String assetId;
   final String fileName;
   final String runId;
+  final String traceId;
   final List<String> warnings;
   final List<String> duplicateAssetIds;
 }

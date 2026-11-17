@@ -99,12 +99,12 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
         subject: subject,
         situation: situation,
       );
-      final body = await _send(
+      final sent = await _send(
         file: file,
         metadata: metadata,
         onProgress: onProgress,
       );
-      return _resultFrom(body, file.fileName);
+      return _resultFrom(sent.body, file.fileName, headerTraceId: sent.traceId);
     } on AssetUploadException {
       rethrow;
     } catch (error) {
@@ -112,7 +112,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     }
   }
 
-  Future<String> _send({
+  Future<({String body, String traceId})> _send({
     required CameraRecordingFile file,
     required String metadata,
     void Function(double progressPercent)? onProgress,
@@ -133,13 +133,14 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
         // 비웹 등 — multipart로 이어 간다.
       }
     }
-    return _upload(
+    final body = await _upload(
       url: assetsUrl,
       metadata: metadata,
       fileName: file.fileName,
       mimeType: file.mimeType,
       bytes: file.bytes,
     );
+    return (body: body, traceId: '');
   }
 
   String _metadataJson({
@@ -163,7 +164,11 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     });
   }
 
-  AssetUploadResult _resultFrom(String body, String fallbackName) {
+  AssetUploadResult _resultFrom(
+    String body,
+    String fallbackName, {
+    String headerTraceId = '',
+  }) {
     final decoded = jsonDecode(body);
     if (decoded is! Map || decoded['asset'] is! Map) {
       throw const AssetUploadException('업로드 응답에 파일 정보가 없습니다.');
@@ -175,12 +180,14 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     }
     final warnings = decoded['warnings'];
     final duplicates = decoded['duplicateOf'];
+    final jsonTraceId = _text(decoded['traceId']);
     return AssetUploadResult(
       assetId: assetId,
       fileName: _text(asset['fileName']).isEmpty
           ? fallbackName
           : _text(asset['fileName']),
       runId: _text(decoded['runId']),
+      traceId: headerTraceId.isNotEmpty ? headerTraceId : jsonTraceId,
       warnings: warnings is List
           ? [for (final warning in warnings) warning.toString()]
           : const [],

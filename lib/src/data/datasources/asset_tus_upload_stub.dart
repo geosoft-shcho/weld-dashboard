@@ -1,7 +1,7 @@
 import 'dart:typed_data';
 
 /// 비웹에서는 이어 올리기를 쓰지 않는다.
-Future<String> uploadAssetTus({
+Future<({String body, String traceId})> uploadAssetTus({
   required String endpoint,
   required String assetsUrl,
   required String metadataJson,

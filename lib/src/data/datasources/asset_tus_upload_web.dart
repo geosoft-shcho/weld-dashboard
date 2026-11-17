@@ -8,7 +8,8 @@ import 'package:web/web.dart' as web;
 import 'asset_json_post_web.dart';
 
 /// tus 1.0 — POST /uploads/ → PATCH 조각 → 마지막 응답(또는 POST /assets {uploadId}).
-Future<String> uploadAssetTus({
+/// 시작 응답 헤더 `Upload-Trace-Id`가 있으면 함께 돌려준다.
+Future<({String body, String traceId})> uploadAssetTus({
   required String endpoint,
   required String assetsUrl,
   required String metadataJson,
@@ -38,6 +39,7 @@ Future<String> uploadAssetTus({
     throw StateError('이어 올리기 주소를 받지 못했습니다.');
   }
   final uploadUrl = _absoluteUrl(endpoint, location);
+  final traceId = (created.headers.get('Upload-Trace-Id') ?? '').trim();
 
   var offset = 0;
   var lastBody = '';
@@ -76,7 +78,7 @@ Future<String> uploadAssetTus({
       jsonBody: jsonEncode({'uploadId': uploadId}),
     );
   }
-  return lastBody;
+  return (body: lastBody, traceId: traceId);
 }
 
 String _b64(String value) => base64Encode(utf8.encode(value));

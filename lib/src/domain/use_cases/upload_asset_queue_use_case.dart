@@ -1,16 +1,23 @@
 import '../entities/asset_upload.dart';
 import '../entities/tool_run.dart';
+import '../entities/upload_trace.dart';
 import '../repositories/asset_upload_repository.dart';
 import '../repositories/tool_run_repository.dart';
+import '../repositories/trace_repository.dart';
 
-/// 파일마다 `POST /assets`를 따로 호출하고, 등록 뒤 `GetRun`으로 후처리를 잇는다(§4.4).
+/// 파일마다 `POST /assets`를 따로 호출하고, 등록 뒤 Trace 또는 `GetRun`으로 후처리를 잇는다.
 class UploadAssetQueueUseCase {
-  const UploadAssetQueueUseCase(this._uploadRepository, this._toolRunRepository);
+  const UploadAssetQueueUseCase(
+    this._uploadRepository,
+    this._toolRunRepository,
+    this._traceRepository,
+  );
 
   static const int maxConcurrent = 3;
 
   final AssetUploadRepository _uploadRepository;
   final ToolRunRepository _toolRunRepository;
+  final TraceRepository _traceRepository;
 
   Future<AssetUploadBatchResult> execute({
     required String jobId,
@@ -109,6 +116,14 @@ class UploadAssetQueueUseCase {
           progressPercent: 100,
         ),
       );
+      if (result.traceId.isNotEmpty) {
+        await _waitForTrace(
+          traceId: result.traceId,
+          base: base.copyWith(result: result),
+          publish: publish,
+        );
+        return;
+      }
       if (result.runId.isEmpty) {
         publish(
           base.copyWith(
@@ -154,6 +169,7 @@ class UploadAssetQueueUseCase {
           assetId: base.result?.assetId ?? assetId,
           fileName: base.result?.fileName ?? base.fileName,
           runId: runId,
+          traceId: base.result?.traceId ?? '',
           warnings: base.result?.warnings ?? const [],
           duplicateAssetIds: base.result?.duplicateAssetIds ?? const [],
         ),
@@ -169,6 +185,44 @@ class UploadAssetQueueUseCase {
       );
       publish(failed);
       return failed;
+    }
+  }
+
+  Future<void> _waitForTrace({
+    required String traceId,
+    required AssetUploadQueueItem base,
+    required void Function(AssetUploadQueueItem item) publish,
+  }) async {
+    while (true) {
+      final trace = await _traceRepository.getTrace(traceId: traceId);
+      switch (trace.status) {
+        case UploadTraceStatus.running:
+          final run = trace.run;
+          final isQueued = run?.status == ToolRunStatus.queued;
+          publish(
+            base.copyWith(
+              status: isQueued
+                  ? AssetUploadItemStatus.postprocessQueued
+                  : AssetUploadItemStatus.postprocessRunning,
+              progressPercent: _traceProgress(trace),
+              message: _traceMessage(trace),
+            ),
+          );
+        case UploadTraceStatus.done:
+          publish(base.copyWith(status: AssetUploadItemStatus.completed));
+          return;
+        case UploadTraceStatus.failed:
+          publish(
+            base.copyWith(
+              status: AssetUploadItemStatus.postprocessFailed,
+              message: trace.errorMessage.isEmpty
+                  ? '파일 후처리에 실패했습니다.'
+                  : trace.errorMessage,
+            ),
+          );
+          return;
+      }
+      await Future<void>.delayed(const Duration(seconds: 1));
     }
   }
 
@@ -219,6 +273,25 @@ class UploadAssetQueueUseCase {
       }
       await Future<void>.delayed(const Duration(seconds: 1));
     }
+  }
+
+  double _traceProgress(TraceSnapshot trace) {
+    if (trace.progressPercent > 0) {
+      return trace.progressPercent;
+    }
+    return trace.run?.progressPercent ?? 0;
+  }
+
+  String _traceMessage(TraceSnapshot trace) {
+    final run = trace.run;
+    if (run != null && run.status == ToolRunStatus.queued) {
+      final wait = _postprocessQueuedMessage(run);
+      if (trace.lastEvent.isEmpty) {
+        return wait;
+      }
+      return '${trace.lastEvent} · $wait';
+    }
+    return trace.lastEvent;
   }
 
   String _postprocessQueuedMessage(ToolRunSnapshot run) {

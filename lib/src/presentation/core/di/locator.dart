@@ -76,6 +76,7 @@ import '../../../data/repositories/remote_report_set_repository.dart';
 import '../../../data/repositories/remote_job_timeline_repository.dart';
 import '../../../data/repositories/remote_label_repository.dart';
 import '../../../data/repositories/remote_tool_run_repository.dart';
+import '../../../data/repositories/remote_trace_repository.dart';
 import '../../../data/repositories/remote_work_detail_repository.dart';
 import '../../../data/repositories/remote_work_history_repository.dart';
 import '../../../domain/repositories/ask_repository.dart';
@@ -89,6 +90,7 @@ import '../../../domain/repositories/report_set_repository.dart';
 import '../../../domain/repositories/job_timeline_repository.dart';
 import '../../../domain/repositories/label_repository.dart';
 import '../../../domain/repositories/tool_run_repository.dart';
+import '../../../domain/repositories/trace_repository.dart';
 import '../../../domain/repositories/work_detail_repository.dart';
 import '../../../domain/repositories/work_history_repository.dart';
 import '../../../domain/use_cases/ask_question_use_case.dart';
@@ -107,6 +109,7 @@ import '../../../domain/use_cases/load_audio_waveform_use_case.dart';
 import '../../../domain/use_cases/load_timeseries_waveform_use_case.dart';
 import '../../../domain/use_cases/label_use_case.dart';
 import '../../../domain/use_cases/tool_run_use_case.dart';
+import '../../../domain/use_cases/trace_use_case.dart';
 import '../../../domain/use_cases/update_clip_use_case.dart';
 import '../../../domain/use_cases/update_timeline_use_case.dart';
 import '../../../domain/use_cases/update_track_use_case.dart';
@@ -188,6 +191,7 @@ void setupLocator({required bool pdfrxReady}) {
     () => UploadAssetQueueUseCase(
       locator<AssetUploadRepository>(),
       locator<ToolRunRepository>(),
+      locator<TraceRepository>(),
     ),
   );
   locator.registerLazySingleton(() => ListUploadFormatsUseCase(locator()));
@@ -360,6 +364,10 @@ void setupLocator({required bool pdfrxReady}) {
     () => RemoteToolRunRepository(locator()),
   );
   locator.registerFactory(() => ToolRunUseCase(locator()));
+  locator.registerLazySingleton<TraceRepository>(
+    () => RemoteTraceRepository(locator()),
+  );
+  locator.registerFactory(() => TraceUseCase(locator()));
   locator.registerLazySingleton<LabelRepository>(
     () => RemoteLabelRepository(locator()),
   );

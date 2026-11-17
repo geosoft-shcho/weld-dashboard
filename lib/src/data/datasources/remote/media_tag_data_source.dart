@@ -11,6 +11,7 @@ import '../generated/mediatag/compose/v1/compose.connect.client.dart';
 import '../generated/mediatag/report/v1/report.connect.client.dart';
 import '../generated/mediatag/run/v1/run.connect.client.dart';
 import '../generated/mediatag/tool/v1/tool.connect.client.dart';
+import '../generated/mediatag/trace/v1/trace.connect.client.dart';
 import '../generated/mediatag/work/v1/work.connect.client.dart';
 import '../generated/tacittag/rag/v2/rag.connect.client.dart';
 import 'dashboard_http_client.dart';
@@ -29,6 +30,7 @@ class MediaTagDataSource {
     labelService = LabelServiceClient(transport);
     toolService = ToolServiceClient(transport);
     runService = RunServiceClient(transport);
+    traceService = TraceServiceClient(transport);
     ragService = RagServiceClient(transport);
   }
 
@@ -40,6 +42,7 @@ class MediaTagDataSource {
   late final LabelServiceClient labelService;
   late final ToolServiceClient toolService;
   late final RunServiceClient runService;
+  late final TraceServiceClient traceService;
   late final RagServiceClient ragService;
 
   Future<String> readContent(String url) async {
