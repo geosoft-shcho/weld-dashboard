@@ -33,9 +33,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   final ScrollController _scrollController = ScrollController();
   final ScrollController _trackLabelScrollController = ScrollController();
   final ScrollController _trackScrollController = ScrollController();
-  final TextEditingController _newTrackNameController = TextEditingController();
-  final TextEditingController _trackNameController = TextEditingController();
-  String _shownTrackId = '';
   DateTime _lastAutoScrollAt = DateTime.fromMillisecondsSinceEpoch(0);
   double _trackedPlayhead = -1;
   String _trackedClipId = '';
@@ -54,13 +51,11 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     _trackedClipId = widget.viewModel.selectedClipId;
     _trackLabelScrollController.addListener(_syncTrackRowsFromLabels);
     _trackScrollController.addListener(_syncTrackLabelsFromRows);
-    _syncSelectedTrackName();
   }
 
   @override
   void didUpdateWidget(covariant MultimodalTimelineBoard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    _syncSelectedTrackName();
     final headMoved = _trackedPlayhead != viewModel.playheadSeconds;
     _trackedPlayhead = viewModel.playheadSeconds;
     final clipChanged = _trackedClipId != viewModel.selectedClipId;
@@ -82,8 +77,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
   void dispose() {
     _trackLabelScrollController.removeListener(_syncTrackRowsFromLabels);
     _trackScrollController.removeListener(_syncTrackLabelsFromRows);
-    _newTrackNameController.dispose();
-    _trackNameController.dispose();
     _scrollController.dispose();
     _trackLabelScrollController.dispose();
     _trackScrollController.dispose();
@@ -115,51 +108,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
     _isSyncingRowScroll = true;
     target.jumpTo(offset);
     _isSyncingRowScroll = false;
-  }
-
-  void _syncSelectedTrackName() {
-    final track = viewModel.selectedServerTrack;
-    final trackId = track?.trackId ?? '';
-    if (trackId == _shownTrackId) {
-      return;
-    }
-    _shownTrackId = trackId;
-    _trackNameController.text = track?.name ?? '';
-  }
-
-  Future<void> _submitNewTrack() async {
-    await viewModel.didSubmitNewTimelineTrack(_newTrackNameController.text);
-    if (!mounted || viewModel.timelineHint.isNotEmpty) {
-      return;
-    }
-    _newTrackNameController.clear();
-  }
-
-  Future<void> _confirmDeleteTrack() async {
-    final didConfirm = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) {
-        return WorkDetailMaterialScope(
-          child: AlertDialog(
-            content: const Text('이 트랙의 클립도 함께 지워집니다.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, false),
-                child: const Text('취소'),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(dialogContext, true),
-                child: const Text('지우기'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-    if (didConfirm != true || !mounted) {
-      return;
-    }
-    await viewModel.didTapDeleteSelectedTimelineTrack();
   }
 
   Future<void> _confirmDeleteSelection() async {
@@ -312,11 +260,7 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
       children: [
         TimelineBoardToolbar(
           viewModel: viewModel,
-          newTrackNameController: _newTrackNameController,
-          trackNameController: _trackNameController,
           onConfirmDeleteSelection: _confirmDeleteSelection,
-          onSubmitNewTrack: _submitNewTrack,
-          onConfirmDeleteTrack: _confirmDeleteTrack,
         ),
         _header(),
         if (viewModel.hasTimelineHint) _hint(),
@@ -324,17 +268,21 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              TimelineBoardTrackLabels(
-                viewModel: viewModel,
-                rows: rows,
-                scrollController: _trackLabelScrollController,
-                onSelectClip: _selectClip,
-              ),
+              _trackLabels(rows),
               Expanded(child: _tracks(rows)),
             ],
           ),
         ),
       ],
+    );
+  }
+
+  Widget _trackLabels(List<TimelineBoardRow> rows) {
+    return TimelineBoardTrackLabels(
+      viewModel: viewModel,
+      rows: rows,
+      scrollController: _trackLabelScrollController,
+      onSelectClip: _selectClip,
     );
   }
 

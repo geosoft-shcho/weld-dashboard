@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 
+import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_studio_palette.dart';
 import 'timeline_board_helpers.dart';
 
-/// 타임라인 좌측 트랙 라벨 열.
+/// 타임라인 좌측 트랙 라벨 열. 트랙 추가·이름 수정·삭제도 여기서 한다.
 class TimelineBoardTrackLabels extends StatelessWidget {
   const TimelineBoardTrackLabels({
     super.key,
@@ -27,8 +28,8 @@ class TimelineBoardTrackLabels extends StatelessWidget {
     color: MultimodalStudioPalette.SAND_600,
     fontSize: 9,
   );
-  // 좌우 패딩 + 아이콘 + AI 배지 + trackId 여유
-  static const double _labelSide = 140;
+  // 좌우 패딩 + 아이콘 + AI 배지 + trackId + 수정/삭제 여유
+  static const double _labelSide = 180;
 
   @override
   Widget build(BuildContext context) {
@@ -47,15 +48,29 @@ class TimelineBoardTrackLabels extends StatelessWidget {
             height: 22,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  '트랙 (${viewModel.timelineTracks.length})',
-                  style: const TextStyle(
-                    color: MultimodalStudioPalette.SAND_600,
-                    fontSize: 11,
+              child: Row(
+                children: [
+                  Text(
+                    '트랙 (${viewModel.timelineTracks.length})',
+                    style: const TextStyle(
+                      color: MultimodalStudioPalette.SAND_600,
+                      fontSize: 11,
+                    ),
                   ),
-                ),
+                  const Spacer(),
+                  Tooltip(
+                    message: '트랙 추가',
+                    verticalOffset: 12,
+                    child: GestureDetector(
+                      onTap: () => _showCreateTrackDialog(context),
+                      child: const Icon(
+                        Icons.add,
+                        size: 16,
+                        color: MultimodalStudioPalette.SAND_700,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -65,7 +80,7 @@ class TimelineBoardTrackLabels extends StatelessWidget {
               controller: scrollController,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [for (final row in rows) _trackLabelRow(row)],
+                children: [for (final row in rows) _trackLabelRow(context, row)],
               ),
             ),
           ),
@@ -100,17 +115,18 @@ class TimelineBoardTrackLabels extends StatelessWidget {
     return widest + _labelSide;
   }
 
-  Widget _trackLabelRow(TimelineBoardRow row) {
+  Widget _trackLabelRow(BuildContext context, TimelineBoardRow row) {
     // 행·mute·모니터가 트랙 단위이므로 보조 식별자는 trackId. 클립 목록은 Tooltip.
     final identity = row.trackId;
     if (row.clips.isEmpty) {
-      return _trackLabel(row, identity: identity);
+      return _trackLabel(context, row, identity: identity);
     }
-    final clip = _rowSelection(row);
-    final isSelected = row.clips.any(_isClipSelected);
-    return GestureDetector(
-      onTap: () => onSelectClip(clip),
-      child: _trackLabel(row, isSelected: isSelected, identity: identity),
+    return _trackLabel(
+      context,
+      row,
+      isSelected: row.clips.any(_isClipSelected),
+      identity: identity,
+      onSelect: () => onSelectClip(_rowSelection(row)),
     );
   }
 
@@ -130,11 +146,21 @@ class TimelineBoardTrackLabels extends StatelessWidget {
     return lines.join('\n');
   }
 
+  bool _isSelectedEditableTrack(TimelineBoardRow row) {
+    final selected = viewModel.selectedServerTrack;
+    return selected != null &&
+        selected.trackId == row.trackId &&
+        viewModel.isServerTimelineTrack(row.trackId);
+  }
+
   Widget _trackLabel(
+    BuildContext context,
     TimelineBoardRow row, {
     bool isSelected = false,
     String identity = '',
+    VoidCallback? onSelect,
   }) {
+    final canEditTrack = _isSelectedEditableTrack(row);
     final body = Row(
       children: [
         if (row.showsAiBadge)
@@ -223,6 +249,21 @@ class TimelineBoardTrackLabels extends StatelessWidget {
           ),
       ],
     );
+    // 체크·CRUD 밖. 활성+클립 있을 때만 본문 탭으로 선택.
+    final Widget bodyArea;
+    if (!row.isEnabled) {
+      bodyArea = IgnorePointer(
+        child: Opacity(opacity: 0.4, child: body),
+      );
+    } else if (onSelect != null) {
+      bodyArea = GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: onSelect,
+        child: body,
+      );
+    } else {
+      bodyArea = body;
+    }
     return Tooltip(
       message: _trackIdentityTooltip(row),
       verticalOffset: 12,
@@ -248,20 +289,28 @@ class TimelineBoardTrackLabels extends StatelessWidget {
                 ),
               ),
             ),
-            Expanded(
-              child: row.isEnabled
-                  ? body
-                  : IgnorePointer(
-                      child: Opacity(opacity: 0.4, child: body),
-                    ),
-            ),
+            Expanded(child: bodyArea),
+            if (canEditTrack) ...[
+              _circleButton(
+                tooltip: '트랙 이름 수정',
+                icon: Icons.edit_outlined,
+                iconColor: MultimodalStudioPalette.SAND_700,
+                onTap: () => _showRenameTrackDialog(context, row.label),
+              ),
+              _circleButton(
+                tooltip: '트랙 삭제',
+                icon: Icons.delete_outline,
+                iconColor: MultimodalStudioPalette.CANTELOUPE_400,
+                onTap: () => _confirmDeleteTrack(context),
+              ),
+            ],
           ],
         ),
       ),
     );
   }
 
-  /// 모니터·차트·소리 토글. 원 배경으로 버튼임을 드러낸다.
+  /// 모니터·차트·소리·트랙 CRUD. 원 배경으로 버튼임을 드러낸다.
   Widget _circleButton({
     required IconData icon,
     required Color iconColor,
@@ -289,6 +338,106 @@ class TimelineBoardTrackLabels extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _showCreateTrackDialog(BuildContext context) async {
+    final name = await _showTrackNameDialog(
+      context,
+      title: '트랙 추가',
+      confirmLabel: '추가',
+      fieldKey: const Key('new-timeline-track-name'),
+    );
+    if (name == null) {
+      return;
+    }
+    await viewModel.didSubmitNewTimelineTrack(name);
+  }
+
+  Future<void> _showRenameTrackDialog(
+    BuildContext context,
+    String currentName,
+  ) async {
+    final name = await _showTrackNameDialog(
+      context,
+      title: '트랙 이름 수정',
+      confirmLabel: '수정',
+      initialName: currentName,
+      fieldKey: const Key('selected-timeline-track-name'),
+    );
+    if (name == null) {
+      return;
+    }
+    await viewModel.didSubmitTimelineTrackName(name);
+  }
+
+  Future<String?> _showTrackNameDialog(
+    BuildContext context, {
+    required String title,
+    required String confirmLabel,
+    String initialName = '',
+    Key? fieldKey,
+  }) async {
+    final controller = TextEditingController(text: initialName);
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) {
+        return WorkDetailMaterialScope(
+          child: AlertDialog(
+            title: Text(title),
+            content: TextField(
+              key: fieldKey,
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: '트랙 이름',
+                isDense: true,
+              ),
+              onSubmitted: (value) => Navigator.pop(dialogContext, value.trim()),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext),
+                child: const Text('취소'),
+              ),
+              TextButton(
+                onPressed: () =>
+                    Navigator.pop(dialogContext, controller.text.trim()),
+                child: Text(confirmLabel),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    controller.dispose();
+    return name;
+  }
+
+  Future<void> _confirmDeleteTrack(BuildContext context) async {
+    final didConfirm = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return WorkDetailMaterialScope(
+          child: AlertDialog(
+            content: const Text('이 트랙의 클립도 함께 지워집니다.'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, false),
+                child: const Text('취소'),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: const Text('지우기'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+    if (didConfirm != true) {
+      return;
+    }
+    await viewModel.didTapDeleteSelectedTimelineTrack();
   }
 
   TimelineBoardClip _rowSelection(TimelineBoardRow row) {

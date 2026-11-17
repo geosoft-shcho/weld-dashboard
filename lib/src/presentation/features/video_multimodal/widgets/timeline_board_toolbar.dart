@@ -2,28 +2,19 @@ import 'package:flutter/material.dart';
 
 import '../video_multimodal_view_model.dart';
 import 'multimodal_studio_palette.dart';
-import 'timeline_board_track_tools.dart';
 
 const double TIMELINE_BOARD_EDIT_TOOL_HEIGHT = 28;
 
-/// 타임라인 상단 도구·트랙 편집 줄·관계 배너.
+/// 타임라인 상단 클립 도구·관계 배너.
 class TimelineBoardToolbar extends StatelessWidget {
   const TimelineBoardToolbar({
     super.key,
     required this.viewModel,
-    required this.newTrackNameController,
-    required this.trackNameController,
     required this.onConfirmDeleteSelection,
-    required this.onSubmitNewTrack,
-    required this.onConfirmDeleteTrack,
   });
 
   final VideoMultimodalViewModel viewModel;
-  final TextEditingController newTrackNameController;
-  final TextEditingController trackNameController;
   final VoidCallback onConfirmDeleteSelection;
-  final VoidCallback onSubmitNewTrack;
-  final VoidCallback onConfirmDeleteTrack;
 
   @override
   Widget build(BuildContext context) {
@@ -32,13 +23,6 @@ class TimelineBoardToolbar extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _toolbar(),
-        TimelineBoardEditTools(
-          viewModel: viewModel,
-          newTrackNameController: newTrackNameController,
-          trackNameController: trackNameController,
-          onSubmitNewTrack: onSubmitNewTrack,
-          onConfirmDeleteTrack: onConfirmDeleteTrack,
-        ),
         if (viewModel.isRelationMode) _relationBanner(),
       ],
     );
