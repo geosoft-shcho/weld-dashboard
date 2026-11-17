@@ -333,6 +333,12 @@ String _stageBoardKey(VideoMultimodalViewModel viewModel) {
     viewModel.showsMissingTargetVideoBanner,
     viewModel.timelineTracks.length,
     viewModel.timelineClips.length,
+    viewModel.isTrackMenuOpen,
+    viewModel.isRelationMode,
+    viewModel.timelineTracks
+        .where((track) => !viewModel.isTrackVisible(track.trackId))
+        .map((track) => track.trackId)
+        .join(','),
   ].join('|');
 }
 
