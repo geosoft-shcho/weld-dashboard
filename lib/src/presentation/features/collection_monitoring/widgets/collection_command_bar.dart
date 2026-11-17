@@ -1,4 +1,5 @@
 import 'package:fluent_ui/fluent_ui.dart';
+import 'package:provider/provider.dart';
 
 import '../../../../domain/entities/collected_node.dart';
 import '../../../../domain/entities/collection_board.dart';
@@ -6,6 +7,7 @@ import '../../../../domain/entities/collection_board_query.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/widgets/command_bar_widget_item.dart';
 import '../collection_monitoring_view_model.dart';
+import '../pipeline_trace_view_model.dart';
 
 class CollectionCommandBar extends StatefulWidget {
   const CollectionCommandBar({
@@ -200,7 +202,10 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
                 child: Padding(
                   padding: const EdgeInsets.only(top: 24),
                   child: Button(
-                    onPressed: widget.viewModel.didTapReload,
+                    onPressed: () {
+                      widget.viewModel.didTapReload();
+                      context.read<PipelineTraceViewModel>().refresh();
+                    },
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [

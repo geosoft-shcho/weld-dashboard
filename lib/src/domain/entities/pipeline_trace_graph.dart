@@ -1,0 +1,496 @@
+import 'tool_run.dart';
+import 'upload_trace.dart';
+
+enum PipelineNodeVisual {
+  idle,
+  done,
+  active,
+  queued,
+  running,
+  failed,
+  skipped,
+}
+
+class PipelineStageDef {
+  const PipelineStageDef({
+    required this.id,
+    required this.label,
+    required this.nodeIds,
+  });
+
+  final String id;
+  final String label;
+  final List<String> nodeIds;
+}
+
+class PipelineNodeDef {
+  const PipelineNodeDef({required this.id, required this.label});
+
+  final String id;
+  final String label;
+}
+
+/// Trace 이벤트 골격 + 받기 이전 하드코딩 선행 단계.
+/// `collect`는 TraceService 이벤트가 없다. 받기 이후 last_event면 통과(done)로만 그린다.
+const pipelineStages = <PipelineStageDef>[
+  PipelineStageDef(
+    id: 'collect',
+    label: '현장/수집',
+    nodeIds: ['collect.field', 'collect.capture'],
+  ),
+  PipelineStageDef(
+    id: 'receive',
+    label: '받기',
+    nodeIds: ['receive.started', 'receive.screened', 'receive.done'],
+  ),
+  PipelineStageDef(
+    id: 'register',
+    label: '등록',
+    nodeIds: ['register.stored', 'register.asset', 'register.attached'],
+  ),
+  PipelineStageDef(
+    id: 'postprocess',
+    label: '후처리',
+    nodeIds: [
+      'postprocess.run',
+      'postprocess.props',
+      'postprocess.duration',
+      'postprocess.report',
+      'postprocess.normalize',
+      'postprocess.waveform',
+      'postprocess.placed',
+    ],
+  ),
+  PipelineStageDef(id: 'tool', label: '도구', nodeIds: ['tool.run']),
+  PipelineStageDef(id: 'embed', label: '임베딩', nodeIds: ['embed.done']),
+  PipelineStageDef(
+    id: 'done',
+    label: '완료',
+    nodeIds: ['done.searchable', 'done.stored'],
+  ),
+];
+
+const pipelineNodeLabels = <String, String>{
+  'collect.field': '현장',
+  'collect.capture': '수집',
+  'receive.started': '받기 시작',
+  'receive.screened': '검사',
+  'receive.done': '받기 완료',
+  'register.stored': '저장',
+  'register.asset': 'Asset',
+  'register.attached': '첨부',
+  'postprocess.run': '후처리 run',
+  'postprocess.props': '속성',
+  'postprocess.duration': '길이',
+  'postprocess.report': '성적서',
+  'postprocess.normalize': '표준화',
+  'postprocess.waveform': '파형',
+  'postprocess.placed': '배치',
+  'tool.run': '도구 run',
+  'embed.done': '임베딩',
+  'done.searchable': '검색 가능',
+  'done.stored': '저장만',
+};
+
+String pipelineEventLabel(String name) {
+  return pipelineNodeLabels[name] ?? name;
+}
+
+/// 노드별 아이콘 키(UI에서 FluentIcons로 매핑).
+String pipelineNodeIconKey(String nodeId) {
+  switch (nodeId) {
+    case 'collect.field':
+      return 'field';
+    case 'collect.capture':
+      return 'capture';
+    case 'receive.started':
+      return 'download';
+    case 'receive.screened':
+      return 'shield';
+    case 'receive.done':
+      return 'check_receive';
+    case 'register.stored':
+      return 'save';
+    case 'register.asset':
+      return 'document';
+    case 'register.attached':
+      return 'link';
+    case 'postprocess.run':
+      return 'processing';
+    case 'postprocess.props':
+      return 'settings';
+    case 'postprocess.duration':
+      return 'clock';
+    case 'postprocess.report':
+      return 'report';
+    case 'postprocess.normalize':
+      return 'normalize';
+    case 'postprocess.waveform':
+      return 'waveform';
+    case 'postprocess.placed':
+      return 'place';
+    case 'tool.run':
+      return 'tool';
+    case 'embed.done':
+      return 'embed';
+    case 'done.searchable':
+      return 'search';
+    case 'done.stored':
+      return 'archive';
+    default:
+      return 'circle';
+  }
+}
+
+String pipelineStageOf(String eventName) {
+  final event = eventName.trim();
+  if (event.isEmpty) {
+    return '';
+  }
+  final dot = event.indexOf('.');
+  return dot <= 0 ? event : event.substring(0, dot);
+}
+
+bool pipelineListHasToolStage(Iterable<TraceSnapshot> traces) {
+  for (final trace in traces) {
+    if (pipelineStageOf(trace.lastEvent) == 'tool') {
+      return true;
+    }
+    for (final event in trace.events) {
+      if (pipelineStageOf(event.name) == 'tool') {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+Map<String, int> pipelineStageCounts(Iterable<TraceSnapshot> traces) {
+  final counts = <String, int>{
+    for (final stage in pipelineStages) stage.id: 0,
+  };
+  for (final trace in traces) {
+    final stage = trace.stageId;
+    if (stage.isEmpty) {
+      continue;
+    }
+    // Trace에 올라온 건은 현장/수집을 지난 것으로 센다(하드코딩 선행 단계).
+    counts['collect'] = (counts['collect'] ?? 0) + 1;
+    counts[stage] = (counts[stage] ?? 0) + 1;
+  }
+  return counts;
+}
+
+Map<String, bool> pipelineStageHasFailed(Iterable<TraceSnapshot> traces) {
+  final failed = <String, bool>{
+    for (final stage in pipelineStages) stage.id: false,
+  };
+  for (final trace in traces) {
+    if (trace.status != UploadTraceStatus.failed) {
+      continue;
+    }
+    final stage = trace.stageId;
+    if (stage.isNotEmpty) {
+      failed[stage] = true;
+    }
+  }
+  return failed;
+}
+
+/// 상태 배지(짧게). idle은 빈 문자열.
+String pipelineNodeStatusLabel(PipelineNodeVisual visual) {
+  switch (visual) {
+    case PipelineNodeVisual.idle:
+      return '';
+    case PipelineNodeVisual.done:
+      return '완료';
+    case PipelineNodeVisual.active:
+      return '현재';
+    case PipelineNodeVisual.queued:
+      return '대기';
+    case PipelineNodeVisual.running:
+      return '진행';
+    case PipelineNodeVisual.failed:
+      return '실패';
+    case PipelineNodeVisual.skipped:
+      return '건너뜀';
+  }
+}
+
+bool pipelineNodeIsLive(PipelineNodeVisual visual) {
+  return visual == PipelineNodeVisual.active ||
+      visual == PipelineNodeVisual.running ||
+      visual == PipelineNodeVisual.queued;
+}
+
+/// 여정이 거친 노드 ID(알려진 pipeline 노드만, 출현 순).
+/// events가 없으면 lastEvent만 넣는다(이전 구간은 UI가 visual로 잇는다).
+List<String> pipelinePathNodeIds(TraceSnapshot trace) {
+  final known = <String>{
+    for (final stage in pipelineStages) ...stage.nodeIds,
+  };
+  final path = <String>[];
+  final seen = <String>{};
+  for (final event in trace.events) {
+    final name = event.name.trim();
+    if (!known.contains(name) || seen.contains(name)) {
+      continue;
+    }
+    path.add(name);
+    seen.add(name);
+  }
+  final last = trace.lastEvent.trim();
+  if (last.isNotEmpty && known.contains(last) && !seen.contains(last)) {
+    path.add(last);
+  }
+  return path;
+}
+
+/// 단계 사이 본선에 쓸 단계 ID(왼쪽→오른쪽).
+/// 선택 시 그 여정이 도달한 단계까지. 미선택 시 집계상 non-idle 단계.
+List<String> pipelineHighlightStageIds({
+  required TraceSnapshot? selected,
+  required Iterable<TraceSnapshot> traces,
+  required List<PipelineStageDef> stages,
+}) {
+  if (selected != null) {
+    final lastOrder = _stageOrder(selected.stageId);
+    if (lastOrder < 0) {
+      return const [];
+    }
+    return [
+      for (final stage in stages)
+        if (_stageOrder(stage.id) <= lastOrder) stage.id,
+    ];
+  }
+  return [
+    for (final stage in stages)
+      if (pipelineStageVisual(
+            stageId: stage.id,
+            selected: null,
+            traces: traces,
+          ) !=
+          PipelineNodeVisual.idle)
+        stage.id,
+  ];
+}
+
+/// 단계(큰 원) 시각. 미선택은 visibleTraces 합산(실패>대기>진행>완료>idle).
+PipelineNodeVisual pipelineStageVisual({
+  required String stageId,
+  required TraceSnapshot? selected,
+  required Iterable<TraceSnapshot> traces,
+}) {
+  final stageOrder = _stageOrder(stageId);
+  if (stageOrder < 0) {
+    return PipelineNodeVisual.idle;
+  }
+  if (selected != null) {
+    final lastOrder = _stageOrder(selected.stageId);
+    if (lastOrder < 0) {
+      return PipelineNodeVisual.idle;
+    }
+    if (stageOrder < lastOrder) {
+      return PipelineNodeVisual.done;
+    }
+    if (stageOrder > lastOrder) {
+      return PipelineNodeVisual.idle;
+    }
+    return _currentStageVisual(selected);
+  }
+
+  var hasFailed = false;
+  var hasQueued = false;
+  var hasRunning = false;
+  var hasDone = false;
+  for (final trace in traces) {
+    final lastOrder = _stageOrder(trace.stageId);
+    if (lastOrder < 0) {
+      continue;
+    }
+    if (lastOrder > stageOrder) {
+      hasDone = true;
+      continue;
+    }
+    if (lastOrder < stageOrder) {
+      continue;
+    }
+    if (trace.status == UploadTraceStatus.failed) {
+      hasFailed = true;
+    } else if (trace.status == UploadTraceStatus.running) {
+      final run = trace.run;
+      if (run != null && run.status == ToolRunStatus.queued) {
+        hasQueued = true;
+      } else {
+        hasRunning = true;
+      }
+    } else {
+      hasDone = true;
+    }
+  }
+  if (hasFailed) {
+    return PipelineNodeVisual.failed;
+  }
+  if (hasQueued) {
+    return PipelineNodeVisual.queued;
+  }
+  if (hasRunning) {
+    return PipelineNodeVisual.running;
+  }
+  if (hasDone) {
+    return PipelineNodeVisual.done;
+  }
+  return PipelineNodeVisual.idle;
+}
+
+PipelineNodeVisual _currentStageVisual(TraceSnapshot trace) {
+  if (trace.status == UploadTraceStatus.failed) {
+    return PipelineNodeVisual.failed;
+  }
+  if (trace.status == UploadTraceStatus.running) {
+    final run = trace.run;
+    if (run != null && run.status == ToolRunStatus.queued) {
+      return PipelineNodeVisual.queued;
+    }
+    if (run != null && run.status == ToolRunStatus.running) {
+      return PipelineNodeVisual.running;
+    }
+    return PipelineNodeVisual.active;
+  }
+  return PipelineNodeVisual.done;
+}
+
+PipelineNodeVisual pipelineNodeVisual({
+  required String nodeId,
+  required TraceSnapshot? selected,
+  required Iterable<TraceSnapshot> traces,
+}) {
+  if (selected != null) {
+    return _visualForSelected(nodeId: nodeId, trace: selected);
+  }
+  // 미선택: 실패 → 진행/현재 → 완료 순으로 합산해 모든 상태가 드러나게 한다.
+  for (final trace in traces) {
+    if (trace.status == UploadTraceStatus.failed &&
+        (trace.lastEvent == nodeId ||
+            pipelineStageOf(trace.lastEvent) == pipelineStageOf(nodeId))) {
+      return PipelineNodeVisual.failed;
+    }
+  }
+  for (final trace in traces) {
+    if (trace.status == UploadTraceStatus.running &&
+        trace.lastEvent == nodeId) {
+      final run = trace.run;
+      if (run != null && run.status == ToolRunStatus.queued) {
+        return PipelineNodeVisual.queued;
+      }
+      if (run != null && run.status == ToolRunStatus.running) {
+        return PipelineNodeVisual.running;
+      }
+      return PipelineNodeVisual.active;
+    }
+  }
+  for (final trace in traces) {
+    if (trace.lastEvent == nodeId ||
+        trace.events.any((event) => event.name == nodeId)) {
+      return PipelineNodeVisual.done;
+    }
+  }
+  for (final trace in traces) {
+    final lastOrder = _stageOrder(trace.stageId);
+    final nodeOrder = _stageOrder(pipelineStageOf(nodeId));
+    if (lastOrder > nodeOrder && nodeOrder >= 0) {
+      return PipelineNodeVisual.done;
+    }
+  }
+  return PipelineNodeVisual.idle;
+}
+
+PipelineNodeVisual _visualForSelected({
+  required String nodeId,
+  required TraceSnapshot trace,
+}) {
+  TraceEventSnapshot? matched;
+  for (final event in trace.events) {
+    if (event.name == nodeId) {
+      matched = event;
+      break;
+    }
+  }
+  if (matched != null) {
+    final status = matched.status.toLowerCase();
+    if (status == 'failed') {
+      return PipelineNodeVisual.failed;
+    }
+    if (status == 'skipped') {
+      return PipelineNodeVisual.skipped;
+    }
+    if (status.contains('queue')) {
+      return PipelineNodeVisual.queued;
+    }
+    if (status.contains('run') && status != 'ok' && status != 'succeeded') {
+      return PipelineNodeVisual.running;
+    }
+    if (trace.lastEvent == nodeId &&
+        trace.status == UploadTraceStatus.running) {
+      final run = trace.run;
+      if (run != null && run.status == ToolRunStatus.queued) {
+        return PipelineNodeVisual.queued;
+      }
+      if (run != null && run.status == ToolRunStatus.running) {
+        return PipelineNodeVisual.running;
+      }
+      return PipelineNodeVisual.active;
+    }
+    return PipelineNodeVisual.done;
+  }
+  if (trace.lastEvent == nodeId) {
+    if (trace.status == UploadTraceStatus.failed) {
+      return PipelineNodeVisual.failed;
+    }
+    if (trace.status == UploadTraceStatus.running) {
+      final run = trace.run;
+      if (run != null && run.status == ToolRunStatus.queued) {
+        return PipelineNodeVisual.queued;
+      }
+      if (run != null && run.status == ToolRunStatus.running) {
+        return PipelineNodeVisual.running;
+      }
+      return PipelineNodeVisual.active;
+    }
+    return PipelineNodeVisual.done;
+  }
+  // last_event가 이 노드보다 뒤 stage면 이전 노드는 done으로 본다.
+  final nodeStage = pipelineStageOf(nodeId);
+  final lastStage = trace.stageId;
+  final nodeOrder = _stageOrder(nodeStage);
+  final lastOrder = _stageOrder(lastStage);
+  if (lastOrder > nodeOrder && nodeOrder >= 0) {
+    return PipelineNodeVisual.done;
+  }
+  if (lastOrder == nodeOrder &&
+      _nodeIndex(nodeId) >= 0 &&
+      _nodeIndex(trace.lastEvent) > _nodeIndex(nodeId)) {
+    return PipelineNodeVisual.done;
+  }
+  return PipelineNodeVisual.idle;
+}
+
+int _stageOrder(String stageId) {
+  for (var i = 0; i < pipelineStages.length; i++) {
+    if (pipelineStages[i].id == stageId) {
+      return i;
+    }
+  }
+  return -1;
+}
+
+int _nodeIndex(String nodeId) {
+  final stage = pipelineStageOf(nodeId);
+  for (final def in pipelineStages) {
+    if (def.id != stage) {
+      continue;
+    }
+    return def.nodeIds.indexOf(nodeId);
+  }
+  return -1;
+}

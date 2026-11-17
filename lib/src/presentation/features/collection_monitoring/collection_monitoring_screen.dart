@@ -6,21 +6,94 @@ import '../../core/di/locator.dart';
 import '../../core/themes/app_theme.dart';
 import '../../core/widgets/query_failure_pane.dart';
 import 'collection_monitoring_view_model.dart';
+import 'pipeline_trace_view_model.dart';
 import 'widgets/collection_command_bar.dart';
 import 'widgets/collection_kpi_cards.dart';
 import 'widgets/collection_status_table.dart';
 import 'widgets/collection_timeline_host.dart';
+import 'widgets/pipeline_trace_tab_body.dart';
 
 class CollectionMonitoringScreen extends StatelessWidget {
   const CollectionMonitoringScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider(
-      create: (_) => locator<CollectionMonitoringViewModel>()..loadBoard(),
-      child: const _CollectionMonitoringBody(),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => locator<CollectionMonitoringViewModel>()..loadBoard(),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => locator<PipelineTraceViewModel>(),
+        ),
+      ],
+      child: const _TraceRefreshIntervalBinder(
+        child: _CollectionMonitoringBody(),
+      ),
     );
   }
+}
+
+/// 커맨드바 새로고침 주기를 TraceService 폴링에 맞춘다.
+class _TraceRefreshIntervalBinder extends StatefulWidget {
+  const _TraceRefreshIntervalBinder({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_TraceRefreshIntervalBinder> createState() =>
+      _TraceRefreshIntervalBinderState();
+}
+
+class _TraceRefreshIntervalBinderState extends State<_TraceRefreshIntervalBinder> {
+  CollectionMonitoringViewModel? _board;
+  int? _appliedInterval;
+  int? _pendingInterval;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final board = context.read<CollectionMonitoringViewModel>();
+    if (!identical(_board, board)) {
+      _board?.removeListener(_onBoardChanged);
+      _board = board;
+      _board!.addListener(_onBoardChanged);
+      _scheduleApplyInterval(board.query.refreshIntervalSeconds);
+    }
+  }
+
+  void _onBoardChanged() {
+    final board = _board;
+    if (board == null) {
+      return;
+    }
+    _scheduleApplyInterval(board.query.refreshIntervalSeconds);
+  }
+
+  /// 빌드/`didChangeDependencies` 중 notifyListeners를 피한다.
+  void _scheduleApplyInterval(int seconds) {
+    if (_appliedInterval == seconds || _pendingInterval == seconds) {
+      return;
+    }
+    _pendingInterval = seconds;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _pendingInterval = null;
+      if (!mounted || _appliedInterval == seconds) {
+        return;
+      }
+      _appliedInterval = seconds;
+      context.read<PipelineTraceViewModel>().applyRefreshInterval(seconds);
+    });
+  }
+
+  @override
+  void dispose() {
+    _board?.removeListener(_onBoardChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class _CollectionMonitoringBody extends StatelessWidget {
@@ -33,12 +106,15 @@ class _CollectionMonitoringBody extends StatelessWidget {
       padding: EdgeInsets.zero,
       content: Padding(
         padding: const EdgeInsets.all(16),
-        child: _content(viewModel),
+        child: _content(context, viewModel),
       ),
     );
   }
 
-  Widget _content(CollectionMonitoringViewModel viewModel) {
+  Widget _content(
+    BuildContext context,
+    CollectionMonitoringViewModel viewModel,
+  ) {
     if (viewModel.isLoading && viewModel.board == null) {
       return const Center(child: ProgressRing());
     }
@@ -46,7 +122,10 @@ class _CollectionMonitoringBody extends StatelessWidget {
       return QueryFailurePane(
         title: '조회 실패',
         message: viewModel.errorMessage,
-        onRetry: viewModel.didTapReload,
+        onRetry: () {
+          viewModel.didTapReload();
+          context.read<PipelineTraceViewModel>().refresh();
+        },
       );
     }
     final board = viewModel.board;
@@ -63,7 +142,7 @@ class _CollectionMonitoringBody extends StatelessWidget {
           InfoBar(
             title: const Text('자동 갱신 중'),
             content: Text(
-              '${viewModel.query.refreshIntervalSeconds == 5 ? '5초' : '1분'} · 재조회',
+              '${viewModel.query.refreshIntervalSeconds == 5 ? '5초' : '1분'} · 보드·파이프라인 재조회',
             ),
             severity: InfoBarSeverity.info,
           ),
@@ -72,7 +151,9 @@ class _CollectionMonitoringBody extends StatelessWidget {
             padding: EdgeInsets.only(top: 8),
             child: InfoBar(
               title: Text('시간 범위 오류'),
-              content: Text('시작 시각이 종료 시각보다 늦습니다. 일자·시간 범위는 타임라인에만 반영됩니다.'),
+              content: Text(
+                '시작 시각이 종료 시각보다 늦습니다. 일자·시간 범위는 타임라인에만 반영됩니다.',
+              ),
               severity: InfoBarSeverity.error,
             ),
           ),
@@ -100,12 +181,15 @@ class _MonitoringTabView extends StatefulWidget {
 }
 
 class _MonitoringTabViewState extends State<_MonitoringTabView> {
+  /// 0 = 적재 파이프라인, 1 = 일자별 수집 타임라인
   int currentIndex = 0;
 
   static final Color _line = AppTheme.STATUS_OFF.withValues(alpha: 0.45);
 
   @override
   Widget build(BuildContext context) {
+    final pipeline = context.watch<PipelineTraceViewModel>();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -117,23 +201,30 @@ class _MonitoringTabViewState extends State<_MonitoringTabView> {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               _MonitoringTab(
-                label: '일자별 수집 타임라인',
+                label: '적재 파이프라인',
                 isSelected: currentIndex == 0,
                 onPressed: () => setState(() => currentIndex = 0),
+              ),
+              _MonitoringTab(
+                label: '일자별 수집 타임라인',
+                isSelected: currentIndex == 1,
+                onPressed: () => setState(() => currentIndex = 1),
               ),
 
               // 탭 현재 수집 상태 임시 주석. 삭제 금지
 
               // _MonitoringTab(
               //   label: '현재 수집 상태',
-              //   isSelected: currentIndex == 1,
-              //   onPressed: () => setState(() => currentIndex = 1),
+              //   isSelected: currentIndex == 2,
+              //   onPressed: () => setState(() => currentIndex = 2),
               // ),
             ],
           ),
         ),
         Expanded(
           child: currentIndex == 0
+              ? PipelineTraceTabBody(viewModel: pipeline)
+              : currentIndex == 1
               ? CollectionTimelineHost(
                   viewModel: widget.viewModel,
                   board: widget.board,

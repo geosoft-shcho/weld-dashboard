@@ -79,6 +79,7 @@ import '../../../data/repositories/remote_tool_run_repository.dart';
 import '../../../data/repositories/remote_trace_repository.dart';
 import '../../../data/repositories/remote_work_detail_repository.dart';
 import '../../../data/repositories/remote_work_history_repository.dart';
+import '../../features/collection_monitoring/pipeline_trace_view_model.dart';
 import '../../../domain/repositories/ask_repository.dart';
 import '../../../domain/repositories/ask_session_store.dart';
 import '../../../domain/repositories/catalog_repository.dart';
@@ -368,6 +369,11 @@ void setupLocator({required bool pdfrxReady}) {
     () => RemoteTraceRepository(locator()),
   );
   locator.registerFactory(() => TraceUseCase(locator()));
+  locator.registerFactory(
+    () => PipelineTraceViewModel(
+      traceUseCase: locator(),
+    ),
+  );
   locator.registerLazySingleton<LabelRepository>(
     () => RemoteLabelRepository(locator()),
   );
