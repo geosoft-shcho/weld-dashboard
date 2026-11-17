@@ -58,16 +58,19 @@ class TimelineBoardToolbar extends StatelessWidget {
           TimelineBoardToolGroup([
             TimelineBoardToolButton(
               '클립 선택',
+              icon: Icons.near_me,
               selected: !viewModel.isRelationMode,
               onPressed: viewModel.didTapSelectTool,
             ),
             TimelineBoardToolButton(
               '클립 관계',
+              icon: Icons.link,
               selected: viewModel.isRelationMode,
               onPressed: viewModel.didTapToggleRelationMode,
             ),
             TimelineBoardToolButton(
               '클립 삭제',
+              icon: Icons.delete_outline,
               onPressed: viewModel.canDeleteSelection
                   ? onConfirmDeleteSelection
                   : null,
@@ -77,16 +80,14 @@ class TimelineBoardToolbar extends StatelessWidget {
           TimelineBoardToolGroup([
             TimelineBoardToolButton(
               '트랙 목록',
+              icon: Icons.view_list,
               selected: viewModel.isTrackMenuOpen,
               onPressed: viewModel.didTapToggleTrackMenu,
             ),
             TimelineBoardToolButton(
               'Marker',
+              icon: Icons.flag,
               onPressed: viewModel.didTapAddMarker,
-            ),
-            TimelineBoardToolButton(
-              'Labels',
-              onPressed: viewModel.didTapToggleLabels,
             ),
           ], isLast: true),
         ],
@@ -156,15 +157,28 @@ class TimelineBoardToolButton extends StatelessWidget {
     this.label, {
     super.key,
     required this.onPressed,
+    this.icon,
     this.selected = false,
   });
 
   final String label;
+  final IconData? icon;
   final VoidCallback? onPressed;
   final bool selected;
 
   @override
   Widget build(BuildContext context) {
+    final labelText = Text(label);
+    final child = icon == null
+        ? labelText
+        : Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, size: 14),
+              const SizedBox(width: 4),
+              labelText,
+            ],
+          );
     return SizedBox(
       height: TIMELINE_BOARD_EDIT_TOOL_HEIGHT,
       child: TextButton(
@@ -189,7 +203,7 @@ class TimelineBoardToolButton extends StatelessWidget {
           textStyle: const TextStyle(fontSize: 11, height: 1.2),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(3)),
         ),
-        child: Text(label),
+        child: child,
       ),
     );
   }
