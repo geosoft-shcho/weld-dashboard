@@ -87,12 +87,16 @@ class LookupTableHeader extends StatelessWidget {
     required this.count,
     required this.actionText,
     this.onAction,
+    this.secondaryActionText,
+    this.onSecondaryAction,
   });
 
   final String label;
   final int count;
   final String actionText;
   final VoidCallback? onAction;
+  final String? secondaryActionText;
+  final VoidCallback? onSecondaryAction;
 
   @override
   Widget build(BuildContext context) {
@@ -100,6 +104,13 @@ class LookupTableHeader extends StatelessWidget {
       children: [
         Text('$label 검색 결과 $count건', style: const TextStyle(fontSize: 12)),
         const Spacer(),
+        if (secondaryActionText != null && onSecondaryAction != null) ...[
+          Button(
+            onPressed: onSecondaryAction,
+            child: Text(secondaryActionText!),
+          ),
+          const SizedBox(width: 8),
+        ],
         FilledButton(onPressed: onAction, child: Text(actionText)),
       ],
     );
@@ -119,6 +130,9 @@ class CatalogLookupTable extends StatefulWidget {
     this.actionsHeader = '동작',
     this.actionsFlex = 10,
     this.actionsBuilder,
+    this.leadingHeader,
+    this.leadingFlex = 4,
+    this.leadingBuilder,
   });
 
   final List<String> headers;
@@ -134,6 +148,11 @@ class CatalogLookupTable extends StatefulWidget {
   final int actionsFlex;
   final Widget? Function(BuildContext context, int index)? actionsBuilder;
 
+  /// [leadingBuilder]가 있을 때만 헤더·행 왼쪽에 쓴다.
+  final Widget? leadingHeader;
+  final int leadingFlex;
+  final Widget? Function(BuildContext context, int index)? leadingBuilder;
+
   @override
   State<CatalogLookupTable> createState() => _CatalogLookupTableState();
 }
@@ -142,6 +161,8 @@ class _CatalogLookupTableState extends State<CatalogLookupTable> {
   final ScrollController _scrollController = ScrollController();
 
   bool get _hasActions => widget.actionsBuilder != null;
+
+  bool get _hasLeading => widget.leadingBuilder != null;
 
   @override
   void initState() {
@@ -198,6 +219,8 @@ class _CatalogLookupTableState extends State<CatalogLookupTable> {
           cells: widget.headers,
           flexes: widget.columnFlexes,
           isHeader: true,
+          leading: _hasLeading ? widget.leadingHeader : null,
+          leadingFlex: widget.leadingFlex,
           actionsHeader: _hasActions ? widget.actionsHeader : null,
           actionsFlex: widget.actionsFlex,
         ),
@@ -227,6 +250,9 @@ class _CatalogLookupTableState extends State<CatalogLookupTable> {
                       child: Center(child: ProgressRing(strokeWidth: 2)),
                     );
                   }
+                  final leading = _hasLeading
+                      ? widget.leadingBuilder!(context, index)
+                      : null;
                   final actions = _hasActions
                       ? widget.actionsBuilder!(context, index)
                       : null;
@@ -238,6 +264,8 @@ class _CatalogLookupTableState extends State<CatalogLookupTable> {
                       onCellsTap: widget.onRowTap == null
                           ? null
                           : () => widget.onRowTap!(index),
+                      leading: leading,
+                      leadingFlex: widget.leadingFlex,
                       actions: actions,
                       actionsFlex: widget.actionsFlex,
                     ),
@@ -257,6 +285,8 @@ class _LookupRow extends StatelessWidget {
     required this.flexes,
     this.isHeader = false,
     this.onCellsTap,
+    this.leading,
+    this.leadingFlex = 4,
     this.actions,
     this.actionsHeader,
     this.actionsFlex = 10,
@@ -266,12 +296,15 @@ class _LookupRow extends StatelessWidget {
   final List<int> flexes;
   final bool isHeader;
   final VoidCallback? onCellsTap;
+  final Widget? leading;
+  final int leadingFlex;
   final Widget? actions;
   final String? actionsHeader;
   final int actionsFlex;
 
   @override
   Widget build(BuildContext context) {
+    final showLeading = leading != null;
     final showActions = actions != null || actionsHeader != null;
     var cellsFlex = 0;
     for (var index = 0; index < cells.length; index++) {
@@ -322,6 +355,14 @@ class _LookupRow extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            if (showLeading)
+              Expanded(
+                flex: leadingFlex,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: leading ?? const SizedBox.shrink(),
+                ),
+              ),
             Expanded(flex: cellsFlex, child: textArea),
             if (showActions)
               Expanded(

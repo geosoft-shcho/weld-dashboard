@@ -52,6 +52,7 @@ class AssetLookupViewModel extends ChangeNotifier {
   int _jobsTotalCount = 0;
   List<JobPassOption> _passes = const [];
   List<AssetLookupRow> _rows = const [];
+  final Set<String> _selectedAssetIds = <String>{};
   String _nextPageToken = '';
   int _totalCount = 0;
   bool _isLoading = false;
@@ -97,6 +98,10 @@ class AssetLookupViewModel extends ChangeNotifier {
   bool get doesHaveMore => _nextPageToken.isNotEmpty;
 
   List<AssetLookupRow> get visibleRows => _rows;
+
+  int get selectedCount => _selectedAssetIds.length;
+
+  bool isSelected(String assetId) => _selectedAssetIds.contains(assetId);
 
   bool get _sharedOnly => _passId == jobCommonPassToken;
 
@@ -148,6 +153,7 @@ class AssetLookupViewModel extends ChangeNotifier {
     _isLoadingMore = false;
     _hasError = false;
     _errorMessage = '';
+    _selectedAssetIds.clear();
     notifyListeners();
     final catalogsFuture = _loadFilterCatalogs(version);
     try {
@@ -159,6 +165,7 @@ class AssetLookupViewModel extends ChangeNotifier {
       _hasError = true;
       _errorMessage = error.toString();
       _rows = const [];
+      _selectedAssetIds.clear();
     } finally {
       if (version == _loadVersion) {
         _isLoading = false;
@@ -168,9 +175,69 @@ class AssetLookupViewModel extends ChangeNotifier {
     await catalogsFuture;
   }
 
+  void didToggleSelected(String assetId, bool? checked) {
+    if (assetId.isEmpty) {
+      return;
+    }
+    if (checked == true) {
+      _selectedAssetIds.add(assetId);
+    } else {
+      _selectedAssetIds.remove(assetId);
+    }
+    notifyListeners();
+  }
+
+  void didSetVisibleSelection(bool selectAll) {
+    if (selectAll) {
+      for (final row in _rows) {
+        if (row.assetId.isNotEmpty) {
+          _selectedAssetIds.add(row.assetId);
+        }
+      }
+    } else {
+      for (final row in _rows) {
+        _selectedAssetIds.remove(row.assetId);
+      }
+    }
+    notifyListeners();
+  }
+
+  void clearSelection() {
+    if (_selectedAssetIds.isEmpty) {
+      return;
+    }
+    _selectedAssetIds.clear();
+    notifyListeners();
+  }
+
   Future<void> deleteAsset({required String assetId}) async {
     await _deleteAssetUseCase.execute(assetId: assetId);
     await load();
+  }
+
+  /// 선택 건마다 DeleteAsset. 실패는 모아 두고 계속하며, 성공이 있으면 load 한 번.
+  Future<({int succeeded, List<String> failureNotes})> deleteSelectedAssets() async {
+    final ids = _selectedAssetIds.toList(growable: false);
+    if (ids.isEmpty) {
+      return (succeeded: 0, failureNotes: const <String>[]);
+    }
+    var succeeded = 0;
+    final failureNotes = <String>[];
+    for (final assetId in ids) {
+      try {
+        await _deleteAssetUseCase.execute(assetId: assetId);
+        succeeded++;
+        _selectedAssetIds.remove(assetId);
+      } catch (error) {
+        failureNotes.add('$assetId: $error');
+      }
+    }
+    if (succeeded > 0) {
+      await load();
+    } else {
+      notifyListeners();
+    }
+    return (succeeded: succeeded, failureNotes: failureNotes);
   }
 
   Future<void> _loadFilterCatalogs(int version) async {

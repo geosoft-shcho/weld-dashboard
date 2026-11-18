@@ -53,12 +53,30 @@ class _AssetLookupBody extends StatelessWidget {
         );
       }
     }
+    final visibleIds = [
+      for (final row in viewModel.visibleRows)
+        if (row.assetId.isNotEmpty) row.assetId,
+    ];
+    final selectedVisibleCount = visibleIds.where(viewModel.isSelected).length;
+    final bool? allVisibleChecked = visibleIds.isEmpty
+        ? false
+        : selectedVisibleCount == 0
+        ? false
+        : selectedVisibleCount == visibleIds.length
+        ? true
+        : null;
     return CatalogLookupFrame(
       tableHeader: LookupTableHeader(
         label: '파일',
         count: viewModel.totalCount,
         actionText: '+ 업로드',
         onAction: () => _didTapUpload(context, viewModel),
+        secondaryActionText: viewModel.selectedCount > 0
+            ? '${viewModel.selectedCount}개 삭제'
+            : null,
+        onSecondaryAction: viewModel.selectedCount > 0
+            ? () => _didTapDeleteSelected(context, viewModel)
+            : null,
       ),
       filters: const [AssetLookupFilters()],
       body: CatalogLookupTable(
@@ -66,6 +84,28 @@ class _AssetLookupBody extends StatelessWidget {
         columnFlexes: const [8, 10, 22, 12, 10, 8, 12],
         actionsHeader: '동작',
         actionsFlex: 10,
+        leadingFlex: 3,
+        leadingHeader: Align(
+          alignment: Alignment.centerLeft,
+          child: Checkbox(
+            checked: allVisibleChecked,
+            onChanged: visibleIds.isEmpty
+                ? null
+                : (value) => viewModel.didSetVisibleSelection(value == true),
+          ),
+        ),
+        leadingBuilder: (context, index) {
+          final row = viewModel.visibleRows[index];
+          return Align(
+            alignment: Alignment.centerLeft,
+            child: Checkbox(
+              checked: viewModel.isSelected(row.assetId),
+              onChanged: row.assetId.isEmpty
+                  ? null
+                  : (value) => viewModel.didToggleSelected(row.assetId, value),
+            ),
+          );
+        },
         emptyTitle: '조건에 맞는 파일이 없습니다',
         isLoadingMore: viewModel.isLoadingMore,
         onNearEnd: viewModel.didScrollNearEnd,
@@ -207,6 +247,76 @@ Future<void> _didTapDelete(
             ],
           );
         },
+      );
+    },
+  );
+}
+
+Future<void> _didTapDeleteSelected(
+  BuildContext context,
+  AssetLookupViewModel viewModel,
+) async {
+  final count = viewModel.selectedCount;
+  if (count < 1) {
+    return;
+  }
+  final confirmed = await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return ContentDialog(
+        title: Text(
+          '선택한 파일 $count개를 지울까요?',
+          style: const TextStyle(fontSize: 16),
+        ),
+        content: const Text(
+          '각 파일마다 삭제를 시도합니다. 지울 수 없는 파일은 건너뛰고, '
+          '지울 수 있는 파일만 지웁니다. 되돌릴 수 없습니다.',
+        ),
+        actions: [
+          Button(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('지우기'),
+          ),
+        ],
+      );
+    },
+  );
+  if (confirmed != true || !context.mounted) {
+    return;
+  }
+  final result = await viewModel.deleteSelectedAssets();
+  if (!context.mounted) {
+    return;
+  }
+  await _showBulkDeleteInfoBar(context, result);
+}
+
+Future<void> _showBulkDeleteInfoBar(
+  BuildContext context,
+  ({int succeeded, List<String> failureNotes}) result,
+) async {
+  final lines = <String>[
+    '지움 ${result.succeeded}건',
+    if (result.failureNotes.isNotEmpty) '건너뜀 ${result.failureNotes.length}건',
+    ...result.failureNotes,
+  ];
+  final severity = result.failureNotes.isEmpty
+      ? InfoBarSeverity.success
+      : result.succeeded > 0
+      ? InfoBarSeverity.warning
+      : InfoBarSeverity.error;
+  await displayInfoBar(
+    context,
+    builder: (context, close) {
+      return InfoBar(
+        title: const Text('선택 삭제'),
+        content: Text(lines.join('\n')),
+        severity: severity,
+        onClose: close,
       );
     },
   );
