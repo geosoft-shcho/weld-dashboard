@@ -144,18 +144,20 @@ void main() {
       ),
       PipelineNodeVisual.done,
     );
+    // done.stored만 있고 embed 이벤트 없으면 임베딩 칸은 거짓 완료가 아니다.
     expect(
       pipelineStageVisual(
         stageId: 'embed',
         selected: null,
         traces: traces,
       ),
-      PipelineNodeVisual.done,
+      PipelineNodeVisual.idle,
     );
+    expect(pipelineListHasEmbedStage(traces), isFalse);
 
     final stages = [
       for (final stage in pipelineStages)
-        if (stage.id != 'tool') stage,
+        if (stage.id != 'tool' && stage.id != 'embed') stage,
     ];
     expect(
       pipelineHighlightStageIds(
@@ -163,7 +165,7 @@ void main() {
         traces: traces,
         stages: stages,
       ),
-      containsAll(['collect', 'receive', 'postprocess', 'embed', 'done']),
+      containsAll(['collect', 'receive', 'postprocess', 'done']),
     );
     expect(
       pipelineStageVisual(
@@ -173,6 +175,51 @@ void main() {
       ),
       PipelineNodeVisual.done,
     );
+  });
+
+  test('embed lights only with embed evidence', () {
+    const storedOnly = TraceSnapshot(
+      traceId: '3',
+      lastEvent: 'done.stored',
+      status: UploadTraceStatus.done,
+      errorMessage: '',
+    );
+    expect(
+      pipelineStageVisual(
+        stageId: 'embed',
+        selected: storedOnly,
+        traces: const [storedOnly],
+      ),
+      PipelineNodeVisual.skipped,
+    );
+    expect(
+      pipelineNodeVisual(
+        nodeId: 'embed.done',
+        selected: storedOnly,
+        traces: const [storedOnly],
+      ),
+      PipelineNodeVisual.skipped,
+    );
+
+    const withEmbed = TraceSnapshot(
+      traceId: '4',
+      lastEvent: 'done.searchable',
+      status: UploadTraceStatus.done,
+      errorMessage: '',
+      events: [
+        TraceEventSnapshot(name: 'embed.done', status: 'ok'),
+        TraceEventSnapshot(name: 'done.searchable', status: 'ok'),
+      ],
+    );
+    expect(
+      pipelineStageVisual(
+        stageId: 'embed',
+        selected: null,
+        traces: const [withEmbed],
+      ),
+      PipelineNodeVisual.done,
+    );
+    expect(pipelineListHasEmbedStage(const [withEmbed]), isTrue);
   });
 
   test('aggregate prefers live over failed on same stage', () {

@@ -41,7 +41,9 @@ class PipelineStageChips extends StatelessWidget {
     final failed = viewModel.stageHasFailed;
     final stages = [
       for (final stage in pipelineStages)
-        if (stage.id != 'tool' || viewModel.doesShowToolStage) stage,
+        if ((stage.id != 'tool' || viewModel.doesShowToolStage) &&
+            (stage.id != 'embed' || viewModel.doesShowEmbedStage))
+          stage,
     ];
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,

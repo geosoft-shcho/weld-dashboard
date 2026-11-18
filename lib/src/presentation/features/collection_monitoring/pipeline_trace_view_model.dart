@@ -75,10 +75,14 @@ class PipelineTraceViewModel extends ChangeNotifier {
 
   bool get doesShowToolStage => pipelineListHasToolStage(visibleTraces);
 
+  bool get doesShowEmbedStage => pipelineListHasEmbedStage(visibleTraces);
+
   List<PipelineStageDef> get visibleStages {
     return [
       for (final stage in pipelineStages)
-        if (stage.id != 'tool' || doesShowToolStage) stage,
+        if ((stage.id != 'tool' || doesShowToolStage) &&
+            (stage.id != 'embed' || doesShowEmbedStage))
+          stage,
     ];
   }
 

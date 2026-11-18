@@ -159,19 +159,39 @@ String pipelineStageOf(String eventName) {
   return dot <= 0 ? event : event.substring(0, dot);
 }
 
-bool pipelineListHasToolStage(Iterable<TraceSnapshot> traces) {
-  for (final trace in traces) {
-    if (pipelineStageOf(trace.lastEvent) == 'tool') {
+bool pipelineTraceTouchesStage(TraceSnapshot trace, String stageId) {
+  if (pipelineStageOf(trace.lastEvent) == stageId) {
+    return true;
+  }
+  for (final event in trace.events) {
+    if (pipelineStageOf(event.name) == stageId) {
       return true;
-    }
-    for (final event in trace.events) {
-      if (pipelineStageOf(event.name) == 'tool') {
-        return true;
-      }
     }
   }
   return false;
 }
+
+bool pipelineListHasToolStage(Iterable<TraceSnapshot> traces) {
+  for (final trace in traces) {
+    if (pipelineTraceTouchesStage(trace, 'tool')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+bool pipelineListHasEmbedStage(Iterable<TraceSnapshot> traces) {
+  for (final trace in traces) {
+    if (pipelineTraceTouchesStage(trace, 'embed')) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/// 순서만으로 완료를 추론하지 않는 선택 단계(이벤트 증거가 필요).
+bool _isEvidenceOnlyStage(String stageId) =>
+    stageId == 'embed' || stageId == 'tool';
 
 Map<String, int> pipelineStageCounts(Iterable<TraceSnapshot> traces) {
   final counts = <String, int>{
@@ -299,6 +319,10 @@ PipelineNodeVisual pipelineStageVisual({
       return PipelineNodeVisual.idle;
     }
     if (stageOrder < lastOrder) {
+      if (_isEvidenceOnlyStage(stageId) &&
+          !pipelineTraceTouchesStage(selected, stageId)) {
+        return PipelineNodeVisual.skipped;
+      }
       return PipelineNodeVisual.done;
     }
     if (stageOrder > lastOrder) {
@@ -317,6 +341,10 @@ PipelineNodeVisual pipelineStageVisual({
       continue;
     }
     if (lastOrder > stageOrder) {
+      if (_isEvidenceOnlyStage(stageId) &&
+          !pipelineTraceTouchesStage(trace, stageId)) {
+        continue;
+      }
       hasDone = true;
       continue;
     }
@@ -405,9 +433,14 @@ PipelineNodeVisual pipelineNodeVisual({
     }
   }
   for (final trace in traces) {
+    final nodeStage = pipelineStageOf(nodeId);
     final lastOrder = _stageOrder(trace.stageId);
-    final nodeOrder = _stageOrder(pipelineStageOf(nodeId));
+    final nodeOrder = _stageOrder(nodeStage);
     if (lastOrder > nodeOrder && nodeOrder >= 0) {
+      if (_isEvidenceOnlyStage(nodeStage) &&
+          !pipelineTraceTouchesStage(trace, nodeStage)) {
+        continue;
+      }
       return PipelineNodeVisual.done;
     }
   }
@@ -469,11 +502,16 @@ PipelineNodeVisual _visualForSelected({
     return PipelineNodeVisual.done;
   }
   // last_event가 이 노드보다 뒤 stage면 이전 노드는 done으로 본다.
+  // embed/tool은 이벤트 증거가 없으면 skipped(거짓 완료 금지).
   final nodeStage = pipelineStageOf(nodeId);
   final lastStage = trace.stageId;
   final nodeOrder = _stageOrder(nodeStage);
   final lastOrder = _stageOrder(lastStage);
   if (lastOrder > nodeOrder && nodeOrder >= 0) {
+    if (_isEvidenceOnlyStage(nodeStage) &&
+        !pipelineTraceTouchesStage(trace, nodeStage)) {
+      return PipelineNodeVisual.skipped;
+    }
     return PipelineNodeVisual.done;
   }
   if (lastOrder == nodeOrder &&
