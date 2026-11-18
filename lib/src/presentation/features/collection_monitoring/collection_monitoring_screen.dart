@@ -9,7 +9,6 @@ import 'collection_monitoring_view_model.dart';
 import 'pipeline_trace_view_model.dart';
 import 'widgets/collection_command_bar.dart';
 import 'widgets/collection_kpi_cards.dart';
-import 'widgets/collection_status_table.dart';
 import 'widgets/collection_timeline_host.dart';
 import 'widgets/pipeline_trace_tab_body.dart';
 
@@ -210,26 +209,13 @@ class _MonitoringTabViewState extends State<_MonitoringTabView> {
                 isSelected: currentIndex == 1,
                 onPressed: () => setState(() => currentIndex = 1),
               ),
-
-              // 탭 현재 수집 상태 임시 주석. 삭제 금지
-
-              // _MonitoringTab(
-              //   label: '현재 수집 상태',
-              //   isSelected: currentIndex == 2,
-              //   onPressed: () => setState(() => currentIndex = 2),
-              // ),
             ],
           ),
         ),
         Expanded(
           child: currentIndex == 0
               ? PipelineTraceTabBody(viewModel: pipeline)
-              : currentIndex == 1
-              ? CollectionTimelineHost(
-                  viewModel: widget.viewModel,
-                  board: widget.board,
-                )
-              : CollectionStatusTable(
+              : CollectionTimelineHost(
                   viewModel: widget.viewModel,
                   board: widget.board,
                 ),

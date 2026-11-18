@@ -311,12 +311,6 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void didToggleDisconnectedOrErrorOnly(bool isChecked) {
-    _query = _query.copyWith(doesShowDisconnectedOrErrorOnly: isChecked);
-    _present();
-    notifyListeners();
-  }
-
   void didSelectRow(String nodeKey) {
     _query = _query.copyWith(selectedEquipmentId: nodeKey);
     _present();

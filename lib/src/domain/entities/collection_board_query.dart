@@ -15,7 +15,6 @@ class CollectionBoardQuery {
     required this.equipmentIds,
     required this.connectionStatuses,
     required this.selectedKpiCard,
-    required this.doesShowDisconnectedOrErrorOnly,
     required this.refreshIntervalSeconds,
     required this.selectedEquipmentId,
     required this.viewKind,
@@ -39,7 +38,6 @@ class CollectionBoardQuery {
       equipmentIds: const [],
       connectionStatuses: const [],
       selectedKpiCard: KpiCardKind.none,
-      doesShowDisconnectedOrErrorOnly: false,
       refreshIntervalSeconds: 0,
       selectedEquipmentId: '',
       viewKind: TimelineViewKind.auto,
@@ -59,7 +57,6 @@ class CollectionBoardQuery {
   final List<String> equipmentIds;
   final List<ConnectionStatus> connectionStatuses;
   final KpiCardKind selectedKpiCard;
-  final bool doesShowDisconnectedOrErrorOnly;
   final int refreshIntervalSeconds;
   final String selectedEquipmentId;
   final TimelineViewKind viewKind;
@@ -80,7 +77,6 @@ class CollectionBoardQuery {
     List<String>? equipmentIds,
     List<ConnectionStatus>? connectionStatuses,
     KpiCardKind? selectedKpiCard,
-    bool? doesShowDisconnectedOrErrorOnly,
     int? refreshIntervalSeconds,
     String? selectedEquipmentId,
     TimelineViewKind? viewKind,
@@ -99,9 +95,6 @@ class CollectionBoardQuery {
       equipmentIds: equipmentIds ?? this.equipmentIds,
       connectionStatuses: connectionStatuses ?? this.connectionStatuses,
       selectedKpiCard: selectedKpiCard ?? this.selectedKpiCard,
-      doesShowDisconnectedOrErrorOnly:
-          doesShowDisconnectedOrErrorOnly ??
-          this.doesShowDisconnectedOrErrorOnly,
       refreshIntervalSeconds:
           refreshIntervalSeconds ?? this.refreshIntervalSeconds,
       selectedEquipmentId: selectedEquipmentId ?? this.selectedEquipmentId,

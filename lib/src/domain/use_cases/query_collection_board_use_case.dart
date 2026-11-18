@@ -44,9 +44,6 @@ class QueryCollectionBoardUseCase {
     final snapshotRows = _snapshotRows(catalog, narrowed);
     final kpi = _kpiFrom(snapshotRows);
     var tableRows = _applyCard(snapshotRows, sanitized.selectedKpiCard);
-    if (sanitized.doesShowDisconnectedOrErrorOnly) {
-      tableRows = tableRows.where((row) => row.isDisconnectedOrError).toList();
-    }
     var selectedEquipmentId = sanitized.selectedEquipmentId;
     if (tableRows.isEmpty) {
       selectedEquipmentId = '';
