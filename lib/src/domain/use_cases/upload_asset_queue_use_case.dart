@@ -204,15 +204,21 @@ class UploadAssetQueueUseCase {
     required AssetUploadQueueItem base,
     required void Function(AssetUploadQueueItem item) publish,
   }) async {
-    UploadTraceStatus? lastLogged;
+    var lastLogged = '';
     while (true) {
       final trace = await _traceRepository.getTrace(traceId: traceId);
-      if (trace.status != lastLogged) {
-        lastLogged = trace.status;
+      final events = [
+        for (final event in trace.events) '${event.name}:${event.status}',
+      ].join(',');
+      final signature =
+          '${trace.status.name}|${trace.lastEvent}|${trace.stageId}|$events';
+      if (signature != lastLogged) {
+        lastLogged = signature;
         if (kDebugMode) {
           debugPrint(
-            '[upload] GetTrace traceId=$traceId '
-            'status=${trace.status.name} lastEvent=${trace.lastEvent}',
+            '[upload] GetTrace id=$traceId '
+            'status=${trace.status.name} last=${trace.lastEvent} '
+            'stage=${trace.stageId} events=[$events]',
           );
         }
       }

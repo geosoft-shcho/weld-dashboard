@@ -129,6 +129,7 @@ class PipelineTraceViewModel extends ChangeNotifier {
       if (didChange) {
         _traces = enriched;
         _tracesSignature = nextTracesSignature;
+        _debugLogLitCells(enriched);
       }
       _hasError = false;
       _errorMessage = '';
@@ -321,5 +322,57 @@ class PipelineTraceViewModel extends ChangeNotifier {
     return [
       for (final trace in traces) trace.pollSignature,
     ].join('\n');
+  }
+
+  void _debugLogLitCells(List<TraceSnapshot> traces) {
+    if (!kDebugMode) {
+      return;
+    }
+    for (final trace in traces) {
+      if (trace.status != UploadTraceStatus.running &&
+          _selected?.traceId != trace.traceId) {
+        continue;
+      }
+      final events = [
+        for (final event in trace.events) '${event.name}:${event.status}',
+      ].join(',');
+      debugPrint(
+        '[pipeline] id=${trace.traceId} status=${trace.status.name} '
+        'last=${trace.lastEvent} stage=${trace.stageId} events=[$events]',
+      );
+    }
+    final lit = <String>[];
+    final failedByStage = <String, List<String>>{};
+    for (final stage in visibleStages) {
+      final visual = pipelineStageVisual(
+        stageId: stage.id,
+        selected: _selected,
+        traces: traces,
+      );
+      if (visual == PipelineNodeVisual.idle) {
+        continue;
+      }
+      lit.add('${stage.id}:${visual.name}');
+      if (visual != PipelineNodeVisual.failed) {
+        continue;
+      }
+      failedByStage[stage.id] = [
+        for (final trace in traces)
+          if (trace.status == UploadTraceStatus.failed &&
+              trace.stageId == stage.id)
+            trace.traceId,
+      ];
+    }
+    if (lit.isNotEmpty) {
+      debugPrint('[pipeline] cells ${lit.join(' ')}');
+    }
+    for (final entry in failedByStage.entries) {
+      if (entry.value.isEmpty) {
+        continue;
+      }
+      debugPrint(
+        '[pipeline] ${entry.key}:failed by id=${entry.value.join(',')}',
+      );
+    }
   }
 }
