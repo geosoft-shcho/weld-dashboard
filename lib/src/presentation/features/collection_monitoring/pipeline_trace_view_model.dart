@@ -30,22 +30,8 @@ class PipelineTraceViewModel extends ChangeNotifier {
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
 
-  /// 필터 없이 전체. 진행 → 실패 → 완료 순으로 위에 둔다.
-  List<TraceSnapshot> get visibleTraces {
-    final running = <TraceSnapshot>[];
-    final failed = <TraceSnapshot>[];
-    final done = <TraceSnapshot>[];
-    for (final trace in _traces) {
-      if (trace.status == UploadTraceStatus.running) {
-        running.add(trace);
-      } else if (trace.status == UploadTraceStatus.failed) {
-        failed.add(trace);
-      } else {
-        done.add(trace);
-      }
-    }
-    return [...running, ...failed, ...done];
-  }
+  /// ListTraces 응답 순서(새것부터). 상태별 재정렬하지 않는다.
+  List<TraceSnapshot> get visibleTraces => List.unmodifiable(_traces);
 
   int get runningCount {
     var n = 0;

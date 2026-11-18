@@ -103,6 +103,11 @@ void main() {
 
     expect(viewModel.traces, hasLength(2));
     expect(viewModel.visibleTraces, hasLength(2));
+    // ListTraces 순서 유지: DONE이 앞이면 RUNNING이 뒤로 남는다.
+    expect(
+      viewModel.visibleTraces.map((t) => t.traceId).toList(),
+      ['20', '7'],
+    );
     expect(viewModel.stageCounts['done'], 1);
     expect(viewModel.stageCounts['receive'], 1);
     expect(viewModel.hasError, isFalse);
