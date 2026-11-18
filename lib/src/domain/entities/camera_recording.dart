@@ -14,6 +14,17 @@ class CameraRecordingFile {
   final DateTime? lastModifiedAt;
 }
 
+/// 웹 파일 선택 결과. 읽기 실패한 파일은 [warnings]에만 남긴다.
+class AssetPickResult {
+  const AssetPickResult({
+    this.files = const [],
+    this.warnings = const [],
+  });
+
+  final List<CameraRecordingFile> files;
+  final List<String> warnings;
+}
+
 class CameraRecording {
   const CameraRecording({
     required this.video,

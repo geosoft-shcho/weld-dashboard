@@ -332,7 +332,7 @@ class _CommentUpload implements AssetUploadRepository {
   Future<CameraRecordingFile?> pickFile() => throw UnimplementedError();
 
   @override
-  Future<List<CameraRecordingFile>> pickFiles() => throw UnimplementedError();
+  Future<AssetPickResult> pickFiles() => throw UnimplementedError();
 
   @override
   Future<AssetUploadResult> registerUploaded({

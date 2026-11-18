@@ -415,7 +415,7 @@ class AssetLookupViewModel extends ChangeNotifier {
     return _uploadAssetUseCase.pickFile();
   }
 
-  Future<List<CameraRecordingFile>> pickUploadFiles() {
+  Future<AssetPickResult> pickUploadFiles() {
     return _uploadAssetUseCase.pickFiles();
   }
 

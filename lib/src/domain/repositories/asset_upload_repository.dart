@@ -13,7 +13,7 @@ abstract class AssetUploadRepository {
 
   Future<CameraRecordingFile?> pickFile();
 
-  Future<List<CameraRecordingFile>> pickFiles();
+  Future<AssetPickResult> pickFiles();
 
   Future<AssetUploadResult> uploadFile({
     required String jobId,

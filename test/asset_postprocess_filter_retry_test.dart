@@ -297,7 +297,7 @@ class _FakeUploadRepository implements AssetUploadRepository {
   }
 
   @override
-  Future<List<CameraRecordingFile>> pickFiles() {
+  Future<AssetPickResult> pickFiles() {
     throw UnimplementedError();
   }
 

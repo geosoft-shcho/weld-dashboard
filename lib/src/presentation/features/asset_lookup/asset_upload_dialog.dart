@@ -44,7 +44,7 @@ Future<AssetUploadBatchResult?> showAssetUploadDialog(
   required String initialPassId,
   required bool lockJob,
   required Future<AssetUploadFormats> Function() loadFormats,
-  required Future<List<CameraRecordingFile>> Function() pickFiles,
+  required Future<AssetPickResult> Function() pickFiles,
   required AssetUploadQueueRunner uploadQueue,
   required AssetRetryPostprocessRunner retryPostprocess,
   List<CameraRecordingFile> initialFiles = const [],
@@ -115,7 +115,7 @@ class _AssetUploadDialog extends StatefulWidget {
   final String initialPassId;
   final bool lockJob;
   final Future<AssetUploadFormats> Function() loadFormats;
-  final Future<List<CameraRecordingFile>> Function() pickFiles;
+  final Future<AssetPickResult> Function() pickFiles;
   final AssetUploadQueueRunner uploadQueue;
   final AssetRetryPostprocessRunner retryPostprocess;
   final List<CameraRecordingFile> initialFiles;
@@ -235,12 +235,15 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
       return;
     }
     try {
-      final files = await widget.pickFiles();
-      if (!mounted || files.isEmpty) {
+      final picked = await widget.pickFiles();
+      if (!mounted) {
+        return;
+      }
+      if (picked.files.isEmpty && picked.warnings.isEmpty) {
         return;
       }
       setState(() {
-        for (final file in files) {
+        for (final file in picked.files) {
           _idSeq += 1;
           _rows.add(
             _DraftRow(
@@ -252,7 +255,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
             ),
           );
         }
-        _error = '';
+        _error = picked.warnings.join('\n');
         _batchResult = null;
       });
     } catch (error) {

@@ -77,7 +77,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
   Future<CameraRecordingFile?> pickFile() => pickAssetFile();
 
   @override
-  Future<List<CameraRecordingFile>> pickFiles() => pickAssetFiles();
+  Future<AssetPickResult> pickFiles() => pickAssetFiles();
 
   @override
   Future<AssetUploadResult> uploadFile({

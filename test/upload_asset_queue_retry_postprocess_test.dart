@@ -127,7 +127,7 @@ class _FakeUploadRepository implements AssetUploadRepository {
   }
 
   @override
-  Future<List<CameraRecordingFile>> pickFiles() {
+  Future<AssetPickResult> pickFiles() {
     throw UnimplementedError();
   }
 
@@ -246,7 +246,10 @@ class _FakeToolRunRepository implements ToolRunRepository {
 
 class _FakeTraceRepository implements TraceRepository {
   @override
-  Future<List<TraceSnapshot>> listTraces({int pageSize = 50}) {
+  Future<List<TraceSnapshot>> listTraces({
+    int pageSize = 50,
+    UploadTraceStatus? status,
+  }) {
     throw UnimplementedError();
   }
 

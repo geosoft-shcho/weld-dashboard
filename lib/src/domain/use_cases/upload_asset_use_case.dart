@@ -23,7 +23,7 @@ class UploadAssetUseCase {
 
   Future<CameraRecordingFile?> pickFile() => _repository.pickFile();
 
-  Future<List<CameraRecordingFile>> pickFiles() => _repository.pickFiles();
+  Future<AssetPickResult> pickFiles() => _repository.pickFiles();
 
   Future<AssetUploadResult> uploadFile({
     required String jobId,
