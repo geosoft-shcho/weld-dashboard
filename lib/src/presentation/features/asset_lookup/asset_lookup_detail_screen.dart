@@ -42,26 +42,6 @@ class _AssetLookupDetailBody extends StatelessWidget {
     AssetLookupDetailViewModel viewModel,
     AppCoordinator coordinator,
   ) async {
-    final reasons = <String>[
-      if (asset.childCount > 0) '파생의 부모',
-      if (viewModel.jobs.isNotEmpty) '작업 첨부',
-    ];
-    if (reasons.isNotEmpty) {
-      await showDialog<void>(
-        context: context,
-        builder: (dialogContext) => ContentDialog(
-          title: const Text('이 파일은 지울 수 없습니다'),
-          content: Text('${reasons.join(' · ')}입니다. 먼저 떼거나 파생을 지우세요.'),
-          actions: [
-            Button(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('닫기'),
-            ),
-          ],
-        ),
-      );
-      return;
-    }
     var error = '';
     var busy = false;
     final deleted = await showDialog<bool>(

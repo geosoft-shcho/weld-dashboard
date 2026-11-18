@@ -391,8 +391,11 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
   Exception _assetWriteFailure(ConnectException error) {
     switch (error.code) {
       case Code.failedPrecondition:
+        final message = error.message.trim();
         return _WriteFailure(
-          '작업에 붙어 있거나 파생의 부모이거나 성적서 원본이면 지울 수 없습니다.',
+          message.isEmpty
+              ? '작업에 붙어 있거나 파생의 부모이거나 성적서 원본이면 지울 수 없습니다.'
+              : message,
         );
       default:
         return error;
