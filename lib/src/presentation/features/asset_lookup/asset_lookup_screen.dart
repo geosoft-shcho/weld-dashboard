@@ -80,8 +80,8 @@ class _AssetLookupBody extends StatelessWidget {
       ),
       filters: const [AssetLookupFilters()],
       body: CatalogLookupTable(
-        headers: const ['번호', '종류', '파일', '장비', '크기', '길이', '상태'],
-        columnFlexes: const [8, 10, 22, 12, 10, 8, 12],
+        headers: const ['번호', '종류', '파일', '장비', '업로드', '크기', '길이', '상태'],
+        columnFlexes: const [7, 9, 18, 10, 14, 8, 7, 10],
         actionsHeader: '동작',
         actionsFlex: 10,
         leadingFlex: 3,
@@ -116,6 +116,7 @@ class _AssetLookupBody extends StatelessWidget {
               AssetLookupKindOption.labelOf(row.kindCode),
               row.fileName,
               viewModel.equipmentNameOf(row.equipmentId),
+              DashboardFormatters.dateTime(row.collectedAt),
               DashboardFormatters.byteSize(row.sizeBytes),
               DashboardFormatters.durationFromNs(row.durationNs),
               assetStatusText(

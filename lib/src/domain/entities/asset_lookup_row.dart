@@ -71,6 +71,7 @@ class AssetLookupRow {
     this.situation = '',
     this.contentUrl = '',
     this.mimeType = '',
+    this.collectedAt,
     this.recordedAt,
     this.postprocess = const AssetPostprocessSummary(),
   });
@@ -98,6 +99,9 @@ class AssetLookupRow {
   final String situation;
   final String contentUrl;
   final String mimeType;
+
+  /// 적재 시각(저장소에 들어온 시각). Asset.collected_at.
+  final DateTime? collectedAt;
   final DateTime? recordedAt;
   final AssetPostprocessSummary postprocess;
 }

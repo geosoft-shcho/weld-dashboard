@@ -301,6 +301,9 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
       situation: asset.situation,
       contentUrl: _contentUrlOf(asset),
       mimeType: asset.mimeType,
+      collectedAt: asset.hasCollectedAt()
+          ? asset.collectedAt.toDateTime().toLocal()
+          : null,
       recordedAt: asset.hasRecordedAt()
           ? asset.recordedAt.toDateTime().toLocal()
           : null,
