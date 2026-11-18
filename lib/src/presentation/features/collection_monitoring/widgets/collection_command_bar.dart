@@ -154,6 +154,7 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
                       value: query.refreshIntervalSeconds,
                       items: const [
                         ComboBoxItem(value: 0, child: Text('끔')),
+                        ComboBoxItem(value: 1, child: Text('1초')),
                         ComboBoxItem(value: 5, child: Text('5초')),
                         ComboBoxItem(value: 60, child: Text('1분')),
                       ],

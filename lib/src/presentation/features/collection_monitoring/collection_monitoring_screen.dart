@@ -141,7 +141,7 @@ class _CollectionMonitoringBody extends StatelessWidget {
           InfoBar(
             title: const Text('자동 갱신 중'),
             content: Text(
-              '${viewModel.query.refreshIntervalSeconds == 5 ? '5초' : '1분'} · 보드·파이프라인 재조회',
+              '${_refreshIntervalLabel(viewModel.query.refreshIntervalSeconds)} · 보드·파이프라인 재조회',
             ),
             severity: InfoBarSeverity.info,
           ),
@@ -271,4 +271,11 @@ class _MonitoringTab extends StatelessWidget {
       },
     );
   }
+}
+
+String _refreshIntervalLabel(int seconds) {
+  if (seconds == 60) {
+    return '1분';
+  }
+  return '$seconds초';
 }

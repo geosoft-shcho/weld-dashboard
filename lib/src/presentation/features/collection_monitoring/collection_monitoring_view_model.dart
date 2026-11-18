@@ -72,8 +72,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
   bool get doesHaveInvalidTimeRange => _query.doesHaveInvalidTimeRange;
-  bool get isAutoRefreshOn =>
-      _query.refreshIntervalSeconds == 5 || _query.refreshIntervalSeconds == 60;
+  bool get isAutoRefreshOn => _query.refreshIntervalSeconds > 0;
 
   CollectedNodePath get currentParent =>
       _ancestors.isEmpty ? CollectedNodePath.root(_view) : _ancestors.last.path;
