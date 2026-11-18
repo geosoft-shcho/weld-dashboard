@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:fixnum/fixnum.dart';
+import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/asset_upload.dart';
 import '../../domain/entities/camera_recording.dart';
@@ -181,13 +181,25 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     final warnings = decoded['warnings'];
     final duplicates = decoded['duplicateOf'];
     final jsonTraceId = _text(decoded['traceId']);
+    final runId = _text(decoded['runId']);
+    final traceSource = headerTraceId.isNotEmpty
+        ? 'header'
+        : (jsonTraceId.isNotEmpty ? 'json' : 'none');
+    final traceId =
+        headerTraceId.isNotEmpty ? headerTraceId : jsonTraceId;
+    if (kDebugMode) {
+      debugPrint(
+        '[upload] resolved traceId=${traceId.isEmpty ? '(empty)' : traceId} '
+        '($traceSource) runId=${runId.isEmpty ? '(empty)' : runId}',
+      );
+    }
     return AssetUploadResult(
       assetId: assetId,
       fileName: _text(asset['fileName']).isEmpty
           ? fallbackName
           : _text(asset['fileName']),
-      runId: _text(decoded['runId']),
-      traceId: headerTraceId.isNotEmpty ? headerTraceId : jsonTraceId,
+      runId: runId,
+      traceId: traceId,
       warnings: warnings is List
           ? [for (final warning in warnings) warning.toString()]
           : const [],

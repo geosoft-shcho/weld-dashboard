@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 import '../entities/asset_upload.dart';
 import '../entities/tool_run.dart';
 import '../entities/upload_trace.dart';
@@ -117,6 +119,9 @@ class UploadAssetQueueUseCase {
         ),
       );
       if (result.traceId.isNotEmpty) {
+        if (kDebugMode) {
+          debugPrint('[upload] wait=Trace traceId=${result.traceId}');
+        }
         await _waitForTrace(
           traceId: result.traceId,
           base: base.copyWith(result: result),
@@ -125,6 +130,9 @@ class UploadAssetQueueUseCase {
         return;
       }
       if (result.runId.isEmpty) {
+        if (kDebugMode) {
+          debugPrint('[upload] wait=done (no traceId/runId)');
+        }
         publish(
           base.copyWith(
             status: AssetUploadItemStatus.completed,
@@ -132,6 +140,9 @@ class UploadAssetQueueUseCase {
           ),
         );
         return;
+      }
+      if (kDebugMode) {
+        debugPrint('[upload] wait=Run runId=${result.runId}');
       }
       await _waitForPostprocess(
         runId: result.runId,
@@ -193,8 +204,18 @@ class UploadAssetQueueUseCase {
     required AssetUploadQueueItem base,
     required void Function(AssetUploadQueueItem item) publish,
   }) async {
+    UploadTraceStatus? lastLogged;
     while (true) {
       final trace = await _traceRepository.getTrace(traceId: traceId);
+      if (trace.status != lastLogged) {
+        lastLogged = trace.status;
+        if (kDebugMode) {
+          debugPrint(
+            '[upload] GetTrace traceId=$traceId '
+            'status=${trace.status.name} lastEvent=${trace.lastEvent}',
+          );
+        }
+      }
       switch (trace.status) {
         case UploadTraceStatus.running:
           final run = trace.run;

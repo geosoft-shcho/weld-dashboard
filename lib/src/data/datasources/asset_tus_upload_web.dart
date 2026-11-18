@@ -1,8 +1,8 @@
 import 'dart:convert';
 import 'dart:js_interop';
 import 'dart:math' as math;
-import 'dart:typed_data';
 
+import 'package:flutter/foundation.dart';
 import 'package:web/web.dart' as web;
 
 import 'asset_json_post_web.dart';
@@ -40,6 +40,11 @@ Future<({String body, String traceId})> uploadAssetTus({
   }
   final uploadUrl = _absoluteUrl(endpoint, location);
   final traceId = (created.headers.get('Upload-Trace-Id') ?? '').trim();
+  if (kDebugMode) {
+    debugPrint(
+      '[upload] tus Upload-Trace-Id=${traceId.isEmpty ? '(empty)' : traceId}',
+    );
+  }
 
   var offset = 0;
   var lastBody = '';
