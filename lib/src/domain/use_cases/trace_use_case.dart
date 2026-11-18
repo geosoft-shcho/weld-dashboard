@@ -6,8 +6,11 @@ class TraceUseCase {
 
   final TraceRepository _repository;
 
-  Future<List<TraceSnapshot>> listTraces({int pageSize = 50}) {
-    return _repository.listTraces(pageSize: pageSize);
+  Future<List<TraceSnapshot>> listTraces({
+    int pageSize = 50,
+    UploadTraceStatus? status,
+  }) {
+    return _repository.listTraces(pageSize: pageSize, status: status);
   }
 
   Future<TraceSnapshot> getTrace({required String traceId}) {

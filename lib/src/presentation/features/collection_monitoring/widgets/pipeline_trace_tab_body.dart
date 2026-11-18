@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+import '../../../../domain/entities/upload_trace.dart';
 import '../../../core/themes/app_theme.dart';
 import '../pipeline_trace_view_model.dart';
 import 'pipeline_stage_chips.dart';
@@ -40,6 +41,8 @@ class PipelineTraceTabBody extends StatelessWidget {
                   ),
           ),
           const SizedBox(height: 8),
+          _TraceListHeader(viewModel: viewModel),
+          const SizedBox(height: 4),
           SizedBox(height: 168, child: PipelineTraceList(viewModel: viewModel)),
           if (viewModel.selected != null)
             Padding(
@@ -60,5 +63,72 @@ class PipelineTraceTabBody extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _TraceListHeader extends StatelessWidget {
+  const _TraceListHeader({required this.viewModel});
+
+  final PipelineTraceViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final filterKey = _statusFilterKey(viewModel.statusFilter);
+    return Row(
+      children: [
+        SizedBox(
+          width: 120,
+          child: ComboBox<String>(
+            value: filterKey,
+            items: const [
+              ComboBoxItem(value: 'all', child: Text('전체')),
+              ComboBoxItem(value: 'running', child: Text('진행')),
+              ComboBoxItem(value: 'done', child: Text('완료')),
+              ComboBoxItem(value: 'failed', child: Text('실패')),
+            ],
+            onChanged: (value) {
+              if (value == null) {
+                return;
+              }
+              viewModel.didSelectStatusFilter(_statusFilterOf(value));
+            },
+          ),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          '최근 ${PipelineTraceViewModel.recentPageSize}건',
+          style: const TextStyle(
+            color: AppTheme.STATUS_OFF,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+String _statusFilterKey(UploadTraceStatus? status) {
+  switch (status) {
+    case UploadTraceStatus.running:
+      return 'running';
+    case UploadTraceStatus.done:
+      return 'done';
+    case UploadTraceStatus.failed:
+      return 'failed';
+    case null:
+      return 'all';
+  }
+}
+
+UploadTraceStatus? _statusFilterOf(String key) {
+  switch (key) {
+    case 'running':
+      return UploadTraceStatus.running;
+    case 'done':
+      return UploadTraceStatus.done;
+    case 'failed':
+      return UploadTraceStatus.failed;
+    default:
+      return null;
   }
 }

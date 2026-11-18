@@ -163,9 +163,18 @@ class _RecordingTraceRepository implements TraceRepository {
   final List<String> getTraceIds = [];
 
   @override
-  Future<List<TraceSnapshot>> listTraces({int pageSize = 50}) async {
+  Future<List<TraceSnapshot>> listTraces({
+    int pageSize = 50,
+    UploadTraceStatus? status,
+  }) async {
     listCallCount++;
-    return listed;
+    if (status == null) {
+      return listed;
+    }
+    return [
+      for (final trace in listed)
+        if (trace.status == status) trace,
+    ];
   }
 
   @override

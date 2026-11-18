@@ -112,6 +112,40 @@ void main() {
     expect(viewModel.stageCounts['receive'], 1);
     expect(viewModel.hasError, isFalse);
     expect(viewModel.isLoading, isFalse);
+    expect(viewModel.statusFilter, isNull);
+    expect(repo.lastStatus, isNull);
+    expect(repo.lastPageSize, PipelineTraceViewModel.recentPageSize);
+
+    viewModel.dispose();
+  });
+
+  test('PipelineTraceViewModel passes status filter to ListTraces', () async {
+    final repo = _FakeTraceRepository([
+      const TraceSnapshot(
+        traceId: '7',
+        fileName: 'b.bin',
+        lastEvent: 'receive.done',
+        status: UploadTraceStatus.running,
+        errorMessage: '',
+      ),
+    ]);
+    final viewModel = PipelineTraceViewModel(
+      traceUseCase: TraceUseCase(repo),
+    );
+
+    await viewModel.refresh();
+    expect(repo.lastStatus, isNull);
+
+    await viewModel.didSelectStatusFilter(UploadTraceStatus.running);
+    expect(viewModel.statusFilter, UploadTraceStatus.running);
+    expect(repo.lastStatus, UploadTraceStatus.running);
+    expect(repo.lastPageSize, PipelineTraceViewModel.recentPageSize);
+
+    await viewModel.didSelectStatusFilter(UploadTraceStatus.done);
+    expect(repo.lastStatus, UploadTraceStatus.done);
+
+    await viewModel.didSelectStatusFilter(null);
+    expect(repo.lastStatus, isNull);
 
     viewModel.dispose();
   });
@@ -121,10 +155,23 @@ class _FakeTraceRepository implements TraceRepository {
   _FakeTraceRepository(this._traces);
 
   final List<TraceSnapshot> _traces;
+  UploadTraceStatus? lastStatus;
+  int? lastPageSize;
 
   @override
-  Future<List<TraceSnapshot>> listTraces({int pageSize = 50}) async {
-    return _traces;
+  Future<List<TraceSnapshot>> listTraces({
+    int pageSize = 50,
+    UploadTraceStatus? status,
+  }) async {
+    lastPageSize = pageSize;
+    lastStatus = status;
+    if (status == null) {
+      return _traces;
+    }
+    return [
+      for (final trace in _traces)
+        if (trace.status == status) trace,
+    ];
   }
 
   @override

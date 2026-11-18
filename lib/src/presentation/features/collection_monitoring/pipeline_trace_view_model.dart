@@ -11,6 +11,9 @@ class PipelineTraceViewModel extends ChangeNotifier {
     required TraceUseCase traceUseCase,
   }) : _traceUseCase = traceUseCase;
 
+  /// ListTraces 최근 창 크기. page_token 페이지네이션 없음.
+  static const int recentPageSize = 80;
+
   final TraceUseCase _traceUseCase;
 
   Timer? _pollTimer;
@@ -18,6 +21,8 @@ class PipelineTraceViewModel extends ChangeNotifier {
 
   List<TraceSnapshot> _traces = const [];
   TraceSnapshot? _selected;
+  /// null = 전체(ListTraces status 비움).
+  UploadTraceStatus? _statusFilter;
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
@@ -26,6 +31,7 @@ class PipelineTraceViewModel extends ChangeNotifier {
 
   List<TraceSnapshot> get traces => List.unmodifiable(_traces);
   TraceSnapshot? get selected => _selected;
+  UploadTraceStatus? get statusFilter => _statusFilter;
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
@@ -107,7 +113,10 @@ class PipelineTraceViewModel extends ChangeNotifier {
       notifyListeners();
     }
     try {
-      final listed = await _traceUseCase.listTraces(pageSize: 80);
+      final listed = await _traceUseCase.listTraces(
+        pageSize: recentPageSize,
+        status: _statusFilter,
+      );
       if (version != _pollVersion) {
         return;
       }
@@ -183,6 +192,15 @@ class PipelineTraceViewModel extends ChangeNotifier {
     }
     await _loadSelection(traceId, version: version, preloaded: preloaded);
     notifyListeners();
+  }
+
+  Future<void> didSelectStatusFilter(UploadTraceStatus? status) async {
+    if (_statusFilter == status) {
+      return;
+    }
+    _statusFilter = status;
+    notifyListeners();
+    await refresh();
   }
 
   void didClearSelection() {

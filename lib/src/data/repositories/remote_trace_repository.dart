@@ -59,19 +59,35 @@ class RemoteTraceRepository implements TraceRepository {
   final MediaTagDataSource _mediaTag;
 
   @override
-  Future<List<TraceSnapshot>> listTraces({int pageSize = 50}) async {
+  Future<List<TraceSnapshot>> listTraces({
+    int pageSize = 50,
+    UploadTraceStatus? status,
+  }) async {
     final size = pageSize < 1 ? 50 : (pageSize > 500 ? 500 : pageSize);
     try {
       // status 비움 = 전부(RUNNING·DONE·FAILED). proto ListTracesRequest 주석.
-      final response = await _mediaTag.traceService.listTraces(
-        trace_pb.ListTracesRequest(pageSize: size),
-      );
+      final request = trace_pb.ListTracesRequest(pageSize: size);
+      if (status != null) {
+        request.status = _protoStatusOf(status);
+      }
+      final response = await _mediaTag.traceService.listTraces(request);
       return traceSnapshotsFromListResponse(response);
     } on ConnectException catch (error) {
       final message = error.message.trim();
       throw TraceException(
         message.isEmpty ? '파이프라인 목록을 불러오지 못했습니다.' : message,
       );
+    }
+  }
+
+  trace_enum.TraceStatus _protoStatusOf(UploadTraceStatus status) {
+    switch (status) {
+      case UploadTraceStatus.running:
+        return trace_enum.TraceStatus.TRACE_STATUS_RUNNING;
+      case UploadTraceStatus.done:
+        return trace_enum.TraceStatus.TRACE_STATUS_DONE;
+      case UploadTraceStatus.failed:
+        return trace_enum.TraceStatus.TRACE_STATUS_FAILED;
     }
   }
 
