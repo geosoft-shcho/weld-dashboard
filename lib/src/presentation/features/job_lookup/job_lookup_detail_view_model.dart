@@ -294,6 +294,22 @@ class JobLookupDetailViewModel extends ChangeNotifier {
     await _reloadDetail();
   }
 
+  Future<AssetLookupPage> listAttachCandidates({
+    required String query,
+    required String kindCode,
+    required bool unattachedOnly,
+    required String pageToken,
+  }) {
+    return _listAssetLookupPageUseCase.execute(
+      kindCode: kindCode,
+      query: query,
+      equipmentId: '',
+      unattachedOnly: unattachedOnly,
+      pageSize: attachmentsPageSize,
+      pageToken: pageToken,
+    );
+  }
+
   Future<void> attachAsset({
     required String assetId,
     required String passId,
@@ -303,6 +319,23 @@ class JobLookupDetailViewModel extends ChangeNotifier {
       assetId: assetId,
       passId: passId,
     );
+    await _reloadAttachments();
+  }
+
+  /// AttachAsset는 파일당 1회이므로 여러 개는 순서대로 붙인 뒤 목록을 한 번 다시 받는다.
+  Future<void> attachAssets({
+    required List<String> assetIds,
+    required String passId,
+  }) async {
+    for (final assetId in assetIds) {
+      final id = assetId.trim();
+      if (id.isEmpty) continue;
+      await _jobAdminUseCase.attachAsset(
+        jobId: jobId,
+        assetId: id,
+        passId: passId,
+      );
+    }
     await _reloadAttachments();
   }
 

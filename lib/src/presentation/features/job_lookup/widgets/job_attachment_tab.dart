@@ -8,10 +8,11 @@ import '../../../core/themes/app_theme.dart';
 import '../../../core/widgets/screen_command_bar.dart';
 import '../../../core/widgets/section_empty_placeholder.dart';
 import '../../../navigation/app_coordinator.dart';
+import '../../asset_lookup/asset_attach_dialog.dart';
 import '../../asset_lookup/asset_upload_dialog.dart';
+import '../../auth/auth_session_view_model.dart';
 import '../job_lookup_detail_view_model.dart';
 import 'job_detail_action_bar.dart';
-import 'job_detail_text_input.dart';
 
 const double _kAttachmentColId = 70;
 const double _kAttachmentColKind = 90;
@@ -70,6 +71,80 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
     );
   }
 
+  bool _isClipDetachBlock(ConnectException error) {
+    return error.code == Code.failedPrecondition &&
+        error.message.contains('clip_job_id_source_asset_id_fkey');
+  }
+
+  bool _isCommentDetachBlock(ConnectException error) {
+    if (error.code != Code.failedPrecondition) return false;
+    final message = error.message;
+    return message.contains('코멘트') || message.contains('DeleteComment');
+  }
+
+  Future<void> _showDetachFailureDialog({
+    required String assetId,
+    required Object error,
+  }) async {
+    if (!mounted) return;
+    if (error is! ConnectException) {
+      await _showErrorDialog('첨부를 해제할 수 없습니다', _userFacingError(error));
+      return;
+    }
+    if (_isClipDetachBlock(error)) {
+      final canOpenVideo = context.read<AuthSessionViewModel>()
+          .canAccessVideoMultimodal;
+      final openTimeline = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => ContentDialog(
+          title: const Text('첨부를 해제할 수 없습니다'),
+          content: Text(
+            '자료 $assetId를 쓰는 타임라인 클립이 있어 첨부를 뗄 수 없습니다.\n'
+            '타임라인에서 해당 자료 클립을 지운 뒤 다시 첨부 해제를 누르세요.\n'
+            '클립 삭제는 되돌릴 수 없습니다.',
+          ),
+          actions: [
+            Button(
+              onPressed: () => Navigator.of(dialogContext).pop(false),
+              child: const Text('닫기'),
+            ),
+            FilledButton(
+              onPressed: canOpenVideo
+                  ? () => Navigator.of(dialogContext).pop(true)
+                  : null,
+              child: const Text('타임라인으로 이동'),
+            ),
+          ],
+        ),
+      );
+      if (openTimeline == true && mounted) {
+        context.read<AppCoordinator>().didTapOpenVideoMultimodal(
+          context,
+          jobId: _viewModel.jobId,
+        );
+      }
+      return;
+    }
+    if (_isCommentDetachBlock(error)) {
+      await _showErrorDialog(
+        '첨부를 해제할 수 없습니다',
+        '코멘트가 이 녹화를 쓰고 있습니다. 코멘트를 먼저 지운 뒤 다시 첨부 해제를 누르세요.',
+      );
+      return;
+    }
+    if (error.code == Code.failedPrecondition) {
+      final detail = error.message.trim();
+      final body = detail.isEmpty
+          ? '이 자료를 쓰는 클립이나 성적서 매칭이 남아 있을 수 있습니다. '
+              '참조를 끊은 뒤 다시 첨부 해제를 누르세요.'
+          : '이 자료를 쓰는 클립이나 성적서 매칭이 남아 있을 수 있습니다. '
+              '참조를 끊은 뒤 다시 첨부 해제를 누르세요.\n$detail';
+      await _showErrorDialog('첨부를 해제할 수 없습니다', body);
+      return;
+    }
+    await _showErrorDialog('첨부를 해제할 수 없습니다', _userFacingError(error));
+  }
+
   Future<void> _run(Future<void> Function() action) async {
     setState(() => _isWorking = true);
     try {
@@ -86,7 +161,7 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
       context: context,
       builder: (dialogContext) => ContentDialog(
         title: const Text('첨부를 해제할까요?'),
-        content: const Text('이 작업에서만 떼어냅니다. 에셋 자체는 남습니다.'),
+        content: const Text('이 작업에서만 떼어냅니다. 파일 자체는 남습니다.'),
         actions: [
           Button(
             onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -104,7 +179,7 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
     try {
       await _viewModel.detachAsset(assetId);
     } catch (error) {
-      await _showErrorDialog('첨부를 해제할 수 없습니다', _userFacingError(error));
+      await _showDetachFailureDialog(assetId: assetId, error: error);
     } finally {
       if (mounted) setState(() => _isWorking = false);
     }
@@ -132,7 +207,7 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
       context,
       builder: (context, close) {
         return InfoBar(
-          title: const Text('올리기 완료'),
+          title: const Text('업로드 완료'),
           content: Text(notes.join('\n')),
           severity: InfoBarSeverity.warning,
           onClose: close,
@@ -142,60 +217,24 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
   }
 
   Future<void> _didTapAttach() async {
-    final assetId = TextEditingController();
-    var passId = '';
-    final confirmed = await showDialog<bool>(
+    final result = await showAssetAttachDialog(
       context: context,
-      builder: (dialogContext) => StatefulBuilder(
-        builder: (dialogContext, setDialogState) => ContentDialog(
-          title: const Text('에셋 붙이기'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                '문서 PDF를 붙이면 첨부만 됩니다. 성적서 세트에는 이어지지 않습니다.',
-                style: TextStyle(fontSize: 12),
-              ),
-              const SizedBox(height: 8),
-              InfoLabel(
-                label: '에셋 번호 *',
-                child: JobDetailTextInput(
-                  controller: assetId,
-                  hintText: '1234',
-                ),
-              ),
-              const SizedBox(height: 12),
-              InfoLabel(
-                label: '패스',
-                child: _passCombo(
-                  value: passId,
-                  onChanged: (value) =>
-                      setDialogState(() => passId = value ?? ''),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            Button(
-              onPressed: () => Navigator.of(dialogContext).pop(false),
-              child: const Text('취소'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.of(dialogContext).pop(true),
-              child: const Text('붙이기'),
-            ),
-          ],
-        ),
+      loadPage: _viewModel.listAttachCandidates,
+      passes: [
+        for (final pass in _viewModel.passes)
+          AssetAttachPassOption(passId: pass.passId, passNo: pass.passNo),
+      ],
+      excludedAssetIds: {
+        for (final row in _viewModel.attachments) row.assetId,
+      },
+    );
+    if (result == null || result.assetIds.isEmpty) return;
+    await _run(
+      () => _viewModel.attachAssets(
+        assetIds: result.assetIds,
+        passId: result.passId,
       ),
     );
-    final id = assetId.text.trim();
-    if (confirmed != true) return;
-    if (id.isEmpty || int.tryParse(id) == null) {
-      await _showErrorDialog('요청을 처리할 수 없습니다', '에셋 번호를 숫자로 넣으세요.');
-      return;
-    }
-    await _run(() => _viewModel.attachAsset(assetId: id, passId: passId));
   }
 
   Widget _passCombo({
@@ -240,14 +279,14 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
                   items: [
                     CommandBarButton(
                       icon: const Icon(FluentIcons.upload, size: 12),
-                      label: const CommandBarLabel('에셋 올리기'),
+                      label: const CommandBarLabel('파일 업로드'),
                       onPressed: _isWorking || _viewModel.isLoadingAttachments
                           ? null
                           : _didTapUploadToJob,
                     ),
                     CommandBarButton(
                       icon: const Icon(FluentIcons.attach, size: 12),
-                      label: const CommandBarLabel('에셋 붙이기(첨부만)'),
+                      label: const CommandBarLabel('파일 첨부'),
                       onPressed: _isWorking || _viewModel.isLoadingAttachments
                           ? null
                           : _didTapAttach,
@@ -261,7 +300,7 @@ class _JobAttachmentTabState extends State<JobAttachmentTab> {
                 else if (_viewModel.attachments.isEmpty)
                   const SectionEmptyPlaceholder(
                     title: '첨부가 없습니다',
-                    message: '이 작업에 올리거나 이미 있는 에셋을 붙일 수 있습니다.',
+                    message: '이 작업에 업로드하거나 이미 있는 파일을 첨부할 수 있습니다.',
                   )
                 else
                   Container(

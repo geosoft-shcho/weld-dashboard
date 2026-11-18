@@ -36,8 +36,12 @@ import 'package:weld_dashboard/src/domain/use_cases/label_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_job_project_id_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_audio_waveform_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/load_timeseries_waveform_use_case.dart';
+import 'package:weld_dashboard/src/domain/entities/job_detail.dart';
+import 'package:weld_dashboard/src/domain/repositories/job_admin_repository.dart';
+import 'package:weld_dashboard/src/domain/use_cases/job_admin_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_history_work_attachments_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/list_asset_lookup_page_use_case.dart';
+import 'package:weld_dashboard/src/domain/use_cases/list_job_passes_use_case.dart';
 import 'package:weld_dashboard/src/domain/repositories/asset_lookup_repository.dart';
 import 'package:weld_dashboard/src/domain/entities/asset_lookup_row.dart';
 import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
@@ -2076,6 +2080,8 @@ VideoMultimodalViewModel _viewModel(
     loadAudioWaveformUseCase: LoadAudioWaveformUseCase(
       GetJobTimelineUseCase(repository),
     ),
+    jobAdminUseCase: JobAdminUseCase(_UnusedJobAdminRepository()),
+    listJobPassesUseCase: ListJobPassesUseCase(_IdleAssetLookupRepository()),
     jobId: 'job-1',
   );
 }
@@ -2635,4 +2641,58 @@ class _IdleAssetLookupRepository implements AssetLookupRepository {
 
   @override
   Future<String> readContent({required String url}) async => '';
+}
+
+class _UnusedJobAdminRepository implements JobAdminRepository {
+  @override
+  Future<void> attachAsset({
+    required String jobId,
+    required String assetId,
+    required String passId,
+  }) async {}
+
+  @override
+  Future<void> createPass({
+    required String jobId,
+    required PassEditDraft draft,
+  }) async {}
+
+  @override
+  Future<void> deleteJob({required String jobId}) async {}
+
+  @override
+  Future<void> deletePass({required String passId}) async {}
+
+  @override
+  Future<void> detachAsset({
+    required String jobId,
+    required String assetId,
+  }) async {}
+
+  @override
+  Future<JobDetail> getJobDetail({required String jobId}) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<JobDetail> updateJob({
+    required JobDetail original,
+    required JobEditDraft draft,
+  }) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<JobDetail> updateJobReportSet({
+    required String jobId,
+    required String reportSetId,
+  }) {
+    throw StateError('unused');
+  }
+
+  @override
+  Future<void> updatePass({
+    required JobPassDetail original,
+    required PassEditDraft draft,
+  }) async {}
 }

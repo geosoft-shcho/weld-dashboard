@@ -435,6 +435,8 @@ void setupLocator({required bool pdfrxReady}) {
       loadJobProjectIdUseCase: locator(),
       loadTimeseriesWaveformUseCase: locator(),
       loadAudioWaveformUseCase: locator(),
+      jobAdminUseCase: locator(),
+      listJobPassesUseCase: locator(),
       jobId: jobId,
     ),
   );

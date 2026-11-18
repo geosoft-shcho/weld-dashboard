@@ -22,10 +22,12 @@ import '../../../domain/use_cases/delete_track_use_case.dart';
 import '../../../domain/use_cases/get_clip_use_case.dart';
 import '../../../domain/entities/waveform_series_bundle.dart';
 import '../../../domain/use_cases/get_job_timeline_use_case.dart';
+import '../../../domain/use_cases/job_admin_use_case.dart';
 import '../../../domain/use_cases/label_use_case.dart';
 import '../../../domain/entities/asset_lookup_row.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_history_work_attachments_use_case.dart';
+import '../../../domain/use_cases/list_job_passes_use_case.dart';
 import '../../../domain/use_cases/load_job_project_id_use_case.dart';
 import '../../../domain/use_cases/load_audio_waveform_use_case.dart';
 import '../../../domain/use_cases/load_timeseries_waveform_use_case.dart';
@@ -73,6 +75,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     required this._loadJobProjectIdUseCase,
     required this._loadTimeseriesWaveformUseCase,
     required this._loadAudioWaveformUseCase,
+    required this._jobAdminUseCase,
+    required this._listJobPassesUseCase,
     required this.jobId,
     this.toolRunPoll = const Duration(seconds: 2),
   });
@@ -123,6 +127,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final LoadJobProjectIdUseCase _loadJobProjectIdUseCase;
   final LoadTimeseriesWaveformUseCase _loadTimeseriesWaveformUseCase;
   final LoadAudioWaveformUseCase _loadAudioWaveformUseCase;
+  final JobAdminUseCase _jobAdminUseCase;
+  final ListJobPassesUseCase _listJobPassesUseCase;
   final String jobId;
   final Duration toolRunPoll;
 
@@ -147,6 +153,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   final Map<int, String> _assetsPageTokenByPage = <int, String>{1: ''};
   bool _isLoadingAssetsPage = false;
   int _assetsPageLoadEpoch = 0;
+  List<JobPassOption> _passes = const [];
   JobTimeline _timeline = JobTimeline.empty;
   final Set<String> _hiddenAttachmentIds = {};
   final Set<String> _hiddenTrackIds = {};
@@ -246,6 +253,7 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get hasNotice => _noticeText.isNotEmpty;
   List<WorkAttachment> get attachments => List.unmodifiable(_attachments);
   List<WorkAttachment> get assetsPageRows => List.unmodifiable(_assetsPageRows);
+  List<JobPassOption> get passes => List.unmodifiable(_passes);
   int get assetsPageIndex => _assetsPageIndex;
   int get assetsPageSize => _assetsPageSize;
   int get assetsTotalCount => _assetsTotalCount;
@@ -606,7 +614,29 @@ class VideoMultimodalViewModel extends ChangeNotifier {
       _loadSideAssets(),
       _ensureLabels(),
       _restoreActiveToolRunInBackground(),
+      _loadJobPasses(),
     ]);
+    if (!_isClosed) {
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadJobPasses() async {
+    if (jobId.isEmpty || _isClosed) {
+      return;
+    }
+    try {
+      _passes = await _listJobPassesUseCase.execute(jobId: jobId);
+    } catch (_) {
+      _passes = const [];
+    }
+  }
+
+  Future<void> ensureJobPasses() async {
+    if (_passes.isNotEmpty || jobId.isEmpty || _isClosed) {
+      return;
+    }
+    await _loadJobPasses();
     if (!_isClosed) {
       notifyListeners();
     }
@@ -644,6 +674,65 @@ class VideoMultimodalViewModel extends ChangeNotifier {
     _assetsSearchQuery = '';
     _resetAssetsPageCache();
     notifyListeners();
+    await _loadAssetsPage(1);
+  }
+
+  Future<void> didTapDetachAsset(String assetId) async {
+    final id = assetId.trim();
+    if (jobId.isEmpty || id.isEmpty || _isClosed) {
+      return;
+    }
+    await _jobAdminUseCase.detachAsset(jobId: jobId, assetId: id);
+    if (_isClosed) {
+      return;
+    }
+    await _loadAssetsPage(_assetsPageIndex);
+  }
+
+  Future<AssetLookupPage> listAttachCandidates({
+    required String query,
+    required String kindCode,
+    required bool unattachedOnly,
+    required String pageToken,
+  }) {
+    return _listAssetLookupPageUseCase.execute(
+      kindCode: kindCode,
+      query: query,
+      equipmentId: '',
+      unattachedOnly: unattachedOnly,
+      pageSize: 50,
+      pageToken: pageToken,
+    );
+  }
+
+  Future<void> didTapAttachAsset({
+    required String assetId,
+    required String passId,
+  }) async {
+    await didTapAttachAssets(assetIds: [assetId], passId: passId);
+  }
+
+  /// AttachAsset는 파일당 1회이므로 여러 개는 순서대로 붙인 뒤 목록을 한 번 다시 받는다.
+  Future<void> didTapAttachAssets({
+    required List<String> assetIds,
+    required String passId,
+  }) async {
+    if (jobId.isEmpty || assetIds.isEmpty || _isClosed) {
+      return;
+    }
+    for (final assetId in assetIds) {
+      final id = assetId.trim();
+      if (id.isEmpty || _isClosed) continue;
+      await _jobAdminUseCase.attachAsset(
+        jobId: jobId,
+        assetId: id,
+        passId: passId,
+      );
+    }
+    if (_isClosed) {
+      return;
+    }
+    _resetAssetsPageCache();
     await _loadAssetsPage(1);
   }
 

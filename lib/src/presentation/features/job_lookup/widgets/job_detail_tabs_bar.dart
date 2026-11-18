@@ -33,8 +33,8 @@ class JobDetailTabsBar extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.end,
           children: [
             _tab(JobLookupDetailTab.info, '기본 정보'),
-            _tab(JobLookupDetailTab.passes, '패스 $passCount'),
-            _tab(JobLookupDetailTab.attachments, '첨부'),
+            _tab(JobLookupDetailTab.passes, '패스 ($passCount)'),
+            _tab(JobLookupDetailTab.attachments, '파일 첨부'),
           ],
         ),
       ),

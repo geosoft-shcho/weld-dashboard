@@ -23,7 +23,7 @@ class MultimodalSidePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = switch (viewModel.side) {
       VideoMultimodalSide.ask => 360.0,
-      VideoMultimodalSide.assets => 360.0,
+      VideoMultimodalSide.assets => 440.0,
       VideoMultimodalSide.properties => 360.0,
       VideoMultimodalSide.comments => 360.0,
       _ => 320.0,

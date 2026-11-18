@@ -465,8 +465,8 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.timelineSaveMode ? '타임라인에 올리기' : '에셋 올리기';
-    final primaryLabel = widget.timelineSaveMode ? '저장' : '올리기';
+    final title = widget.timelineSaveMode ? '타임라인에 업로드' : '에셋 업로드';
+    final primaryLabel = widget.timelineSaveMode ? '저장' : '업로드';
     return ContentDialog(
       title: Text(title),
       constraints: const BoxConstraints(maxWidth: 720, maxHeight: 760),
@@ -513,7 +513,10 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
                       ])
                         Padding(
                           padding: const EdgeInsets.only(top: 4),
-                          child: Text(note, style: const TextStyle(fontSize: 12)),
+                          child: Text(
+                            note,
+                            style: const TextStyle(fontSize: 12),
+                          ),
                         ),
                     ],
                   ],
@@ -800,10 +803,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
           ),
           if (progress != null) ...[
             const SizedBox(height: 8),
-            Text(
-              _statusLine(progress),
-              style: const TextStyle(fontSize: 12),
-            ),
+            Text(_statusLine(progress), style: const TextStyle(fontSize: 12)),
             for (final warning in progress.warnings)
               Padding(
                 padding: const EdgeInsets.only(top: 2),

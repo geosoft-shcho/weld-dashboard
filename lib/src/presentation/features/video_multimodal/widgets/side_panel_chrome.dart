@@ -142,10 +142,12 @@ class SidePanelAccentButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.onPressed,
+    this.icon,
   });
 
   final String label;
   final VoidCallback? onPressed;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -159,7 +161,7 @@ class SidePanelAccentButton extends StatelessWidget {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
       ),
-      child: Text(label),
+      child: _SidePanelButtonLabel(label: label, icon: icon),
     );
   }
 }
@@ -169,10 +171,12 @@ class SidePanelQuietButton extends StatelessWidget {
     super.key,
     required this.label,
     required this.onPressed,
+    this.icon,
   });
 
   final String label;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
+  final IconData? icon;
 
   @override
   Widget build(BuildContext context) {
@@ -185,7 +189,29 @@ class SidePanelQuietButton extends StatelessWidget {
         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
         textStyle: const TextStyle(fontSize: 11),
       ),
-      child: Text(label),
+      child: _SidePanelButtonLabel(label: label, icon: icon),
+    );
+  }
+}
+
+class _SidePanelButtonLabel extends StatelessWidget {
+  const _SidePanelButtonLabel({required this.label, this.icon});
+
+  final String label;
+  final IconData? icon;
+
+  @override
+  Widget build(BuildContext context) {
+    if (icon == null) {
+      return Text(label);
+    }
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 12),
+        const SizedBox(width: 4),
+        Text(label),
+      ],
     );
   }
 }
@@ -282,21 +308,35 @@ class SidePanelDataCell {
     this.flex = 1,
     this.isHeader = false,
     this.badge = '',
-  }) : dot = null;
+  })  : dot = null,
+        child = null;
 
   const SidePanelDataCell.dot(this.dot)
-    : text = '',
-      flex = 1,
-      isHeader = false,
-      badge = '';
+      : text = '',
+        flex = 1,
+        isHeader = false,
+        badge = '',
+        child = null;
+
+  const SidePanelDataCell.child(
+    this.child, {
+    this.flex = 1,
+  })  : text = '',
+        isHeader = false,
+        badge = '',
+        dot = null;
 
   final String text;
   final int flex;
   final bool isHeader;
   final String badge;
   final Color? dot;
+  final Widget? child;
 
   Widget build({required bool isHeader}) {
+    if (child != null) {
+      return child!;
+    }
     final tone = isHeader || this.isHeader
         ? MultimodalStudioPalette.PANEL_MUTED
         : MultimodalStudioPalette.PANEL_INK;
@@ -312,7 +352,9 @@ class SidePanelDataCell {
           Flexible(
             child: Text(
               text,
-              overflow: TextOverflow.visible,
+              softWrap: true,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 color: tone,
                 fontSize: isHeader || this.isHeader ? 10 : 11,
