@@ -283,6 +283,7 @@ void setupLocator({required bool pdfrxReady}) {
       listUploadFormatsUseCase: locator(),
       uploadAssetUseCase: locator(),
       uploadAssetQueueUseCase: locator(),
+      deleteAssetUseCase: locator(),
     ),
   );
   locator.registerFactoryParam<ProjectLookupDetailViewModel, String, void>(

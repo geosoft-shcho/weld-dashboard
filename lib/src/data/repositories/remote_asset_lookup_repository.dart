@@ -299,9 +299,7 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
           : '',
       subject: asset.subject,
       situation: asset.situation,
-      contentUrl: asset.contentUrl.isEmpty
-          ? ''
-          : _mediaTag.resolveContentUrl(asset.contentUrl),
+      contentUrl: _contentUrlOf(asset),
       mimeType: asset.mimeType,
       recordedAt: asset.hasRecordedAt()
           ? asset.recordedAt.toDateTime().toLocal()
@@ -316,6 +314,16 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
             )
           : const AssetPostprocessSummary(),
     );
+  }
+
+  String _contentUrlOf(asset_pb.Asset asset) {
+    if (asset.contentUrl.isNotEmpty) {
+      return _mediaTag.resolveContentUrl(asset.contentUrl);
+    }
+    if (asset.assetId == Int64.ZERO) {
+      return '';
+    }
+    return _mediaTag.resolveContentUrl('/assets/${idText(asset.assetId)}/content');
   }
 
   run_pb.RunStatus _postprocessStatusOf(String code) {

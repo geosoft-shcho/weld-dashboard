@@ -245,7 +245,12 @@ class _UnsupportedPreview extends StatelessWidget {
             if (canOpen) ...[
               const SizedBox(height: 12),
               Button(
-                onPressed: () => openBrowserUrl(asset.contentUrl),
+                onPressed: () {
+                  final name = asset.fileName.trim().isEmpty
+                      ? asset.assetId
+                      : asset.fileName;
+                  downloadBrowserUrl(asset.contentUrl, fileName: name);
+                },
                 child: const Text('내려받아 열기'),
               ),
             ],

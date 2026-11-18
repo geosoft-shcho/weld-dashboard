@@ -9,6 +9,7 @@ import '../../../domain/entities/camera_recording.dart';
 import '../../../domain/entities/equipment.dart';
 import '../../../domain/entities/work_history_item.dart';
 import '../../../domain/entities/work_history_query.dart';
+import '../../../domain/use_cases/delete_asset_use_case.dart';
 import '../../../domain/use_cases/list_asset_lookup_page_use_case.dart';
 import '../../../domain/use_cases/list_equipment_lookup_use_case.dart';
 import '../../../domain/use_cases/list_upload_formats_use_case.dart';
@@ -24,6 +25,7 @@ class AssetLookupViewModel extends ChangeNotifier {
     required this._listUploadFormatsUseCase,
     required this._uploadAssetUseCase,
     required this._uploadAssetQueueUseCase,
+    required this._deleteAssetUseCase,
   });
 
   static const int pageSize = WorkHistoryQuery.BATCH_SIZE;
@@ -35,6 +37,7 @@ class AssetLookupViewModel extends ChangeNotifier {
   final ListUploadFormatsUseCase _listUploadFormatsUseCase;
   final UploadAssetUseCase _uploadAssetUseCase;
   final UploadAssetQueueUseCase _uploadAssetQueueUseCase;
+  final DeleteAssetUseCase _deleteAssetUseCase;
 
   String _kindCode = '';
   String _fileNameText = '';
@@ -163,6 +166,11 @@ class AssetLookupViewModel extends ChangeNotifier {
       }
     }
     await catalogsFuture;
+  }
+
+  Future<void> deleteAsset({required String assetId}) async {
+    await _deleteAssetUseCase.execute(assetId: assetId);
+    await load();
   }
 
   Future<void> _loadFilterCatalogs(int version) async {

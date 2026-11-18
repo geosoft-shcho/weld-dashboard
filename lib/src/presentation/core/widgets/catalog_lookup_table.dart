@@ -116,6 +116,9 @@ class CatalogLookupTable extends StatefulWidget {
     this.onRowTap,
     this.onNearEnd,
     this.isLoadingMore = false,
+    this.actionsHeader = '동작',
+    this.actionsFlex = 10,
+    this.actionsBuilder,
   });
 
   final List<String> headers;
@@ -126,12 +129,19 @@ class CatalogLookupTable extends StatefulWidget {
   final VoidCallback? onNearEnd;
   final bool isLoadingMore;
 
+  /// [actionsBuilder]가 있을 때만 헤더·행 오른쪽에 쓴다.
+  final String actionsHeader;
+  final int actionsFlex;
+  final Widget? Function(BuildContext context, int index)? actionsBuilder;
+
   @override
   State<CatalogLookupTable> createState() => _CatalogLookupTableState();
 }
 
 class _CatalogLookupTableState extends State<CatalogLookupTable> {
   final ScrollController _scrollController = ScrollController();
+
+  bool get _hasActions => widget.actionsBuilder != null;
 
   @override
   void initState() {
@@ -188,6 +198,8 @@ class _CatalogLookupTableState extends State<CatalogLookupTable> {
           cells: widget.headers,
           flexes: widget.columnFlexes,
           isHeader: true,
+          actionsHeader: _hasActions ? widget.actionsHeader : null,
+          actionsFlex: widget.actionsFlex,
         ),
         if (widget.rows.isEmpty)
           Padding(
@@ -215,22 +227,20 @@ class _CatalogLookupTableState extends State<CatalogLookupTable> {
                       child: Center(child: ProgressRing(strokeWidth: 2)),
                     );
                   }
-                  return HoverButton(
-                    onPressed: widget.onRowTap == null
-                        ? null
-                        : () => widget.onRowTap!(index),
-                    builder: (context, states) {
-                      return ColoredBox(
-                        color: AppTheme.tableRowColor(
-                          index: index,
-                          hovered: states.contains(WidgetState.hovered),
-                        ),
-                        child: _LookupRow(
-                          cells: widget.rows[index],
-                          flexes: widget.columnFlexes,
-                        ),
-                      );
-                    },
+                  final actions = _hasActions
+                      ? widget.actionsBuilder!(context, index)
+                      : null;
+                  return ColoredBox(
+                    color: AppTheme.tableRowColor(index: index, hovered: false),
+                    child: _LookupRow(
+                      cells: widget.rows[index],
+                      flexes: widget.columnFlexes,
+                      onCellsTap: widget.onRowTap == null
+                          ? null
+                          : () => widget.onRowTap!(index),
+                      actions: actions,
+                      actionsFlex: widget.actionsFlex,
+                    ),
                   );
                 },
               ),
@@ -246,14 +256,62 @@ class _LookupRow extends StatelessWidget {
     required this.cells,
     required this.flexes,
     this.isHeader = false,
+    this.onCellsTap,
+    this.actions,
+    this.actionsHeader,
+    this.actionsFlex = 10,
   });
 
   final List<String> cells;
   final List<int> flexes;
   final bool isHeader;
+  final VoidCallback? onCellsTap;
+  final Widget? actions;
+  final String? actionsHeader;
+  final int actionsFlex;
 
   @override
   Widget build(BuildContext context) {
+    final showActions = actions != null || actionsHeader != null;
+    var cellsFlex = 0;
+    for (var index = 0; index < cells.length; index++) {
+      cellsFlex += index < flexes.length ? flexes[index] : 1;
+    }
+    if (cellsFlex < 1) {
+      cellsFlex = 1;
+    }
+
+    final textCells = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var index = 0; index < cells.length; index++)
+          Expanded(
+            flex: index < flexes.length ? flexes[index] : 1,
+            child: Text(
+              cells[index].isEmpty ? '—' : cells[index],
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: isHeader ? FontWeight.w600 : FontWeight.w400,
+              ),
+            ),
+          ),
+      ],
+    );
+
+    final textArea = isHeader || onCellsTap == null
+        ? textCells
+        : HoverButton(
+            onPressed: onCellsTap,
+            builder: (context, states) {
+              return ColoredBox(
+                color: states.contains(WidgetState.hovered)
+                    ? AppTheme.SURFACE_RAISED.withValues(alpha: 0.35)
+                    : const Color(0x00000000),
+                child: textCells,
+              );
+            },
+          );
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: isHeader ? const Color(0xFF32363C) : const Color(0x00000000),
@@ -262,18 +320,21 @@ class _LookupRow extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            for (var index = 0; index < cells.length; index++)
+            Expanded(flex: cellsFlex, child: textArea),
+            if (showActions)
               Expanded(
-                flex: index < flexes.length ? flexes[index] : 1,
-                child: Text(
-                  cells[index].isEmpty ? '—' : cells[index],
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: isHeader ? FontWeight.w600 : FontWeight.w400,
-                  ),
-                ),
+                flex: actionsFlex,
+                child: isHeader
+                    ? Text(
+                        actionsHeader ?? '',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      )
+                    : (actions ?? const SizedBox.shrink()),
               ),
           ],
         ),

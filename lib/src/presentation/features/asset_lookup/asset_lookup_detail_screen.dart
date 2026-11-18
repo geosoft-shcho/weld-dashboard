@@ -120,7 +120,12 @@ class _AssetLookupDetailBody extends StatelessWidget {
       actions: [
         if (asset != null && asset.contentUrl.isNotEmpty)
           Button(
-            onPressed: () => openBrowserUrl(asset.contentUrl),
+            onPressed: () {
+              final name = asset.fileName.trim().isEmpty
+                  ? asset.assetId
+                  : asset.fileName;
+              downloadBrowserUrl(asset.contentUrl, fileName: name);
+            },
             child: const Text('내려받기'),
           ),
         const SizedBox(width: 8),

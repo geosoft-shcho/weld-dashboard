@@ -2,6 +2,8 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
 import '../../../domain/entities/asset_lookup_kind.dart';
+import '../../../domain/entities/asset_lookup_row.dart';
+import '../../core/browser_open_url.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
@@ -61,7 +63,9 @@ class _AssetLookupBody extends StatelessWidget {
       filters: const [AssetLookupFilters()],
       body: CatalogLookupTable(
         headers: const ['번호', '종류', '파일', '장비', '크기', '길이', '상태'],
-        columnFlexes: const [8, 10, 24, 14, 10, 8, 12],
+        columnFlexes: const [8, 10, 22, 12, 10, 8, 12],
+        actionsHeader: '동작',
+        actionsFlex: 10,
         emptyTitle: '조건에 맞는 파일이 없습니다',
         isLoadingMore: viewModel.isLoadingMore,
         onNearEnd: viewModel.didScrollNearEnd,
@@ -88,9 +92,124 @@ class _AssetLookupBody extends StatelessWidget {
           }
           context.read<AppCoordinator>().didTapOpenAssetDetail(row.assetId);
         },
+        actionsBuilder: (context, index) {
+          final row = viewModel.visibleRows[index];
+          return _AssetRowActions(
+            row: row,
+            onDownload: row.contentUrl.isEmpty
+                ? null
+                : () {
+                    final name = row.fileName.trim().isEmpty
+                        ? row.assetId
+                        : row.fileName;
+                    downloadBrowserUrl(row.contentUrl, fileName: name);
+                  },
+            onDelete: () => _didTapDelete(context, viewModel, row),
+          );
+        },
       ),
     );
   }
+}
+
+class _AssetRowActions extends StatelessWidget {
+  const _AssetRowActions({
+    required this.row,
+    required this.onDownload,
+    required this.onDelete,
+  });
+
+  final AssetLookupRow row;
+  final VoidCallback? onDownload;
+  final VoidCallback onDelete;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Tooltip(
+          message: '내려받기',
+          child: IconButton(
+            icon: const Icon(FluentIcons.download, size: 14),
+            onPressed: onDownload,
+          ),
+        ),
+        Tooltip(
+          message: '삭제',
+          child: IconButton(
+            icon: const Icon(FluentIcons.delete, size: 14),
+            onPressed: row.assetId.isEmpty ? null : onDelete,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+Future<void> _didTapDelete(
+  BuildContext context,
+  AssetLookupViewModel viewModel,
+  AssetLookupRow row,
+) async {
+  var error = '';
+  var busy = false;
+  await showDialog<bool>(
+    context: context,
+    builder: (dialogContext) {
+      return StatefulBuilder(
+        builder: (context, setDialogState) {
+          return ContentDialog(
+            title: Text(
+              '파일 ${row.assetId}를 지울까요?',
+              style: const TextStyle(fontSize: 16),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text('행과 저장된 파일이 지워집니다. 되돌릴 수 없습니다.'),
+                if (error.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Text(error, style: TextStyle(color: Colors.red)),
+                ],
+              ],
+            ),
+            actions: [
+              Button(
+                onPressed: busy
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(false),
+                child: const Text('취소'),
+              ),
+              FilledButton(
+                onPressed: busy
+                    ? null
+                    : () async {
+                        setDialogState(() {
+                          busy = true;
+                          error = '';
+                        });
+                        try {
+                          await viewModel.deleteAsset(assetId: row.assetId);
+                          if (dialogContext.mounted) {
+                            Navigator.of(dialogContext).pop(true);
+                          }
+                        } catch (e) {
+                          setDialogState(() {
+                            busy = false;
+                            error = '$e';
+                          });
+                        }
+                      },
+                child: const Text('지우기'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
 }
 
 Future<void> _didTapUpload(
