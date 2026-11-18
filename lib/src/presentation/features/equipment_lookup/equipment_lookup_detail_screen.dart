@@ -117,7 +117,7 @@ class _EquipmentLookupDetailBodyState
         builder: (dialogContext) => ContentDialog(
           title: const Text('장비를 지울 수 없습니다'),
           content: Text(
-            '기록한 에셋 ${equipment.assetCount}건이 있어 지울 수 없습니다. 안 쓰는 장비는 숨기세요.',
+            '첨부된 파일 ${equipment.assetCount}건이 있어 지울 수 없습니다. 안 쓰는 장비는 숨기세요.',
           ),
           actions: [
             Button(
@@ -256,7 +256,7 @@ class _EquipmentLookupDetailBodyState
           entries: [
             ('장비 코드', equipment.equipmentCode),
             ('쓰인 작업', '${equipment.jobCount}건'),
-            ('기록한 에셋', '${equipment.assetCount}건'),
+            ('첨부된 파일', '${equipment.assetCount}건'),
             ('숨김', equipment.isInactive ? '숨김 — 고르는 목록에서 빠짐' : '아니오'),
           ],
         ),
@@ -294,7 +294,7 @@ class _EquipmentLookupDetailBodyState
         else
           LookupDetailPlainTable(
             headers: const ['번호', '종류', '파일'],
-            emptyText: '기록한 에셋이 없습니다',
+            emptyText: '첨부된 파일이 없습니다',
             rows: [
               for (final asset in viewModel.assets)
                 [
@@ -442,7 +442,7 @@ class _EquipmentDetailTabsBar extends StatelessWidget {
           crossAxisAlignment: WrapCrossAlignment.end,
           children: [
             _tab(_EquipmentDetailTab.jobs, '쓰인 작업 $jobCount'),
-            _tab(_EquipmentDetailTab.assets, '기록한 에셋 $assetCount'),
+            _tab(_EquipmentDetailTab.assets, '첨부된 파일 $assetCount'),
           ],
         ),
       ),

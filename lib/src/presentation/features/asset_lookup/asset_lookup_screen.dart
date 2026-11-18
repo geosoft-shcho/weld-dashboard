@@ -53,16 +53,16 @@ class _AssetLookupBody extends StatelessWidget {
     }
     return CatalogLookupFrame(
       tableHeader: LookupTableHeader(
-        label: '에셋',
+        label: '파일',
         count: viewModel.totalCount,
-        actionText: '+ 올리기',
+        actionText: '+ 업로드',
         onAction: () => _didTapUpload(context, viewModel),
       ),
       filters: const [AssetLookupFilters()],
       body: CatalogLookupTable(
         headers: const ['번호', '종류', '파일', '장비', '크기', '길이', '상태'],
         columnFlexes: const [8, 10, 24, 14, 10, 8, 12],
-        emptyTitle: '조건에 맞는 에셋이 없습니다',
+        emptyTitle: '조건에 맞는 파일이 없습니다',
         isLoadingMore: viewModel.isLoadingMore,
         onNearEnd: viewModel.didScrollNearEnd,
         rows: [

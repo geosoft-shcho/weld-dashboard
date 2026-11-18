@@ -465,7 +465,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.timelineSaveMode ? '타임라인에 업로드' : '에셋 업로드';
+    final title = widget.timelineSaveMode ? '타임라인에 업로드' : '파일 업로드';
     final primaryLabel = widget.timelineSaveMode ? '저장' : '업로드';
     return ContentDialog(
       title: Text(title),
@@ -860,7 +860,7 @@ class _AssetUploadDialogState extends State<_AssetUploadDialog> {
     }
     final assetId = progress.result?.assetId ?? '';
     if (assetId.isNotEmpty) {
-      return '$label · 에셋 $assetId';
+      return '$label · 파일 $assetId';
     }
     return label;
   }

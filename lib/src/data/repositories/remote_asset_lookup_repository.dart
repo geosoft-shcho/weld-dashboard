@@ -212,7 +212,7 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
   }) async {
     final id = protoIdOrNull(assetId);
     if (id == null) {
-      throw ArgumentError('에셋 번호가 없습니다.');
+      throw ArgumentError('파일 번호가 없습니다.');
     }
     if (changedFields.isEmpty) {
       throw ArgumentError('바뀐 칸이 없습니다.');
@@ -238,7 +238,7 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
   Future<void> deleteAsset({required String assetId}) async {
     final id = protoIdOrNull(assetId);
     if (id == null) {
-      throw ArgumentError('에셋 번호가 없습니다.');
+      throw ArgumentError('파일 번호가 없습니다.');
     }
     try {
       await _mediaTag.assetService.deleteAsset(

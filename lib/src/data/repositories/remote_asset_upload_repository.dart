@@ -258,7 +258,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
   @override
   Future<String> retryPostprocess({required String assetId}) async {
     if (!_hasId(assetId)) {
-      throw const AssetUploadException('다시 걸 에셋 번호가 없습니다.');
+      throw const AssetUploadException('다시 걸 파일 번호가 없습니다.');
     }
     try {
       final response = await _mediaTag.assetService.retryPostprocess(

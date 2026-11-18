@@ -139,7 +139,7 @@ class _ShellScreenState extends State<ShellScreen> {
               ),
               _navPaneItem(
                 iconData: FluentIcons.folder_open,
-                label: '에셋 관리',
+                label: '파일 관리',
                 body: _assetLookupBody(nav),
               ),
             ],

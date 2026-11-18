@@ -250,7 +250,7 @@ class AssetLookupDetailViewModel extends ChangeNotifier {
       _asset = asset;
       if (asset == null) {
         _hasError = true;
-        _errorMessage = '에셋을 찾지 못했습니다.';
+        _errorMessage = '파일을 찾지 못했습니다.';
         _jobs = const [];
         return;
       }

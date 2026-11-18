@@ -50,7 +50,7 @@ class _AssetLookupDetailBody extends StatelessWidget {
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => ContentDialog(
-          title: const Text('이 에셋은 지울 수 없습니다'),
+          title: const Text('이 파일은 지울 수 없습니다'),
           content: Text('${reasons.join(' · ')}입니다. 먼저 떼거나 파생을 지우세요.'),
           actions: [
             Button(
@@ -71,7 +71,7 @@ class _AssetLookupDetailBody extends StatelessWidget {
           builder: (context, setDialogState) {
             return ContentDialog(
               title: Text(
-                '에셋 ${asset.assetId}를 지울까요?',
+                '파일 ${asset.assetId}를 지울까요?',
                 style: const TextStyle(fontSize: 16),
               ),
               content: Column(
@@ -131,10 +131,10 @@ class _AssetLookupDetailBody extends StatelessWidget {
     final coordinator = context.read<AppCoordinator>();
     final asset = viewModel.asset;
     final kindLabel = asset == null
-        ? '에셋'
+        ? '파일'
         : AssetLookupKindOption.labelOf(asset.kindCode);
     return LookupDetailScaffold(
-      title: asset == null ? '에셋 상세' : '$kindLabel ${asset.assetId}',
+      title: asset == null ? '파일 상세' : '$kindLabel ${asset.assetId}',
       subtitle: '',
       onBack: coordinator.didTapBackFromLookupDetail,
       actions: [
@@ -176,7 +176,7 @@ class _AssetLookupDetailBody extends StatelessWidget {
     final asset = viewModel.asset;
     if (asset == null) {
       return const InfoBar(
-        title: Text('에셋 없음'),
+        title: Text('파일 없음'),
         severity: InfoBarSeverity.warning,
       );
     }

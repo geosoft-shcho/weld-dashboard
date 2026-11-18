@@ -86,7 +86,7 @@ class _EquipmentLookupBody extends StatelessWidget {
         ),
       ],
       body: CatalogLookupTable(
-        headers: const ['장비 코드', '이름', '쓰인 작업', '기록한 에셋'],
+        headers: const ['장비 코드', '이름', '쓰인 작업', '첨부된 파일'],
         columnFlexes: const [16, 18, 10, 10],
         emptyTitle: '조건에 맞는 장비가 없습니다',
         isLoadingMore: viewModel.isLoadingMore,

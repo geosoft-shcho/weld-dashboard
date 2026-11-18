@@ -8,7 +8,7 @@ import '../../../core/widgets/catalog_lookup_table.dart';
 import '../../../core/widgets/lookup_search_field.dart';
 import '../asset_lookup_view_model.dart';
 
-/// 에셋 목록 [CatalogLookupFrame]용 필터 칸.
+/// 파일 목록 [CatalogLookupFrame]용 필터 칸.
 class AssetLookupFilters extends StatelessWidget {
   const AssetLookupFilters({super.key});
 

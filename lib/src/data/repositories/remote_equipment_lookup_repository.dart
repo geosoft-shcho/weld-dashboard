@@ -155,7 +155,7 @@ Exception _equipmentWriteFailure(ConnectException error) {
     case Code.alreadyExists:
       return _WriteFailure('같은 장비 코드가 이미 있습니다.');
     case Code.failedPrecondition:
-      return _WriteFailure('기록한 에셋이 있어 지울 수 없습니다. 안 쓰는 장비는 숨기세요.');
+      return _WriteFailure('첨부된 파일이 있어 지울 수 없습니다. 안 쓰는 장비는 숨기세요.');
     default:
       return error;
   }

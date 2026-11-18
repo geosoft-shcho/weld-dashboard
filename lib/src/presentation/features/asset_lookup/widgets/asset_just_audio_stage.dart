@@ -12,7 +12,7 @@ import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../core/widgets/waveform_material_scope.dart';
 
-/// 에셋 상세 음성 미리보기: just_audio 재생 + waveform_pro 파형.
+/// 파일 상세 음성 미리보기: just_audio 재생 + waveform_pro 파형.
 class AssetJustAudioStage extends StatefulWidget {
   const AssetJustAudioStage({
     super.key,

@@ -130,7 +130,7 @@ class AppCoordinator extends ChangeNotifier {
       case EQUIPMENT_LOOKUP_PANE_INDEX:
         return _lookupDetailId.isEmpty ? '장비 관리' : '장비 상세';
       case ASSET_LOOKUP_PANE_INDEX:
-        return _lookupDetailId.isEmpty ? '에셋 관리' : '에셋 상세';
+        return _lookupDetailId.isEmpty ? '파일 관리' : '파일 상세';
       case COLLECTION_PANE_INDEX:
       default:
         return '수집 모니터링';

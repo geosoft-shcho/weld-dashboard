@@ -115,7 +115,7 @@ class AssetUploadBatchResult {
 
   final List<AssetUploadQueueItem> items;
 
-  /// 녹화→타임라인 저장 시 화면 코멘트(CreateComment) body. 에셋 조회 올리기는 비움.
+  /// 녹화→타임라인 저장 시 화면 코멘트(CreateComment) body. 파일 조회 업로드는 비움.
   final String screenCommentBody;
 
   AssetUploadBatchResult copyWith({
@@ -148,7 +148,7 @@ class AssetUploadBatchResult {
         notes.add('${result.fileName}: $warning');
       }
       for (final id in result.duplicateAssetIds) {
-        notes.add('${result.fileName}: 같은 내용의 에셋 $id가 이미 있습니다');
+        notes.add('${result.fileName}: 같은 내용의 파일 $id가 이미 있습니다');
       }
       if (item.status == AssetUploadItemStatus.postprocessFailed &&
           item.message.isNotEmpty) {

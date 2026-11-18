@@ -95,7 +95,7 @@ class CollectionTimelineInspector extends StatelessWidget {
   _DetailAction? _detailActionOf(CollectedNode node) {
     final path = node.path;
     if (node.assetId.isNotEmpty) {
-      return const _DetailAction(kind: _DetailKind.asset, tooltip: '에셋 상세');
+      return const _DetailAction(kind: _DetailKind.asset, tooltip: '파일 상세');
     }
     switch (path.level) {
       case CollectedNodeLevel.equipment:
