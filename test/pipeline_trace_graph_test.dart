@@ -175,6 +175,40 @@ void main() {
     );
   });
 
+  test('aggregate prefers live over failed on same stage', () {
+    final traces = [
+      const TraceSnapshot(
+        traceId: 'old',
+        lastEvent: 'register.asset',
+        status: UploadTraceStatus.failed,
+        errorMessage: 'x',
+      ),
+      const TraceSnapshot(
+        traceId: '76',
+        lastEvent: 'register.stored',
+        status: UploadTraceStatus.running,
+        errorMessage: '',
+      ),
+    ];
+    expect(
+      pipelineStageVisual(
+        stageId: 'register',
+        selected: null,
+        traces: traces,
+      ),
+      PipelineNodeVisual.running,
+    );
+    expect(
+      pipelineNodeVisual(
+        nodeId: 'register.stored',
+        selected: null,
+        traces: traces,
+      ),
+      PipelineNodeVisual.active,
+    );
+    expect(pipelineStages[2].nodeIds, contains('register.duplicates'));
+  });
+
   test('path nodes follow events; selected stage path to last', () {
     const running = TraceSnapshot(
       traceId: '9',

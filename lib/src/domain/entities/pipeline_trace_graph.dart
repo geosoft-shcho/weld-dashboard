@@ -46,7 +46,12 @@ const pipelineStages = <PipelineStageDef>[
   PipelineStageDef(
     id: 'register',
     label: '등록',
-    nodeIds: ['register.stored', 'register.asset', 'register.attached'],
+    nodeIds: [
+      'register.stored',
+      'register.asset',
+      'register.attached',
+      'register.duplicates',
+    ],
   ),
   PipelineStageDef(
     id: 'postprocess',
@@ -79,6 +84,7 @@ const pipelineNodeLabels = <String, String>{
   'register.stored': '저장',
   'register.asset': 'Asset',
   'register.attached': '첨부',
+  'register.duplicates': '중복',
   'postprocess.run': '후처리 run',
   'postprocess.props': '속성',
   'postprocess.duration': '길이',
@@ -115,6 +121,8 @@ String pipelineNodeIconKey(String nodeId) {
       return 'document';
     case 'register.attached':
       return 'link';
+    case 'register.duplicates':
+      return 'duplicate';
     case 'postprocess.run':
       return 'processing';
     case 'postprocess.props':
@@ -275,7 +283,7 @@ List<String> pipelineHighlightStageIds({
   ];
 }
 
-/// 단계(큰 원) 시각. 미선택은 visibleTraces 합산(실패>대기>진행>완료>idle).
+/// 단계(큰 원) 시각. 미선택은 visibleTraces 합산(대기>진행>실패>완료>idle).
 PipelineNodeVisual pipelineStageVisual({
   required String stageId,
   required TraceSnapshot? selected,
@@ -328,14 +336,15 @@ PipelineNodeVisual pipelineStageVisual({
       hasDone = true;
     }
   }
-  if (hasFailed) {
-    return PipelineNodeVisual.failed;
-  }
+  // 진행 중인 업로드가 옛 실패에 가려지지 않게 대기/진행을 실패보다 앞선다.
   if (hasQueued) {
     return PipelineNodeVisual.queued;
   }
   if (hasRunning) {
     return PipelineNodeVisual.running;
+  }
+  if (hasFailed) {
+    return PipelineNodeVisual.failed;
   }
   if (hasDone) {
     return PipelineNodeVisual.done;
@@ -368,14 +377,7 @@ PipelineNodeVisual pipelineNodeVisual({
   if (selected != null) {
     return _visualForSelected(nodeId: nodeId, trace: selected);
   }
-  // 미선택: 실패 → 진행/현재 → 완료 순으로 합산해 모든 상태가 드러나게 한다.
-  for (final trace in traces) {
-    if (trace.status == UploadTraceStatus.failed &&
-        (trace.lastEvent == nodeId ||
-            pipelineStageOf(trace.lastEvent) == pipelineStageOf(nodeId))) {
-      return PipelineNodeVisual.failed;
-    }
-  }
+  // 미선택: 대기/진행 → 실패 → 완료 순(진행 중 업로드가 옛 실패에 가려지지 않게).
   for (final trace in traces) {
     if (trace.status == UploadTraceStatus.running &&
         trace.lastEvent == nodeId) {
@@ -387,6 +389,13 @@ PipelineNodeVisual pipelineNodeVisual({
         return PipelineNodeVisual.running;
       }
       return PipelineNodeVisual.active;
+    }
+  }
+  for (final trace in traces) {
+    if (trace.status == UploadTraceStatus.failed &&
+        (trace.lastEvent == nodeId ||
+            pipelineStageOf(trace.lastEvent) == pipelineStageOf(nodeId))) {
+      return PipelineNodeVisual.failed;
     }
   }
   for (final trace in traces) {

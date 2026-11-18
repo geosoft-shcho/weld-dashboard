@@ -20,6 +20,8 @@ IconData pipelineNodeIconData(String nodeId) {
       return FluentIcons.document;
     case 'link':
       return FluentIcons.link;
+    case 'duplicate':
+      return FluentIcons.branch_compare;
     case 'processing':
       return FluentIcons.processing_run;
     case 'settings':
