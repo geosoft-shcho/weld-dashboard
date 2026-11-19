@@ -8,11 +8,22 @@ import 'pipeline_stage_chips.dart';
 import 'pipeline_trace_graph_view.dart';
 import 'pipeline_trace_list.dart';
 
-/// 적재 파이프라인 탭: 칩 + 가로 스테퍼 + 파이프라인 목록.
-class PipelineTraceTabBody extends StatelessWidget {
+/// 적재 파이프라인 탭: 칩 + 그래프 + 우측 목록 패널(토글).
+class PipelineTraceTabBody extends StatefulWidget {
   const PipelineTraceTabBody({super.key, required this.viewModel});
 
   final PipelineTraceViewModel viewModel;
+
+  @override
+  State<PipelineTraceTabBody> createState() => _PipelineTraceTabBodyState();
+}
+
+class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
+  static const double _listPanelWidth = 320;
+
+  bool _listPanelVisible = true;
+
+  PipelineTraceViewModel get viewModel => widget.viewModel;
 
   @override
   Widget build(BuildContext context) {
@@ -22,7 +33,28 @@ class PipelineTraceTabBody extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          PipelineStageChips(viewModel: viewModel),
+          Row(
+            children: [
+              Expanded(child: PipelineStageChips(viewModel: viewModel)),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: _listPanelVisible ? '목록 숨기기' : '목록 보이기',
+                child: IconButton(
+                  icon: Icon(
+                    _listPanelVisible
+                        ? FluentIcons.chrome_back_mirrored
+                        : FluentIcons.bulleted_list2,
+                    size: 16,
+                  ),
+                  onPressed: () {
+                    setState(() {
+                      _listPanelVisible = !_listPanelVisible;
+                    });
+                  },
+                ),
+              ),
+            ],
+          ),
           if (viewModel.hasError)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -33,18 +65,50 @@ class PipelineTraceTabBody extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 8),
-          // 스테퍼는 위쪽 가변, ListTraces는 고정 높이 로그 패널.
           Expanded(
             child: viewModel.isLoading && viewModel.traces.isEmpty
                 ? const Center(child: ProgressRing())
-                : SingleChildScrollView(
-                    child: PipelineTraceGraphView(viewModel: viewModel),
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: PipelineTraceGraphView(viewModel: viewModel),
+                      ),
+                      if (_listPanelVisible) ...[
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          width: _listPanelWidth,
+                          child: _TraceListPanel(viewModel: viewModel),
+                        ),
+                      ],
+                    ],
                   ),
           ),
-          const SizedBox(height: 8),
+        ],
+      ),
+    );
+  }
+}
+
+class _TraceListPanel extends StatelessWidget {
+  const _TraceListPanel({required this.viewModel});
+
+  final PipelineTraceViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFF3E424A)),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      padding: const EdgeInsets.all(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
           _TraceListHeader(viewModel: viewModel),
-          const SizedBox(height: 4),
-          SizedBox(height: 168, child: PipelineTraceList(viewModel: viewModel)),
+          const SizedBox(height: 6),
+          Expanded(child: PipelineTraceList(viewModel: viewModel)),
           if (viewModel.selected != null)
             Padding(
               padding: const EdgeInsets.only(top: 6),
@@ -58,6 +122,8 @@ class PipelineTraceTabBody extends StatelessWidget {
                       true)
                     viewModel.selected!.run!.queueWaitLabel,
                 ].join(' · '),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(color: AppTheme.INK, fontSize: 12),
               ),
             ),
@@ -69,7 +135,7 @@ class PipelineTraceTabBody extends StatelessWidget {
   }
 }
 
-/// Trace.run 집계 큐 병목. GetQueue를 쓰지 않는다.
+/// Trace.run 집계 큐 병목. GetQueue를 치지 않는다.
 class _QueueBottleneckPanel extends StatelessWidget {
   const _QueueBottleneckPanel({required this.viewModel});
 
@@ -82,77 +148,69 @@ class _QueueBottleneckPanel extends StatelessWidget {
     final selectedRunId = viewModel.selectedRunId;
     return Padding(
       padding: const EdgeInsets.only(top: 8),
-      child: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          border: Border.all(color: const Color(0xFF3E424A)),
-          borderRadius: BorderRadius.circular(4),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              '큐 병목 (Trace.run)',
-              style: TextStyle(
-                color: AppTheme.INK,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            '큐 병목 (Trace.run)',
+            style: TextStyle(
+              color: AppTheme.INK,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          for (final item in bottlenecks)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '${toolRunQueueDisplayName(item.queue)} · '
+                '진행 ${item.running} · 대기 ${item.waiting}',
+                style: const TextStyle(color: AppTheme.INK, fontSize: 12),
               ),
             ),
-            for (final item in bottlenecks)
-              Padding(
-                padding: const EdgeInsets.only(top: 4),
-                child: Text(
-                  '${toolRunQueueDisplayName(item.queue)} · '
-                  '진행 ${item.running} · 대기 ${item.waiting}',
-                  style: const TextStyle(color: AppTheme.INK, fontSize: 12),
-                ),
+          if (sameQueue.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              '같은 큐 · ${toolRunQueueDisplayName(sameQueue.first.run!.queue)}',
+              style: const TextStyle(
+                color: AppTheme.STATUS_OFF,
+                fontSize: 11,
               ),
-            if (sameQueue.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                '같은 큐 · ${toolRunQueueDisplayName(sameQueue.first.run!.queue)}',
-                style: const TextStyle(
-                  color: AppTheme.STATUS_OFF,
-                  fontSize: 11,
-                ),
-              ),
-              SizedBox(
-                height: 96,
-                child: ListView.builder(
-                  itemCount: sameQueue.length,
-                  itemBuilder: (context, index) {
-                    final trace = sameQueue[index];
-                    final run = trace.run!;
-                    final isMine = selectedRunId.isNotEmpty &&
-                        run.runId == selectedRunId;
-                    final name = trace.fileName.isEmpty
-                        ? '#${trace.traceId}'
-                        : trace.fileName;
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text(
-                        [
-                          isMine ? '●' : '○',
-                          name,
-                          'run ${run.runId}',
-                          run.status.name,
-                          if (run.queueWaitLabel.isNotEmpty) run.queueWaitLabel,
-                        ].join(' · '),
-                        style: TextStyle(
-                          color: isMine ? AppTheme.ACCENT_STEEL : AppTheme.INK,
-                          fontSize: 12,
-                          fontWeight:
-                              isMine ? FontWeight.w600 : FontWeight.w400,
-                        ),
+            ),
+            SizedBox(
+              height: 96,
+              child: ListView.builder(
+                itemCount: sameQueue.length,
+                itemBuilder: (context, index) {
+                  final trace = sameQueue[index];
+                  final run = trace.run!;
+                  final isMine =
+                      selectedRunId.isNotEmpty && run.runId == selectedRunId;
+                  final name = trace.fileName.isEmpty
+                      ? '#${trace.traceId}'
+                      : trace.fileName;
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: Text(
+                      [
+                        isMine ? '●' : '○',
+                        name,
+                        'run ${run.runId}',
+                        run.status.name,
+                        if (run.queueWaitLabel.isNotEmpty) run.queueWaitLabel,
+                      ].join(' · '),
+                      style: TextStyle(
+                        color: isMine ? AppTheme.ACCENT_STEEL : AppTheme.INK,
+                        fontSize: 12,
+                        fontWeight: isMine ? FontWeight.w600 : FontWeight.w400,
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                },
               ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }
@@ -168,8 +226,7 @@ class _TraceListHeader extends StatelessWidget {
     final filterKey = _statusFilterKey(viewModel.statusFilter);
     return Row(
       children: [
-        SizedBox(
-          width: 120,
+        Expanded(
           child: ComboBox<String>(
             value: filterKey,
             items: const [
@@ -186,12 +243,12 @@ class _TraceListHeader extends StatelessWidget {
             },
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: 8),
         Text(
-          '최근 ${PipelineTraceViewModel.recentPageSize}건',
+          '최근 ${PipelineTraceViewModel.recentPageSize}',
           style: const TextStyle(
             color: AppTheme.STATUS_OFF,
-            fontSize: 12,
+            fontSize: 11,
           ),
         ),
       ],

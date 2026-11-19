@@ -289,4 +289,82 @@ void main() {
     expect(pipelineNodeStatusLabel(PipelineNodeVisual.running), '진행');
     expect(pipelineNodeIsLive(PipelineNodeVisual.active), isTrue);
   });
+
+  test('active edges follow event path only; jumps light without skipped links', () {
+    final stages = [
+      for (final stage in pipelineStages)
+        if (stage.id != 'tool' && stage.id != 'embed') stage,
+    ];
+    final edges = pipelineSkeletonEdges(stages);
+    expect(
+      edges.map((e) => e.key),
+      contains('receive.done>register.stored'),
+    );
+    expect(
+      edges.map((e) => e.key),
+      contains('register.stored>register.asset'),
+    );
+
+    // 받기 → 등록.저장 → 후처리.속성 → 완료 (중간 이벤트 생략)
+    const jumped = TraceSnapshot(
+      traceId: '42',
+      lastEvent: 'done.searchable',
+      status: UploadTraceStatus.done,
+      errorMessage: '',
+      events: [
+        TraceEventSnapshot(name: 'receive.done', status: 'ok'),
+        TraceEventSnapshot(name: 'register.stored', status: 'ok'),
+        TraceEventSnapshot(name: 'postprocess.props', status: 'ok'),
+        TraceEventSnapshot(name: 'done.searchable', status: 'ok'),
+      ],
+    );
+    final keys = pipelineHighlightEdgeKeys(
+      selected: jumped,
+      traces: const [jumped],
+      stages: stages,
+    );
+    expect(keys, contains('receive.done>register.stored'));
+    expect(keys, contains('register.stored>postprocess.props'));
+    expect(keys, contains('postprocess.props>done.searchable'));
+    // 골격 중간선은 path에 없으므로 비활성
+    expect(keys, isNot(contains('register.stored>register.asset')));
+    expect(keys, isNot(contains('postprocess.run>postprocess.props')));
+    expect(keys, isNot(contains('done.searchable>done.stored')));
+
+    final active = pipelineActivePathEdges(
+      selected: jumped,
+      traces: const [jumped],
+      stages: stages,
+    );
+    expect(
+      active.map((e) => e.key).toList(),
+      [
+        'receive.done>register.stored',
+        'register.stored>postprocess.props',
+        'postprocess.props>done.searchable',
+      ],
+    );
+
+    const running = TraceSnapshot(
+      traceId: '9',
+      lastEvent: 'register.asset',
+      status: UploadTraceStatus.running,
+      errorMessage: '',
+      events: [
+        TraceEventSnapshot(name: 'receive.started', status: 'ok'),
+        TraceEventSnapshot(name: 'receive.done', status: 'ok'),
+        TraceEventSnapshot(name: 'register.stored', status: 'ok'),
+        TraceEventSnapshot(name: 'register.asset', status: 'running'),
+      ],
+    );
+    expect(
+      pipelineEdgeIsLive(
+        fromId: 'register.stored',
+        toId: 'register.asset',
+        selected: running,
+        traces: const [running],
+      ),
+      isTrue,
+    );
+  });
 }

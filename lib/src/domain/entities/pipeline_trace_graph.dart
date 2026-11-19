@@ -274,6 +274,128 @@ List<String> pipelinePathNodeIds(TraceSnapshot trace) {
   return path;
 }
 
+/// 골격 인접 이벤트 연결.
+class PipelineTraceEdge {
+  const PipelineTraceEdge({required this.fromId, required this.toId});
+
+  final String fromId;
+  final String toId;
+
+  String get key => '$fromId>$toId';
+}
+
+/// visible 단계의 이벤트 노드를 왼쪽→오른쪽 순으로 펼친다.
+List<String> pipelineSkeletonNodeIds(List<PipelineStageDef> stages) {
+  return [for (final stage in stages) ...stage.nodeIds];
+}
+
+/// 펼친 노드의 인접 쌍(가이드 연결선).
+List<PipelineTraceEdge> pipelineSkeletonEdges(List<PipelineStageDef> stages) {
+  final nodes = pipelineSkeletonNodeIds(stages);
+  if (nodes.length < 2) {
+    return const [];
+  }
+  return [
+    for (var i = 0; i < nodes.length - 1; i++)
+      PipelineTraceEdge(fromId: nodes[i], toId: nodes[i + 1]),
+  ];
+}
+
+/// 한 여정 path의 연속 쌍. 골격 비인접(점프)도 포함한다.
+List<PipelineTraceEdge> pipelinePathEdges(
+  TraceSnapshot trace, {
+  required Set<String> visibleNodeIds,
+}) {
+  final path = [
+    for (final id in pipelinePathNodeIds(trace))
+      if (visibleNodeIds.contains(id)) id,
+  ];
+  if (path.length < 2) {
+    return const [];
+  }
+  return [
+    for (var i = 0; i < path.length - 1; i++)
+      PipelineTraceEdge(fromId: path[i], toId: path[i + 1]),
+  ];
+}
+
+/// 활성 연결: 실제 이벤트 path 연속 쌍만.
+/// 선택 시 그 여정, 미선택 시 visibleTraces path 합집합.
+Set<String> pipelineHighlightEdgeKeys({
+  required TraceSnapshot? selected,
+  required Iterable<TraceSnapshot> traces,
+  required List<PipelineStageDef> stages,
+}) {
+  final visibleNodeIds = pipelineSkeletonNodeIds(stages).toSet();
+  if (selected != null) {
+    return {
+      for (final edge in pipelinePathEdges(
+        selected,
+        visibleNodeIds: visibleNodeIds,
+      ))
+        edge.key,
+    };
+  }
+  final keys = <String>{};
+  for (final trace in traces) {
+    for (final edge in pipelinePathEdges(
+      trace,
+      visibleNodeIds: visibleNodeIds,
+    )) {
+      keys.add(edge.key);
+    }
+  }
+  return keys;
+}
+
+/// 활성 path 엣지 목록(점프 포함). 페인터가 골격과 따로 그린다.
+List<PipelineTraceEdge> pipelineActivePathEdges({
+  required TraceSnapshot? selected,
+  required Iterable<TraceSnapshot> traces,
+  required List<PipelineStageDef> stages,
+}) {
+  final visibleNodeIds = pipelineSkeletonNodeIds(stages).toSet();
+  if (selected != null) {
+    return pipelinePathEdges(selected, visibleNodeIds: visibleNodeIds);
+  }
+  final seen = <String>{};
+  final edges = <PipelineTraceEdge>[];
+  for (final trace in traces) {
+    for (final edge in pipelinePathEdges(
+      trace,
+      visibleNodeIds: visibleNodeIds,
+    )) {
+      if (seen.add(edge.key)) {
+        edges.add(edge);
+      }
+    }
+  }
+  return edges;
+}
+
+/// 활성 엣지 중 한쪽이라도 live면 흐름 입자 대상.
+bool pipelineEdgeIsLive({
+  required String fromId,
+  required String toId,
+  required TraceSnapshot? selected,
+  required Iterable<TraceSnapshot> traces,
+}) {
+  return pipelineNodeIsLive(
+        pipelineNodeVisual(
+          nodeId: fromId,
+          selected: selected,
+          traces: traces,
+        ),
+      ) ||
+      pipelineNodeIsLive(
+        pipelineNodeVisual(
+          nodeId: toId,
+          selected: selected,
+          traces: traces,
+        ),
+      );
+}
+
 /// 단계 사이 본선에 쓸 단계 ID(왼쪽→오른쪽).
 /// 선택 시 그 여정이 도달한 단계까지. 미선택 시 집계상 non-idle 단계.
 List<String> pipelineHighlightStageIds({
