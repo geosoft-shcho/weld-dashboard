@@ -61,22 +61,24 @@ class PipelineTraceTabBody extends StatelessWidget {
                 style: const TextStyle(color: AppTheme.INK, fontSize: 12),
               ),
             ),
-          if (viewModel.doesShowQueueFront)
-            _QueueFrontPanel(viewModel: viewModel),
+          if (viewModel.doesShowQueueBottleneck)
+            _QueueBottleneckPanel(viewModel: viewModel),
         ],
       ),
     );
   }
 }
 
-class _QueueFrontPanel extends StatelessWidget {
-  const _QueueFrontPanel({required this.viewModel});
+/// Trace.run 집계 큐 병목. GetQueue를 쓰지 않는다.
+class _QueueBottleneckPanel extends StatelessWidget {
+  const _QueueBottleneckPanel({required this.viewModel});
 
   final PipelineTraceViewModel viewModel;
 
   @override
   Widget build(BuildContext context) {
-    final queue = viewModel.selectedQueue;
+    final bottlenecks = viewModel.queueBottlenecks;
+    final sameQueue = viewModel.sameQueueTraces;
     final selectedRunId = viewModel.selectedRunId;
     return Padding(
       padding: const EdgeInsets.only(top: 8),
@@ -89,59 +91,53 @@ class _QueueFrontPanel extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              queue == null
-                  ? '대기열 앞줄'
-                  : '${toolRunQueueDisplayName(queue.queue)} · '
-                        '워커 ${queue.workers} · '
-                        '진행 ${queue.running} · '
-                        '대기 ${queue.waiting}',
-              style: const TextStyle(
+            const Text(
+              '큐 병목 (Trace.run)',
+              style: TextStyle(
                 color: AppTheme.INK,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            if (viewModel.queueError.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                viewModel.queueError,
-                style: TextStyle(color: Colors.red, fontSize: 12),
-              ),
-            ] else if (viewModel.queueEmptyMessage.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                viewModel.queueEmptyMessage,
-                style: const TextStyle(
-                  color: AppTheme.STATUS_OFF,
-                  fontSize: 12,
+            for (final item in bottlenecks)
+              Padding(
+                padding: const EdgeInsets.only(top: 4),
+                child: Text(
+                  '${toolRunQueueDisplayName(item.queue)} · '
+                  '진행 ${item.running} · 대기 ${item.waiting}',
+                  style: const TextStyle(color: AppTheme.INK, fontSize: 12),
                 ),
               ),
-            ] else if (queue == null || queue.runs.isEmpty) ...[
-              const SizedBox(height: 4),
-              const Text(
-                '대기열에 run이 없습니다.',
-                style: TextStyle(color: AppTheme.STATUS_OFF, fontSize: 12),
+            if (sameQueue.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                '같은 큐 · ${toolRunQueueDisplayName(sameQueue.first.run!.queue)}',
+                style: const TextStyle(
+                  color: AppTheme.STATUS_OFF,
+                  fontSize: 11,
+                ),
               ),
-            ] else
               SizedBox(
                 height: 96,
                 child: ListView.builder(
-                  itemCount: queue.runs.length,
+                  itemCount: sameQueue.length,
                   itemBuilder: (context, index) {
-                    final run = queue.runs[index];
-                    final isMine =
-                        selectedRunId.isNotEmpty && run.runId == selectedRunId;
-                    final wait = _waitAgeLabel(run.createdAt);
+                    final trace = sameQueue[index];
+                    final run = trace.run!;
+                    final isMine = selectedRunId.isNotEmpty &&
+                        run.runId == selectedRunId;
+                    final name = trace.fileName.isEmpty
+                        ? '#${trace.traceId}'
+                        : trace.fileName;
                     return Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         [
                           isMine ? '●' : '○',
+                          name,
                           'run ${run.runId}',
                           run.status.name,
                           if (run.queueWaitLabel.isNotEmpty) run.queueWaitLabel,
-                          if (wait.isNotEmpty) wait,
                         ].join(' · '),
                         style: TextStyle(
                           color: isMine ? AppTheme.ACCENT_STEEL : AppTheme.INK,
@@ -154,29 +150,12 @@ class _QueueFrontPanel extends StatelessWidget {
                   },
                 ),
               ),
+            ],
           ],
         ),
       ),
     );
   }
-}
-
-String _waitAgeLabel(DateTime? createdAt) {
-  if (createdAt == null) {
-    return '';
-  }
-  final seconds = DateTime.now().difference(createdAt).inSeconds;
-  if (seconds < 0) {
-    return '';
-  }
-  if (seconds < 60) {
-    return '$seconds초 대기';
-  }
-  final minutes = seconds ~/ 60;
-  if (minutes < 60) {
-    return '$minutes분 대기';
-  }
-  return '${minutes ~/ 60}시간 대기';
 }
 
 class _TraceListHeader extends StatelessWidget {

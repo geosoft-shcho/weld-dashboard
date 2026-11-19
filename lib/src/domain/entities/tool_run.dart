@@ -84,7 +84,7 @@ class ToolRunSnapshot {
     ].join('·');
   }
 
-  /// 대기열 표시용. 예: `후처리 · 앞 2건` 또는 `후처리 · 1/3`
+  /// 대기열 표시용. 예: `후처리 · 앞 2건` · `후처리 · 42%` · `후처리 · 1/3`
   String get queueWaitLabel {
     final name = switch (queue.trim()) {
       'postprocess' => '후처리',
@@ -99,6 +99,12 @@ class ToolRunSnapshot {
     final waitDetail = _waitDetail;
     if (waitDetail.isNotEmpty) {
       parts.add(waitDetail);
+    } else if (status == ToolRunStatus.running) {
+      if (progressPercent > 0) {
+        parts.add('${progressPercent.round()}%');
+      } else {
+        parts.add('진행');
+      }
     } else if (queuePosition > 0) {
       if (queueLength > 0) {
         parts.add('$queuePosition/$queueLength');

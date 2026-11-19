@@ -3,23 +3,18 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 
 import '../../../domain/entities/pipeline_trace_graph.dart';
-import '../../../domain/entities/tool_run.dart';
 import '../../../domain/entities/upload_trace.dart';
-import '../../../domain/use_cases/tool_run_use_case.dart';
 import '../../../domain/use_cases/trace_use_case.dart';
 
 class PipelineTraceViewModel extends ChangeNotifier {
   PipelineTraceViewModel({
     required TraceUseCase traceUseCase,
-    required ToolRunUseCase toolRunUseCase,
-  }) : _traceUseCase = traceUseCase,
-       _toolRunUseCase = toolRunUseCase;
+  }) : _traceUseCase = traceUseCase;
 
   /// ListTraces 최근 창 크기. page_token 페이지네이션 없음.
   static const int recentPageSize = 80;
 
   final TraceUseCase _traceUseCase;
-  final ToolRunUseCase _toolRunUseCase;
 
   Timer? _pollTimer;
   int _pollVersion = 0;
@@ -33,9 +28,6 @@ class PipelineTraceViewModel extends ChangeNotifier {
   String _errorMessage = '';
   String _tracesSignature = '';
   String _selectionSignature = '';
-  ToolRunQueue? _selectedQueue;
-  String _queueError = '';
-  String _queueEmptyMessage = '';
 
   List<TraceSnapshot> get traces => List.unmodifiable(_traces);
   TraceSnapshot? get selected => _selected;
@@ -43,14 +35,23 @@ class PipelineTraceViewModel extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
-  ToolRunQueue? get selectedQueue => _selectedQueue;
-  List<ToolRunSnapshot> get queueFrontRuns =>
-      List.unmodifiable(_selectedQueue?.runs ?? const []);
-  String get queueError => _queueError;
-  String get queueEmptyMessage => _queueEmptyMessage;
-  /// 선택 runId. 미선택이면 RUNNING+queue 첫 줄의 runId(앞줄 ● 강조).
-  String get selectedRunId => _queueFocusTrace?.run?.runId ?? '';
-  bool get doesShowQueueFront => _queueNameForFront.isNotEmpty;
+
+  /// ListTraces/GetTrace `run` 집계. GetQueue를 치지 않는다.
+  List<TraceQueueBottleneck> get queueBottlenecks =>
+      traceQueueBottlenecks(_traces);
+
+  bool get doesShowQueueBottleneck => queueBottlenecks.isNotEmpty;
+
+  /// 선택 Trace와 같은 `run.queue`의 in-progress(오래된 순).
+  List<TraceSnapshot> get sameQueueTraces {
+    final queue = _selected?.run?.queue.trim() ?? '';
+    if (queue.isEmpty) {
+      return const [];
+    }
+    return tracesInSameQueueOldestFirst(_traces, queue);
+  }
+
+  String get selectedRunId => _selected?.run?.runId ?? '';
 
   /// ListTraces 응답 순서(새것부터). 상태별 재정렬하지 않는다.
   List<TraceSnapshot> get visibleTraces => List.unmodifiable(_traces);
@@ -170,8 +171,6 @@ class PipelineTraceViewModel extends ChangeNotifier {
         );
         didChange = didChange || selectionChanged;
       }
-      final queueChanged = await _refreshQueueFront(version: version);
-      didChange = didChange || queueChanged;
 
       if (version != _pollVersion) {
         return;
@@ -214,7 +213,6 @@ class PipelineTraceViewModel extends ChangeNotifier {
       }
     }
     await _loadSelection(traceId, version: version, preloaded: preloaded);
-    await _refreshQueueFront(version: version);
     notifyListeners();
   }
 
@@ -234,7 +232,6 @@ class PipelineTraceViewModel extends ChangeNotifier {
     _selected = null;
     _selectionSignature = '';
     notifyListeners();
-    unawaited(refresh());
   }
 
   /// ListTraces 요약에 RUNNING(+선택) GetTrace events를 붙인다.
@@ -340,89 +337,6 @@ class PipelineTraceViewModel extends ChangeNotifier {
       _selectionSignature = '';
       return true;
     }
-  }
-
-  /// 선택(우선) 또는 RUNNING+queue 첫 줄. ● 강조용. 없으면 null.
-  TraceSnapshot? get _queueFocusTrace {
-    final selectedQueue = _selected?.run?.queue.trim() ?? '';
-    if (_selected != null && selectedQueue.isNotEmpty) {
-      return _selected;
-    }
-    for (final trace in _traces) {
-      if (trace.status != UploadTraceStatus.running) {
-        continue;
-      }
-      if ((trace.run?.queue.trim() ?? '').isEmpty) {
-        continue;
-      }
-      return trace;
-    }
-    return null;
-  }
-
-  /// 포커스 queue가 없으면 postprocess를 기본으로 앞줄을 유지한다.
-  static const String _defaultQueueName = 'postprocess';
-
-  String get _queueNameForFront {
-    final focused = _queueFocusTrace?.run?.queue.trim() ?? '';
-    if (focused.isNotEmpty) {
-      return focused;
-    }
-    return _defaultQueueName;
-  }
-
-  /// [_queueNameForFront]로 GetQueue 앞줄을 맞춘다. 바뀌었으면 true.
-  Future<bool> _refreshQueueFront({required int version}) async {
-    final queueName = _queueNameForFront;
-    try {
-      final queues = await _toolRunUseCase.getQueue();
-      if (version != _pollVersion) {
-        return false;
-      }
-      final matched = toolRunQueueMatching(queues, queueName);
-      final nextError = '';
-      final nextEmpty = matched == null ? '같은 이름의 대기열이 없습니다.' : '';
-      final sameQueue = _selectedQueue?.queue == matched?.queue &&
-          _selectedQueue?.workers == matched?.workers &&
-          _selectedQueue?.running == matched?.running &&
-          _selectedQueue?.waiting == matched?.waiting &&
-          _queueRunsSignature(_selectedQueue?.runs) ==
-              _queueRunsSignature(matched?.runs);
-      if (sameQueue &&
-          _queueError == nextError &&
-          _queueEmptyMessage == nextEmpty) {
-        return false;
-      }
-      _selectedQueue = matched;
-      _queueError = nextError;
-      _queueEmptyMessage = nextEmpty;
-      return true;
-    } catch (error) {
-      if (version != _pollVersion) {
-        return false;
-      }
-      final message = error.toString().trim().isEmpty
-          ? '대기열을 불러오지 못했습니다.'
-          : error.toString();
-      final nextMessage =
-          message.contains('대기열') ? message : '대기열을 불러오지 못했습니다.';
-      if (_queueError == nextMessage && _selectedQueue == null) {
-        return false;
-      }
-      _selectedQueue = null;
-      _queueEmptyMessage = '';
-      _queueError = nextMessage;
-      return true;
-    }
-  }
-
-  String _queueRunsSignature(List<ToolRunSnapshot>? runs) {
-    if (runs == null || runs.isEmpty) {
-      return '';
-    }
-    return [
-      for (final run in runs) run.pollSignature,
-    ].join('\n');
   }
 
   String _signatureOfTraces(List<TraceSnapshot> traces) {

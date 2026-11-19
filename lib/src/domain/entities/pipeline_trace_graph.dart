@@ -541,3 +541,86 @@ int _nodeIndex(String nodeId) {
   }
   return -1;
 }
+
+/// ListTraces/GetTrace의 `Trace.run`만으로 본 큐별 병목(실행·대기 수).
+class TraceQueueBottleneck {
+  const TraceQueueBottleneck({
+    required this.queue,
+    required this.running,
+    required this.waiting,
+  });
+
+  final String queue;
+  final int running;
+  final int waiting;
+}
+
+/// in-progress `run.queue`를 큐 이름순으로 집계한다. GetQueue를 쓰지 않는다.
+List<TraceQueueBottleneck> traceQueueBottlenecks(
+  Iterable<TraceSnapshot> traces,
+) {
+  final runningByQueue = <String, int>{};
+  final waitingByQueue = <String, int>{};
+  for (final trace in traces) {
+    final run = trace.run;
+    if (run == null || !run.isInProgress) {
+      continue;
+    }
+    final queue = run.queue.trim();
+    if (queue.isEmpty) {
+      continue;
+    }
+    if (run.status == ToolRunStatus.running) {
+      runningByQueue[queue] = (runningByQueue[queue] ?? 0) + 1;
+    } else {
+      waitingByQueue[queue] = (waitingByQueue[queue] ?? 0) + 1;
+    }
+  }
+  final names = {...runningByQueue.keys, ...waitingByQueue.keys}.toList()
+    ..sort();
+  return [
+    for (final name in names)
+      TraceQueueBottleneck(
+        queue: name,
+        running: runningByQueue[name] ?? 0,
+        waiting: waitingByQueue[name] ?? 0,
+      ),
+  ];
+}
+
+/// 같은 `run.queue`의 in-progress Trace를 `created_at` 오래된 순(없으면 뒤에).
+List<TraceSnapshot> tracesInSameQueueOldestFirst(
+  Iterable<TraceSnapshot> traces,
+  String queueName,
+) {
+  final name = queueName.trim();
+  if (name.isEmpty) {
+    return const [];
+  }
+  final matched = [
+    for (final trace in traces)
+      if (trace.run != null &&
+          trace.run!.isInProgress &&
+          trace.run!.queue.trim() == name)
+        trace,
+  ];
+  matched.sort((a, b) {
+    final aAt = a.run?.createdAt;
+    final bAt = b.run?.createdAt;
+    if (aAt == null && bAt == null) {
+      return a.traceId.compareTo(b.traceId);
+    }
+    if (aAt == null) {
+      return 1;
+    }
+    if (bAt == null) {
+      return -1;
+    }
+    final byTime = aAt.compareTo(bAt);
+    if (byTime != 0) {
+      return byTime;
+    }
+    return a.traceId.compareTo(b.traceId);
+  });
+  return matched;
+}

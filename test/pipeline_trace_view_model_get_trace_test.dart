@@ -1,9 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:weld_dashboard/src/domain/entities/tool_run.dart';
 import 'package:weld_dashboard/src/domain/entities/upload_trace.dart';
-import 'package:weld_dashboard/src/domain/repositories/tool_run_repository.dart';
 import 'package:weld_dashboard/src/domain/repositories/trace_repository.dart';
-import 'package:weld_dashboard/src/domain/use_cases/tool_run_use_case.dart';
 import 'package:weld_dashboard/src/domain/use_cases/trace_use_case.dart';
 import 'package:weld_dashboard/src/presentation/features/collection_monitoring/pipeline_trace_view_model.dart';
 
@@ -44,7 +41,6 @@ void main() {
     );
     final viewModel = PipelineTraceViewModel(
       traceUseCase: TraceUseCase(repo),
-      toolRunUseCase: ToolRunUseCase(_FakeToolRunRepository()),
     );
 
     await viewModel.refresh();
@@ -89,7 +85,6 @@ void main() {
     );
     final viewModel = PipelineTraceViewModel(
       traceUseCase: TraceUseCase(repo),
-      toolRunUseCase: ToolRunUseCase(_FakeToolRunRepository()),
     );
 
     await viewModel.didSelectTrace('20');
@@ -130,7 +125,6 @@ void main() {
     );
     final viewModel = PipelineTraceViewModel(
       traceUseCase: TraceUseCase(repo),
-      toolRunUseCase: ToolRunUseCase(_FakeToolRunRepository()),
     );
 
     await viewModel.refresh();
@@ -191,39 +185,5 @@ class _RecordingTraceRepository implements TraceRepository {
       throw const TraceException('not found');
     }
     return detail;
-  }
-}
-
-class _FakeToolRunRepository implements ToolRunRepository {
-  @override
-  Future<ToolRunSnapshot> cancelRun({required String runId}) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<List<ToolRunQueue>> getQueue() async => const [];
-
-  @override
-  Future<ToolRunSnapshot> getRun({required String runId}) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<List<InferenceTool>> listEnabledTools({bool includeDisabled = false}) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<List<ToolRunSnapshot>> listJobRuns({required String jobId}) {
-    throw UnimplementedError();
-  }
-
-  @override
-  Future<ToolRunSnapshot> startRun({
-    required String toolId,
-    required ToolRunTargetKind kind,
-    required String targetId,
-  }) {
-    throw UnimplementedError();
   }
 }
