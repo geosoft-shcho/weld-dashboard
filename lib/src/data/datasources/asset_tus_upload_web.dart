@@ -17,7 +17,8 @@ Future<({String body, String traceId})> uploadAssetTus({
   required Uint8List bytes,
   void Function(double progressPercent)? onProgress,
 }) async {
-  const chunkSize = 64 * 1024 * 1024;
+  // 프록시가 조각 단위로만 본 서버에 넘기므로, 작게 두면 Trace 진행이 더 자주 오른다.
+  const chunkSize = 8 * 1024 * 1024;
   final createHeaders = web.Headers();
   createHeaders.set('Tus-Resumable', '1.0.0');
   createHeaders.set('Upload-Length', '${bytes.length}');
