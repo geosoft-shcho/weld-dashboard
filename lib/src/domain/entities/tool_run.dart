@@ -42,6 +42,7 @@ class ToolRunSnapshot {
     this.waitAhead = 0,
     this.waitRunning = 0,
     this.waitWorkers = 0,
+    this.createdAt,
   });
 
   final String runId;
@@ -58,6 +59,7 @@ class ToolRunSnapshot {
   final int waitAhead;
   final int waitRunning;
   final int waitWorkers;
+  final DateTime? createdAt;
 
   bool get isInProgress {
     return status == ToolRunStatus.queued || status == ToolRunStatus.running;
@@ -137,6 +139,36 @@ class ToolRunQueue {
   final int running;
   final int waiting;
   final List<ToolRunSnapshot> runs;
+}
+
+/// GetQueue `queues[]`에서 Trace/Run의 queue 이름과 같은 항목을 고른다.
+ToolRunQueue? toolRunQueueMatching(
+  Iterable<ToolRunQueue> queues,
+  String queueName,
+) {
+  final name = queueName.trim();
+  if (name.isEmpty) {
+    return null;
+  }
+  for (final queue in queues) {
+    if (queue.queue == name) {
+      return queue;
+    }
+  }
+  return null;
+}
+
+String toolRunQueueDisplayName(String queue) {
+  switch (queue.trim()) {
+    case 'postprocess':
+      return '후처리';
+    case 'work':
+      return '작업';
+    case '':
+      return '';
+    default:
+      return queue.trim();
+  }
 }
 
 class ToolRunException implements Exception {

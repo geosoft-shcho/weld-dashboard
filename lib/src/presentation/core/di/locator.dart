@@ -373,6 +373,7 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerFactory(
     () => PipelineTraceViewModel(
       traceUseCase: locator(),
+      toolRunUseCase: locator(),
     ),
   );
   locator.registerLazySingleton<LabelRepository>(

@@ -215,6 +215,7 @@ ToolRunSnapshot toolRunSnapshotFrom(run_pb.Run run) {
     waitAhead: wait?.ahead ?? 0,
     waitRunning: wait?.running ?? 0,
     waitWorkers: wait?.workers ?? 0,
+    createdAt: run.hasCreatedAt() ? run.createdAt.toDateTime() : null,
   );
 }
 

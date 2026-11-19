@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:fluent_ui/fluent_ui.dart';
 
-import '../../../../domain/entities/pipeline_trace_graph.dart';
 import '../../../../domain/entities/upload_trace.dart';
 import '../../../core/themes/app_theme.dart';
 import '../pipeline_trace_view_model.dart';
@@ -83,7 +82,11 @@ class _PipelineTraceListState extends State<PipelineTraceList>
               final name = trace.fileName.isEmpty
                   ? '파이프라인 ${trace.traceId}'
                   : trace.fileName;
-              final event = pipelineEventLabel(trace.lastEvent);
+              final wait = trace.run?.queueWaitLabel.trim() ?? '';
+              final event = [
+                if (trace.lastEvent.trim().isNotEmpty) trace.lastEvent.trim(),
+                if (wait.isNotEmpty) wait,
+              ].join(' · ');
               return HoverButton(
                 onPressed: () =>
                     widget.viewModel.didSelectTrace(trace.traceId),

@@ -59,6 +59,10 @@ class ToolRunUseCase {
     return _repository.getRun(runId: runId);
   }
 
+  Future<List<ToolRunQueue>> getQueue() {
+    return _repository.getQueue();
+  }
+
   Future<ToolRunSnapshot> cancel({required String runId}) {
     if (runId.isEmpty) {
       throw const ToolRunException('실행을 찾지 못했습니다.');

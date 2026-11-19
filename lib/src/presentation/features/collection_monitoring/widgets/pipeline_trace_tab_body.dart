@@ -1,5 +1,6 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
+import '../../../../domain/entities/tool_run.dart';
 import '../../../../domain/entities/upload_trace.dart';
 import '../../../core/themes/app_theme.dart';
 import '../pipeline_trace_view_model.dart';
@@ -60,10 +61,122 @@ class PipelineTraceTabBody extends StatelessWidget {
                 style: const TextStyle(color: AppTheme.INK, fontSize: 12),
               ),
             ),
+          if (viewModel.doesShowQueueFront)
+            _QueueFrontPanel(viewModel: viewModel),
         ],
       ),
     );
   }
+}
+
+class _QueueFrontPanel extends StatelessWidget {
+  const _QueueFrontPanel({required this.viewModel});
+
+  final PipelineTraceViewModel viewModel;
+
+  @override
+  Widget build(BuildContext context) {
+    final queue = viewModel.selectedQueue;
+    final selectedRunId = viewModel.selectedRunId;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFF3E424A)),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              queue == null
+                  ? '대기열 앞줄'
+                  : '${toolRunQueueDisplayName(queue.queue)} · '
+                        '워커 ${queue.workers} · '
+                        '진행 ${queue.running} · '
+                        '대기 ${queue.waiting}',
+              style: const TextStyle(
+                color: AppTheme.INK,
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (viewModel.queueError.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                viewModel.queueError,
+                style: TextStyle(color: Colors.red, fontSize: 12),
+              ),
+            ] else if (viewModel.queueEmptyMessage.isNotEmpty) ...[
+              const SizedBox(height: 4),
+              Text(
+                viewModel.queueEmptyMessage,
+                style: const TextStyle(
+                  color: AppTheme.STATUS_OFF,
+                  fontSize: 12,
+                ),
+              ),
+            ] else if (queue == null || queue.runs.isEmpty) ...[
+              const SizedBox(height: 4),
+              const Text(
+                '대기열에 run이 없습니다.',
+                style: TextStyle(color: AppTheme.STATUS_OFF, fontSize: 12),
+              ),
+            ] else
+              SizedBox(
+                height: 96,
+                child: ListView.builder(
+                  itemCount: queue.runs.length,
+                  itemBuilder: (context, index) {
+                    final run = queue.runs[index];
+                    final isMine =
+                        selectedRunId.isNotEmpty && run.runId == selectedRunId;
+                    final wait = _waitAgeLabel(run.createdAt);
+                    return Padding(
+                      padding: const EdgeInsets.only(top: 4),
+                      child: Text(
+                        [
+                          isMine ? '●' : '○',
+                          'run ${run.runId}',
+                          run.status.name,
+                          if (run.queueWaitLabel.isNotEmpty) run.queueWaitLabel,
+                          if (wait.isNotEmpty) wait,
+                        ].join(' · '),
+                        style: TextStyle(
+                          color: isMine ? AppTheme.ACCENT_STEEL : AppTheme.INK,
+                          fontSize: 12,
+                          fontWeight:
+                              isMine ? FontWeight.w600 : FontWeight.w400,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+String _waitAgeLabel(DateTime? createdAt) {
+  if (createdAt == null) {
+    return '';
+  }
+  final seconds = DateTime.now().difference(createdAt).inSeconds;
+  if (seconds < 0) {
+    return '';
+  }
+  if (seconds < 60) {
+    return '$seconds초 대기';
+  }
+  final minutes = seconds ~/ 60;
+  if (minutes < 60) {
+    return '$minutes분 대기';
+  }
+  return '${minutes ~/ 60}시간 대기';
 }
 
 class _TraceListHeader extends StatelessWidget {
