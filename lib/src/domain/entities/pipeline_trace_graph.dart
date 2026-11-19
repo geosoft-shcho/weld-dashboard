@@ -319,36 +319,23 @@ List<PipelineTraceEdge> pipelinePathEdges(
   ];
 }
 
-/// 활성 연결: 실제 이벤트 path 연속 쌍만.
-/// 선택 시 그 여정, 미선택 시 visibleTraces path 합집합.
+/// 활성 연결 키. 선택 시 그 여정 path, 미선택 시 visibleTraces path 합집합.
 Set<String> pipelineHighlightEdgeKeys({
   required TraceSnapshot? selected,
   required Iterable<TraceSnapshot> traces,
   required List<PipelineStageDef> stages,
 }) {
-  final visibleNodeIds = pipelineSkeletonNodeIds(stages).toSet();
-  if (selected != null) {
-    return {
-      for (final edge in pipelinePathEdges(
-        selected,
-        visibleNodeIds: visibleNodeIds,
-      ))
-        edge.key,
-    };
-  }
-  final keys = <String>{};
-  for (final trace in traces) {
-    for (final edge in pipelinePathEdges(
-      trace,
-      visibleNodeIds: visibleNodeIds,
-    )) {
-      keys.add(edge.key);
-    }
-  }
-  return keys;
+  return {
+    for (final edge in pipelineActivePathEdges(
+      selected: selected,
+      traces: traces,
+      stages: stages,
+    ))
+      edge.key,
+  };
 }
 
-/// 활성 path 엣지 목록(점프 포함). 페인터가 골격과 따로 그린다.
+/// 활성 path 엣지. 선택 시 그 여정, 미선택 시 traces path 합집합(점프 포함).
 List<PipelineTraceEdge> pipelineActivePathEdges({
   required TraceSnapshot? selected,
   required Iterable<TraceSnapshot> traces,
@@ -358,6 +345,13 @@ List<PipelineTraceEdge> pipelineActivePathEdges({
   if (selected != null) {
     return pipelinePathEdges(selected, visibleNodeIds: visibleNodeIds);
   }
+  return _unionPathEdges(traces, visibleNodeIds: visibleNodeIds);
+}
+
+List<PipelineTraceEdge> _unionPathEdges(
+  Iterable<TraceSnapshot> traces, {
+  required Set<String> visibleNodeIds,
+}) {
   final seen = <String>{};
   final edges = <PipelineTraceEdge>[];
   for (final trace in traces) {
@@ -396,8 +390,7 @@ bool pipelineEdgeIsLive({
       );
 }
 
-/// 단계 사이 본선에 쓸 단계 ID(왼쪽→오른쪽).
-/// 선택 시 그 여정이 도달한 단계까지. 미선택 시 집계상 non-idle 단계.
+/// 단계 사이 본선에 쓸 단계 ID. 선택 시 도달 단계까지, 미선택 시 합산 non-idle.
 List<String> pipelineHighlightStageIds({
   required TraceSnapshot? selected,
   required Iterable<TraceSnapshot> traces,
@@ -425,7 +418,7 @@ List<String> pipelineHighlightStageIds({
   ];
 }
 
-/// 단계(큰 원) 시각. 미선택은 visibleTraces 합산(대기>진행>실패>완료>idle).
+/// 단계 시각. 선택 시 그 여정, 미선택 시 traces 합산(대기>진행>실패>완료>idle).
 PipelineNodeVisual pipelineStageVisual({
   required String stageId,
   required TraceSnapshot? selected,
@@ -436,23 +429,38 @@ PipelineNodeVisual pipelineStageVisual({
     return PipelineNodeVisual.idle;
   }
   if (selected != null) {
-    final lastOrder = _stageOrder(selected.stageId);
-    if (lastOrder < 0) {
-      return PipelineNodeVisual.idle;
-    }
-    if (stageOrder < lastOrder) {
-      if (_isEvidenceOnlyStage(stageId) &&
-          !pipelineTraceTouchesStage(selected, stageId)) {
-        return PipelineNodeVisual.skipped;
-      }
-      return PipelineNodeVisual.done;
-    }
-    if (stageOrder > lastOrder) {
-      return PipelineNodeVisual.idle;
-    }
-    return _currentStageVisual(selected);
+    return _stageVisualForTrace(stageId: stageId, trace: selected);
   }
+  return _stageVisualAggregate(stageId: stageId, traces: traces);
+}
 
+PipelineNodeVisual _stageVisualForTrace({
+  required String stageId,
+  required TraceSnapshot trace,
+}) {
+  final stageOrder = _stageOrder(stageId);
+  final lastOrder = _stageOrder(trace.stageId);
+  if (lastOrder < 0) {
+    return PipelineNodeVisual.idle;
+  }
+  if (stageOrder < lastOrder) {
+    if (_isEvidenceOnlyStage(stageId) &&
+        !pipelineTraceTouchesStage(trace, stageId)) {
+      return PipelineNodeVisual.skipped;
+    }
+    return PipelineNodeVisual.done;
+  }
+  if (stageOrder > lastOrder) {
+    return PipelineNodeVisual.idle;
+  }
+  return _currentStageVisual(trace);
+}
+
+PipelineNodeVisual _stageVisualAggregate({
+  required String stageId,
+  required Iterable<TraceSnapshot> traces,
+}) {
+  final stageOrder = _stageOrder(stageId);
   var hasFailed = false;
   var hasQueued = false;
   var hasRunning = false;
@@ -476,8 +484,7 @@ PipelineNodeVisual pipelineStageVisual({
     if (trace.status == UploadTraceStatus.failed) {
       hasFailed = true;
     } else if (trace.status == UploadTraceStatus.running) {
-      final run = trace.run;
-      if (run != null && run.status == ToolRunStatus.queued) {
+      if (trace.run?.status == ToolRunStatus.queued) {
         hasQueued = true;
       } else {
         hasRunning = true;
@@ -486,7 +493,6 @@ PipelineNodeVisual pipelineStageVisual({
       hasDone = true;
     }
   }
-  // 진행 중인 업로드가 옛 실패에 가려지지 않게 대기/진행을 실패보다 앞선다.
   if (hasQueued) {
     return PipelineNodeVisual.queued;
   }
@@ -507,18 +513,22 @@ PipelineNodeVisual _currentStageVisual(TraceSnapshot trace) {
     return PipelineNodeVisual.failed;
   }
   if (trace.status == UploadTraceStatus.running) {
-    final run = trace.run;
-    if (run != null && run.status == ToolRunStatus.queued) {
-      return PipelineNodeVisual.queued;
-    }
-    if (run != null && run.status == ToolRunStatus.running) {
-      return PipelineNodeVisual.running;
-    }
-    return PipelineNodeVisual.active;
+    return _liveVisualFromRun(trace.run);
   }
   return PipelineNodeVisual.done;
 }
 
+PipelineNodeVisual _liveVisualFromRun(ToolRunSnapshot? run) {
+  if (run != null && run.status == ToolRunStatus.queued) {
+    return PipelineNodeVisual.queued;
+  }
+  if (run != null && run.status == ToolRunStatus.running) {
+    return PipelineNodeVisual.running;
+  }
+  return PipelineNodeVisual.active;
+}
+
+/// 이벤트 노드 시각. 선택 시 그 여정, 미선택 시 traces 합산(진행>실패>완료).
 PipelineNodeVisual pipelineNodeVisual({
   required String nodeId,
   required TraceSnapshot? selected,
@@ -527,18 +537,17 @@ PipelineNodeVisual pipelineNodeVisual({
   if (selected != null) {
     return _visualForSelected(nodeId: nodeId, trace: selected);
   }
-  // 미선택: 대기/진행 → 실패 → 완료 순(진행 중 업로드가 옛 실패에 가려지지 않게).
+  return _nodeVisualAggregate(nodeId: nodeId, traces: traces);
+}
+
+PipelineNodeVisual _nodeVisualAggregate({
+  required String nodeId,
+  required Iterable<TraceSnapshot> traces,
+}) {
   for (final trace in traces) {
     if (trace.status == UploadTraceStatus.running &&
         trace.lastEvent == nodeId) {
-      final run = trace.run;
-      if (run != null && run.status == ToolRunStatus.queued) {
-        return PipelineNodeVisual.queued;
-      }
-      if (run != null && run.status == ToolRunStatus.running) {
-        return PipelineNodeVisual.running;
-      }
-      return PipelineNodeVisual.active;
+      return _liveVisualFromRun(trace.run);
     }
   }
   for (final trace in traces) {
@@ -596,14 +605,7 @@ PipelineNodeVisual _visualForSelected({
     }
     if (trace.lastEvent == nodeId &&
         trace.status == UploadTraceStatus.running) {
-      final run = trace.run;
-      if (run != null && run.status == ToolRunStatus.queued) {
-        return PipelineNodeVisual.queued;
-      }
-      if (run != null && run.status == ToolRunStatus.running) {
-        return PipelineNodeVisual.running;
-      }
-      return PipelineNodeVisual.active;
+      return _liveVisualFromRun(trace.run);
     }
     return PipelineNodeVisual.done;
   }
@@ -612,14 +614,7 @@ PipelineNodeVisual _visualForSelected({
       return PipelineNodeVisual.failed;
     }
     if (trace.status == UploadTraceStatus.running) {
-      final run = trace.run;
-      if (run != null && run.status == ToolRunStatus.queued) {
-        return PipelineNodeVisual.queued;
-      }
-      if (run != null && run.status == ToolRunStatus.running) {
-        return PipelineNodeVisual.running;
-      }
-      return PipelineNodeVisual.active;
+      return _liveVisualFromRun(trace.run);
     }
     return PipelineNodeVisual.done;
   }

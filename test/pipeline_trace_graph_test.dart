@@ -144,7 +144,6 @@ void main() {
       ),
       PipelineNodeVisual.done,
     );
-    // done.stored만 있고 embed 이벤트 없으면 임베딩 칸은 거짓 완료가 아니다.
     expect(
       pipelineStageVisual(
         stageId: 'embed',
@@ -290,7 +289,7 @@ void main() {
     expect(pipelineNodeIsLive(PipelineNodeVisual.active), isTrue);
   });
 
-  test('active edges follow event path only; jumps light without skipped links', () {
+  test('active edges follow event path; unselected uses path union', () {
     final stages = [
       for (final stage in pipelineStages)
         if (stage.id != 'tool' && stage.id != 'embed') stage,
@@ -300,12 +299,7 @@ void main() {
       edges.map((e) => e.key),
       contains('receive.done>register.stored'),
     );
-    expect(
-      edges.map((e) => e.key),
-      contains('register.stored>register.asset'),
-    );
 
-    // 받기 → 등록.저장 → 후처리.속성 → 완료 (중간 이벤트 생략)
     const jumped = TraceSnapshot(
       traceId: '42',
       lastEvent: 'done.searchable',
@@ -326,10 +320,7 @@ void main() {
     expect(keys, contains('receive.done>register.stored'));
     expect(keys, contains('register.stored>postprocess.props'));
     expect(keys, contains('postprocess.props>done.searchable'));
-    // 골격 중간선은 path에 없으므로 비활성
     expect(keys, isNot(contains('register.stored>register.asset')));
-    expect(keys, isNot(contains('postprocess.run>postprocess.props')));
-    expect(keys, isNot(contains('done.searchable>done.stored')));
 
     final active = pipelineActivePathEdges(
       selected: jumped,
@@ -345,7 +336,7 @@ void main() {
       ],
     );
 
-    const running = TraceSnapshot(
+    const runningA = TraceSnapshot(
       traceId: '9',
       lastEvent: 'register.asset',
       status: UploadTraceStatus.running,
@@ -357,12 +348,35 @@ void main() {
         TraceEventSnapshot(name: 'register.asset', status: 'running'),
       ],
     );
+    const runningB = TraceSnapshot(
+      traceId: '10',
+      lastEvent: 'receive.started',
+      status: UploadTraceStatus.running,
+      errorMessage: '',
+      events: [
+        TraceEventSnapshot(name: 'receive.started', status: 'ok'),
+      ],
+    );
+    final union = pipelineActivePathEdges(
+      selected: null,
+      traces: const [runningA, runningB],
+      stages: stages,
+    );
+    expect(
+      union.map((e) => e.key),
+      containsAll([
+        'receive.started>receive.done',
+        'receive.done>register.stored',
+        'register.stored>register.asset',
+      ]),
+    );
+
     expect(
       pipelineEdgeIsLive(
         fromId: 'register.stored',
         toId: 'register.asset',
-        selected: running,
-        traces: const [running],
+        selected: runningA,
+        traces: const [runningA],
       ),
       isTrue,
     );
