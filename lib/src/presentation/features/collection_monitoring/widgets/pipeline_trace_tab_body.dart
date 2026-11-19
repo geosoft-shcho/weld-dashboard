@@ -19,7 +19,7 @@ class PipelineTraceTabBody extends StatefulWidget {
 }
 
 class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
-  static const double _listPanelWidth = 320;
+  static const double _listPanelWidth = 380;
 
   bool _listPanelVisible = true;
 
@@ -172,10 +172,7 @@ class _QueueBottleneckPanel extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               '같은 큐 · ${toolRunQueueDisplayName(sameQueue.first.run!.queue)}',
-              style: const TextStyle(
-                color: AppTheme.STATUS_OFF,
-                fontSize: 11,
-              ),
+              style: const TextStyle(color: AppTheme.STATUS_OFF, fontSize: 11),
             ),
             SizedBox(
               height: 96,
@@ -246,10 +243,7 @@ class _TraceListHeader extends StatelessWidget {
         const SizedBox(width: 8),
         Text(
           '최근 ${PipelineTraceViewModel.recentPageSize}',
-          style: const TextStyle(
-            color: AppTheme.STATUS_OFF,
-            fontSize: 11,
-          ),
+          style: const TextStyle(color: AppTheme.STATUS_OFF, fontSize: 11),
         ),
       ],
     );

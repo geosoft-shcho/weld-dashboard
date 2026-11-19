@@ -28,6 +28,9 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
 
+  /// 탭으로 포커스한 이벤트 노드. 여정 선택과는 별개.
+  String? _focusedNodeId;
+
   /// 노드·라벨이 겹치지 않는 최소 셀.
   static const double _minColumnWidth = 128;
   static const double _minRowHeight = 96;
@@ -115,9 +118,11 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                               nodeRadius: layout.radius,
                             ),
                           ),
-                          for (var stageIndex = 0;
-                              stageIndex < stages.length;
-                              stageIndex++)
+                          for (
+                            var stageIndex = 0;
+                            stageIndex < stages.length;
+                            stageIndex++
+                          )
                             Positioned(
                               left: layout.columnLeft(stageIndex),
                               top: layout.headerTop,
@@ -149,11 +154,7 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                                 selected: selected,
                                 traces: traces,
                               ),
-                              onTap: () => _selectNear(
-                                viewModel: viewModel,
-                                nodeId: entry.key,
-                                stageId: pipelineStageOf(entry.key),
-                              ),
+                              onTap: () => _didTapNode(entry.key),
                             ),
                         ],
                       ),
@@ -164,15 +165,25 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                       // ScrollPosition 미연결 예외가 난다. 스크롤만 둔다.
                       return SingleChildScrollView(
                         scrollDirection: Axis.horizontal,
-                        child: SingleChildScrollView(
-                          child: canvas,
-                        ),
+                        child: SingleChildScrollView(child: canvas),
                       );
                     }
                     return canvas;
                   },
                 ),
               ),
+              if (_focusedNodeId != null) ...[
+                const SizedBox(height: 6),
+                _FocusedNodeEventStrip(
+                  nodeId: _focusedNodeId!,
+                  selected: selected,
+                  onDismiss: () {
+                    setState(() {
+                      _focusedNodeId = null;
+                    });
+                  },
+                ),
+              ],
             ],
           ),
         );
@@ -288,24 +299,14 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
     );
   }
 
-  void _selectNear({
-    required PipelineTraceViewModel viewModel,
-    required String nodeId,
-    required String stageId,
-  }) {
-    final candidates = [
-      for (final trace in viewModel.visibleTraces)
-        if (trace.lastEvent == nodeId ||
-            pipelineStageOf(trace.lastEvent) == stageId)
-          trace,
-    ];
-    if (candidates.isEmpty && viewModel.visibleTraces.isNotEmpty) {
-      viewModel.didSelectTrace(viewModel.visibleTraces.first.traceId);
-      return;
-    }
-    if (candidates.isNotEmpty) {
-      viewModel.didSelectTrace(candidates.first.traceId);
-    }
+  void _didTapNode(String nodeId) {
+    setState(() {
+      if (_focusedNodeId == nodeId) {
+        _focusedNodeId = null;
+      } else {
+        _focusedNodeId = nodeId;
+      }
+    });
   }
 
   Color _fillOf(PipelineNodeVisual visual, Color accent) {
@@ -345,6 +346,83 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
   }
 }
 
+/// 포커스 노드의 이벤트 요약. 선택 Trace.events에서 name 매칭.
+class _FocusedNodeEventStrip extends StatelessWidget {
+  const _FocusedNodeEventStrip({
+    required this.nodeId,
+    required this.selected,
+    required this.onDismiss,
+  });
+
+  final String nodeId;
+  final TraceSnapshot? selected;
+  final VoidCallback onDismiss;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = pipelineEventLabel(nodeId);
+    final body = _bodyText(label);
+    return Container(
+      padding: const EdgeInsets.fromLTRB(8, 6, 4, 6),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFF3E424A)),
+        borderRadius: BorderRadius.circular(4),
+        color: AppTheme.SURFACE_RAISED.withValues(alpha: 0.65),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Text(
+              body,
+              style: const TextStyle(color: AppTheme.INK, fontSize: 12),
+            ),
+          ),
+          IconButton(
+            icon: const Icon(FluentIcons.chrome_close, size: 12),
+            onPressed: onDismiss,
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _bodyText(String label) {
+    final selected = this.selected;
+    if (selected == null) {
+      return '$label · 목록에서 여정을 선택하면 이 노드 이벤트를 볼 수 있습니다.';
+    }
+    TraceEventSnapshot? matched;
+    for (final event in selected.events) {
+      if (event.name == nodeId) {
+        matched = event;
+        break;
+      }
+    }
+    if (matched == null) {
+      return '$label · 이 여정에 이 이벤트 기록이 없습니다.';
+    }
+    final parts = <String>[
+      label,
+      if (matched.status.isNotEmpty) matched.status,
+      if (matched.at != null) _formatAt(matched.at!),
+      if (matched.runId.isNotEmpty) 'run ${matched.runId}',
+      if (matched.errorMessage.isNotEmpty) matched.errorMessage,
+    ];
+    return parts.join(' · ');
+  }
+
+  String _formatAt(DateTime at) {
+    final local = at.toLocal();
+    final month = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    final hour = local.hour.toString().padLeft(2, '0');
+    final minute = local.minute.toString().padLeft(2, '0');
+    final second = local.second.toString().padLeft(2, '0');
+    return '$month-$day $hour:$minute:$second';
+  }
+}
+
 /// viewport에 맞춰 셀을 나누되 최소 폭·높이로 겹침을 막는다.
 class _CellLayout {
   const _CellLayout({
@@ -379,8 +457,10 @@ class _CellLayout {
       maxRows = math.max(maxRows, stage.nodeIds.length);
     }
 
-    final availW =
-        math.max(1.0, viewport.width - 2 * _PipelineTraceGraphViewState._padX);
+    final availW = math.max(
+      1.0,
+      viewport.width - 2 * _PipelineTraceGraphViewState._padX,
+    );
     final availH = math.max(
       1.0,
       viewport.height -
@@ -399,26 +479,29 @@ class _CellLayout {
 
     final canvasWidth =
         2 * _PipelineTraceGraphViewState._padX + stageCount * columnWidth;
-    final canvasHeight = _PipelineTraceGraphViewState._headerBand +
+    final canvasHeight =
+        _PipelineTraceGraphViewState._headerBand +
         _PipelineTraceGraphViewState._padY +
         maxRows * rowHeight;
     final needsScroll =
-        canvasWidth > viewport.width + 0.5 || canvasHeight > viewport.height + 0.5;
+        canvasWidth > viewport.width + 0.5 ||
+        canvasHeight > viewport.height + 0.5;
 
-    final radius = math.min(
-      nodeRadius,
-      math.min(columnWidth * 0.22, rowHeight * 0.22),
-    ).clamp(12.0, nodeRadius);
+    final radius = math
+        .min(nodeRadius, math.min(columnWidth * 0.22, rowHeight * 0.22))
+        .clamp(12.0, nodeRadius);
 
     final positions = <String, Offset>{};
     for (var stageIndex = 0; stageIndex < stages.length; stageIndex++) {
       final nodeIds = stages[stageIndex].nodeIds;
       for (var row = 0; row < nodeIds.length; row++) {
         // 원 중심: 셀 상단 쪽에 두어 아래 라벨 공간을 확보.
-        final cx = _PipelineTraceGraphViewState._padX +
+        final cx =
+            _PipelineTraceGraphViewState._padX +
             stageIndex * columnWidth +
             columnWidth / 2;
-        final cy = _PipelineTraceGraphViewState._headerBand +
+        final cy =
+            _PipelineTraceGraphViewState._headerBand +
             row * rowHeight +
             radius +
             8;
@@ -601,11 +684,7 @@ class _PipelineFlowPainter extends CustomPainter {
         final t = pulse % 1.0;
         final tangent = metric.getTangentForOffset(metric.length * t);
         if (tangent != null) {
-          canvas.drawCircle(
-            tangent.position,
-            3.4,
-            Paint()..color = color,
-          );
+          canvas.drawCircle(tangent.position, 3.4, Paint()..color = color);
         }
       }
     } else {
@@ -634,10 +713,7 @@ class _PipelineFlowPainter extends CustomPainter {
       var distance = 0.0;
       var draw = true;
       while (distance < metric.length) {
-        final next = math.min(
-          distance + (draw ? dash : gap),
-          metric.length,
-        );
+        final next = math.min(distance + (draw ? dash : gap), metric.length);
         if (draw) {
           canvas.drawPath(metric.extractPath(distance, next), paint);
         }
