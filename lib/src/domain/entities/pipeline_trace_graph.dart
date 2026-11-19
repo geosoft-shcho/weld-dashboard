@@ -251,7 +251,9 @@ bool pipelineNodeIsLive(PipelineNodeVisual visual) {
       visual == PipelineNodeVisual.queued;
 }
 
-/// 여정이 거친 노드 ID(알려진 pipeline 노드만, 출현 순).
+/// 여정이 거친 노드 ID(알려진 pipeline 노드만, **최초** 출현 순).
+/// 같은 name 다중 줄(예: postprocess.run)은 path에 한 번만; 상세·visual은
+/// [traceEventNamed]가 마지막·종결 status를 쓴다.
 /// events가 없으면 lastEvent만 넣는다(이전 구간은 UI가 visual로 잇는다).
 List<String> pipelinePathNodeIds(TraceSnapshot trace) {
   final known = <String>{
@@ -582,13 +584,7 @@ PipelineNodeVisual _visualForSelected({
   required String nodeId,
   required TraceSnapshot trace,
 }) {
-  TraceEventSnapshot? matched;
-  for (final event in trace.events) {
-    if (event.name == nodeId) {
-      matched = event;
-      break;
-    }
-  }
+  final matched = traceEventNamed(trace.events, nodeId);
   if (matched != null) {
     final status = matched.status.toLowerCase();
     if (status == 'failed') {

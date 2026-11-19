@@ -392,13 +392,7 @@ class _FocusedNodeEventStrip extends StatelessWidget {
     if (selected == null) {
       return '$label · 목록에서 여정을 선택하면 이 노드 이벤트를 볼 수 있습니다.';
     }
-    TraceEventSnapshot? matched;
-    for (final event in selected.events) {
-      if (event.name == nodeId) {
-        matched = event;
-        break;
-      }
-    }
+    final matched = traceEventNamed(selected.events, nodeId);
     if (matched == null) {
       return '$label · 이 여정에 이 이벤트 기록이 없습니다.';
     }

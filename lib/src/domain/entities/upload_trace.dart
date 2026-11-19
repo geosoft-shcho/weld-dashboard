@@ -18,6 +18,35 @@ class TraceEventSnapshot {
   final DateTime? at;
 }
 
+/// GetTrace `events`는 오래된 순. 같은 [name]이 여러 줄이면
+/// `succeeded`/`failed`/`canceled` 중 **마지막 종결**을 쓰고, 없으면 **마지막** 줄.
+/// 여정 완료 여부는 [TraceSnapshot.status] / [TraceSnapshot.lastEvent]로 판정한다.
+TraceEventSnapshot? traceEventNamed(
+  Iterable<TraceEventSnapshot> events,
+  String name,
+) {
+  final want = name.trim();
+  if (want.isEmpty) {
+    return null;
+  }
+  TraceEventSnapshot? last;
+  TraceEventSnapshot? lastTerminal;
+  for (final event in events) {
+    if (event.name.trim() != want) {
+      continue;
+    }
+    last = event;
+    final status = event.status.trim().toLowerCase();
+    if (status == 'succeeded' ||
+        status == 'failed' ||
+        status == 'canceled' ||
+        status == 'cancelled') {
+      lastTerminal = event;
+    }
+  }
+  return lastTerminal ?? last;
+}
+
 class TraceSnapshot {
   const TraceSnapshot({
     required this.traceId,

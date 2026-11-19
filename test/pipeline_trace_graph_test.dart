@@ -381,4 +381,69 @@ void main() {
       isTrue,
     );
   });
+
+  test('traceEventNamed prefers terminal status over first queued line', () {
+    const events = [
+      TraceEventSnapshot(name: 'postprocess.run', status: 'queued'),
+      TraceEventSnapshot(name: 'postprocess.run', status: 'running'),
+      TraceEventSnapshot(name: 'postprocess.run', status: 'succeeded'),
+      TraceEventSnapshot(name: 'done.stored', status: 'ok'),
+    ];
+    expect(traceEventNamed(events, 'postprocess.run')?.status, 'succeeded');
+    expect(traceEventNamed(events, 'done.stored')?.status, 'ok');
+    expect(traceEventNamed(events, 'missing'), isNull);
+
+    // 서버 역전: done이 배열에 먼저 와도 run 종결 줄은 succeeded
+    const reversed = [
+      TraceEventSnapshot(name: 'postprocess.run', status: 'queued'),
+      TraceEventSnapshot(name: 'postprocess.run', status: 'running'),
+      TraceEventSnapshot(name: 'done.stored', status: 'ok'),
+      TraceEventSnapshot(name: 'postprocess.run', status: 'succeeded'),
+    ];
+    expect(traceEventNamed(reversed, 'postprocess.run')?.status, 'succeeded');
+
+    const doneTrace = TraceSnapshot(
+      traceId: '143',
+      lastEvent: 'done.stored',
+      status: UploadTraceStatus.done,
+      errorMessage: '',
+      events: events,
+    );
+    expect(
+      pipelineNodeVisual(
+        nodeId: 'postprocess.run',
+        selected: doneTrace,
+        traces: const [doneTrace],
+      ),
+      PipelineNodeVisual.done,
+    );
+
+    const queuedOnly = TraceSnapshot(
+      traceId: '9',
+      lastEvent: 'postprocess.run',
+      status: UploadTraceStatus.running,
+      errorMessage: '',
+      events: [
+        TraceEventSnapshot(name: 'postprocess.run', status: 'queued'),
+      ],
+    );
+    expect(
+      pipelineNodeVisual(
+        nodeId: 'postprocess.run',
+        selected: queuedOnly,
+        traces: const [queuedOnly],
+      ),
+      PipelineNodeVisual.queued,
+    );
+
+    // path는 여전히 name 최초 출현만
+    expect(
+      pipelinePathNodeIds(doneTrace),
+      containsAll(['postprocess.run', 'done.stored']),
+    );
+    expect(
+      pipelinePathNodeIds(doneTrace).where((id) => id == 'postprocess.run').length,
+      1,
+    );
+  });
 }
