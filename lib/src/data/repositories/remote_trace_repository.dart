@@ -1,5 +1,4 @@
 import 'package:connectrpc/connect.dart';
-import 'package:flutter/foundation.dart';
 
 import '../../domain/entities/upload_trace.dart';
 import '../../domain/repositories/trace_repository.dart';
@@ -96,44 +95,15 @@ class RemoteTraceRepository implements TraceRepository {
   Future<TraceSnapshot> getTrace({required String traceId}) async {
     final id = protoIdOrNull(traceId);
     if (id == null) {
-      if (kDebugMode) {
-        debugPrint('[GetTrace] reject invalid traceId=$traceId');
-      }
       throw const TraceException('파이프라인을 찾지 못했습니다.');
-    }
-    if (kDebugMode) {
-      debugPrint('[GetTrace] request TraceService/GetTrace traceId=$traceId');
     }
     try {
       final response = await _mediaTag.traceService.getTrace(
         trace_pb.GetTraceRequest(traceId: id),
       );
-      final snapshot =
-          traceSnapshotFrom(response.trace, events: response.events);
-      if (kDebugMode) {
-        final progress = snapshot.progressPercent > 0
-            ? ' progress=${snapshot.progressPercent.toStringAsFixed(1)}%'
-            : '';
-        final events = [
-          for (final event in snapshot.events)
-            '${event.name}:${event.status}',
-        ].join(',');
-        debugPrint(
-          '[GetTrace] ok id=${snapshot.traceId} '
-          'status=${snapshot.status.name} last=${snapshot.lastEvent} '
-          'events=${snapshot.events.length}$progress '
-          '[$events]',
-        );
-      }
-      return snapshot;
+      return traceSnapshotFrom(response.trace, events: response.events);
     } on ConnectException catch (error) {
       final message = error.message.trim();
-      if (kDebugMode) {
-        debugPrint(
-          '[GetTrace] fail traceId=$traceId '
-          'code=${error.code} message=${message.isEmpty ? '(empty)' : message}',
-        );
-      }
       throw TraceException(
         message.isEmpty ? '파이프라인 상태를 불러오지 못했습니다.' : message,
       );

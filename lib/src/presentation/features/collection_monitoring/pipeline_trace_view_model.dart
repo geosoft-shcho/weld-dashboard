@@ -150,7 +150,6 @@ class PipelineTraceViewModel extends ChangeNotifier {
       if (didChange) {
         _traces = enriched;
         _tracesSignature = nextTracesSignature;
-        _debugLogLitCells(enriched);
       }
       _hasError = false;
       _errorMessage = '';
@@ -257,12 +256,6 @@ class PipelineTraceViewModel extends ChangeNotifier {
 
     final details = <String, TraceSnapshot>{};
     if (ids.isNotEmpty) {
-      if (kDebugMode) {
-        debugPrint(
-          '[GetTrace] enrich ids=${ids.join(',')} '
-          '(running+selected)',
-        );
-      }
       await Future.wait([
         for (final id in ids)
           _fetchTraceDetail(id).then((detail) {
@@ -286,10 +279,7 @@ class PipelineTraceViewModel extends ChangeNotifier {
   Future<TraceSnapshot?> _fetchTraceDetail(String traceId) async {
     try {
       return await _traceUseCase.getTrace(traceId: traceId);
-    } catch (error) {
-      if (kDebugMode) {
-        debugPrint('[GetTrace] enrich miss id=$traceId error=$error');
-      }
+    } catch (_) {
       return null;
     }
   }
@@ -329,9 +319,6 @@ class PipelineTraceViewModel extends ChangeNotifier {
     TraceSnapshot? preloaded,
   }) async {
     try {
-      if (preloaded == null && kDebugMode) {
-        debugPrint('[GetTrace] select id=$traceId');
-      }
       final detail =
           preloaded ?? await _traceUseCase.getTrace(traceId: traceId);
       if (version != _pollVersion) {
@@ -343,18 +330,8 @@ class PipelineTraceViewModel extends ChangeNotifier {
       }
       _selected = detail;
       _selectionSignature = nextSignature;
-      if (kDebugMode) {
-        debugPrint(
-          '[GetTrace] selected id=${detail.traceId} '
-          'events=${detail.events.length} last=${detail.lastEvent} '
-          'source=${preloaded == null ? 'rpc' : 'preloaded'}',
-        );
-      }
       return true;
-    } catch (error) {
-      if (kDebugMode) {
-        debugPrint('[GetTrace] select fail id=$traceId error=$error');
-      }
+    } catch (_) {
       if (version != _pollVersion) {
         return false;
       }
@@ -371,57 +348,5 @@ class PipelineTraceViewModel extends ChangeNotifier {
     return [
       for (final trace in traces) trace.pollSignature,
     ].join('\n');
-  }
-
-  void _debugLogLitCells(List<TraceSnapshot> traces) {
-    if (!kDebugMode) {
-      return;
-    }
-    for (final trace in traces) {
-      if (trace.status != UploadTraceStatus.running &&
-          _selected?.traceId != trace.traceId) {
-        continue;
-      }
-      final events = [
-        for (final event in trace.events) '${event.name}:${event.status}',
-      ].join(',');
-      debugPrint(
-        '[pipeline] id=${trace.traceId} status=${trace.status.name} '
-        'last=${trace.lastEvent} stage=${trace.stageId} events=[$events]',
-      );
-    }
-    final lit = <String>[];
-    final failedByStage = <String, List<String>>{};
-    for (final stage in visibleStages) {
-      final visual = pipelineStageVisual(
-        stageId: stage.id,
-        selected: _selected,
-        traces: traces,
-      );
-      if (visual == PipelineNodeVisual.idle) {
-        continue;
-      }
-      lit.add('${stage.id}:${visual.name}');
-      if (visual != PipelineNodeVisual.failed) {
-        continue;
-      }
-      failedByStage[stage.id] = [
-        for (final trace in traces)
-          if (trace.status == UploadTraceStatus.failed &&
-              trace.stageId == stage.id)
-            trace.traceId,
-      ];
-    }
-    if (lit.isNotEmpty) {
-      debugPrint('[pipeline] cells ${lit.join(' ')}');
-    }
-    for (final entry in failedByStage.entries) {
-      if (entry.value.isEmpty) {
-        continue;
-      }
-      debugPrint(
-        '[pipeline] ${entry.key}:failed by id=${entry.value.join(',')}',
-      );
-    }
   }
 }
