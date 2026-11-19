@@ -197,6 +197,7 @@ class PipelineTraceViewModel extends ChangeNotifier {
     }
   }
 
+  /// 목록 선택: 항상 GetTrace로 상세(events)를 받아 그래프 path에 쓴다.
   Future<void> didSelectTrace(String traceId) async {
     if (traceId.isEmpty) {
       return;
@@ -205,15 +206,19 @@ class PipelineTraceViewModel extends ChangeNotifier {
       return;
     }
     final version = _pollVersion;
-    TraceSnapshot? preloaded;
-    for (final trace in _traces) {
-      if (trace.traceId == traceId && trace.events.isNotEmpty) {
-        preloaded = trace;
-        break;
-      }
+    final changed = await _loadSelection(traceId, version: version);
+    if (changed && _selected != null && _selected!.traceId == traceId) {
+      _replaceTraceInList(_selected!);
     }
-    await _loadSelection(traceId, version: version, preloaded: preloaded);
     notifyListeners();
+  }
+
+  void _replaceTraceInList(TraceSnapshot detail) {
+    _traces = [
+      for (final trace in _traces)
+        if (trace.traceId == detail.traceId) detail else trace,
+    ];
+    _tracesSignature = _signatureOfTraces(_traces);
   }
 
   Future<void> didSelectStatusFilter(UploadTraceStatus? status) async {
@@ -252,6 +257,12 @@ class PipelineTraceViewModel extends ChangeNotifier {
 
     final details = <String, TraceSnapshot>{};
     if (ids.isNotEmpty) {
+      if (kDebugMode) {
+        debugPrint(
+          '[GetTrace] enrich ids=${ids.join(',')} '
+          '(running+selected)',
+        );
+      }
       await Future.wait([
         for (final id in ids)
           _fetchTraceDetail(id).then((detail) {
@@ -275,7 +286,10 @@ class PipelineTraceViewModel extends ChangeNotifier {
   Future<TraceSnapshot?> _fetchTraceDetail(String traceId) async {
     try {
       return await _traceUseCase.getTrace(traceId: traceId);
-    } catch (_) {
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('[GetTrace] enrich miss id=$traceId error=$error');
+      }
       return null;
     }
   }
@@ -307,13 +321,17 @@ class PipelineTraceViewModel extends ChangeNotifier {
     );
   }
 
-  /// 선택이 바뀌었으면 true. [preloaded]가 있으면 GetTrace를 다시 치지 않는다.
+  /// 선택이 바뀌었으면 true.
+  /// [preloaded]는 폴링 enrich가 방금 받은 상세만 넘긴다. 목록 선택은 preloaded 없이 GetTrace.
   Future<bool> _loadSelection(
     String traceId, {
     required int version,
     TraceSnapshot? preloaded,
   }) async {
     try {
+      if (preloaded == null && kDebugMode) {
+        debugPrint('[GetTrace] select id=$traceId');
+      }
       final detail =
           preloaded ?? await _traceUseCase.getTrace(traceId: traceId);
       if (version != _pollVersion) {
@@ -325,8 +343,18 @@ class PipelineTraceViewModel extends ChangeNotifier {
       }
       _selected = detail;
       _selectionSignature = nextSignature;
+      if (kDebugMode) {
+        debugPrint(
+          '[GetTrace] selected id=${detail.traceId} '
+          'events=${detail.events.length} last=${detail.lastEvent} '
+          'source=${preloaded == null ? 'rpc' : 'preloaded'}',
+        );
+      }
       return true;
-    } catch (_) {
+    } catch (error) {
+      if (kDebugMode) {
+        debugPrint('[GetTrace] select fail id=$traceId error=$error');
+      }
       if (version != _pollVersion) {
         return false;
       }

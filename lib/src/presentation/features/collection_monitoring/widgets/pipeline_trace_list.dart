@@ -87,6 +87,7 @@ class _PipelineTraceListState extends State<PipelineTraceList>
                 if (trace.lastEvent.trim().isNotEmpty) trace.lastEvent.trim(),
                 if (wait.isNotEmpty) wait,
               ].join(' · ');
+              final progressLabel = _progressLabel(trace.progressPercent);
               return HoverButton(
                 onPressed: () =>
                     widget.viewModel.didSelectTrace(trace.traceId),
@@ -167,6 +168,22 @@ class _PipelineTraceListState extends State<PipelineTraceList>
                             ),
                           ),
                         ),
+                        SizedBox(
+                          width: 40,
+                          child: Text(
+                            progressLabel,
+                            maxLines: 1,
+                            textAlign: TextAlign.right,
+                            style: _mono.copyWith(
+                              color: progressLabel == '—'
+                                  ? AppTheme.STATUS_OFF.withValues(alpha: 0.55)
+                                  : AppTheme.ACCENT_STEEL,
+                              fontWeight: progressLabel == '—'
+                                  ? FontWeight.w400
+                                  : FontWeight.w700,
+                            ),
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           flex: 2,
@@ -190,6 +207,15 @@ class _PipelineTraceListState extends State<PipelineTraceList>
         },
       ),
     );
+  }
+
+  /// Trace.progressPercent. 수신 중 등 >0일 때만 `N%`.
+  String _progressLabel(double progressPercent) {
+    if (progressPercent <= 0) {
+      return '—';
+    }
+    final clamped = progressPercent > 100 ? 100.0 : progressPercent;
+    return '${clamped.round()}%';
   }
 
   String _statusTag(UploadTraceStatus status) {

@@ -58,6 +58,54 @@ void main() {
     viewModel.dispose();
   });
 
+  test('didSelectTrace always GetTrace even if list already has events',
+      () async {
+    final repo = _RecordingTraceRepository(
+      listed: const [
+        TraceSnapshot(
+          traceId: '20',
+          fileName: 'done.png',
+          lastEvent: 'done.stored',
+          status: UploadTraceStatus.done,
+          errorMessage: '',
+          events: [
+            TraceEventSnapshot(name: 'receive.done', status: 'ok'),
+            TraceEventSnapshot(name: 'done.stored', status: 'ok'),
+          ],
+        ),
+      ],
+      details: {
+        '20': const TraceSnapshot(
+          traceId: '20',
+          fileName: 'done.png',
+          lastEvent: 'done.stored',
+          status: UploadTraceStatus.done,
+          errorMessage: '',
+          events: [
+            TraceEventSnapshot(name: 'receive.started', status: 'ok'),
+            TraceEventSnapshot(name: 'receive.done', status: 'ok'),
+            TraceEventSnapshot(name: 'register.stored', status: 'ok'),
+            TraceEventSnapshot(name: 'done.stored', status: 'ok'),
+          ],
+        ),
+      },
+    );
+    final viewModel = PipelineTraceViewModel(
+      traceUseCase: TraceUseCase(repo),
+    );
+
+    await viewModel.refresh();
+    // DONE은 enrich 대상이 아니라도 목록에 옛 events가 있을 수 있음.
+    repo.getTraceIds.clear();
+    await viewModel.didSelectTrace('20');
+
+    expect(repo.getTraceIds, ['20']);
+    expect(viewModel.selected?.events, hasLength(4));
+    expect(viewModel.traces.single.events, hasLength(4));
+
+    viewModel.dispose();
+  });
+
   test('selected DONE also gets GetTrace on refresh', () async {
     final repo = _RecordingTraceRepository(
       listed: const [
