@@ -8,6 +8,7 @@ import '../../../core/themes/app_theme.dart';
 import '../pipeline_trace_view_model.dart';
 import 'pipeline_node_icons.dart';
 import 'pipeline_stage_chips.dart';
+import 'pipeline_status_mapper.dart';
 
 /// DataFlow식 캔버스: 단계 열·이벤트 노드 + 골격/path 연결. 줌 없음.
 class PipelineTraceGraphView extends StatefulWidget {
@@ -87,7 +88,6 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                 running: viewModel.runningCount,
                 done: viewModel.doneCount,
                 failed: viewModel.failedCount,
-                pulse: _pulse.value,
                 compact: widget.compact,
               ),
               const SizedBox(height: 6),
@@ -201,11 +201,12 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
     required VoidCallback onTap,
   }) {
     final accent = pipelineStageAccent(stageId);
-    final fill = _fillOf(visual, accent);
-    final border = _borderOf(visual, accent);
-    final status = pipelineNodeStatusLabel(visual);
+    final fill = pipelineStatusFill(visual, accent);
+    final border = pipelineStatusBorder(visual, accent);
+    final ink = pipelineStatusInk(visual);
+    final status = pipelineStatusShortLabel(visual);
     final live = pipelineNodeIsLive(visual);
-    final ring = live ? 2.0 + 1.2 * math.sin(_pulse.value * math.pi * 2) : 0.0;
+    const ringPad = 4.0;
     final label = pipelineEventLabel(nodeId);
     // 원 중심이 center, 라벨은 원 아래 셀 안에만.
     final blockTop = center.dy - radius;
@@ -219,15 +220,15 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
           mainAxisSize: MainAxisSize.min,
           children: [
             SizedBox(
-              width: radius * 2 + ring * 2,
-              height: radius * 2 + ring * 2,
+              width: radius * 2 + (live ? ringPad * 2 : 0),
+              height: radius * 2 + (live ? ringPad * 2 : 0),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
-                  if (live)
+                  if (live) ...[
                     Container(
-                      width: radius * 2 + ring * 2,
-                      height: radius * 2 + ring * 2,
+                      width: radius * 2 + ringPad * 2,
+                      height: radius * 2 + ringPad * 2,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
                         border: Border.all(
@@ -236,6 +237,17 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                         ),
                       ),
                     ),
+                    CustomPaint(
+                      size: Size(
+                        radius * 2 + ringPad * 2,
+                        radius * 2 + ringPad * 2,
+                      ),
+                      painter: _LiveNodeArcPainter(
+                        color: border,
+                        progress: _pulse.value,
+                      ),
+                    ),
+                  ],
                   Container(
                     width: radius * 2,
                     height: radius * 2,
@@ -246,23 +258,13 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                         color: border,
                         width: live ? 2.5 : 1.5,
                       ),
-                      boxShadow: live
-                          ? [
-                              BoxShadow(
-                                color: border.withValues(alpha: 0.35),
-                                blurRadius: 8,
-                              ),
-                            ]
-                          : null,
                     ),
                     child: Icon(
                       visual == PipelineNodeVisual.done
                           ? FluentIcons.check_mark
                           : pipelineNodeIconData(nodeId),
                       size: radius,
-                      color: visual == PipelineNodeVisual.idle
-                          ? AppTheme.INK.withValues(alpha: 0.45)
-                          : AppTheme.INK,
+                      color: ink,
                     ),
                   ),
                 ],
@@ -307,42 +309,6 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
         _focusedNodeId = nodeId;
       }
     });
-  }
-
-  Color _fillOf(PipelineNodeVisual visual, Color accent) {
-    switch (visual) {
-      case PipelineNodeVisual.idle:
-        return AppTheme.STATUS_OFF.withValues(alpha: 0.28);
-      case PipelineNodeVisual.done:
-        return accent.withValues(alpha: 0.85);
-      case PipelineNodeVisual.active:
-      case PipelineNodeVisual.running:
-        return accent;
-      case PipelineNodeVisual.queued:
-        return AppTheme.STATUS_WARN.withValues(alpha: 0.85);
-      case PipelineNodeVisual.failed:
-        return AppTheme.STATUS_ERROR.withValues(alpha: 0.9);
-      case PipelineNodeVisual.skipped:
-        return AppTheme.STATUS_OFF.withValues(alpha: 0.4);
-    }
-  }
-
-  Color _borderOf(PipelineNodeVisual visual, Color accent) {
-    switch (visual) {
-      case PipelineNodeVisual.idle:
-        return AppTheme.STATUS_OFF.withValues(alpha: 0.55);
-      case PipelineNodeVisual.done:
-        return accent;
-      case PipelineNodeVisual.active:
-      case PipelineNodeVisual.running:
-        return AppTheme.INK;
-      case PipelineNodeVisual.queued:
-        return AppTheme.STATUS_WARN;
-      case PipelineNodeVisual.failed:
-        return AppTheme.STATUS_ERROR;
-      case PipelineNodeVisual.skipped:
-        return AppTheme.STATUS_OFF;
-    }
   }
 }
 
@@ -520,30 +486,23 @@ class _LiveStatusSummary extends StatelessWidget {
     required this.running,
     required this.done,
     required this.failed,
-    required this.pulse,
     required this.compact,
   });
 
   final int running;
   final int done;
   final int failed;
-  final double pulse;
   final bool compact;
 
   @override
   Widget build(BuildContext context) {
-    final glow = 0.55 + 0.45 * math.sin(pulse * math.pi * 2);
     return Row(
       children: [
-        _chip('진행 $running', AppTheme.ACCENT_STEEL, running > 0 ? glow : 0),
+        _chip('진행 $running', AppTheme.ACCENT_STEEL, emphasize: running > 0),
         const SizedBox(width: 8),
-        _chip('완료 $done', AppTheme.STATUS_OK, 0),
+        _chip('완료 $done', AppTheme.STATUS_OK),
         const SizedBox(width: 8),
-        _chip(
-          '실패 $failed',
-          AppTheme.STATUS_ERROR,
-          failed > 0 ? 0.35 + 0.2 * math.sin(pulse * math.pi * 2) : 0,
-        ),
+        _chip('실패 $failed', AppTheme.STATUS_ERROR, emphasize: failed > 0),
         const Spacer(),
         Text(
           running > 0 ? '실시간 반영 중' : '대기',
@@ -556,24 +515,22 @@ class _LiveStatusSummary extends StatelessWidget {
     );
   }
 
-  Widget _chip(String label, Color color, double pulse) {
+  Widget _chip(String label, Color color, {bool emphasize = false}) {
+    final size = emphasize ? 10.0 : 8.0;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
-          width: 8,
-          height: 8,
+          width: size,
+          height: size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: color,
-            boxShadow: pulse > 0
-                ? [
-                    BoxShadow(
-                      color: color.withValues(alpha: pulse),
-                      blurRadius: 6,
-                      spreadRadius: 1,
-                    ),
-                  ]
+            border: emphasize
+                ? Border.all(
+                    color: AppTheme.INK.withValues(alpha: 0.55),
+                    width: 1,
+                  )
                 : null,
           ),
         ),
@@ -583,11 +540,43 @@ class _LiveStatusSummary extends StatelessWidget {
           style: TextStyle(
             color: AppTheme.INK,
             fontSize: compact ? 11 : 12,
-            fontWeight: FontWeight.w600,
+            fontWeight: emphasize ? FontWeight.w700 : FontWeight.w600,
           ),
         ),
       ],
     );
+  }
+}
+
+/// live 노드: 고정 링 위에 진행 아크만(sine wobble 없음).
+class _LiveNodeArcPainter extends CustomPainter {
+  _LiveNodeArcPainter({required this.color, required this.progress});
+
+  final Color color;
+  final double progress;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 1.5;
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
+    final start = -math.pi / 2 + progress * math.pi * 2;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      start,
+      math.pi * 0.55,
+      false,
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant _LiveNodeArcPainter oldDelegate) {
+    return oldDelegate.progress != progress || oldDelegate.color != color;
   }
 }
 
@@ -656,6 +645,8 @@ class _PipelineFlowPainter extends CustomPainter {
     }
   }
 
+  static const int _liveParticleCount = 3;
+
   void _drawBezier(
     Canvas canvas,
     Offset from,
@@ -671,14 +662,20 @@ class _PipelineFlowPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
     if (live) {
-      _drawDashedPath(canvas, path, paint);
-      final metrics = path.computeMetrics().toList();
-      if (metrics.isNotEmpty) {
-        final metric = metrics.first;
-        final t = pulse % 1.0;
-        final tangent = metric.getTangentForOffset(metric.length * t);
-        if (tangent != null) {
-          canvas.drawCircle(tangent.position, 3.4, Paint()..color = color);
+      // 좌→우 current: dash phase가 진행 방향으로 흐름(선형).
+      _drawDashedPath(canvas, path, paint, phase: pulse);
+      for (final metric in path.computeMetrics()) {
+        if (metric.length <= 0) {
+          continue;
+        }
+        final particlePaint = Paint()..color = color;
+        for (var i = 0; i < _liveParticleCount; i++) {
+          final t = (pulse + i / _liveParticleCount) % 1.0;
+          final tangent = metric.getTangentForOffset(metric.length * t);
+          if (tangent == null) {
+            continue;
+          }
+          canvas.drawCircle(tangent.position, 3.2, particlePaint);
         }
       }
     } else {
@@ -700,16 +697,28 @@ class _PipelineFlowPainter extends CustomPainter {
     return path;
   }
 
-  void _drawDashedPath(Canvas canvas, Path path, Paint paint) {
+  void _drawDashedPath(
+    Canvas canvas,
+    Path path,
+    Paint paint, {
+    required double phase,
+  }) {
     const dash = 6.0;
     const gap = 4.0;
+    final period = dash + gap;
+    // phase 증가 → dash가 from→to 방향으로 이동.
+    final offset = (phase % 1.0) * period;
     for (final metric in path.computeMetrics()) {
-      var distance = 0.0;
+      var distance = -offset;
       var draw = true;
       while (distance < metric.length) {
-        final next = math.min(distance + (draw ? dash : gap), metric.length);
-        if (draw) {
-          canvas.drawPath(metric.extractPath(distance, next), paint);
+        final segment = draw ? dash : gap;
+        final next = math.min(distance + segment, metric.length);
+        if (draw && next > 0) {
+          final start = math.max(0.0, distance);
+          if (start < next) {
+            canvas.drawPath(metric.extractPath(start, next), paint);
+          }
         }
         distance = next;
         draw = !draw;
