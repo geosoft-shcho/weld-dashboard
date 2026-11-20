@@ -527,10 +527,7 @@ class _LiveStatusSummary extends StatelessWidget {
             shape: BoxShape.circle,
             color: color,
             border: emphasize
-                ? Border.all(
-                    color: AppTheme.INK.withValues(alpha: 0.55),
-                    width: 1,
-                  )
+                ? Border.all(color: AppTheme.INK.withValues(alpha: 0.55), width: 1)
                 : null,
           ),
         ),
@@ -664,7 +661,8 @@ class _PipelineFlowPainter extends CustomPainter {
     if (live) {
       // 좌→우 current: dash phase가 진행 방향으로 흐름(선형).
       _drawDashedPath(canvas, path, paint, phase: pulse);
-      for (final metric in path.computeMetrics()) {
+      final metrics = path.computeMetrics();
+      for (final metric in metrics) {
         if (metric.length <= 0) {
           continue;
         }

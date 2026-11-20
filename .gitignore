@@ -50,3 +50,8 @@ docs/**/node_modules/
 docs/manuals/output/
 docs/**/slides/output/
 **/~$*
+
+# local three for GLB script
+scripts/node_modules/
+scripts/package-lock.json
+scripts/package.json

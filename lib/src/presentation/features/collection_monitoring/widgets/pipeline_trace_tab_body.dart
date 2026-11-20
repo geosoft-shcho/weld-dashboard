@@ -5,10 +5,13 @@ import '../../../../domain/entities/upload_trace.dart';
 import '../../../core/themes/app_theme.dart';
 import '../pipeline_trace_view_model.dart';
 import 'pipeline_stage_chips.dart';
+import 'pipeline_trace_graph_o3d_view.dart';
 import 'pipeline_trace_graph_view.dart';
 import 'pipeline_trace_list.dart';
 
-/// 적재 파이프라인 탭: 칩 + 그래프 + 우측 목록 패널(토글).
+enum _PipelineGraphMode { twoD, o3d }
+
+/// 적재 파이프라인 탭: 칩 + 그래프(2D|O3D) + 우측 목록 패널(토글).
 class PipelineTraceTabBody extends StatefulWidget {
   const PipelineTraceTabBody({super.key, required this.viewModel});
 
@@ -22,8 +25,42 @@ class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
   static const double _listPanelWidth = 380;
 
   bool _listPanelVisible = true;
+  _PipelineGraphMode _graphMode = _PipelineGraphMode.twoD;
 
   PipelineTraceViewModel get viewModel => widget.viewModel;
+
+  Widget _graphBody() {
+    switch (_graphMode) {
+      case _PipelineGraphMode.o3d:
+        return PipelineTraceGraphO3dView(viewModel: viewModel);
+      case _PipelineGraphMode.twoD:
+        return PipelineTraceGraphView(viewModel: viewModel);
+    }
+  }
+
+  void _cycleGraphMode() {
+    setState(() {
+      _graphMode = switch (_graphMode) {
+        _PipelineGraphMode.twoD => _PipelineGraphMode.o3d,
+        _PipelineGraphMode.o3d => _PipelineGraphMode.twoD,
+      };
+    });
+  }
+
+  String get _graphModeLabel => switch (_graphMode) {
+        _PipelineGraphMode.twoD => '2D',
+        _PipelineGraphMode.o3d => 'O3D',
+      };
+
+  String get _graphModeTooltip => switch (_graphMode) {
+        _PipelineGraphMode.twoD => '다음: O3D',
+        _PipelineGraphMode.o3d => '다음: 2D 그래프',
+      };
+
+  IconData get _graphModeIcon => switch (_graphMode) {
+        _PipelineGraphMode.twoD => FluentIcons.chart,
+        _PipelineGraphMode.o3d => FluentIcons.product,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -36,6 +73,21 @@ class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
           Row(
             children: [
               Expanded(child: PipelineStageChips(viewModel: viewModel)),
+              const SizedBox(width: 8),
+              Tooltip(
+                message: _graphModeTooltip,
+                child: IconButton(
+                  icon: Icon(_graphModeIcon, size: 16),
+                  onPressed: _cycleGraphMode,
+                ),
+              ),
+              Text(
+                _graphModeLabel,
+                style: const TextStyle(
+                  color: AppTheme.STATUS_OFF,
+                  fontSize: 11,
+                ),
+              ),
               const SizedBox(width: 8),
               Tooltip(
                 message: _listPanelVisible ? '목록 숨기기' : '목록 보이기',
@@ -71,9 +123,7 @@ class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
                 : Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      Expanded(
-                        child: PipelineTraceGraphView(viewModel: viewModel),
-                      ),
+                      Expanded(child: _graphBody()),
                       if (_listPanelVisible) ...[
                         const SizedBox(width: 8),
                         SizedBox(
