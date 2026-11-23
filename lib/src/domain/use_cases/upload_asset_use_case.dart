@@ -59,6 +59,7 @@ class UploadAssetUseCase {
     String subject = '',
     String situation = '',
     String fallbackFileName = '',
+    DateTime? fileModifiedAt,
   }) {
     return _repository.registerUploaded(
       uploadId: uploadId,
@@ -69,6 +70,7 @@ class UploadAssetUseCase {
       subject: subject,
       situation: situation,
       fallbackFileName: fallbackFileName,
+      fileModifiedAt: fileModifiedAt,
     );
   }
 }

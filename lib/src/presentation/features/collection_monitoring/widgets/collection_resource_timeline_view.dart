@@ -378,7 +378,9 @@ class _CollectionResourceTimelineViewState
         child: Align(
           alignment: Alignment.centerLeft,
           child: Text(
-            '${event.connectionStatus.label} · ${DashboardFormatters.durationLabel(event.durationSec)}',
+            event.isPoint
+                ? '◆ ${event.windowLabel}'
+                : '${event.connectionStatus.label} · ${DashboardFormatters.durationLabel(event.durationSec)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(fontSize: 11, color: AppTheme.INK),

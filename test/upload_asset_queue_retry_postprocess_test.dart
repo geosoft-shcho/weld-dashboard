@@ -141,6 +141,7 @@ class _FakeUploadRepository implements AssetUploadRepository {
     String subject = '',
     String situation = '',
     String fallbackFileName = '',
+    DateTime? fileModifiedAt,
   }) {
     throw UnimplementedError();
   }
@@ -254,6 +255,10 @@ class _FakeTraceRepository implements TraceRepository {
   }
 
   @override
+  
+  @override
+  Future<int> countTraces({required UploadTraceStatus status}) async => 0;
+
   Future<TraceSnapshot> getTrace({required String traceId}) {
     throw UnimplementedError();
   }

@@ -16,9 +16,10 @@ import 'dart:core' as $core;
 import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import '../../../google/protobuf/field_mask.pb.dart' as $1;
-import '../../../google/protobuf/timestamp.pb.dart' as $0;
-import '../../asset/v1/asset.pb.dart' as $2;
+import '../../../google/protobuf/field_mask.pb.dart' as $2;
+import '../../../google/protobuf/timestamp.pb.dart' as $1;
+import '../../asset/v1/asset.pb.dart' as $3;
+import '../../auth/v1/auth.pb.dart' as $0;
 import 'work.pbenum.dart';
 
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
@@ -33,6 +34,8 @@ class Project extends $pb.GeneratedMessage {
     $core.String? siteName,
     $core.String? customer,
     $fixnum.Int64? projectId,
+    $0.Author? createdBy,
+    $0.Author? updatedBy,
   }) {
     final result = create();
     if (projectNo != null) result.projectNo = projectNo;
@@ -40,6 +43,8 @@ class Project extends $pb.GeneratedMessage {
     if (siteName != null) result.siteName = siteName;
     if (customer != null) result.customer = customer;
     if (projectId != null) result.projectId = projectId;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -62,6 +67,10 @@ class Project extends $pb.GeneratedMessage {
     ..aOS(3, _omitFieldNames ? '' : 'siteName')
     ..aOS(4, _omitFieldNames ? '' : 'customer')
     ..aInt64(5, _omitFieldNames ? '' : 'projectId')
+    ..aOM<$0.Author>(6, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $0.Author.create)
+    ..aOM<$0.Author>(7, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $0.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -127,6 +136,28 @@ class Project extends $pb.GeneratedMessage {
   $core.bool hasProjectId() => $_has(4);
   @$pb.TagNumber(5)
   void clearProjectId() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $0.Author get createdBy => $_getN(5);
+  @$pb.TagNumber(6)
+  set createdBy($0.Author value) => $_setField(6, value);
+  @$pb.TagNumber(6)
+  $core.bool hasCreatedBy() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearCreatedBy() => $_clearField(6);
+  @$pb.TagNumber(6)
+  $0.Author ensureCreatedBy() => $_ensure(5);
+
+  @$pb.TagNumber(7)
+  $0.Author get updatedBy => $_getN(6);
+  @$pb.TagNumber(7)
+  set updatedBy($0.Author value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasUpdatedBy() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearUpdatedBy() => $_clearField(7);
+  @$pb.TagNumber(7)
+  $0.Author ensureUpdatedBy() => $_ensure(6);
 }
 
 /// 작업자.
@@ -138,6 +169,8 @@ class Worker extends $pb.GeneratedMessage {
     $core.String? description,
     $core.bool? inactive,
     WorkerType? workerType,
+    $0.Author? createdBy,
+    $0.Author? updatedBy,
   }) {
     final result = create();
     if (workerId != null) result.workerId = workerId;
@@ -146,6 +179,8 @@ class Worker extends $pb.GeneratedMessage {
     if (description != null) result.description = description;
     if (inactive != null) result.inactive = inactive;
     if (workerType != null) result.workerType = workerType;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -172,6 +207,10 @@ class Worker extends $pb.GeneratedMessage {
         defaultOrMaker: WorkerType.WORKER_TYPE_UNSPECIFIED,
         valueOf: WorkerType.valueOf,
         enumValues: WorkerType.values)
+    ..aOM<$0.Author>(10, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $0.Author.create)
+    ..aOM<$0.Author>(11, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $0.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -246,6 +285,28 @@ class Worker extends $pb.GeneratedMessage {
   $core.bool hasWorkerType() => $_has(5);
   @$pb.TagNumber(9)
   void clearWorkerType() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $0.Author get createdBy => $_getN(6);
+  @$pb.TagNumber(10)
+  set createdBy($0.Author value) => $_setField(10, value);
+  @$pb.TagNumber(10)
+  $core.bool hasCreatedBy() => $_has(6);
+  @$pb.TagNumber(10)
+  void clearCreatedBy() => $_clearField(10);
+  @$pb.TagNumber(10)
+  $0.Author ensureCreatedBy() => $_ensure(6);
+
+  @$pb.TagNumber(11)
+  $0.Author get updatedBy => $_getN(7);
+  @$pb.TagNumber(11)
+  set updatedBy($0.Author value) => $_setField(11, value);
+  @$pb.TagNumber(11)
+  $core.bool hasUpdatedBy() => $_has(7);
+  @$pb.TagNumber(11)
+  void clearUpdatedBy() => $_clearField(11);
+  @$pb.TagNumber(11)
+  $0.Author ensureUpdatedBy() => $_ensure(7);
 }
 
 /// 수집 장비(카메라·마이크·센서·용접기 패널 등).
@@ -256,6 +317,8 @@ class Equipment extends $pb.GeneratedMessage {
     $core.String? equipmentCode,
     $core.String? description,
     $core.bool? inactive,
+    $0.Author? createdBy,
+    $0.Author? updatedBy,
   }) {
     final result = create();
     if (equipmentId != null) result.equipmentId = equipmentId;
@@ -263,6 +326,8 @@ class Equipment extends $pb.GeneratedMessage {
     if (equipmentCode != null) result.equipmentCode = equipmentCode;
     if (description != null) result.description = description;
     if (inactive != null) result.inactive = inactive;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -285,6 +350,10 @@ class Equipment extends $pb.GeneratedMessage {
     ..aOS(4, _omitFieldNames ? '' : 'equipmentCode')
     ..aOS(5, _omitFieldNames ? '' : 'description')
     ..aOB(6, _omitFieldNames ? '' : 'inactive')
+    ..aOM<$0.Author>(7, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $0.Author.create)
+    ..aOM<$0.Author>(8, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $0.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -350,6 +419,28 @@ class Equipment extends $pb.GeneratedMessage {
   $core.bool hasInactive() => $_has(4);
   @$pb.TagNumber(6)
   void clearInactive() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $0.Author get createdBy => $_getN(5);
+  @$pb.TagNumber(7)
+  set createdBy($0.Author value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasCreatedBy() => $_has(5);
+  @$pb.TagNumber(7)
+  void clearCreatedBy() => $_clearField(7);
+  @$pb.TagNumber(7)
+  $0.Author ensureCreatedBy() => $_ensure(5);
+
+  @$pb.TagNumber(8)
+  $0.Author get updatedBy => $_getN(6);
+  @$pb.TagNumber(8)
+  set updatedBy($0.Author value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasUpdatedBy() => $_has(6);
+  @$pb.TagNumber(8)
+  void clearUpdatedBy() => $_clearField(8);
+  @$pb.TagNumber(8)
+  $0.Author ensureUpdatedBy() => $_ensure(6);
 }
 
 /// 작업 1회 = 이력 1건 = 타임라인 1개.
@@ -367,8 +458,8 @@ class Job extends $pb.GeneratedMessage {
     $core.double? outerDiameterMm,
     $core.double? thicknessMm,
     $fixnum.Int64? workerId,
-    $0.Timestamp? startedAt,
-    $0.Timestamp? endedAt,
+    $1.Timestamp? startedAt,
+    $1.Timestamp? endedAt,
     $core.String? jointNo,
     $core.String? jobKey,
     $fixnum.Int64? projectId,
@@ -376,6 +467,8 @@ class Job extends $pb.GeneratedMessage {
     $fixnum.Int64? projectItemId,
     $fixnum.Int64? reportSetId,
     $fixnum.Int64? activeReportSetId,
+    $0.Author? createdBy,
+    $0.Author? updatedBy,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
@@ -399,6 +492,8 @@ class Job extends $pb.GeneratedMessage {
     if (projectItemId != null) result.projectItemId = projectItemId;
     if (reportSetId != null) result.reportSetId = reportSetId;
     if (activeReportSetId != null) result.activeReportSetId = activeReportSetId;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -430,10 +525,10 @@ class Job extends $pb.GeneratedMessage {
     ..a<$core.double>(
         12, _omitFieldNames ? '' : 'thicknessMm', $pb.PbFieldType.OD)
     ..aInt64(13, _omitFieldNames ? '' : 'workerId')
-    ..aOM<$0.Timestamp>(14, _omitFieldNames ? '' : 'startedAt',
-        subBuilder: $0.Timestamp.create)
-    ..aOM<$0.Timestamp>(15, _omitFieldNames ? '' : 'endedAt',
-        subBuilder: $0.Timestamp.create)
+    ..aOM<$1.Timestamp>(14, _omitFieldNames ? '' : 'startedAt',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(15, _omitFieldNames ? '' : 'endedAt',
+        subBuilder: $1.Timestamp.create)
     ..aOS(16, _omitFieldNames ? '' : 'jointNo')
     ..aOS(17, _omitFieldNames ? '' : 'jobKey')
     ..aInt64(18, _omitFieldNames ? '' : 'projectId')
@@ -441,6 +536,10 @@ class Job extends $pb.GeneratedMessage {
     ..aInt64(20, _omitFieldNames ? '' : 'projectItemId')
     ..aInt64(21, _omitFieldNames ? '' : 'reportSetId')
     ..aInt64(22, _omitFieldNames ? '' : 'activeReportSetId')
+    ..aOM<$0.Author>(23, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $0.Author.create)
+    ..aOM<$0.Author>(24, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $0.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -571,26 +670,26 @@ class Job extends $pb.GeneratedMessage {
   void clearWorkerId() => $_clearField(13);
 
   @$pb.TagNumber(14)
-  $0.Timestamp get startedAt => $_getN(12);
+  $1.Timestamp get startedAt => $_getN(12);
   @$pb.TagNumber(14)
-  set startedAt($0.Timestamp value) => $_setField(14, value);
+  set startedAt($1.Timestamp value) => $_setField(14, value);
   @$pb.TagNumber(14)
   $core.bool hasStartedAt() => $_has(12);
   @$pb.TagNumber(14)
   void clearStartedAt() => $_clearField(14);
   @$pb.TagNumber(14)
-  $0.Timestamp ensureStartedAt() => $_ensure(12);
+  $1.Timestamp ensureStartedAt() => $_ensure(12);
 
   @$pb.TagNumber(15)
-  $0.Timestamp get endedAt => $_getN(13);
+  $1.Timestamp get endedAt => $_getN(13);
   @$pb.TagNumber(15)
-  set endedAt($0.Timestamp value) => $_setField(15, value);
+  set endedAt($1.Timestamp value) => $_setField(15, value);
   @$pb.TagNumber(15)
   $core.bool hasEndedAt() => $_has(13);
   @$pb.TagNumber(15)
   void clearEndedAt() => $_clearField(15);
   @$pb.TagNumber(15)
-  $0.Timestamp ensureEndedAt() => $_ensure(13);
+  $1.Timestamp ensureEndedAt() => $_ensure(13);
 
   /// 이음부 번호('DGT-ELA-01', 성적서 UT 표의 확인번호). 작업을 이음부(원주 이음 한 곳) 단위로 만든 경우에만 있다 —
   /// 비면 품목 전체 작업. 같은 common_key(품목) 아래에 이음부마다 작업이 하나씩 있다.
@@ -664,6 +763,28 @@ class Job extends $pb.GeneratedMessage {
   $core.bool hasActiveReportSetId() => $_has(20);
   @$pb.TagNumber(22)
   void clearActiveReportSetId() => $_clearField(22);
+
+  @$pb.TagNumber(23)
+  $0.Author get createdBy => $_getN(21);
+  @$pb.TagNumber(23)
+  set createdBy($0.Author value) => $_setField(23, value);
+  @$pb.TagNumber(23)
+  $core.bool hasCreatedBy() => $_has(21);
+  @$pb.TagNumber(23)
+  void clearCreatedBy() => $_clearField(23);
+  @$pb.TagNumber(23)
+  $0.Author ensureCreatedBy() => $_ensure(21);
+
+  @$pb.TagNumber(24)
+  $0.Author get updatedBy => $_getN(22);
+  @$pb.TagNumber(24)
+  set updatedBy($0.Author value) => $_setField(24, value);
+  @$pb.TagNumber(24)
+  $core.bool hasUpdatedBy() => $_has(22);
+  @$pb.TagNumber(24)
+  void clearUpdatedBy() => $_clearField(24);
+  @$pb.TagNumber(24)
+  $0.Author ensureUpdatedBy() => $_ensure(22);
 }
 
 /// 공사·호기에 배정한 품목 한 줄. (project_id, unit_no, item_code)가 유일하다. 이름은 배정 줄마다 따로 둔다.
@@ -1301,9 +1422,11 @@ class Pass extends $pb.GeneratedMessage {
     $fixnum.Int64? passId,
     $fixnum.Int64? jobId,
     $core.int? passNo,
-    $0.Timestamp? startedAt,
-    $0.Timestamp? endedAt,
+    $1.Timestamp? startedAt,
+    $1.Timestamp? endedAt,
     PassType? passType,
+    $0.Author? createdBy,
+    $0.Author? updatedBy,
   }) {
     final result = create();
     if (passId != null) result.passId = passId;
@@ -1312,6 +1435,8 @@ class Pass extends $pb.GeneratedMessage {
     if (startedAt != null) result.startedAt = startedAt;
     if (endedAt != null) result.endedAt = endedAt;
     if (passType != null) result.passType = passType;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -1332,14 +1457,18 @@ class Pass extends $pb.GeneratedMessage {
     ..aInt64(1, _omitFieldNames ? '' : 'passId')
     ..aInt64(2, _omitFieldNames ? '' : 'jobId')
     ..a<$core.int>(3, _omitFieldNames ? '' : 'passNo', $pb.PbFieldType.O3)
-    ..aOM<$0.Timestamp>(4, _omitFieldNames ? '' : 'startedAt',
-        subBuilder: $0.Timestamp.create)
-    ..aOM<$0.Timestamp>(5, _omitFieldNames ? '' : 'endedAt',
-        subBuilder: $0.Timestamp.create)
+    ..aOM<$1.Timestamp>(4, _omitFieldNames ? '' : 'startedAt',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(5, _omitFieldNames ? '' : 'endedAt',
+        subBuilder: $1.Timestamp.create)
     ..e<PassType>(6, _omitFieldNames ? '' : 'passType', $pb.PbFieldType.OE,
         defaultOrMaker: PassType.PASS_TYPE_UNSPECIFIED,
         valueOf: PassType.valueOf,
         enumValues: PassType.values)
+    ..aOM<$0.Author>(7, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $0.Author.create)
+    ..aOM<$0.Author>(8, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $0.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1389,26 +1518,26 @@ class Pass extends $pb.GeneratedMessage {
   void clearPassNo() => $_clearField(3);
 
   @$pb.TagNumber(4)
-  $0.Timestamp get startedAt => $_getN(3);
+  $1.Timestamp get startedAt => $_getN(3);
   @$pb.TagNumber(4)
-  set startedAt($0.Timestamp value) => $_setField(4, value);
+  set startedAt($1.Timestamp value) => $_setField(4, value);
   @$pb.TagNumber(4)
   $core.bool hasStartedAt() => $_has(3);
   @$pb.TagNumber(4)
   void clearStartedAt() => $_clearField(4);
   @$pb.TagNumber(4)
-  $0.Timestamp ensureStartedAt() => $_ensure(3);
+  $1.Timestamp ensureStartedAt() => $_ensure(3);
 
   @$pb.TagNumber(5)
-  $0.Timestamp get endedAt => $_getN(4);
+  $1.Timestamp get endedAt => $_getN(4);
   @$pb.TagNumber(5)
-  set endedAt($0.Timestamp value) => $_setField(5, value);
+  set endedAt($1.Timestamp value) => $_setField(5, value);
   @$pb.TagNumber(5)
   $core.bool hasEndedAt() => $_has(4);
   @$pb.TagNumber(5)
   void clearEndedAt() => $_clearField(5);
   @$pb.TagNumber(5)
-  $0.Timestamp ensureEndedAt() => $_ensure(4);
+  $1.Timestamp ensureEndedAt() => $_ensure(4);
 
   @$pb.TagNumber(6)
   PassType get passType => $_getN(5);
@@ -1418,6 +1547,28 @@ class Pass extends $pb.GeneratedMessage {
   $core.bool hasPassType() => $_has(5);
   @$pb.TagNumber(6)
   void clearPassType() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $0.Author get createdBy => $_getN(6);
+  @$pb.TagNumber(7)
+  set createdBy($0.Author value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasCreatedBy() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearCreatedBy() => $_clearField(7);
+  @$pb.TagNumber(7)
+  $0.Author ensureCreatedBy() => $_ensure(6);
+
+  @$pb.TagNumber(8)
+  $0.Author get updatedBy => $_getN(7);
+  @$pb.TagNumber(8)
+  set updatedBy($0.Author value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasUpdatedBy() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearUpdatedBy() => $_clearField(8);
+  @$pb.TagNumber(8)
+  $0.Author ensureUpdatedBy() => $_ensure(7);
 }
 
 /// 목록 한 행. 이름·개수는 조인·집계한 표시용 값이다.
@@ -1782,9 +1933,11 @@ class GetProjectRequest extends $pb.GeneratedMessage {
 class GetProjectResponse extends $pb.GeneratedMessage {
   factory GetProjectResponse({
     ProjectFilter? project,
+    $core.int? ragChunks,
   }) {
     final result = create();
     if (project != null) result.project = project;
+    if (ragChunks != null) result.ragChunks = ragChunks;
     return result;
   }
 
@@ -1804,6 +1957,7 @@ class GetProjectResponse extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOM<ProjectFilter>(1, _omitFieldNames ? '' : 'project',
         subBuilder: ProjectFilter.create)
+    ..a<$core.int>(2, _omitFieldNames ? '' : 'ragChunks', $pb.PbFieldType.O3)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1837,6 +1991,17 @@ class GetProjectResponse extends $pb.GeneratedMessage {
   void clearProject() => $_clearField(1);
   @$pb.TagNumber(1)
   ProjectFilter ensureProject() => $_ensure(0);
+
+  /// RAG 색인 청크 수(RagService.GetIndexStats의 rag_chunks_by_project). 색인이 없으면 0.
+  /// RAG 서버가 설정되지 않았거나 답하지 않으면 비어 있다(공사 조회는 실패하지 않는다).
+  @$pb.TagNumber(2)
+  $core.int get ragChunks => $_getIZ(1);
+  @$pb.TagNumber(2)
+  set ragChunks($core.int value) => $_setSignedInt32(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasRagChunks() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearRagChunks() => $_clearField(2);
 }
 
 class GetWorkerRequest extends $pb.GeneratedMessage {
@@ -2354,7 +2519,7 @@ class CreateWorkerResponse extends $pb.GeneratedMessage {
 class UpdateWorkerRequest extends $pb.GeneratedMessage {
   factory UpdateWorkerRequest({
     Worker? worker,
-    $1.FieldMask? updateMask,
+    $2.FieldMask? updateMask,
   }) {
     final result = create();
     if (worker != null) result.worker = worker;
@@ -2377,8 +2542,8 @@ class UpdateWorkerRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
       createEmptyInstance: create)
     ..aOM<Worker>(1, _omitFieldNames ? '' : 'worker', subBuilder: Worker.create)
-    ..aOM<$1.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $1.FieldMask.create)
+    ..aOM<$2.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $2.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2414,15 +2579,15 @@ class UpdateWorkerRequest extends $pb.GeneratedMessage {
   Worker ensureWorker() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $1.FieldMask get updateMask => $_getN(1);
+  $2.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($1.FieldMask value) => $_setField(2, value);
+  set updateMask($2.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $1.FieldMask ensureUpdateMask() => $_ensure(1);
+  $2.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateWorkerResponse extends $pb.GeneratedMessage {
@@ -2711,7 +2876,7 @@ class CreateEquipmentResponse extends $pb.GeneratedMessage {
 class UpdateEquipmentRequest extends $pb.GeneratedMessage {
   factory UpdateEquipmentRequest({
     Equipment? equipment,
-    $1.FieldMask? updateMask,
+    $2.FieldMask? updateMask,
   }) {
     final result = create();
     if (equipment != null) result.equipment = equipment;
@@ -2735,8 +2900,8 @@ class UpdateEquipmentRequest extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOM<Equipment>(1, _omitFieldNames ? '' : 'equipment',
         subBuilder: Equipment.create)
-    ..aOM<$1.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $1.FieldMask.create)
+    ..aOM<$2.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $2.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2774,15 +2939,15 @@ class UpdateEquipmentRequest extends $pb.GeneratedMessage {
   Equipment ensureEquipment() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $1.FieldMask get updateMask => $_getN(1);
+  $2.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($1.FieldMask value) => $_setField(2, value);
+  set updateMask($2.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $1.FieldMask ensureUpdateMask() => $_ensure(1);
+  $2.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateEquipmentResponse extends $pb.GeneratedMessage {
@@ -2952,7 +3117,7 @@ class DeleteEquipmentResponse extends $pb.GeneratedMessage {
 class UpdateProjectRequest extends $pb.GeneratedMessage {
   factory UpdateProjectRequest({
     Project? project,
-    $1.FieldMask? updateMask,
+    $2.FieldMask? updateMask,
   }) {
     final result = create();
     if (project != null) result.project = project;
@@ -2976,8 +3141,8 @@ class UpdateProjectRequest extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOM<Project>(1, _omitFieldNames ? '' : 'project',
         subBuilder: Project.create)
-    ..aOM<$1.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $1.FieldMask.create)
+    ..aOM<$2.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $2.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3014,15 +3179,15 @@ class UpdateProjectRequest extends $pb.GeneratedMessage {
   Project ensureProject() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $1.FieldMask get updateMask => $_getN(1);
+  $2.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($1.FieldMask value) => $_setField(2, value);
+  set updateMask($2.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $1.FieldMask ensureUpdateMask() => $_ensure(1);
+  $2.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateProjectResponse extends $pb.GeneratedMessage {
@@ -3336,7 +3501,7 @@ class CreateJobResponse extends $pb.GeneratedMessage {
 class UpdateJobRequest extends $pb.GeneratedMessage {
   factory UpdateJobRequest({
     Job? job,
-    $1.FieldMask? updateMask,
+    $2.FieldMask? updateMask,
   }) {
     final result = create();
     if (job != null) result.job = job;
@@ -3359,8 +3524,8 @@ class UpdateJobRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
       createEmptyInstance: create)
     ..aOM<Job>(1, _omitFieldNames ? '' : 'job', subBuilder: Job.create)
-    ..aOM<$1.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $1.FieldMask.create)
+    ..aOM<$2.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $2.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3398,15 +3563,15 @@ class UpdateJobRequest extends $pb.GeneratedMessage {
   /// project_no(또는 project_id), unit_no, item_code, job_name, item_no, joint_no, operation_no, material,
   /// outer_diameter_mm, thickness_mm, worker_id, started_at, ended_at
   @$pb.TagNumber(2)
-  $1.FieldMask get updateMask => $_getN(1);
+  $2.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($1.FieldMask value) => $_setField(2, value);
+  set updateMask($2.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $1.FieldMask ensureUpdateMask() => $_ensure(1);
+  $2.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateJobResponse extends $pb.GeneratedMessage {
@@ -3687,7 +3852,7 @@ class CreatePassResponse extends $pb.GeneratedMessage {
 class UpdatePassRequest extends $pb.GeneratedMessage {
   factory UpdatePassRequest({
     Pass? pass,
-    $1.FieldMask? updateMask,
+    $2.FieldMask? updateMask,
   }) {
     final result = create();
     if (pass != null) result.pass = pass;
@@ -3710,8 +3875,8 @@ class UpdatePassRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
       createEmptyInstance: create)
     ..aOM<Pass>(1, _omitFieldNames ? '' : 'pass', subBuilder: Pass.create)
-    ..aOM<$1.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $1.FieldMask.create)
+    ..aOM<$2.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $2.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3747,15 +3912,15 @@ class UpdatePassRequest extends $pb.GeneratedMessage {
   Pass ensurePass() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $1.FieldMask get updateMask => $_getN(1);
+  $2.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($1.FieldMask value) => $_setField(2, value);
+  set updateMask($2.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $1.FieldMask ensureUpdateMask() => $_ensure(1);
+  $2.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdatePassResponse extends $pb.GeneratedMessage {
@@ -4756,8 +4921,8 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     $core.String? itemCode,
     $fixnum.Int64? workerId,
     $fixnum.Int64? equipmentId,
-    $0.Timestamp? startedFrom,
-    $0.Timestamp? startedTo,
+    $1.Timestamp? startedFrom,
+    $1.Timestamp? startedTo,
     $core.int? pageSize,
     $core.String? pageToken,
     $core.String? unitNo,
@@ -4807,10 +4972,10 @@ class ListJobsRequest extends $pb.GeneratedMessage {
     ..aOS(3, _omitFieldNames ? '' : 'itemCode')
     ..aInt64(4, _omitFieldNames ? '' : 'workerId')
     ..aInt64(6, _omitFieldNames ? '' : 'equipmentId')
-    ..aOM<$0.Timestamp>(7, _omitFieldNames ? '' : 'startedFrom',
-        subBuilder: $0.Timestamp.create)
-    ..aOM<$0.Timestamp>(8, _omitFieldNames ? '' : 'startedTo',
-        subBuilder: $0.Timestamp.create)
+    ..aOM<$1.Timestamp>(7, _omitFieldNames ? '' : 'startedFrom',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(8, _omitFieldNames ? '' : 'startedTo',
+        subBuilder: $1.Timestamp.create)
     ..a<$core.int>(9, _omitFieldNames ? '' : 'pageSize', $pb.PbFieldType.O3)
     ..aOS(10, _omitFieldNames ? '' : 'pageToken')
     ..aOS(11, _omitFieldNames ? '' : 'unitNo')
@@ -4892,26 +5057,26 @@ class ListJobsRequest extends $pb.GeneratedMessage {
   void clearEquipmentId() => $_clearField(6);
 
   @$pb.TagNumber(7)
-  $0.Timestamp get startedFrom => $_getN(5);
+  $1.Timestamp get startedFrom => $_getN(5);
   @$pb.TagNumber(7)
-  set startedFrom($0.Timestamp value) => $_setField(7, value);
+  set startedFrom($1.Timestamp value) => $_setField(7, value);
   @$pb.TagNumber(7)
   $core.bool hasStartedFrom() => $_has(5);
   @$pb.TagNumber(7)
   void clearStartedFrom() => $_clearField(7);
   @$pb.TagNumber(7)
-  $0.Timestamp ensureStartedFrom() => $_ensure(5);
+  $1.Timestamp ensureStartedFrom() => $_ensure(5);
 
   @$pb.TagNumber(8)
-  $0.Timestamp get startedTo => $_getN(6);
+  $1.Timestamp get startedTo => $_getN(6);
   @$pb.TagNumber(8)
-  set startedTo($0.Timestamp value) => $_setField(8, value);
+  set startedTo($1.Timestamp value) => $_setField(8, value);
   @$pb.TagNumber(8)
   $core.bool hasStartedTo() => $_has(6);
   @$pb.TagNumber(8)
   void clearStartedTo() => $_clearField(8);
   @$pb.TagNumber(8)
-  $0.Timestamp ensureStartedTo() => $_ensure(6);
+  $1.Timestamp ensureStartedTo() => $_ensure(6);
 
   @$pb.TagNumber(9)
   $core.int get pageSize => $_getIZ(7);
@@ -5217,18 +5382,15 @@ class GetJobResponse extends $pb.GeneratedMessage {
 
 /// 노드의 위치. 클라이언트는 받은 값을 그대로 parent로 돌려보낸다.
 /// level 단계의 ID가 비어 있으면 그 단계가 "미지정" 노드다.
-///   - 장비 미지정: equipment_id 없는 Asset
-///   - 공사 미지정: project_no 없는 Job, 또는 (장비별) 작업에 첨부 안 된 Asset
-///   - 품목 미지정: common_key 없는 Job, 또는 (장비별) 작업에 첨부 안 된 Asset
-///   - 작업 미지정: (장비별) 작업에 첨부 안 된 Asset
+///   - 공사 미지정: project_no 없는 Job, 또는 작업에 첨부 안 된 Asset
+///   - 품목 미지정: common_key 없는 Job, 또는 작업에 첨부 안 된 Asset
+///   - 작업 미지정: 작업에 첨부 안 된 Asset
 /// 작업 노드의 자식은 바로 Asset이다. Asset 노드의 pass_id = 첨부된 패스(비어 있으면 작업 공용).
-/// 작업자별 보기에는 작업에 첨부 안 된 Asset이 나오지 않는다(작업자는 작업을 거쳐 안다).
+/// worker_id 필터를 주면 작업에 첨부 안 된 Asset(미지정)은 나오지 않는다(작업자는 작업을 거쳐 안다).
 class CollectionPath extends $pb.GeneratedMessage {
   factory CollectionPath({
     CollectionView? view,
     CollectionLevel? level,
-    $fixnum.Int64? equipmentId,
-    $fixnum.Int64? workerId,
     $core.String? projectNo,
     $fixnum.Int64? jobId,
     $fixnum.Int64? passId,
@@ -5237,8 +5399,6 @@ class CollectionPath extends $pb.GeneratedMessage {
     final result = create();
     if (view != null) result.view = view;
     if (level != null) result.level = level;
-    if (equipmentId != null) result.equipmentId = equipmentId;
-    if (workerId != null) result.workerId = workerId;
     if (projectNo != null) result.projectNo = projectNo;
     if (jobId != null) result.jobId = jobId;
     if (passId != null) result.passId = passId;
@@ -5268,8 +5428,6 @@ class CollectionPath extends $pb.GeneratedMessage {
         defaultOrMaker: CollectionLevel.COLLECTION_LEVEL_UNSPECIFIED,
         valueOf: CollectionLevel.valueOf,
         enumValues: CollectionLevel.values)
-    ..aInt64(3, _omitFieldNames ? '' : 'equipmentId')
-    ..aInt64(4, _omitFieldNames ? '' : 'workerId')
     ..aOS(5, _omitFieldNames ? '' : 'projectNo')
     ..aInt64(6, _omitFieldNames ? '' : 'jobId')
     ..aInt64(7, _omitFieldNames ? '' : 'passId')
@@ -5315,57 +5473,39 @@ class CollectionPath extends $pb.GeneratedMessage {
   @$pb.TagNumber(2)
   void clearLevel() => $_clearField(2);
 
-  @$pb.TagNumber(3)
-  $fixnum.Int64 get equipmentId => $_getI64(2);
-  @$pb.TagNumber(3)
-  set equipmentId($fixnum.Int64 value) => $_setInt64(2, value);
-  @$pb.TagNumber(3)
-  $core.bool hasEquipmentId() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearEquipmentId() => $_clearField(3);
-
-  @$pb.TagNumber(4)
-  $fixnum.Int64 get workerId => $_getI64(3);
-  @$pb.TagNumber(4)
-  set workerId($fixnum.Int64 value) => $_setInt64(3, value);
-  @$pb.TagNumber(4)
-  $core.bool hasWorkerId() => $_has(3);
-  @$pb.TagNumber(4)
-  void clearWorkerId() => $_clearField(4);
-
   @$pb.TagNumber(5)
-  $core.String get projectNo => $_getSZ(4);
+  $core.String get projectNo => $_getSZ(2);
   @$pb.TagNumber(5)
-  set projectNo($core.String value) => $_setString(4, value);
+  set projectNo($core.String value) => $_setString(2, value);
   @$pb.TagNumber(5)
-  $core.bool hasProjectNo() => $_has(4);
+  $core.bool hasProjectNo() => $_has(2);
   @$pb.TagNumber(5)
   void clearProjectNo() => $_clearField(5);
 
   @$pb.TagNumber(6)
-  $fixnum.Int64 get jobId => $_getI64(5);
+  $fixnum.Int64 get jobId => $_getI64(3);
   @$pb.TagNumber(6)
-  set jobId($fixnum.Int64 value) => $_setInt64(5, value);
+  set jobId($fixnum.Int64 value) => $_setInt64(3, value);
   @$pb.TagNumber(6)
-  $core.bool hasJobId() => $_has(5);
+  $core.bool hasJobId() => $_has(3);
   @$pb.TagNumber(6)
   void clearJobId() => $_clearField(6);
 
   @$pb.TagNumber(7)
-  $fixnum.Int64 get passId => $_getI64(6);
+  $fixnum.Int64 get passId => $_getI64(4);
   @$pb.TagNumber(7)
-  set passId($fixnum.Int64 value) => $_setInt64(6, value);
+  set passId($fixnum.Int64 value) => $_setInt64(4, value);
   @$pb.TagNumber(7)
-  $core.bool hasPassId() => $_has(6);
+  $core.bool hasPassId() => $_has(4);
   @$pb.TagNumber(7)
   void clearPassId() => $_clearField(7);
 
   @$pb.TagNumber(8)
-  $core.String get commonKey => $_getSZ(7);
+  $core.String get commonKey => $_getSZ(5);
   @$pb.TagNumber(8)
-  set commonKey($core.String value) => $_setString(7, value);
+  set commonKey($core.String value) => $_setString(5, value);
   @$pb.TagNumber(8)
-  $core.bool hasCommonKey() => $_has(7);
+  $core.bool hasCommonKey() => $_has(5);
   @$pb.TagNumber(8)
   void clearCommonKey() => $_clearField(8);
 }
@@ -5377,6 +5517,7 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
     $fixnum.Int64? endOffsetNs,
     TimeBasis? basis,
     SegmentUnit? segmentUnit,
+    $fixnum.Int64? workerId,
   }) {
     final result = create();
     if (parent != null) result.parent = parent;
@@ -5384,6 +5525,7 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
     if (endOffsetNs != null) result.endOffsetNs = endOffsetNs;
     if (basis != null) result.basis = basis;
     if (segmentUnit != null) result.segmentUnit = segmentUnit;
+    if (workerId != null) result.workerId = workerId;
     return result;
   }
 
@@ -5414,6 +5556,7 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
         defaultOrMaker: SegmentUnit.SEGMENT_UNIT_UNSPECIFIED,
         valueOf: SegmentUnit.valueOf,
         enumValues: SegmentUnit.values)
+    ..aInt64(6, _omitFieldNames ? '' : 'workerId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -5490,6 +5633,17 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
   $core.bool hasSegmentUnit() => $_has(4);
   @$pb.TagNumber(5)
   void clearSegmentUnit() => $_clearField(5);
+
+  /// 그 작업자의 작업만(0이면 전체). 노드 · 막대 · summary 모두에 걸린다. 주면 작업에 첨부 안 된 Asset(미지정)은 빠진다.
+  /// basis · segment_unit · worker_id를 바꾸면 열린 노드를 모두 다시 불러야 위아래 막대가 맞는다.
+  @$pb.TagNumber(6)
+  $fixnum.Int64 get workerId => $_getI64(5);
+  @$pb.TagNumber(6)
+  set workerId($fixnum.Int64 value) => $_setInt64(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasWorkerId() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearWorkerId() => $_clearField(6);
 }
 
 class ListCollectionNodesResponse extends $pb.GeneratedMessage {
@@ -5548,15 +5702,182 @@ class ListCollectionNodesResponse extends $pb.GeneratedMessage {
   $pb.PbList<CollectionNode> get nodes => $_getList(0);
 }
 
+class GetCollectionSummaryRequest extends $pb.GeneratedMessage {
+  factory GetCollectionSummaryRequest({
+    CollectionPath? parent,
+    $fixnum.Int64? workerId,
+  }) {
+    final result = create();
+    if (parent != null) result.parent = parent;
+    if (workerId != null) result.workerId = workerId;
+    return result;
+  }
+
+  GetCollectionSummaryRequest._();
+
+  factory GetCollectionSummaryRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetCollectionSummaryRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetCollectionSummaryRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<CollectionPath>(1, _omitFieldNames ? '' : 'parent',
+        subBuilder: CollectionPath.create)
+    ..aInt64(2, _omitFieldNames ? '' : 'workerId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetCollectionSummaryRequest clone() =>
+      GetCollectionSummaryRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetCollectionSummaryRequest copyWith(
+          void Function(GetCollectionSummaryRequest) updates) =>
+      super.copyWith(
+              (message) => updates(message as GetCollectionSummaryRequest))
+          as GetCollectionSummaryRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetCollectionSummaryRequest create() =>
+      GetCollectionSummaryRequest._();
+  @$core.override
+  GetCollectionSummaryRequest createEmptyInstance() => create();
+  static $pb.PbList<GetCollectionSummaryRequest> createRepeated() =>
+      $pb.PbList<GetCollectionSummaryRequest>();
+  @$core.pragma('dart2js:noInline')
+  static GetCollectionSummaryRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetCollectionSummaryRequest>(create);
+  static GetCollectionSummaryRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  CollectionPath get parent => $_getN(0);
+  @$pb.TagNumber(1)
+  set parent(CollectionPath value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasParent() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearParent() => $_clearField(1);
+  @$pb.TagNumber(1)
+  CollectionPath ensureParent() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get workerId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set workerId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasWorkerId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearWorkerId() => $_clearField(2);
+}
+
+class GetCollectionSummaryResponse extends $pb.GeneratedMessage {
+  factory GetCollectionSummaryResponse({
+    CollectionSummary? summary,
+    $fixnum.Int64? traceRunningCount,
+    $fixnum.Int64? traceFailedCount,
+  }) {
+    final result = create();
+    if (summary != null) result.summary = summary;
+    if (traceRunningCount != null) result.traceRunningCount = traceRunningCount;
+    if (traceFailedCount != null) result.traceFailedCount = traceFailedCount;
+    return result;
+  }
+
+  GetCollectionSummaryResponse._();
+
+  factory GetCollectionSummaryResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory GetCollectionSummaryResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'GetCollectionSummaryResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<CollectionSummary>(1, _omitFieldNames ? '' : 'summary',
+        subBuilder: CollectionSummary.create)
+    ..aInt64(2, _omitFieldNames ? '' : 'traceRunningCount')
+    ..aInt64(3, _omitFieldNames ? '' : 'traceFailedCount')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetCollectionSummaryResponse clone() =>
+      GetCollectionSummaryResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  GetCollectionSummaryResponse copyWith(
+          void Function(GetCollectionSummaryResponse) updates) =>
+      super.copyWith(
+              (message) => updates(message as GetCollectionSummaryResponse))
+          as GetCollectionSummaryResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static GetCollectionSummaryResponse create() =>
+      GetCollectionSummaryResponse._();
+  @$core.override
+  GetCollectionSummaryResponse createEmptyInstance() => create();
+  static $pb.PbList<GetCollectionSummaryResponse> createRepeated() =>
+      $pb.PbList<GetCollectionSummaryResponse>();
+  @$core.pragma('dart2js:noInline')
+  static GetCollectionSummaryResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<GetCollectionSummaryResponse>(create);
+  static GetCollectionSummaryResponse? _defaultInstance;
+
+  /// 자식 노드 summary를 더하지 말 것: Asset 하나가 여러 작업에 첨부될 수 있어 더하면 두 번 센다. 이 값은 asset_id · job_id를 중복 없이 센다.
+  @$pb.TagNumber(1)
+  CollectionSummary get summary => $_getN(0);
+  @$pb.TagNumber(1)
+  set summary(CollectionSummary value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasSummary() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearSummary() => $_clearField(1);
+  @$pb.TagNumber(1)
+  CollectionSummary ensureSummary() => $_ensure(0);
+
+  /// 적재 추적(TraceService) 건수 — ListTraces(status, page_size=1)의 total_count와 같은 값. parent · worker_id와 상관없이 늘 전체:
+  /// 등록 전에 실패한 업로드는 Asset이 없어 공사 · 작업에 이어지지 않는다. 기간 없이 누적(2026-11-23 결정).
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get traceRunningCount => $_getI64(1);
+  @$pb.TagNumber(2)
+  set traceRunningCount($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasTraceRunningCount() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearTraceRunningCount() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get traceFailedCount => $_getI64(2);
+  @$pb.TagNumber(3)
+  set traceFailedCount($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTraceFailedCount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTraceFailedCount() => $_clearField(3);
+}
+
 class CollectionNode extends $pb.GeneratedMessage {
   factory CollectionNode({
     CollectionPath? path,
     $core.String? label,
     $core.bool? hasChildren,
     CollectionSummary? summary,
-    $2.Asset? asset,
-    $0.Timestamp? startedAt,
-    $0.Timestamp? endedAt,
+    $3.Asset? asset,
+    $1.Timestamp? startedAt,
+    $1.Timestamp? endedAt,
     $core.Iterable<TimeRange>? segments,
   }) {
     final result = create();
@@ -5591,12 +5912,12 @@ class CollectionNode extends $pb.GeneratedMessage {
     ..aOB(3, _omitFieldNames ? '' : 'hasChildren')
     ..aOM<CollectionSummary>(4, _omitFieldNames ? '' : 'summary',
         subBuilder: CollectionSummary.create)
-    ..aOM<$2.Asset>(5, _omitFieldNames ? '' : 'asset',
-        subBuilder: $2.Asset.create)
-    ..aOM<$0.Timestamp>(6, _omitFieldNames ? '' : 'startedAt',
-        subBuilder: $0.Timestamp.create)
-    ..aOM<$0.Timestamp>(7, _omitFieldNames ? '' : 'endedAt',
-        subBuilder: $0.Timestamp.create)
+    ..aOM<$3.Asset>(5, _omitFieldNames ? '' : 'asset',
+        subBuilder: $3.Asset.create)
+    ..aOM<$1.Timestamp>(6, _omitFieldNames ? '' : 'startedAt',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(7, _omitFieldNames ? '' : 'endedAt',
+        subBuilder: $1.Timestamp.create)
     ..pc<TimeRange>(8, _omitFieldNames ? '' : 'segments', $pb.PbFieldType.PM,
         subBuilder: TimeRange.create)
     ..hasRequiredFields = false;
@@ -5663,37 +5984,37 @@ class CollectionNode extends $pb.GeneratedMessage {
   CollectionSummary ensureSummary() => $_ensure(3);
 
   @$pb.TagNumber(5)
-  $2.Asset get asset => $_getN(4);
+  $3.Asset get asset => $_getN(4);
   @$pb.TagNumber(5)
-  set asset($2.Asset value) => $_setField(5, value);
+  set asset($3.Asset value) => $_setField(5, value);
   @$pb.TagNumber(5)
   $core.bool hasAsset() => $_has(4);
   @$pb.TagNumber(5)
   void clearAsset() => $_clearField(5);
   @$pb.TagNumber(5)
-  $2.Asset ensureAsset() => $_ensure(4);
+  $3.Asset ensureAsset() => $_ensure(4);
 
   @$pb.TagNumber(6)
-  $0.Timestamp get startedAt => $_getN(5);
+  $1.Timestamp get startedAt => $_getN(5);
   @$pb.TagNumber(6)
-  set startedAt($0.Timestamp value) => $_setField(6, value);
+  set startedAt($1.Timestamp value) => $_setField(6, value);
   @$pb.TagNumber(6)
   $core.bool hasStartedAt() => $_has(5);
   @$pb.TagNumber(6)
   void clearStartedAt() => $_clearField(6);
   @$pb.TagNumber(6)
-  $0.Timestamp ensureStartedAt() => $_ensure(5);
+  $1.Timestamp ensureStartedAt() => $_ensure(5);
 
   @$pb.TagNumber(7)
-  $0.Timestamp get endedAt => $_getN(6);
+  $1.Timestamp get endedAt => $_getN(6);
   @$pb.TagNumber(7)
-  set endedAt($0.Timestamp value) => $_setField(7, value);
+  set endedAt($1.Timestamp value) => $_setField(7, value);
   @$pb.TagNumber(7)
   $core.bool hasEndedAt() => $_has(6);
   @$pb.TagNumber(7)
   void clearEndedAt() => $_clearField(7);
   @$pb.TagNumber(7)
-  $0.Timestamp ensureEndedAt() => $_ensure(6);
+  $1.Timestamp ensureEndedAt() => $_ensure(6);
 
   /// 막대로 그릴 구간(시작 순, 겹치거나 맞닿으면 합침) — started_at~ended_at은 전체 범위라 사이의 빈 날이 안 보인다.
   /// 작업 구간 기준: 그 아래 작업들의 구간(segment_unit JOB — 작업 노드는 자기 구간 하나) 또는 패스들의 구간(PASS), 파일은 속한 패스(없으면 작업)의 구간.
@@ -5705,8 +6026,8 @@ class CollectionNode extends $pb.GeneratedMessage {
 /// asset_id를 먼저 중복 제거한 뒤 집계한다(Asset 하나가 여러 작업에 첨부될 수 있음).
 class TimeRange extends $pb.GeneratedMessage {
   factory TimeRange({
-    $0.Timestamp? startedAt,
-    $0.Timestamp? endedAt,
+    $1.Timestamp? startedAt,
+    $1.Timestamp? endedAt,
   }) {
     final result = create();
     if (startedAt != null) result.startedAt = startedAt;
@@ -5728,10 +6049,10 @@ class TimeRange extends $pb.GeneratedMessage {
       package:
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
       createEmptyInstance: create)
-    ..aOM<$0.Timestamp>(1, _omitFieldNames ? '' : 'startedAt',
-        subBuilder: $0.Timestamp.create)
-    ..aOM<$0.Timestamp>(2, _omitFieldNames ? '' : 'endedAt',
-        subBuilder: $0.Timestamp.create)
+    ..aOM<$1.Timestamp>(1, _omitFieldNames ? '' : 'startedAt',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(2, _omitFieldNames ? '' : 'endedAt',
+        subBuilder: $1.Timestamp.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -5754,37 +6075,47 @@ class TimeRange extends $pb.GeneratedMessage {
   static TimeRange? _defaultInstance;
 
   @$pb.TagNumber(1)
-  $0.Timestamp get startedAt => $_getN(0);
+  $1.Timestamp get startedAt => $_getN(0);
   @$pb.TagNumber(1)
-  set startedAt($0.Timestamp value) => $_setField(1, value);
+  set startedAt($1.Timestamp value) => $_setField(1, value);
   @$pb.TagNumber(1)
   $core.bool hasStartedAt() => $_has(0);
   @$pb.TagNumber(1)
   void clearStartedAt() => $_clearField(1);
   @$pb.TagNumber(1)
-  $0.Timestamp ensureStartedAt() => $_ensure(0);
+  $1.Timestamp ensureStartedAt() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $0.Timestamp get endedAt => $_getN(1);
+  $1.Timestamp get endedAt => $_getN(1);
   @$pb.TagNumber(2)
-  set endedAt($0.Timestamp value) => $_setField(2, value);
+  set endedAt($1.Timestamp value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasEndedAt() => $_has(1);
   @$pb.TagNumber(2)
   void clearEndedAt() => $_clearField(2);
   @$pb.TagNumber(2)
-  $0.Timestamp ensureEndedAt() => $_ensure(1);
+  $1.Timestamp ensureEndedAt() => $_ensure(1);
 }
 
 class CollectionSummary extends $pb.GeneratedMessage {
   factory CollectionSummary({
     $fixnum.Int64? assetCount,
     $fixnum.Int64? totalSizeBytes,
-    $0.Timestamp? firstRecordedAt,
-    $0.Timestamp? lastRecordedAt,
-    $0.Timestamp? lastCollectedAt,
+    $1.Timestamp? firstRecordedAt,
+    $1.Timestamp? lastRecordedAt,
+    $1.Timestamp? lastCollectedAt,
     $fixnum.Int64? jobCount,
     $fixnum.Int64? workDurationSeconds,
+    $fixnum.Int64? jobWithoutAssetCount,
+    $fixnum.Int64? clipCount,
+    $fixnum.Int64? embeddedClipCount,
+    $fixnum.Int64? timeUnverifiedAssetCount,
+    $core.Iterable<KindCoverage>? coverage,
+    $fixnum.Int64? weldDurationSeconds,
+    $fixnum.Int64? attachedAssetCount,
+    $fixnum.Int64? embeddedAttachedAssetCount,
+    $fixnum.Int64? commentCount,
+    $fixnum.Int64? embeddedCommentCount,
   }) {
     final result = create();
     if (assetCount != null) result.assetCount = assetCount;
@@ -5795,6 +6126,22 @@ class CollectionSummary extends $pb.GeneratedMessage {
     if (jobCount != null) result.jobCount = jobCount;
     if (workDurationSeconds != null)
       result.workDurationSeconds = workDurationSeconds;
+    if (jobWithoutAssetCount != null)
+      result.jobWithoutAssetCount = jobWithoutAssetCount;
+    if (clipCount != null) result.clipCount = clipCount;
+    if (embeddedClipCount != null) result.embeddedClipCount = embeddedClipCount;
+    if (timeUnverifiedAssetCount != null)
+      result.timeUnverifiedAssetCount = timeUnverifiedAssetCount;
+    if (coverage != null) result.coverage.addAll(coverage);
+    if (weldDurationSeconds != null)
+      result.weldDurationSeconds = weldDurationSeconds;
+    if (attachedAssetCount != null)
+      result.attachedAssetCount = attachedAssetCount;
+    if (embeddedAttachedAssetCount != null)
+      result.embeddedAttachedAssetCount = embeddedAttachedAssetCount;
+    if (commentCount != null) result.commentCount = commentCount;
+    if (embeddedCommentCount != null)
+      result.embeddedCommentCount = embeddedCommentCount;
     return result;
   }
 
@@ -5814,14 +6161,26 @@ class CollectionSummary extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aInt64(1, _omitFieldNames ? '' : 'assetCount')
     ..aInt64(2, _omitFieldNames ? '' : 'totalSizeBytes')
-    ..aOM<$0.Timestamp>(3, _omitFieldNames ? '' : 'firstRecordedAt',
-        subBuilder: $0.Timestamp.create)
-    ..aOM<$0.Timestamp>(4, _omitFieldNames ? '' : 'lastRecordedAt',
-        subBuilder: $0.Timestamp.create)
-    ..aOM<$0.Timestamp>(5, _omitFieldNames ? '' : 'lastCollectedAt',
-        subBuilder: $0.Timestamp.create)
+    ..aOM<$1.Timestamp>(3, _omitFieldNames ? '' : 'firstRecordedAt',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(4, _omitFieldNames ? '' : 'lastRecordedAt',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(5, _omitFieldNames ? '' : 'lastCollectedAt',
+        subBuilder: $1.Timestamp.create)
     ..aInt64(6, _omitFieldNames ? '' : 'jobCount')
     ..aInt64(7, _omitFieldNames ? '' : 'workDurationSeconds')
+    ..aInt64(8, _omitFieldNames ? '' : 'jobWithoutAssetCount')
+    ..aInt64(9, _omitFieldNames ? '' : 'clipCount')
+    ..aInt64(10, _omitFieldNames ? '' : 'embeddedClipCount')
+    ..aInt64(11, _omitFieldNames ? '' : 'timeUnverifiedAssetCount')
+    ..pc<KindCoverage>(
+        12, _omitFieldNames ? '' : 'coverage', $pb.PbFieldType.PM,
+        subBuilder: KindCoverage.create)
+    ..aInt64(13, _omitFieldNames ? '' : 'weldDurationSeconds')
+    ..aInt64(14, _omitFieldNames ? '' : 'attachedAssetCount')
+    ..aInt64(15, _omitFieldNames ? '' : 'embeddedAttachedAssetCount')
+    ..aInt64(16, _omitFieldNames ? '' : 'commentCount')
+    ..aInt64(17, _omitFieldNames ? '' : 'embeddedCommentCount')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -5864,37 +6223,37 @@ class CollectionSummary extends $pb.GeneratedMessage {
   void clearTotalSizeBytes() => $_clearField(2);
 
   @$pb.TagNumber(3)
-  $0.Timestamp get firstRecordedAt => $_getN(2);
+  $1.Timestamp get firstRecordedAt => $_getN(2);
   @$pb.TagNumber(3)
-  set firstRecordedAt($0.Timestamp value) => $_setField(3, value);
+  set firstRecordedAt($1.Timestamp value) => $_setField(3, value);
   @$pb.TagNumber(3)
   $core.bool hasFirstRecordedAt() => $_has(2);
   @$pb.TagNumber(3)
   void clearFirstRecordedAt() => $_clearField(3);
   @$pb.TagNumber(3)
-  $0.Timestamp ensureFirstRecordedAt() => $_ensure(2);
+  $1.Timestamp ensureFirstRecordedAt() => $_ensure(2);
 
   @$pb.TagNumber(4)
-  $0.Timestamp get lastRecordedAt => $_getN(3);
+  $1.Timestamp get lastRecordedAt => $_getN(3);
   @$pb.TagNumber(4)
-  set lastRecordedAt($0.Timestamp value) => $_setField(4, value);
+  set lastRecordedAt($1.Timestamp value) => $_setField(4, value);
   @$pb.TagNumber(4)
   $core.bool hasLastRecordedAt() => $_has(3);
   @$pb.TagNumber(4)
   void clearLastRecordedAt() => $_clearField(4);
   @$pb.TagNumber(4)
-  $0.Timestamp ensureLastRecordedAt() => $_ensure(3);
+  $1.Timestamp ensureLastRecordedAt() => $_ensure(3);
 
   @$pb.TagNumber(5)
-  $0.Timestamp get lastCollectedAt => $_getN(4);
+  $1.Timestamp get lastCollectedAt => $_getN(4);
   @$pb.TagNumber(5)
-  set lastCollectedAt($0.Timestamp value) => $_setField(5, value);
+  set lastCollectedAt($1.Timestamp value) => $_setField(5, value);
   @$pb.TagNumber(5)
   $core.bool hasLastCollectedAt() => $_has(4);
   @$pb.TagNumber(5)
   void clearLastCollectedAt() => $_clearField(5);
   @$pb.TagNumber(5)
-  $0.Timestamp ensureLastCollectedAt() => $_ensure(4);
+  $1.Timestamp ensureLastCollectedAt() => $_ensure(4);
 
   @$pb.TagNumber(6)
   $fixnum.Int64 get jobCount => $_getI64(5);
@@ -5913,6 +6272,173 @@ class CollectionSummary extends $pb.GeneratedMessage {
   $core.bool hasWorkDurationSeconds() => $_has(6);
   @$pb.TagNumber(7)
   void clearWorkDurationSeconds() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $fixnum.Int64 get jobWithoutAssetCount => $_getI64(7);
+  @$pb.TagNumber(8)
+  set jobWithoutAssetCount($fixnum.Int64 value) => $_setInt64(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasJobWithoutAssetCount() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearJobWithoutAssetCount() => $_clearField(8);
+
+  /// 임베딩 진행: 아래 작업의 클립 중 원본이 장비 기록인 시간 자료(영상 · 음성 · 센서 · 포즈 · 깊이, 50ms 초과)와
+  /// 그중 지금 내용까지 임베딩된 것(embedded_at >= updated_at — 임베딩 뒤 고친 클립은 빠짐)
+  @$pb.TagNumber(9)
+  $fixnum.Int64 get clipCount => $_getI64(8);
+  @$pb.TagNumber(9)
+  set clipCount($fixnum.Int64 value) => $_setInt64(8, value);
+  @$pb.TagNumber(9)
+  $core.bool hasClipCount() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearClipCount() => $_clearField(9);
+
+  @$pb.TagNumber(10)
+  $fixnum.Int64 get embeddedClipCount => $_getI64(9);
+  @$pb.TagNumber(10)
+  set embeddedClipCount($fixnum.Int64 value) => $_setInt64(9, value);
+  @$pb.TagNumber(10)
+  $core.bool hasEmbeddedClipCount() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearEmbeddedClipCount() => $_clearField(10);
+
+  /// 기록 시각이 기기 시계 · 파일 메타 · 파일 수정 시각 · 받은 시각에서 온 Asset(properties.upload.time_source가
+  /// creation_time · exif · pdf_created · file_modified · collected) — 타임라인 위치를 사람이 확인할 것
+  @$pb.TagNumber(11)
+  $fixnum.Int64 get timeUnverifiedAssetCount => $_getI64(10);
+  @$pb.TagNumber(11)
+  set timeUnverifiedAssetCount($fixnum.Int64 value) => $_setInt64(10, value);
+  @$pb.TagNumber(11)
+  $core.bool hasTimeUnverifiedAssetCount() => $_has(10);
+  @$pb.TagNumber(11)
+  void clearTimeUnverifiedAssetCount() => $_clearField(11);
+
+  /// 기록 커버리지: 자료 종류별로 용접시간 중 클립이 덮은 초(작업마다 클립 구간을 합쳐 용접 구간과 겹친 길이 — 패스 사이 쉬는 시간의
+  /// 기록은 세지 않음). 비율 = covered_seconds / weld_duration_seconds. 클립이 없는 종류는 빠진다
+  @$pb.TagNumber(12)
+  $pb.PbList<KindCoverage> get coverage => $_getList(11);
+
+  /// 용접시간: 패스 구간 합(시각이 있는 패스), 패스가 없는 작업은 작업 구간(끝이 없으면 0). 작업시간(7)은 작업이 열려 있던 시간
+  @$pb.TagNumber(13)
+  $fixnum.Int64 get weldDurationSeconds => $_getI64(12);
+  @$pb.TagNumber(13)
+  set weldDurationSeconds($fixnum.Int64 value) => $_setInt64(12, value);
+  @$pb.TagNumber(13)
+  $core.bool hasWeldDurationSeconds() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearWeldDurationSeconds() => $_clearField(13);
+
+  /// 메타 임베딩: AI 서버는 작업 × 파일 쌍마다 메타 문서(파일명 · 종류 · 설비 · 작업 정보)를 만든다. 아래 작업에 붙은 쌍 수와
+  /// 그중 지금 내용까지 임베딩된 것(파일 · 첨부를 고친 뒤는 빠짐). 파일 하나가 두 작업에 붙으면 2 — asset_count(1)와 다르다
+  @$pb.TagNumber(14)
+  $fixnum.Int64 get attachedAssetCount => $_getI64(13);
+  @$pb.TagNumber(14)
+  set attachedAssetCount($fixnum.Int64 value) => $_setInt64(13, value);
+  @$pb.TagNumber(14)
+  $core.bool hasAttachedAssetCount() => $_has(13);
+  @$pb.TagNumber(14)
+  void clearAttachedAssetCount() => $_clearField(14);
+
+  @$pb.TagNumber(15)
+  $fixnum.Int64 get embeddedAttachedAssetCount => $_getI64(14);
+  @$pb.TagNumber(15)
+  set embeddedAttachedAssetCount($fixnum.Int64 value) => $_setInt64(14, value);
+  @$pb.TagNumber(15)
+  $core.bool hasEmbeddedAttachedAssetCount() => $_has(14);
+  @$pb.TagNumber(15)
+  void clearEmbeddedAttachedAssetCount() => $_clearField(15);
+
+  /// 코멘트 임베딩: 아래 작업에 달린 코멘트 수와 그중 지금 내용(본문 + STT 자막)까지 임베딩된 것. STT 자막이 나중에 생기면
+  /// 다시 임베딩될 때까지 빠진다. 작업 없이 남긴 코멘트는 어느 범위에도 들지 않는다
+  @$pb.TagNumber(16)
+  $fixnum.Int64 get commentCount => $_getI64(15);
+  @$pb.TagNumber(16)
+  set commentCount($fixnum.Int64 value) => $_setInt64(15, value);
+  @$pb.TagNumber(16)
+  $core.bool hasCommentCount() => $_has(15);
+  @$pb.TagNumber(16)
+  void clearCommentCount() => $_clearField(16);
+
+  @$pb.TagNumber(17)
+  $fixnum.Int64 get embeddedCommentCount => $_getI64(16);
+  @$pb.TagNumber(17)
+  set embeddedCommentCount($fixnum.Int64 value) => $_setInt64(16, value);
+  @$pb.TagNumber(17)
+  $core.bool hasEmbeddedCommentCount() => $_has(16);
+  @$pb.TagNumber(17)
+  void clearEmbeddedCommentCount() => $_clearField(17);
+}
+
+class KindCoverage extends $pb.GeneratedMessage {
+  factory KindCoverage({
+    $3.AssetKind? kind,
+    $fixnum.Int64? coveredSeconds,
+  }) {
+    final result = create();
+    if (kind != null) result.kind = kind;
+    if (coveredSeconds != null) result.coveredSeconds = coveredSeconds;
+    return result;
+  }
+
+  KindCoverage._();
+
+  factory KindCoverage.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory KindCoverage.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'KindCoverage',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..e<$3.AssetKind>(1, _omitFieldNames ? '' : 'kind', $pb.PbFieldType.OE,
+        defaultOrMaker: $3.AssetKind.ASSET_KIND_UNSPECIFIED,
+        valueOf: $3.AssetKind.valueOf,
+        enumValues: $3.AssetKind.values)
+    ..aInt64(2, _omitFieldNames ? '' : 'coveredSeconds')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  KindCoverage clone() => KindCoverage()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  KindCoverage copyWith(void Function(KindCoverage) updates) =>
+      super.copyWith((message) => updates(message as KindCoverage))
+          as KindCoverage;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static KindCoverage create() => KindCoverage._();
+  @$core.override
+  KindCoverage createEmptyInstance() => create();
+  static $pb.PbList<KindCoverage> createRepeated() =>
+      $pb.PbList<KindCoverage>();
+  @$core.pragma('dart2js:noInline')
+  static KindCoverage getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<KindCoverage>(create);
+  static KindCoverage? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $3.AssetKind get kind => $_getN(0);
+  @$pb.TagNumber(1)
+  set kind($3.AssetKind value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasKind() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearKind() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get coveredSeconds => $_getI64(1);
+  @$pb.TagNumber(2)
+  set coveredSeconds($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasCoveredSeconds() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearCoveredSeconds() => $_clearField(2);
 }
 
 class GetPassWaveformRequest extends $pb.GeneratedMessage {
@@ -6485,6 +7011,273 @@ class WaveformChannel extends $pb.GeneratedMessage {
   $pb.PbList<$core.double> get values => $_getList(2);
 }
 
+class ListAssetCountsRequest extends $pb.GeneratedMessage {
+  factory ListAssetCountsRequest({
+    AssetTimeBasis? basis,
+    CollectionPath? parent,
+    $fixnum.Int64? workerId,
+    $1.Timestamp? from,
+    $1.Timestamp? to,
+  }) {
+    final result = create();
+    if (basis != null) result.basis = basis;
+    if (parent != null) result.parent = parent;
+    if (workerId != null) result.workerId = workerId;
+    if (from != null) result.from = from;
+    if (to != null) result.to = to;
+    return result;
+  }
+
+  ListAssetCountsRequest._();
+
+  factory ListAssetCountsRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListAssetCountsRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListAssetCountsRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..e<AssetTimeBasis>(1, _omitFieldNames ? '' : 'basis', $pb.PbFieldType.OE,
+        defaultOrMaker: AssetTimeBasis.ASSET_TIME_BASIS_UNSPECIFIED,
+        valueOf: AssetTimeBasis.valueOf,
+        enumValues: AssetTimeBasis.values)
+    ..aOM<CollectionPath>(2, _omitFieldNames ? '' : 'parent',
+        subBuilder: CollectionPath.create)
+    ..aInt64(3, _omitFieldNames ? '' : 'workerId')
+    ..aOM<$1.Timestamp>(4, _omitFieldNames ? '' : 'from',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(5, _omitFieldNames ? '' : 'to',
+        subBuilder: $1.Timestamp.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListAssetCountsRequest clone() =>
+      ListAssetCountsRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListAssetCountsRequest copyWith(
+          void Function(ListAssetCountsRequest) updates) =>
+      super.copyWith((message) => updates(message as ListAssetCountsRequest))
+          as ListAssetCountsRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListAssetCountsRequest create() => ListAssetCountsRequest._();
+  @$core.override
+  ListAssetCountsRequest createEmptyInstance() => create();
+  static $pb.PbList<ListAssetCountsRequest> createRepeated() =>
+      $pb.PbList<ListAssetCountsRequest>();
+  @$core.pragma('dart2js:noInline')
+  static ListAssetCountsRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListAssetCountsRequest>(create);
+  static ListAssetCountsRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  AssetTimeBasis get basis => $_getN(0);
+  @$pb.TagNumber(1)
+  set basis(AssetTimeBasis value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasBasis() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearBasis() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  CollectionPath get parent => $_getN(1);
+  @$pb.TagNumber(2)
+  set parent(CollectionPath value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasParent() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearParent() => $_clearField(2);
+  @$pb.TagNumber(2)
+  CollectionPath ensureParent() => $_ensure(1);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get workerId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set workerId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasWorkerId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearWorkerId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $1.Timestamp get from => $_getN(3);
+  @$pb.TagNumber(4)
+  set from($1.Timestamp value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasFrom() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearFrom() => $_clearField(4);
+  @$pb.TagNumber(4)
+  $1.Timestamp ensureFrom() => $_ensure(3);
+
+  @$pb.TagNumber(5)
+  $1.Timestamp get to => $_getN(4);
+  @$pb.TagNumber(5)
+  set to($1.Timestamp value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasTo() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearTo() => $_clearField(5);
+  @$pb.TagNumber(5)
+  $1.Timestamp ensureTo() => $_ensure(4);
+}
+
+class AssetCount extends $pb.GeneratedMessage {
+  factory AssetCount({
+    $core.String? date,
+    $3.AssetKind? kind,
+    $fixnum.Int64? assetCount,
+    $fixnum.Int64? totalSizeBytes,
+  }) {
+    final result = create();
+    if (date != null) result.date = date;
+    if (kind != null) result.kind = kind;
+    if (assetCount != null) result.assetCount = assetCount;
+    if (totalSizeBytes != null) result.totalSizeBytes = totalSizeBytes;
+    return result;
+  }
+
+  AssetCount._();
+
+  factory AssetCount.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory AssetCount.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'AssetCount',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOS(1, _omitFieldNames ? '' : 'date')
+    ..e<$3.AssetKind>(2, _omitFieldNames ? '' : 'kind', $pb.PbFieldType.OE,
+        defaultOrMaker: $3.AssetKind.ASSET_KIND_UNSPECIFIED,
+        valueOf: $3.AssetKind.valueOf,
+        enumValues: $3.AssetKind.values)
+    ..aInt64(3, _omitFieldNames ? '' : 'assetCount')
+    ..aInt64(4, _omitFieldNames ? '' : 'totalSizeBytes')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AssetCount clone() => AssetCount()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  AssetCount copyWith(void Function(AssetCount) updates) =>
+      super.copyWith((message) => updates(message as AssetCount)) as AssetCount;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static AssetCount create() => AssetCount._();
+  @$core.override
+  AssetCount createEmptyInstance() => create();
+  static $pb.PbList<AssetCount> createRepeated() => $pb.PbList<AssetCount>();
+  @$core.pragma('dart2js:noInline')
+  static AssetCount getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<AssetCount>(create);
+  static AssetCount? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.String get date => $_getSZ(0);
+  @$pb.TagNumber(1)
+  set date($core.String value) => $_setString(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDate() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDate() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $3.AssetKind get kind => $_getN(1);
+  @$pb.TagNumber(2)
+  set kind($3.AssetKind value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasKind() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearKind() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get assetCount => $_getI64(2);
+  @$pb.TagNumber(3)
+  set assetCount($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasAssetCount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearAssetCount() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get totalSizeBytes => $_getI64(3);
+  @$pb.TagNumber(4)
+  set totalSizeBytes($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasTotalSizeBytes() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearTotalSizeBytes() => $_clearField(4);
+}
+
+class ListAssetCountsResponse extends $pb.GeneratedMessage {
+  factory ListAssetCountsResponse({
+    $core.Iterable<AssetCount>? counts,
+  }) {
+    final result = create();
+    if (counts != null) result.counts.addAll(counts);
+    return result;
+  }
+
+  ListAssetCountsResponse._();
+
+  factory ListAssetCountsResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListAssetCountsResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListAssetCountsResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..pc<AssetCount>(1, _omitFieldNames ? '' : 'counts', $pb.PbFieldType.PM,
+        subBuilder: AssetCount.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListAssetCountsResponse clone() =>
+      ListAssetCountsResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListAssetCountsResponse copyWith(
+          void Function(ListAssetCountsResponse) updates) =>
+      super.copyWith((message) => updates(message as ListAssetCountsResponse))
+          as ListAssetCountsResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListAssetCountsResponse create() => ListAssetCountsResponse._();
+  @$core.override
+  ListAssetCountsResponse createEmptyInstance() => create();
+  static $pb.PbList<ListAssetCountsResponse> createRepeated() =>
+      $pb.PbList<ListAssetCountsResponse>();
+  @$core.pragma('dart2js:noInline')
+  static ListAssetCountsResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListAssetCountsResponse>(create);
+  static ListAssetCountsResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<AssetCount> get counts => $_getList(0);
+}
+
 /// 사용처: 대시보드(s0 수집 현황, s2 작업 이력·필터, s3 파형 비교, s3/s4 컨텍스트), 컴포즈(열 작업 고르기).
 class WorkServiceApi {
   final $pb.RpcClient _client;
@@ -6496,13 +7289,14 @@ class WorkServiceApi {
       _client.invoke<ListProjectsResponse>(
           ctx, 'WorkService', 'ListProjects', request, ListProjectsResponse());
 
-  /// 공사 하나 + 호기·품목·작업 수(ListProjects.project_details와 같은 값). 없으면 NotFound.
+  /// 공사 하나 + 호기·품목·작업 수(ListProjects.project_details와 같은 값)·RAG 색인 청크 수. 없으면 NotFound.
   $async.Future<GetProjectResponse> getProject(
           $pb.ClientContext? ctx, GetProjectRequest request) =>
       _client.invoke<GetProjectResponse>(
           ctx, 'WorkService', 'GetProject', request, GetProjectResponse());
 
   /// 공사를 만든다. project.project_no는 필수이고 발급 후 불변. 같은 번호가 있으면 AlreadyExists.
+  /// 만든 뒤 RAG 서버에 그 공사의 색인을 요청한다(뒤에서 — RAG가 실패해도 공사는 만들어진다).
   $async.Future<CreateProjectResponse> createProject(
           $pb.ClientContext? ctx, CreateProjectRequest request) =>
       _client.invoke<CreateProjectResponse>(ctx, 'WorkService', 'CreateProject',
@@ -6613,6 +7407,7 @@ class WorkServiceApi {
           request, UpdateProjectResponse());
 
   /// 행을 실제로 지운다(되돌릴 수 없음). 작업이 하나라도 있는 공사는 FailedPrecondition.
+  /// 지운 뒤 RAG 서버의 그 공사 색인도 지운다(뒤에서 — RAG가 실패해도 공사는 지워진다).
   $async.Future<DeleteProjectResponse> deleteProject(
           $pb.ClientContext? ctx, DeleteProjectRequest request) =>
       _client.invoke<DeleteProjectResponse>(ctx, 'WorkService', 'DeleteProject',
@@ -6679,6 +7474,20 @@ class WorkServiceApi {
           $pb.ClientContext? ctx, GetPassWaveformRequest request) =>
       _client.invoke<GetPassWaveformResponse>(ctx, 'WorkService',
           'GetPassWaveform', request, GetPassWaveformResponse());
+
+  /// 범위 전체의 집계 — KPI 카드(수집량 · 작업량 · 커버리지 · 임베딩). 범위 · 세는 규칙은 ListCollectionNodes와 같다.
+  /// parent를 비우면 전체 현황. 노드마다의 집계는 ListCollectionNodes의 CollectionNode.summary.
+  $async.Future<GetCollectionSummaryResponse> getCollectionSummary(
+          $pb.ClientContext? ctx, GetCollectionSummaryRequest request) =>
+      _client.invoke<GetCollectionSummaryResponse>(ctx, 'WorkService',
+          'GetCollectionSummary', request, GetCollectionSummaryResponse());
+
+  /// 날짜(한국 시각) × 자료 종류별 Asset 수 · 용량 — "언제 얼마나 들어왔나(수집 시각) / 기록됐나(기록 시각)" 그래프.
+  /// 범위 · 세는 규칙은 ListCollectionNodes와 같다(parent · worker_id 같은 값, 날짜별 합 = GetCollectionSummary의 asset_count · total_size_bytes).
+  $async.Future<ListAssetCountsResponse> listAssetCounts(
+          $pb.ClientContext? ctx, ListAssetCountsRequest request) =>
+      _client.invoke<ListAssetCountsResponse>(ctx, 'WorkService',
+          'ListAssetCounts', request, ListAssetCountsResponse());
 }
 
 const $core.bool _omitFieldNames =

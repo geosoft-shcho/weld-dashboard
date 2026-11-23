@@ -80,6 +80,24 @@ class RemoteTraceRepository implements TraceRepository {
     }
   }
 
+  @override
+  Future<int> countTraces({required UploadTraceStatus status}) async {
+    try {
+      final response = await _mediaTag.traceService.listTraces(
+        trace_pb.ListTracesRequest(
+          pageSize: 1,
+          status: _protoStatusOf(status),
+        ),
+      );
+      return response.totalCount.toInt();
+    } on ConnectException catch (error) {
+      final message = error.message.trim();
+      throw TraceException(
+        message.isEmpty ? '파이프라인 건수를 불러오지 못했습니다.' : message,
+      );
+    }
+  }
+
   trace_enum.TraceStatus _protoStatusOf(UploadTraceStatus status) {
     switch (status) {
       case UploadTraceStatus.running:

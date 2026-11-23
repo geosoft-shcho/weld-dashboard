@@ -91,6 +91,7 @@ message ListTracesRequest {
 message ListTracesResponse {
   repeated Trace traces = 1;
   string next_page_token = 2; // 더 없으면 비움
+  int64 total_count = 3;      // 조건(status · asset_id · trace_ids)에 맞는 전체 건수 — KPI 카드는 page_size=1로 이것만 본다
 }
 
 message GetTraceRequest {

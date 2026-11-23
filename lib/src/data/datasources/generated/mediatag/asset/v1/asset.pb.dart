@@ -16,9 +16,10 @@ import 'dart:core' as $core;
 import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import '../../../google/protobuf/field_mask.pb.dart' as $3;
+import '../../../google/protobuf/field_mask.pb.dart' as $4;
 import '../../../google/protobuf/struct.pb.dart' as $0;
 import '../../../google/protobuf/timestamp.pb.dart' as $1;
+import '../../auth/v1/auth.pb.dart' as $3;
 import '../../run/v1/run.pb.dart' as $2;
 import 'asset.pbenum.dart';
 
@@ -47,6 +48,8 @@ class Asset extends $pb.GeneratedMessage {
     $core.String? subject,
     $core.String? situation,
     $2.Run? postprocess,
+    $3.Author? createdBy,
+    $3.Author? updatedBy,
   }) {
     final result = create();
     if (assetId != null) result.assetId = assetId;
@@ -68,6 +71,8 @@ class Asset extends $pb.GeneratedMessage {
     if (subject != null) result.subject = subject;
     if (situation != null) result.situation = situation;
     if (postprocess != null) result.postprocess = postprocess;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -113,6 +118,10 @@ class Asset extends $pb.GeneratedMessage {
     ..aOS(18, _omitFieldNames ? '' : 'situation')
     ..aOM<$2.Run>(19, _omitFieldNames ? '' : 'postprocess',
         subBuilder: $2.Run.create)
+    ..aOM<$3.Author>(20, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $3.Author.create)
+    ..aOM<$3.Author>(21, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $3.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -316,6 +325,28 @@ class Asset extends $pb.GeneratedMessage {
   void clearPostprocess() => $_clearField(19);
   @$pb.TagNumber(19)
   $2.Run ensurePostprocess() => $_ensure(18);
+
+  @$pb.TagNumber(20)
+  $3.Author get createdBy => $_getN(19);
+  @$pb.TagNumber(20)
+  set createdBy($3.Author value) => $_setField(20, value);
+  @$pb.TagNumber(20)
+  $core.bool hasCreatedBy() => $_has(19);
+  @$pb.TagNumber(20)
+  void clearCreatedBy() => $_clearField(20);
+  @$pb.TagNumber(20)
+  $3.Author ensureCreatedBy() => $_ensure(19);
+
+  @$pb.TagNumber(21)
+  $3.Author get updatedBy => $_getN(20);
+  @$pb.TagNumber(21)
+  set updatedBy($3.Author value) => $_setField(21, value);
+  @$pb.TagNumber(21)
+  $core.bool hasUpdatedBy() => $_has(20);
+  @$pb.TagNumber(21)
+  void clearUpdatedBy() => $_clearField(21);
+  @$pb.TagNumber(21)
+  $3.Author ensureUpdatedBy() => $_ensure(20);
 }
 
 class DisplayField extends $pb.GeneratedMessage {
@@ -1195,7 +1226,7 @@ class GetAssetResponse extends $pb.GeneratedMessage {
 class UpdateAssetRequest extends $pb.GeneratedMessage {
   factory UpdateAssetRequest({
     Asset? asset,
-    $3.FieldMask? updateMask,
+    $4.FieldMask? updateMask,
   }) {
     final result = create();
     if (asset != null) result.asset = asset;
@@ -1218,8 +1249,8 @@ class UpdateAssetRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.asset.v1'),
       createEmptyInstance: create)
     ..aOM<Asset>(1, _omitFieldNames ? '' : 'asset', subBuilder: Asset.create)
-    ..aOM<$3.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $3.FieldMask.create)
+    ..aOM<$4.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $4.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1255,15 +1286,15 @@ class UpdateAssetRequest extends $pb.GeneratedMessage {
   Asset ensureAsset() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $3.FieldMask get updateMask => $_getN(1);
+  $4.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($3.FieldMask value) => $_setField(2, value);
+  set updateMask($4.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $3.FieldMask ensureUpdateMask() => $_ensure(1);
+  $4.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateAssetResponse extends $pb.GeneratedMessage {
@@ -2981,6 +3012,8 @@ class Comment extends $pb.GeneratedMessage {
     $1.Timestamp? updatedAt,
     $2.Run? stt,
     $fixnum.Int64? subtitleAssetId,
+    $3.Author? createdBy,
+    $3.Author? updatedBy,
   }) {
     final result = create();
     if (commentId != null) result.commentId = commentId;
@@ -2995,6 +3028,8 @@ class Comment extends $pb.GeneratedMessage {
     if (updatedAt != null) result.updatedAt = updatedAt;
     if (stt != null) result.stt = stt;
     if (subtitleAssetId != null) result.subtitleAssetId = subtitleAssetId;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -3028,6 +3063,10 @@ class Comment extends $pb.GeneratedMessage {
         subBuilder: $1.Timestamp.create)
     ..aOM<$2.Run>(11, _omitFieldNames ? '' : 'stt', subBuilder: $2.Run.create)
     ..aInt64(12, _omitFieldNames ? '' : 'subtitleAssetId')
+    ..aOM<$3.Author>(13, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $3.Author.create)
+    ..aOM<$3.Author>(14, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $3.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -3171,6 +3210,28 @@ class Comment extends $pb.GeneratedMessage {
   $core.bool hasSubtitleAssetId() => $_has(11);
   @$pb.TagNumber(12)
   void clearSubtitleAssetId() => $_clearField(12);
+
+  @$pb.TagNumber(13)
+  $3.Author get createdBy => $_getN(12);
+  @$pb.TagNumber(13)
+  set createdBy($3.Author value) => $_setField(13, value);
+  @$pb.TagNumber(13)
+  $core.bool hasCreatedBy() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearCreatedBy() => $_clearField(13);
+  @$pb.TagNumber(13)
+  $3.Author ensureCreatedBy() => $_ensure(12);
+
+  @$pb.TagNumber(14)
+  $3.Author get updatedBy => $_getN(13);
+  @$pb.TagNumber(14)
+  set updatedBy($3.Author value) => $_setField(14, value);
+  @$pb.TagNumber(14)
+  $core.bool hasUpdatedBy() => $_has(13);
+  @$pb.TagNumber(14)
+  void clearUpdatedBy() => $_clearField(14);
+  @$pb.TagNumber(14)
+  $3.Author ensureUpdatedBy() => $_ensure(13);
 }
 
 class CreateCommentRequest extends $pb.GeneratedMessage {

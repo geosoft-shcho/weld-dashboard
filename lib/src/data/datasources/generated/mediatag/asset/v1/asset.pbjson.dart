@@ -14,9 +14,10 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
-import '../../../google/protobuf/field_mask.pbjson.dart' as $3;
+import '../../../google/protobuf/field_mask.pbjson.dart' as $4;
 import '../../../google/protobuf/struct.pbjson.dart' as $0;
 import '../../../google/protobuf/timestamp.pbjson.dart' as $1;
+import '../../auth/v1/auth.pbjson.dart' as $3;
 import '../../run/v1/run.pbjson.dart' as $2;
 
 @$core.Deprecated('Use assetKindDescriptor instead')
@@ -142,6 +143,22 @@ const Asset$json = {
       '6': '.mediatag.run.v1.Run',
       '10': 'postprocess'
     },
+    {
+      '1': 'created_by',
+      '3': 20,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 21,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
   '8': [
     {'1': '_duration_ns'},
@@ -164,7 +181,9 @@ final $typed_data.Uint8List assetDescriptor = $convert.base64Decode(
     'VudBI5CgdkaXNwbGF5GBAgAygLMh8ubWVkaWF0YWcuYXNzZXQudjEuRGlzcGxheUZpZWxkUgdk'
     'aXNwbGF5EhgKB3N1YmplY3QYESABKAlSB3N1YmplY3QSHAoJc2l0dWF0aW9uGBIgASgJUglzaX'
     'R1YXRpb24SNgoLcG9zdHByb2Nlc3MYEyABKAsyFC5tZWRpYXRhZy5ydW4udjEuUnVuUgtwb3N0'
-    'cHJvY2Vzc0IOCgxfZHVyYXRpb25fbnM=');
+    'cHJvY2VzcxI3CgpjcmVhdGVkX2J5GBQgASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCW'
+    'NyZWF0ZWRCeRI3Cgp1cGRhdGVkX2J5GBUgASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JS'
+    'CXVwZGF0ZWRCeUIOCgxfZHVyYXRpb25fbnM=');
 
 @$core.Deprecated('Use displayFieldDescriptor instead')
 const DisplayField$json = {
@@ -965,6 +984,22 @@ const Comment$json = {
       '5': 3,
       '10': 'subtitleAssetId'
     },
+    {
+      '1': 'created_by',
+      '3': 13,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 14,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
 };
 
@@ -978,8 +1013,10 @@ final $typed_data.Uint8List commentDescriptor = $convert.base64Decode(
     'RpbWVzdGFtcFIJc3RhcnRlZEF0EjkKCmNyZWF0ZWRfYXQYCSABKAsyGi5nb29nbGUucHJvdG9i'
     'dWYuVGltZXN0YW1wUgljcmVhdGVkQXQSOQoKdXBkYXRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm'
     '90b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdBImCgNzdHQYCyABKAsyFC5tZWRpYXRhZy5ydW4u'
-    'djEuUnVuUgNzdHQSKgoRc3VidGl0bGVfYXNzZXRfaWQYDCABKANSD3N1YnRpdGxlQXNzZXRJZA'
-    '==');
+    'djEuUnVuUgNzdHQSKgoRc3VidGl0bGVfYXNzZXRfaWQYDCABKANSD3N1YnRpdGxlQXNzZXRJZB'
+    'I3CgpjcmVhdGVkX2J5GA0gASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCWNyZWF0ZWRC'
+    'eRI3Cgp1cGRhdGVkX2J5GA4gASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCXVwZGF0ZW'
+    'RCeQ==');
 
 @$core.Deprecated('Use createCommentRequestDescriptor instead')
 const CreateCommentRequest$json = {
@@ -1237,6 +1274,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.run.v1.Run': $2.Run$json,
   '.mediatag.run.v1.RunTarget': $2.RunTarget$json,
   '.mediatag.run.v1.RunWait': $2.RunWait$json,
+  '.mediatag.auth.v1.Author': $3.Author$json,
   '.mediatag.asset.v1.ListAssetsRequest': ListAssetsRequest$json,
   '.mediatag.asset.v1.AssetJobFilter': AssetJobFilter$json,
   '.mediatag.asset.v1.ListAssetsResponse': ListAssetsResponse$json,
@@ -1245,7 +1283,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.asset.v1.GetAssetRequest': GetAssetRequest$json,
   '.mediatag.asset.v1.GetAssetResponse': GetAssetResponse$json,
   '.mediatag.asset.v1.UpdateAssetRequest': UpdateAssetRequest$json,
-  '.google.protobuf.FieldMask': $3.FieldMask$json,
+  '.google.protobuf.FieldMask': $4.FieldMask$json,
   '.mediatag.asset.v1.UpdateAssetResponse': UpdateAssetResponse$json,
   '.mediatag.asset.v1.RetryPostprocessRequest': RetryPostprocessRequest$json,
   '.mediatag.asset.v1.RetryPostprocessResponse': RetryPostprocessResponse$json,

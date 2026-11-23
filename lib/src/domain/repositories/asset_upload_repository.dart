@@ -36,6 +36,7 @@ abstract class AssetUploadRepository {
     String subject = '',
     String situation = '',
     String fallbackFileName = '',
+    DateTime? fileModifiedAt,
   });
 
   /// 실패한 후처리를 다시 건다. 반환값은 실행 번호(runId).

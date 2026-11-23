@@ -185,6 +185,10 @@ class _TraceRepo implements TraceRepository {
       listed;
 
   @override
+  
+  @override
+  Future<int> countTraces({required UploadTraceStatus status}) async => 0;
+
   Future<TraceSnapshot> getTrace({required String traceId}) async {
     final detail = details[traceId];
     if (detail == null) {

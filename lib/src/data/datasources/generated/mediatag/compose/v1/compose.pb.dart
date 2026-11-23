@@ -16,10 +16,11 @@ import 'dart:core' as $core;
 import 'package:fixnum/fixnum.dart' as $fixnum;
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import '../../../google/protobuf/field_mask.pb.dart' as $3;
-import '../../../google/protobuf/struct.pb.dart' as $1;
+import '../../../google/protobuf/field_mask.pb.dart' as $4;
+import '../../../google/protobuf/struct.pb.dart' as $2;
 import '../../../google/protobuf/timestamp.pb.dart' as $0;
-import '../../asset/v1/asset.pb.dart' as $2;
+import '../../asset/v1/asset.pb.dart' as $3;
+import '../../auth/v1/auth.pb.dart' as $1;
 import 'compose.pbenum.dart';
 
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
@@ -33,6 +34,8 @@ class Timeline extends $pb.GeneratedMessage {
     $core.String? description,
     $0.Timestamp? createdAt,
     $0.Timestamp? updatedAt,
+    $1.Author? createdBy,
+    $1.Author? updatedBy,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
@@ -40,6 +43,8 @@ class Timeline extends $pb.GeneratedMessage {
     if (description != null) result.description = description;
     if (createdAt != null) result.createdAt = createdAt;
     if (updatedAt != null) result.updatedAt = updatedAt;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -64,6 +69,10 @@ class Timeline extends $pb.GeneratedMessage {
         subBuilder: $0.Timestamp.create)
     ..aOM<$0.Timestamp>(8, _omitFieldNames ? '' : 'updatedAt',
         subBuilder: $0.Timestamp.create)
+    ..aOM<$1.Author>(9, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $1.Author.create)
+    ..aOM<$1.Author>(10, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $1.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -133,6 +142,28 @@ class Timeline extends $pb.GeneratedMessage {
   void clearUpdatedAt() => $_clearField(8);
   @$pb.TagNumber(8)
   $0.Timestamp ensureUpdatedAt() => $_ensure(4);
+
+  @$pb.TagNumber(9)
+  $1.Author get createdBy => $_getN(5);
+  @$pb.TagNumber(9)
+  set createdBy($1.Author value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasCreatedBy() => $_has(5);
+  @$pb.TagNumber(9)
+  void clearCreatedBy() => $_clearField(9);
+  @$pb.TagNumber(9)
+  $1.Author ensureCreatedBy() => $_ensure(5);
+
+  @$pb.TagNumber(10)
+  $1.Author get updatedBy => $_getN(6);
+  @$pb.TagNumber(10)
+  set updatedBy($1.Author value) => $_setField(10, value);
+  @$pb.TagNumber(10)
+  $core.bool hasUpdatedBy() => $_has(6);
+  @$pb.TagNumber(10)
+  void clearUpdatedBy() => $_clearField(10);
+  @$pb.TagNumber(10)
+  $1.Author ensureUpdatedBy() => $_ensure(6);
 }
 
 class Track extends $pb.GeneratedMessage {
@@ -144,6 +175,8 @@ class Track extends $pb.GeneratedMessage {
     $core.bool? visible,
     $0.Timestamp? createdAt,
     $0.Timestamp? updatedAt,
+    $1.Author? createdBy,
+    $1.Author? updatedBy,
   }) {
     final result = create();
     if (trackId != null) result.trackId = trackId;
@@ -153,6 +186,8 @@ class Track extends $pb.GeneratedMessage {
     if (visible != null) result.visible = visible;
     if (createdAt != null) result.createdAt = createdAt;
     if (updatedAt != null) result.updatedAt = updatedAt;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -179,6 +214,10 @@ class Track extends $pb.GeneratedMessage {
         subBuilder: $0.Timestamp.create)
     ..aOM<$0.Timestamp>(7, _omitFieldNames ? '' : 'updatedAt',
         subBuilder: $0.Timestamp.create)
+    ..aOM<$1.Author>(8, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $1.Author.create)
+    ..aOM<$1.Author>(9, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $1.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -266,6 +305,28 @@ class Track extends $pb.GeneratedMessage {
   void clearUpdatedAt() => $_clearField(7);
   @$pb.TagNumber(7)
   $0.Timestamp ensureUpdatedAt() => $_ensure(6);
+
+  @$pb.TagNumber(8)
+  $1.Author get createdBy => $_getN(7);
+  @$pb.TagNumber(8)
+  set createdBy($1.Author value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasCreatedBy() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearCreatedBy() => $_clearField(8);
+  @$pb.TagNumber(8)
+  $1.Author ensureCreatedBy() => $_ensure(7);
+
+  @$pb.TagNumber(9)
+  $1.Author get updatedBy => $_getN(8);
+  @$pb.TagNumber(9)
+  set updatedBy($1.Author value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasUpdatedBy() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearUpdatedBy() => $_clearField(9);
+  @$pb.TagNumber(9)
+  $1.Author ensureUpdatedBy() => $_ensure(8);
 }
 
 class Clip extends $pb.GeneratedMessage {
@@ -284,6 +345,8 @@ class Clip extends $pb.GeneratedMessage {
     $0.Timestamp? updatedAt,
     ClipRelation? relation,
     $core.double? value,
+    $1.Author? createdBy,
+    $1.Author? updatedBy,
   }) {
     final result = create();
     if (clipId != null) result.clipId = clipId;
@@ -300,6 +363,8 @@ class Clip extends $pb.GeneratedMessage {
     if (updatedAt != null) result.updatedAt = updatedAt;
     if (relation != null) result.relation = relation;
     if (value != null) result.value = value;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -340,6 +405,10 @@ class Clip extends $pb.GeneratedMessage {
     ..aOM<ClipRelation>(13, _omitFieldNames ? '' : 'relation',
         subBuilder: ClipRelation.create)
     ..a<$core.double>(14, _omitFieldNames ? '' : 'value', $pb.PbFieldType.OD)
+    ..aOM<$1.Author>(15, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $1.Author.create)
+    ..aOM<$1.Author>(16, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $1.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -501,6 +570,28 @@ class Clip extends $pb.GeneratedMessage {
   $core.bool hasValue() => $_has(13);
   @$pb.TagNumber(14)
   void clearValue() => $_clearField(14);
+
+  @$pb.TagNumber(15)
+  $1.Author get createdBy => $_getN(14);
+  @$pb.TagNumber(15)
+  set createdBy($1.Author value) => $_setField(15, value);
+  @$pb.TagNumber(15)
+  $core.bool hasCreatedBy() => $_has(14);
+  @$pb.TagNumber(15)
+  void clearCreatedBy() => $_clearField(15);
+  @$pb.TagNumber(15)
+  $1.Author ensureCreatedBy() => $_ensure(14);
+
+  @$pb.TagNumber(16)
+  $1.Author get updatedBy => $_getN(15);
+  @$pb.TagNumber(16)
+  set updatedBy($1.Author value) => $_setField(16, value);
+  @$pb.TagNumber(16)
+  $core.bool hasUpdatedBy() => $_has(15);
+  @$pb.TagNumber(16)
+  void clearUpdatedBy() => $_clearField(16);
+  @$pb.TagNumber(16)
+  $1.Author ensureUpdatedBy() => $_ensure(15);
 }
 
 /// 관계 클립이 잇는 두 클립. "이 구간(timeline_start_ns~end_ns)에서 from이 to와 관련 있다"는 뜻이다 — 구간은 관계 클립이
@@ -582,7 +673,7 @@ class ClipSource extends $pb.GeneratedMessage {
     $fixnum.Int64? assetId,
     $fixnum.Int64? startNs,
     $fixnum.Int64? endNs,
-    $1.Struct? locator,
+    $2.Struct? locator,
     $fixnum.Int64? assetDurationNs,
     $fixnum.Int64? assetStartTimeNs,
   }) {
@@ -613,8 +704,8 @@ class ClipSource extends $pb.GeneratedMessage {
     ..aInt64(1, _omitFieldNames ? '' : 'assetId')
     ..aInt64(2, _omitFieldNames ? '' : 'startNs')
     ..aInt64(3, _omitFieldNames ? '' : 'endNs')
-    ..aOM<$1.Struct>(4, _omitFieldNames ? '' : 'locator',
-        subBuilder: $1.Struct.create)
+    ..aOM<$2.Struct>(4, _omitFieldNames ? '' : 'locator',
+        subBuilder: $2.Struct.create)
     ..aInt64(5, _omitFieldNames ? '' : 'assetDurationNs')
     ..aInt64(6, _omitFieldNames ? '' : 'assetStartTimeNs')
     ..hasRequiredFields = false;
@@ -676,15 +767,15 @@ class ClipSource extends $pb.GeneratedMessage {
   ///   pointcloud: {"points": [[x,y,z], ...]}
   /// 영상 속 영역은 locator가 아니라 REGION Clip으로 둔다.
   @$pb.TagNumber(4)
-  $1.Struct get locator => $_getN(3);
+  $2.Struct get locator => $_getN(3);
   @$pb.TagNumber(4)
-  set locator($1.Struct value) => $_setField(4, value);
+  set locator($2.Struct value) => $_setField(4, value);
   @$pb.TagNumber(4)
   $core.bool hasLocator() => $_has(3);
   @$pb.TagNumber(4)
   void clearLocator() => $_clearField(4);
   @$pb.TagNumber(4)
-  $1.Struct ensureLocator() => $_ensure(3);
+  $2.Struct ensureLocator() => $_ensure(3);
 
   /// 아래 둘은 읽기 전용 — 서버가 가리키는 Asset에서 채운다(저장하지 않고, 요청에 넣어도 무시한다). Asset을 따로 찾지 않고도
   /// 재생 위치와 자를 수 있는 한계를 계산할 수 있게 한다.
@@ -935,7 +1026,7 @@ class GetTimelineResponse extends $pb.GeneratedMessage {
     Timeline? timeline,
     $core.Iterable<Track>? tracks,
     $core.Iterable<Clip>? clips,
-    $core.Iterable<$2.Asset>? assets,
+    $core.Iterable<$3.Asset>? assets,
     $fixnum.Int64? windowStartNs,
     $fixnum.Int64? windowEndNs,
   }) {
@@ -969,8 +1060,8 @@ class GetTimelineResponse extends $pb.GeneratedMessage {
         subBuilder: Track.create)
     ..pc<Clip>(3, _omitFieldNames ? '' : 'clips', $pb.PbFieldType.PM,
         subBuilder: Clip.create)
-    ..pc<$2.Asset>(4, _omitFieldNames ? '' : 'assets', $pb.PbFieldType.PM,
-        subBuilder: $2.Asset.create)
+    ..pc<$3.Asset>(4, _omitFieldNames ? '' : 'assets', $pb.PbFieldType.PM,
+        subBuilder: $3.Asset.create)
     ..aInt64(5, _omitFieldNames ? '' : 'windowStartNs')
     ..aInt64(6, _omitFieldNames ? '' : 'windowEndNs')
     ..hasRequiredFields = false;
@@ -1014,7 +1105,7 @@ class GetTimelineResponse extends $pb.GeneratedMessage {
   $pb.PbList<Clip> get clips => $_getList(2);
 
   @$pb.TagNumber(4)
-  $pb.PbList<$2.Asset> get assets => $_getList(3);
+  $pb.PbList<$3.Asset> get assets => $_getList(3);
 
   /// pass_id를 줬을 때 그 패스 구간(Timeline 시간축, [start, end)). 화면이 이 구간으로 확대해 연다.
   @$pb.TagNumber(5)
@@ -1187,7 +1278,7 @@ class ListTimelinesResponse extends $pb.GeneratedMessage {
 class UpdateTimelineRequest extends $pb.GeneratedMessage {
   factory UpdateTimelineRequest({
     Timeline? timeline,
-    $3.FieldMask? updateMask,
+    $4.FieldMask? updateMask,
   }) {
     final result = create();
     if (timeline != null) result.timeline = timeline;
@@ -1211,8 +1302,8 @@ class UpdateTimelineRequest extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOM<Timeline>(1, _omitFieldNames ? '' : 'timeline',
         subBuilder: Timeline.create)
-    ..aOM<$3.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $3.FieldMask.create)
+    ..aOM<$4.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $4.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1250,15 +1341,15 @@ class UpdateTimelineRequest extends $pb.GeneratedMessage {
   Timeline ensureTimeline() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $3.FieldMask get updateMask => $_getN(1);
+  $4.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($3.FieldMask value) => $_setField(2, value);
+  set updateMask($4.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $3.FieldMask ensureUpdateMask() => $_ensure(1);
+  $4.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateTimelineResponse extends $pb.GeneratedMessage {
@@ -1546,7 +1637,7 @@ class CreateTrackResponse extends $pb.GeneratedMessage {
 class UpdateTrackRequest extends $pb.GeneratedMessage {
   factory UpdateTrackRequest({
     Track? track,
-    $3.FieldMask? updateMask,
+    $4.FieldMask? updateMask,
   }) {
     final result = create();
     if (track != null) result.track = track;
@@ -1569,8 +1660,8 @@ class UpdateTrackRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
     ..aOM<Track>(1, _omitFieldNames ? '' : 'track', subBuilder: Track.create)
-    ..aOM<$3.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $3.FieldMask.create)
+    ..aOM<$4.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $4.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -1606,15 +1697,15 @@ class UpdateTrackRequest extends $pb.GeneratedMessage {
   Track ensureTrack() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $3.FieldMask get updateMask => $_getN(1);
+  $4.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($3.FieldMask value) => $_setField(2, value);
+  set updateMask($4.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $3.FieldMask ensureUpdateMask() => $_ensure(1);
+  $4.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateTrackResponse extends $pb.GeneratedMessage {
@@ -1976,9 +2067,9 @@ class GetClipRequest extends $pb.GeneratedMessage {
 class GetClipResponse extends $pb.GeneratedMessage {
   factory GetClipResponse({
     Clip? clip,
-    $2.Asset? asset,
+    $3.Asset? asset,
     Clip? targetClip,
-    $2.Asset? targetAsset,
+    $3.Asset? targetAsset,
   }) {
     final result = create();
     if (clip != null) result.clip = clip;
@@ -2003,11 +2094,11 @@ class GetClipResponse extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
     ..aOM<Clip>(1, _omitFieldNames ? '' : 'clip', subBuilder: Clip.create)
-    ..aOM<$2.Asset>(2, _omitFieldNames ? '' : 'asset',
-        subBuilder: $2.Asset.create)
+    ..aOM<$3.Asset>(2, _omitFieldNames ? '' : 'asset',
+        subBuilder: $3.Asset.create)
     ..aOM<Clip>(3, _omitFieldNames ? '' : 'targetClip', subBuilder: Clip.create)
-    ..aOM<$2.Asset>(4, _omitFieldNames ? '' : 'targetAsset',
-        subBuilder: $2.Asset.create)
+    ..aOM<$3.Asset>(4, _omitFieldNames ? '' : 'targetAsset',
+        subBuilder: $3.Asset.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2043,15 +2134,15 @@ class GetClipResponse extends $pb.GeneratedMessage {
   Clip ensureClip() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $2.Asset get asset => $_getN(1);
+  $3.Asset get asset => $_getN(1);
   @$pb.TagNumber(2)
-  set asset($2.Asset value) => $_setField(2, value);
+  set asset($3.Asset value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasAsset() => $_has(1);
   @$pb.TagNumber(2)
   void clearAsset() => $_clearField(2);
   @$pb.TagNumber(2)
-  $2.Asset ensureAsset() => $_ensure(1);
+  $3.Asset ensureAsset() => $_ensure(1);
 
   /// include_target이고 clip.provenance.target_kind가 CLIP일 때 그 대상 클립. 한 단계만 따라간다(대상의 대상은 안 본다).
   @$pb.TagNumber(3)
@@ -2068,21 +2159,21 @@ class GetClipResponse extends $pb.GeneratedMessage {
   /// include_target일 때 대상 Asset — target_kind가 CLIP이면 target_clip.source가 가리키는 Asset(source가 없으면 비어 있음),
   /// ASSET이면 target_id의 Asset. 대상이 없거나 지워졌으면 둘 다 비어 있음(오류 아님).
   @$pb.TagNumber(4)
-  $2.Asset get targetAsset => $_getN(3);
+  $3.Asset get targetAsset => $_getN(3);
   @$pb.TagNumber(4)
-  set targetAsset($2.Asset value) => $_setField(4, value);
+  set targetAsset($3.Asset value) => $_setField(4, value);
   @$pb.TagNumber(4)
   $core.bool hasTargetAsset() => $_has(3);
   @$pb.TagNumber(4)
   void clearTargetAsset() => $_clearField(4);
   @$pb.TagNumber(4)
-  $2.Asset ensureTargetAsset() => $_ensure(3);
+  $3.Asset ensureTargetAsset() => $_ensure(3);
 }
 
 class UpdateClipRequest extends $pb.GeneratedMessage {
   factory UpdateClipRequest({
     Clip? clip,
-    $3.FieldMask? updateMask,
+    $4.FieldMask? updateMask,
   }) {
     final result = create();
     if (clip != null) result.clip = clip;
@@ -2105,8 +2196,8 @@ class UpdateClipRequest extends $pb.GeneratedMessage {
           const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.compose.v1'),
       createEmptyInstance: create)
     ..aOM<Clip>(1, _omitFieldNames ? '' : 'clip', subBuilder: Clip.create)
-    ..aOM<$3.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $3.FieldMask.create)
+    ..aOM<$4.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $4.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2144,15 +2235,15 @@ class UpdateClipRequest extends $pb.GeneratedMessage {
   /// track_id, timeline_start_ns, timeline_end_ns, source, label_value_id, description,
   /// value, provenance.reviewed
   @$pb.TagNumber(2)
-  $3.FieldMask get updateMask => $_getN(1);
+  $4.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($3.FieldMask value) => $_setField(2, value);
+  set updateMask($4.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $3.FieldMask ensureUpdateMask() => $_ensure(1);
+  $4.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateClipResponse extends $pb.GeneratedMessage {
@@ -2322,6 +2413,8 @@ class LabelValue extends $pb.GeneratedMessage {
     $fixnum.Int64? parentValueId,
     $core.String? code,
     $core.String? unit,
+    $1.Author? createdBy,
+    $1.Author? updatedBy,
   }) {
     final result = create();
     if (valueId != null) result.valueId = valueId;
@@ -2331,6 +2424,8 @@ class LabelValue extends $pb.GeneratedMessage {
     if (parentValueId != null) result.parentValueId = parentValueId;
     if (code != null) result.code = code;
     if (unit != null) result.unit = unit;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -2355,6 +2450,10 @@ class LabelValue extends $pb.GeneratedMessage {
     ..aInt64(6, _omitFieldNames ? '' : 'parentValueId')
     ..aOS(7, _omitFieldNames ? '' : 'code')
     ..aOS(8, _omitFieldNames ? '' : 'unit')
+    ..aOM<$1.Author>(9, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $1.Author.create)
+    ..aOM<$1.Author>(10, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $1.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2441,6 +2540,28 @@ class LabelValue extends $pb.GeneratedMessage {
   $core.bool hasUnit() => $_has(6);
   @$pb.TagNumber(8)
   void clearUnit() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $1.Author get createdBy => $_getN(7);
+  @$pb.TagNumber(9)
+  set createdBy($1.Author value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasCreatedBy() => $_has(7);
+  @$pb.TagNumber(9)
+  void clearCreatedBy() => $_clearField(9);
+  @$pb.TagNumber(9)
+  $1.Author ensureCreatedBy() => $_ensure(7);
+
+  @$pb.TagNumber(10)
+  $1.Author get updatedBy => $_getN(8);
+  @$pb.TagNumber(10)
+  set updatedBy($1.Author value) => $_setField(10, value);
+  @$pb.TagNumber(10)
+  $core.bool hasUpdatedBy() => $_has(8);
+  @$pb.TagNumber(10)
+  void clearUpdatedBy() => $_clearField(10);
+  @$pb.TagNumber(10)
+  $1.Author ensureUpdatedBy() => $_ensure(8);
 }
 
 class ListLabelsRequest extends $pb.GeneratedMessage {
@@ -2724,7 +2845,7 @@ class CreateLabelValueResponse extends $pb.GeneratedMessage {
 class UpdateLabelValueRequest extends $pb.GeneratedMessage {
   factory UpdateLabelValueRequest({
     LabelValue? value,
-    $3.FieldMask? updateMask,
+    $4.FieldMask? updateMask,
   }) {
     final result = create();
     if (value != null) result.value = value;
@@ -2748,8 +2869,8 @@ class UpdateLabelValueRequest extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOM<LabelValue>(1, _omitFieldNames ? '' : 'value',
         subBuilder: LabelValue.create)
-    ..aOM<$3.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
-        subBuilder: $3.FieldMask.create)
+    ..aOM<$4.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $4.FieldMask.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -2787,15 +2908,15 @@ class UpdateLabelValueRequest extends $pb.GeneratedMessage {
   LabelValue ensureValue() => $_ensure(0);
 
   @$pb.TagNumber(2)
-  $3.FieldMask get updateMask => $_getN(1);
+  $4.FieldMask get updateMask => $_getN(1);
   @$pb.TagNumber(2)
-  set updateMask($3.FieldMask value) => $_setField(2, value);
+  set updateMask($4.FieldMask value) => $_setField(2, value);
   @$pb.TagNumber(2)
   $core.bool hasUpdateMask() => $_has(1);
   @$pb.TagNumber(2)
   void clearUpdateMask() => $_clearField(2);
   @$pb.TagNumber(2)
-  $3.FieldMask ensureUpdateMask() => $_ensure(1);
+  $4.FieldMask ensureUpdateMask() => $_ensure(1);
 }
 
 class UpdateLabelValueResponse extends $pb.GeneratedMessage {

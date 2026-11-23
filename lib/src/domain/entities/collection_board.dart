@@ -1,5 +1,6 @@
 import 'collection_board_query.dart';
 import 'collection_board_row.dart';
+import 'collection_summary.dart';
 import 'collection_timeline.dart';
 import 'connection_status.dart';
 
@@ -7,30 +8,24 @@ export 'collection_board_row.dart';
 
 class CollectionKpi {
   const CollectionKpi({
-    required this.equipmentCount,
-    required this.connectedCount,
-    required this.disconnectedCount,
-    required this.errorCount,
-    required this.receivedCount,
-    required this.windowLabel,
-    required this.lossRateAverage,
-    required this.lossWarningCount,
-    required this.syncedCount,
-    required this.delayedCount,
-    required this.unsyncedCount,
+    required this.summary,
+    required this.runningTraceCount,
+    required this.failedTraceCount,
   });
 
-  final int equipmentCount;
-  final int connectedCount;
-  final int disconnectedCount;
-  final int errorCount;
-  final int receivedCount;
-  final String windowLabel;
-  final double? lossRateAverage;
-  final int lossWarningCount;
-  final int syncedCount;
-  final int delayedCount;
-  final int unsyncedCount;
+  static const empty = CollectionKpi(
+    summary: CollectionSummary.empty,
+    runningTraceCount: 0,
+    failedTraceCount: 0,
+  );
+
+  final CollectionSummary summary;
+
+  /// GetCollectionSummaryResponse.trace_running_count
+  final int runningTraceCount;
+
+  /// GetCollectionSummaryResponse.trace_failed_count
+  final int failedTraceCount;
 }
 
 class CollectionFilterOptions {

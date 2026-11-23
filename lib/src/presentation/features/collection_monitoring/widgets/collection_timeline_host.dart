@@ -226,8 +226,6 @@ class _LevelBadge extends StatelessWidget {
 
 String _levelLabelOf(CollectedNodeLevel level) {
   return switch (level) {
-    CollectedNodeLevel.equipment => '장비',
-    CollectedNodeLevel.worker => '작업자',
     CollectedNodeLevel.project => '공사',
     CollectedNodeLevel.item => '품목',
     CollectedNodeLevel.job => '작업',
@@ -236,10 +234,7 @@ String _levelLabelOf(CollectedNodeLevel level) {
 }
 
 String _viewRootLabelOf(CollectedNodeView view) {
-  return switch (view) {
-    CollectedNodeView.equipment => '장비별',
-    CollectedNodeView.worker => '작업자별',
-  };
+  return '공사별';
 }
 
 class _Toolbar extends StatelessWidget {
@@ -321,8 +316,6 @@ String _childCountUnitOf(List<CollectedNode> children) {
     return '개';
   }
   return switch (children.first.path.level) {
-    CollectedNodeLevel.equipment => '대',
-    CollectedNodeLevel.worker => '명',
     CollectedNodeLevel.project ||
     CollectedNodeLevel.item ||
     CollectedNodeLevel.job ||

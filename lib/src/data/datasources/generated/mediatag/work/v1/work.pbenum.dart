@@ -72,19 +72,27 @@ class PassType extends $pb.ProtobufEnum {
 class CollectionView extends $pb.ProtobufEnum {
   static const CollectionView COLLECTION_VIEW_UNSPECIFIED =
       CollectionView._(0, _omitEnumNames ? '' : 'COLLECTION_VIEW_UNSPECIFIED');
+
+  /// 옛 값 — 장비 · 작업자부터 펼치던 보기는 2026-11-18에 없앴다. 옛 화면이 깨지지 않게 받아서 공사 보기로 답한다(노드 path의 view는
+  /// 보낸 값 그대로). 새 코드는 PROJECT와 worker_id 필터를 쓴다. 화면이 옮기면 reserved로 바꾼다.
+  @$core.Deprecated('This enum value is deprecated')
   static const CollectionView COLLECTION_VIEW_EQUIPMENT =
       CollectionView._(1, _omitEnumNames ? '' : 'COLLECTION_VIEW_EQUIPMENT');
+  @$core.Deprecated('This enum value is deprecated')
   static const CollectionView COLLECTION_VIEW_WORKER =
       CollectionView._(2, _omitEnumNames ? '' : 'COLLECTION_VIEW_WORKER');
+  static const CollectionView COLLECTION_VIEW_PROJECT =
+      CollectionView._(3, _omitEnumNames ? '' : 'COLLECTION_VIEW_PROJECT');
 
   static const $core.List<CollectionView> values = <CollectionView>[
     COLLECTION_VIEW_UNSPECIFIED,
     COLLECTION_VIEW_EQUIPMENT,
     COLLECTION_VIEW_WORKER,
+    COLLECTION_VIEW_PROJECT,
   ];
 
   static final $core.List<CollectionView?> _byValue =
-      $pb.ProtobufEnum.$_initByValueList(values, 2);
+      $pb.ProtobufEnum.$_initByValueList(values, 3);
   static CollectionView? valueOf($core.int value) =>
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 
@@ -95,10 +103,6 @@ class CollectionView extends $pb.ProtobufEnum {
 class CollectionLevel extends $pb.ProtobufEnum {
   static const CollectionLevel COLLECTION_LEVEL_UNSPECIFIED = CollectionLevel._(
       0, _omitEnumNames ? '' : 'COLLECTION_LEVEL_UNSPECIFIED');
-  static const CollectionLevel COLLECTION_LEVEL_EQUIPMENT =
-      CollectionLevel._(1, _omitEnumNames ? '' : 'COLLECTION_LEVEL_EQUIPMENT');
-  static const CollectionLevel COLLECTION_LEVEL_WORKER =
-      CollectionLevel._(2, _omitEnumNames ? '' : 'COLLECTION_LEVEL_WORKER');
   static const CollectionLevel COLLECTION_LEVEL_PROJECT =
       CollectionLevel._(3, _omitEnumNames ? '' : 'COLLECTION_LEVEL_PROJECT');
   static const CollectionLevel COLLECTION_LEVEL_JOB =
@@ -108,17 +112,14 @@ class CollectionLevel extends $pb.ProtobufEnum {
 
   static const $core.List<CollectionLevel> values = <CollectionLevel>[
     COLLECTION_LEVEL_UNSPECIFIED,
-    COLLECTION_LEVEL_EQUIPMENT,
-    COLLECTION_LEVEL_WORKER,
     COLLECTION_LEVEL_PROJECT,
     COLLECTION_LEVEL_JOB,
     COLLECTION_LEVEL_ITEM,
   ];
 
-  static final $core.List<CollectionLevel?> _byValue =
-      $pb.ProtobufEnum.$_initByValueList(values, 6);
-  static CollectionLevel? valueOf($core.int value) =>
-      value < 0 || value >= _byValue.length ? null : _byValue[value];
+  static final $core.Map<$core.int, CollectionLevel> _byValue =
+      $pb.ProtobufEnum.initByValue(values);
+  static CollectionLevel? valueOf($core.int value) => _byValue[value];
 
   const CollectionLevel._(super.value, super.name);
 }
@@ -199,6 +200,28 @@ class WaveformNormalize extends $pb.ProtobufEnum {
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 
   const WaveformNormalize._(super.value, super.name);
+}
+
+class AssetTimeBasis extends $pb.ProtobufEnum {
+  static const AssetTimeBasis ASSET_TIME_BASIS_UNSPECIFIED =
+      AssetTimeBasis._(0, _omitEnumNames ? '' : 'ASSET_TIME_BASIS_UNSPECIFIED');
+  static const AssetTimeBasis ASSET_TIME_BASIS_COLLECTED =
+      AssetTimeBasis._(1, _omitEnumNames ? '' : 'ASSET_TIME_BASIS_COLLECTED');
+  static const AssetTimeBasis ASSET_TIME_BASIS_RECORDED =
+      AssetTimeBasis._(2, _omitEnumNames ? '' : 'ASSET_TIME_BASIS_RECORDED');
+
+  static const $core.List<AssetTimeBasis> values = <AssetTimeBasis>[
+    ASSET_TIME_BASIS_UNSPECIFIED,
+    ASSET_TIME_BASIS_COLLECTED,
+    ASSET_TIME_BASIS_RECORDED,
+  ];
+
+  static final $core.List<AssetTimeBasis?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static AssetTimeBasis? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const AssetTimeBasis._(super.value, super.name);
 }
 
 const $core.bool _omitEnumNames =

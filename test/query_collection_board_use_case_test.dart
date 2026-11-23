@@ -20,17 +20,9 @@ void main() {
       catalog: _catalog(),
       query: _onCollectionDay(),
     );
-    expect(board.kpi.equipmentCount, 8);
-    expect(board.kpi.connectedCount, 5);
-    expect(board.kpi.disconnectedCount, 2);
-    expect(board.kpi.errorCount, 1);
-    expect(board.kpi.receivedCount, 8272);
-    expect(board.kpi.windowLabel, '최근 5분');
-    expect(board.kpi.lossWarningCount, 4);
-    expect(board.kpi.syncedCount, 3);
-    expect(board.kpi.delayedCount, 2);
-    expect(board.kpi.unsyncedCount, 3);
-    expect(board.kpi.lossRateAverage, closeTo(35.542857, 0.001));
+    // KPI는 GetCollectionSummary 경로로 옮김 — 이 UseCase는 빈 KPI.
+    expect(board.kpi.summary.assetCount, 0);
+    expect(board.kpi.runningTraceCount, 0);
     expect(board.rows.length, 8);
     expect(board.timeline.viewKind, TimelineViewKind.resource);
     expect(board.timeline.depth, CollectionResourceDepth.project);

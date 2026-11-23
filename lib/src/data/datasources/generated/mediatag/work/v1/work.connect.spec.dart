@@ -18,7 +18,7 @@ abstract final class WorkService {
     mediatagworkv1work.ListProjectsResponse.new,
   );
 
-  /// 공사 하나 + 호기·품목·작업 수(ListProjects.project_details와 같은 값). 없으면 NotFound.
+  /// 공사 하나 + 호기·품목·작업 수(ListProjects.project_details와 같은 값)·RAG 색인 청크 수. 없으면 NotFound.
   static const getProject = connect.Spec(
     '/$name/GetProject',
     connect.StreamType.unary,
@@ -27,6 +27,7 @@ abstract final class WorkService {
   );
 
   /// 공사를 만든다. project.project_no는 필수이고 발급 후 불변. 같은 번호가 있으면 AlreadyExists.
+  /// 만든 뒤 RAG 서버에 그 공사의 색인을 요청한다(뒤에서 — RAG가 실패해도 공사는 만들어진다).
   static const createProject = connect.Spec(
     '/$name/CreateProject',
     connect.StreamType.unary,
@@ -173,6 +174,7 @@ abstract final class WorkService {
   );
 
   /// 행을 실제로 지운다(되돌릴 수 없음). 작업이 하나라도 있는 공사는 FailedPrecondition.
+  /// 지운 뒤 RAG 서버의 그 공사 색인도 지운다(뒤에서 — RAG가 실패해도 공사는 지워진다).
   static const deleteProject = connect.Spec(
     '/$name/DeleteProject',
     connect.StreamType.unary,
@@ -258,5 +260,23 @@ abstract final class WorkService {
     connect.StreamType.unary,
     mediatagworkv1work.GetPassWaveformRequest.new,
     mediatagworkv1work.GetPassWaveformResponse.new,
+  );
+
+  /// 범위 전체의 집계 — KPI 카드(수집량 · 작업량 · 커버리지 · 임베딩). 범위 · 세는 규칙은 ListCollectionNodes와 같다.
+  /// parent를 비우면 전체 현황. 노드마다의 집계는 ListCollectionNodes의 CollectionNode.summary.
+  static const getCollectionSummary = connect.Spec(
+    '/$name/GetCollectionSummary',
+    connect.StreamType.unary,
+    mediatagworkv1work.GetCollectionSummaryRequest.new,
+    mediatagworkv1work.GetCollectionSummaryResponse.new,
+  );
+
+  /// 날짜(한국 시각) × 자료 종류별 Asset 수 · 용량 — "언제 얼마나 들어왔나(수집 시각) / 기록됐나(기록 시각)" 그래프.
+  /// 범위 · 세는 규칙은 ListCollectionNodes와 같다(parent · worker_id 같은 값, 날짜별 합 = GetCollectionSummary의 asset_count · total_size_bytes).
+  static const listAssetCounts = connect.Spec(
+    '/$name/ListAssetCounts',
+    connect.StreamType.unary,
+    mediatagworkv1work.ListAssetCountsRequest.new,
+    mediatagworkv1work.ListAssetCountsResponse.new,
   );
 }

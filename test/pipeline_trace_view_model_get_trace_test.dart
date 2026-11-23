@@ -226,6 +226,10 @@ class _RecordingTraceRepository implements TraceRepository {
   }
 
   @override
+  
+  @override
+  Future<int> countTraces({required UploadTraceStatus status}) async => 0;
+
   Future<TraceSnapshot> getTrace({required String traceId}) async {
     getTraceIds.add(traceId);
     final detail = details[traceId];

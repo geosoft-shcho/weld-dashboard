@@ -14,11 +14,12 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
-import '../../../google/protobuf/field_mask.pbjson.dart' as $3;
-import '../../../google/protobuf/struct.pbjson.dart' as $1;
+import '../../../google/protobuf/field_mask.pbjson.dart' as $4;
+import '../../../google/protobuf/struct.pbjson.dart' as $2;
 import '../../../google/protobuf/timestamp.pbjson.dart' as $0;
-import '../../asset/v1/asset.pbjson.dart' as $2;
-import '../../run/v1/run.pbjson.dart' as $4;
+import '../../asset/v1/asset.pbjson.dart' as $3;
+import '../../auth/v1/auth.pbjson.dart' as $1;
+import '../../run/v1/run.pbjson.dart' as $5;
 
 @$core.Deprecated('Use clipKindDescriptor instead')
 const ClipKind$json = {
@@ -87,6 +88,22 @@ const Timeline$json = {
       '6': '.google.protobuf.Timestamp',
       '10': 'updatedAt'
     },
+    {
+      '1': 'created_by',
+      '3': 9,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 10,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
   '9': [
     {'1': 3, '2': 4},
@@ -101,8 +118,10 @@ final $typed_data.Uint8List timelineDescriptor = $convert.base64Decode(
     'CghUaW1lbGluZRIVCgZqb2JfaWQYASABKANSBWpvYklkEhIKBG5hbWUYAiABKAlSBG5hbWUSIA'
     'oLZGVzY3JpcHRpb24YBCABKAlSC2Rlc2NyaXB0aW9uEjkKCmNyZWF0ZWRfYXQYByABKAsyGi5n'
     'b29nbGUucHJvdG9idWYuVGltZXN0YW1wUgljcmVhdGVkQXQSOQoKdXBkYXRlZF9hdBgIIAEoCz'
-    'IaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdEoECAMQBEoECAUQBkoECAYQ'
-    'B1IGc3RhdHVzUgZsYWJlbHNSC2VtYmVkZGVkX2F0');
+    'IaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdBI3CgpjcmVhdGVkX2J5GAkg'
+    'ASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCWNyZWF0ZWRCeRI3Cgp1cGRhdGVkX2J5GA'
+    'ogASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCXVwZGF0ZWRCeUoECAMQBEoECAUQBkoE'
+    'CAYQB1IGc3RhdHVzUgZsYWJlbHNSC2VtYmVkZGVkX2F0');
 
 @$core.Deprecated('Use trackDescriptor instead')
 const Track$json = {
@@ -137,6 +156,22 @@ const Track$json = {
       '6': '.google.protobuf.Timestamp',
       '10': 'updatedAt'
     },
+    {
+      '1': 'created_by',
+      '3': 8,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 9,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
   '8': [
     {'1': '_visible'},
@@ -149,7 +184,9 @@ final $typed_data.Uint8List trackDescriptor = $convert.base64Decode(
     'lkEhIKBG5hbWUYAyABKAlSBG5hbWUSFAoFb3JkZXIYBCABKAVSBW9yZGVyEh0KB3Zpc2libGUY'
     'BSABKAhIAFIHdmlzaWJsZYgBARI5CgpjcmVhdGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYn'
     'VmLlRpbWVzdGFtcFIJY3JlYXRlZEF0EjkKCnVwZGF0ZWRfYXQYByABKAsyGi5nb29nbGUucHJv'
-    'dG9idWYuVGltZXN0YW1wUgl1cGRhdGVkQXRCCgoIX3Zpc2libGU=');
+    'dG9idWYuVGltZXN0YW1wUgl1cGRhdGVkQXQSNwoKY3JlYXRlZF9ieRgIIAEoCzIYLm1lZGlhdG'
+    'FnLmF1dGgudjEuQXV0aG9yUgljcmVhdGVkQnkSNwoKdXBkYXRlZF9ieRgJIAEoCzIYLm1lZGlh'
+    'dGFnLmF1dGgudjEuQXV0aG9yUgl1cGRhdGVkQnlCCgoIX3Zpc2libGU=');
 
 @$core.Deprecated('Use clipDescriptor instead')
 const Clip$json = {
@@ -234,6 +271,22 @@ const Clip$json = {
       '10': 'relation'
     },
     {'1': 'value', '3': 14, '4': 1, '5': 1, '9': 2, '10': 'value', '17': true},
+    {
+      '1': 'created_by',
+      '3': 15,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 16,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
   '8': [
     {'1': '_timeline_start_ns'},
@@ -256,8 +309,10 @@ final $typed_data.Uint8List clipDescriptor = $convert.base64Decode(
     'YuVGltZXN0YW1wUgljcmVhdGVkQXQSOQoKdXBkYXRlZF9hdBgMIAEoCzIaLmdvb2dsZS5wcm90'
     'b2J1Zi5UaW1lc3RhbXBSCXVwZGF0ZWRBdBI9CghyZWxhdGlvbhgNIAEoCzIhLm1lZGlhdGFnLm'
     'NvbXBvc2UudjEuQ2xpcFJlbGF0aW9uUghyZWxhdGlvbhIZCgV2YWx1ZRgOIAEoAUgCUgV2YWx1'
-    'ZYgBAUIUChJfdGltZWxpbmVfc3RhcnRfbnNCEgoQX3RpbWVsaW5lX2VuZF9uc0IICgZfdmFsdW'
-    'U=');
+    'ZYgBARI3CgpjcmVhdGVkX2J5GA8gASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCWNyZW'
+    'F0ZWRCeRI3Cgp1cGRhdGVkX2J5GBAgASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCXVw'
+    'ZGF0ZWRCeUIUChJfdGltZWxpbmVfc3RhcnRfbnNCEgoQX3RpbWVsaW5lX2VuZF9uc0IICgZfdm'
+    'FsdWU=');
 
 @$core.Deprecated('Use clipRelationDescriptor instead')
 const ClipRelation$json = {
@@ -872,6 +927,22 @@ const LabelValue$json = {
     {'1': 'parent_value_id', '3': 6, '4': 1, '5': 3, '10': 'parentValueId'},
     {'1': 'code', '3': 7, '4': 1, '5': 9, '10': 'code'},
     {'1': 'unit', '3': 8, '4': 1, '5': 9, '10': 'unit'},
+    {
+      '1': 'created_by',
+      '3': 9,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 10,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
   '9': [
     {'1': 2, '2': 3},
@@ -884,7 +955,10 @@ final $typed_data.Uint8List labelValueDescriptor = $convert.base64Decode(
     'CgpMYWJlbFZhbHVlEhkKCHZhbHVlX2lkGAEgASgDUgd2YWx1ZUlkEhIKBG5hbWUYAyABKAlSBG'
     '5hbWUSHgoKZGVwcmVjYXRlZBgEIAEoCFIKZGVwcmVjYXRlZBIgCgtkZXNjcmlwdGlvbhgFIAEo'
     'CVILZGVzY3JpcHRpb24SJgoPcGFyZW50X3ZhbHVlX2lkGAYgASgDUg1wYXJlbnRWYWx1ZUlkEh'
-    'IKBGNvZGUYByABKAlSBGNvZGUSEgoEdW5pdBgIIAEoCVIEdW5pdEoECAIQA1IJdm9jYWJfa2V5');
+    'IKBGNvZGUYByABKAlSBGNvZGUSEgoEdW5pdBgIIAEoCVIEdW5pdBI3CgpjcmVhdGVkX2J5GAkg'
+    'ASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCWNyZWF0ZWRCeRI3Cgp1cGRhdGVkX2J5GA'
+    'ogASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCXVwZGF0ZWRCeUoECAIQA1IJdm9jYWJf'
+    'a2V5');
 
 @$core.Deprecated('Use listLabelsRequestDescriptor instead')
 const ListLabelsRequest$json = {
@@ -1087,25 +1161,26 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.compose.v1.GetTimelineResponse': GetTimelineResponse$json,
   '.mediatag.compose.v1.Timeline': Timeline$json,
   '.google.protobuf.Timestamp': $0.Timestamp$json,
+  '.mediatag.auth.v1.Author': $1.Author$json,
   '.mediatag.compose.v1.Track': Track$json,
   '.mediatag.compose.v1.Clip': Clip$json,
   '.mediatag.compose.v1.ClipSource': ClipSource$json,
-  '.google.protobuf.Struct': $1.Struct$json,
-  '.google.protobuf.Struct.FieldsEntry': $1.Struct_FieldsEntry$json,
-  '.google.protobuf.Value': $1.Value$json,
-  '.google.protobuf.ListValue': $1.ListValue$json,
+  '.google.protobuf.Struct': $2.Struct$json,
+  '.google.protobuf.Struct.FieldsEntry': $2.Struct_FieldsEntry$json,
+  '.google.protobuf.Value': $2.Value$json,
+  '.google.protobuf.ListValue': $2.ListValue$json,
   '.mediatag.compose.v1.ClipProvenance': ClipProvenance$json,
   '.mediatag.compose.v1.ClipRelation': ClipRelation$json,
-  '.mediatag.asset.v1.Asset': $2.Asset$json,
-  '.mediatag.asset.v1.Provenance': $2.Provenance$json,
-  '.mediatag.asset.v1.DisplayField': $2.DisplayField$json,
-  '.mediatag.run.v1.Run': $4.Run$json,
-  '.mediatag.run.v1.RunTarget': $4.RunTarget$json,
-  '.mediatag.run.v1.RunWait': $4.RunWait$json,
+  '.mediatag.asset.v1.Asset': $3.Asset$json,
+  '.mediatag.asset.v1.Provenance': $3.Provenance$json,
+  '.mediatag.asset.v1.DisplayField': $3.DisplayField$json,
+  '.mediatag.run.v1.Run': $5.Run$json,
+  '.mediatag.run.v1.RunTarget': $5.RunTarget$json,
+  '.mediatag.run.v1.RunWait': $5.RunWait$json,
   '.mediatag.compose.v1.ListTimelinesRequest': ListTimelinesRequest$json,
   '.mediatag.compose.v1.ListTimelinesResponse': ListTimelinesResponse$json,
   '.mediatag.compose.v1.UpdateTimelineRequest': UpdateTimelineRequest$json,
-  '.google.protobuf.FieldMask': $3.FieldMask$json,
+  '.google.protobuf.FieldMask': $4.FieldMask$json,
   '.mediatag.compose.v1.UpdateTimelineResponse': UpdateTimelineResponse$json,
   '.mediatag.compose.v1.DeleteTimelineRequest': DeleteTimelineRequest$json,
   '.mediatag.compose.v1.DeleteTimelineResponse': DeleteTimelineResponse$json,
@@ -1175,11 +1250,12 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.compose.v1.ListLabelsRequest': ListLabelsRequest$json,
   '.mediatag.compose.v1.ListLabelsResponse': ListLabelsResponse$json,
   '.mediatag.compose.v1.LabelValue': LabelValue$json,
+  '.mediatag.auth.v1.Author': $1.Author$json,
   '.mediatag.compose.v1.CreateLabelValueRequest': CreateLabelValueRequest$json,
   '.mediatag.compose.v1.CreateLabelValueResponse':
       CreateLabelValueResponse$json,
   '.mediatag.compose.v1.UpdateLabelValueRequest': UpdateLabelValueRequest$json,
-  '.google.protobuf.FieldMask': $3.FieldMask$json,
+  '.google.protobuf.FieldMask': $4.FieldMask$json,
   '.mediatag.compose.v1.UpdateLabelValueResponse':
       UpdateLabelValueResponse$json,
 };

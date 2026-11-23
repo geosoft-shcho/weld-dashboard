@@ -10,6 +10,7 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-11-17  geosoft-Server: 응답에 created_by · updated_by(mediatag.auth.v1.Author) — 만든 · 고친 사람
 //   2026-10-26  geosoft-Server: UpdateReportField — 세트 · 섹션 칸 하나를 고친다(고친 기록은 확인 목록에). Section.table,
 //                Section.fields에 행 번호 id, ReviewReason MANUAL
 //   2026-10-26  geosoft-Server: 깨지는 변경 — MatchReportSet · ReportSet.job_id 삭제. 작업이 세트를 고른다(Job.report_set_id).
@@ -34,6 +35,7 @@ package mediatag.report.v1;
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "mediatag/auth/v1/auth.proto";
 
 option go_package = "gen/protobuf/mediatag/report/v1;reportv1";
 
@@ -153,6 +155,8 @@ message ReviewItem {
   optional string corrected_value = 10;
   string corrected_by = 11;      // rule | claude | human
   google.protobuf.Timestamp corrected_at = 12;
+  mediatag.auth.v1.Author created_by = 13; // 응답 전용 — 만든 사람(비면 사람이 아닌 일). 보내도 무시한다
+  mediatag.auth.v1.Author updated_by = 14; // 응답 전용 — 마지막으로 고친 사람
 }
 
 enum ReviewReason {

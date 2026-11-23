@@ -18,6 +18,7 @@ import 'package:protobuf/protobuf.dart' as $pb;
 
 import '../../../google/protobuf/struct.pb.dart' as $1;
 import '../../../google/protobuf/timestamp.pb.dart' as $0;
+import '../../auth/v1/auth.pb.dart' as $2;
 import 'report.pbenum.dart';
 
 export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
@@ -737,6 +738,8 @@ class ReviewItem extends $pb.GeneratedMessage {
     $core.String? correctedValue,
     $core.String? correctedBy,
     $0.Timestamp? correctedAt,
+    $2.Author? createdBy,
+    $2.Author? updatedBy,
   }) {
     final result = create();
     if (id != null) result.id = id;
@@ -751,6 +754,8 @@ class ReviewItem extends $pb.GeneratedMessage {
     if (correctedValue != null) result.correctedValue = correctedValue;
     if (correctedBy != null) result.correctedBy = correctedBy;
     if (correctedAt != null) result.correctedAt = correctedAt;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
     return result;
   }
 
@@ -784,6 +789,10 @@ class ReviewItem extends $pb.GeneratedMessage {
     ..aOS(11, _omitFieldNames ? '' : 'correctedBy')
     ..aOM<$0.Timestamp>(12, _omitFieldNames ? '' : 'correctedAt',
         subBuilder: $0.Timestamp.create)
+    ..aOM<$2.Author>(13, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $2.Author.create)
+    ..aOM<$2.Author>(14, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $2.Author.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -908,6 +917,28 @@ class ReviewItem extends $pb.GeneratedMessage {
   void clearCorrectedAt() => $_clearField(12);
   @$pb.TagNumber(12)
   $0.Timestamp ensureCorrectedAt() => $_ensure(11);
+
+  @$pb.TagNumber(13)
+  $2.Author get createdBy => $_getN(12);
+  @$pb.TagNumber(13)
+  set createdBy($2.Author value) => $_setField(13, value);
+  @$pb.TagNumber(13)
+  $core.bool hasCreatedBy() => $_has(12);
+  @$pb.TagNumber(13)
+  void clearCreatedBy() => $_clearField(13);
+  @$pb.TagNumber(13)
+  $2.Author ensureCreatedBy() => $_ensure(12);
+
+  @$pb.TagNumber(14)
+  $2.Author get updatedBy => $_getN(13);
+  @$pb.TagNumber(14)
+  set updatedBy($2.Author value) => $_setField(14, value);
+  @$pb.TagNumber(14)
+  $core.bool hasUpdatedBy() => $_has(13);
+  @$pb.TagNumber(14)
+  void clearUpdatedBy() => $_clearField(14);
+  @$pb.TagNumber(14)
+  $2.Author ensureUpdatedBy() => $_ensure(13);
 }
 
 class ResolveReviewRequest extends $pb.GeneratedMessage {

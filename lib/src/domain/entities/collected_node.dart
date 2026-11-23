@@ -1,8 +1,8 @@
-enum CollectedNodeView { equipment, worker }
+enum CollectedNodeView { project }
 
 enum CollectedTimeBasis { work, collection }
 
-enum CollectedNodeLevel { unspecified, equipment, worker, project, item, job }
+enum CollectedNodeLevel { unspecified, project, item, job }
 
 enum CollectedSegmentUnit { job, pass }
 
@@ -17,20 +17,18 @@ class CollectedNodePath {
   const CollectedNodePath({
     required this.view,
     required this.level,
-    required this.equipmentId,
-    required this.workerId,
     required this.projectNo,
     this.commonKey = '',
     required this.jobId,
     required this.passId,
   });
 
-  factory CollectedNodePath.root(CollectedNodeView view) {
+  factory CollectedNodePath.root([
+    CollectedNodeView view = CollectedNodeView.project,
+  ]) {
     return CollectedNodePath(
       view: view,
       level: CollectedNodeLevel.unspecified,
-      equipmentId: '',
-      workerId: '',
       projectNo: '',
       commonKey: '',
       jobId: '',
@@ -40,23 +38,19 @@ class CollectedNodePath {
 
   final CollectedNodeView view;
   final CollectedNodeLevel level;
-  final String equipmentId;
-  final String workerId;
   final String projectNo;
   final String commonKey;
   final String jobId;
   final String passId;
 
   String get key =>
-      '${view.name}|${level.name}|$equipmentId|$workerId|$projectNo|$commonKey|$jobId|$passId';
+      '${view.name}|${level.name}|$projectNo|$commonKey|$jobId|$passId';
 
   @override
   bool operator ==(Object other) {
     return other is CollectedNodePath &&
         other.view == view &&
         other.level == level &&
-        other.equipmentId == equipmentId &&
-        other.workerId == workerId &&
         other.projectNo == projectNo &&
         other.commonKey == commonKey &&
         other.jobId == jobId &&
@@ -64,16 +58,8 @@ class CollectedNodePath {
   }
 
   @override
-  int get hashCode => Object.hash(
-    view,
-    level,
-    equipmentId,
-    workerId,
-    projectNo,
-    commonKey,
-    jobId,
-    passId,
-  );
+  int get hashCode =>
+      Object.hash(view, level, projectNo, commonKey, jobId, passId);
 }
 
 class CollectedNode {

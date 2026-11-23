@@ -98,6 +98,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
         timeOrigin: timeOrigin,
         subject: subject,
         situation: situation,
+        fileModifiedAt: file.lastModifiedAt,
       );
       final sent = await _send(
         file: file,
@@ -150,6 +151,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     required DateTime? timeOrigin,
     required String subject,
     required String situation,
+    DateTime? fileModifiedAt,
   }) {
     final subjectText = subject.trim();
     final situationText = situation.trim();
@@ -159,6 +161,8 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
       if (_hasId(equipmentId)) 'equipmentId': equipmentId,
       if (timeOrigin != null)
         'timeOrigin': timeOrigin.toUtc().toIso8601String(),
+      if (fileModifiedAt != null)
+        'fileModifiedAt': fileModifiedAt.toUtc().toIso8601String(),
       if (subjectText.isNotEmpty) 'subject': subjectText,
       if (situationText.isNotEmpty) 'situation': situationText,
     });
@@ -219,6 +223,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     String subject = '',
     String situation = '',
     String fallbackFileName = '',
+    DateTime? fileModifiedAt,
   }) async {
     if (uploadId.isEmpty) {
       throw const AssetUploadException('uploadId가 없습니다.');
@@ -234,6 +239,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
                 timeOrigin: timeOrigin,
                 subject: subject,
                 situation: situation,
+                fileModifiedAt: fileModifiedAt,
               ),
             )
             as Map<String, dynamic>,

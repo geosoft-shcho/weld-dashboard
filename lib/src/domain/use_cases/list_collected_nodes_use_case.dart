@@ -12,6 +12,7 @@ class ListCollectedNodesUseCase {
     int? endOffsetNs,
     CollectedTimeBasis basis = CollectedTimeBasis.work,
     CollectedSegmentUnit segmentUnit = CollectedSegmentUnit.job,
+    String workerId = '',
   }) {
     return _repository.listCollectedNodes(
       parent,
@@ -19,6 +20,7 @@ class ListCollectedNodesUseCase {
       endOffsetNs: endOffsetNs,
       basis: basis,
       segmentUnit: segmentUnit,
+      workerId: workerId,
     );
   }
 }

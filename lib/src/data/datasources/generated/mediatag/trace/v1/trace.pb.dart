@@ -522,10 +522,12 @@ class ListTracesResponse extends $pb.GeneratedMessage {
   factory ListTracesResponse({
     $core.Iterable<Trace>? traces,
     $core.String? nextPageToken,
+    $fixnum.Int64? totalCount,
   }) {
     final result = create();
     if (traces != null) result.traces.addAll(traces);
     if (nextPageToken != null) result.nextPageToken = nextPageToken;
+    if (totalCount != null) result.totalCount = totalCount;
     return result;
   }
 
@@ -546,6 +548,7 @@ class ListTracesResponse extends $pb.GeneratedMessage {
     ..pc<Trace>(1, _omitFieldNames ? '' : 'traces', $pb.PbFieldType.PM,
         subBuilder: Trace.create)
     ..aOS(2, _omitFieldNames ? '' : 'nextPageToken')
+    ..aInt64(3, _omitFieldNames ? '' : 'totalCount')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -580,6 +583,15 @@ class ListTracesResponse extends $pb.GeneratedMessage {
   $core.bool hasNextPageToken() => $_has(1);
   @$pb.TagNumber(2)
   void clearNextPageToken() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get totalCount => $_getI64(2);
+  @$pb.TagNumber(3)
+  set totalCount($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasTotalCount() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearTotalCount() => $_clearField(3);
 }
 
 class GetTraceRequest extends $pb.GeneratedMessage {

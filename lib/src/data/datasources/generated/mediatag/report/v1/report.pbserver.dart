@@ -15,35 +15,35 @@ import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
 
-import 'report.pb.dart' as $2;
+import 'report.pb.dart' as $3;
 import 'report.pbjson.dart';
 
 export 'report.pb.dart';
 
 abstract class ReportServiceBase extends $pb.GeneratedService {
-  $async.Future<$2.ListReportSetsResponse> listReportSets(
-      $pb.ServerContext ctx, $2.ListReportSetsRequest request);
-  $async.Future<$2.GetReportSetResponse> getReportSet(
-      $pb.ServerContext ctx, $2.GetReportSetRequest request);
-  $async.Future<$2.ResolveReviewResponse> resolveReview(
-      $pb.ServerContext ctx, $2.ResolveReviewRequest request);
-  $async.Future<$2.UpdateReportFieldResponse> updateReportField(
-      $pb.ServerContext ctx, $2.UpdateReportFieldRequest request);
-  $async.Future<$2.ListQualityResultsResponse> listQualityResults(
-      $pb.ServerContext ctx, $2.ListQualityResultsRequest request);
+  $async.Future<$3.ListReportSetsResponse> listReportSets(
+      $pb.ServerContext ctx, $3.ListReportSetsRequest request);
+  $async.Future<$3.GetReportSetResponse> getReportSet(
+      $pb.ServerContext ctx, $3.GetReportSetRequest request);
+  $async.Future<$3.ResolveReviewResponse> resolveReview(
+      $pb.ServerContext ctx, $3.ResolveReviewRequest request);
+  $async.Future<$3.UpdateReportFieldResponse> updateReportField(
+      $pb.ServerContext ctx, $3.UpdateReportFieldRequest request);
+  $async.Future<$3.ListQualityResultsResponse> listQualityResults(
+      $pb.ServerContext ctx, $3.ListQualityResultsRequest request);
 
   $pb.GeneratedMessage createRequest($core.String methodName) {
     switch (methodName) {
       case 'ListReportSets':
-        return $2.ListReportSetsRequest();
+        return $3.ListReportSetsRequest();
       case 'GetReportSet':
-        return $2.GetReportSetRequest();
+        return $3.GetReportSetRequest();
       case 'ResolveReview':
-        return $2.ResolveReviewRequest();
+        return $3.ResolveReviewRequest();
       case 'UpdateReportField':
-        return $2.UpdateReportFieldRequest();
+        return $3.UpdateReportFieldRequest();
       case 'ListQualityResults':
-        return $2.ListQualityResultsRequest();
+        return $3.ListQualityResultsRequest();
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }
@@ -53,15 +53,15 @@ abstract class ReportServiceBase extends $pb.GeneratedService {
       $core.String methodName, $pb.GeneratedMessage request) {
     switch (methodName) {
       case 'ListReportSets':
-        return listReportSets(ctx, request as $2.ListReportSetsRequest);
+        return listReportSets(ctx, request as $3.ListReportSetsRequest);
       case 'GetReportSet':
-        return getReportSet(ctx, request as $2.GetReportSetRequest);
+        return getReportSet(ctx, request as $3.GetReportSetRequest);
       case 'ResolveReview':
-        return resolveReview(ctx, request as $2.ResolveReviewRequest);
+        return resolveReview(ctx, request as $3.ResolveReviewRequest);
       case 'UpdateReportField':
-        return updateReportField(ctx, request as $2.UpdateReportFieldRequest);
+        return updateReportField(ctx, request as $3.UpdateReportFieldRequest);
       case 'ListQualityResults':
-        return listQualityResults(ctx, request as $2.ListQualityResultsRequest);
+        return listQualityResults(ctx, request as $3.ListQualityResultsRequest);
       default:
         throw $core.ArgumentError('Unknown method: $methodName');
     }

@@ -10,7 +10,6 @@ import '../entities/collection_timeline_resource.dart';
 import '../entities/connection_status.dart';
 import '../entities/equipment.dart';
 import '../entities/kpi_card_kind.dart';
-import '../entities/time_sync_status.dart';
 import '../entities/timeline_view_kind.dart';
 
 class QueryCollectionBoardUseCase {
@@ -490,62 +489,15 @@ class QueryCollectionBoardUseCase {
   }
 
   CollectionKpi _kpiFrom(List<CollectionBoardRow> rows) {
-    final lossRates = [
-      for (final row in rows)
-        if (row.lossRatePercent != null) row.lossRatePercent!,
-    ];
-    return CollectionKpi(
-      equipmentCount: rows.length,
-      connectedCount: rows
-          .where((row) => row.connectionStatus == ConnectionStatus.connected)
-          .length,
-      disconnectedCount: rows
-          .where((row) => row.connectionStatus == ConnectionStatus.disconnected)
-          .length,
-      errorCount: rows
-          .where((row) => row.connectionStatus == ConnectionStatus.error)
-          .length,
-      receivedCount: rows.fold(0, (sum, row) => sum + row.receivedCount),
-      windowLabel: rows.isEmpty ? '' : rows.first.windowLabel,
-      lossRateAverage: lossRates.isEmpty
-          ? null
-          : lossRates.reduce((a, b) => a + b) / lossRates.length,
-      lossWarningCount: rows
-          .where(
-            (row) =>
-                row.lossRatePercent != null &&
-                row.lossRatePercent! >= LOSS_WARNING_PERCENT,
-          )
-          .length,
-      syncedCount: rows
-          .where((row) => row.timeSyncStatus == TimeSyncStatus.synced)
-          .length,
-      delayedCount: rows
-          .where((row) => row.timeSyncStatus == TimeSyncStatus.delayed)
-          .length,
-      unsyncedCount: rows
-          .where((row) => row.timeSyncStatus == TimeSyncStatus.unsynced)
-          .length,
-    );
+    // 수집 모니터링 KPI는 GetCollectionSummary를 쓴다. 이 경로(CSV 보드)는 빈 KPI.
+    return CollectionKpi.empty;
   }
 
   List<CollectionBoardRow> _applyCard(
     List<CollectionBoardRow> rows,
     KpiCardKind card,
   ) {
-    switch (card) {
-      case KpiCardKind.connection:
-        return rows.where((row) => row.isDisconnectedOrError).toList();
-      case KpiCardKind.loss:
-        return rows.where((row) => row.isLossWarning).toList();
-      case KpiCardKind.sync:
-        return rows
-            .where((row) => row.timeSyncStatus != TimeSyncStatus.synced)
-            .toList();
-      case KpiCardKind.reception:
-      case KpiCardKind.none:
-        return rows;
-    }
+    return rows;
   }
 
   CollectionTimeline _timeline({
@@ -898,25 +850,7 @@ class QueryCollectionBoardUseCase {
     List<CollectionBoardRow> snapshotRows,
     KpiCardKind card,
   ) {
-    switch (card) {
-      case KpiCardKind.connection:
-        return events
-            .where(
-              (event) => event.connectionStatus != ConnectionStatus.connected,
-            )
-            .toList();
-      case KpiCardKind.loss:
-      case KpiCardKind.sync:
-        final ids = {
-          for (final row in _applyCard(snapshotRows, card)) row.equipmentId,
-        };
-        return events
-            .where((event) => ids.contains(event.equipmentId))
-            .toList();
-      case KpiCardKind.reception:
-      case KpiCardKind.none:
-        return events;
-    }
+    return events;
   }
 
   List<CollectionEvent> _eventsOverlap(

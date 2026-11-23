@@ -74,12 +74,6 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
               ),
               CommandBarWidgetItem(
                 child: SizedBox(
-                  width: 110,
-                  child: InfoLabel(label: '보기', child: _buildViewComboBox()),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: SizedBox(
                   width: 120,
                   child: InfoLabel(label: '기준', child: _buildBasisComboBox()),
                 ),
@@ -93,30 +87,21 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
                   ),
                 ),
               ),
+              CommandBarWidgetItem(
+                child: SizedBox(
+                  width: 160,
+                  child: InfoLabel(
+                    label: '작업자',
+                    child: _buildWorkerFilterComboBox(),
+                  ),
+                ),
+              ),
             ],
           ),
           CommandBar(
             overflowBehavior: CommandBarOverflowBehavior.wrap,
             crossAxisAlignment: CrossAxisAlignment.center,
             primaryItems: [
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 160,
-                  child: InfoLabel(
-                    label: '장비',
-                    child: _buildLevelComboBox(CollectedNodeLevel.equipment),
-                  ),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 140,
-                  child: InfoLabel(
-                    label: '작업자',
-                    child: _buildLevelComboBox(CollectedNodeLevel.worker),
-                  ),
-                ),
-              ),
               CommandBarWidgetItem(
                 child: SizedBox(
                   width: 160,
@@ -272,18 +257,29 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
     );
   }
 
-  Widget _buildViewComboBox() {
-    return ComboBox<CollectedNodeView>(
+  Widget _buildWorkerFilterComboBox() {
+    final workers = widget.viewModel.workerOptions;
+    final selected = widget.viewModel.workerId;
+    final hasSelected =
+        selected.isEmpty || workers.any((worker) => worker.workerId == selected);
+    return ComboBox<String>(
       isExpanded: true,
-      value: widget.viewModel.collectedView,
-      items: const [
-        ComboBoxItem(value: CollectedNodeView.equipment, child: Text('장비')),
-        ComboBoxItem(value: CollectedNodeView.worker, child: Text('작업자')),
+      value: hasSelected ? (selected.isEmpty ? 'all' : selected) : 'all',
+      items: [
+        const ComboBoxItem(value: 'all', child: Text('전체')),
+        for (final worker in workers)
+          ComboBoxItem(
+            value: worker.workerId,
+            child: Text(
+              worker.workerName.isEmpty ? worker.workerId : worker.workerName,
+            ),
+          ),
       ],
       onChanged: (value) {
-        if (value != null) {
-          widget.viewModel.didSelectCollectedView(value);
+        if (value == null) {
+          return;
         }
+        widget.viewModel.didSelectWorkerFilter(value == 'all' ? '' : value);
       },
     );
   }

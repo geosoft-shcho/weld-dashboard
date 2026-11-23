@@ -96,6 +96,8 @@ import '../../../domain/repositories/work_detail_repository.dart';
 import '../../../domain/repositories/work_history_repository.dart';
 import '../../../domain/use_cases/ask_question_use_case.dart';
 import '../../../domain/use_cases/get_session_history_use_case.dart';
+import '../../../domain/use_cases/get_collection_summary_use_case.dart';
+import '../../../domain/use_cases/list_asset_counts_use_case.dart';
 import '../../../domain/use_cases/list_collected_nodes_use_case.dart';
 import '../../../domain/use_cases/load_job_project_id_use_case.dart';
 import '../../../domain/use_cases/get_report_set_use_case.dart';
@@ -205,6 +207,8 @@ void setupLocator({required bool pdfrxReady}) {
   );
   locator.registerLazySingleton(() => LoadCollectionCatalogUseCase(locator()));
   locator.registerLazySingleton(() => ListCollectedNodesUseCase(locator()));
+  locator.registerLazySingleton(() => GetCollectionSummaryUseCase(locator()));
+  locator.registerLazySingleton(() => ListAssetCountsUseCase(locator()));
   locator.registerFactory(() => QueryCollectionBoardUseCase());
   locator.registerFactory(() => PresentCollectionNodesUseCase());
   locator.registerLazySingleton<WorkHistoryRepository>(
@@ -522,6 +526,9 @@ void setupLocator({required bool pdfrxReady}) {
       listCollectedNodesUseCase: locator(),
       presentCollectionNodesUseCase: locator(),
       listProjectLookupUseCase: locator(),
+      getCollectionSummaryUseCase: locator(),
+      listAssetCountsUseCase: locator(),
+      listWorkerLookupUseCase: locator(),
       onAfterBoardLoaded: locator<AppCoordinator>().didRefreshDashboardData,
     ),
   );

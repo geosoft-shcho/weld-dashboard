@@ -140,4 +140,36 @@ class DashboardFormatters {
     final seconds = durationSec < 1 ? 1 : durationSec;
     return '$seconds초';
   }
+
+  /// 초 합을 월·일·시·분·초로 푼다. 월은 고정 30일(달력 월이 아님).
+  /// 0인 단위는 빼고, 전부 0이면 `0초`.
+  static String durationParts(int totalSeconds) {
+    if (totalSeconds <= 0) {
+      return '0초';
+    }
+    const secondsPerMonth = 30 * 24 * 60 * 60;
+    const secondsPerDay = 24 * 60 * 60;
+    const secondsPerHour = 60 * 60;
+    const secondsPerMinute = 60;
+    var remain = totalSeconds;
+    final months = remain ~/ secondsPerMonth;
+    remain %= secondsPerMonth;
+    final days = remain ~/ secondsPerDay;
+    remain %= secondsPerDay;
+    final hours = remain ~/ secondsPerHour;
+    remain %= secondsPerHour;
+    final minutes = remain ~/ secondsPerMinute;
+    final seconds = remain % secondsPerMinute;
+    final parts = <String>[
+      if (months > 0) '$months개월',
+      if (days > 0) '$days일',
+      if (hours > 0) '$hours시간',
+      if (minutes > 0) '$minutes분',
+      if (seconds > 0) '$seconds초',
+    ];
+    if (parts.isEmpty) {
+      return '0초';
+    }
+    return parts.join(' ');
+  }
 }

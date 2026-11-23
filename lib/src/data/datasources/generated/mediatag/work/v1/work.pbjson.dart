@@ -14,11 +14,12 @@ import 'dart:convert' as $convert;
 import 'dart:core' as $core;
 import 'dart:typed_data' as $typed_data;
 
-import '../../../google/protobuf/field_mask.pbjson.dart' as $1;
-import '../../../google/protobuf/struct.pbjson.dart' as $3;
-import '../../../google/protobuf/timestamp.pbjson.dart' as $0;
-import '../../asset/v1/asset.pbjson.dart' as $2;
-import '../../run/v1/run.pbjson.dart' as $4;
+import '../../../google/protobuf/field_mask.pbjson.dart' as $2;
+import '../../../google/protobuf/struct.pbjson.dart' as $4;
+import '../../../google/protobuf/timestamp.pbjson.dart' as $1;
+import '../../asset/v1/asset.pbjson.dart' as $3;
+import '../../auth/v1/auth.pbjson.dart' as $0;
+import '../../run/v1/run.pbjson.dart' as $5;
 
 @$core.Deprecated('Use workerTypeDescriptor instead')
 const WorkerType$json = {
@@ -60,40 +61,54 @@ const CollectionView$json = {
   '1': 'CollectionView',
   '2': [
     {'1': 'COLLECTION_VIEW_UNSPECIFIED', '2': 0},
-    {'1': 'COLLECTION_VIEW_EQUIPMENT', '2': 1},
-    {'1': 'COLLECTION_VIEW_WORKER', '2': 2},
+    {
+      '1': 'COLLECTION_VIEW_EQUIPMENT',
+      '2': 1,
+      '3': {'1': true},
+    },
+    {
+      '1': 'COLLECTION_VIEW_WORKER',
+      '2': 2,
+      '3': {'1': true},
+    },
+    {'1': 'COLLECTION_VIEW_PROJECT', '2': 3},
   ],
 };
 
 /// Descriptor for `CollectionView`. Decode as a `google.protobuf.EnumDescriptorProto`.
 final $typed_data.Uint8List collectionViewDescriptor = $convert.base64Decode(
-    'Cg5Db2xsZWN0aW9uVmlldxIfChtDT0xMRUNUSU9OX1ZJRVdfVU5TUEVDSUZJRUQQABIdChlDT0'
-    'xMRUNUSU9OX1ZJRVdfRVFVSVBNRU5UEAESGgoWQ09MTEVDVElPTl9WSUVXX1dPUktFUhAC');
+    'Cg5Db2xsZWN0aW9uVmlldxIfChtDT0xMRUNUSU9OX1ZJRVdfVU5TUEVDSUZJRUQQABIhChlDT0'
+    'xMRUNUSU9OX1ZJRVdfRVFVSVBNRU5UEAEaAggBEh4KFkNPTExFQ1RJT05fVklFV19XT1JLRVIQ'
+    'AhoCCAESGwoXQ09MTEVDVElPTl9WSUVXX1BST0pFQ1QQAw==');
 
 @$core.Deprecated('Use collectionLevelDescriptor instead')
 const CollectionLevel$json = {
   '1': 'CollectionLevel',
   '2': [
     {'1': 'COLLECTION_LEVEL_UNSPECIFIED', '2': 0},
-    {'1': 'COLLECTION_LEVEL_EQUIPMENT', '2': 1},
-    {'1': 'COLLECTION_LEVEL_WORKER', '2': 2},
     {'1': 'COLLECTION_LEVEL_PROJECT', '2': 3},
     {'1': 'COLLECTION_LEVEL_JOB', '2': 4},
     {'1': 'COLLECTION_LEVEL_ITEM', '2': 6},
   ],
   '4': [
+    {'1': 1, '2': 1},
+    {'1': 2, '2': 2},
     {'1': 5, '2': 5},
   ],
-  '5': ['COLLECTION_LEVEL_PASS'],
+  '5': [
+    'COLLECTION_LEVEL_EQUIPMENT',
+    'COLLECTION_LEVEL_WORKER',
+    'COLLECTION_LEVEL_PASS'
+  ],
 };
 
 /// Descriptor for `CollectionLevel`. Decode as a `google.protobuf.EnumDescriptorProto`.
 final $typed_data.Uint8List collectionLevelDescriptor = $convert.base64Decode(
-    'Cg9Db2xsZWN0aW9uTGV2ZWwSIAocQ09MTEVDVElPTl9MRVZFTF9VTlNQRUNJRklFRBAAEh4KGk'
-    'NPTExFQ1RJT05fTEVWRUxfRVFVSVBNRU5UEAESGwoXQ09MTEVDVElPTl9MRVZFTF9XT1JLRVIQ'
-    'AhIcChhDT0xMRUNUSU9OX0xFVkVMX1BST0pFQ1QQAxIYChRDT0xMRUNUSU9OX0xFVkVMX0pPQh'
-    'AEEhkKFUNPTExFQ1RJT05fTEVWRUxfSVRFTRAGIgQIBRAFKhVDT0xMRUNUSU9OX0xFVkVMX1BB'
-    'U1M=');
+    'Cg9Db2xsZWN0aW9uTGV2ZWwSIAocQ09MTEVDVElPTl9MRVZFTF9VTlNQRUNJRklFRBAAEhwKGE'
+    'NPTExFQ1RJT05fTEVWRUxfUFJPSkVDVBADEhgKFENPTExFQ1RJT05fTEVWRUxfSk9CEAQSGQoV'
+    'Q09MTEVDVElPTl9MRVZFTF9JVEVNEAYiBAgBEAEiBAgCEAIiBAgFEAUqGkNPTExFQ1RJT05fTE'
+    'VWRUxfRVFVSVBNRU5UKhdDT0xMRUNUSU9OX0xFVkVMX1dPUktFUioVQ09MTEVDVElPTl9MRVZF'
+    'TF9QQVNT');
 
 @$core.Deprecated('Use segmentUnitDescriptor instead')
 const SegmentUnit$json = {
@@ -139,6 +154,22 @@ final $typed_data.Uint8List waveformNormalizeDescriptor = $convert.base64Decode(
     'ChFXYXZlZm9ybU5vcm1hbGl6ZRIiCh5XQVZFRk9STV9OT1JNQUxJWkVfVU5TUEVDSUZJRUQQAB'
     'IaChZXQVZFRk9STV9OT1JNQUxJWkVfRFRXEAE=');
 
+@$core.Deprecated('Use assetTimeBasisDescriptor instead')
+const AssetTimeBasis$json = {
+  '1': 'AssetTimeBasis',
+  '2': [
+    {'1': 'ASSET_TIME_BASIS_UNSPECIFIED', '2': 0},
+    {'1': 'ASSET_TIME_BASIS_COLLECTED', '2': 1},
+    {'1': 'ASSET_TIME_BASIS_RECORDED', '2': 2},
+  ],
+};
+
+/// Descriptor for `AssetTimeBasis`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List assetTimeBasisDescriptor = $convert.base64Decode(
+    'Cg5Bc3NldFRpbWVCYXNpcxIgChxBU1NFVF9USU1FX0JBU0lTX1VOU1BFQ0lGSUVEEAASHgoaQV'
+    'NTRVRfVElNRV9CQVNJU19DT0xMRUNURUQQARIdChlBU1NFVF9USU1FX0JBU0lTX1JFQ09SREVE'
+    'EAI=');
+
 @$core.Deprecated('Use projectDescriptor instead')
 const Project$json = {
   '1': 'Project',
@@ -148,6 +179,22 @@ const Project$json = {
     {'1': 'site_name', '3': 3, '4': 1, '5': 9, '10': 'siteName'},
     {'1': 'customer', '3': 4, '4': 1, '5': 9, '10': 'customer'},
     {'1': 'project_id', '3': 5, '4': 1, '5': 3, '10': 'projectId'},
+    {
+      '1': 'created_by',
+      '3': 6,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
 };
 
@@ -155,7 +202,10 @@ const Project$json = {
 final $typed_data.Uint8List projectDescriptor = $convert.base64Decode(
     'CgdQcm9qZWN0Eh0KCnByb2plY3Rfbm8YASABKAlSCXByb2plY3RObxIhCgxwcm9qZWN0X25hbW'
     'UYAiABKAlSC3Byb2plY3ROYW1lEhsKCXNpdGVfbmFtZRgDIAEoCVIIc2l0ZU5hbWUSGgoIY3Vz'
-    'dG9tZXIYBCABKAlSCGN1c3RvbWVyEh0KCnByb2plY3RfaWQYBSABKANSCXByb2plY3RJZA==');
+    'dG9tZXIYBCABKAlSCGN1c3RvbWVyEh0KCnByb2plY3RfaWQYBSABKANSCXByb2plY3RJZBI3Cg'
+    'pjcmVhdGVkX2J5GAYgASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCWNyZWF0ZWRCeRI3'
+    'Cgp1cGRhdGVkX2J5GAcgASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCXVwZGF0ZWRCeQ'
+    '==');
 
 @$core.Deprecated('Use workerDescriptor instead')
 const Worker$json = {
@@ -174,6 +224,22 @@ const Worker$json = {
       '6': '.mediatag.work.v1.WorkerType',
       '10': 'workerType'
     },
+    {
+      '1': 'created_by',
+      '3': 10,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 11,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
   '9': [
     {'1': 3, '2': 4},
@@ -188,7 +254,9 @@ final $typed_data.Uint8List workerDescriptor = $convert.base64Decode(
     'EoCVIKd29ya2VyTmFtZRIfCgtlbXBsb3llZV9ubxgGIAEoCVIKZW1wbG95ZWVObxIgCgtkZXNj'
     'cmlwdGlvbhgHIAEoCVILZGVzY3JpcHRpb24SGgoIaW5hY3RpdmUYCCABKAhSCGluYWN0aXZlEj'
     '0KC3dvcmtlcl90eXBlGAkgASgOMhwubWVkaWF0YWcud29yay52MS5Xb3JrZXJUeXBlUgp3b3Jr'
-    'ZXJUeXBlSgQIAxAESgQIBBAFSgQIBRAG');
+    'ZXJUeXBlEjcKCmNyZWF0ZWRfYnkYCiABKAsyGC5tZWRpYXRhZy5hdXRoLnYxLkF1dGhvclIJY3'
+    'JlYXRlZEJ5EjcKCnVwZGF0ZWRfYnkYCyABKAsyGC5tZWRpYXRhZy5hdXRoLnYxLkF1dGhvclIJ'
+    'dXBkYXRlZEJ5SgQIAxAESgQIBBAFSgQIBRAG');
 
 @$core.Deprecated('Use equipmentDescriptor instead')
 const Equipment$json = {
@@ -199,6 +267,22 @@ const Equipment$json = {
     {'1': 'equipment_code', '3': 4, '4': 1, '5': 9, '10': 'equipmentCode'},
     {'1': 'description', '3': 5, '4': 1, '5': 9, '10': 'description'},
     {'1': 'inactive', '3': 6, '4': 1, '5': 8, '10': 'inactive'},
+    {
+      '1': 'created_by',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 8,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
   '9': [
     {'1': 3, '2': 4},
@@ -210,7 +294,9 @@ final $typed_data.Uint8List equipmentDescriptor = $convert.base64Decode(
     'CglFcXVpcG1lbnQSIQoMZXF1aXBtZW50X2lkGAEgASgDUgtlcXVpcG1lbnRJZBIlCg5lcXVpcG'
     '1lbnRfbmFtZRgCIAEoCVINZXF1aXBtZW50TmFtZRIlCg5lcXVpcG1lbnRfY29kZRgEIAEoCVIN'
     'ZXF1aXBtZW50Q29kZRIgCgtkZXNjcmlwdGlvbhgFIAEoCVILZGVzY3JpcHRpb24SGgoIaW5hY3'
-    'RpdmUYBiABKAhSCGluYWN0aXZlSgQIAxAE');
+    'RpdmUYBiABKAhSCGluYWN0aXZlEjcKCmNyZWF0ZWRfYnkYByABKAsyGC5tZWRpYXRhZy5hdXRo'
+    'LnYxLkF1dGhvclIJY3JlYXRlZEJ5EjcKCnVwZGF0ZWRfYnkYCCABKAsyGC5tZWRpYXRhZy5hdX'
+    'RoLnYxLkF1dGhvclIJdXBkYXRlZEJ5SgQIAxAE');
 
 @$core.Deprecated('Use jobDescriptor instead')
 const Job$json = {
@@ -273,6 +359,22 @@ const Job$json = {
       '5': 3,
       '10': 'activeReportSetId'
     },
+    {
+      '1': 'created_by',
+      '3': 23,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 24,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
   '8': [
     {'1': '_outer_diameter_mm'},
@@ -298,7 +400,9 @@ final $typed_data.Uint8List jobDescriptor = $convert.base64Decode(
     'dF9pZBgSIAEoA1IJcHJvamVjdElkEhkKCGpvYl9uYW1lGBMgASgJUgdqb2JOYW1lEiYKD3Byb2'
     'plY3RfaXRlbV9pZBgUIAEoA1INcHJvamVjdEl0ZW1JZBIiCg1yZXBvcnRfc2V0X2lkGBUgASgD'
     'UgtyZXBvcnRTZXRJZBIvChRhY3RpdmVfcmVwb3J0X3NldF9pZBgWIAEoA1IRYWN0aXZlUmVwb3'
-    'J0U2V0SWRCFAoSX291dGVyX2RpYW1ldGVyX21tQg8KDV90aGlja25lc3NfbW1KBAgHEAg=');
+    'J0U2V0SWQSNwoKY3JlYXRlZF9ieRgXIAEoCzIYLm1lZGlhdGFnLmF1dGgudjEuQXV0aG9yUglj'
+    'cmVhdGVkQnkSNwoKdXBkYXRlZF9ieRgYIAEoCzIYLm1lZGlhdGFnLmF1dGgudjEuQXV0aG9yUg'
+    'l1cGRhdGVkQnlCFAoSX291dGVyX2RpYW1ldGVyX21tQg8KDV90aGlja25lc3NfbW1KBAgHEAg=');
 
 @$core.Deprecated('Use itemAssignmentDescriptor instead')
 const ItemAssignment$json = {
@@ -504,6 +608,22 @@ const Pass$json = {
       '6': '.mediatag.work.v1.PassType',
       '10': 'passType'
     },
+    {
+      '1': 'created_by',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 8,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
 };
 
@@ -513,7 +633,9 @@ final $typed_data.Uint8List passDescriptor = $convert.base64Decode(
     'cKB3Bhc3Nfbm8YAyABKAVSBnBhc3NObxI5CgpzdGFydGVkX2F0GAQgASgLMhouZ29vZ2xlLnBy'
     'b3RvYnVmLlRpbWVzdGFtcFIJc3RhcnRlZEF0EjUKCGVuZGVkX2F0GAUgASgLMhouZ29vZ2xlLn'
     'Byb3RvYnVmLlRpbWVzdGFtcFIHZW5kZWRBdBI3CglwYXNzX3R5cGUYBiABKA4yGi5tZWRpYXRh'
-    'Zy53b3JrLnYxLlBhc3NUeXBlUghwYXNzVHlwZQ==');
+    'Zy53b3JrLnYxLlBhc3NUeXBlUghwYXNzVHlwZRI3CgpjcmVhdGVkX2J5GAcgASgLMhgubWVkaW'
+    'F0YWcuYXV0aC52MS5BdXRob3JSCWNyZWF0ZWRCeRI3Cgp1cGRhdGVkX2J5GAggASgLMhgubWVk'
+    'aWF0YWcuYXV0aC52MS5BdXRob3JSCXVwZGF0ZWRCeQ==');
 
 @$core.Deprecated('Use jobSummaryDescriptor instead')
 const JobSummary$json = {
@@ -636,13 +758,26 @@ const GetProjectResponse$json = {
       '6': '.mediatag.work.v1.ProjectFilter',
       '10': 'project'
     },
+    {
+      '1': 'rag_chunks',
+      '3': 2,
+      '4': 1,
+      '5': 5,
+      '9': 0,
+      '10': 'ragChunks',
+      '17': true
+    },
+  ],
+  '8': [
+    {'1': '_rag_chunks'},
   ],
 };
 
 /// Descriptor for `GetProjectResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List getProjectResponseDescriptor = $convert.base64Decode(
     'ChJHZXRQcm9qZWN0UmVzcG9uc2USOQoHcHJvamVjdBgBIAEoCzIfLm1lZGlhdGFnLndvcmsudj'
-    'EuUHJvamVjdEZpbHRlclIHcHJvamVjdA==');
+    'EuUHJvamVjdEZpbHRlclIHcHJvamVjdBIiCgpyYWdfY2h1bmtzGAIgASgFSABSCXJhZ0NodW5r'
+    'c4gBAUINCgtfcmFnX2NodW5rcw==');
 
 @$core.Deprecated('Use getWorkerRequestDescriptor instead')
 const GetWorkerRequest$json = {
@@ -1806,23 +1941,25 @@ const CollectionPath$json = {
       '6': '.mediatag.work.v1.CollectionLevel',
       '10': 'level'
     },
-    {'1': 'equipment_id', '3': 3, '4': 1, '5': 3, '10': 'equipmentId'},
-    {'1': 'worker_id', '3': 4, '4': 1, '5': 3, '10': 'workerId'},
     {'1': 'project_no', '3': 5, '4': 1, '5': 9, '10': 'projectNo'},
     {'1': 'job_id', '3': 6, '4': 1, '5': 3, '10': 'jobId'},
     {'1': 'pass_id', '3': 7, '4': 1, '5': 3, '10': 'passId'},
     {'1': 'common_key', '3': 8, '4': 1, '5': 9, '10': 'commonKey'},
   ],
+  '9': [
+    {'1': 3, '2': 4},
+    {'1': 4, '2': 5},
+  ],
+  '10': ['equipment_id', 'worker_id'],
 };
 
 /// Descriptor for `CollectionPath`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List collectionPathDescriptor = $convert.base64Decode(
     'Cg5Db2xsZWN0aW9uUGF0aBI0CgR2aWV3GAEgASgOMiAubWVkaWF0YWcud29yay52MS5Db2xsZW'
     'N0aW9uVmlld1IEdmlldxI3CgVsZXZlbBgCIAEoDjIhLm1lZGlhdGFnLndvcmsudjEuQ29sbGVj'
-    'dGlvbkxldmVsUgVsZXZlbBIhCgxlcXVpcG1lbnRfaWQYAyABKANSC2VxdWlwbWVudElkEhsKCX'
-    'dvcmtlcl9pZBgEIAEoA1IId29ya2VySWQSHQoKcHJvamVjdF9ubxgFIAEoCVIJcHJvamVjdE5v'
-    'EhUKBmpvYl9pZBgGIAEoA1IFam9iSWQSFwoHcGFzc19pZBgHIAEoA1IGcGFzc0lkEh0KCmNvbW'
-    '1vbl9rZXkYCCABKAlSCWNvbW1vbktleQ==');
+    'dGlvbkxldmVsUgVsZXZlbBIdCgpwcm9qZWN0X25vGAUgASgJUglwcm9qZWN0Tm8SFQoGam9iX2'
+    'lkGAYgASgDUgVqb2JJZBIXCgdwYXNzX2lkGAcgASgDUgZwYXNzSWQSHQoKY29tbW9uX2tleRgI'
+    'IAEoCVIJY29tbW9uS2V5SgQIAxAESgQIBBAFUgxlcXVpcG1lbnRfaWRSCXdvcmtlcl9pZA==');
 
 @$core.Deprecated('Use listCollectionNodesRequestDescriptor instead')
 const ListCollectionNodesRequest$json = {
@@ -1870,6 +2007,7 @@ const ListCollectionNodesRequest$json = {
       '6': '.mediatag.work.v1.SegmentUnit',
       '10': 'segmentUnit'
     },
+    {'1': 'worker_id', '3': 6, '4': 1, '5': 3, '10': 'workerId'},
   ],
   '8': [
     {'1': '_start_offset_ns'},
@@ -1884,7 +2022,8 @@ final $typed_data.Uint8List listCollectionNodesRequestDescriptor = $convert.base
     'SABSDXN0YXJ0T2Zmc2V0TnOIAQESJwoNZW5kX29mZnNldF9ucxgDIAEoA0gBUgtlbmRPZmZzZX'
     'ROc4gBARIxCgViYXNpcxgEIAEoDjIbLm1lZGlhdGFnLndvcmsudjEuVGltZUJhc2lzUgViYXNp'
     'cxJACgxzZWdtZW50X3VuaXQYBSABKA4yHS5tZWRpYXRhZy53b3JrLnYxLlNlZ21lbnRVbml0Ug'
-    'tzZWdtZW50VW5pdEISChBfc3RhcnRfb2Zmc2V0X25zQhAKDl9lbmRfb2Zmc2V0X25z');
+    'tzZWdtZW50VW5pdBIbCgl3b3JrZXJfaWQYBiABKANSCHdvcmtlcklkQhIKEF9zdGFydF9vZmZz'
+    'ZXRfbnNCEAoOX2VuZF9vZmZzZXRfbnM=');
 
 @$core.Deprecated('Use listCollectionNodesResponseDescriptor instead')
 const ListCollectionNodesResponse$json = {
@@ -1899,13 +2038,75 @@ const ListCollectionNodesResponse$json = {
       '10': 'nodes'
     },
   ],
+  '9': [
+    {'1': 2, '2': 3},
+  ],
 };
 
 /// Descriptor for `ListCollectionNodesResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listCollectionNodesResponseDescriptor =
     $convert.base64Decode(
         'ChtMaXN0Q29sbGVjdGlvbk5vZGVzUmVzcG9uc2USNgoFbm9kZXMYASADKAsyIC5tZWRpYXRhZy'
-        '53b3JrLnYxLkNvbGxlY3Rpb25Ob2RlUgVub2Rlcw==');
+        '53b3JrLnYxLkNvbGxlY3Rpb25Ob2RlUgVub2Rlc0oECAIQAw==');
+
+@$core.Deprecated('Use getCollectionSummaryRequestDescriptor instead')
+const GetCollectionSummaryRequest$json = {
+  '1': 'GetCollectionSummaryRequest',
+  '2': [
+    {
+      '1': 'parent',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.work.v1.CollectionPath',
+      '10': 'parent'
+    },
+    {'1': 'worker_id', '3': 2, '4': 1, '5': 3, '10': 'workerId'},
+  ],
+};
+
+/// Descriptor for `GetCollectionSummaryRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getCollectionSummaryRequestDescriptor =
+    $convert.base64Decode(
+        'ChtHZXRDb2xsZWN0aW9uU3VtbWFyeVJlcXVlc3QSOAoGcGFyZW50GAEgASgLMiAubWVkaWF0YW'
+        'cud29yay52MS5Db2xsZWN0aW9uUGF0aFIGcGFyZW50EhsKCXdvcmtlcl9pZBgCIAEoA1IId29y'
+        'a2VySWQ=');
+
+@$core.Deprecated('Use getCollectionSummaryResponseDescriptor instead')
+const GetCollectionSummaryResponse$json = {
+  '1': 'GetCollectionSummaryResponse',
+  '2': [
+    {
+      '1': 'summary',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.work.v1.CollectionSummary',
+      '10': 'summary'
+    },
+    {
+      '1': 'trace_running_count',
+      '3': 2,
+      '4': 1,
+      '5': 3,
+      '10': 'traceRunningCount'
+    },
+    {
+      '1': 'trace_failed_count',
+      '3': 3,
+      '4': 1,
+      '5': 3,
+      '10': 'traceFailedCount'
+    },
+  ],
+};
+
+/// Descriptor for `GetCollectionSummaryResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List getCollectionSummaryResponseDescriptor = $convert.base64Decode(
+    'ChxHZXRDb2xsZWN0aW9uU3VtbWFyeVJlc3BvbnNlEj0KB3N1bW1hcnkYASABKAsyIy5tZWRpYX'
+    'RhZy53b3JrLnYxLkNvbGxlY3Rpb25TdW1tYXJ5UgdzdW1tYXJ5Ei4KE3RyYWNlX3J1bm5pbmdf'
+    'Y291bnQYAiABKANSEXRyYWNlUnVubmluZ0NvdW50EiwKEnRyYWNlX2ZhaWxlZF9jb3VudBgDIA'
+    'EoA1IQdHJhY2VGYWlsZWRDb3VudA==');
 
 @$core.Deprecated('Use collectionNodeDescriptor instead')
 const CollectionNode$json = {
@@ -2042,6 +2243,65 @@ const CollectionSummary$json = {
       '5': 3,
       '10': 'workDurationSeconds'
     },
+    {
+      '1': 'job_without_asset_count',
+      '3': 8,
+      '4': 1,
+      '5': 3,
+      '10': 'jobWithoutAssetCount'
+    },
+    {'1': 'clip_count', '3': 9, '4': 1, '5': 3, '10': 'clipCount'},
+    {
+      '1': 'embedded_clip_count',
+      '3': 10,
+      '4': 1,
+      '5': 3,
+      '10': 'embeddedClipCount'
+    },
+    {
+      '1': 'time_unverified_asset_count',
+      '3': 11,
+      '4': 1,
+      '5': 3,
+      '10': 'timeUnverifiedAssetCount'
+    },
+    {
+      '1': 'coverage',
+      '3': 12,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.KindCoverage',
+      '10': 'coverage'
+    },
+    {
+      '1': 'weld_duration_seconds',
+      '3': 13,
+      '4': 1,
+      '5': 3,
+      '10': 'weldDurationSeconds'
+    },
+    {
+      '1': 'attached_asset_count',
+      '3': 14,
+      '4': 1,
+      '5': 3,
+      '10': 'attachedAssetCount'
+    },
+    {
+      '1': 'embedded_attached_asset_count',
+      '3': 15,
+      '4': 1,
+      '5': 3,
+      '10': 'embeddedAttachedAssetCount'
+    },
+    {'1': 'comment_count', '3': 16, '4': 1, '5': 3, '10': 'commentCount'},
+    {
+      '1': 'embedded_comment_count',
+      '3': 17,
+      '4': 1,
+      '5': 3,
+      '10': 'embeddedCommentCount'
+    },
   ],
 };
 
@@ -2054,7 +2314,37 @@ final $typed_data.Uint8List collectionSummaryDescriptor = $convert.base64Decode(
     'bGFzdFJlY29yZGVkQXQSRgoRbGFzdF9jb2xsZWN0ZWRfYXQYBSABKAsyGi5nb29nbGUucHJvdG'
     '9idWYuVGltZXN0YW1wUg9sYXN0Q29sbGVjdGVkQXQSGwoJam9iX2NvdW50GAYgASgDUghqb2JD'
     'b3VudBIyChV3b3JrX2R1cmF0aW9uX3NlY29uZHMYByABKANSE3dvcmtEdXJhdGlvblNlY29uZH'
-    'M=');
+    'MSNQoXam9iX3dpdGhvdXRfYXNzZXRfY291bnQYCCABKANSFGpvYldpdGhvdXRBc3NldENvdW50'
+    'Eh0KCmNsaXBfY291bnQYCSABKANSCWNsaXBDb3VudBIuChNlbWJlZGRlZF9jbGlwX2NvdW50GA'
+    'ogASgDUhFlbWJlZGRlZENsaXBDb3VudBI9Cht0aW1lX3VudmVyaWZpZWRfYXNzZXRfY291bnQY'
+    'CyABKANSGHRpbWVVbnZlcmlmaWVkQXNzZXRDb3VudBI6Cghjb3ZlcmFnZRgMIAMoCzIeLm1lZG'
+    'lhdGFnLndvcmsudjEuS2luZENvdmVyYWdlUghjb3ZlcmFnZRIyChV3ZWxkX2R1cmF0aW9uX3Nl'
+    'Y29uZHMYDSABKANSE3dlbGREdXJhdGlvblNlY29uZHMSMAoUYXR0YWNoZWRfYXNzZXRfY291bn'
+    'QYDiABKANSEmF0dGFjaGVkQXNzZXRDb3VudBJBCh1lbWJlZGRlZF9hdHRhY2hlZF9hc3NldF9j'
+    'b3VudBgPIAEoA1IaZW1iZWRkZWRBdHRhY2hlZEFzc2V0Q291bnQSIwoNY29tbWVudF9jb3VudB'
+    'gQIAEoA1IMY29tbWVudENvdW50EjQKFmVtYmVkZGVkX2NvbW1lbnRfY291bnQYESABKANSFGVt'
+    'YmVkZGVkQ29tbWVudENvdW50');
+
+@$core.Deprecated('Use kindCoverageDescriptor instead')
+const KindCoverage$json = {
+  '1': 'KindCoverage',
+  '2': [
+    {
+      '1': 'kind',
+      '3': 1,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.asset.v1.AssetKind',
+      '10': 'kind'
+    },
+    {'1': 'covered_seconds', '3': 2, '4': 1, '5': 3, '10': 'coveredSeconds'},
+  ],
+};
+
+/// Descriptor for `KindCoverage`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List kindCoverageDescriptor = $convert.base64Decode(
+    'CgxLaW5kQ292ZXJhZ2USMAoEa2luZBgBIAEoDjIcLm1lZGlhdGFnLmFzc2V0LnYxLkFzc2V0S2'
+    'luZFIEa2luZBInCg9jb3ZlcmVkX3NlY29uZHMYAiABKANSDmNvdmVyZWRTZWNvbmRz');
 
 @$core.Deprecated('Use getPassWaveformRequestDescriptor instead')
 const GetPassWaveformRequest$json = {
@@ -2233,6 +2523,99 @@ final $typed_data.Uint8List waveformChannelDescriptor = $convert.base64Decode(
     'Cg9XYXZlZm9ybUNoYW5uZWwSEgoEbmFtZRgBIAEoCVIEbmFtZRISCgR1bml0GAIgASgJUgR1bm'
     'l0EhYKBnZhbHVlcxgDIAMoAVIGdmFsdWVz');
 
+@$core.Deprecated('Use listAssetCountsRequestDescriptor instead')
+const ListAssetCountsRequest$json = {
+  '1': 'ListAssetCountsRequest',
+  '2': [
+    {
+      '1': 'basis',
+      '3': 1,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.work.v1.AssetTimeBasis',
+      '10': 'basis'
+    },
+    {
+      '1': 'parent',
+      '3': 2,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.work.v1.CollectionPath',
+      '10': 'parent'
+    },
+    {'1': 'worker_id', '3': 3, '4': 1, '5': 3, '10': 'workerId'},
+    {
+      '1': 'from',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'from'
+    },
+    {
+      '1': 'to',
+      '3': 5,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'to'
+    },
+  ],
+};
+
+/// Descriptor for `ListAssetCountsRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listAssetCountsRequestDescriptor = $convert.base64Decode(
+    'ChZMaXN0QXNzZXRDb3VudHNSZXF1ZXN0EjYKBWJhc2lzGAEgASgOMiAubWVkaWF0YWcud29yay'
+    '52MS5Bc3NldFRpbWVCYXNpc1IFYmFzaXMSOAoGcGFyZW50GAIgASgLMiAubWVkaWF0YWcud29y'
+    'ay52MS5Db2xsZWN0aW9uUGF0aFIGcGFyZW50EhsKCXdvcmtlcl9pZBgDIAEoA1IId29ya2VySW'
+    'QSLgoEZnJvbRgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBSBGZyb20SKgoCdG8Y'
+    'BSABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wUgJ0bw==');
+
+@$core.Deprecated('Use assetCountDescriptor instead')
+const AssetCount$json = {
+  '1': 'AssetCount',
+  '2': [
+    {'1': 'date', '3': 1, '4': 1, '5': 9, '10': 'date'},
+    {
+      '1': 'kind',
+      '3': 2,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.asset.v1.AssetKind',
+      '10': 'kind'
+    },
+    {'1': 'asset_count', '3': 3, '4': 1, '5': 3, '10': 'assetCount'},
+    {'1': 'total_size_bytes', '3': 4, '4': 1, '5': 3, '10': 'totalSizeBytes'},
+  ],
+};
+
+/// Descriptor for `AssetCount`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List assetCountDescriptor = $convert.base64Decode(
+    'CgpBc3NldENvdW50EhIKBGRhdGUYASABKAlSBGRhdGUSMAoEa2luZBgCIAEoDjIcLm1lZGlhdG'
+    'FnLmFzc2V0LnYxLkFzc2V0S2luZFIEa2luZBIfCgthc3NldF9jb3VudBgDIAEoA1IKYXNzZXRD'
+    'b3VudBIoChB0b3RhbF9zaXplX2J5dGVzGAQgASgDUg50b3RhbFNpemVCeXRlcw==');
+
+@$core.Deprecated('Use listAssetCountsResponseDescriptor instead')
+const ListAssetCountsResponse$json = {
+  '1': 'ListAssetCountsResponse',
+  '2': [
+    {
+      '1': 'counts',
+      '3': 1,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.AssetCount',
+      '10': 'counts'
+    },
+  ],
+};
+
+/// Descriptor for `ListAssetCountsResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listAssetCountsResponseDescriptor =
+    $convert.base64Decode(
+        'ChdMaXN0QXNzZXRDb3VudHNSZXNwb25zZRI0CgZjb3VudHMYASADKAsyHC5tZWRpYXRhZy53b3'
+        'JrLnYxLkFzc2V0Q291bnRSBmNvdW50cw==');
+
 const $core.Map<$core.String, $core.dynamic> WorkServiceBase$json = {
   '1': 'WorkService',
   '2': [
@@ -2386,6 +2769,16 @@ const $core.Map<$core.String, $core.dynamic> WorkServiceBase$json = {
       '2': '.mediatag.work.v1.GetPassWaveformRequest',
       '3': '.mediatag.work.v1.GetPassWaveformResponse'
     },
+    {
+      '1': 'GetCollectionSummary',
+      '2': '.mediatag.work.v1.GetCollectionSummaryRequest',
+      '3': '.mediatag.work.v1.GetCollectionSummaryResponse'
+    },
+    {
+      '1': 'ListAssetCounts',
+      '2': '.mediatag.work.v1.ListAssetCountsRequest',
+      '3': '.mediatag.work.v1.ListAssetCountsResponse'
+    },
   ],
 };
 
@@ -2395,6 +2788,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.work.v1.ListProjectsRequest': ListProjectsRequest$json,
   '.mediatag.work.v1.ListProjectsResponse': ListProjectsResponse$json,
   '.mediatag.work.v1.Project': Project$json,
+  '.mediatag.auth.v1.Author': $0.Author$json,
   '.mediatag.work.v1.ProjectFilter': ProjectFilter$json,
   '.mediatag.work.v1.ProjectUnit': ProjectUnit$json,
   '.mediatag.work.v1.ProjectItem': ProjectItem$json,
@@ -2413,7 +2807,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.work.v1.CreateWorkerRequest': CreateWorkerRequest$json,
   '.mediatag.work.v1.CreateWorkerResponse': CreateWorkerResponse$json,
   '.mediatag.work.v1.UpdateWorkerRequest': UpdateWorkerRequest$json,
-  '.google.protobuf.FieldMask': $1.FieldMask$json,
+  '.google.protobuf.FieldMask': $2.FieldMask$json,
   '.mediatag.work.v1.UpdateWorkerResponse': UpdateWorkerResponse$json,
   '.mediatag.work.v1.DeleteWorkerRequest': DeleteWorkerRequest$json,
   '.mediatag.work.v1.DeleteWorkerResponse': DeleteWorkerResponse$json,
@@ -2452,7 +2846,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.work.v1.ListJobFiltersResponse.EquipmentAssetCountsEntry':
       ListJobFiltersResponse_EquipmentAssetCountsEntry$json,
   '.mediatag.work.v1.ListJobsRequest': ListJobsRequest$json,
-  '.google.protobuf.Timestamp': $0.Timestamp$json,
+  '.google.protobuf.Timestamp': $1.Timestamp$json,
   '.mediatag.work.v1.ListJobsResponse': ListJobsResponse$json,
   '.mediatag.work.v1.JobSummary': JobSummary$json,
   '.mediatag.work.v1.Job': Job$json,
@@ -2482,16 +2876,17 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
       ListCollectionNodesResponse$json,
   '.mediatag.work.v1.CollectionNode': CollectionNode$json,
   '.mediatag.work.v1.CollectionSummary': CollectionSummary$json,
-  '.mediatag.asset.v1.Asset': $2.Asset$json,
-  '.google.protobuf.Struct': $3.Struct$json,
-  '.google.protobuf.Struct.FieldsEntry': $3.Struct_FieldsEntry$json,
-  '.google.protobuf.Value': $3.Value$json,
-  '.google.protobuf.ListValue': $3.ListValue$json,
-  '.mediatag.asset.v1.Provenance': $2.Provenance$json,
-  '.mediatag.asset.v1.DisplayField': $2.DisplayField$json,
-  '.mediatag.run.v1.Run': $4.Run$json,
-  '.mediatag.run.v1.RunTarget': $4.RunTarget$json,
-  '.mediatag.run.v1.RunWait': $4.RunWait$json,
+  '.mediatag.work.v1.KindCoverage': KindCoverage$json,
+  '.mediatag.asset.v1.Asset': $3.Asset$json,
+  '.google.protobuf.Struct': $4.Struct$json,
+  '.google.protobuf.Struct.FieldsEntry': $4.Struct_FieldsEntry$json,
+  '.google.protobuf.Value': $4.Value$json,
+  '.google.protobuf.ListValue': $4.ListValue$json,
+  '.mediatag.asset.v1.Provenance': $3.Provenance$json,
+  '.mediatag.asset.v1.DisplayField': $3.DisplayField$json,
+  '.mediatag.run.v1.Run': $5.Run$json,
+  '.mediatag.run.v1.RunTarget': $5.RunTarget$json,
+  '.mediatag.run.v1.RunWait': $5.RunWait$json,
   '.mediatag.work.v1.TimeRange': TimeRange$json,
   '.mediatag.work.v1.GetPassWaveformRequest': GetPassWaveformRequest$json,
   '.mediatag.work.v1.GetPassWaveformResponse': GetPassWaveformResponse$json,
@@ -2499,6 +2894,13 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.work.v1.WaveformSeries': WaveformSeries$json,
   '.mediatag.work.v1.WaveformChannel': WaveformChannel$json,
   '.mediatag.work.v1.WaveformChannelCompare': WaveformChannelCompare$json,
+  '.mediatag.work.v1.GetCollectionSummaryRequest':
+      GetCollectionSummaryRequest$json,
+  '.mediatag.work.v1.GetCollectionSummaryResponse':
+      GetCollectionSummaryResponse$json,
+  '.mediatag.work.v1.ListAssetCountsRequest': ListAssetCountsRequest$json,
+  '.mediatag.work.v1.ListAssetCountsResponse': ListAssetCountsResponse$json,
+  '.mediatag.work.v1.AssetCount': AssetCount$json,
 };
 
 /// Descriptor for `WorkService`. Decode as a `google.protobuf.ServiceDescriptorProto`.
@@ -2554,4 +2956,8 @@ final $typed_data.Uint8List workServiceDescriptor = $convert.base64Decode(
     'EnIKE0xpc3RDb2xsZWN0aW9uTm9kZXMSLC5tZWRpYXRhZy53b3JrLnYxLkxpc3RDb2xsZWN0aW'
     '9uTm9kZXNSZXF1ZXN0Gi0ubWVkaWF0YWcud29yay52MS5MaXN0Q29sbGVjdGlvbk5vZGVzUmVz'
     'cG9uc2USZgoPR2V0UGFzc1dhdmVmb3JtEigubWVkaWF0YWcud29yay52MS5HZXRQYXNzV2F2ZW'
-    'Zvcm1SZXF1ZXN0GikubWVkaWF0YWcud29yay52MS5HZXRQYXNzV2F2ZWZvcm1SZXNwb25zZQ==');
+    'Zvcm1SZXF1ZXN0GikubWVkaWF0YWcud29yay52MS5HZXRQYXNzV2F2ZWZvcm1SZXNwb25zZRJ1'
+    'ChRHZXRDb2xsZWN0aW9uU3VtbWFyeRItLm1lZGlhdGFnLndvcmsudjEuR2V0Q29sbGVjdGlvbl'
+    'N1bW1hcnlSZXF1ZXN0Gi4ubWVkaWF0YWcud29yay52MS5HZXRDb2xsZWN0aW9uU3VtbWFyeVJl'
+    'c3BvbnNlEmYKD0xpc3RBc3NldENvdW50cxIoLm1lZGlhdGFnLndvcmsudjEuTGlzdEFzc2V0Q2'
+    '91bnRzUmVxdWVzdBopLm1lZGlhdGFnLndvcmsudjEuTGlzdEFzc2V0Q291bnRzUmVzcG9uc2U=');

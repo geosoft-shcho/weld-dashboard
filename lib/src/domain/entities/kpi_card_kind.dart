@@ -1,1 +1,8 @@
-enum KpiCardKind { none, connection, reception, loss, sync }
+enum KpiCardKind {
+  none,
+  files,
+  jobs,
+  weld,
+  traces,
+  embedding,
+}

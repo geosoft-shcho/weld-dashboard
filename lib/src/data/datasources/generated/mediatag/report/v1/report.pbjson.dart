@@ -16,6 +16,7 @@ import 'dart:typed_data' as $typed_data;
 
 import '../../../google/protobuf/struct.pbjson.dart' as $1;
 import '../../../google/protobuf/timestamp.pbjson.dart' as $0;
+import '../../auth/v1/auth.pbjson.dart' as $2;
 
 @$core.Deprecated('Use sectionKindDescriptor instead')
 const SectionKind$json = {
@@ -365,6 +366,22 @@ const ReviewItem$json = {
       '6': '.google.protobuf.Timestamp',
       '10': 'correctedAt'
     },
+    {
+      '1': 'created_by',
+      '3': 13,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 14,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
   ],
   '8': [
     {'1': '_page'},
@@ -383,8 +400,10 @@ final $typed_data.Uint8List reviewItemDescriptor = $convert.base64Decode(
     'DjIgLm1lZGlhdGFnLnJlcG9ydC52MS5SZXZpZXdSZWFzb25SBnJlYXNvbhIsCg9jb3JyZWN0ZW'
     'RfdmFsdWUYCiABKAlIA1IOY29ycmVjdGVkVmFsdWWIAQESIQoMY29ycmVjdGVkX2J5GAsgASgJ'
     'Ugtjb3JyZWN0ZWRCeRI9Cgxjb3JyZWN0ZWRfYXQYDCABKAsyGi5nb29nbGUucHJvdG9idWYuVG'
-    'ltZXN0YW1wUgtjb3JyZWN0ZWRBdEIHCgVfcGFnZUIICgZfdmFsdWVCDAoKX29jcl9zY29yZUIS'
-    'ChBfY29ycmVjdGVkX3ZhbHVl');
+    'ltZXN0YW1wUgtjb3JyZWN0ZWRBdBI3CgpjcmVhdGVkX2J5GA0gASgLMhgubWVkaWF0YWcuYXV0'
+    'aC52MS5BdXRob3JSCWNyZWF0ZWRCeRI3Cgp1cGRhdGVkX2J5GA4gASgLMhgubWVkaWF0YWcuYX'
+    'V0aC52MS5BdXRob3JSCXVwZGF0ZWRCeUIHCgVfcGFnZUIICgZfdmFsdWVCDAoKX29jcl9zY29y'
+    'ZUISChBfY29ycmVjdGVkX3ZhbHVl');
 
 @$core.Deprecated('Use resolveReviewRequestDescriptor instead')
 const ResolveReviewRequest$json = {
@@ -783,6 +802,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.google.protobuf.Value': $1.Value$json,
   '.google.protobuf.ListValue': $1.ListValue$json,
   '.mediatag.report.v1.ReviewItem': ReviewItem$json,
+  '.mediatag.auth.v1.Author': $2.Author$json,
   '.mediatag.report.v1.ResolveReviewRequest': ResolveReviewRequest$json,
   '.mediatag.report.v1.ResolveReviewResponse': ResolveReviewResponse$json,
   '.mediatag.report.v1.UpdateReportFieldRequest': UpdateReportFieldRequest$json,

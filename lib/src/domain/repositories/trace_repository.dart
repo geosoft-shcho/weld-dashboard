@@ -6,5 +6,8 @@ abstract class TraceRepository {
     UploadTraceStatus? status,
   });
 
+  /// KPI용 — page_size=1로 조건에 맞는 전체 건수만 본다.
+  Future<int> countTraces({required UploadTraceStatus status});
+
   Future<TraceSnapshot> getTrace({required String traceId});
 }

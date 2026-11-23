@@ -2,6 +2,7 @@ import '../../domain/entities/collected_node.dart';
 import '../../domain/entities/collection_catalog.dart';
 import '../../domain/entities/collection_board_query.dart';
 import '../../domain/entities/collection_event.dart';
+import '../../domain/entities/collection_summary.dart';
 import '../../domain/entities/equipment.dart';
 import '../../domain/repositories/collection_catalog_repository.dart';
 import '../datasources/local/csv_asset_data_source.dart';
@@ -63,6 +64,26 @@ class CollectionCatalogRepositoryImpl implements CollectionCatalogRepository {
     int? endOffsetNs,
     CollectedTimeBasis basis = CollectedTimeBasis.work,
     CollectedSegmentUnit segmentUnit = CollectedSegmentUnit.job,
+    String workerId = '',
+  }) async {
+    return const [];
+  }
+
+  @override
+  Future<CollectionSummaryLoad> getCollectionSummary({
+    CollectedNodePath? parent,
+    String workerId = '',
+  }) async {
+    return CollectionSummaryLoad.empty;
+  }
+
+  @override
+  Future<List<AssetCountRow>> listAssetCounts({
+    CollectedNodePath? parent,
+    String workerId = '',
+    AssetCountTimeBasis basis = AssetCountTimeBasis.collected,
+    DateTime? from,
+    DateTime? to,
   }) async {
     return const [];
   }

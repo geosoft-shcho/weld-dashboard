@@ -175,6 +175,10 @@ class _FakeTraceRepository implements TraceRepository {
   }
 
   @override
+  
+  @override
+  Future<int> countTraces({required UploadTraceStatus status}) async => 0;
+
   Future<TraceSnapshot> getTrace({required String traceId}) async {
     for (final trace in _traces) {
       if (trace.traceId == traceId) {

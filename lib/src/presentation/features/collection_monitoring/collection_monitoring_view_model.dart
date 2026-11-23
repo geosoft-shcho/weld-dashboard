@@ -5,10 +5,15 @@ import 'package:flutter/foundation.dart';
 import '../../../domain/entities/collected_node.dart';
 import '../../../domain/entities/collection_board.dart';
 import '../../../domain/entities/collection_board_query.dart';
+import '../../../domain/entities/collection_summary.dart';
 import '../../../domain/entities/kpi_card_kind.dart';
 import '../../../domain/entities/timeline_view_kind.dart';
+import '../../../domain/entities/worker.dart';
+import '../../../domain/use_cases/get_collection_summary_use_case.dart';
+import '../../../domain/use_cases/list_asset_counts_use_case.dart';
 import '../../../domain/use_cases/list_collected_nodes_use_case.dart';
 import '../../../domain/use_cases/list_project_lookup_use_case.dart';
+import '../../../domain/use_cases/list_worker_lookup_use_case.dart';
 import '../../../domain/use_cases/present_collection_nodes_use_case.dart';
 
 class CollectionMonitoringViewModel extends ChangeNotifier {
@@ -16,24 +21,37 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     required ListCollectedNodesUseCase listCollectedNodesUseCase,
     required PresentCollectionNodesUseCase presentCollectionNodesUseCase,
     required ListProjectLookupUseCase listProjectLookupUseCase,
+    required GetCollectionSummaryUseCase getCollectionSummaryUseCase,
+    required ListAssetCountsUseCase listAssetCountsUseCase,
+    required ListWorkerLookupUseCase listWorkerLookupUseCase,
     this.onAfterBoardLoaded,
   }) : _listCollectedNodesUseCase = listCollectedNodesUseCase,
        _presentCollectionNodesUseCase = presentCollectionNodesUseCase,
-       _listProjectLookupUseCase = listProjectLookupUseCase;
+       _listProjectLookupUseCase = listProjectLookupUseCase,
+       _getCollectionSummaryUseCase = getCollectionSummaryUseCase,
+       _listAssetCountsUseCase = listAssetCountsUseCase,
+       _listWorkerLookupUseCase = listWorkerLookupUseCase;
 
   final ListCollectedNodesUseCase _listCollectedNodesUseCase;
   final PresentCollectionNodesUseCase _presentCollectionNodesUseCase;
   final ListProjectLookupUseCase _listProjectLookupUseCase;
+  final GetCollectionSummaryUseCase _getCollectionSummaryUseCase;
+  final ListAssetCountsUseCase _listAssetCountsUseCase;
+  final ListWorkerLookupUseCase _listWorkerLookupUseCase;
   final ValueChanged<DateTime>? onAfterBoardLoaded;
 
   CollectionBoardQuery _query = CollectionBoardQuery.initial();
-  CollectedNodeView _view = CollectedNodeView.equipment;
   CollectedTimeBasis _basis = CollectedTimeBasis.work;
   CollectedSegmentUnit _segmentUnit = CollectedSegmentUnit.job;
+  String _workerId = '';
   final List<CollectedNode> _ancestors = [];
   final Map<String, List<CollectedNode>> _nodesByParentKey = {};
   List<CollectedNode> _nodes = const [];
   CollectionBoard? _board;
+  CollectionKpi _kpi = CollectionKpi.empty;
+  List<AssetCountRow> _assetCounts = const [];
+  AssetCountTimeBasis _assetCountBasis = AssetCountTimeBasis.collected;
+  List<Worker> _workerOptions = const [];
   bool _isLoading = false;
   bool _hasError = false;
   String _errorMessage = '';
@@ -42,6 +60,11 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
 
   CollectionBoardQuery get query => _query;
   CollectionBoard? get board => _board;
+  CollectionKpi get kpi => _kpi;
+  List<AssetCountRow> get assetCounts => List.unmodifiable(_assetCounts);
+  AssetCountTimeBasis get assetCountBasis => _assetCountBasis;
+  List<Worker> get workerOptions => List.unmodifiable(_workerOptions);
+  String get workerId => _workerId;
 
   List<CollectedNode> get nodes => List.unmodifiable(_nodes);
 
@@ -64,7 +87,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     return null;
   }
 
-  CollectedNodeView get collectedView => _view;
+  CollectedNodeView get collectedView => CollectedNodeView.project;
   CollectedTimeBasis get timeBasis => _basis;
   CollectedSegmentUnit get segmentUnit => _segmentUnit;
   List<CollectedNode> get ancestors => List.unmodifiable(_ancestors);
@@ -75,9 +98,9 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   bool get isAutoRefreshOn => _query.refreshIntervalSeconds > 0;
 
   CollectedNodePath get currentParent =>
-      _ancestors.isEmpty ? CollectedNodePath.root(_view) : _ancestors.last.path;
+      _ancestors.isEmpty ? CollectedNodePath.root() : _ancestors.last.path;
 
-  Future<void> loadBoard() async {
+  Future<void> loadBoard({bool doesReloadSummary = true}) async {
     final version = ++_loadVersion;
     final parent = currentParent;
     _isLoading = true;
@@ -85,19 +108,46 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     _errorMessage = '';
     notifyListeners();
     try {
+      if (_workerOptions.isEmpty) {
+        final page = await _listWorkerLookupUseCase.execute();
+        if (version != _loadVersion) {
+          return;
+        }
+        _workerOptions = page.items;
+      }
       final offsets = _offsetsOf(parent);
-      final nodes = await _listCollectedNodesUseCase.execute(
+      final nodesFuture = _listCollectedNodesUseCase.execute(
         parent,
         startOffsetNs: offsets.$1,
         endOffsetNs: offsets.$2,
         basis: _basis,
         segmentUnit: _segmentUnit,
+        workerId: _workerId,
       );
+      final summaryFuture = doesReloadSummary
+          ? _getCollectionSummaryUseCase.execute(workerId: _workerId)
+          : Future<CollectionSummaryLoad?>.value(null);
+      final countsFuture = _listAssetCountsUseCase.execute(
+        parent: parent.level == CollectedNodeLevel.unspecified ? null : parent,
+        workerId: _workerId,
+        basis: _assetCountBasis,
+      );
+      final nodes = await nodesFuture;
+      final summaryLoad = await summaryFuture;
+      final counts = await countsFuture;
       if (version != _loadVersion) {
         return;
       }
       _nodesByParentKey[parent.key] = nodes;
       _nodes = nodes;
+      _assetCounts = counts;
+      if (summaryLoad != null) {
+        _kpi = CollectionKpi(
+          summary: summaryLoad.summary,
+          runningTraceCount: summaryLoad.runningTraceCount,
+          failedTraceCount: summaryLoad.failedTraceCount,
+        );
+      }
       _present();
       onAfterBoardLoaded?.call(DateTime.now());
     } catch (error) {
@@ -149,15 +199,22 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     return null;
   }
 
-  void didSelectCollectedView(CollectedNodeView view) {
-    if (_view == view) {
+  void didSelectWorkerFilter(String? workerId) {
+    final next = workerId ?? '';
+    if (_workerId == next) {
       return;
     }
-    _view = view;
-    _ancestors.clear();
-    _nodesByParentKey.clear();
-    _nodes = const [];
-    loadBoard();
+    _workerId = next;
+    _clearTreeCache();
+    loadBoard(doesReloadSummary: true);
+  }
+
+  void didSelectAssetCountBasis(AssetCountTimeBasis basis) {
+    if (_assetCountBasis == basis) {
+      return;
+    }
+    _assetCountBasis = basis;
+    loadBoard(doesReloadSummary: false);
   }
 
   void didSelectTimeBasis(CollectedTimeBasis basis) {
@@ -165,7 +222,8 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       return;
     }
     _basis = basis;
-    loadBoard();
+    _clearTreeCache();
+    loadBoard(doesReloadSummary: false);
   }
 
   void didSelectSegmentUnit(CollectedSegmentUnit segmentUnit) {
@@ -173,8 +231,8 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       return;
     }
     _segmentUnit = segmentUnit;
-    _nodesByParentKey.clear();
-    loadBoard();
+    _clearTreeCache();
+    loadBoard(doesReloadSummary: false);
   }
 
   void didSelectLevelNode(CollectedNodeLevel level, String? nodeKey) {
@@ -183,7 +241,8 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     }
     if (nodeKey == null) {
       _ancestors.removeWhere((node) => !_isBefore(node.path.level, level));
-      loadBoard();
+      _applySegmentForLevel();
+      loadBoard(doesReloadSummary: false);
       return;
     }
     CollectedNode? selected;
@@ -213,7 +272,8 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     _ancestors
       ..removeWhere((node) => !_isBefore(node.path.level, level))
       ..add(selected);
-    loadBoard();
+    _applySegmentForLevel();
+    loadBoard(doesReloadSummary: false);
   }
 
   void didTapTimelineNode(String nodeKey) {
@@ -242,7 +302,8 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     if (keepCount < _ancestors.length) {
       _ancestors.removeRange(keepCount, _ancestors.length);
     }
-    loadBoard();
+    _applySegmentForLevel();
+    loadBoard(doesReloadSummary: false);
   }
 
   void didTapPreviousDate() {
@@ -284,22 +345,26 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   }
 
   void didTapQuery() {
-    loadBoard();
+    loadBoard(doesReloadSummary: true);
   }
 
   void didTapReset() {
     _query = CollectionBoardQuery.initial();
-    _view = CollectedNodeView.equipment;
     _basis = CollectedTimeBasis.work;
+    _segmentUnit = CollectedSegmentUnit.job;
+    _workerId = '';
+    _assetCountBasis = AssetCountTimeBasis.collected;
     _ancestors.clear();
     _nodesByParentKey.clear();
     _nodes = const [];
+    _kpi = CollectionKpi.empty;
+    _assetCounts = const [];
     _restartTimer();
-    loadBoard();
+    loadBoard(doesReloadSummary: true);
   }
 
   void didTapReload() {
-    loadBoard();
+    loadBoard(doesReloadSummary: true);
   }
 
   void didTapKpiCard(KpiCardKind kind) {
@@ -379,7 +444,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
 
   void _applyDateWindow() {
     if (currentParent.jobId.isNotEmpty) {
-      loadBoard();
+      loadBoard(doesReloadSummary: false);
       return;
     }
     _present();
@@ -390,8 +455,24 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     _board = _presentCollectionNodesUseCase.execute(
       nodes: _nodes,
       query: _query,
+      kpi: _kpi,
     );
     _query = _board!.query;
+  }
+
+  void _clearTreeCache() {
+    _ancestors.clear();
+    _nodesByParentKey.clear();
+    _nodes = const [];
+  }
+
+  void _applySegmentForLevel() {
+    final level = _ancestors.isEmpty
+        ? CollectedNodeLevel.unspecified
+        : _ancestors.last.path.level;
+    _segmentUnit = level == CollectedNodeLevel.job
+        ? CollectedSegmentUnit.pass
+        : CollectedSegmentUnit.job;
   }
 
   (int?, int?) _offsetsOf(CollectedNodePath parent) {
@@ -423,13 +504,8 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   }
 
   CollectedNodePath? _parentListing(CollectedNodeLevel level) {
-    if (level == CollectedNodeLevel.equipment &&
-        _view == CollectedNodeView.equipment) {
-      return CollectedNodePath.root(_view);
-    }
-    if (level == CollectedNodeLevel.worker &&
-        _view == CollectedNodeView.worker) {
-      return CollectedNodePath.root(_view);
+    if (level == CollectedNodeLevel.project) {
+      return CollectedNodePath.root();
     }
     final previous = _previousLevel(level);
     if (previous == null) {
@@ -458,16 +534,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
   }
 
   List<CollectedNodeLevel> _chain() {
-    if (_view == CollectedNodeView.worker) {
-      return const [
-        CollectedNodeLevel.worker,
-        CollectedNodeLevel.project,
-        CollectedNodeLevel.item,
-        CollectedNodeLevel.job,
-      ];
-    }
     return const [
-      CollectedNodeLevel.equipment,
       CollectedNodeLevel.project,
       CollectedNodeLevel.item,
       CollectedNodeLevel.job,
@@ -481,7 +548,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     }
     _refreshTimer = Timer.periodic(
       Duration(seconds: _query.refreshIntervalSeconds),
-      (_) => loadBoard(),
+      (_) => loadBoard(doesReloadSummary: true),
     );
   }
 }

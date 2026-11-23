@@ -205,13 +205,15 @@ const ListTracesResponse$json = {
       '10': 'traces'
     },
     {'1': 'next_page_token', '3': 2, '4': 1, '5': 9, '10': 'nextPageToken'},
+    {'1': 'total_count', '3': 3, '4': 1, '5': 3, '10': 'totalCount'},
   ],
 };
 
 /// Descriptor for `ListTracesResponse`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listTracesResponseDescriptor = $convert.base64Decode(
     'ChJMaXN0VHJhY2VzUmVzcG9uc2USMAoGdHJhY2VzGAEgAygLMhgubWVkaWF0YWcudHJhY2Uudj'
-    'EuVHJhY2VSBnRyYWNlcxImCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAlSDW5leHRQYWdlVG9rZW4=');
+    'EuVHJhY2VSBnRyYWNlcxImCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAlSDW5leHRQYWdlVG9rZW4S'
+    'HwoLdG90YWxfY291bnQYAyABKANSCnRvdGFsQ291bnQ=');
 
 @$core.Deprecated('Use getTraceRequestDescriptor instead')
 const GetTraceRequest$json = {

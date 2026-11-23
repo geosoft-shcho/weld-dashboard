@@ -311,6 +311,7 @@ class _FakeUploadRepository implements AssetUploadRepository {
     String subject = '',
     String situation = '',
     String fallbackFileName = '',
+    DateTime? fileModifiedAt,
   }) {
     throw UnimplementedError();
   }

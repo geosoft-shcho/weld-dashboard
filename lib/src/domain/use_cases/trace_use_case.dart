@@ -13,6 +13,10 @@ class TraceUseCase {
     return _repository.listTraces(pageSize: pageSize, status: status);
   }
 
+  Future<int> countTraces({required UploadTraceStatus status}) {
+    return _repository.countTraces(status: status);
+  }
+
   Future<TraceSnapshot> getTrace({required String traceId}) {
     return _repository.getTrace(traceId: traceId);
   }

@@ -6,7 +6,6 @@ import '../entities/collection_resource_depth.dart';
 import '../entities/collection_timeline.dart';
 import '../entities/collection_timeline_resource.dart';
 import '../entities/connection_status.dart';
-import '../entities/kpi_card_kind.dart';
 import '../entities/time_sync_status.dart';
 import '../entities/timeline_view_kind.dart';
 
@@ -14,23 +13,21 @@ class PresentCollectionNodesUseCase {
   CollectionBoard execute({
     required List<CollectedNode> nodes,
     required CollectionBoardQuery query,
+    CollectionKpi kpi = CollectionKpi.empty,
   }) {
     final rows = [for (final node in nodes) _rowFrom(node)];
     final events = query.doesHaveInvalidTimeRange
         ? const <CollectionEvent>[]
         : [for (final node in nodes) ..._eventsFrom(node, query)];
-    final kpi = _kpiFrom(rows);
-    final shownRows = _applyCard(rows, query.selectedKpiCard);
-    final shownEvents = _applyCardToEvents(events, shownRows);
-    final focused = _focused(query.selectedEquipmentId, shownRows);
+    final focused = _focused(query.selectedEquipmentId, rows);
     final viewKind = _viewKind(query.viewKind);
     final canvasEvents = viewKind == TimelineViewKind.day && focused.isNotEmpty
-        ? shownEvents.where((event) => event.equipmentId == focused).toList()
-        : shownEvents;
+        ? events.where((event) => event.equipmentId == focused).toList()
+        : events;
     return CollectionBoard(
       query: query.copyWith(selectedEquipmentId: focused),
       kpi: kpi,
-      rows: shownRows,
+      rows: rows,
       options: const CollectionFilterOptions(
         projects: [],
         workers: [],
@@ -46,7 +43,7 @@ class PresentCollectionNodesUseCase {
         resourceHeaderLabel: _header(nodes),
         resources: [
           for (final node in nodes)
-            if (shownRows.any((row) => row.equipmentId == node.nodeKey))
+            if (rows.any((row) => row.equipmentId == node.nodeKey))
               CollectionTimelineResource(
                 resourceId: CollectionTimelineResource.equipmentResourceId(
                   node.nodeKey,
@@ -62,7 +59,7 @@ class PresentCollectionNodesUseCase {
               event.equipmentId,
             ),
         },
-        equipmentRows: shownRows,
+        equipmentRows: rows,
         selectedEventId: query.selectedEventId,
         focusedEquipmentId: focused,
         canShowDayView: focused.isNotEmpty,
@@ -90,7 +87,7 @@ class PresentCollectionNodesUseCase {
       clockOffsetMs: null,
       lastReceivedAt: node.lastCollectedAt ?? node.lastRecordedAt,
       projectName: node.path.projectNo,
-      workerName: node.path.workerId,
+      workerName: '',
     );
   }
 
@@ -122,14 +119,22 @@ class PresentCollectionNodesUseCase {
     for (var index = 0; index < ranges.length; index++) {
       final startedAt = ranges[index].startedAt;
       final endedAt = ranges[index].endedAt;
-      if (startedAt == null || endedAt == null || !endedAt.isAfter(startedAt)) {
+      if (startedAt == null || endedAt == null) {
         continue;
       }
+      final isPoint = !endedAt.isAfter(startedAt);
       final visibleStart = startedAt.isBefore(windowStart)
           ? windowStart
           : startedAt;
-      final visibleEnd = endedAt.isAfter(windowEnd) ? windowEnd : endedAt;
-      if (!visibleStart.isBefore(visibleEnd)) {
+      final visibleEnd = isPoint
+          ? visibleStart
+          : (endedAt.isAfter(windowEnd) ? windowEnd : endedAt);
+      if (!isPoint && !visibleStart.isBefore(visibleEnd)) {
+        continue;
+      }
+      if (isPoint &&
+          (visibleStart.isBefore(windowStart) ||
+              !visibleStart.isBefore(windowEnd))) {
         continue;
       }
       events.add(
@@ -139,7 +144,9 @@ class PresentCollectionNodesUseCase {
           equipmentName: node.label.isEmpty ? '미지정' : node.label,
           lineName: '',
           eventAt: visibleStart,
-          durationSec: visibleEnd.difference(visibleStart).inSeconds,
+          durationSec: isPoint
+              ? 0
+              : visibleEnd.difference(visibleStart).inSeconds,
           connectionStatus: assetCount > 0
               ? ConnectionStatus.connected
               : ConnectionStatus.disconnected,
@@ -152,33 +159,6 @@ class PresentCollectionNodesUseCase {
       );
     }
     return events;
-  }
-
-  List<CollectionBoardRow> _applyCard(
-    List<CollectionBoardRow> rows,
-    KpiCardKind card,
-  ) {
-    switch (card) {
-      case KpiCardKind.connection:
-        return rows.where((row) => row.isDisconnectedOrError).toList();
-      case KpiCardKind.loss:
-        return rows.where((row) => row.isLossWarning).toList();
-      case KpiCardKind.sync:
-        return rows
-            .where((row) => row.timeSyncStatus != TimeSyncStatus.synced)
-            .toList();
-      case KpiCardKind.reception:
-      case KpiCardKind.none:
-        return rows;
-    }
-  }
-
-  List<CollectionEvent> _applyCardToEvents(
-    List<CollectionEvent> events,
-    List<CollectionBoardRow> rows,
-  ) {
-    final keys = {for (final row in rows) row.equipmentId};
-    return events.where((event) => keys.contains(event.equipmentId)).toList();
   }
 
   String _focused(String selectedId, List<CollectionBoardRow> rows) {
@@ -220,39 +200,11 @@ class PresentCollectionNodesUseCase {
 
   String _levelName(CollectedNodeLevel level) {
     return switch (level) {
-      CollectedNodeLevel.equipment => '장비',
-      CollectedNodeLevel.worker => '작업자',
       CollectedNodeLevel.project => '공사',
       CollectedNodeLevel.item => '품목',
       CollectedNodeLevel.job => '작업',
       CollectedNodeLevel.unspecified => '수집',
     };
-  }
-
-  CollectionKpi _kpiFrom(List<CollectionBoardRow> rows) {
-    return CollectionKpi(
-      equipmentCount: rows.length,
-      connectedCount: rows
-          .where((row) => row.connectionStatus == ConnectionStatus.connected)
-          .length,
-      disconnectedCount: rows
-          .where((row) => row.connectionStatus == ConnectionStatus.disconnected)
-          .length,
-      errorCount: rows
-          .where((row) => row.connectionStatus == ConnectionStatus.error)
-          .length,
-      receivedCount: rows.fold(0, (sum, row) => sum + row.receivedCount),
-      windowLabel: rows.isEmpty ? '' : rows.first.windowLabel,
-      lossRateAverage: null,
-      lossWarningCount: 0,
-      syncedCount: rows
-          .where((row) => row.timeSyncStatus == TimeSyncStatus.synced)
-          .length,
-      delayedCount: 0,
-      unsyncedCount: rows
-          .where((row) => row.timeSyncStatus == TimeSyncStatus.unsynced)
-          .length,
-    );
   }
 
   String _windowLabel(CollectedNode node) {

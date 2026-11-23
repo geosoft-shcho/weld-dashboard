@@ -7,6 +7,7 @@ import '../../core/themes/app_theme.dart';
 import '../../core/widgets/query_failure_pane.dart';
 import 'collection_monitoring_view_model.dart';
 import 'pipeline_trace_view_model.dart';
+import 'widgets/collection_asset_counts_panel.dart';
 import 'widgets/collection_command_bar.dart';
 import 'widgets/collection_kpi_cards.dart';
 import 'widgets/collection_timeline_host.dart';
@@ -44,7 +45,8 @@ class _TraceRefreshIntervalBinder extends StatefulWidget {
       _TraceRefreshIntervalBinderState();
 }
 
-class _TraceRefreshIntervalBinderState extends State<_TraceRefreshIntervalBinder> {
+class _TraceRefreshIntervalBinderState
+    extends State<_TraceRefreshIntervalBinder> {
   CollectionMonitoringViewModel? _board;
   int? _appliedInterval;
   int? _pendingInterval;
@@ -150,9 +152,7 @@ class _CollectionMonitoringBody extends StatelessWidget {
             padding: EdgeInsets.only(top: 8),
             child: InfoBar(
               title: Text('시간 범위 오류'),
-              content: Text(
-                '시작 시각이 종료 시각보다 늦습니다. 일자·시간 범위는 타임라인에만 반영됩니다.',
-              ),
+              content: Text('시작 시각이 종료 시각보다 늦습니다. 일자·시간 범위는 타임라인에만 반영됩니다.'),
               severity: InfoBarSeverity.error,
             ),
           ),

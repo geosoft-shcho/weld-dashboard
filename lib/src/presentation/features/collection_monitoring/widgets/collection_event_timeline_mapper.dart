@@ -21,6 +21,9 @@ class CollectionEventPlannerAdapter
 
   @override
   DateTime endOf(CollectionEvent entry) {
+    if (entry.isPoint) {
+      return entry.eventAt.add(const Duration(minutes: 1));
+    }
     final endedAt = entry.endedAt;
     if (!endedAt.isAfter(entry.eventAt)) {
       return entry.eventAt.add(const Duration(seconds: 1));
@@ -30,14 +33,17 @@ class CollectionEventPlannerAdapter
 
   @override
   NeonPlannerEntryPresentation presentationOf(CollectionEvent entry) {
+    final title = entry.isPoint
+        ? '◆ ${entry.windowLabel}'
+        : '${entry.connectionStatus.label} · ${entry.windowLabel}';
     return NeonPlannerEntryPresentation(
-      title: '${entry.connectionStatus.label} · ${entry.windowLabel}',
+      title: title,
       subtitle: entry.equipmentName,
       metadata:
           '수신 ${DashboardFormatters.count(entry.receivedCount)} · 유실 ${DashboardFormatters.percent(entry.lossRatePercent)}',
       semanticLabel:
           '${entry.equipmentName} ${entry.connectionStatus.label} ${entry.windowLabel}',
-      icon: Icons.sensors,
+      icon: entry.isPoint ? Icons.diamond : Icons.sensors,
       kind: NeonPlannerEntryKind.standard,
       accentColor: CollectionEventTimelineMapper.colorOf(entry),
     );
@@ -85,16 +91,20 @@ class CollectionEventTimelineMapper {
     CollectionEvent event, {
     required String resourceId,
   }) {
-    final durationSec = event.durationSec < 1 ? 1 : event.durationSec;
+    // 점(길이 0)도 레이아웃용으로 1분 폭을 쓰되, 표시는 ◆로 구분한다.
+    final duration = event.isPoint
+        ? const Duration(minutes: 1)
+        : Duration(seconds: event.durationSec < 1 ? 1 : event.durationSec);
     return TimelineEntry<CollectionEvent>(
       id: event.eventId,
       value: event,
       start: event.eventAt,
-      duration: Duration(seconds: durationSec),
+      duration: duration,
       status: statusOf(event),
       color: colorOf(event),
-      semanticLabel:
-          '${event.equipmentName} ${event.connectionStatus.label} ${event.windowLabel}',
+      semanticLabel: event.isPoint
+          ? '${event.equipmentName} 점 ${event.windowLabel}'
+          : '${event.equipmentName} ${event.connectionStatus.label} ${event.windowLabel}',
       draggable: false,
       resourceIds: {resourceId},
     );

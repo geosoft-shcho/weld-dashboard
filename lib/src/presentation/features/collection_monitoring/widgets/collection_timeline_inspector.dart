@@ -75,10 +75,6 @@ class CollectionTimelineInspector extends StatelessWidget {
   ) async {
     final coordinator = context.read<AppCoordinator>();
     switch (detail.kind) {
-      case _DetailKind.equipment:
-        coordinator.didTapOpenEquipmentDetail(node.path.equipmentId);
-      case _DetailKind.worker:
-        coordinator.didTapOpenWorkerDetail(node.path.workerId);
       case _DetailKind.project:
         final projectId = await viewModel.resolveProjectId(node.path.projectNo);
         if (!context.mounted || projectId == null || projectId.isEmpty) {
@@ -98,19 +94,6 @@ class CollectionTimelineInspector extends StatelessWidget {
       return const _DetailAction(kind: _DetailKind.asset, tooltip: '파일 상세');
     }
     switch (path.level) {
-      case CollectedNodeLevel.equipment:
-        if (path.equipmentId.isEmpty) {
-          return null;
-        }
-        return const _DetailAction(
-          kind: _DetailKind.equipment,
-          tooltip: '장비 상세',
-        );
-      case CollectedNodeLevel.worker:
-        if (path.workerId.isEmpty) {
-          return null;
-        }
-        return const _DetailAction(kind: _DetailKind.worker, tooltip: '작업자 상세');
       case CollectedNodeLevel.project:
         if (path.projectNo.isEmpty) {
           return null;
@@ -130,11 +113,10 @@ class CollectionTimelineInspector extends StatelessWidget {
   List<(String, String)> _fieldsOf(CollectedNode node) {
     final path = node.path;
     return [
-      ('보기', _viewLabel(path.view)),
+      ('보기', '공사'),
       ('단계', _levelLabel(path.level)),
-      if (path.equipmentId.isNotEmpty) ('장비', path.equipmentId),
-      if (path.workerId.isNotEmpty) ('작업자', path.workerId),
       if (path.projectNo.isNotEmpty) ('공사', path.projectNo),
+      if (path.commonKey.isNotEmpty) ('품목', path.commonKey),
       if (path.jobId.isNotEmpty) ('작업', path.jobId),
       if (path.passId.isNotEmpty)
         ('패스', path.passId)
@@ -160,17 +142,8 @@ class CollectionTimelineInspector extends StatelessWidget {
     ];
   }
 
-  String _viewLabel(CollectedNodeView view) {
-    return switch (view) {
-      CollectedNodeView.equipment => '장비',
-      CollectedNodeView.worker => '작업자',
-    };
-  }
-
   String _levelLabel(CollectedNodeLevel level) {
     return switch (level) {
-      CollectedNodeLevel.equipment => '장비',
-      CollectedNodeLevel.worker => '작업자',
       CollectedNodeLevel.project => '공사',
       CollectedNodeLevel.item => '품목',
       CollectedNodeLevel.job => '작업',
@@ -210,7 +183,7 @@ class CollectionTimelineInspector extends StatelessWidget {
   }
 }
 
-enum _DetailKind { equipment, worker, project, job, asset }
+enum _DetailKind { project, job, asset }
 
 class _DetailAction {
   const _DetailAction({required this.kind, required this.tooltip});

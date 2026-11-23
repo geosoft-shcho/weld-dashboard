@@ -4,9 +4,8 @@
 // 공사·작업·패스는 화면에서 CreateProject·CreateJob·CreatePass로 만든다. 첨부는 AssetService.
 //
 // 수집 현황(대시보드 s0): 장비 연결 상태가 아니라 실제로 저장된 Asset이 얼마나 있는지를
-// 한 단계씩 보여준다.
-//   [장비별]   Equipment → Project → Job → Pass → Asset
-//   [작업자별] Worker    → Project → Job → Pass → Asset
+// 한 단계씩 보여준다. 작업자는 필터(ListCollectionNodesRequest.worker_id)다.
+//   [공사별]   Project → Item → Job → Asset
 // 파형 비교(대시보드 s3): 이 작업 vs 비교 작업(명장의 유사 작업)의 같은 패스 센서 파형.
 // 설계: tacit docs/설계/공통키 및 작업 타임라인 통합 설계.md §2·§3·§3.3·§3.4
 // ============================================================================
@@ -15,6 +14,16 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-11-19  geosoft-Server: CollectionSummary.comment_count · embedded_comment_count — 코멘트 임베딩(16 · 17)
+//   2026-11-19  geosoft-Server: 범위 전체 집계(KPI 카드)를 GetCollectionSummary로 뗌 — ListCollectionNodesResponse.summary(2) 삭제(배포 전 칸).
+//                화면은 전체 현황을 한 번 부르고, 노드를 열 때마다 범위 전체를 다시 세지 않는다
+//   2026-11-19  geosoft-Server: 옛 COLLECTION_VIEW_EQUIPMENT · WORKER를 deprecated로 되살림 — 받아서 공사 보기로 답한다(화면 옮기는 동안).
+//   2026-11-18  geosoft-Server: GetProjectResponse.rag_chunks(RAG 색인 청크 수). CreateProject · DeleteProject가 RAG 색인을 만들고 지운다
+//   2026-11-18  geosoft-Server: 수집 현황을 공사 보기 하나로 — COLLECTION_VIEW_PROJECT(작업에서 시작, 파일 없는 작업도),
+//                EQUIPMENT · WORKER 보기 삭제(깨지는 변경), 작업자 필터 worker_id, 응답 summary(요청 범위 전체),
+//                CollectionSummary에 파일 없는 작업 · 임베딩 · 시각 확인 필요 · 용접시간(패스) · 기록 커버리지(용접시간 기준), ListAssetCounts(날짜 × 종류)
+//   2026-11-23  geosoft-Server: GetCollectionSummaryResponse.trace_running_count · trace_failed_count — 적재 진행 · 실패 수(늘 전체)
+//   2026-11-17  geosoft-Server: 응답에 created_by · updated_by(mediatag.auth.v1.Author) — 만든 · 고친 사람
 //   2026-11-16  geosoft-Server: GetPassWaveformResponse.compare_summary — DTW 비교의 채널별 평균 차이(mediatag 계산)·유사도(DTW 서버 scores)
 //   2026-10-26  geosoft-Server: 작업이 성적서 세트를 고른다 — Job.report_set_id(지정, UpdateJob으로) · active_report_set_id(실제로 쓰는 세트).
 //                세트를 붙인다고 세트·다른 작업이 바뀌지 않는다. 작업을 만들거나 품목을 고쳐도 성적서 PDF를 첨부로 복사하지 않는다
@@ -77,15 +86,17 @@ package mediatag.work.v1;
 import "google/protobuf/field_mask.proto";
 import "google/protobuf/timestamp.proto";
 import "mediatag/asset/v1/asset.proto";
+import "mediatag/auth/v1/auth.proto";
 
 option go_package = "gen/protobuf/mediatag/work/v1;workv1";
 
 // 사용처: 대시보드(s0 수집 현황, s2 작업 이력·필터, s3 파형 비교, s3/s4 컨텍스트), 컴포즈(열 작업 고르기).
 service WorkService {
   rpc ListProjects(ListProjectsRequest) returns (ListProjectsResponse);
-  // 공사 하나 + 호기·품목·작업 수(ListProjects.project_details와 같은 값). 없으면 NotFound.
+  // 공사 하나 + 호기·품목·작업 수(ListProjects.project_details와 같은 값)·RAG 색인 청크 수. 없으면 NotFound.
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse);
   // 공사를 만든다. project.project_no는 필수이고 발급 후 불변. 같은 번호가 있으면 AlreadyExists.
+  // 만든 뒤 RAG 서버에 그 공사의 색인을 요청한다(뒤에서 — RAG가 실패해도 공사는 만들어진다).
   rpc CreateProject(CreateProjectRequest) returns (CreateProjectResponse);
   // 숨긴(inactive) 작업자는 빠진다 — include_inactive면 전부.
   rpc ListWorkers(ListWorkersRequest) returns (ListWorkersResponse);
@@ -124,6 +135,7 @@ service WorkService {
   // 공사 이름·현장·발주처를 고친다(update_mask: project_name, site_name, customer). 공사 번호는 못 바꾼다.
   rpc UpdateProject(UpdateProjectRequest) returns (UpdateProjectResponse);
   // 행을 실제로 지운다(되돌릴 수 없음). 작업이 하나라도 있는 공사는 FailedPrecondition.
+  // 지운 뒤 RAG 서버의 그 공사 색인도 지운다(뒤에서 — RAG가 실패해도 공사는 지워진다).
   rpc DeleteProject(DeleteProjectRequest) returns (DeleteProjectResponse);
   // 작업을 만든다. 필수: job.project_no(또는 project_id)·unit_no·item_code(공백 없이, 정규화된 값 — '05'·'TFPB')·joint_no·started_at, 그리고 item_name(이미 배정된 품목이면 안 줘도 되고, 줘도 저장된 이름을 따른다).
   // job_id·job_key·common_key는 서버가 정하고 보낸 값은 무시한다. 공사·작업자가 없으면 InvalidArgument.
@@ -152,6 +164,12 @@ service WorkService {
   // 패스 하나의 센서 파형. comparison_pass_id를 주면 그 패스의 파형도 함께 준다.
   // 파형은 표준화 파생 CSV(operation=timeseries_normalize)에서 패스 구간만큼 잘라 낸다.
   rpc GetPassWaveform(GetPassWaveformRequest) returns (GetPassWaveformResponse);
+  // 범위 전체의 집계 — KPI 카드(수집량 · 작업량 · 커버리지 · 임베딩). 범위 · 세는 규칙은 ListCollectionNodes와 같다.
+  // parent를 비우면 전체 현황. 노드마다의 집계는 ListCollectionNodes의 CollectionNode.summary.
+  rpc GetCollectionSummary(GetCollectionSummaryRequest) returns (GetCollectionSummaryResponse);
+  // 날짜(한국 시각) × 자료 종류별 Asset 수 · 용량 — "언제 얼마나 들어왔나(수집 시각) / 기록됐나(기록 시각)" 그래프.
+  // 범위 · 세는 규칙은 ListCollectionNodes와 같다(parent · worker_id 같은 값, 날짜별 합 = GetCollectionSummary의 asset_count · total_size_bytes).
+  rpc ListAssetCounts(ListAssetCountsRequest) returns (ListAssetCountsResponse);
 }
 
 // 작업 공간 = 공사. PDF DB·CARO의 project_no와 같은 값.
@@ -161,6 +179,8 @@ message Project {
   string site_name = 3;
   string customer = 4;
   int64 project_id = 5;    // 시스템이 매기는 번호
+  mediatag.auth.v1.Author created_by = 6; // 응답 전용 — 만든 사람(비면 사람이 아닌 일). 보내도 무시한다
+  mediatag.auth.v1.Author updated_by = 7; // 응답 전용 — 마지막으로 고친 사람
 }
 
 // 작업자 종류. 명장/일반 구분은 비교·학습 데이터의 핵심이고, 로봇 용접도 작업자로 둔다.
@@ -180,6 +200,8 @@ message Worker {
   string description = 7;      // 비고(경력·자격·주 공정 등 자유 글)
   bool inactive = 8;           // 숨김(그만둔 사람). 고르는 목록(ListWorkers)에서만 빠지고 맡은 작업에는 그대로 보인다
   WorkerType worker_type = 9;
+  mediatag.auth.v1.Author created_by = 10; // 응답 전용 — 만든 사람(비면 사람이 아닌 일). 보내도 무시한다
+  mediatag.auth.v1.Author updated_by = 11; // 응답 전용 — 마지막으로 고친 사람
 }
 
 // 수집 장비(카메라·마이크·센서·용접기 패널 등).
@@ -190,6 +212,8 @@ message Equipment {
   string equipment_code = 4;   // 사람이 정한 값('DEMO-DEPTH-FRONT'). 없어도 되고, 있으면 유일
   string description = 5;      // 비고
   bool inactive = 6;           // 숨김(안 쓰는 장비). 고르는 목록(ListEquipment)에서만 빠진다
+  mediatag.auth.v1.Author created_by = 7; // 응답 전용 — 만든 사람(비면 사람이 아닌 일). 보내도 무시한다
+  mediatag.auth.v1.Author updated_by = 8; // 응답 전용 — 마지막으로 고친 사람
 }
 
 // 작업 1회 = 이력 1건 = 타임라인 1개.
@@ -226,6 +250,8 @@ message Job {
   int64 report_set_id = 21;
   // 실제로 쓰는 세트(지정한 세트, 없으면 본인 세트). 읽기 전용, 없으면 0. ListReportSets(job_id) · ListQualityResults(job_id)가 이 세트다
   int64 active_report_set_id = 22;
+  mediatag.auth.v1.Author created_by = 23; // 응답 전용 — 만든 사람(비면 사람이 아닌 일). 보내도 무시한다
+  mediatag.auth.v1.Author updated_by = 24; // 응답 전용 — 마지막으로 고친 사람
 }
 
 // 공사·호기에 배정한 품목 한 줄. (project_id, unit_no, item_code)가 유일하다. 이름은 배정 줄마다 따로 둔다.
@@ -290,6 +316,8 @@ message Pass {
   google.protobuf.Timestamp started_at = 4;
   google.protobuf.Timestamp ended_at = 5;
   PassType pass_type = 6;  // 비우면 모름. pass_no와 따로 정한다(1패스가 늘 ROOT라도 2패스부터는 HOT·FILL·CAP이 작업마다 다르다)
+  mediatag.auth.v1.Author created_by = 7; // 응답 전용 — 만든 사람(비면 사람이 아닌 일). 보내도 무시한다
+  mediatag.auth.v1.Author updated_by = 8; // 응답 전용 — 마지막으로 고친 사람
 }
 
 // 목록 한 행. 이름·개수는 조인·집계한 표시용 값이다.
@@ -325,6 +353,9 @@ message GetProjectRequest {
 
 message GetProjectResponse {
   ProjectFilter project = 1; // 공사 + 호기·품목·작업 수
+  // RAG 색인 청크 수(RagService.GetIndexStats의 rag_chunks_by_project). 색인이 없으면 0.
+  // RAG 서버가 설정되지 않았거나 답하지 않으면 비어 있다(공사 조회는 실패하지 않는다).
+  optional int32 rag_chunks = 2;
 }
 
 message GetWorkerRequest {
@@ -582,16 +613,19 @@ message GetJobResponse {
 // ===== 수집 현황·파형 비교 =====
 
 enum CollectionView {
-  COLLECTION_VIEW_UNSPECIFIED = 0;
-  COLLECTION_VIEW_EQUIPMENT = 1;
-  COLLECTION_VIEW_WORKER = 2;
+  COLLECTION_VIEW_UNSPECIFIED = 0; // = PROJECT
+  // 옛 값 — 장비 · 작업자부터 펼치던 보기는 2026-11-18에 없앴다. 옛 화면이 깨지지 않게 받아서 공사 보기로 답한다(노드 path의 view는
+  // 보낸 값 그대로). 새 코드는 PROJECT와 worker_id 필터를 쓴다. 화면이 옮기면 reserved로 바꾼다.
+  COLLECTION_VIEW_EQUIPMENT = 1 [deprecated = true];
+  COLLECTION_VIEW_WORKER = 2 [deprecated = true];
+  COLLECTION_VIEW_PROJECT = 3;     // 공사 → 품목 → 작업 → Asset
 }
 
 // 노드가 어느 단계인가. UNSPECIFIED = 루트(첫 단계 목록을 달라는 뜻).
 enum CollectionLevel {
   COLLECTION_LEVEL_UNSPECIFIED = 0;
-  COLLECTION_LEVEL_EQUIPMENT = 1;
-  COLLECTION_LEVEL_WORKER = 2;
+  reserved 1, 2;               // 옛 EQUIPMENT · WORKER 단계(그 보기와 함께 삭제)
+  reserved "COLLECTION_LEVEL_EQUIPMENT", "COLLECTION_LEVEL_WORKER";
   COLLECTION_LEVEL_PROJECT = 3;
   COLLECTION_LEVEL_JOB = 4;
   reserved 5;                  // 옛 COLLECTION_LEVEL_PASS — 패스는 단계가 아니라 막대 단위(segment_unit)·파일의 path.pass_id로
@@ -601,17 +635,16 @@ enum CollectionLevel {
 
 // 노드의 위치. 클라이언트는 받은 값을 그대로 parent로 돌려보낸다.
 // level 단계의 ID가 비어 있으면 그 단계가 "미지정" 노드다.
-//   - 장비 미지정: equipment_id 없는 Asset
-//   - 공사 미지정: project_no 없는 Job, 또는 (장비별) 작업에 첨부 안 된 Asset
-//   - 품목 미지정: common_key 없는 Job, 또는 (장비별) 작업에 첨부 안 된 Asset
-//   - 작업 미지정: (장비별) 작업에 첨부 안 된 Asset
+//   - 공사 미지정: project_no 없는 Job, 또는 작업에 첨부 안 된 Asset
+//   - 품목 미지정: common_key 없는 Job, 또는 작업에 첨부 안 된 Asset
+//   - 작업 미지정: 작업에 첨부 안 된 Asset
 // 작업 노드의 자식은 바로 Asset이다. Asset 노드의 pass_id = 첨부된 패스(비어 있으면 작업 공용).
-// 작업자별 보기에는 작업에 첨부 안 된 Asset이 나오지 않는다(작업자는 작업을 거쳐 안다).
+// worker_id 필터를 주면 작업에 첨부 안 된 Asset(미지정)은 나오지 않는다(작업자는 작업을 거쳐 안다).
 message CollectionPath {
   CollectionView view = 1;
   CollectionLevel level = 2;
-  int64 equipment_id = 3;
-  int64 worker_id = 4;
+  reserved 3, 4;           // 옛 equipment_id · worker_id(장비 · 작업자 단계). 작업자는 요청의 worker_id 필터로
+  reserved "equipment_id", "worker_id";
   string project_no = 5;
   int64 job_id = 6;
   int64 pass_id = 7;       // Asset 노드에서만 — 첨부된 패스. 요청 parent로는 쓰지 않는다
@@ -628,6 +661,9 @@ message ListCollectionNodesRequest {
   TimeBasis basis = 4;
   // segments를 자르는 단위(작업 구간 기준일 때). 비우면 JOB. 트리를 열지 않고 어느 단계에서든 작업/패스 단위 막대를 본다.
   SegmentUnit segment_unit = 5;
+  // 그 작업자의 작업만(0이면 전체). 노드 · 막대 · summary 모두에 걸린다. 주면 작업에 첨부 안 된 Asset(미지정)은 빠진다.
+  // basis · segment_unit · worker_id를 바꾸면 열린 노드를 모두 다시 불러야 위아래 막대가 맞는다.
+  int64 worker_id = 6;
 }
 
 enum SegmentUnit {
@@ -647,6 +683,21 @@ enum TimeBasis {
 
 message ListCollectionNodesResponse {
   repeated CollectionNode nodes = 1;
+  reserved 2; // 범위 전체 집계는 GetCollectionSummary
+}
+
+message GetCollectionSummaryRequest {
+  CollectionPath parent = 1; // ListCollectionNodes와 같은 값. 비면 전체(작업 미지정 포함)
+  int64 worker_id = 2;       // ListCollectionNodes와 같음. 0이면 전체(주면 작업 미지정은 빠짐)
+}
+
+message GetCollectionSummaryResponse {
+  // 자식 노드 summary를 더하지 말 것: Asset 하나가 여러 작업에 첨부될 수 있어 더하면 두 번 센다. 이 값은 asset_id · job_id를 중복 없이 센다.
+  CollectionSummary summary = 1;
+  // 적재 추적(TraceService) 건수 — ListTraces(status, page_size=1)의 total_count와 같은 값. parent · worker_id와 상관없이 늘 전체:
+  // 등록 전에 실패한 업로드는 Asset이 없어 공사 · 작업에 이어지지 않는다. 기간 없이 누적(2026-11-23 결정).
+  int64 trace_running_count = 2; // 진행 중(업로드 ~ 임베딩 대기)
+  int64 trace_failed_count = 3;  // 실패(다시 올리지 않으면 줄지 않음 — 목록은 ListTraces(status=FAILED))
 }
 
 message CollectionNode {
@@ -675,8 +726,34 @@ message CollectionSummary {
   google.protobuf.Timestamp first_recorded_at = 3;
   google.protobuf.Timestamp last_recorded_at = 4;
   google.protobuf.Timestamp last_collected_at = 5;
-  int64 job_count = 6;              // Equipment·Worker·Project·Item 노드(작업 노드는 0)
-  int64 work_duration_seconds = 7;  // Equipment·Worker·Project 노드: 아래 작업들의 job.started_at~ended_at 합(작업 노드는 0)
+  int64 job_count = 6;              // 아래 작업 수(파일 없는 작업 포함, 작업 노드는 1)
+  int64 work_duration_seconds = 7;  // 아래 작업들의 job.started_at~ended_at 합(ended_at 없는 작업은 빠짐, 작업 노드는 자기 길이)
+  int64 job_without_asset_count = 8; // 그중 Asset이 하나도 첨부되지 않은 작업
+  // 임베딩 진행: 아래 작업의 클립 중 원본이 장비 기록인 시간 자료(영상 · 음성 · 센서 · 포즈 · 깊이, 50ms 초과)와
+  // 그중 지금 내용까지 임베딩된 것(embedded_at >= updated_at — 임베딩 뒤 고친 클립은 빠짐)
+  int64 clip_count = 9;
+  int64 embedded_clip_count = 10;
+  // 기록 시각이 기기 시계 · 파일 메타 · 파일 수정 시각 · 받은 시각에서 온 Asset(properties.upload.time_source가
+  // creation_time · exif · pdf_created · file_modified · collected) — 타임라인 위치를 사람이 확인할 것
+  int64 time_unverified_asset_count = 11;
+  // 기록 커버리지: 자료 종류별로 용접시간 중 클립이 덮은 초(작업마다 클립 구간을 합쳐 용접 구간과 겹친 길이 — 패스 사이 쉬는 시간의
+  // 기록은 세지 않음). 비율 = covered_seconds / weld_duration_seconds. 클립이 없는 종류는 빠진다
+  repeated KindCoverage coverage = 12;
+  // 용접시간: 패스 구간 합(시각이 있는 패스), 패스가 없는 작업은 작업 구간(끝이 없으면 0). 작업시간(7)은 작업이 열려 있던 시간
+  int64 weld_duration_seconds = 13;
+  // 메타 임베딩: AI 서버는 작업 × 파일 쌍마다 메타 문서(파일명 · 종류 · 설비 · 작업 정보)를 만든다. 아래 작업에 붙은 쌍 수와
+  // 그중 지금 내용까지 임베딩된 것(파일 · 첨부를 고친 뒤는 빠짐). 파일 하나가 두 작업에 붙으면 2 — asset_count(1)와 다르다
+  int64 attached_asset_count = 14;
+  int64 embedded_attached_asset_count = 15;
+  // 코멘트 임베딩: 아래 작업에 달린 코멘트 수와 그중 지금 내용(본문 + STT 자막)까지 임베딩된 것. STT 자막이 나중에 생기면
+  // 다시 임베딩될 때까지 빠진다. 작업 없이 남긴 코멘트는 어느 범위에도 들지 않는다
+  int64 comment_count = 16;
+  int64 embedded_comment_count = 17;
+}
+
+message KindCoverage {
+  mediatag.asset.v1.AssetKind kind = 1; // VIDEO · AUDIO · TIMESERIES · POSE · POINTCLOUD
+  int64 covered_seconds = 2;
 }
 
 message GetPassWaveformRequest {
@@ -744,4 +821,29 @@ message WaveformChannel {
   string name = 1;              // 'current_a', 'voltage_v', 'rotation_speed_rpm' 등
   string unit = 2;              // 통일되는 채널만: A, V, m/min, rpm, deg/s, deg. 그 밖(IMU 등)은 빈 값
   repeated double values = 3;   // t_offset_ns와 같은 길이. 결측은 NaN
+}
+
+enum AssetTimeBasis {
+  ASSET_TIME_BASIS_UNSPECIFIED = 0; // = COLLECTED
+  ASSET_TIME_BASIS_COLLECTED = 1;   // 수집(적재) 시각 asset.collected_at — 서버가 받은 날
+  ASSET_TIME_BASIS_RECORDED = 2;    // 기록 시각 asset.recorded_at — 기록을 시작한 날(자정을 넘긴 녹화는 시작한 날에)
+}
+
+message ListAssetCountsRequest {
+  AssetTimeBasis basis = 1;
+  CollectionPath parent = 2;          // ListCollectionNodes와 같은 값. 비면 전체(작업 미지정 포함)
+  int64 worker_id = 3;                // ListCollectionNodes와 같음. 0이면 전체
+  google.protobuf.Timestamp from = 4; // basis 시각이 [from, to) 안인 것. 비면 처음 / 끝까지
+  google.protobuf.Timestamp to = 5;
+}
+
+message AssetCount {
+  string date = 1;                      // "2026-09-21"(한국 시각 날짜)
+  mediatag.asset.v1.AssetKind kind = 2;
+  int64 asset_count = 3;
+  int64 total_size_bytes = 4;
+}
+
+message ListAssetCountsResponse {
+  repeated AssetCount counts = 1; // 날짜 · 종류 순. 0인 칸은 없다
 }

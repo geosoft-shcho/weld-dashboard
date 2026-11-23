@@ -344,6 +344,7 @@ class _CommentUpload implements AssetUploadRepository {
     String subject = '',
     String situation = '',
     String fallbackFileName = '',
+    DateTime? fileModifiedAt,
   }) => throw UnimplementedError();
 
   @override

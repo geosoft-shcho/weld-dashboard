@@ -32,6 +32,9 @@ class CollectionEvent {
 
   DateTime get endedAt => eventAt.add(Duration(seconds: durationSec));
 
+  /// 시작만 있는 작업(길이 0) — 타임라인에 점으로 그린다.
+  bool get isPoint => durationSec <= 0;
+
   bool get isLossWarning => lossRatePercent != null && lossRatePercent! >= 10;
 
   bool get isDesynced =>
