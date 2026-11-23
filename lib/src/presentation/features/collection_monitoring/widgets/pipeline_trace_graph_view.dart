@@ -10,7 +10,7 @@ import 'pipeline_node_icons.dart';
 import 'pipeline_stage_chips.dart';
 import 'pipeline_status_mapper.dart';
 
-/// DataFlow식 캔버스: 단계 열·이벤트 노드 + 골격/path 연결. 줌 없음.
+/// DataFlow식 캔버스: 단계 열·이벤트 노드 + 골격/path 연결. 줌·팬.
 class PipelineTraceGraphView extends StatefulWidget {
   const PipelineTraceGraphView({
     super.key,
@@ -28,9 +28,14 @@ class PipelineTraceGraphView extends StatefulWidget {
 class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
     with SingleTickerProviderStateMixin {
   late final AnimationController _pulse;
+  final TransformationController _transform = TransformationController();
 
   /// 탭으로 포커스한 이벤트 노드. 여정 선택과는 별개.
   String? _focusedNodeId;
+
+  /// 초기 fit을 다시 잡을 때 비교하는 뷰포트·캔버스 크기.
+  Size? _fitViewport;
+  Size? _fitCanvas;
 
   /// 노드·라벨이 겹치지 않는 최소 셀.
   static const double _minColumnWidth = 128;
@@ -40,6 +45,9 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
   static const double _padY = 16;
   static const double _nodeRadius = 18;
   static const double _compactRadius = 14;
+  static const double _minScale = 0.4;
+  static const double _maxScale = 2.5;
+  static const double _zoomStep = 1.2;
 
   @override
   void initState() {
@@ -53,7 +61,48 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
   @override
   void dispose() {
     _pulse.dispose();
+    _transform.dispose();
     super.dispose();
+  }
+
+  void _scheduleFitIfNeeded(Size viewport, Size canvas) {
+    if (_fitViewport == viewport && _fitCanvas == canvas) {
+      return;
+    }
+    _fitViewport = viewport;
+    _fitCanvas = canvas;
+    final sx = canvas.width <= 0 ? 1.0 : viewport.width / canvas.width;
+    final sy = canvas.height <= 0 ? 1.0 : viewport.height / canvas.height;
+    final fit = math.min(1.0, math.min(sx, sy)).clamp(_minScale, _maxScale);
+    final matrix = Matrix4.identity()..scaleByDouble(fit, fit, 1, 1);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      _transform.value = matrix;
+    });
+  }
+
+  void _zoomBy(double factor) {
+    final m = _transform.value.clone();
+    final current = m.getMaxScaleOnAxis();
+    final next = (current * factor).clamp(_minScale, _maxScale);
+    if ((next - current).abs() < 1e-6) {
+      return;
+    }
+    final ratio = next / current;
+    // 뷰포트 중심 기준으로 확대·축소.
+    final vp = _fitViewport;
+    if (vp == null || vp.isEmpty) {
+      m.scaleByDouble(ratio, ratio, 1, 1);
+      _transform.value = m;
+      return;
+    }
+    final focal = Offset(vp.width / 2, vp.height / 2);
+    m.translateByDouble(focal.dx, focal.dy, 0, 1);
+    m.scaleByDouble(ratio, ratio, 1, 1);
+    m.translateByDouble(-focal.dx, -focal.dy, 0, 1);
+    _transform.value = m;
   }
 
   @override
@@ -94,11 +143,13 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
+                    final viewport = constraints.biggest;
                     final layout = _CellLayout.fromViewport(
                       stages: stages,
-                      viewport: constraints.biggest,
+                      viewport: viewport,
                       nodeRadius: radius,
                     );
+                    _scheduleFitIfNeeded(viewport, layout.canvasSize);
                     final canvas = SizedBox(
                       width: layout.canvasSize.width,
                       height: layout.canvasSize.height,
@@ -160,15 +211,46 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                       ),
                     );
 
-                    if (layout.needsScroll) {
-                      // Scrollbar+PrimaryScrollController는 이중 스크롤에서
-                      // ScrollPosition 미연결 예외가 난다. 스크롤만 둔다.
-                      return SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: SingleChildScrollView(child: canvas),
-                      );
-                    }
-                    return canvas;
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: InteractiveViewer(
+                            transformationController: _transform,
+                            minScale: _minScale,
+                            maxScale: _maxScale,
+                            constrained: false,
+                            boundaryMargin: const EdgeInsets.all(48),
+                            child: canvas,
+                          ),
+                        ),
+                        Positioned(
+                          top: 0,
+                          right: 0,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Tooltip(
+                                message: '축소',
+                                child: IconButton(
+                                  icon: const Icon(
+                                    FluentIcons.remove,
+                                    size: 12,
+                                  ),
+                                  onPressed: () => _zoomBy(1 / _zoomStep),
+                                ),
+                              ),
+                              Tooltip(
+                                message: '확대',
+                                child: IconButton(
+                                  icon: const Icon(FluentIcons.add, size: 12),
+                                  onPressed: () => _zoomBy(_zoomStep),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
                   },
                 ),
               ),
@@ -391,7 +473,6 @@ class _CellLayout {
     required this.radius,
     required this.canvasSize,
     required this.positions,
-    required this.needsScroll,
     required this.headerTop,
   });
 
@@ -400,7 +481,6 @@ class _CellLayout {
   final double radius;
   final Size canvasSize;
   final Map<String, Offset> positions;
-  final bool needsScroll;
   final double headerTop;
 
   double columnLeft(int stageIndex) =>
@@ -443,9 +523,6 @@ class _CellLayout {
         _PipelineTraceGraphViewState._headerBand +
         _PipelineTraceGraphViewState._padY +
         maxRows * rowHeight;
-    final needsScroll =
-        canvasWidth > viewport.width + 0.5 ||
-        canvasHeight > viewport.height + 0.5;
 
     final radius = math
         .min(nodeRadius, math.min(columnWidth * 0.22, rowHeight * 0.22))
@@ -475,7 +552,6 @@ class _CellLayout {
       radius: radius,
       canvasSize: Size(canvasWidth, canvasHeight),
       positions: positions,
-      needsScroll: needsScroll,
       headerTop: 6,
     );
   }
