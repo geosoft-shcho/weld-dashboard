@@ -25,6 +25,7 @@ Color pipelineStageAccent(String stageId) {
   }
 }
 
+/// 진행·완료·실패 요약 + Stage 건수 칩을 한 줄에 표시한다.
 class PipelineStageChips extends StatelessWidget {
   const PipelineStageChips({
     super.key,
@@ -39,28 +40,112 @@ class PipelineStageChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final counts = viewModel.stageCounts;
     final failed = viewModel.stageHasFailed;
+    final running = viewModel.runningCount;
+    final done = viewModel.doneCount;
+    final failedCount = viewModel.failedCount;
     final stages = [
       for (final stage in pipelineStages)
         if ((stage.id != 'tool' || viewModel.doesShowToolStage) &&
             (stage.id != 'embed' || viewModel.doesShowEmbedStage))
           stage,
     ];
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: [
-          for (final stage in stages) ...[
-            _StageChip(
-              label: stage.label,
-              count: counts[stage.id] ?? 0,
-              accent: pipelineStageAccent(stage.id),
-              hasFailed: failed[stage.id] == true,
-              compact: compact,
+    return Row(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              children: [
+                for (final stage in stages) ...[
+                  _StageChip(
+                    label: stage.label,
+                    count: counts[stage.id] ?? 0,
+                    accent: pipelineStageAccent(stage.id),
+                    hasFailed: failed[stage.id] == true,
+                    compact: compact,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+              ],
             ),
-            const SizedBox(width: 8),
-          ],
-        ],
-      ),
+          ),
+        ),
+
+        Text(
+          running > 0 ? '실시간 반영 중' : '대기',
+          style: TextStyle(
+            color: AppTheme.INK.withValues(alpha: 0.65),
+            fontSize: compact ? 11 : 12,
+          ),
+        ),
+        const SizedBox(width: 16),
+        _StatusDot(
+          label: '진행 $running',
+          color: AppTheme.ACCENT_STEEL,
+          emphasize: running > 0,
+          compact: compact,
+        ),
+        SizedBox(width: compact ? 6 : 8),
+        _StatusDot(
+          label: '완료 $done',
+          color: AppTheme.STATUS_OK,
+          compact: compact,
+        ),
+        SizedBox(width: compact ? 6 : 8),
+        _StatusDot(
+          label: '실패 $failedCount',
+          color: AppTheme.STATUS_ERROR,
+          emphasize: failedCount > 0,
+          compact: compact,
+        ),
+      ],
+    );
+  }
+}
+
+class _StatusDot extends StatelessWidget {
+  const _StatusDot({
+    required this.label,
+    required this.color,
+    required this.compact,
+    this.emphasize = false,
+  });
+
+  final String label;
+  final Color color;
+  final bool compact;
+  final bool emphasize;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = emphasize ? 10.0 : 8.0;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: color,
+            border: emphasize
+                ? Border.all(
+                    color: AppTheme.INK.withValues(alpha: 0.55),
+                    width: 1,
+                  )
+                : null,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: AppTheme.INK,
+            fontSize: compact ? 11 : 12,
+            fontWeight: emphasize ? FontWeight.w700 : FontWeight.w600,
+          ),
+        ),
+      ],
     );
   }
 }

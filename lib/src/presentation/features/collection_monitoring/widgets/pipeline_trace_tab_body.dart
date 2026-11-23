@@ -8,7 +8,7 @@ import 'pipeline_stage_chips.dart';
 import 'pipeline_trace_graph_view.dart';
 import 'pipeline_trace_list.dart';
 
-/// 적재 파이프라인 탭: 칩 + 그래프 + 우측 목록 패널(토글).
+/// 적재 파이프라인 탭: 칩 + 가로 그래프 + 하단 목록 패널(토글).
 class PipelineTraceTabBody extends StatefulWidget {
   const PipelineTraceTabBody({super.key, required this.viewModel});
 
@@ -19,11 +19,18 @@ class PipelineTraceTabBody extends StatefulWidget {
 }
 
 class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
-  static const double _listPanelWidth = 380;
+  /// 하단 목록 펼침 높이. 그래프가 세로 대부분을 유지한다.
+  static const double _listPanelHeight = 260;
 
   bool _listPanelVisible = true;
 
   PipelineTraceViewModel get viewModel => widget.viewModel;
+
+  void _toggleListPanel() {
+    setState(() {
+      _listPanelVisible = !_listPanelVisible;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,28 +40,7 @@ class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Expanded(child: PipelineStageChips(viewModel: viewModel)),
-              const SizedBox(width: 8),
-              Tooltip(
-                message: _listPanelVisible ? '목록 숨기기' : '목록 보이기',
-                child: IconButton(
-                  icon: Icon(
-                    _listPanelVisible
-                        ? FluentIcons.chrome_back_mirrored
-                        : FluentIcons.bulleted_list2,
-                    size: 16,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _listPanelVisible = !_listPanelVisible;
-                    });
-                  },
-                ),
-              ),
-            ],
-          ),
+          PipelineStageChips(viewModel: viewModel),
           if (viewModel.hasError)
             Padding(
               padding: const EdgeInsets.only(top: 8),
@@ -68,16 +54,21 @@ class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
           Expanded(
             child: viewModel.isLoading && viewModel.traces.isEmpty
                 ? const Center(child: ProgressRing())
-                : Row(
+                : Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       Expanded(
                         child: PipelineTraceGraphView(viewModel: viewModel),
                       ),
+                      const SizedBox(height: 6),
+                      _ListPanelToggleBar(
+                        expanded: _listPanelVisible,
+                        onToggle: _toggleListPanel,
+                      ),
                       if (_listPanelVisible) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(height: 6),
                         SizedBox(
-                          width: _listPanelWidth,
+                          height: _listPanelHeight,
                           child: _TraceListPanel(viewModel: viewModel),
                         ),
                       ],
@@ -85,6 +76,54 @@ class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// 그래프와 목록 사이 접힘 바. 탭하면 하단 목록을 펼치거나 접는다.
+class _ListPanelToggleBar extends StatelessWidget {
+  const _ListPanelToggleBar({required this.expanded, required this.onToggle});
+
+  final bool expanded;
+  final VoidCallback onToggle;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onToggle,
+      child: Container(
+        height: 32,
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        decoration: BoxDecoration(
+          color: AppTheme.SURFACE_RAISED,
+          border: Border.all(color: const Color(0xFF3E424A)),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              expanded ? FluentIcons.chevron_down : FluentIcons.chevron_up,
+              size: 12,
+              color: AppTheme.STATUS_OFF,
+            ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                '수집 이력',
+                style: TextStyle(
+                  color: AppTheme.INK,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            Text(
+              expanded ? '접기' : '펼치기',
+              style: const TextStyle(color: AppTheme.STATUS_OFF, fontSize: 11),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -223,7 +262,7 @@ class _TraceListHeader extends StatelessWidget {
     final filterKey = _statusFilterKey(viewModel.statusFilter);
     return Row(
       children: [
-        Expanded(
+        IntrinsicWidth(
           child: ComboBox<String>(
             value: filterKey,
             items: const [

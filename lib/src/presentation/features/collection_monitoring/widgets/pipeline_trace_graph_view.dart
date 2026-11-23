@@ -10,7 +10,7 @@ import 'pipeline_node_icons.dart';
 import 'pipeline_stage_chips.dart';
 import 'pipeline_status_mapper.dart';
 
-/// DataFlow식 캔버스: 단계 열·이벤트 노드 + 골격/path 연결. 줌·팬.
+/// DataFlow식 캔버스: 가로 레일 Stage·노드 + path 연결.
 class PipelineTraceGraphView extends StatefulWidget {
   const PipelineTraceGraphView({
     super.key,
@@ -26,28 +26,42 @@ class PipelineTraceGraphView extends StatefulWidget {
 }
 
 class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late final AnimationController _pulse;
-  final TransformationController _transform = TransformationController();
 
   /// 탭으로 포커스한 이벤트 노드. 여정 선택과는 별개.
   String? _focusedNodeId;
 
-  /// 초기 fit을 다시 잡을 때 비교하는 뷰포트·캔버스 크기.
-  Size? _fitViewport;
-  Size? _fitCanvas;
+  /// 완료·대기 Stage를 사용자가 수동으로 펼친 id.
+  final Set<String> _manualExpanded = {};
 
-  /// 노드·라벨이 겹치지 않는 최소 셀.
-  static const double _minColumnWidth = 128;
-  static const double _minRowHeight = 96;
+  /// Stage별 펼침 진행(0=접힘, 1=펼침).
+  final Map<String, AnimationController> _expandCtrls = {};
+
   static const double _headerBand = 28;
   static const double _padX = 24;
   static const double _padY = 16;
   static const double _nodeRadius = 18;
   static const double _compactRadius = 14;
-  static const double _minScale = 0.4;
-  static const double _maxScale = 2.5;
-  static const double _zoomStep = 1.2;
+  static const double _nodePitch = 76;
+  static const double _collapsedWidth = 96;
+  static const double _stageGap = 36;
+  static const Duration _expandDuration = Duration(milliseconds: 240);
+
+  /// 실패·진행 계열은 항상 펼침. 완료·대기는 접힘(수동 펼침 가능).
+  static bool _autoExpand(PipelineNodeVisual visual) {
+    switch (visual) {
+      case PipelineNodeVisual.failed:
+      case PipelineNodeVisual.running:
+      case PipelineNodeVisual.queued:
+      case PipelineNodeVisual.active:
+        return true;
+      case PipelineNodeVisual.done:
+      case PipelineNodeVisual.skipped:
+      case PipelineNodeVisual.idle:
+        return false;
+    }
+  }
 
   @override
   void initState() {
@@ -61,48 +75,57 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
   @override
   void dispose() {
     _pulse.dispose();
-    _transform.dispose();
+    for (final ctrl in _expandCtrls.values) {
+      ctrl.dispose();
+    }
     super.dispose();
   }
 
-  void _scheduleFitIfNeeded(Size viewport, Size canvas) {
-    if (_fitViewport == viewport && _fitCanvas == canvas) {
-      return;
+  AnimationController _expandCtrl(String stageId, {required bool expanded}) {
+    final existing = _expandCtrls[stageId];
+    if (existing != null) {
+      return existing;
     }
-    _fitViewport = viewport;
-    _fitCanvas = canvas;
-    final sx = canvas.width <= 0 ? 1.0 : viewport.width / canvas.width;
-    final sy = canvas.height <= 0 ? 1.0 : viewport.height / canvas.height;
-    final fit = math.min(1.0, math.min(sx, sy)).clamp(_minScale, _maxScale);
-    final matrix = Matrix4.identity()..scaleByDouble(fit, fit, 1, 1);
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      _transform.value = matrix;
-    });
+    final ctrl =
+        AnimationController(
+          vsync: this,
+          duration: _expandDuration,
+          value: expanded ? 1 : 0,
+        )..addListener(() {
+          if (mounted) {
+            setState(() {});
+          }
+        });
+    _expandCtrls[stageId] = ctrl;
+    return ctrl;
   }
 
-  void _zoomBy(double factor) {
-    final m = _transform.value.clone();
-    final current = m.getMaxScaleOnAxis();
-    final next = (current * factor).clamp(_minScale, _maxScale);
-    if ((next - current).abs() < 1e-6) {
-      return;
+  void _syncExpandAnimations(
+    List<PipelineStageDef> stages,
+    Set<String> expandedIds,
+  ) {
+    for (final stage in stages) {
+      final want = expandedIds.contains(stage.id);
+      final ctrl = _expandCtrl(stage.id, expanded: want);
+      if (want) {
+        if (ctrl.status != AnimationStatus.completed &&
+            ctrl.status != AnimationStatus.forward) {
+          ctrl.forward();
+        }
+      } else if (ctrl.status != AnimationStatus.dismissed &&
+          ctrl.status != AnimationStatus.reverse) {
+        ctrl.reverse();
+      }
     }
-    final ratio = next / current;
-    // 뷰포트 중심 기준으로 확대·축소.
-    final vp = _fitViewport;
-    if (vp == null || vp.isEmpty) {
-      m.scaleByDouble(ratio, ratio, 1, 1);
-      _transform.value = m;
-      return;
-    }
-    final focal = Offset(vp.width / 2, vp.height / 2);
-    m.translateByDouble(focal.dx, focal.dy, 0, 1);
-    m.scaleByDouble(ratio, ratio, 1, 1);
-    m.translateByDouble(-focal.dx, -focal.dy, 0, 1);
-    _transform.value = m;
+  }
+
+  Map<String, double> _expandProgress(List<PipelineStageDef> stages) {
+    return {
+      for (final stage in stages)
+        stage.id: Curves.easeInOut.transform(
+          _expandCtrls[stage.id]?.value ?? 0,
+        ),
+    };
   }
 
   @override
@@ -117,13 +140,11 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
       return const SizedBox.shrink();
     }
 
-    final skeleton = pipelineSkeletonEdges(stages);
     final active = pipelineActivePathEdges(
       selected: selected,
       traces: traces,
       stages: stages,
     );
-    final activeKeys = {for (final edge in active) edge.key};
 
     return AnimatedBuilder(
       animation: _pulse,
@@ -133,123 +154,155 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _LiveStatusSummary(
-                running: viewModel.runningCount,
-                done: viewModel.doneCount,
-                failed: viewModel.failedCount,
-                compact: widget.compact,
-              ),
-              const SizedBox(height: 6),
               Expanded(
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final viewport = constraints.biggest;
-                    final layout = _CellLayout.fromViewport(
+                child: Builder(
+                  builder: (_) {
+                    final stageVisuals = <String, PipelineNodeVisual>{
+                      for (final stage in stages)
+                        stage.id: pipelineStageVisual(
+                          stageId: stage.id,
+                          selected: selected,
+                          traces: traces,
+                        ),
+                    };
+                    final expandedIds = <String>{
+                      for (final stage in stages)
+                        if (_autoExpand(stageVisuals[stage.id]!) ||
+                            _manualExpanded.contains(stage.id))
+                          stage.id,
+                    };
+                    for (final stage in stages) {
+                      _expandCtrl(
+                        stage.id,
+                        expanded: expandedIds.contains(stage.id),
+                      );
+                    }
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!mounted) {
+                        return;
+                      }
+                      _syncExpandAnimations(stages, expandedIds);
+                    });
+                    final expandT = _expandProgress(stages);
+                    final layout = _RailLayout.fromStages(
                       stages: stages,
-                      viewport: viewport,
+                      expandT: expandT,
                       nodeRadius: radius,
                     );
-                    _scheduleFitIfNeeded(viewport, layout.canvasSize);
-                    final canvas = SizedBox(
-                      width: layout.canvasSize.width,
-                      height: layout.canvasSize.height,
-                      child: Stack(
-                        clipBehavior: Clip.none,
-                        children: [
-                          CustomPaint(
-                            size: layout.canvasSize,
-                            painter: _PipelineFlowPainter(
-                              positions: layout.positions,
-                              skeleton: skeleton,
-                              active: active,
-                              activeKeys: activeKeys,
-                              selected: selected,
-                              traces: traces,
-                              pulse: _pulse.value,
-                              nodeRadius: layout.radius,
-                            ),
-                          ),
-                          for (
-                            var stageIndex = 0;
-                            stageIndex < stages.length;
-                            stageIndex++
-                          )
-                            Positioned(
-                              left: layout.columnLeft(stageIndex),
-                              top: layout.headerTop,
-                              width: layout.columnWidth,
-                              child: Text(
-                                '${stages[stageIndex].label} · '
-                                '${viewModel.stageCounts[stages[stageIndex].id] ?? 0}',
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: TextStyle(
-                                  color: pipelineStageAccent(
-                                    stages[stageIndex].id,
-                                  ),
-                                  fontSize: widget.compact ? 10 : 11,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          for (final entry in layout.positions.entries)
-                            _buildNode(
-                              nodeId: entry.key,
-                              center: entry.value,
-                              radius: layout.radius,
-                              labelWidth: layout.columnWidth - 8,
-                              stageId: pipelineStageOf(entry.key),
-                              visual: pipelineNodeVisual(
-                                nodeId: entry.key,
+                    return FittedBox(
+                      fit: BoxFit.contain,
+                      alignment: Alignment.centerLeft,
+                      child: SizedBox(
+                        width: layout.canvasSize.width,
+                        height: layout.canvasSize.height,
+                        child: Stack(
+                          clipBehavior: Clip.none,
+                          children: [
+                            CustomPaint(
+                              size: layout.canvasSize,
+                              painter: _PipelineFlowPainter(
+                                positions: layout.positions,
+                                railPoints: layout.railPoints,
+                                active: active,
                                 selected: selected,
                                 traces: traces,
+                                pulse: _pulse.value,
+                                nodeRadius: layout.radius,
                               ),
-                              onTap: () => _didTapNode(entry.key),
                             ),
-                        ],
-                      ),
-                    );
-
-                    return Stack(
-                      children: [
-                        Positioned.fill(
-                          child: InteractiveViewer(
-                            transformationController: _transform,
-                            minScale: _minScale,
-                            maxScale: _maxScale,
-                            constrained: false,
-                            boundaryMargin: const EdgeInsets.all(48),
-                            child: canvas,
-                          ),
-                        ),
-                        Positioned(
-                          top: 0,
-                          right: 0,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Tooltip(
-                                message: '축소',
-                                child: IconButton(
-                                  icon: const Icon(
-                                    FluentIcons.remove,
-                                    size: 12,
+                            for (final stage in stages)
+                              Positioned(
+                                left: layout.stageLeft[stage.id]!,
+                                top: layout.headerTop,
+                                width: layout.stageWidth[stage.id]!,
+                                child: GestureDetector(
+                                  onTap: () {
+                                    final visual = stageVisuals[stage.id]!;
+                                    if (_autoExpand(visual)) {
+                                      return;
+                                    }
+                                    setState(() {
+                                      if (_manualExpanded.contains(stage.id)) {
+                                        _manualExpanded.remove(stage.id);
+                                      } else {
+                                        _manualExpanded.add(stage.id);
+                                      }
+                                    });
+                                  },
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.center,
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          '${stage.label} · '
+                                          '${viewModel.stageCounts[stage.id] ?? 0}',
+                                          textAlign: TextAlign.center,
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: TextStyle(
+                                            color: pipelineStageAccent(
+                                              stage.id,
+                                            ),
+                                            fontSize: widget.compact ? 11 : 12,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Transform.rotate(
+                                        angle:
+                                            (expandT[stage.id] ?? 0) *
+                                            (math.pi / 2),
+                                        child: Icon(
+                                          FluentIcons.chevron_right,
+                                          size: 10,
+                                          color: pipelineStageAccent(stage.id),
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  onPressed: () => _zoomBy(1 / _zoomStep),
                                 ),
                               ),
-                              Tooltip(
-                                message: '확대',
-                                child: IconButton(
-                                  icon: const Icon(FluentIcons.add, size: 12),
-                                  onPressed: () => _zoomBy(_zoomStep),
+                            for (final stage in stages)
+                              if ((expandT[stage.id] ?? 0) < 0.98)
+                                _buildCollapsedStage(
+                                  stage: stage,
+                                  center: layout.stageCenters[stage.id]!,
+                                  width: layout.stageWidth[stage.id]!,
+                                  radius: layout.radius,
+                                  visual: stageVisuals[stage.id]!,
+                                  opacity: (1.0 - (expandT[stage.id] ?? 0.0))
+                                      .clamp(0.0, 1.0)
+                                      .toDouble(),
+                                  onTap: () {
+                                    setState(() {
+                                      _manualExpanded.add(stage.id);
+                                    });
+                                  },
                                 ),
+                            for (final entry in layout.positions.entries)
+                              _buildNode(
+                                nodeId: entry.key,
+                                center: entry.value,
+                                radius: layout.radius,
+                                labelWidth: _nodePitch - 8,
+                                stageId: pipelineStageOf(entry.key),
+                                visual: pipelineNodeVisual(
+                                  nodeId: entry.key,
+                                  selected: selected,
+                                  traces: traces,
+                                ),
+                                opacity:
+                                    (expandT[pipelineStageOf(entry.key)] ?? 0.0)
+                                        .clamp(0.0, 1.0)
+                                        .toDouble(),
+                                onTap: () => _didTapNode(entry.key),
                               ),
-                            ],
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     );
                   },
                 ),
@@ -281,6 +334,7 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
     required String stageId,
     required PipelineNodeVisual visual,
     required VoidCallback onTap,
+    double opacity = 1,
   }) {
     final accent = pipelineStageAccent(stageId);
     final fill = pipelineStatusFill(visual, accent);
@@ -296,88 +350,183 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
       left: center.dx - labelWidth / 2,
       top: blockTop,
       width: labelWidth,
-      child: GestureDetector(
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            SizedBox(
-              width: radius * 2 + (live ? ringPad * 2 : 0),
-              height: radius * 2 + (live ? ringPad * 2 : 0),
-              child: Stack(
+      child: IgnorePointer(
+        ignoring: opacity < 0.2,
+        child: Opacity(
+          opacity: opacity,
+          child: GestureDetector(
+            onTap: onTap,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  width: radius * 2 + (live ? ringPad * 2 : 0),
+                  height: radius * 2 + (live ? ringPad * 2 : 0),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      if (live) ...[
+                        Container(
+                          width: radius * 2 + ringPad * 2,
+                          height: radius * 2 + ringPad * 2,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: border.withValues(alpha: 0.45),
+                              width: 2,
+                            ),
+                          ),
+                        ),
+                        CustomPaint(
+                          size: Size(
+                            radius * 2 + ringPad * 2,
+                            radius * 2 + ringPad * 2,
+                          ),
+                          painter: _LiveNodeArcPainter(
+                            color: border,
+                            progress: _pulse.value,
+                          ),
+                        ),
+                      ],
+                      Container(
+                        width: radius * 2,
+                        height: radius * 2,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: fill,
+                          border: Border.all(
+                            color: border,
+                            width: live ? 2.5 : 1.5,
+                          ),
+                        ),
+                        child: Icon(
+                          visual == PipelineNodeVisual.done
+                              ? FluentIcons.check_mark
+                              : pipelineNodeIconData(nodeId),
+                          size: radius,
+                          color: ink,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: visual == PipelineNodeVisual.idle
+                        ? AppTheme.INK.withValues(alpha: 0.5)
+                        : AppTheme.INK,
+                    fontSize: widget.compact ? 9 : 10,
+                    fontWeight: live || visual == PipelineNodeVisual.failed
+                        ? FontWeight.w700
+                        : FontWeight.w600,
+                  ),
+                ),
+                if (status.isNotEmpty)
+                  Text(
+                    status,
+                    style: TextStyle(
+                      color: border,
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCollapsedStage({
+    required PipelineStageDef stage,
+    required Offset center,
+    required double width,
+    required double radius,
+    required PipelineNodeVisual visual,
+    required VoidCallback onTap,
+    double opacity = 1,
+  }) {
+    final accent = pipelineStageAccent(stage.id);
+    final fill = pipelineStatusFill(visual, accent);
+    final border = pipelineStatusBorder(visual, accent);
+    final ink = pipelineStatusInk(visual);
+    final status = pipelineStatusShortLabel(visual);
+    return Positioned(
+      left: center.dx - width / 2,
+      top: center.dy - radius - 2,
+      width: width,
+      child: Opacity(
+        opacity: opacity,
+        child: GestureDetector(
+          onTap: onTap,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: radius * 2,
                 alignment: Alignment.center,
-                children: [
-                  if (live) ...[
-                    Container(
-                      width: radius * 2 + ringPad * 2,
-                      height: radius * 2 + ringPad * 2,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: border.withValues(alpha: 0.45),
-                          width: 2,
+                decoration: BoxDecoration(
+                  color: fill,
+                  borderRadius: BorderRadius.circular(radius),
+                  border: Border.all(color: border, width: 1.5),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      visual == PipelineNodeVisual.done
+                          ? FluentIcons.check_mark
+                          : FluentIcons.more,
+                      size: radius * 0.9,
+                      color: ink,
+                    ),
+                    const SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        '${stage.nodeIds.length}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: ink,
+                          fontSize: widget.compact ? 10 : 11,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
-                    CustomPaint(
-                      size: Size(
-                        radius * 2 + ringPad * 2,
-                        radius * 2 + ringPad * 2,
-                      ),
-                      painter: _LiveNodeArcPainter(
-                        color: border,
-                        progress: _pulse.value,
-                      ),
-                    ),
                   ],
-                  Container(
-                    width: radius * 2,
-                    height: radius * 2,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: fill,
-                      border: Border.all(
-                        color: border,
-                        width: live ? 2.5 : 1.5,
-                      ),
-                    ),
-                    child: Icon(
-                      visual == PipelineNodeVisual.done
-                          ? FluentIcons.check_mark
-                          : pipelineNodeIconData(nodeId),
-                      size: radius,
-                      color: ink,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: visual == PipelineNodeVisual.idle
-                    ? AppTheme.INK.withValues(alpha: 0.5)
-                    : AppTheme.INK,
-                fontSize: widget.compact ? 9 : 10,
-                fontWeight: live || visual == PipelineNodeVisual.failed
-                    ? FontWeight.w700
-                    : FontWeight.w600,
-              ),
-            ),
-            if (status.isNotEmpty)
-              Text(
-                status,
-                style: TextStyle(
-                  color: border,
-                  fontSize: 8,
-                  fontWeight: FontWeight.w700,
                 ),
               ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                stage.label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: visual == PipelineNodeVisual.idle
+                      ? AppTheme.INK.withValues(alpha: 0.5)
+                      : AppTheme.INK,
+                  fontSize: widget.compact ? 9 : 10,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              if (status.isNotEmpty)
+                Text(
+                  status,
+                  style: TextStyle(
+                    color: border,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -465,161 +614,90 @@ class _FocusedNodeEventStrip extends StatelessWidget {
   }
 }
 
-/// viewport에 맞춰 셀을 나누되 최소 폭·높이로 겹침을 막는다.
-class _CellLayout {
-  const _CellLayout({
-    required this.columnWidth,
-    required this.rowHeight,
+/// 가로 레일: Stage 좌→우, 펼친 Stage의 nodeIds도 좌→우.
+class _RailLayout {
+  const _RailLayout({
     required this.radius,
     required this.canvasSize,
     required this.positions,
+    required this.stageCenters,
+    required this.stageLeft,
+    required this.stageWidth,
+    required this.railPoints,
     required this.headerTop,
   });
 
-  final double columnWidth;
-  final double rowHeight;
   final double radius;
   final Size canvasSize;
   final Map<String, Offset> positions;
+  final Map<String, Offset> stageCenters;
+  final Map<String, double> stageLeft;
+  final Map<String, double> stageWidth;
+  final List<Offset> railPoints;
   final double headerTop;
 
-  double columnLeft(int stageIndex) =>
-      _PipelineTraceGraphViewState._padX + stageIndex * columnWidth;
-
-  factory _CellLayout.fromViewport({
+  factory _RailLayout.fromStages({
     required List<PipelineStageDef> stages,
-    required Size viewport,
+    required Map<String, double> expandT,
     required double nodeRadius,
   }) {
-    final stageCount = math.max(1, stages.length);
-    var maxRows = 1;
-    for (final stage in stages) {
-      maxRows = math.max(maxRows, stage.nodeIds.length);
-    }
-
-    final availW = math.max(
-      1.0,
-      viewport.width - 2 * _PipelineTraceGraphViewState._padX,
-    );
-    final availH = math.max(
-      1.0,
-      viewport.height -
-          _PipelineTraceGraphViewState._headerBand -
-          _PipelineTraceGraphViewState._padY,
-    );
-
-    final columnWidth = math.max(
-      _PipelineTraceGraphViewState._minColumnWidth,
-      availW / stageCount,
-    );
-    final rowHeight = math.max(
-      _PipelineTraceGraphViewState._minRowHeight,
-      availH / maxRows,
-    );
-
-    final canvasWidth =
-        2 * _PipelineTraceGraphViewState._padX + stageCount * columnWidth;
-    final canvasHeight =
-        _PipelineTraceGraphViewState._headerBand +
-        _PipelineTraceGraphViewState._padY +
-        maxRows * rowHeight;
-
-    final radius = math
-        .min(nodeRadius, math.min(columnWidth * 0.22, rowHeight * 0.22))
-        .clamp(12.0, nodeRadius);
-
+    final radius = nodeRadius.clamp(12.0, 22.0);
+    final railY = _PipelineTraceGraphViewState._headerBand + radius + 18;
     final positions = <String, Offset>{};
-    for (var stageIndex = 0; stageIndex < stages.length; stageIndex++) {
-      final nodeIds = stages[stageIndex].nodeIds;
-      for (var row = 0; row < nodeIds.length; row++) {
-        // 원 중심: 셀 상단 쪽에 두어 아래 라벨 공간을 확보.
-        final cx =
-            _PipelineTraceGraphViewState._padX +
-            stageIndex * columnWidth +
-            columnWidth / 2;
-        final cy =
-            _PipelineTraceGraphViewState._headerBand +
-            row * rowHeight +
-            radius +
-            8;
-        positions[nodeIds[row]] = Offset(cx, cy);
+    final stageCenters = <String, Offset>{};
+    final stageLeft = <String, double>{};
+    final stageWidth = <String, double>{};
+    final railPoints = <Offset>[];
+
+    var cursor = _PipelineTraceGraphViewState._padX;
+    for (var i = 0; i < stages.length; i++) {
+      final stage = stages[i];
+      final t = (expandT[stage.id] ?? 0).clamp(0.0, 1.0);
+      final collapsedW = _PipelineTraceGraphViewState._collapsedWidth;
+      final expandedW = math.max(
+        collapsedW,
+        stage.nodeIds.length * _PipelineTraceGraphViewState._nodePitch,
+      );
+      final width = collapsedW + (expandedW - collapsedW) * t;
+      stageLeft[stage.id] = cursor;
+      stageWidth[stage.id] = width;
+      final centerX = cursor + width / 2;
+      stageCenters[stage.id] = Offset(centerX, railY);
+
+      final n = math.max(1, stage.nodeIds.length);
+      final pitch = width / n;
+      for (var ni = 0; ni < stage.nodeIds.length; ni++) {
+        final expandedCx = cursor + pitch * (ni + 0.5);
+        final cx = centerX + (expandedCx - centerX) * t;
+        final p = Offset(cx, railY);
+        positions[stage.nodeIds[ni]] = p;
+        if (t > 0.08) {
+          railPoints.add(p);
+        }
+      }
+      if (t <= 0.08) {
+        railPoints.add(Offset(centerX, railY));
+      }
+
+      cursor += width;
+      if (i < stages.length - 1) {
+        cursor += _PipelineTraceGraphViewState._stageGap;
       }
     }
 
-    return _CellLayout(
-      columnWidth: columnWidth,
-      rowHeight: rowHeight,
+    final canvasWidth = cursor + _PipelineTraceGraphViewState._padX;
+    final canvasHeight =
+        railY + radius + 52 + _PipelineTraceGraphViewState._padY;
+
+    return _RailLayout(
       radius: radius,
       canvasSize: Size(canvasWidth, canvasHeight),
       positions: positions,
+      stageCenters: stageCenters,
+      stageLeft: stageLeft,
+      stageWidth: stageWidth,
+      railPoints: railPoints,
       headerTop: 6,
-    );
-  }
-}
-
-class _LiveStatusSummary extends StatelessWidget {
-  const _LiveStatusSummary({
-    required this.running,
-    required this.done,
-    required this.failed,
-    required this.compact,
-  });
-
-  final int running;
-  final int done;
-  final int failed;
-  final bool compact;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        _chip('진행 $running', AppTheme.ACCENT_STEEL, emphasize: running > 0),
-        const SizedBox(width: 8),
-        _chip('완료 $done', AppTheme.STATUS_OK),
-        const SizedBox(width: 8),
-        _chip('실패 $failed', AppTheme.STATUS_ERROR, emphasize: failed > 0),
-        const Spacer(),
-        Text(
-          running > 0 ? '실시간 반영 중' : '대기',
-          style: TextStyle(
-            color: AppTheme.INK.withValues(alpha: 0.65),
-            fontSize: compact ? 10 : 11,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _chip(String label, Color color, {bool emphasize = false}) {
-    final size = emphasize ? 10.0 : 8.0;
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: size,
-          height: size,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color,
-            border: emphasize
-                ? Border.all(
-                    color: AppTheme.INK.withValues(alpha: 0.55),
-                    width: 1,
-                  )
-                : null,
-          ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            color: AppTheme.INK,
-            fontSize: compact ? 11 : 12,
-            fontWeight: emphasize ? FontWeight.w700 : FontWeight.w600,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -659,9 +737,8 @@ class _LiveNodeArcPainter extends CustomPainter {
 class _PipelineFlowPainter extends CustomPainter {
   _PipelineFlowPainter({
     required this.positions,
-    required this.skeleton,
+    required this.railPoints,
     required this.active,
-    required this.activeKeys,
     required this.selected,
     required this.traces,
     required this.pulse,
@@ -669,9 +746,8 @@ class _PipelineFlowPainter extends CustomPainter {
   });
 
   final Map<String, Offset> positions;
-  final List<PipelineTraceEdge> skeleton;
+  final List<Offset> railPoints;
   final List<PipelineTraceEdge> active;
-  final Set<String> activeKeys;
   final TraceSnapshot? selected;
   final List<TraceSnapshot> traces;
   final double pulse;
@@ -679,25 +755,19 @@ class _PipelineFlowPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    for (final edge in skeleton) {
-      final from = positions[edge.fromId];
-      final to = positions[edge.toId];
-      if (from == null || to == null) {
-        continue;
-      }
-      if (activeKeys.contains(edge.key)) {
-        continue;
-      }
+    // 가로 레일 골격: 연속 앵커를 잇는다.
+    for (var i = 0; i < railPoints.length - 1; i++) {
       _drawBezier(
         canvas,
-        from,
-        to,
+        railPoints[i],
+        railPoints[i + 1],
         color: AppTheme.STATUS_OFF.withValues(alpha: 0.35),
-        strokeWidth: 1.4,
+        strokeWidth: 1.6,
         live: false,
       );
     }
 
+    // 펼쳐진 노드 사이 active path (양 끝 좌표가 있을 때만).
     for (final edge in active) {
       final from = positions[edge.fromId];
       final to = positions[edge.toId];
@@ -826,9 +896,10 @@ class _PipelineFlowPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _PipelineFlowPainter oldDelegate) {
     return oldDelegate.pulse != pulse ||
-        oldDelegate.activeKeys != activeKeys ||
         oldDelegate.selected != selected ||
         oldDelegate.traces != traces ||
-        oldDelegate.positions != positions;
+        oldDelegate.positions != positions ||
+        oldDelegate.railPoints != railPoints ||
+        oldDelegate.active != active;
   }
 }
