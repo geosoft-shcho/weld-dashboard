@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 
@@ -5,7 +7,6 @@ import '../../../../domain/entities/collected_node.dart';
 import '../../../../domain/entities/collection_board.dart';
 import '../../../../domain/entities/collection_board_query.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
-import '../../../core/widgets/command_bar_widget_item.dart';
 import '../collection_monitoring_view_model.dart';
 import '../pipeline_trace_view_model.dart';
 
@@ -24,190 +25,190 @@ class CollectionCommandBar extends StatefulWidget {
 }
 
 class _CollectionCommandBarState extends State<CollectionCommandBar> {
+  static const double _gap = 8;
+  static const double _minFieldWidth = 96;
+  static const double _buttonReserve = 268;
+
   @override
   Widget build(BuildContext context) {
     final query = widget.viewModel.query;
+    final fields = <({int flex, Widget child})>[
+      (flex: 22, child: _buildDateNavigationField(query)),
+      (
+        flex: 14,
+        child: InfoLabel(
+          label: '시작',
+          child: TimePicker(
+            hourFormat: HourFormat.HH,
+            selected: _clock(query.selectedDate, query.startMinutes),
+            onChanged: widget.viewModel.didSelectStartTime,
+          ),
+        ),
+      ),
+      (
+        flex: 14,
+        child: InfoLabel(
+          label: '종료',
+          child: TimePicker(
+            hourFormat: HourFormat.HH,
+            selected: _clock(
+              query.selectedDate,
+              query.endMinutes >= 1440 ? 23 * 60 + 59 : query.endMinutes,
+            ),
+            onChanged: widget.viewModel.didSelectEndTime,
+          ),
+        ),
+      ),
+      (flex: 12, child: InfoLabel(label: '기준', child: _buildBasisComboBox())),
+      (
+        flex: 12,
+        child: InfoLabel(label: '막대 단위', child: _buildSegmentUnitComboBox()),
+      ),
+      (
+        flex: 16,
+        child: InfoLabel(label: '작업자', child: _buildWorkerFilterComboBox()),
+      ),
+      (
+        flex: 16,
+        child: InfoLabel(
+          label: '공사',
+          child: _buildLevelComboBox(CollectedNodeLevel.project),
+        ),
+      ),
+      (
+        flex: 18,
+        child: InfoLabel(
+          label: '품목',
+          child: _buildLevelComboBox(CollectedNodeLevel.item),
+        ),
+      ),
+      (
+        flex: 18,
+        child: InfoLabel(
+          label: '작업',
+          child: _buildLevelComboBox(CollectedNodeLevel.job),
+        ),
+      ),
+      (
+        flex: 12,
+        child: InfoLabel(
+          label: '새로고침 주기',
+          child: ComboBox<int>(
+            isExpanded: true,
+            value: query.refreshIntervalSeconds,
+            items: const [
+              ComboBoxItem(value: 0, child: Text('끔')),
+              ComboBoxItem(value: 1, child: Text('1초')),
+              ComboBoxItem(value: 5, child: Text('5초')),
+              ComboBoxItem(value: 60, child: Text('1분')),
+            ],
+            onChanged: (value) {
+              if (value != null) {
+                widget.viewModel.didSelectRefreshInterval(value);
+              }
+            },
+          ),
+        ),
+      ),
+    ];
+    final actions = _actionButtons(context);
+
     return CommandBarCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          CommandBar(
-            overflowBehavior: CommandBarOverflowBehavior.wrap,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            primaryItems: [
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 220,
-                  child: _buildDateNavigationField(query),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 136,
-                  child: InfoLabel(
-                    label: '시작',
-                    child: TimePicker(
-                      hourFormat: HourFormat.HH,
-                      selected: _clock(query.selectedDate, query.startMinutes),
-                      onChanged: widget.viewModel.didSelectStartTime,
-                    ),
-                  ),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 136,
-                  child: InfoLabel(
-                    label: '종료',
-                    child: TimePicker(
-                      hourFormat: HourFormat.HH,
-                      selected: _clock(
-                        query.selectedDate,
-                        query.endMinutes >= 1440
-                            ? 23 * 60 + 59
-                            : query.endMinutes,
-                      ),
-                      onChanged: widget.viewModel.didSelectEndTime,
-                    ),
-                  ),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 120,
-                  child: InfoLabel(label: '기준', child: _buildBasisComboBox()),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 120,
-                  child: InfoLabel(
-                    label: '막대 단위',
-                    child: _buildSegmentUnitComboBox(),
-                  ),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 160,
-                  child: InfoLabel(
-                    label: '작업자',
-                    child: _buildWorkerFilterComboBox(),
-                  ),
-                ),
-              ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final fieldCount = fields.length;
+          final oneRowNeed =
+              _minFieldWidth * fieldCount +
+              _gap * (fieldCount - 1) +
+              _buttonReserve +
+              _gap * 3;
+          if (constraints.maxWidth >= oneRowNeed) {
+            return Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < fields.length; i++) ...[
+                  if (i > 0) const SizedBox(width: _gap),
+                  Expanded(flex: fields[i].flex, child: fields[i].child),
+                ],
+                const SizedBox(width: _gap),
+                for (var i = 0; i < actions.length; i++) ...[
+                  if (i > 0) const SizedBox(width: _gap),
+                  actions[i],
+                ],
+              ],
+            );
+          }
+
+          final maxPerRow = math.max(
+            1,
+            ((constraints.maxWidth + _gap) / (_minFieldWidth + _gap)).floor(),
+          );
+          final perRow = math.min(fieldCount, maxPerRow);
+          final fieldWidth =
+              (constraints.maxWidth - _gap * (perRow - 1)) / perRow;
+          return Wrap(
+            spacing: _gap,
+            runSpacing: _gap,
+            crossAxisAlignment: WrapCrossAlignment.start,
+            children: [
+              for (final field in fields)
+                SizedBox(width: fieldWidth, child: field.child),
+              ...actions,
             ],
-          ),
-          CommandBar(
-            overflowBehavior: CommandBarOverflowBehavior.wrap,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            primaryItems: [
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 160,
-                  child: InfoLabel(
-                    label: '공사',
-                    child: _buildLevelComboBox(CollectedNodeLevel.project),
-                  ),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 180,
-                  child: InfoLabel(
-                    label: '품목',
-                    child: _buildLevelComboBox(CollectedNodeLevel.item),
-                  ),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 180,
-                  child: InfoLabel(
-                    label: '작업',
-                    child: _buildLevelComboBox(CollectedNodeLevel.job),
-                  ),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: SizedBox(
-                  width: 120,
-                  child: InfoLabel(
-                    label: '새로고침 주기',
-                    child: ComboBox<int>(
-                      isExpanded: true,
-                      value: query.refreshIntervalSeconds,
-                      items: const [
-                        ComboBoxItem(value: 0, child: Text('끔')),
-                        ComboBoxItem(value: 1, child: Text('1초')),
-                        ComboBoxItem(value: 5, child: Text('5초')),
-                        ComboBoxItem(value: 60, child: Text('1분')),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          widget.viewModel.didSelectRefreshInterval(value);
-                        }
-                      },
-                    ),
-                  ),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 24),
-                  child: FilledButton(
-                    onPressed: widget.viewModel.didTapQuery,
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(FluentIcons.search, size: 14),
-                        SizedBox(width: 6),
-                        Text('조회'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 24),
-                  child: Button(
-                    onPressed: widget.viewModel.didTapReset,
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(FluentIcons.clear_filter, size: 14),
-                        SizedBox(width: 6),
-                        Text('초기화'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              CommandBarWidgetItem(
-                child: Padding(
-                  padding: const EdgeInsets.only(top: 24),
-                  child: Button(
-                    onPressed: () {
-                      widget.viewModel.didTapReload();
-                      context.read<PipelineTraceViewModel>().refresh();
-                    },
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(FluentIcons.refresh, size: 14),
-                        SizedBox(width: 6),
-                        Text('새로고침'),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+          );
+        },
       ),
     );
+  }
+
+  List<Widget> _actionButtons(BuildContext context) {
+    return [
+      Padding(
+        padding: const EdgeInsets.only(top: 24),
+        child: FilledButton(
+          onPressed: widget.viewModel.didTapQuery,
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(FluentIcons.search, size: 14),
+              SizedBox(width: 6),
+              Text('조회'),
+            ],
+          ),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 24),
+        child: Button(
+          onPressed: widget.viewModel.didTapReset,
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(FluentIcons.clear_filter, size: 14),
+              SizedBox(width: 6),
+              Text('초기화'),
+            ],
+          ),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 24),
+        child: Button(
+          onPressed: () {
+            widget.viewModel.didTapReload();
+            context.read<PipelineTraceViewModel>().refresh();
+          },
+          child: const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(FluentIcons.refresh, size: 14),
+              SizedBox(width: 6),
+              Text('새로고침'),
+            ],
+          ),
+        ),
+      ),
+    ];
   }
 
   DateTime _clock(DateTime date, int minutes) {
@@ -261,7 +262,8 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
     final workers = widget.viewModel.workerOptions;
     final selected = widget.viewModel.workerId;
     final hasSelected =
-        selected.isEmpty || workers.any((worker) => worker.workerId == selected);
+        selected.isEmpty ||
+        workers.any((worker) => worker.workerId == selected);
     return ComboBox<String>(
       isExpanded: true,
       value: hasSelected ? (selected.isEmpty ? 'all' : selected) : 'all',
@@ -304,8 +306,7 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
   }
 
   Widget _buildSegmentUnitComboBox() {
-    final isWorkBasis =
-        widget.viewModel.timeBasis == CollectedTimeBasis.work;
+    final isWorkBasis = widget.viewModel.timeBasis == CollectedTimeBasis.work;
     return ComboBox<CollectedSegmentUnit>(
       isExpanded: true,
       value: widget.viewModel.segmentUnit,
