@@ -5,13 +5,18 @@ import 'proto_id.dart';
 WorkHistoryProjectFilter projectFilterFromProto(
   work_pb.ProjectFilter project,
 ) {
+  final proto = project.project;
   return WorkHistoryProjectFilter(
-    projectId: idText(project.project.projectId),
-    projectNo: project.project.projectNo,
-    projectName: project.project.projectName,
-    siteName: project.project.siteName,
-    customer: project.project.customer,
+    projectId: idText(proto.projectId),
+    projectNo: proto.projectNo,
+    projectName: proto.projectName,
+    siteName: proto.siteName,
+    customer: proto.customer,
     jobCount: project.jobCount,
+    createdByDisplayName:
+        proto.hasCreatedBy() ? proto.createdBy.displayName : '',
+    updatedByDisplayName:
+        proto.hasUpdatedBy() ? proto.updatedBy.displayName : '',
     units: [
       for (final unit in project.units)
         WorkHistoryUnitFilter(

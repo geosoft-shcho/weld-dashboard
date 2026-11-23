@@ -5,6 +5,7 @@ import '../../../domain/entities/worker.dart';
 import '../../../domain/entities/worker_kind.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
+import '../../core/widgets/author_display.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../core/widgets/pass_context_bar.dart';
@@ -253,6 +254,8 @@ class _WorkerLookupDetailBodyState extends State<_WorkerLookupDetailBody> {
             ('사번', worker.employeeNo),
             ('맡은 작업', '${worker.jobCount}건'),
             ('숨김', worker.isInactive ? '숨김 — 고르는 목록에서 빠짐' : '아니오'),
+            ('작성자', authorDisplayLabel(worker.createdByDisplayName)),
+            ('수정자', authorDisplayLabel(worker.updatedByDisplayName)),
           ],
         ),
         const SizedBox(height: 12),

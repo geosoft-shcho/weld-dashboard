@@ -61,6 +61,8 @@ class JobDetail {
     required this.hasReport,
     required this.attachmentCount,
     required this.passes,
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String jobId;
@@ -89,6 +91,8 @@ class JobDetail {
   final bool hasReport;
   final int attachmentCount;
   final List<JobPassDetail> passes;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 }
 
 /// 수정 폼 값. 원래 값과 비교해 바뀐 칸만 서버에 보낸다.

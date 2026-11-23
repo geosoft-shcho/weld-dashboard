@@ -8,6 +8,8 @@ class Equipment {
     this.isInactive = false,
     this.jobCount = 0,
     this.assetCount = 0,
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String equipmentId;
@@ -18,6 +20,8 @@ class Equipment {
   final bool isInactive;
   final int jobCount;
   final int assetCount;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 }
 
 /// 장비 코드는 공백 없이 대문자로 보낸다. 비우면 빈 문자열이다.

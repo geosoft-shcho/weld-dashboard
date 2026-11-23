@@ -8,6 +8,7 @@ import '../../../domain/entities/work_history_project_filter.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/widgets/author_display.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
 import '../../core/widgets/pass_context_bar.dart';
 import '../../core/widgets/query_failure_pane.dart';
@@ -254,6 +255,8 @@ class _ProjectLookupDetailBodyState extends State<_ProjectLookupDetailBody> {
               ('현장', project.siteName),
               ('발주처', project.customer),
               ('작업', '${project.jobCount}건'),
+              ('작성자', authorDisplayLabel(project.createdByDisplayName)),
+              ('수정자', authorDisplayLabel(project.updatedByDisplayName)),
             ],
           ),
           const SizedBox(height: 12),

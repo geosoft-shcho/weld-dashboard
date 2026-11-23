@@ -9,6 +9,8 @@ class Worker {
     this.description = '',
     this.isInactive = false,
     this.jobCount = 0,
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String workerId;
@@ -18,4 +20,6 @@ class Worker {
   final String description;
   final bool isInactive;
   final int jobCount;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 }

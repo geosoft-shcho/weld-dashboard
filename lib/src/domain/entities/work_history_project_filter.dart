@@ -42,6 +42,8 @@ class WorkHistoryProjectFilter {
     this.siteName = '',
     this.customer = '',
     this.jobCount = 0,
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String projectId;
@@ -51,4 +53,6 @@ class WorkHistoryProjectFilter {
   final String customer;
   final List<WorkHistoryUnitFilter> units;
   final int jobCount;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 }

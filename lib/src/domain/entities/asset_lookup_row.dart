@@ -74,6 +74,8 @@ class AssetLookupRow {
     this.collectedAt,
     this.recordedAt,
     this.postprocess = const AssetPostprocessSummary(),
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String assetId;
@@ -104,6 +106,8 @@ class AssetLookupRow {
   final DateTime? collectedAt;
   final DateTime? recordedAt;
   final AssetPostprocessSummary postprocess;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 }
 
 class AssetLookupPage {

@@ -316,6 +316,10 @@ class RemoteAssetLookupRepository implements AssetLookupRepository {
               errorMessage: asset.postprocess.errorMessage,
             )
           : const AssetPostprocessSummary(),
+      createdByDisplayName:
+          asset.hasCreatedBy() ? asset.createdBy.displayName : '',
+      updatedByDisplayName:
+          asset.hasUpdatedBy() ? asset.updatedBy.displayName : '',
     );
   }
 

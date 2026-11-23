@@ -60,6 +60,10 @@ class RemoteJobAdminRepository implements JobAdminRepository {
                 : null,
           ),
       ],
+      createdByDisplayName:
+          job.hasCreatedBy() ? job.createdBy.displayName : '',
+      updatedByDisplayName:
+          job.hasUpdatedBy() ? job.updatedBy.displayName : '',
     );
   }
 

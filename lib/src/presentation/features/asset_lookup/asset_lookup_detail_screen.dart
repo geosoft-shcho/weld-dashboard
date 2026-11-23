@@ -11,6 +11,7 @@ import '../../core/browser_open_url.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/widgets/author_display.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
 import '../../core/widgets/query_failure_pane.dart';
 import '../../core/widgets/waveform_material_scope.dart';
@@ -215,6 +216,19 @@ class _AssetLookupDetailBody extends StatelessWidget {
                   value: asset.recordedAt == null
                       ? '—'
                       : DashboardFormatters.dateTime(asset.recordedAt!),
+                ),
+                const SizedBox(height: 12),
+                LookupDetailKvGrid(
+                  entries: [
+                    (
+                      '작성자',
+                      authorDisplayLabel(asset.createdByDisplayName),
+                    ),
+                    (
+                      '수정자',
+                      authorDisplayLabel(asset.updatedByDisplayName),
+                    ),
+                  ],
                 ),
               ],
             ),

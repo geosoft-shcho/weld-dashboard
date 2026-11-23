@@ -405,6 +405,8 @@ class JobLookupDetailViewModel extends ChangeNotifier {
         hasReport: detail.hasReport,
         attachmentCount: count,
         passes: detail.passes,
+        createdByDisplayName: detail.createdByDisplayName,
+        updatedByDisplayName: detail.updatedByDisplayName,
       ),
     );
   }
@@ -441,6 +443,8 @@ class JobLookupDetailViewModel extends ChangeNotifier {
       hasReport: updated.hasReport,
       attachmentCount: count,
       passes: updated.passes,
+      createdByDisplayName: updated.createdByDisplayName,
+      updatedByDisplayName: updated.updatedByDisplayName,
     );
   }
 

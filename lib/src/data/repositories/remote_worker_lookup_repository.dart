@@ -37,6 +37,10 @@ class RemoteWorkerLookupRepository implements WorkerLookupRepository {
         description: item.description,
         isInactive: item.inactive,
         jobCount: response.jobCount,
+        createdByDisplayName:
+            item.hasCreatedBy() ? item.createdBy.displayName : '',
+        updatedByDisplayName:
+            item.hasUpdatedBy() ? item.updatedBy.displayName : '',
       );
     } on ConnectException catch (error) {
       if (error.code == Code.notFound) {
@@ -74,6 +78,10 @@ class RemoteWorkerLookupRepository implements WorkerLookupRepository {
             description: item.description,
             isInactive: item.inactive,
             jobCount: response.jobCounts[item.workerId] ?? 0,
+            createdByDisplayName:
+                item.hasCreatedBy() ? item.createdBy.displayName : '',
+            updatedByDisplayName:
+                item.hasUpdatedBy() ? item.updatedBy.displayName : '',
           ),
       ],
       nextPageToken: response.nextPageToken,

@@ -4,6 +4,7 @@ import '../../../../domain/entities/job_detail.dart';
 import '../../../../domain/entities/job_draft.dart';
 import '../../../../domain/entities/worker_kind.dart';
 import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/author_display.dart';
 import '../../../core/widgets/screen_command_bar.dart';
 import '../job_lookup_detail_view_model.dart';
 import 'job_detail_action_bar.dart';
@@ -247,6 +248,12 @@ class _JobInfoTabState extends State<JobInfoTab> {
                 Text(
                   '품목 이름: ${detail.itemName.isEmpty ? '—' : detail.itemName} '
                   '(품목 이름은 공사에서 고칩니다)',
+                  style: const TextStyle(fontSize: 12),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  '작성자: ${authorDisplayLabel(detail.createdByDisplayName)} · '
+                  '수정자: ${authorDisplayLabel(detail.updatedByDisplayName)}',
                   style: const TextStyle(fontSize: 12),
                 ),
                 const SizedBox(height: 12),

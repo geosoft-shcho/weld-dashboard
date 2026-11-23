@@ -6,6 +6,7 @@ import '../../../domain/entities/equipment.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
 import '../../core/themes/app_theme.dart';
+import '../../core/widgets/author_display.dart';
 import '../../core/widgets/lookup_detail_scaffold.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../core/widgets/pass_context_bar.dart';
@@ -258,6 +259,8 @@ class _EquipmentLookupDetailBodyState
             ('쓰인 작업', '${equipment.jobCount}건'),
             ('첨부된 파일', '${equipment.assetCount}건'),
             ('숨김', equipment.isInactive ? '숨김 — 고르는 목록에서 빠짐' : '아니오'),
+            ('작성자', authorDisplayLabel(equipment.createdByDisplayName)),
+            ('수정자', authorDisplayLabel(equipment.updatedByDisplayName)),
           ],
         ),
         if (equipment.description.isNotEmpty) ...[

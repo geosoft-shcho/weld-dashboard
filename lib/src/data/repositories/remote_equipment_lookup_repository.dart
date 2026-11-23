@@ -35,6 +35,10 @@ class RemoteEquipmentLookupRepository implements EquipmentLookupRepository {
         isInactive: item.inactive,
         jobCount: response.jobCount,
         assetCount: response.assetCount,
+        createdByDisplayName:
+            item.hasCreatedBy() ? item.createdBy.displayName : '',
+        updatedByDisplayName:
+            item.hasUpdatedBy() ? item.updatedBy.displayName : '',
       );
     } on ConnectException catch (error) {
       if (error.code == Code.notFound) {
@@ -72,6 +76,10 @@ class RemoteEquipmentLookupRepository implements EquipmentLookupRepository {
             isInactive: item.inactive,
             jobCount: response.jobCounts[item.equipmentId] ?? 0,
             assetCount: response.assetCounts[item.equipmentId] ?? 0,
+            createdByDisplayName:
+                item.hasCreatedBy() ? item.createdBy.displayName : '',
+            updatedByDisplayName:
+                item.hasUpdatedBy() ? item.updatedBy.displayName : '',
           ),
       ],
       nextPageToken: response.nextPageToken,
