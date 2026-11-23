@@ -7,7 +7,6 @@ import '../../core/themes/app_theme.dart';
 import '../../core/widgets/query_failure_pane.dart';
 import 'collection_monitoring_view_model.dart';
 import 'pipeline_trace_view_model.dart';
-import 'widgets/collection_asset_counts_panel.dart';
 import 'widgets/collection_command_bar.dart';
 import 'widgets/collection_kpi_cards.dart';
 import 'widgets/collection_timeline_host.dart';
@@ -140,23 +139,27 @@ class _CollectionMonitoringBody extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (viewModel.isAutoRefreshOn)
-          InfoBar(
-            title: const Text('자동 갱신 중'),
-            content: Text(
-              '${_refreshIntervalLabel(viewModel.query.refreshIntervalSeconds)} · 보드·파이프라인 재조회',
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: InfoBar(
+              title: const Text('자동 갱신 중'),
+              content: Text(
+                '${_refreshIntervalLabel(viewModel.query.refreshIntervalSeconds)} · 보드·파이프라인 재조회',
+              ),
+              severity: InfoBarSeverity.info,
             ),
-            severity: InfoBarSeverity.info,
           ),
         if (viewModel.doesHaveInvalidTimeRange)
           const Padding(
-            padding: EdgeInsets.only(top: 8),
+            padding: EdgeInsets.only(bottom: 8),
             child: InfoBar(
               title: Text('시간 범위 오류'),
-              content: Text('시작 시각이 종료 시각보다 늦습니다. 일자·시간 범위는 타임라인에만 반영됩니다.'),
+              content: Text(
+                '시작 시각이 종료 시각보다 늦습니다. 일자·시간 범위는 타임라인에만 반영됩니다.',
+              ),
               severity: InfoBarSeverity.error,
             ),
           ),
-        const SizedBox(height: 8),
         CollectionCommandBar(viewModel: viewModel, board: board),
         const SizedBox(height: 16),
         CollectionKpiCards(viewModel: viewModel, kpi: board.kpi),

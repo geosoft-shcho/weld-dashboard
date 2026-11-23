@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../../domain/entities/tool_run.dart';
@@ -19,8 +21,11 @@ class PipelineTraceTabBody extends StatefulWidget {
 }
 
 class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
-  /// 하단 목록 펼침 높이. 그래프가 세로 대부분을 유지한다.
+  /// 하단 목록 펼침 목표 높이. 공간이 부족하면 그래프 min을 남기고 줄어든다.
   static const double _listPanelHeight = 260;
+  static const double _graphMinHeight = 160;
+  static const double _toggleBarHeight = 32;
+  static const double _sectionGap = 6;
 
   bool _listPanelVisible = true;
 
@@ -54,25 +59,55 @@ class _PipelineTraceTabBodyState extends State<PipelineTraceTabBody> {
           Expanded(
             child: viewModel.isLoading && viewModel.traces.isEmpty
                 ? const Center(child: ProgressRing())
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: PipelineTraceGraphView(viewModel: viewModel),
-                      ),
-                      const SizedBox(height: 6),
-                      _ListPanelToggleBar(
-                        expanded: _listPanelVisible,
-                        onToggle: _toggleListPanel,
-                      ),
-                      if (_listPanelVisible) ...[
-                        const SizedBox(height: 6),
-                        SizedBox(
-                          height: _listPanelHeight,
-                          child: _TraceListPanel(viewModel: viewModel),
-                        ),
-                      ],
-                    ],
+                : LayoutBuilder(
+                    builder: (context, constraints) {
+                      final chrome =
+                          _toggleBarHeight +
+                          _sectionGap +
+                          (_listPanelVisible ? _sectionGap : 0);
+                      final listHeight = !_listPanelVisible
+                          ? 0.0
+                          : math.min(
+                              _listPanelHeight,
+                              math.max(
+                                0.0,
+                                constraints.maxHeight -
+                                    chrome -
+                                    _graphMinHeight,
+                              ),
+                            );
+                      const panelBorder = Color(0xFF3E424A);
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: panelBorder),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              clipBehavior: Clip.antiAlias,
+                              padding: const EdgeInsets.all(8),
+                              child: PipelineTraceGraphView(
+                                viewModel: viewModel,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: _sectionGap),
+                          _ListPanelToggleBar(
+                            expanded: _listPanelVisible,
+                            onToggle: _toggleListPanel,
+                          ),
+                          if (_listPanelVisible) ...[
+                            const SizedBox(height: _sectionGap),
+                            SizedBox(
+                              height: listHeight,
+                              child: _TraceListPanel(viewModel: viewModel),
+                            ),
+                          ],
+                        ],
+                      );
+                    },
                   ),
           ),
         ],
