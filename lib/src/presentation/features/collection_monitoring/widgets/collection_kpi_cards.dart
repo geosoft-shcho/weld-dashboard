@@ -462,14 +462,14 @@ class _EmbeddingSection extends StatelessWidget {
         Text(
           label,
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          overflow: TextOverflow.visible,
           style: TextStyle(fontSize: 11, color: muted),
         ),
         const SizedBox(height: 2),
         Text(
           ratio,
           maxLines: 1,
-          overflow: TextOverflow.ellipsis,
+          overflow: TextOverflow.visible,
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w600,
@@ -483,7 +483,7 @@ class _EmbeddingSection extends StatelessWidget {
             child: Text(
               detail,
               maxLines: 2,
-              overflow: TextOverflow.ellipsis,
+              overflow: TextOverflow.visible,
               style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
             ),
           ),
