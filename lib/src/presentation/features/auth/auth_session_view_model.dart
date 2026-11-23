@@ -6,7 +6,7 @@ import '../../../domain/use_cases/restore_auth_session_use_case.dart';
 import '../../../domain/use_cases/sign_in_use_case.dart';
 import '../../../domain/use_cases/sign_out_use_case.dart';
 
-/// 앱 전역 로그인 세션. Web·모바일 prefs에 저장된 ID를 복원한다.
+/// 앱 전역 로그인 세션. AuthService 토큰·계정을 복원한다.
 class AuthSessionViewModel extends ChangeNotifier {
   AuthSessionViewModel({
     required RestoreAuthSessionUseCase restoreAuthSessionUseCase,
@@ -27,12 +27,14 @@ class AuthSessionViewModel extends ChangeNotifier {
 
   AuthUser? get user => _user;
   String get userId => _user?.userId ?? '';
+  String get shellDisplayName => _user?.shellDisplayName ?? '';
   bool get isSignedIn => _user != null;
   bool get isRestoring => _isRestoring;
   bool get isBusy => _isBusy;
   String get errorMessage => _errorMessage;
   bool get canAccessVideoMultimodal =>
       _user?.canAccessVideoMultimodal ?? false;
+  bool get hasAccountManage => _user?.hasAccountManage ?? false;
 
   Future<void> restore() async {
     _isRestoring = true;
@@ -65,9 +67,10 @@ class AuthSessionViewModel extends ChangeNotifier {
       );
       if (!result.isSuccess) {
         _errorMessage = switch (result.failure) {
-          SignInFailure.wrongPassword => '비밀번호가 올바르지 않습니다.',
-          SignInFailure.unknownUser || null =>
-            '사용할 수 없는 계정입니다. geosoft 또는 user를 입력하세요.',
+          SignInFailure.rateLimited =>
+            '같은 아이디로 여러 번 틀려 잠시 막혔습니다. 1분 뒤 다시 시도하세요.',
+          SignInFailure.invalidCredentials || null =>
+            '아이디 또는 비밀번호가 올바르지 않습니다.',
         };
         return false;
       }
@@ -96,5 +99,17 @@ class AuthSessionViewModel extends ChangeNotifier {
       _isBusy = false;
       notifyListeners();
     }
+  }
+
+  /// Connect 401 공통 처리. Logout RPC는 호출하지 않는다.
+  void didReceiveUnauthenticated() {
+    if (_user == null && !_isRestoring) {
+      return;
+    }
+    _user = null;
+    _errorMessage = '';
+    _isRestoring = false;
+    _isBusy = false;
+    notifyListeners();
   }
 }

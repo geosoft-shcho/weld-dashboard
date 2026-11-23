@@ -6,7 +6,8 @@ class AuthSessionLocalDataSource {
   AuthSessionLocalDataSource({SharedPreferences? preferences})
     : _cachedPreferences = preferences;
 
-  static const String USER_ID_KEY = 'auth.session.user_id';
+  static const String LOGIN_NAME_KEY = 'auth.session.user_id';
+  static const String TOKEN_KEY = 'auth.session.token';
 
   SharedPreferences? _cachedPreferences;
 
@@ -14,26 +15,41 @@ class AuthSessionLocalDataSource {
     return _cachedPreferences ??= await SharedPreferences.getInstance();
   }
 
-  Future<String?> readUserId() async {
+  Future<String?> readLoginName() async {
     final prefs = await _prefs();
-    final value = prefs.getString(USER_ID_KEY)?.trim();
+    final value = prefs.getString(LOGIN_NAME_KEY)?.trim();
     if (value == null || value.isEmpty) {
       return null;
     }
     return value;
   }
 
-  Future<void> writeUserId(String userId) async {
-    final id = userId.trim();
-    if (id.isEmpty) {
+  Future<String?> readToken() async {
+    final prefs = await _prefs();
+    final value = prefs.getString(TOKEN_KEY)?.trim();
+    if (value == null || value.isEmpty) {
+      return null;
+    }
+    return value;
+  }
+
+  Future<void> writeSession({
+    required String loginName,
+    required String token,
+  }) async {
+    final name = loginName.trim();
+    final sessionToken = token.trim();
+    if (name.isEmpty || sessionToken.isEmpty) {
       return;
     }
     final prefs = await _prefs();
-    await prefs.setString(USER_ID_KEY, id);
+    await prefs.setString(LOGIN_NAME_KEY, name);
+    await prefs.setString(TOKEN_KEY, sessionToken);
   }
 
   Future<void> clear() async {
     final prefs = await _prefs();
-    await prefs.remove(USER_ID_KEY);
+    await prefs.remove(LOGIN_NAME_KEY);
+    await prefs.remove(TOKEN_KEY);
   }
 }

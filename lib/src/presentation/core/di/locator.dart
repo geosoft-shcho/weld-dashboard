@@ -59,7 +59,7 @@ import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../../data/datasources/local/auth_session_local_data_source.dart';
 import '../../../data/repositories/browser_ask_session_store.dart';
-import '../../../data/repositories/hardcoded_auth_repository.dart';
+import '../../../data/repositories/remote_auth_repository.dart';
 import '../../../domain/repositories/auth_repository.dart';
 import '../../../domain/use_cases/restore_auth_session_use_case.dart';
 import '../../../domain/use_cases/sign_in_use_case.dart';
@@ -160,8 +160,9 @@ final locator = GetIt.instance;
 
 void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => AuthSessionLocalDataSource());
+  locator.registerLazySingleton(() => MediaTagDataSource());
   locator.registerLazySingleton<AuthRepository>(
-    () => HardcodedAuthRepository(locator()),
+    () => RemoteAuthRepository(locator(), locator()),
   );
   locator.registerLazySingleton(() => RestoreAuthSessionUseCase(locator()));
   locator.registerLazySingleton(() => SignInUseCase(locator()));
@@ -173,7 +174,11 @@ void setupLocator({required bool pdfrxReady}) {
       signOutUseCase: locator(),
     ),
   );
-  locator.registerLazySingleton(() => MediaTagDataSource());
+  locator<MediaTagDataSource>().onUnauthenticated = () {
+    // Logout RPC는 다시 401을 부를 수 있어 로컬만 비운다.
+    locator<AuthSessionLocalDataSource>().clear();
+    locator<AuthSessionViewModel>().didReceiveUnauthenticated();
+  };
   locator.registerLazySingleton<AssetUploadRepository>(
     () => RemoteAssetUploadRepository(locator()),
   );

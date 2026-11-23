@@ -434,19 +434,19 @@ class _AuthSessionActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final userId = context.select<AuthSessionViewModel, String>(
-      (auth) => auth.userId,
+    final displayName = context.select<AuthSessionViewModel, String>(
+      (auth) => auth.shellDisplayName,
     );
     final isBusy = context.select<AuthSessionViewModel, bool>(
       (auth) => auth.isBusy,
     );
-    if (userId.isEmpty) {
+    if (displayName.isEmpty) {
       return const SizedBox.shrink();
     }
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(userId, style: const TextStyle(fontSize: 12)),
+        Text(displayName, style: const TextStyle(fontSize: 12)),
         const SizedBox(width: 8),
         Button(
           onPressed: isBusy

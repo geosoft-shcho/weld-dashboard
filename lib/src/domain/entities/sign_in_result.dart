@@ -1,6 +1,6 @@
 import 'auth_user.dart';
 
-enum SignInFailure { unknownUser, wrongPassword }
+enum SignInFailure { invalidCredentials, rateLimited }
 
 class SignInResult {
   const SignInResult.success(this.user) : failure = null;
