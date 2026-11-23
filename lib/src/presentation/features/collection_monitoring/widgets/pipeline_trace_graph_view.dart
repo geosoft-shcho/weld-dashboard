@@ -149,14 +149,12 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
     return AnimatedBuilder(
       animation: _pulse,
       builder: (context, _) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
               Expanded(
                 child: Builder(
-                  builder: (_) {
+                  builder: (context) {
                     final stageVisuals = <String, PipelineNodeVisual>{
                       for (final stage in stages)
                         stage.id: pipelineStageVisual(
@@ -189,121 +187,132 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                       expandT: expandT,
                       nodeRadius: radius,
                     );
-                    // 가용 가로 폭에 맞춰 스케일(contain은 세로에 먼저 닿아 가로 여백이 남음).
+                    final canvas = layout.canvasSize;
+                    // 기본 스케일(1.0)만 사용 — 확대·축소 없음. 넘치면 가로 스크롤.
                     return ClipRect(
-                      child: FittedBox(
-                        fit: BoxFit.fitWidth,
-                        alignment: Alignment.centerLeft,
-                        child: SizedBox(
-                          width: layout.canvasSize.width,
-                          height: layout.canvasSize.height,
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                            CustomPaint(
-                              size: layout.canvasSize,
-                              painter: _PipelineFlowPainter(
-                                positions: layout.positions,
-                                railPoints: layout.railPoints,
-                                active: active,
-                                selected: selected,
-                                traces: traces,
-                                pulse: _pulse.value,
-                                nodeRadius: layout.radius,
-                              ),
-                            ),
-                            for (final stage in stages)
-                              Positioned(
-                                left: layout.stageLeft[stage.id]!,
-                                top: layout.headerTop,
-                                width: layout.stageWidth[stage.id]!,
-                                child: GestureDetector(
-                                  onTap: () {
-                                    final visual = stageVisuals[stage.id]!;
-                                    if (_autoExpand(visual)) {
-                                      return;
-                                    }
-                                    setState(() {
-                                      if (_manualExpanded.contains(stage.id)) {
-                                        _manualExpanded.remove(stage.id);
-                                      } else {
-                                        _manualExpanded.add(stage.id);
-                                      }
-                                    });
-                                  },
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.center,
-                                    children: [
-                                      Flexible(
-                                        child: Text(
-                                          '${stage.label} · '
-                                          '${viewModel.stageCounts[stage.id] ?? 0}',
-                                          textAlign: TextAlign.center,
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: pipelineStageAccent(
-                                              stage.id,
-                                            ),
-                                            fontSize: widget.compact ? 11 : 12,
-                                            fontWeight: FontWeight.w700,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Transform.rotate(
-                                        angle:
-                                            (expandT[stage.id] ?? 0) *
-                                            (math.pi / 2),
-                                        child: Icon(
-                                          FluentIcons.chevron_right,
-                                          size: 10,
-                                          color: pipelineStageAccent(stage.id),
-                                        ),
-                                      ),
-                                    ],
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: SizedBox(
+                            width: canvas.width,
+                            height: canvas.height,
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                CustomPaint(
+                                  size: canvas,
+                                  painter: _PipelineFlowPainter(
+                                    positions: layout.positions,
+                                    railPoints: layout.railPoints,
+                                    active: active,
+                                    selected: selected,
+                                    traces: traces,
+                                    pulse: _pulse.value,
+                                    nodeRadius: layout.radius,
                                   ),
                                 ),
-                              ),
-                            for (final stage in stages)
-                              if ((expandT[stage.id] ?? 0) < 0.98)
-                                _buildCollapsedStage(
-                                  stage: stage,
-                                  center: layout.stageCenters[stage.id]!,
-                                  width: layout.stageWidth[stage.id]!,
-                                  radius: layout.radius,
-                                  visual: stageVisuals[stage.id]!,
-                                  opacity: (1.0 - (expandT[stage.id] ?? 0.0))
-                                      .clamp(0.0, 1.0)
-                                      .toDouble(),
-                                  onTap: () {
-                                    setState(() {
-                                      _manualExpanded.add(stage.id);
-                                    });
-                                  },
-                                ),
-                            for (final entry in layout.positions.entries)
-                              _buildNode(
-                                nodeId: entry.key,
-                                center: entry.value,
-                                radius: layout.radius,
-                                labelWidth: _nodePitch - 8,
-                                stageId: pipelineStageOf(entry.key),
-                                visual: pipelineNodeVisual(
-                                  nodeId: entry.key,
-                                  selected: selected,
-                                  traces: traces,
-                                ),
-                                opacity:
-                                    (expandT[pipelineStageOf(entry.key)] ?? 0.0)
-                                        .clamp(0.0, 1.0)
-                                        .toDouble(),
-                                onTap: () => _didTapNode(entry.key),
-                              ),
-                          ],
-                        ),
+                                for (final stage in stages)
+                                  Positioned(
+                                    left: layout.stageLeft[stage.id]!,
+                                    top: layout.headerTop,
+                                    width: layout.stageWidth[stage.id]!,
+                                    child: GestureDetector(
+                                      onTap: () {
+                                        final visual = stageVisuals[stage.id]!;
+                                        if (_autoExpand(visual)) {
+                                          return;
+                                        }
+                                        setState(() {
+                                          if (_manualExpanded.contains(
+                                            stage.id,
+                                          )) {
+                                            _manualExpanded.remove(stage.id);
+                                          } else {
+                                            _manualExpanded.add(stage.id);
+                                          }
+                                        });
+                                      },
+                                      child: Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.center,
+                                        children: [
+                                          Flexible(
+                                            child: Text(
+                                              '${stage.label} · '
+                                              '${viewModel.stageCounts[stage.id] ?? 0}',
+                                              textAlign: TextAlign.center,
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: TextStyle(
+                                                color: pipelineStageAccent(
+                                                  stage.id,
+                                                ),
+                                                fontSize:
+                                                    widget.compact ? 11 : 12,
+                                                fontWeight: FontWeight.w700,
+                                              ),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Transform.rotate(
+                                            angle:
+                                                (expandT[stage.id] ?? 0) *
+                                                (math.pi / 2),
+                                            child: Icon(
+                                              FluentIcons.chevron_right,
+                                              size: 10,
+                                              color: pipelineStageAccent(
+                                                stage.id,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                for (final stage in stages)
+                                  if ((expandT[stage.id] ?? 0) < 0.98)
+                                    _buildCollapsedStage(
+                                      stage: stage,
+                                      center: layout.stageCenters[stage.id]!,
+                                      width: layout.stageWidth[stage.id]!,
+                                      radius: layout.radius,
+                                      visual: stageVisuals[stage.id]!,
+                                      opacity:
+                                          (1.0 - (expandT[stage.id] ?? 0.0))
+                                              .clamp(0.0, 1.0)
+                                              .toDouble(),
+                                      onTap: () {
+                                        setState(() {
+                                          _manualExpanded.add(stage.id);
+                                        });
+                                      },
+                                    ),
+                                for (final entry in layout.positions.entries)
+                                  _buildNode(
+                                    nodeId: entry.key,
+                                    center: entry.value,
+                                    radius: layout.radius,
+                                    labelWidth: _nodePitch - 8,
+                                    stageId: pipelineStageOf(entry.key),
+                                    visual: pipelineNodeVisual(
+                                      nodeId: entry.key,
+                                      selected: selected,
+                                      traces: traces,
+                                    ),
+                                    opacity:
+                                        (expandT[pipelineStageOf(entry.key)] ??
+                                                0.0)
+                                            .clamp(0.0, 1.0)
+                                            .toDouble(),
+                                    onTap: () => _didTapNode(entry.key),
+                                  ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     );
@@ -322,8 +331,7 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                   },
                 ),
               ],
-            ],
-          ),
+          ],
         );
       },
     );
