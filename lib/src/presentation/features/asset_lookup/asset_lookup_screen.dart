@@ -300,24 +300,60 @@ Future<void> _showBulkDeleteInfoBar(
   BuildContext context,
   ({int succeeded, List<String> failureNotes}) result,
 ) async {
-  final lines = <String>[
+  final summaryParts = <String>[
     '지움 ${result.succeeded}건',
     if (result.failureNotes.isNotEmpty) '건너뜀 ${result.failureNotes.length}건',
-    ...result.failureNotes,
   ];
-  final severity = result.failureNotes.isEmpty
-      ? InfoBarSeverity.success
-      : result.succeeded > 0
-      ? InfoBarSeverity.warning
-      : InfoBarSeverity.error;
-  await displayInfoBar(
+  await _showNotesDialog(
     context,
-    builder: (context, close) {
-      return InfoBar(
-        title: const Text('선택 삭제'),
-        content: Text(lines.join('\n')),
-        severity: severity,
-        onClose: close,
+    title: '선택 삭제',
+    summary: summaryParts.join(' · '),
+    notes: result.failureNotes,
+  );
+}
+
+Future<void> _showNotesDialog(
+  BuildContext context, {
+  required String title,
+  required String summary,
+  required List<String> notes,
+}) async {
+  await showDialog<void>(
+    context: context,
+    builder: (dialogContext) {
+      return ContentDialog(
+        constraints: const BoxConstraints(maxWidth: 480, maxHeight: 560),
+        title: Text(title, style: const TextStyle(fontSize: 16)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(summary),
+            if (notes.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 280),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      for (var i = 0; i < notes.length; i++) ...[
+                        if (i > 0) const SizedBox(height: 6),
+                        Text(notes[i]),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: const Text('확인'),
+          ),
+        ],
       );
     },
   );
@@ -346,19 +382,20 @@ Future<void> _didTapUpload(
   if (!context.mounted) {
     return;
   }
+  final warningCount = result.warningNotes.length;
+  final failureCount = result.failureNotes.length;
   final notes = [...result.warningNotes, ...result.failureNotes];
   if (notes.isEmpty) {
     return;
   }
-  await displayInfoBar(
+  final summaryParts = <String>[
+    if (warningCount > 0) '경고 $warningCount건',
+    if (failureCount > 0) '실패 $failureCount건',
+  ];
+  await _showNotesDialog(
     context,
-    builder: (context, close) {
-      return InfoBar(
-        title: const Text('올리기 완료'),
-        content: Text(notes.join('\n')),
-        severity: InfoBarSeverity.warning,
-        onClose: close,
-      );
-    },
+    title: '올리기 완료',
+    summary: summaryParts.join(' · '),
+    notes: notes,
   );
 }
