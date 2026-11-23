@@ -189,15 +189,17 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                       expandT: expandT,
                       nodeRadius: radius,
                     );
-                    return FittedBox(
-                      fit: BoxFit.contain,
-                      alignment: Alignment.centerLeft,
-                      child: SizedBox(
-                        width: layout.canvasSize.width,
-                        height: layout.canvasSize.height,
-                        child: Stack(
-                          clipBehavior: Clip.none,
-                          children: [
+                    // 가용 가로 폭에 맞춰 스케일(contain은 세로에 먼저 닿아 가로 여백이 남음).
+                    return ClipRect(
+                      child: FittedBox(
+                        fit: BoxFit.fitWidth,
+                        alignment: Alignment.centerLeft,
+                        child: SizedBox(
+                          width: layout.canvasSize.width,
+                          height: layout.canvasSize.height,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
                             CustomPaint(
                               size: layout.canvasSize,
                               painter: _PipelineFlowPainter(
@@ -301,6 +303,7 @@ class _PipelineTraceGraphViewState extends State<PipelineTraceGraphView>
                                 onTap: () => _didTapNode(entry.key),
                               ),
                           ],
+                        ),
                         ),
                       ),
                     );
