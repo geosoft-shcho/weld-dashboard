@@ -123,18 +123,41 @@ class PresentCollectionNodesUseCase {
         continue;
       }
       final isPoint = !endedAt.isAfter(startedAt);
+      // 점은 창으로 끌어올리지 않는다. 원본 시각이 [windowStart, windowEnd)일 때만.
+      if (isPoint) {
+        if (startedAt.isBefore(windowStart) ||
+            !startedAt.isBefore(windowEnd)) {
+          continue;
+        }
+        events.add(
+          CollectionEvent(
+            eventId: '${node.nodeKey}/$index',
+            equipmentId: node.nodeKey,
+            equipmentName: node.label.isEmpty ? '미지정' : node.label,
+            lineName: '',
+            eventAt: startedAt,
+            durationSec: 0,
+            connectionStatus: assetCount > 0
+                ? ConnectionStatus.connected
+                : ConnectionStatus.disconnected,
+            receivedCount: assetCount,
+            windowLabel: _segmentWindowLabel(
+              startedAt: startedAt,
+              endedAt: endedAt,
+              isPoint: true,
+            ),
+            lossRatePercent: null,
+            timeSyncStatus: TimeSyncStatus.synced,
+            clockOffsetMs: null,
+          ),
+        );
+        continue;
+      }
       final visibleStart = startedAt.isBefore(windowStart)
           ? windowStart
           : startedAt;
-      final visibleEnd = isPoint
-          ? visibleStart
-          : (endedAt.isAfter(windowEnd) ? windowEnd : endedAt);
-      if (!isPoint && !visibleStart.isBefore(visibleEnd)) {
-        continue;
-      }
-      if (isPoint &&
-          (visibleStart.isBefore(windowStart) ||
-              !visibleStart.isBefore(windowEnd))) {
+      final visibleEnd = endedAt.isAfter(windowEnd) ? windowEnd : endedAt;
+      if (!visibleStart.isBefore(visibleEnd)) {
         continue;
       }
       events.add(
@@ -144,14 +167,16 @@ class PresentCollectionNodesUseCase {
           equipmentName: node.label.isEmpty ? '미지정' : node.label,
           lineName: '',
           eventAt: visibleStart,
-          durationSec: isPoint
-              ? 0
-              : visibleEnd.difference(visibleStart).inSeconds,
+          durationSec: visibleEnd.difference(visibleStart).inSeconds,
           connectionStatus: assetCount > 0
               ? ConnectionStatus.connected
               : ConnectionStatus.disconnected,
           receivedCount: assetCount,
-          windowLabel: _windowLabel(node),
+          windowLabel: _segmentWindowLabel(
+            startedAt: startedAt,
+            endedAt: endedAt,
+            isPoint: false,
+          ),
           lossRatePercent: null,
           timeSyncStatus: TimeSyncStatus.synced,
           clockOffsetMs: null,
@@ -212,6 +237,22 @@ class PresentCollectionNodesUseCase {
     final endedAt = node.lastRecordedAt ?? node.endedAt;
     if (startedAt == null || endedAt == null) {
       return node.label;
+    }
+    return _segmentWindowLabel(
+      startedAt: startedAt,
+      endedAt: endedAt,
+      isPoint: !endedAt.isAfter(startedAt),
+    );
+  }
+
+  /// segment 시각만으로 막대·접근성 문구를 만든다. 긴 node.label을 쓰지 않는다.
+  String _segmentWindowLabel({
+    required DateTime startedAt,
+    required DateTime endedAt,
+    required bool isPoint,
+  }) {
+    if (isPoint) {
+      return _dateClock(startedAt);
     }
     final doesSpanDays =
         startedAt.year != endedAt.year ||
