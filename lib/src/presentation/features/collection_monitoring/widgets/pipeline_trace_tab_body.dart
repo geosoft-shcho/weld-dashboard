@@ -202,7 +202,11 @@ class _TraceListPanel extends StatelessWidget {
               ),
             ),
           if (viewModel.doesShowQueueBottleneck)
-            _QueueBottleneckPanel(viewModel: viewModel),
+            Flexible(
+              child: SingleChildScrollView(
+                child: _QueueBottleneckPanel(viewModel: viewModel),
+              ),
+            ),
         ],
       ),
     );
@@ -297,8 +301,9 @@ class _TraceListHeader extends StatelessWidget {
     final filterKey = _statusFilterKey(viewModel.statusFilter);
     return Row(
       children: [
-        IntrinsicWidth(
+        Flexible(
           child: ComboBox<String>(
+            isExpanded: true,
             value: filterKey,
             items: const [
               ComboBoxItem(value: 'all', child: Text('전체')),
