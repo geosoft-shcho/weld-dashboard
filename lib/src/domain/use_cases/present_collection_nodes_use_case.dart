@@ -49,7 +49,12 @@ class PresentCollectionNodesUseCase {
                   node.nodeKey,
                 ),
                 label: node.label.isEmpty ? '미지정' : node.label,
-                subtitle: _rowSubtitle(node),
+                subtitle: _rowSubtitle(
+                  node,
+                  doesHaveDayEvents: events.any(
+                    (event) => event.equipmentId == node.nodeKey,
+                  ),
+                ),
                 selectionKey: node.nodeKey,
               ),
         ],
@@ -216,9 +221,18 @@ class PresentCollectionNodesUseCase {
     return _levelName(nodes.first.path.level);
   }
 
-  String _rowSubtitle(CollectedNode node) {
+  String _rowSubtitle(
+    CollectedNode node, {
+    required bool doesHaveDayEvents,
+  }) {
     if (node.contentUrl.isNotEmpty) {
       return '파일';
+    }
+    if (node.path.level == CollectedNodeLevel.job) {
+      final assetCount = node.assetCount ?? 0;
+      if (assetCount > 0 && !doesHaveDayEvents) {
+        return '이 날짜 기록 없음 · 파일 $assetCount';
+      }
     }
     return _levelName(node.path.level);
   }

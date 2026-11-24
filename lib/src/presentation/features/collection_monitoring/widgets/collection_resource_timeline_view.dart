@@ -161,9 +161,10 @@ class _CollectionResourceTimelineViewState
       );
     }
     if (timeline.resources.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(_emptyLabel(timeline.depth, timeline.eventCount)),
+      return _EmptyBoardBody(
+        viewModel: widget.viewModel,
+        depth: timeline.depth,
+        eventCount: timeline.eventCount,
       );
     }
     final resources = [
@@ -340,17 +341,6 @@ class _CollectionResourceTimelineViewState
     return null;
   }
 
-  String _emptyLabel(CollectionResourceDepth depth, int eventCount) {
-    switch (depth) {
-      case CollectionResourceDepth.project:
-        return '조건에 맞는 공사가 없습니다';
-      case CollectionResourceDepth.line:
-        return '조건에 맞는 라인이 없습니다';
-      case CollectionResourceDepth.equipment:
-        return eventCount == 0 ? '이 날짜의 수집 이벤트가 없습니다' : '조건에 맞는 장비가 없습니다';
-    }
-  }
-
   void _handleEntryTap(
     BuildContext context,
     TimelineEntryDetails<CollectionEvent> details,
@@ -515,5 +505,76 @@ class _NowCaretPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant _NowCaretPainter oldDelegate) {
     return oldDelegate.color != color;
+  }
+}
+
+class _EmptyBoardBody extends StatelessWidget {
+  const _EmptyBoardBody({
+    required this.viewModel,
+    required this.depth,
+    required this.eventCount,
+  });
+
+  final CollectionMonitoringViewModel viewModel;
+  final CollectionResourceDepth depth;
+  final int eventCount;
+
+  @override
+  Widget build(BuildContext context) {
+    final hint = viewModel.jobDayEmptyHint;
+    if (hint == null) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: Text(_fallbackLabel()),
+      );
+    }
+    if (!hint.doesLackDayOverlap) {
+      return const Padding(
+        padding: EdgeInsets.all(16),
+        child: Text('이 작업에 첨부된 파일이 없습니다'),
+      );
+    }
+    final dateLabel = DashboardFormatters.date(hint.selectedDate);
+    final countLabel = DashboardFormatters.count(hint.assetCount);
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            '이 날짜에 기록된 파일이 없습니다',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+          ),
+          const SizedBox(height: 8),
+          Text('${hint.label} 파일 $countLabel개 · $dateLabel에는 기록 없음'),
+          const SizedBox(height: 4),
+          const Text(
+            '파일 목록은 선택일 기준으로 서버가 걸러 줍니다.',
+            style: TextStyle(fontSize: 12, color: AppTheme.STATUS_OFF),
+          ),
+          if (hint.canJumpToRecordDate) ...[
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: viewModel.didTapJumpToJobRecordDate,
+              child: const Text('기록이 있는 날 보기'),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  String _fallbackLabel() {
+    switch (depth) {
+      case CollectionResourceDepth.project:
+        return '조건에 맞는 공사가 없습니다';
+      case CollectionResourceDepth.line:
+        return '조건에 맞는 라인이 없습니다';
+      case CollectionResourceDepth.equipment:
+        return eventCount == 0
+            ? '이 날짜의 수집 이벤트가 없습니다'
+            : '조건에 맞는 장비가 없습니다';
+    }
   }
 }

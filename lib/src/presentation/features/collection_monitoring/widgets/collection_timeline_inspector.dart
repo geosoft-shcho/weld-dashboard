@@ -13,14 +13,14 @@ class CollectionTimelineInspector extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final node = viewModel.selectedNode;
+    final node = viewModel.inspectorNode;
     if (node == null) {
       return const Padding(
         padding: EdgeInsets.all(12),
         child: Text('타임라인에서 항목을 선택하세요'),
       );
     }
-    final fields = _fieldsOf(node);
+    final fields = _fieldsOf(node, viewModel.jobDayEmptyHint);
     final detail = _detailActionOf(node);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(12),
@@ -110,7 +110,10 @@ class CollectionTimelineInspector extends StatelessWidget {
     }
   }
 
-  List<(String, String)> _fieldsOf(CollectedNode node) {
+  List<(String, String)> _fieldsOf(
+    CollectedNode node,
+    JobDayEmptyHint? dayEmptyHint,
+  ) {
     final path = node.path;
     return [
       ('보기', '공사'),
@@ -139,6 +142,8 @@ class CollectionTimelineInspector extends StatelessWidget {
       if (node.workDurationSeconds != null)
         ('작업 시간', _workDurationLabel(node.workDurationSeconds!)),
       if (node.contentUrl.isNotEmpty) ('파일', node.contentUrl),
+      if (dayEmptyHint != null && dayEmptyHint.doesLackDayOverlap)
+        ('선택일 겹침', '없음'),
     ];
   }
 
