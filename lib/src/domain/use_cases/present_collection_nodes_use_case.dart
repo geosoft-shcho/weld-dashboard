@@ -75,12 +75,14 @@ class PresentCollectionNodesUseCase {
   }
 
   CollectionBoardRow _rowFrom(CollectedNode node) {
+    // API: summary.asset_count > 0 또는 Asset 노드(asset 필드).
     final assetCount = node.assetCount ?? 0;
+    final isConnected = assetCount > 0 || node.isAssetNode;
     return CollectionBoardRow(
       equipmentId: node.nodeKey,
       equipmentName: node.label.isEmpty ? '미지정' : node.label,
       lineName: '',
-      connectionStatus: assetCount > 0
+      connectionStatus: isConnected
           ? ConnectionStatus.connected
           : ConnectionStatus.disconnected,
       receivedCount: assetCount,
@@ -121,6 +123,10 @@ class PresentCollectionNodesUseCase {
           ];
     final events = <CollectionEvent>[];
     final assetCount = node.assetCount ?? 0;
+    final isConnected = assetCount > 0 || node.isAssetNode;
+    final connectionStatus = isConnected
+        ? ConnectionStatus.connected
+        : ConnectionStatus.disconnected;
     for (var index = 0; index < ranges.length; index++) {
       final startedAt = ranges[index].startedAt;
       final endedAt = ranges[index].endedAt;
@@ -142,9 +148,7 @@ class PresentCollectionNodesUseCase {
             lineName: '',
             eventAt: startedAt,
             durationSec: 0,
-            connectionStatus: assetCount > 0
-                ? ConnectionStatus.connected
-                : ConnectionStatus.disconnected,
+            connectionStatus: connectionStatus,
             receivedCount: assetCount,
             windowLabel: _segmentWindowLabel(
               startedAt: startedAt,
@@ -173,9 +177,7 @@ class PresentCollectionNodesUseCase {
           lineName: '',
           eventAt: visibleStart,
           durationSec: visibleEnd.difference(visibleStart).inSeconds,
-          connectionStatus: assetCount > 0
-              ? ConnectionStatus.connected
-              : ConnectionStatus.disconnected,
+          connectionStatus: connectionStatus,
           receivedCount: assetCount,
           windowLabel: _segmentWindowLabel(
             startedAt: startedAt,

@@ -114,10 +114,11 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
 
   CollectionStatus _statusFrom(CollectedNode node, DateTime snapshotAt) {
     final assetCount = node.assetCount ?? 0;
+    final isConnected = assetCount > 0 || node.isAssetNode;
     return CollectionStatus(
       equipmentId: node.nodeKey,
       snapshotAt: snapshotAt,
-      connectionStatus: assetCount > 0
+      connectionStatus: isConnected
           ? ConnectionStatus.connected
           : ConnectionStatus.disconnected,
       receivedCount: assetCount,
@@ -146,6 +147,11 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
             ),
           ];
     final events = <CollectionEvent>[];
+    final assetCount = node.assetCount ?? 0;
+    final isConnected = assetCount > 0 || node.isAssetNode;
+    final connectionStatus = isConnected
+        ? ConnectionStatus.connected
+        : ConnectionStatus.disconnected;
     for (var index = 0; index < ranges.length; index++) {
       final startedAt = ranges[index].startedAt;
       final endedAt = ranges[index].endedAt;
@@ -165,10 +171,8 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
             lineName: '',
             eventAt: startedAt,
             durationSec: 0,
-            connectionStatus: (node.assetCount ?? 0) > 0
-                ? ConnectionStatus.connected
-                : ConnectionStatus.disconnected,
-            receivedCount: node.assetCount ?? 0,
+            connectionStatus: connectionStatus,
+            receivedCount: assetCount,
             windowLabel: _segmentWindowLabel(
               startedAt: startedAt,
               endedAt: endedAt,
@@ -194,10 +198,8 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
           lineName: '',
           eventAt: visibleStart,
           durationSec: visibleEnd.difference(visibleStart).inSeconds,
-          connectionStatus: (node.assetCount ?? 0) > 0
-              ? ConnectionStatus.connected
-              : ConnectionStatus.disconnected,
-          receivedCount: node.assetCount ?? 0,
+          connectionStatus: connectionStatus,
+          receivedCount: assetCount,
           windowLabel: _segmentWindowLabel(
             startedAt: startedAt,
             endedAt: endedAt,

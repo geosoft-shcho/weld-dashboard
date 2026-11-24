@@ -78,35 +78,23 @@ class CollectionEventTimelineMapper {
 
   static const double HOUR_PX = 48;
 
+  /// API summary.asset_count / asset 유무로만 정한 수집·기록 없음 색.
   static Color colorOf(CollectionEvent event) {
-    if (event.isLossWarning) {
-      return AppTheme.STATUS_WARN;
-    }
-    if (event.isDesynced) {
-      return AppTheme.STATUS_DESYNC;
-    }
     switch (event.connectionStatus) {
       case ConnectionStatus.connected:
         return AppTheme.STATUS_OK;
       case ConnectionStatus.disconnected:
-        return AppTheme.STATUS_OFF;
       case ConnectionStatus.error:
-        return AppTheme.STATUS_ERROR;
+        // 기록 없음: 어두운 캔버스에서 회색보다 잘 보이게.
+        return AppTheme.STATUS_WARN;
     }
   }
 
   static TimelineStatus statusOf(CollectionEvent event) {
-    if (event.connectionStatus == ConnectionStatus.error ||
-        event.isLossWarning) {
-      return TimelineStatus.error;
+    if (event.connectionStatus == ConnectionStatus.connected) {
+      return TimelineStatus.active;
     }
-    if (event.connectionStatus == ConnectionStatus.disconnected) {
-      return TimelineStatus.disabled;
-    }
-    if (event.isDesynced) {
-      return TimelineStatus.pending;
-    }
-    return TimelineStatus.active;
+    return TimelineStatus.disabled;
   }
 
   static TimelineEntry<CollectionEvent> entryOf(
