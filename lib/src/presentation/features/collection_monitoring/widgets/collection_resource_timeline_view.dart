@@ -31,6 +31,9 @@ class _CollectionResourceTimelineViewState
   static const double _rowHeight = 64;
   static const double _timeHeaderHeight = 48;
 
+  /// neon_timeline `resourceColumnWidth` 하한(≥120). 화면에는 클립으로 숨긴다.
+  static const double _packageResourceColumnWidth = 120;
+
   late final TimelineController<CollectionEvent> _controller;
   late final ScrollController _horizontalController;
   late final ScrollController _verticalController;
@@ -127,7 +130,6 @@ class _CollectionResourceTimelineViewState
     required int startHour,
     required int endHour,
     required double pixelsPerMinute,
-    required double resourceColumnWidth,
     required double viewportWidth,
   }) {
     final now = DateTime.now();
@@ -140,11 +142,9 @@ class _CollectionResourceTimelineViewState
     final scroll = _horizontalController.hasClients
         ? _horizontalController.offset
         : 0.0;
-    final left =
-        resourceColumnWidth +
-        (nowMinutes - rangeStart) * pixelsPerMinute -
-        scroll;
-    if (left < resourceColumnWidth - 1 || left > viewportWidth) {
+    // 패키지 리소스 열은 왼쪽으로 밀어 클립했으므로 캔버스 원점은 viewport 0.
+    final left = (nowMinutes - rangeStart) * pixelsPerMinute - scroll;
+    if (left < -1 || left > viewportWidth) {
       return null;
     }
     return left;
@@ -178,98 +178,111 @@ class _CollectionResourceTimelineViewState
           resourceId: timeline.resourceIdOf(event),
         ),
     ];
-    final resourceColumnWidth = CollectionEventTimelineMapper.columnWidthOf(
+    final stickyColumnWidth = CollectionEventTimelineMapper.columnWidthOf(
       timeline.depth,
     );
     final startHour = CollectionEventTimelineMapper.startHourOf(query);
     final endHour = CollectionEventTimelineMapper.endHourOf(query);
     final nowOnDate = _nowOnSelectedDate(query.selectedDate);
     return NeonTimelineMaterialScope(
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final canvasBudget = constraints.maxWidth.isFinite
-              ? constraints.maxWidth - resourceColumnWidth
-              : 0.0;
-          final pixelsPerMinute =
-              CollectionEventTimelineMapper.pixelsPerMinuteForViewport(
-                zoomHours: query.zoomHours,
-                canvasBudget: canvasBudget,
-                startHour: startHour,
-                endHour: endHour,
-              );
-          final nowLeft = constraints.maxWidth.isFinite
-              ? _nowLineLeft(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: stickyColumnWidth,
+            child: _StickyResourceColumn(
+              label: timeline.resourceHeaderLabel,
+              timeHeaderHeight: _timeHeaderHeight,
+              rowHeight: _rowHeight,
+              verticalController: _stickyVerticalController,
+              resources: resources,
+              headerBuilder: _buildResourceHeader,
+            ),
+          ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final viewWidth = constraints.maxWidth.isFinite
+                    ? constraints.maxWidth
+                    : 0.0;
+                final viewHeight = constraints.maxHeight.isFinite
+                    ? constraints.maxHeight
+                    : 0.0;
+                final pixelsPerMinute =
+                    CollectionEventTimelineMapper.pixelsPerMinuteForViewport(
+                      zoomHours: query.zoomHours,
+                      canvasBudget: viewWidth,
+                      startHour: startHour,
+                      endHour: endHour,
+                    );
+                final nowLeft = viewWidth > 0
+                    ? _nowLineLeft(
+                        startHour: startHour,
+                        endHour: endHour,
+                        pixelsPerMinute: pixelsPerMinute,
+                        viewportWidth: viewWidth,
+                      )
+                    : null;
+                final board = ResourceTimelineView<CollectionEvent>(
+                  resources: resources,
+                  entries: entries,
+                  selectedDate: query.selectedDate,
+                  now: nowOnDate,
+                  timelineController: _controller,
+                  horizontalController: _horizontalController,
+                  verticalController: _verticalController,
+                  dataRevision: Object.hash(
+                    query.snapshotAt,
+                    query.zoomHours,
+                    timeline.depth,
+                    timeline.eventCount,
+                    timeline.selectedEventId,
+                    timeline.resources.length,
+                    viewWidth.round(),
+                    pixelsPerMinute,
+                  ),
                   startHour: startHour,
                   endHour: endHour,
                   pixelsPerMinute: pixelsPerMinute,
-                  resourceColumnWidth: resourceColumnWidth,
-                  viewportWidth: constraints.maxWidth,
-                )
-              : null;
-          return Stack(
-            children: [
-              ResourceTimelineView<CollectionEvent>(
-                resources: resources,
-                entries: entries,
-                selectedDate: query.selectedDate,
-                now: nowOnDate,
-                timelineController: _controller,
-                horizontalController: _horizontalController,
-                verticalController: _verticalController,
-                dataRevision: Object.hash(
-                  query.snapshotAt,
-                  query.zoomHours,
-                  timeline.depth,
-                  timeline.eventCount,
-                  timeline.selectedEventId,
-                  timeline.resources.length,
-                  constraints.maxWidth.isFinite
-                      ? constraints.maxWidth.round()
-                      : 0,
-                  pixelsPerMinute,
-                ),
-                startHour: startHour,
-                endHour: endHour,
-                pixelsPerMinute: pixelsPerMinute,
-                rowHeight: _rowHeight,
-                resourceColumnWidth: resourceColumnWidth,
-                timeHeaderHeight: _timeHeaderHeight,
-                showCapacityConflicts: false,
-                interactions: const TimelineInteractionConfig(
-                  enableDragging: false,
-                  enableResizing: false,
-                  enableKeyboard: false,
-                ),
-                resourceHeaderLabel: timeline.resourceHeaderLabel,
-                resourceHeaderBuilder: _buildEmptyResourceHeader,
-                onEntryTap: _handleEntryTap,
-                itemBuilder: _buildEntry,
-              ),
-              Positioned(
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: resourceColumnWidth,
-                child: _StickyResourceColumn(
-                  label: timeline.resourceHeaderLabel,
-                  timeHeaderHeight: _timeHeaderHeight,
                   rowHeight: _rowHeight,
-                  verticalController: _stickyVerticalController,
-                  resources: resources,
-                  headerBuilder: _buildResourceHeader,
-                ),
-              ),
-              if (nowLeft != null)
-                Positioned(
-                  left: nowLeft - 6,
-                  top: 0,
-                  bottom: 0,
-                  width: 12,
-                  child: const IgnorePointer(child: _NowMarker()),
-                ),
-            ],
-          );
-        },
+                  resourceColumnWidth: _packageResourceColumnWidth,
+                  timeHeaderHeight: _timeHeaderHeight,
+                  showCapacityConflicts: false,
+                  interactions: const TimelineInteractionConfig(
+                    enableDragging: false,
+                    enableResizing: false,
+                    enableKeyboard: false,
+                  ),
+                  resourceHeaderLabel: '',
+                  resourceHeaderBuilder: _buildEmptyResourceHeader,
+                  onEntryTap: _handleEntryTap,
+                  itemBuilder: _buildEntry,
+                );
+                return Stack(
+                  clipBehavior: Clip.hardEdge,
+                  children: [
+                    // 패키지 하한 120px 리소스 열은 왼쪽으로 밀어 보이지 않게 한다.
+                    Positioned(
+                      left: -_packageResourceColumnWidth,
+                      top: 0,
+                      width: viewWidth + _packageResourceColumnWidth,
+                      height: viewHeight,
+                      child: board,
+                    ),
+                    if (nowLeft != null)
+                      Positioned(
+                        left: nowLeft - 6,
+                        top: 0,
+                        bottom: 0,
+                        width: 12,
+                        child: const IgnorePointer(child: _NowMarker()),
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -278,7 +291,10 @@ class _CollectionResourceTimelineViewState
     BuildContext context,
     TimelineResource resource,
   ) {
-    return const SizedBox.expand();
+    return const ColoredBox(
+      color: AppTheme.SURFACE_RAISED,
+      child: SizedBox.expand(),
+    );
   }
 
   Widget _buildResourceHeader(BuildContext context, TimelineResource resource) {
