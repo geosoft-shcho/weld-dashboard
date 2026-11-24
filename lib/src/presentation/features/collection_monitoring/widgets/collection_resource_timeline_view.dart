@@ -303,13 +303,16 @@ class _CollectionResourceTimelineViewState
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(
-                resource.label,
-                maxLines: 2,
-                overflow: TextOverflow.visible,
-                style: const TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+              Tooltip(
+                message: resource.label,
+                child: Text(
+                  resource.label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
               Text(
@@ -356,6 +359,15 @@ class _CollectionResourceTimelineViewState
     widget.viewModel.didSelectEvent(event.eventId, event.equipmentId);
   }
 
+  /// 점 막대에 행 라벨(긴 공사명)을 다시 쓰지 않는다.
+  String _pointBarLabel(CollectionEvent event) {
+    final windowLabel = event.windowLabel.trim();
+    if (windowLabel.isEmpty || windowLabel == event.equipmentName) {
+      return '◆';
+    }
+    return '◆ $windowLabel';
+  }
+
   Widget _buildEntry(
     BuildContext context,
     TimelineResourceEntryDetails<CollectionEvent> details,
@@ -379,7 +391,7 @@ class _CollectionResourceTimelineViewState
           alignment: Alignment.centerLeft,
           child: Text(
             event.isPoint
-                ? '◆ ${event.windowLabel}'
+                ? _pointBarLabel(event)
                 : '${event.connectionStatus.label} · ${DashboardFormatters.durationLabel(event.durationSec)}',
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

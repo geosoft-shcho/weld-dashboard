@@ -34,19 +34,41 @@ class CollectionEventPlannerAdapter
   @override
   NeonPlannerEntryPresentation presentationOf(CollectionEvent entry) {
     final title = entry.isPoint
-        ? '◆ ${entry.windowLabel}'
+        ? _pointTitle(entry)
         : '${entry.connectionStatus.label} · ${entry.windowLabel}';
     return NeonPlannerEntryPresentation(
       title: title,
       subtitle: entry.equipmentName,
       metadata:
           '수신 ${DashboardFormatters.count(entry.receivedCount)} · 유실 ${DashboardFormatters.percent(entry.lossRatePercent)}',
-      semanticLabel:
-          '${entry.equipmentName} ${entry.connectionStatus.label} ${entry.windowLabel}',
+      semanticLabel: _semanticLabel(entry),
       icon: entry.isPoint ? Icons.diamond : Icons.sensors,
       kind: NeonPlannerEntryKind.standard,
       accentColor: CollectionEventTimelineMapper.colorOf(entry),
     );
+  }
+
+  static String _pointTitle(CollectionEvent entry) {
+    final windowLabel = entry.windowLabel.trim();
+    if (windowLabel.isEmpty || windowLabel == entry.equipmentName) {
+      return '◆';
+    }
+    return '◆ $windowLabel';
+  }
+
+  static String _semanticLabel(CollectionEvent entry) {
+    final windowLabel = entry.windowLabel.trim();
+    final doesRepeatName =
+        windowLabel.isEmpty || windowLabel == entry.equipmentName;
+    if (entry.isPoint) {
+      return doesRepeatName
+          ? '${entry.equipmentName} 점'
+          : '${entry.equipmentName} 점 $windowLabel';
+    }
+    if (doesRepeatName) {
+      return '${entry.equipmentName} ${entry.connectionStatus.label}';
+    }
+    return '${entry.equipmentName} ${entry.connectionStatus.label} $windowLabel';
   }
 }
 
@@ -102,9 +124,7 @@ class CollectionEventTimelineMapper {
       duration: duration,
       status: statusOf(event),
       color: colorOf(event),
-      semanticLabel: event.isPoint
-          ? '${event.equipmentName} 점 ${event.windowLabel}'
-          : '${event.equipmentName} ${event.connectionStatus.label} ${event.windowLabel}',
+      semanticLabel: CollectionEventPlannerAdapter._semanticLabel(event),
       draggable: false,
       resourceIds: {resourceId},
     );

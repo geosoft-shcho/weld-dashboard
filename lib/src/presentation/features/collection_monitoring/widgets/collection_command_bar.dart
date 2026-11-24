@@ -337,7 +337,11 @@ class _CollectionCommandBarState extends State<CollectionCommandBar> {
         for (final node in nodes)
           ComboBoxItem(
             value: node.nodeKey,
-            child: Text(node.label.isEmpty ? '미지정' : node.label),
+            child: Text(
+              node.label.isEmpty ? '미지정' : node.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
       ],
       onChanged: (value) {
