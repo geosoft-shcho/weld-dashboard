@@ -27,6 +27,7 @@ class MediaTagDataSource {
       interceptors: [_attachBearer, _handleUnauthenticated],
     );
     authService = AuthServiceClient(transport);
+    accountService = AccountServiceClient(transport);
     workService = WorkServiceClient(transport);
     assetService = AssetServiceClient(transport);
     reportService = ReportServiceClient(transport);
@@ -47,6 +48,7 @@ class MediaTagDataSource {
   void Function()? onUnauthenticated;
 
   late final AuthServiceClient authService;
+  late final AccountServiceClient accountService;
   late final WorkServiceClient workService;
   late final AssetServiceClient assetService;
   late final ReportServiceClient reportService;

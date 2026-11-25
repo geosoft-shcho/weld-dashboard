@@ -25,10 +25,14 @@ class AppCoordinator extends ChangeNotifier {
   static const int WORK_HISTORY_PANE_INDEX = 5;
   static const int EQUIPMENT_LOOKUP_PANE_INDEX = 6;
   static const int ASSET_LOOKUP_PANE_INDEX = 7;
+  static const int ACCOUNTS_PANE_INDEX = 8;
+  static const int ROLES_PANE_INDEX = 9;
+  static const int SERVICE_TOKENS_PANE_INDEX = 10;
 
   AppNavigationPort? _navigation;
   bool _isApplyingRoute = false;
   bool Function()? _canAccessVideoMultimodal;
+  bool Function()? _canAccessAccountManage;
 
   int _selectedPaneIndex = 0;
   WorkHistoryStack _workHistoryStack = WorkHistoryStack.list;
@@ -88,11 +92,15 @@ class AppCoordinator extends ChangeNotifier {
   /// 권한 콜백 미연결 시 기본 거부 (제한 계정 권한이 풀리지 않게).
   bool get canAccessVideoMultimodal =>
       _canAccessVideoMultimodal?.call() ?? false;
+  bool get canAccessAccountManage =>
+      _canAccessAccountManage?.call() ?? false;
 
   void attachAuthPermission({
     required bool Function() canAccessVideoMultimodal,
+    required bool Function() canAccessAccountManage,
   }) {
     _canAccessVideoMultimodal = canAccessVideoMultimodal;
+    _canAccessAccountManage = canAccessAccountManage;
   }
 
   /// 제한 계정 등 권한 없을 때 멀티모달 스택에 남아 있으면 상세로 되돌린다.
@@ -108,9 +116,27 @@ class AppCoordinator extends ChangeNotifier {
     _publishLocation(_RouteWriteMode.replace);
   }
 
+  /// account.manage 없으면 계정 관리 pane에서 수집으로 되돌린다.
+  void didDenyAccountManageIfNeeded() {
+    if (canAccessAccountManage) {
+      return;
+    }
+    if (_selectedPaneIndex != ACCOUNTS_PANE_INDEX &&
+        _selectedPaneIndex != ROLES_PANE_INDEX &&
+        _selectedPaneIndex != SERVICE_TOKENS_PANE_INDEX) {
+      return;
+    }
+    _selectedPaneIndex = COLLECTION_PANE_INDEX;
+    _lookupDetailId = '';
+    _resetWorkHistoryToList();
+    notifyListeners();
+    _publishLocation(_RouteWriteMode.replace);
+  }
+
   /// 로그인·로그아웃 후 버튼 활성 상태 등을 다시 그리게 한다.
   void didAuthSessionChange() {
     didDenyVideoMultimodalIfNeeded();
+    didDenyAccountManageIfNeeded();
     notifyListeners();
   }
 
@@ -131,6 +157,12 @@ class AppCoordinator extends ChangeNotifier {
         return _lookupDetailId.isEmpty ? '장비 관리' : '장비 상세';
       case ASSET_LOOKUP_PANE_INDEX:
         return _lookupDetailId.isEmpty ? '파일 관리' : '파일 상세';
+      case ACCOUNTS_PANE_INDEX:
+        return '계정 관리';
+      case ROLES_PANE_INDEX:
+        return '권한 관리';
+      case SERVICE_TOKENS_PANE_INDEX:
+        return '서버 연동 토큰';
       case COLLECTION_PANE_INDEX:
       default:
         return '수집 모니터링';
@@ -671,6 +703,12 @@ class AppCoordinator extends ChangeNotifier {
           pane: AppPane.assets,
           lookupDetailId: _lookupDetailId,
         );
+      case ACCOUNTS_PANE_INDEX:
+        return const AppRouteState(pane: AppPane.accounts);
+      case ROLES_PANE_INDEX:
+        return const AppRouteState(pane: AppPane.roles);
+      case SERVICE_TOKENS_PANE_INDEX:
+        return const AppRouteState(pane: AppPane.serviceTokens);
       case COLLECTION_PANE_INDEX:
       default:
         return const AppRouteState(pane: AppPane.collection);
@@ -741,6 +779,12 @@ class AppCoordinator extends ChangeNotifier {
       case AppPane.assets:
         return _selectedPaneIndex == ASSET_LOOKUP_PANE_INDEX &&
             state.lookupDetailId == _lookupDetailId;
+      case AppPane.accounts:
+        return _selectedPaneIndex == ACCOUNTS_PANE_INDEX;
+      case AppPane.roles:
+        return _selectedPaneIndex == ROLES_PANE_INDEX;
+      case AppPane.serviceTokens:
+        return _selectedPaneIndex == SERVICE_TOKENS_PANE_INDEX;
     }
   }
 
@@ -805,6 +849,36 @@ class AppCoordinator extends ChangeNotifier {
         _selectedPaneIndex = ASSET_LOOKUP_PANE_INDEX;
         _resetWorkHistoryToList();
         _lookupDetailId = state.lookupDetailId;
+      case AppPane.accounts:
+        if (!canAccessAccountManage) {
+          _selectedPaneIndex = COLLECTION_PANE_INDEX;
+          _resetWorkHistoryToList();
+          _lookupDetailId = '';
+          break;
+        }
+        _selectedPaneIndex = ACCOUNTS_PANE_INDEX;
+        _resetWorkHistoryToList();
+        _lookupDetailId = '';
+      case AppPane.roles:
+        if (!canAccessAccountManage) {
+          _selectedPaneIndex = COLLECTION_PANE_INDEX;
+          _resetWorkHistoryToList();
+          _lookupDetailId = '';
+          break;
+        }
+        _selectedPaneIndex = ROLES_PANE_INDEX;
+        _resetWorkHistoryToList();
+        _lookupDetailId = '';
+      case AppPane.serviceTokens:
+        if (!canAccessAccountManage) {
+          _selectedPaneIndex = COLLECTION_PANE_INDEX;
+          _resetWorkHistoryToList();
+          _lookupDetailId = '';
+          break;
+        }
+        _selectedPaneIndex = SERVICE_TOKENS_PANE_INDEX;
+        _resetWorkHistoryToList();
+        _lookupDetailId = '';
     }
   }
 

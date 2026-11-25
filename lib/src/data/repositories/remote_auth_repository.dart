@@ -88,6 +88,19 @@ class RemoteAuthRepository implements AuthRepository {
     }
   }
 
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _mediaTag.authService.changePassword(
+      auth_pb.ChangePasswordRequest(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      ),
+    );
+  }
+
   Future<void> _clearLocal() async {
     _mediaTag.sessionToken = null;
     await _sessionLocal.clear();

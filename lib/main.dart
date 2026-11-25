@@ -54,16 +54,18 @@ class _WeldDashboardAppState extends State<WeldDashboardApp> {
     _authSession = locator<AuthSessionViewModel>();
     _coordinator.attachAuthPermission(
       canAccessVideoMultimodal: () => _authSession.canAccessVideoMultimodal,
+      canAccessAccountManage: () => _authSession.hasAccountManage,
     );
     _authSession.addListener(_didAuthSessionChange);
     _router = createAppRouter(onLocationChanged: _coordinator.didApplyRoute);
     _coordinator.attachNavigation(GoRouterAppNavigation(_router));
-    // restore 후 권한 없는 계정 + multimodal URL이면 스택을 상세로 되돌린다.
+    // restore 후 권한 없는 계정 + multimodal/계정관리 URL이면 되돌린다.
     _authSession.restore().then((_) {
       if (!mounted) {
         return;
       }
       _coordinator.didDenyVideoMultimodalIfNeeded();
+      _coordinator.didDenyAccountManageIfNeeded();
     });
   }
 

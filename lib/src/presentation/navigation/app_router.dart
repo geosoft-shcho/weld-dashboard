@@ -124,6 +124,21 @@ GoRouter createAppRouter({
             pageBuilder: (context, state) =>
                 const NoTransitionPage<void>(child: SizedBox.shrink()),
           ),
+          GoRoute(
+            path: AppRouteState.accountsPath,
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
+          ),
+          GoRoute(
+            path: AppRouteState.rolesPath,
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
+          ),
+          GoRoute(
+            path: AppRouteState.serviceTokensPath,
+            pageBuilder: (context, state) =>
+                const NoTransitionPage<void>(child: SizedBox.shrink()),
+          ),
         ],
       ),
     ],

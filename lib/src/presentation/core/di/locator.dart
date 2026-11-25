@@ -59,11 +59,17 @@ import '../../../domain/use_cases/upload_asset_use_case.dart';
 import '../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../../data/datasources/local/auth_session_local_data_source.dart';
 import '../../../data/repositories/browser_ask_session_store.dart';
+import '../../../data/repositories/remote_account_repository.dart';
 import '../../../data/repositories/remote_auth_repository.dart';
+import '../../../domain/repositories/account_admin_repository.dart';
 import '../../../domain/repositories/auth_repository.dart';
 import '../../../domain/use_cases/restore_auth_session_use_case.dart';
+import '../../../domain/use_cases/change_password_use_case.dart';
 import '../../../domain/use_cases/sign_in_use_case.dart';
 import '../../../domain/use_cases/sign_out_use_case.dart';
+import '../../features/account_admin/accounts_admin_view_model.dart';
+import '../../features/account_admin/roles_admin_view_model.dart';
+import '../../features/account_admin/service_tokens_admin_view_model.dart';
 import '../../features/auth/auth_session_view_model.dart';
 import '../../../data/repositories/remote_ask_repository.dart';
 import '../../../data/repositories/remote_asset_upload_repository.dart';
@@ -167,11 +173,13 @@ void setupLocator({required bool pdfrxReady}) {
   locator.registerLazySingleton(() => RestoreAuthSessionUseCase(locator()));
   locator.registerLazySingleton(() => SignInUseCase(locator()));
   locator.registerLazySingleton(() => SignOutUseCase(locator()));
+  locator.registerLazySingleton(() => ChangePasswordUseCase(locator()));
   locator.registerLazySingleton(
     () => AuthSessionViewModel(
       restoreAuthSessionUseCase: locator(),
       signInUseCase: locator(),
       signOutUseCase: locator(),
+      changePasswordUseCase: locator(),
     ),
   );
   locator<MediaTagDataSource>().onUnauthenticated = () {
@@ -179,6 +187,18 @@ void setupLocator({required bool pdfrxReady}) {
     locator<AuthSessionLocalDataSource>().clear();
     locator<AuthSessionViewModel>().didReceiveUnauthenticated();
   };
+  locator.registerLazySingleton<AccountAdminRepository>(
+    () => RemoteAccountRepository(locator()),
+  );
+  locator.registerFactory(
+    () => AccountsAdminViewModel(repository: locator()),
+  );
+  locator.registerFactory(
+    () => RolesAdminViewModel(repository: locator()),
+  );
+  locator.registerFactory(
+    () => ServiceTokensAdminViewModel(repository: locator()),
+  );
   locator.registerLazySingleton<AssetUploadRepository>(
     () => RemoteAssetUploadRepository(locator()),
   );

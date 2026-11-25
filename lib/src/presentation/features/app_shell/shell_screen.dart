@@ -2,6 +2,9 @@ import 'package:fluent_ui/fluent_ui.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 
+import '../../features/account_admin/accounts_admin_screen.dart';
+import '../../features/account_admin/roles_admin_screen.dart';
+import '../../features/account_admin/service_tokens_admin_screen.dart';
 import '../../features/asset_lookup/asset_lookup_detail_screen.dart';
 import '../../features/asset_lookup/asset_lookup_screen.dart';
 import '../../features/auth/auth_session_view_model.dart';
@@ -17,6 +20,7 @@ import '../../features/video_multimodal/video_multimodal_screen.dart';
 import '../../features/work_history/work_history_screen.dart';
 import '../../features/worker_lookup/worker_lookup_detail_screen.dart';
 import '../../features/worker_lookup/worker_lookup_screen.dart';
+import '../../core/widgets/lookup_search_field.dart';
 import '../../navigation/app_coordinator.dart';
 import 'shell_view_model.dart';
 import 'widgets/shell_title_leading.dart';
@@ -66,6 +70,9 @@ class _ShellScreenState extends State<ShellScreen> {
     // 주기적으로 rebuild되면 작업이력 TextBox 입력이 Web에서 끊긴다.
     final nav = context.select<AppCoordinator, _ShellNavSnapshot>(
       _ShellNavSnapshot.from,
+    );
+    final canManageAccounts = context.select<AuthSessionViewModel, bool>(
+      (auth) => auth.hasAccountManage,
     );
     final coordinator = context.read<AppCoordinator>();
 
@@ -142,6 +149,24 @@ class _ShellScreenState extends State<ShellScreen> {
                 label: '파일 관리',
                 body: _assetLookupBody(nav),
               ),
+              if (canManageAccounts) ...[
+                _buildPaneGroupLabel('계정'),
+                _navPaneItem(
+                  iconData: FluentIcons.contact_info,
+                  label: '계정 관리',
+                  body: const AccountsAdminScreen(),
+                ),
+                _navPaneItem(
+                  iconData: FluentIcons.permissions,
+                  label: '권한 관리',
+                  body: const RolesAdminScreen(),
+                ),
+                _navPaneItem(
+                  iconData: FluentIcons.protected_document,
+                  label: '서버 연동 토큰',
+                  body: const ServiceTokensAdminScreen(),
+                ),
+              ],
             ],
           ),
         ),
@@ -451,8 +476,192 @@ class _AuthSessionActions extends StatelessWidget {
         Button(
           onPressed: isBusy
               ? null
+              : () => _didTapChangePassword(context),
+          child: const Text('비밀번호 변경'),
+        ),
+        const SizedBox(width: 8),
+        Button(
+          onPressed: isBusy
+              ? null
               : () => context.read<AuthSessionViewModel>().signOut(),
           child: const Text('로그아웃'),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _didTapChangePassword(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => const _ChangePasswordDialog(),
+    );
+  }
+}
+
+class _ChangePasswordDialog extends StatefulWidget {
+  const _ChangePasswordDialog();
+
+  @override
+  State<_ChangePasswordDialog> createState() => _ChangePasswordDialogState();
+}
+
+class _ChangePasswordDialogState extends State<_ChangePasswordDialog> {
+  final TextEditingController _current = TextEditingController();
+  final TextEditingController _next = TextEditingController();
+  final TextEditingController _confirm = TextEditingController();
+  String _error = '';
+  bool _isSaving = false;
+  bool _didSucceed = false;
+  bool _isCurrentVisible = false;
+  bool _isNextVisible = false;
+  bool _isConfirmVisible = false;
+
+  Widget _passwordField({
+    required TextEditingController controller,
+    required String hintText,
+    required bool isVisible,
+    required VoidCallback onToggleVisibility,
+  }) {
+    return LookupSearchField(
+      controller: controller,
+      value: controller.text,
+      hintText: hintText,
+      obscureText: !isVisible,
+      textInputAction: TextInputAction.next,
+      onChanged: (_) {},
+      suffixIcon: Tooltip(
+        message: isVisible ? '비밀번호 가리기' : '비밀번호 보기',
+        child: IconButton(
+          icon: Icon(
+            isVisible ? FluentIcons.hide : FluentIcons.red_eye,
+            size: 14,
+          ),
+          onPressed: onToggleVisibility,
+        ),
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _current.dispose();
+    _next.dispose();
+    _confirm.dispose();
+    super.dispose();
+  }
+
+  Future<void> _didTapSave() async {
+    setState(() {
+      _error = '';
+      _isSaving = true;
+    });
+    final message = await context.read<AuthSessionViewModel>().changePassword(
+      currentPassword: _current.text,
+      newPassword: _next.text,
+      confirmPassword: _confirm.text,
+    );
+    if (!mounted) {
+      return;
+    }
+    if (message != null) {
+      setState(() {
+        _error = message;
+        _isSaving = false;
+      });
+      return;
+    }
+    setState(() {
+      _isSaving = false;
+      _didSucceed = true;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_didSucceed) {
+      return ContentDialog(
+        title: const Text('비밀번호 변경'),
+        content: const Text(
+          '비밀번호를 바꿨습니다. 이 계정의 다른 세션은 끊깁니다. '
+          '확인하면 다시 로그인합니다.',
+        ),
+        actions: [
+          FilledButton(
+            onPressed: () async {
+              final auth = context.read<AuthSessionViewModel>();
+              Navigator.of(context).pop();
+              await auth.signOut();
+            },
+            child: const Text('확인'),
+          ),
+        ],
+      );
+    }
+    return ContentDialog(
+      title: const Text('비밀번호 변경'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InfoLabel(
+            label: '현재 비밀번호',
+            child: _passwordField(
+              controller: _current,
+              hintText: '현재 비밀번호',
+              isVisible: _isCurrentVisible,
+              onToggleVisibility: () {
+                setState(() => _isCurrentVisible = !_isCurrentVisible);
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          InfoLabel(
+            label: '새 비밀번호 (8~72바이트)',
+            child: _passwordField(
+              controller: _next,
+              hintText: '새 비밀번호',
+              isVisible: _isNextVisible,
+              onToggleVisibility: () {
+                setState(() => _isNextVisible = !_isNextVisible);
+              },
+            ),
+          ),
+          const SizedBox(height: 12),
+          InfoLabel(
+            label: '새 비밀번호 확인',
+            child: _passwordField(
+              controller: _confirm,
+              hintText: '새 비밀번호 확인',
+              isVisible: _isConfirmVisible,
+              onToggleVisibility: () {
+                setState(() => _isConfirmVisible = !_isConfirmVisible);
+              },
+            ),
+          ),
+          if (_error.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            InfoBar(
+              title: const Text('변경 실패'),
+              content: Text(_error),
+              severity: InfoBarSeverity.error,
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        Button(
+          onPressed: _isSaving ? null : () => Navigator.of(context).pop(),
+          child: const Text('취소'),
+        ),
+        FilledButton(
+          onPressed: _isSaving ? null : _didTapSave,
+          child: _isSaving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: ProgressRing(strokeWidth: 2),
+                )
+              : const Text('변경'),
         ),
       ],
     );

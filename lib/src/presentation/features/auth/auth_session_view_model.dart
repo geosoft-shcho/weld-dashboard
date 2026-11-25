@@ -1,7 +1,11 @@
+import 'dart:convert';
+
+import 'package:connectrpc/connect.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../domain/entities/auth_user.dart';
 import '../../../domain/entities/sign_in_result.dart';
+import '../../../domain/use_cases/change_password_use_case.dart';
 import '../../../domain/use_cases/restore_auth_session_use_case.dart';
 import '../../../domain/use_cases/sign_in_use_case.dart';
 import '../../../domain/use_cases/sign_out_use_case.dart';
@@ -12,13 +16,16 @@ class AuthSessionViewModel extends ChangeNotifier {
     required RestoreAuthSessionUseCase restoreAuthSessionUseCase,
     required SignInUseCase signInUseCase,
     required SignOutUseCase signOutUseCase,
+    required ChangePasswordUseCase changePasswordUseCase,
   }) : _restoreAuthSessionUseCase = restoreAuthSessionUseCase,
        _signInUseCase = signInUseCase,
-       _signOutUseCase = signOutUseCase;
+       _signOutUseCase = signOutUseCase,
+       _changePasswordUseCase = changePasswordUseCase;
 
   final RestoreAuthSessionUseCase _restoreAuthSessionUseCase;
   final SignInUseCase _signInUseCase;
   final SignOutUseCase _signOutUseCase;
+  final ChangePasswordUseCase _changePasswordUseCase;
 
   AuthUser? _user;
   bool _isRestoring = true;
@@ -26,6 +33,7 @@ class AuthSessionViewModel extends ChangeNotifier {
   String _errorMessage = '';
 
   AuthUser? get user => _user;
+  int get accountId => _user?.accountId ?? 0;
   String get userId => _user?.userId ?? '';
   String get shellDisplayName => _user?.shellDisplayName ?? '';
   bool get isSignedIn => _user != null;
@@ -95,6 +103,49 @@ class AuthSessionViewModel extends ChangeNotifier {
       await _signOutUseCase.execute();
       _user = null;
       _errorMessage = '';
+    } finally {
+      _isBusy = false;
+      notifyListeners();
+    }
+  }
+
+  /// 성공하면 null, 실패하면 안내 문구.
+  Future<String?> changePassword({
+    required String currentPassword,
+    required String newPassword,
+    required String confirmPassword,
+  }) async {
+    final current = currentPassword;
+    final next = newPassword;
+    final confirm = confirmPassword;
+    if (current.isEmpty) {
+      return '현재 비밀번호를 넣으세요.';
+    }
+    if (next != confirm) {
+      return '새 비밀번호 확인이 같지 않습니다.';
+    }
+    final byteLength = utf8.encode(next).length;
+    if (byteLength < 8 || byteLength > 72) {
+      return '새 비밀번호는 8~72바이트여야 합니다.';
+    }
+    if (_isBusy) {
+      return '잠시 후 다시 시도하세요.';
+    }
+    _isBusy = true;
+    notifyListeners();
+    try {
+      await _changePasswordUseCase.execute(
+        currentPassword: current,
+        newPassword: next,
+      );
+      return null;
+    } on ConnectException catch (error) {
+      if (error.code == Code.permissionDenied) {
+        return '현재 비밀번호가 올바르지 않습니다.';
+      }
+      return error.message.isNotEmpty ? error.message : error.toString();
+    } catch (error) {
+      return error.toString();
     } finally {
       _isBusy = false;
       notifyListeners();

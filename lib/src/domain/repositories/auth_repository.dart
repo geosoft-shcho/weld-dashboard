@@ -12,4 +12,10 @@ abstract class AuthRepository {
   });
 
   Future<void> signOut();
+
+  /// AuthService.ChangePassword. 현재 비번이 틀리면 예외(PermissionDenied).
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
 }
