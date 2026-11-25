@@ -1,10 +1,14 @@
 import 'dart:async';
 
 import 'package:chewie/chewie.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../core/authenticated_media_blob.dart';
+import '../../../core/di/locator.dart';
+import '../../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_caption.dart';
@@ -41,12 +45,16 @@ class MultimodalVideoPlayer extends StatefulWidget {
   final List<VideoCaption> captions;
   final List<VideoOverlayFrame> frames;
   final ValueChanged<VideoPlaybackClock> onClock;
+
   /// Stage·보드와 같은 ViewModel 재생 토글.
   final VoidCallback togglePlaybackHandler;
+
   /// 파일 축 내용 끝(ms). `asset_start + duration` 기준. null이면 video.duration.
   final int? contentEndMs;
+
   /// 가이드 §6: 배속 0·범위 밖이면 재생 대신 시크만(소리 off).
   final bool usesStepSeek;
+
   /// 트랙 라벨 mute. 스텝 시킹이 아닐 때만 volume에 반영.
   final bool isAudioMuted;
 
@@ -71,6 +79,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
   int _seekGeneration = 0;
   bool _seekInFlight = false;
   int? _queuedSeekToken;
+  String? _blobUrl;
 
   @override
   void initState() {
@@ -166,21 +175,41 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     _release();
     _loadedMediaUrl = '';
     setState(() => _errorText = '');
-    final videoController =
-        source.startsWith('http://') || source.startsWith('https://')
-        ? VideoPlayerController.networkUrl(Uri.parse(source))
-        : VideoPlayerController.asset(source);
+    VideoPlayerController? videoController;
     try {
+      videoController = await _createController(source);
+      if (!mounted || generation != _openGeneration) {
+        await videoController.dispose();
+        _revokeBlobUrl();
+        return;
+      }
       await videoController.initialize();
-    } catch (error) {
-      await videoController.dispose();
+    } catch (error, stackTrace) {
+      final value = videoController?.value;
+      final safeUrl = _debugMediaUrl(source);
+      debugPrint(
+        'MultimodalVideoPlayer initialize failed\n'
+        'URL: $safeUrl\n'
+        'error: $error\n'
+        'hasError: ${value?.hasError}\n'
+        'errorDescription: ${value?.errorDescription}\n'
+        '$stackTrace',
+      );
+      await videoController?.dispose();
+      _revokeBlobUrl();
       if (mounted && generation == _openGeneration) {
-        setState(() => _errorText = error.toString());
+        setState(() {
+          _errorText =
+              '${error.toString()}\n'
+              'URL: $safeUrl'
+              '${value?.errorDescription == null || value!.errorDescription!.isEmpty ? '' : '\nplayer: ${value.errorDescription}'}';
+        });
       }
       return;
     }
     if (!mounted || generation != _openGeneration) {
       await videoController.dispose();
+      _revokeBlobUrl();
       return;
     }
     final chewieController = _createChewie(videoController, widget.captions);
@@ -197,6 +226,39 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       _watch(videoController);
       await _applyPlaybackRate(videoController);
     } catch (_) {}
+  }
+
+  Future<VideoPlayerController> _createController(String source) async {
+    final isNetwork =
+        source.startsWith('http://') || source.startsWith('https://');
+    if (!isNetwork) {
+      return VideoPlayerController.asset(source);
+    }
+    final mediaTag = locator<MediaTagDataSource>();
+    final token = mediaTag.sessionToken?.trim() ?? '';
+    if (kIsWeb) {
+      final bytes = await mediaTag.readBytes(source);
+      final blobUrl = createAuthenticatedMediaBlobUrl(
+        bytes,
+        mimeType: mimeTypeForMediaUrl(source),
+      );
+      _blobUrl = blobUrl;
+      return VideoPlayerController.networkUrl(Uri.parse(blobUrl));
+    }
+    return VideoPlayerController.networkUrl(
+      Uri.parse(source),
+      httpHeaders: token.isEmpty
+          ? const <String, String>{}
+          : <String, String>{'Authorization': 'Bearer $token'},
+    );
+  }
+
+  void _revokeBlobUrl() {
+    final url = _blobUrl;
+    _blobUrl = null;
+    if (url != null && url.isNotEmpty) {
+      revokeAuthenticatedMediaBlobUrl(url);
+    }
   }
 
   ChewieController _createChewie(
@@ -362,7 +424,9 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
           break;
         }
         try {
-          await _seekTo(widget.seekToMs).timeout(_seekTimeout, onTimeout: () {});
+          await _seekTo(
+            widget.seekToMs,
+          ).timeout(_seekTimeout, onTimeout: () {});
         } catch (_) {}
         if (!mounted || generation != _seekGeneration) {
           break;
@@ -413,8 +477,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       return;
     }
     final requestedRate = widget.playbackRate;
-    final stepSeek =
-        widget.usesStepSeek || doesRequireStepSeek(requestedRate);
+    final stepSeek = widget.usesStepSeek || doesRequireStepSeek(requestedRate);
     if (stepSeek) {
       try {
         await controller.setVolume(0);
@@ -467,6 +530,18 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     _chewieController = null;
     controller?.dispose();
     _videoController = null;
+    _revokeBlobUrl();
+  }
+
+  /// 화면·콘솔용. 쿼리(토큰 등)는 마스킹한다.
+  static String _debugMediaUrl(String source) {
+    final uri = Uri.tryParse(source);
+    if (uri == null || !uri.hasScheme) {
+      return source;
+    }
+    final path = uri.path.isEmpty ? '/' : uri.path;
+    final query = uri.hasQuery ? '?…' : '';
+    return '${uri.scheme}://${uri.host}$path$query';
   }
 
   @override
@@ -477,7 +552,20 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       child: ColoredBox(
         color: const Color(0xFF121416),
         child: _errorText.isNotEmpty
-            ? Center(child: Text('비디오를 열 수 없습니다.\n$_errorText'))
+            ? Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    '비디오를 열 수 없습니다.\n$_errorText',
+                    softWrap: true,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: Color(0xFFE8EAED),
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              )
             : chewieController == null ||
                   videoController == null ||
                   !videoController.value.isInitialized

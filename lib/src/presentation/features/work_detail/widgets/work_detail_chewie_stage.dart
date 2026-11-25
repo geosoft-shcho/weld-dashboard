@@ -1,10 +1,14 @@
 import 'dart:async';
 
 import 'package:chewie/chewie.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
+import '../../../core/authenticated_media_blob.dart';
+import '../../../core/di/locator.dart';
 import '../../../core/themes/app_theme.dart';
+import '../../../../data/datasources/remote/media_tag_data_source.dart';
 import 'work_detail_material_scope.dart';
 
 class VideoPlaybackClock {
@@ -33,8 +37,10 @@ class WorkDetailChewieStage extends StatefulWidget {
 
   final String assetPath;
   final int? seekToMs;
+
   /// 같은 ms를 연속 탭해도 seek가 다시 적용되도록 증가.
   final int seekToken;
+
   /// 재생 위치 콜백이 seekToMs를 다시 바꿀 때 탐색이 반복되지 않게 한다.
   final bool applySeekOnTokenOnly;
   final int playbackToken;
@@ -52,6 +58,8 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
   int? _pendingSeekToMs;
   Timer? _clockTimer;
   VoidCallback? _clockListener;
+  String? _blobUrl;
+  int _loadGeneration = 0;
 
   @override
   void initState() {
@@ -91,25 +99,31 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
 
   @override
   void dispose() {
+    _loadGeneration += 1;
     _unbindClock();
     _disposePlayers();
     super.dispose();
   }
 
   Future<void> _load() async {
+    final generation = ++_loadGeneration;
     _disposePlayers();
     setState(() {
       _errorMessage = '';
     });
     final source = widget.assetPath;
-    final videoController =
-        source.startsWith('http://') || source.startsWith('https://')
-        ? VideoPlayerController.networkUrl(Uri.parse(source))
-        : VideoPlayerController.asset(source);
+    VideoPlayerController? videoController;
     try {
-      await videoController.initialize();
-      if (!mounted) {
+      videoController = await _createController(source);
+      if (!mounted || generation != _loadGeneration) {
         await videoController.dispose();
+        _revokeBlobUrl();
+        return;
+      }
+      await videoController.initialize();
+      if (!mounted || generation != _loadGeneration) {
+        await videoController.dispose();
+        _revokeBlobUrl();
         return;
       }
       final chewieController = ChewieController(
@@ -132,13 +146,47 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
       _bindClock();
       await _applySeek(_pendingSeekToMs ?? widget.seekToMs);
     } catch (error) {
-      await videoController.dispose();
-      if (!mounted) {
+      await videoController?.dispose();
+      _revokeBlobUrl();
+      if (!mounted || generation != _loadGeneration) {
         return;
       }
       setState(() {
         _errorMessage = error.toString();
       });
+    }
+  }
+
+  Future<VideoPlayerController> _createController(String source) async {
+    final isNetwork =
+        source.startsWith('http://') || source.startsWith('https://');
+    if (!isNetwork) {
+      return VideoPlayerController.asset(source);
+    }
+    final mediaTag = locator<MediaTagDataSource>();
+    final token = mediaTag.sessionToken?.trim() ?? '';
+    if (kIsWeb) {
+      final bytes = await mediaTag.readBytes(source);
+      final blobUrl = createAuthenticatedMediaBlobUrl(
+        bytes,
+        mimeType: mimeTypeForMediaUrl(source),
+      );
+      _blobUrl = blobUrl;
+      return VideoPlayerController.networkUrl(Uri.parse(blobUrl));
+    }
+    return VideoPlayerController.networkUrl(
+      Uri.parse(source),
+      httpHeaders: token.isEmpty
+          ? const <String, String>{}
+          : <String, String>{'Authorization': 'Bearer $token'},
+    );
+  }
+
+  void _revokeBlobUrl() {
+    final url = _blobUrl;
+    _blobUrl = null;
+    if (url != null && url.isNotEmpty) {
+      revokeAuthenticatedMediaBlobUrl(url);
     }
   }
 
@@ -153,9 +201,7 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
     }
     _pendingSeekToMs = null;
     final durationMs = videoController.value.duration.inMilliseconds;
-    final clamped = durationMs <= 0
-        ? 0
-        : seekToMs.clamp(0, durationMs);
+    final clamped = durationMs <= 0 ? 0 : seekToMs.clamp(0, durationMs);
     await videoController.seekTo(Duration(milliseconds: clamped));
   }
 
@@ -206,6 +252,7 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
     _chewieController = null;
     _videoController?.dispose();
     _videoController = null;
+    _revokeBlobUrl();
   }
 
   @override
