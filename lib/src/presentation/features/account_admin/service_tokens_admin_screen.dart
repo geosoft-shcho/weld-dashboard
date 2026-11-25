@@ -37,10 +37,7 @@ class _ServiceTokensAdminBody extends StatelessWidget {
     );
   }
 
-  Widget _content(
-    BuildContext context,
-    ServiceTokensAdminViewModel viewModel,
-  ) {
+  Widget _content(BuildContext context, ServiceTokensAdminViewModel viewModel) {
     if (!viewModel.hasLoaded) {
       if (viewModel.isLoading) {
         return const Center(child: ProgressRing());
@@ -60,12 +57,7 @@ class _ServiceTokensAdminBody extends StatelessWidget {
         actionText: '+ 토큰 발급',
         onAction: () => _didTapCreate(context, viewModel),
       ),
-      filters: [
-        CatalogLookupFilterActions(
-          onQuery: viewModel.load,
-          onReset: viewModel.load,
-        ),
-      ],
+      filters: [],
       body: CatalogLookupTable(
         headers: const ['이름', '만든 시각', '마지막 사용', '상태'],
         columnFlexes: const [14, 16, 16, 10],
@@ -154,9 +146,7 @@ class _ServiceTokensAdminBody extends StatelessWidget {
           actions: [
             Button(
               onPressed: () async {
-                await Clipboard.setData(
-                  ClipboardData(text: created.plaintext),
-                );
+                await Clipboard.setData(ClipboardData(text: created.plaintext));
               },
               child: const Text('복사'),
             ),
