@@ -111,6 +111,8 @@ class RemoteAuthRepository implements AuthRepository {
       accountId: account.accountId.toInt(),
       loginName: account.loginName,
       displayName: account.displayName,
+      roleId: account.roleId.toInt(),
+      roleName: account.roleName,
       permissions: List<String>.from(account.permissions),
     );
   }
