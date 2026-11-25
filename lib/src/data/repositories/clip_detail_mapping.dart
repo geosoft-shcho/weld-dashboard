@@ -72,6 +72,14 @@ ClipDetail clipDetailFromResponse(
   add('embeddedAt', _time(clip.hasEmbeddedAt(), clip.embeddedAt));
   add('createdAt', _time(clip.hasCreatedAt(), clip.createdAt));
   add('updatedAt', _time(clip.hasUpdatedAt(), clip.updatedAt));
+  add(
+    'createdBy',
+    clip.hasCreatedBy() ? clip.createdBy.displayName : '',
+  );
+  add(
+    'updatedBy',
+    clip.hasUpdatedBy() ? clip.updatedBy.displayName : '',
+  );
   final isRelation = clip.kind == compose_pb.ClipKind.CLIP_KIND_RELATION;
   if (isRelation && clip.hasRelation()) {
     add('relation.fromClipId', _id(clip.relation.fromClipId));
@@ -207,6 +215,10 @@ ClipDetail clipDetailFromResponse(
             waveformUrlFromProperties(response.asset.properties),
           )
         : '',
+    createdByDisplayName:
+        clip.hasCreatedBy() ? clip.createdBy.displayName : '',
+    updatedByDisplayName:
+        clip.hasUpdatedBy() ? clip.updatedBy.displayName : '',
   );
 }
 

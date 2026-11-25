@@ -377,6 +377,10 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
       playClipId: playback.clipId,
       playheadNs: playback.playheadNs,
       videoAssetId: idText(comment.videoAssetId),
+      createdByDisplayName:
+          comment.hasCreatedBy() ? comment.createdBy.displayName : '',
+      updatedByDisplayName:
+          comment.hasUpdatedBy() ? comment.updatedBy.displayName : '',
     );
   }
 

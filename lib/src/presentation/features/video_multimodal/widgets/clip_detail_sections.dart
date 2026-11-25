@@ -1,4 +1,5 @@
 import '../../../../domain/entities/job_timeline.dart';
+import '../../../core/widgets/author_display.dart';
 
 class ClipDetailRow {
   const ClipDetailRow({required this.label, required this.value});
@@ -35,6 +36,8 @@ const _CLIP_KEYS = {
   'embeddedAt',
   'createdAt',
   'updatedAt',
+  'createdBy',
+  'updatedBy',
 };
 
 const _FIELD_LABELS = {
@@ -48,6 +51,8 @@ const _FIELD_LABELS = {
   'embeddedAt': '임베딩 시각',
   'createdAt': '만든 시각',
   'updatedAt': '고친 시각',
+  'createdBy': '작성자',
+  'updatedBy': '수정자',
   'source.assetId': '파일 번호',
   'source.startNs': '파일 시작',
   'source.endNs': '파일 끝',
@@ -103,9 +108,12 @@ List<ClipDetailSection> groupClipDetailFields(List<ClipField> fields) {
   final clipExtras = <ClipDetailRow>[];
   for (final field in fields) {
     final title = _sectionTitle(field.label);
+    final rawValue = field.value;
     final row = ClipDetailRow(
       label: _fieldLabel(field.label),
-      value: field.value,
+      value: field.label == 'createdBy' || field.label == 'updatedBy'
+          ? authorDisplayLabel(rawValue)
+          : rawValue,
     );
     if (title == '클립' && !_CLIP_KEYS.contains(field.label)) {
       clipExtras.add(row);

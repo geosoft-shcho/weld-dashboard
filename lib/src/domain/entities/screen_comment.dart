@@ -16,6 +16,8 @@ class ScreenComment {
     this.playClipId = '',
     this.playheadNs,
     this.videoAssetId = '',
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String commentId;
@@ -25,6 +27,8 @@ class ScreenComment {
   final String playClipId;
   final int? playheadNs;
   final String videoAssetId;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 
   bool get canPlay => playClipId.isNotEmpty || videoAssetId.isNotEmpty;
 }

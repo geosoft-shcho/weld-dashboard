@@ -58,6 +58,10 @@ class RemoteJobAdminRepository implements JobAdminRepository {
             endedAt: pass.hasEndedAt()
                 ? pass.endedAt.toDateTime().toLocal()
                 : null,
+            createdByDisplayName:
+                pass.hasCreatedBy() ? pass.createdBy.displayName : '',
+            updatedByDisplayName:
+                pass.hasUpdatedBy() ? pass.updatedBy.displayName : '',
           ),
       ],
       createdByDisplayName:

@@ -26,6 +26,8 @@ class JobPassDetail {
     required this.kind,
     this.startedAt,
     this.endedAt,
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String passId;
@@ -33,6 +35,8 @@ class JobPassDetail {
   final PassKind kind;
   final DateTime? startedAt;
   final DateTime? endedAt;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 }
 
 class JobDetail {

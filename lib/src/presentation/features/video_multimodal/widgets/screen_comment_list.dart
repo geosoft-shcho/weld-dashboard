@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../../../domain/entities/screen_comment.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/author_display.dart';
 import '../../../core/widgets/waveform_material_scope.dart';
 import '../screen_comment_list_view_model.dart';
 
@@ -210,6 +211,12 @@ class _ScreenCommentTileState extends State<_ScreenCommentTile> {
             content: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Text(
+                  '작성자: ${authorDisplayLabel(widget.comment.createdByDisplayName)} · '
+                  '수정자: ${authorDisplayLabel(widget.comment.updatedByDisplayName)}',
+                  style: const TextStyle(fontSize: 11),
+                ),
+                const SizedBox(height: 8),
                 const Text(
                   'STT 상태',
                   style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600),

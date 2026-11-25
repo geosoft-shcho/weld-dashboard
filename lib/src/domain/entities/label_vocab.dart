@@ -4,12 +4,16 @@ class LabelNode {
     required this.name,
     this.parentValueId = '',
     this.children = const [],
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String valueId;
   final String name;
   final String parentValueId;
   final List<LabelNode> children;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 }
 
 class LabelException implements Exception {
@@ -44,7 +48,12 @@ List<LabelNode> insertLabelNode(List<LabelNode> nodes, LabelNode created) {
   }
   return [
     ...placed.nodes,
-    LabelNode(valueId: created.valueId, name: created.name),
+    LabelNode(
+      valueId: created.valueId,
+      name: created.name,
+      createdByDisplayName: created.createdByDisplayName,
+      updatedByDisplayName: created.updatedByDisplayName,
+    ),
   ];
 }
 
@@ -61,6 +70,8 @@ List<LabelNode> renameLabelNode(
           name: name,
           parentValueId: node.parentValueId,
           children: node.children,
+          createdByDisplayName: node.createdByDisplayName,
+          updatedByDisplayName: node.updatedByDisplayName,
         )
       else
         LabelNode(
@@ -68,6 +79,8 @@ List<LabelNode> renameLabelNode(
           name: node.name,
           parentValueId: node.parentValueId,
           children: renameLabelNode(node.children, valueId, name),
+          createdByDisplayName: node.createdByDisplayName,
+          updatedByDisplayName: node.updatedByDisplayName,
         ),
   ];
 }
@@ -81,6 +94,8 @@ List<LabelNode> removeLabelNode(List<LabelNode> nodes, String valueId) {
         valueId: node.valueId,
         name: node.name,
         children: node.children,
+        createdByDisplayName: node.createdByDisplayName,
+        updatedByDisplayName: node.updatedByDisplayName,
       ),
   ];
 }
@@ -96,6 +111,8 @@ List<LabelNode> _upsertLabel(List<LabelNode> nodes, LabelNode created) {
           name: created.name,
           parentValueId: created.parentValueId,
           children: node.children,
+          createdByDisplayName: created.createdByDisplayName,
+          updatedByDisplayName: created.updatedByDisplayName,
         ),
       );
       found = true;
@@ -123,6 +140,8 @@ List<LabelNode> _upsertLabel(List<LabelNode> nodes, LabelNode created) {
           name: node.name,
           parentValueId: node.parentValueId,
           children: _upsertLabel(node.children, created),
+          createdByDisplayName: node.createdByDisplayName,
+          updatedByDisplayName: node.updatedByDisplayName,
         ),
       );
       inserted = true;
@@ -135,6 +154,8 @@ List<LabelNode> _upsertLabel(List<LabelNode> nodes, LabelNode created) {
         name: node.name,
         parentValueId: node.parentValueId,
         children: below.nodes,
+        createdByDisplayName: node.createdByDisplayName,
+        updatedByDisplayName: node.updatedByDisplayName,
       ),
     );
     inserted = inserted || below.inserted;
@@ -160,6 +181,8 @@ List<LabelNode> _upsertLabel(List<LabelNode> nodes, LabelNode created) {
         name: node.name,
         parentValueId: node.parentValueId,
         children: below.nodes,
+        createdByDisplayName: node.createdByDisplayName,
+        updatedByDisplayName: node.updatedByDisplayName,
       ),
     );
     promoted.addAll(below.promoted);

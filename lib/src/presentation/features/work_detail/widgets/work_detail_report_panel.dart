@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../../domain/entities/report_set.dart';
 import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/author_display.dart';
 import '../../../core/widgets/pdfrx_document_source.dart';
 import '../../../core/widgets/pdfrx_document_viewer.dart';
 import '../work_detail_view_model.dart';
@@ -277,11 +278,12 @@ class _SectionAndReviews extends StatelessWidget {
               color: AppTheme.STATUS_OFF.withValues(alpha: 0.35),
             ),
             columnWidths: const {
-              0: FlexColumnWidth(1.4),
-              1: FlexColumnWidth(1.4),
-              2: FlexColumnWidth(1.4),
-              3: FlexColumnWidth(1.0),
-              4: FlexColumnWidth(0.8),
+              0: FlexColumnWidth(1.2),
+              1: FlexColumnWidth(1.2),
+              2: FlexColumnWidth(1.2),
+              3: FlexColumnWidth(0.9),
+              4: FlexColumnWidth(1.4),
+              5: FlexColumnWidth(0.7),
             },
             children: [
               const TableRow(
@@ -290,6 +292,7 @@ class _SectionAndReviews extends StatelessWidget {
                   _Cell('값', isHeader: true),
                   _Cell('원문', isHeader: true),
                   _Cell('이유', isHeader: true),
+                  _Cell('작성·수정', isHeader: true),
                   _Cell('', isHeader: true),
                 ],
               ),
@@ -304,6 +307,10 @@ class _SectionAndReviews extends StatelessWidget {
                     ),
                     _Cell(review.raw),
                     _Cell(review.reason),
+                    _Cell(
+                      '${authorDisplayLabel(review.createdByDisplayName)} / '
+                      '${authorDisplayLabel(review.updatedByDisplayName)}',
+                    ),
                     Padding(
                       padding: const EdgeInsets.all(4),
                       child: Button(

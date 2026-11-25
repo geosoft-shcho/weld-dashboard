@@ -317,15 +317,24 @@ JobTimeline jobTimelineFromResponse(
         order: track.order,
         isVisible: true,
         clips: clipsByTrackId[trackId] ?? const [],
+        createdByDisplayName:
+            track.hasCreatedBy() ? track.createdBy.displayName : '',
+        updatedByDisplayName:
+            track.hasUpdatedBy() ? track.updatedBy.displayName : '',
       ),
     );
   }
+  final timeline = response.timeline;
   return JobTimeline(
-    jobId: idText(response.timeline.jobId),
-    name: response.timeline.name,
-    description: response.timeline.description,
+    jobId: idText(timeline.jobId),
+    name: timeline.name,
+    description: timeline.description,
     tracks: tracks,
     overlays: overlays,
+    createdByDisplayName:
+        timeline.hasCreatedBy() ? timeline.createdBy.displayName : '',
+    updatedByDisplayName:
+        timeline.hasUpdatedBy() ? timeline.updatedBy.displayName : '',
   );
 }
 
@@ -439,6 +448,10 @@ TimelineClip? _clipFrom(
         provenance != null &&
         (idText(provenance.runId).isNotEmpty ||
             idText(provenance.toolId).isNotEmpty),
+    createdByDisplayName:
+        clip.hasCreatedBy() ? clip.createdBy.displayName : '',
+    updatedByDisplayName:
+        clip.hasUpdatedBy() ? clip.updatedBy.displayName : '',
   );
 }
 

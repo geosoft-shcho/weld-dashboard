@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/widgets/author_display.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_studio_palette.dart';
@@ -132,14 +133,18 @@ class TimelineBoardTrackLabels extends StatelessWidget {
 
   String _trackIdentityTooltip(TimelineBoardRow row) {
     final trackLine = '트랙 ID: ${row.trackId}';
+    final authorLine =
+        '작성자: ${authorDisplayLabel(row.createdByDisplayName)} · '
+        '수정자: ${authorDisplayLabel(row.updatedByDisplayName)}';
     if (row.clips.isEmpty) {
-      return '$trackLine\n클립: 없음';
+      return '$trackLine\n$authorLine\n클립: 없음';
     }
     if (row.clips.length == 1) {
-      return '$trackLine\n클립 ID: ${row.clips.first.clipId}';
+      return '$trackLine\n$authorLine\n클립 ID: ${row.clips.first.clipId}';
     }
     final lines = [
       trackLine,
+      authorLine,
       '클립 ID (${row.clips.length}):',
       for (final clip in row.clips) '· ${clip.clipId}',
     ];

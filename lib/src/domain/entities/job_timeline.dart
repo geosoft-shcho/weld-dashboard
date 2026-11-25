@@ -32,6 +32,8 @@ class TimelineClip {
     this.assetDurationNs = '',
     this.assetStartTimeNs = '',
     this.waveformUrl = '',
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String clipId;
@@ -52,6 +54,8 @@ class TimelineClip {
 
   /// GetTimeline asset.properties.waveform_url (해석된 주소).
   final String waveformUrl;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 
   String get startNanoseconds => startNs;
   String get endNanoseconds => endNs;
@@ -66,6 +70,8 @@ class TimelineTrack {
     required this.order,
     this.isVisible = true,
     required this.clips,
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String trackId;
@@ -73,6 +79,8 @@ class TimelineTrack {
   final int order;
   final bool isVisible;
   final List<TimelineClip> clips;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 }
 
 enum TimelineOverlayKind { subtitle, pose }
@@ -105,6 +113,8 @@ class JobTimeline {
     required this.tracks,
     this.description = '',
     this.overlays = const [],
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   static const empty = JobTimeline(jobId: '', name: '', tracks: []);
@@ -114,6 +124,8 @@ class JobTimeline {
   final String description;
   final List<TimelineTrack> tracks;
   final List<TimelineOverlay> overlays;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 
   List<TimelineClip> get clips => [for (final track in tracks) ...track.clips];
 }
@@ -176,6 +188,8 @@ class ClipDetail {
     this.isTargetAssetVideo = false,
     this.channelNames = const [],
     this.waveformUrl = '',
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   static const empty = ClipDetail(clipId: '', fields: []);
@@ -210,6 +224,8 @@ class ClipDetail {
 
   /// GetClip asset.properties.waveform_url (MEDIA_TAG_BASE_URL 해석됨).
   final String waveformUrl;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 
   String valueOf(String label) {
     for (final field in fields) {

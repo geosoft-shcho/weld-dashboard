@@ -96,6 +96,8 @@ class ReportReviewRow {
     required this.raw,
     required this.reason,
     this.correctedValue = '',
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String id;
@@ -105,6 +107,8 @@ class ReportReviewRow {
   final String raw;
   final String reason;
   final String correctedValue;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 }
 
 class ReportSetNotFoundException implements Exception {

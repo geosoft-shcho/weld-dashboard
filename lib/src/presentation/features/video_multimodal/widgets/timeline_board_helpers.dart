@@ -29,6 +29,8 @@ class TimelineBoardRow {
     this.isEnabled = true,
     this.isChartExpanded = false,
     this.expandedChartHeight = TIMELINE_TIMESERIES_CHART_HEIGHT,
+    this.createdByDisplayName = '',
+    this.updatedByDisplayName = '',
   });
 
   final String trackId;
@@ -41,6 +43,8 @@ class TimelineBoardRow {
   final bool isEnabled;
   final bool isChartExpanded;
   final double expandedChartHeight;
+  final String createdByDisplayName;
+  final String updatedByDisplayName;
 
   double get height => isChartExpanded
       ? expandedChartHeight
@@ -222,6 +226,8 @@ List<TimelineBoardRow> buildTimelineBoardRows(
             clipChartKindOf(expandedClip?.kind ?? TimelineClipKind.unspecified)
                     ?.expandedHeight ??
                 TIMELINE_TIMESERIES_CHART_HEIGHT,
+        createdByDisplayName: track.createdByDisplayName,
+        updatedByDisplayName: track.updatedByDisplayName,
         clips: [
           for (final clip in clips)
             TimelineBoardClip(

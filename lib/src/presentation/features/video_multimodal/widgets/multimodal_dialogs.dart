@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
 
 import '../../../../domain/entities/tool_run.dart';
+import '../../../core/widgets/author_display.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
 import '../video_multimodal_view_model.dart';
 
@@ -193,6 +194,12 @@ class _TimelineSaveDialogState extends State<_TimelineSaveDialog> {
           TextField(
             controller: _descriptionController,
             decoration: const InputDecoration(labelText: '설명'),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '작성자: ${authorDisplayLabel(widget.viewModel.timelineCreatedByDisplayName)} · '
+            '수정자: ${authorDisplayLabel(widget.viewModel.timelineUpdatedByDisplayName)}',
+            style: const TextStyle(fontSize: 12),
           ),
           if (_message.isNotEmpty) ...[
             const SizedBox(height: 8),

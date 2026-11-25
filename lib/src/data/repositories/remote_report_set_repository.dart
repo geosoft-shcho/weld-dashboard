@@ -174,6 +174,10 @@ class RemoteReportSetRepository implements ReportSetRepository {
       raw: review.raw,
       reason: _reasonLabel(review.reason),
       correctedValue: review.hasCorrectedValue() ? review.correctedValue : '',
+      createdByDisplayName:
+          review.hasCreatedBy() ? review.createdBy.displayName : '',
+      updatedByDisplayName:
+          review.hasUpdatedBy() ? review.updatedBy.displayName : '',
     );
   }
 

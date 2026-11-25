@@ -2,6 +2,7 @@ import 'package:fluent_ui/fluent_ui.dart' as fluent;
 import 'package:flutter/material.dart';
 
 import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/author_display.dart';
 import '../../../../domain/entities/label_vocab.dart';
 import '../video_multimodal_view_model.dart';
 import 'multimodal_dialogs.dart';
@@ -103,6 +104,15 @@ class _LabelsSideBodyState extends State<LabelsSideBody> {
         onDelete: isSelected ? () => _deprecateLabel(node) : null,
         onAddChild: isSelected ? () => _openAdd(node.valueId) : null,
       ),
+      if (isSelected)
+        Padding(
+          padding: EdgeInsets.fromLTRB(8 + depth * _INDENT_STEP, 0, 8, 4),
+          child: Text(
+            '작성자: ${authorDisplayLabel(node.createdByDisplayName)} · '
+            '수정자: ${authorDisplayLabel(node.updatedByDisplayName)}',
+            style: const TextStyle(fontSize: 11, color: AppTheme.STATUS_OFF),
+          ),
+        ),
       if (isSelected && _addingParentId == node.valueId)
         _addField(node.valueId, depth + 1),
       if (!isCollapsed)

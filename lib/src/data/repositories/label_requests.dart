@@ -43,6 +43,10 @@ LabelNode? labelNodeFrom(compose_pb.LabelValue value) {
     valueId: valueId,
     name: value.name,
     parentValueId: idText(value.parentValueId),
+    createdByDisplayName:
+        value.hasCreatedBy() ? value.createdBy.displayName : '',
+    updatedByDisplayName:
+        value.hasUpdatedBy() ? value.updatedBy.displayName : '',
   );
 }
 
@@ -55,6 +59,8 @@ LabelNode _withChildren(
     valueId: node.valueId,
     name: node.name,
     parentValueId: node.parentValueId,
+    createdByDisplayName: node.createdByDisplayName,
+    updatedByDisplayName: node.updatedByDisplayName,
     children: [
       for (final child in children) _withChildren(child, childrenByParent),
     ],

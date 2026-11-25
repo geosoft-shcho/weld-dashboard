@@ -3,6 +3,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import '../../../../domain/entities/job_detail.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/author_display.dart';
 import '../../../core/widgets/section_empty_placeholder.dart';
 import '../../../core/widgets/screen_command_bar.dart';
 import '../job_lookup_detail_view_model.dart';
@@ -379,6 +380,14 @@ class _JobPassDialogState extends State<_JobPassDialog> {
             '시각은 비워 둘 수 있습니다.',
             style: const TextStyle(fontSize: 12),
           ),
+          if (original != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              '작성자: ${authorDisplayLabel(original.createdByDisplayName)} · '
+              '수정자: ${authorDisplayLabel(original.updatedByDisplayName)}',
+              style: const TextStyle(fontSize: 12),
+            ),
+          ],
           if (_error.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(_error, style: TextStyle(color: Colors.red)),

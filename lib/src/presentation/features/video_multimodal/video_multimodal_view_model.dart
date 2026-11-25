@@ -426,6 +426,8 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   String get spanLabel => formatPlayheadClock(spanSeconds);
   String get timelineName => _timeline.name;
   String get timelineDescription => _timeline.description;
+  String get timelineCreatedByDisplayName => _timeline.createdByDisplayName;
+  String get timelineUpdatedByDisplayName => _timeline.updatedByDisplayName;
 
   String get pageTitle {
     final workName = _workName.trim();
