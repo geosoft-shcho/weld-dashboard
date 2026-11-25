@@ -21,6 +21,7 @@ void main() {
         required String fileName,
         required String mimeType,
         required Uint8List bytes,
+        String? bearerToken,
       }) async {
         sentUrl = url;
         sentMetadata = metadata;
@@ -67,6 +68,7 @@ void main() {
         required String fileName,
         required String mimeType,
         required Uint8List bytes,
+        String? bearerToken,
       }) async {
         sentMetadata = metadata;
         return '{"asset":{"assetId":"82","fileName":"a.mp4"},"runId":"1"}';
@@ -107,6 +109,7 @@ void main() {
         required String fileName,
         required String mimeType,
         required Uint8List bytes,
+        String? bearerToken,
       }) async {
         sentMetadata = metadata;
         return '{"asset":{"assetId":"83","fileName":"b.mp4"},"runId":"2"}';

@@ -7,6 +7,7 @@ Future<({String body, String traceId})> uploadAssetTus({
   required String metadataJson,
   required String fileName,
   required Uint8List bytes,
+  String? bearerToken,
   void Function(double progressPercent)? onProgress,
 }) {
   throw UnsupportedError('이어 올리기는 웹에서만 지원합니다.');

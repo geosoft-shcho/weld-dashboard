@@ -25,6 +25,7 @@ typedef AssetMultipartUpload =
       required String fileName,
       required String mimeType,
       required Uint8List bytes,
+      String? bearerToken,
     });
 
 class RemoteAssetUploadRepository implements AssetUploadRepository {
@@ -119,6 +120,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     void Function(double progressPercent)? onProgress,
   }) async {
     final assetsUrl = _mediaTag.resolveContentUrl('/assets');
+    final bearerToken = _mediaTag.sessionToken;
     final useTus = file.bytes.length >= tusMinBytes;
     if (useTus) {
       try {
@@ -128,6 +130,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
           metadataJson: metadata,
           fileName: file.fileName,
           bytes: file.bytes,
+          bearerToken: bearerToken,
           onProgress: onProgress,
         );
       } on UnsupportedError {
@@ -140,6 +143,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
       fileName: file.fileName,
       mimeType: file.mimeType,
       bytes: file.bytes,
+      bearerToken: bearerToken,
     );
     return (body: body, traceId: '');
   }
@@ -258,6 +262,7 @@ class RemoteAssetUploadRepository implements AssetUploadRepository {
     return postAssetJson(
       url: _mediaTag.resolveContentUrl('/assets'),
       jsonBody: jsonBody,
+      bearerToken: _mediaTag.sessionToken,
     );
   }
 

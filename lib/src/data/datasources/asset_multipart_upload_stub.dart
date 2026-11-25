@@ -6,6 +6,7 @@ Future<String> uploadAssetMultipart({
   required String fileName,
   required String mimeType,
   required Uint8List bytes,
+  String? bearerToken,
 }) {
   throw UnsupportedError('파일 업로드는 웹 브라우저에서만 지원합니다.');
 }

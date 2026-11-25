@@ -15,10 +15,12 @@ Future<({String body, String traceId})> uploadAssetTus({
   required String metadataJson,
   required String fileName,
   required Uint8List bytes,
+  String? bearerToken,
   void Function(double progressPercent)? onProgress,
 }) async {
   // 프록시가 조각 단위로만 본 서버에 넘기므로, 작게 두면 Trace 진행이 더 자주 오른다.
   const chunkSize = 8 * 1024 * 1024;
+  final token = bearerToken?.trim() ?? '';
   final createHeaders = web.Headers();
   createHeaders.set('Tus-Resumable', '1.0.0');
   createHeaders.set('Upload-Length', '${bytes.length}');
@@ -26,6 +28,9 @@ Future<({String body, String traceId})> uploadAssetTus({
     'Upload-Metadata',
     'filename ${_b64(fileName)},metadata ${_b64(metadataJson)}',
   );
+  if (token.isNotEmpty) {
+    createHeaders.set('Authorization', 'Bearer $token');
+  }
   final created = await web.window
       .fetch(
         endpoint.toJS,
@@ -56,6 +61,9 @@ Future<({String body, String traceId})> uploadAssetTus({
     patchHeaders.set('Tus-Resumable', '1.0.0');
     patchHeaders.set('Upload-Offset', '$offset');
     patchHeaders.set('Content-Type', 'application/offset+octet-stream');
+    if (token.isNotEmpty) {
+      patchHeaders.set('Authorization', 'Bearer $token');
+    }
     final patched = await web.window
         .fetch(
           uploadUrl.toJS,
@@ -82,6 +90,7 @@ Future<({String body, String traceId})> uploadAssetTus({
     lastBody = await postAssetJson(
       url: assetsUrl,
       jsonBody: jsonEncode({'uploadId': uploadId}),
+      bearerToken: bearerToken,
     );
   }
   return (body: lastBody, traceId: traceId);

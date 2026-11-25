@@ -9,6 +9,7 @@ Future<String> uploadAssetMultipart({
   required String fileName,
   required String mimeType,
   required Uint8List bytes,
+  String? bearerToken,
 }) async {
   final form = web.FormData();
   form.append('metadata', metadata.toJS);
@@ -18,8 +19,16 @@ Future<String> uploadAssetMultipart({
     web.FilePropertyBag(type: mimeType),
   );
   form.append('file', file, fileName);
+  final headers = web.Headers();
+  final token = bearerToken?.trim() ?? '';
+  if (token.isNotEmpty) {
+    headers.set('Authorization', 'Bearer $token');
+  }
   final response = await web.window
-      .fetch(url.toJS, web.RequestInit(method: 'POST', body: form))
+      .fetch(
+        url.toJS,
+        web.RequestInit(method: 'POST', headers: headers, body: form),
+      )
       .toDart;
   final body = (await response.text().toDart).toDart;
   if (!response.ok) {

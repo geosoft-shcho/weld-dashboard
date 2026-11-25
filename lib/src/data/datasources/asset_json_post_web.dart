@@ -5,9 +5,14 @@ import 'package:web/web.dart' as web;
 Future<String> postAssetJson({
   required String url,
   required String jsonBody,
+  String? bearerToken,
 }) async {
   final headers = web.Headers();
   headers.set('Content-Type', 'application/json');
+  final token = bearerToken?.trim() ?? '';
+  if (token.isNotEmpty) {
+    headers.set('Authorization', 'Bearer $token');
+  }
   final response = await web.window
       .fetch(
         url.toJS,
