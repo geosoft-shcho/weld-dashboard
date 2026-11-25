@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 
 import '../../../domain/entities/asset_lookup_kind.dart';
 import '../../../domain/entities/asset_lookup_row.dart';
+import '../../core/authenticated_media.dart';
 import '../../core/browser_open_url.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
@@ -121,11 +122,48 @@ class _AssetLookupDetailBody extends StatelessWidget {
       actions: [
         if (asset != null && asset.contentUrl.isNotEmpty)
           Button(
-            onPressed: () {
+            onPressed: () async {
+              FocusManager.instance.primaryFocus?.unfocus();
               final name = asset.fileName.trim().isEmpty
                   ? asset.assetId
                   : asset.fileName;
-              downloadBrowserUrl(asset.contentUrl, fileName: name);
+              if (isWebInMemoryMediaTooLarge(asset.sizeBytes)) {
+                if (!context.mounted) {
+                  return;
+                }
+                await displayInfoBar(
+                  context,
+                  builder: (context, close) {
+                    return InfoBar(
+                      title: const Text('내려받기'),
+                      content: Text(
+                        webInMemoryMediaTooLargeMessage(asset.sizeBytes),
+                      ),
+                      severity: InfoBarSeverity.warning,
+                      onClose: close,
+                    );
+                  },
+                );
+                return;
+              }
+              final error = await downloadBrowserUrl(
+                asset.contentUrl,
+                fileName: name,
+              );
+              if (error == null || !context.mounted) {
+                return;
+              }
+              await displayInfoBar(
+                context,
+                builder: (context, close) {
+                  return InfoBar(
+                    title: const Text('내려받기'),
+                    content: Text(error),
+                    severity: InfoBarSeverity.warning,
+                    onClose: close,
+                  );
+                },
+              );
             },
             child: const Text('내려받기'),
           ),
@@ -436,6 +474,7 @@ Future<void> _didTapEditSubjectSituation(
                 onPressed: busy
                     ? null
                     : () async {
+                        FocusManager.instance.primaryFocus?.unfocus();
                         setDialogState(() {
                           busy = true;
                           error = '';

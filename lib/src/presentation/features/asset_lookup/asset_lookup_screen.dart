@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 
 import '../../../domain/entities/asset_lookup_kind.dart';
 import '../../../domain/entities/asset_lookup_row.dart';
+import '../../core/authenticated_media.dart';
 import '../../core/browser_open_url.dart';
 import '../../core/di/locator.dart';
 import '../../core/formatters/dashboard_formatters.dart';
@@ -139,11 +140,47 @@ class _AssetLookupBody extends StatelessWidget {
             row: row,
             onDownload: row.contentUrl.isEmpty
                 ? null
-                : () {
+                : () async {
                     final name = row.fileName.trim().isEmpty
                         ? row.assetId
                         : row.fileName;
-                    downloadBrowserUrl(row.contentUrl, fileName: name);
+                    if (isWebInMemoryMediaTooLarge(row.sizeBytes)) {
+                      if (!context.mounted) {
+                        return;
+                      }
+                      await displayInfoBar(
+                        context,
+                        builder: (context, close) {
+                          return InfoBar(
+                            title: const Text('내려받기'),
+                            content: Text(
+                              webInMemoryMediaTooLargeMessage(row.sizeBytes),
+                            ),
+                            severity: InfoBarSeverity.warning,
+                            onClose: close,
+                          );
+                        },
+                      );
+                      return;
+                    }
+                    final error = await downloadBrowserUrl(
+                      row.contentUrl,
+                      fileName: name,
+                    );
+                    if (error == null || !context.mounted) {
+                      return;
+                    }
+                    await displayInfoBar(
+                      context,
+                      builder: (context, close) {
+                        return InfoBar(
+                          title: const Text('내려받기'),
+                          content: Text(error),
+                          severity: InfoBarSeverity.warning,
+                          onClose: close,
+                        );
+                      },
+                    );
                   },
             onDelete: () => _didTapDelete(context, viewModel, row),
           );
