@@ -1,8 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:photo_view/photo_view.dart';
 
 import '../../../../domain/entities/work_attachment.dart';
+import '../../../core/authenticated_network_image.dart';
 import '../../../core/themes/app_theme.dart';
 import '../work_detail_view_model.dart';
 import 'work_detail_empty_bar.dart';
@@ -52,7 +52,6 @@ class _WorkDetailImageViewerState extends State<WorkDetailImageViewer> {
     if (attachment == null) {
       return const WorkDetailEmptyBar(message: '이 작업에 이미지 파일이 없습니다');
     }
-    final provider = WorkDetailImageFrame.providerFor(attachment);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -60,7 +59,7 @@ class _WorkDetailImageViewerState extends State<WorkDetailImageViewer> {
         const SizedBox(height: 8),
         Expanded(
           child: WorkDetailHost(
-            packageName: 'photo_view + cached_network_image',
+            packageName: 'photo_view + authenticated readBytes',
             attachment: attachment,
             index: viewModel.selectedFileIndex,
             total: files.length,
@@ -69,24 +68,30 @@ class _WorkDetailImageViewerState extends State<WorkDetailImageViewer> {
                 Expanded(
                   child: ColoredBox(
                     color: AppTheme.SURFACE,
-                    child: provider == null
-                        ? const WorkDetailImageSwatch()
-                        : WorkDetailMaterialScope(
-                            child: PhotoView(
-                              key: ValueKey(attachment.attachmentId),
-                              controller: _controller,
-                              enablePanAlways: false,
-                              imageProvider: provider,
-                              minScale: PhotoViewComputedScale.contained * 0.5,
-                              maxScale: PhotoViewComputedScale.covered * 4,
-                              initialScale: PhotoViewComputedScale.contained,
-                              backgroundDecoration: const BoxDecoration(
-                                color: AppTheme.SURFACE,
-                              ),
-                              errorBuilder: (_, _, _) =>
-                                  const WorkDetailImageSwatch(),
+                    child: WorkDetailMaterialScope(
+                      child: AuthenticatedNetworkImage(
+                        key: ValueKey(attachment.attachmentId),
+                        networkUrl: attachment.networkUrl,
+                        assetPath: attachment.assetPath,
+                        loading: const Center(child: ProgressRing()),
+                        error: const WorkDetailImageSwatch(),
+                        builder: (context, provider) {
+                          return PhotoView(
+                            controller: _controller,
+                            enablePanAlways: false,
+                            imageProvider: provider,
+                            minScale: PhotoViewComputedScale.contained * 0.5,
+                            maxScale: PhotoViewComputedScale.covered * 4,
+                            initialScale: PhotoViewComputedScale.contained,
+                            backgroundDecoration: const BoxDecoration(
+                              color: AppTheme.SURFACE,
                             ),
-                          ),
+                            errorBuilder: (_, _, _) =>
+                                const WorkDetailImageSwatch(),
+                          );
+                        },
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -123,28 +128,23 @@ class WorkDetailImageFrame extends StatelessWidget {
 
   final WorkAttachment attachment;
 
-  static ImageProvider? providerFor(WorkAttachment attachment) {
-    final networkUrl = attachment.networkUrl;
-    if (networkUrl != null) {
-      return CachedNetworkImageProvider(networkUrl);
-    }
-    final assetPath = attachment.assetPath;
-    if (assetPath != null) {
-      return AssetImage(assetPath);
-    }
-    return null;
-  }
-
   @override
   Widget build(BuildContext context) {
-    final provider = providerFor(attachment);
-    if (provider == null) {
-      return const WorkDetailImageSwatch();
-    }
-    return Image(
-      image: provider,
-      fit: BoxFit.cover,
-      errorBuilder: (_, _, _) => const WorkDetailImageSwatch(),
+    return AuthenticatedNetworkImage(
+      networkUrl: attachment.networkUrl,
+      assetPath: attachment.assetPath,
+      loading: const ColoredBox(
+        color: Color(0xFF32363C),
+        child: Center(child: ProgressRing()),
+      ),
+      error: const WorkDetailImageSwatch(),
+      builder: (context, provider) {
+        return Image(
+          image: provider,
+          fit: BoxFit.cover,
+          errorBuilder: (_, _, _) => const WorkDetailImageSwatch(),
+        );
+      },
     );
   }
 }

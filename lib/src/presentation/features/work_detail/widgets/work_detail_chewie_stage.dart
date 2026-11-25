@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../../core/authenticated_media_blob.dart';
+import '../../../core/authenticated_media.dart';
 import '../../../core/di/locator.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../../data/datasources/remote/media_tag_data_source.dart';
@@ -152,7 +152,9 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
         return;
       }
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = error is AuthenticatedMediaTooLargeException
+            ? webInMemoryMediaPreviewMessage(error.byteLength)
+            : '비디오를 열 수 없습니다.';
       });
     }
   }
@@ -166,11 +168,7 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
     final mediaTag = locator<MediaTagDataSource>();
     final token = mediaTag.sessionToken?.trim() ?? '';
     if (kIsWeb) {
-      final bytes = await mediaTag.readBytes(source);
-      final blobUrl = createAuthenticatedMediaBlobUrl(
-        bytes,
-        mimeType: mimeTypeForMediaUrl(source),
-      );
+      final blobUrl = await createAuthenticatedMediaBlobPlaybackUrl(source);
       _blobUrl = blobUrl;
       return VideoPlayerController.networkUrl(Uri.parse(blobUrl));
     }
@@ -259,10 +257,13 @@ class _WorkDetailChewieStageState extends State<WorkDetailChewieStage> {
   Widget build(BuildContext context) {
     if (_errorMessage.isNotEmpty) {
       return Center(
-        child: Text(
-          '비디오를 열 수 없습니다.\n$_errorMessage',
-          textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xFF8E949E)),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Text(
+            _errorMessage,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Color(0xFF8E949E)),
+          ),
         ),
       );
     }

@@ -1,10 +1,10 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../core/themes/app_theme.dart';
+import '../../../core/widgets/authenticated_pdfrx_document.dart';
 import '../../../core/widgets/pdfrx_document_source.dart';
-import '../../../core/widgets/pdfrx_document_viewer.dart';
 
-class PaperScanHost extends StatefulWidget {
+class PaperScanHost extends StatelessWidget {
   const PaperScanHost({
     super.key,
     required this.scanFile,
@@ -16,83 +16,32 @@ class PaperScanHost extends StatefulWidget {
   final int scanPages;
   final int? initialPage;
 
-  @override
-  State<PaperScanHost> createState() => _PaperScanHostState();
-}
-
-class _PaperScanHostState extends State<PaperScanHost> {
   static const double VIEWPORT_MIN_HEIGHT = 540;
   static const String UNAVAILABLE_MESSAGE =
       '페이퍼 원본이 연동되지 않았습니다. 성적서 번호와 검사 항목만 표시합니다.';
 
-  PdfrxDocumentSource? _source;
-  String? _unsupportedReason;
-
-  @override
-  void initState() {
-    super.initState();
-    _prepare();
-  }
-
-  @override
-  void didUpdateWidget(covariant PaperScanHost oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.scanFile != widget.scanFile) {
-      _prepare();
-    }
-  }
-
-  void _prepare() {
-    final path = widget.scanFile.trim();
-    _unsupportedReason = null;
-    if (path.isEmpty) {
-      _source = null;
-      return;
-    }
-    _source = resolvePdfrxDocumentSource(
-      path,
-      onUnsupported: (reason) => _unsupportedReason = reason,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
-    final scanFile = widget.scanFile.trim();
-    if (scanFile.isEmpty) {
-      return _unavailableSlot();
-    }
-    final source = _source;
-    if (source == null) {
+    final path = scanFile.trim();
+    if (path.isEmpty) {
       return _viewport(
-        child: Center(
+        child: const Center(
           child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Text(
-              _unsupportedReason ?? '연결된 스캔 파일을 찾을 수 없습니다',
-              textAlign: TextAlign.center,
-            ),
+            padding: EdgeInsets.all(16),
+            child: Text(UNAVAILABLE_MESSAGE, textAlign: TextAlign.center),
           ),
         ),
       );
     }
-    return PdfrxDocumentViewer(
-      key: ValueKey(scanFile),
-      source: source,
-      initialPage: widget.initialPage,
-      backgroundColor: AppTheme.SURFACE_RAISED,
-      fallbackPageCount: widget.scanPages,
-      expandViewport: false,
-      viewportHeight: VIEWPORT_MIN_HEIGHT,
-    );
-  }
-
-  Widget _unavailableSlot() {
     return _viewport(
-      child: const Center(
-        child: Padding(
-          padding: EdgeInsets.all(16),
-          child: Text(UNAVAILABLE_MESSAGE, textAlign: TextAlign.center),
-        ),
+      child: AuthenticatedPdfrxDocument(
+        key: ValueKey(path),
+        path: path,
+        initialPage: initialPage,
+        backgroundColor: AppTheme.SURFACE_RAISED,
+        fallbackPageCount: scanPages,
+        expandViewport: false,
+        viewportHeight: VIEWPORT_MIN_HEIGHT,
       ),
     );
   }

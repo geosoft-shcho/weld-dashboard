@@ -3,8 +3,7 @@ import 'package:fluent_ui/fluent_ui.dart';
 import '../../../../domain/entities/report_set.dart';
 import '../../../core/themes/app_theme.dart';
 import '../../../core/widgets/author_display.dart';
-import '../../../core/widgets/pdfrx_document_source.dart';
-import '../../../core/widgets/pdfrx_document_viewer.dart';
+import '../../../core/widgets/authenticated_pdfrx_document.dart';
 import '../work_detail_view_model.dart';
 
 class WorkDetailReportPanel extends StatelessWidget {
@@ -373,16 +372,9 @@ class _SplitPdf extends StatelessWidget {
         severity: InfoBarSeverity.info,
       );
     }
-    final source = resolvePdfrxDocumentSource(pdfUrl);
-    if (source == null) {
-      return const InfoBar(
-        title: Text('PDF 주소를 열 수 없습니다'),
-        severity: InfoBarSeverity.warning,
-      );
-    }
-    return PdfrxDocumentViewer(
+    return AuthenticatedPdfrxDocument(
       key: ValueKey(pdfUrl),
-      source: source,
+      path: pdfUrl,
       initialPage: page,
       backgroundColor: AppTheme.SURFACE,
       expandViewport: true,

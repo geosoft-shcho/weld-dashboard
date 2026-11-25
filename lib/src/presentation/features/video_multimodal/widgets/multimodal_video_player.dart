@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:video_player/video_player.dart';
 
-import '../../../core/authenticated_media_blob.dart';
+import '../../../core/authenticated_media.dart';
 import '../../../core/di/locator.dart';
 import '../../../../data/datasources/remote/media_tag_data_source.dart';
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
@@ -199,10 +199,11 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
       _revokeBlobUrl();
       if (mounted && generation == _openGeneration) {
         setState(() {
-          _errorText =
-              '${error.toString()}\n'
-              'URL: $safeUrl'
-              '${value?.errorDescription == null || value!.errorDescription!.isEmpty ? '' : '\nplayer: ${value.errorDescription}'}';
+          _errorText = error is AuthenticatedMediaTooLargeException
+              ? webInMemoryMediaPreviewMessage(error.byteLength)
+              : '${error.toString()}\n'
+                    'URL: $safeUrl'
+                    '${value?.errorDescription == null || value!.errorDescription!.isEmpty ? '' : '\nplayer: ${value.errorDescription}'}';
         });
       }
       return;
@@ -237,11 +238,7 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
     final mediaTag = locator<MediaTagDataSource>();
     final token = mediaTag.sessionToken?.trim() ?? '';
     if (kIsWeb) {
-      final bytes = await mediaTag.readBytes(source);
-      final blobUrl = createAuthenticatedMediaBlobUrl(
-        bytes,
-        mimeType: mimeTypeForMediaUrl(source),
-      );
+      final blobUrl = await createAuthenticatedMediaBlobPlaybackUrl(source);
       _blobUrl = blobUrl;
       return VideoPlayerController.networkUrl(Uri.parse(blobUrl));
     }
@@ -556,7 +553,9 @@ class _MultimodalVideoPlayerState extends State<MultimodalVideoPlayer> {
                 child: Padding(
                   padding: const EdgeInsets.all(16),
                   child: Text(
-                    '비디오를 열 수 없습니다.\n$_errorText',
+                    _errorText.contains('브라우저에서 미리볼 수 없습니다')
+                        ? _errorText
+                        : '비디오를 열 수 없습니다.\n$_errorText',
                     softWrap: true,
                     textAlign: TextAlign.center,
                     style: const TextStyle(

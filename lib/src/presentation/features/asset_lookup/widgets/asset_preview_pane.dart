@@ -1,14 +1,14 @@
 import 'dart:convert';
 
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:fluent_ui/fluent_ui.dart';
 import 'package:photo_view/photo_view.dart';
 
 import '../../../../domain/entities/asset_lookup_row.dart';
+import '../../../core/authenticated_media.dart';
+import '../../../core/authenticated_network_image.dart';
 import '../../../core/browser_open_url.dart';
 import '../../../core/themes/app_theme.dart';
-import '../../../core/widgets/pdfrx_document_source.dart';
-import '../../../core/widgets/pdfrx_document_viewer.dart';
+import '../../../core/widgets/authenticated_pdfrx_document.dart';
 import '../../../core/widgets/waveform_material_scope.dart';
 import '../../work_detail/widgets/work_detail_chewie_stage.dart';
 import '../../work_detail/widgets/work_detail_material_scope.dart';
@@ -58,9 +58,14 @@ class AssetPreviewPane extends StatelessWidget {
               '미리 볼 주소가 없습니다',
             ),
             _AssetPreviewKind.unsupported => _UnsupportedPreview(asset: asset),
-            _AssetPreviewKind.video => WorkDetailMaterialScope(
-              child: WorkDetailChewieStage(assetPath: url),
-            ),
+            _AssetPreviewKind.video =>
+              isWebInMemoryMediaTooLarge(asset.sizeBytes)
+                  ? _PreviewMessage(
+                      webInMemoryMediaPreviewMessage(asset.sizeBytes),
+                    )
+                  : WorkDetailMaterialScope(
+                      child: WorkDetailChewieStage(assetPath: url),
+                    ),
             _AssetPreviewKind.audio => WorkDetailMaterialScope(
               child: AssetJustAudioStage(
                 contentUrl: url,
@@ -69,9 +74,7 @@ class AssetPreviewPane extends StatelessWidget {
             ),
             _AssetPreviewKind.image => _ImagePreview(url: url),
             _AssetPreviewKind.pdf => WaveformMaterialScope(
-              child: PdfrxDocumentViewer(
-                source: PdfrxDocumentSource.uri(Uri.parse(url)),
-              ),
+              child: AuthenticatedPdfrxDocument(path: url),
             ),
             _AssetPreviewKind.text => _TextPreview(
               url: url,
@@ -242,16 +245,44 @@ class _UnsupportedPreview extends StatelessWidget {
               textAlign: TextAlign.center,
               style: const TextStyle(color: AppTheme.STATUS_OFF, fontSize: 13),
             ),
-            if (canOpen) ...[
+            if (canOpen && !isWebInMemoryMediaTooLarge(asset.sizeBytes)) ...[
               const SizedBox(height: 12),
               Button(
-                onPressed: () {
+                onPressed: () async {
                   final name = asset.fileName.trim().isEmpty
                       ? asset.assetId
                       : asset.fileName;
-                  downloadBrowserUrl(asset.contentUrl, fileName: name);
+                  final error = await downloadBrowserUrl(
+                    asset.contentUrl,
+                    fileName: name,
+                  );
+                  if (error == null || !context.mounted) {
+                    return;
+                  }
+                  await displayInfoBar(
+                    context,
+                    builder: (context, close) {
+                      return InfoBar(
+                        title: const Text('내려받기'),
+                        content: Text(error),
+                        severity: InfoBarSeverity.warning,
+                        onClose: close,
+                      );
+                    },
+                  );
                 },
                 child: const Text('내려받아 열기'),
+              ),
+            ],
+            if (canOpen && isWebInMemoryMediaTooLarge(asset.sizeBytes)) ...[
+              const SizedBox(height: 8),
+              Text(
+                webInMemoryMediaTooLargeMessage(asset.sizeBytes),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppTheme.STATUS_OFF,
+                  fontSize: 12,
+                ),
               ),
             ],
           ],
@@ -269,18 +300,22 @@ class _ImagePreview extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return WorkDetailMaterialScope(
-      child: PhotoView(
-        backgroundDecoration: const BoxDecoration(
-          color: AppTheme.SURFACE_RAISED,
-        ),
-        imageProvider: CachedNetworkImageProvider(url),
-        minScale: PhotoViewComputedScale.contained,
-        maxScale: PhotoViewComputedScale.covered * 2.5,
-        errorBuilder: (context, error, stackTrace) {
-          return const _PreviewMessage('이미지를 불러오지 못했습니다');
-        },
-        loadingBuilder: (context, event) {
-          return const Center(child: ProgressRing());
+      child: AuthenticatedNetworkImage(
+        networkUrl: url,
+        loading: const Center(child: ProgressRing()),
+        error: const _PreviewMessage('이미지를 불러오지 못했습니다'),
+        builder: (context, provider) {
+          return PhotoView(
+            backgroundDecoration: const BoxDecoration(
+              color: AppTheme.SURFACE_RAISED,
+            ),
+            imageProvider: provider,
+            minScale: PhotoViewComputedScale.contained,
+            maxScale: PhotoViewComputedScale.covered * 2.5,
+            errorBuilder: (context, error, stackTrace) {
+              return const _PreviewMessage('이미지를 불러오지 못했습니다');
+            },
+          );
         },
       ),
     );

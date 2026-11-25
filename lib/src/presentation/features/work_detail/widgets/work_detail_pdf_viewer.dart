@@ -1,8 +1,7 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 import '../../../core/themes/app_theme.dart';
-import '../../../core/widgets/pdfrx_document_source.dart';
-import '../../../core/widgets/pdfrx_document_viewer.dart';
+import '../../../core/widgets/authenticated_pdfrx_document.dart';
 import '../work_detail_view_model.dart';
 import 'work_detail_empty_bar.dart';
 import 'work_detail_file_strip.dart';
@@ -28,7 +27,7 @@ class WorkDetailPdfViewer extends StatelessWidget {
         const SizedBox(height: 8),
         Expanded(
           child: WorkDetailHost(
-            packageName: 'pdfrx',
+            packageName: 'pdfrx + authenticated readBytes',
             attachment: attachment,
             index: viewModel.selectedFileIndex,
             total: files.length,
@@ -52,10 +51,8 @@ class WorkDetailPdfrxStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return PdfrxDocumentViewer(
-      source:
-          resolvePdfrxDocumentSource(assetPath) ??
-          PdfrxDocumentSource.asset(assetPath),
+    return AuthenticatedPdfrxDocument(
+      path: assetPath,
       backgroundColor: AppTheme.SURFACE,
       expandViewport: true,
     );

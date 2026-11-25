@@ -123,6 +123,38 @@ class MediaTagDataSource {
     return bytes;
   }
 
+  /// `Content-Range` 전체 길이. 모르면 null.
+  Future<int?> probeContentLength(String url) async {
+    final headers = connect.Headers();
+    headers.add('range', 'bytes=0-0');
+    final token = sessionToken?.trim() ?? '';
+    if (token.isNotEmpty) {
+      headers.add('authorization', 'Bearer $token');
+    }
+    final response = await createDashboardHttpClient()(
+      connect.HttpRequest(url, 'GET', headers, null, null),
+    );
+    if (response.status != 200 && response.status != 206) {
+      throw StateError('content ${response.status}');
+    }
+    await response.body.drain<void>();
+    final contentRange = response.header['content-range'];
+    if (contentRange != null) {
+      final slash = contentRange.lastIndexOf('/');
+      if (slash >= 0) {
+        final total = int.tryParse(contentRange.substring(slash + 1).trim());
+        if (total != null && total >= 0) {
+          return total;
+        }
+      }
+    }
+    final contentLength = response.header['content-length'];
+    if (contentLength != null) {
+      return int.tryParse(contentLength.trim());
+    }
+    return null;
+  }
+
   String resolveContentUrl(String path) {
     if (path.isEmpty) {
       return '';
