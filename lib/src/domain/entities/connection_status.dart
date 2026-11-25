@@ -21,9 +21,10 @@ enum ConnectionStatus {
       case ConnectionStatus.connected:
         return '수집';
       case ConnectionStatus.disconnected:
-        return '단절';
+        return '기록 없음';
       case ConnectionStatus.error:
-        return '오류';
+        // 타임라인 Present는 쓰지 않음. parse·기타 경로용.
+        return '기록 없음';
     }
   }
 }

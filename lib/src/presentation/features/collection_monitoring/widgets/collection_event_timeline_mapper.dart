@@ -34,19 +34,41 @@ class CollectionEventPlannerAdapter
   @override
   NeonPlannerEntryPresentation presentationOf(CollectionEvent entry) {
     final title = entry.isPoint
-        ? '◆ ${entry.windowLabel}'
+        ? _pointTitle(entry)
         : '${entry.connectionStatus.label} · ${entry.windowLabel}';
     return NeonPlannerEntryPresentation(
       title: title,
       subtitle: entry.equipmentName,
       metadata:
           '수신 ${DashboardFormatters.count(entry.receivedCount)} · 유실 ${DashboardFormatters.percent(entry.lossRatePercent)}',
-      semanticLabel:
-          '${entry.equipmentName} ${entry.connectionStatus.label} ${entry.windowLabel}',
+      semanticLabel: _semanticLabel(entry),
       icon: entry.isPoint ? Icons.diamond : Icons.sensors,
       kind: NeonPlannerEntryKind.standard,
       accentColor: CollectionEventTimelineMapper.colorOf(entry),
     );
+  }
+
+  static String _pointTitle(CollectionEvent entry) {
+    final windowLabel = entry.windowLabel.trim();
+    if (windowLabel.isEmpty || windowLabel == entry.equipmentName) {
+      return '◆';
+    }
+    return '◆ $windowLabel';
+  }
+
+  static String _semanticLabel(CollectionEvent entry) {
+    final windowLabel = entry.windowLabel.trim();
+    final doesRepeatName =
+        windowLabel.isEmpty || windowLabel == entry.equipmentName;
+    if (entry.isPoint) {
+      return doesRepeatName
+          ? '${entry.equipmentName} 점'
+          : '${entry.equipmentName} 점 $windowLabel';
+    }
+    if (doesRepeatName) {
+      return '${entry.equipmentName} ${entry.connectionStatus.label}';
+    }
+    return '${entry.equipmentName} ${entry.connectionStatus.label} $windowLabel';
   }
 }
 
@@ -56,35 +78,23 @@ class CollectionEventTimelineMapper {
 
   static const double HOUR_PX = 48;
 
+  /// API summary.asset_count / asset 유무로만 정한 수집·기록 없음 색.
   static Color colorOf(CollectionEvent event) {
-    if (event.isLossWarning) {
-      return AppTheme.STATUS_WARN;
-    }
-    if (event.isDesynced) {
-      return AppTheme.STATUS_DESYNC;
-    }
     switch (event.connectionStatus) {
       case ConnectionStatus.connected:
         return AppTheme.STATUS_OK;
       case ConnectionStatus.disconnected:
-        return AppTheme.STATUS_OFF;
       case ConnectionStatus.error:
-        return AppTheme.STATUS_ERROR;
+        // 기록 없음: 어두운 캔버스에서 회색보다 잘 보이게.
+        return AppTheme.STATUS_WARN;
     }
   }
 
   static TimelineStatus statusOf(CollectionEvent event) {
-    if (event.connectionStatus == ConnectionStatus.error ||
-        event.isLossWarning) {
-      return TimelineStatus.error;
+    if (event.connectionStatus == ConnectionStatus.connected) {
+      return TimelineStatus.active;
     }
-    if (event.connectionStatus == ConnectionStatus.disconnected) {
-      return TimelineStatus.disabled;
-    }
-    if (event.isDesynced) {
-      return TimelineStatus.pending;
-    }
-    return TimelineStatus.active;
+    return TimelineStatus.disabled;
   }
 
   static TimelineEntry<CollectionEvent> entryOf(
@@ -102,9 +112,7 @@ class CollectionEventTimelineMapper {
       duration: duration,
       status: statusOf(event),
       color: colorOf(event),
-      semanticLabel: event.isPoint
-          ? '${event.equipmentName} 점 ${event.windowLabel}'
-          : '${event.equipmentName} ${event.connectionStatus.label} ${event.windowLabel}',
+      semanticLabel: CollectionEventPlannerAdapter._semanticLabel(event),
       draggable: false,
       resourceIds: {resourceId},
     );

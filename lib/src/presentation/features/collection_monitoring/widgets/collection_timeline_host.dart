@@ -353,14 +353,7 @@ class _Legend extends StatelessWidget {
       runSpacing: 4,
       children: const [
         _LegendItem(label: '수집', color: AppTheme.STATUS_OK),
-        _LegendItem(label: '단절', color: AppTheme.STATUS_OFF),
-        _LegendItem(label: '오류', color: AppTheme.STATUS_ERROR),
-        _LegendItem(label: '유실≥10%', color: AppTheme.STATUS_WARN),
-        _LegendItem(
-          label: '지연·미동기',
-          color: AppTheme.STATUS_DESYNC,
-          isDashed: true,
-        ),
+        _LegendItem(label: '기록 없음', color: AppTheme.STATUS_WARN),
       ],
     );
   }
@@ -370,19 +363,17 @@ class _LegendItem extends StatelessWidget {
   const _LegendItem({
     required this.label,
     required this.color,
-    this.isDashed = false,
   });
 
   final String label;
   final Color color;
-  final bool isDashed;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        TimelineStatusSwatch(color: color, isDashed: isDashed),
+        TimelineStatusSwatch(color: color),
         const SizedBox(width: 6),
         Text(label, style: const TextStyle(fontSize: 12)),
       ],

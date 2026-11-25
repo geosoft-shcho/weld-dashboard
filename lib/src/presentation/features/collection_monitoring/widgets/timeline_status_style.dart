@@ -16,26 +16,13 @@ class TimelineStatusStyle {
   final bool isDashed;
 
   factory TimelineStatusStyle.of(CollectionEvent event) {
-    Color fill;
-    Color border;
-    switch (event.connectionStatus) {
-      case ConnectionStatus.connected:
-        fill = AppTheme.STATUS_OK.withValues(alpha: 0.38);
-        border = AppTheme.STATUS_OK;
-      case ConnectionStatus.disconnected:
-        fill = AppTheme.STATUS_OFF.withValues(alpha: 0.38);
-        border = AppTheme.STATUS_OFF;
-      case ConnectionStatus.error:
-        fill = AppTheme.STATUS_ERROR.withValues(alpha: 0.38);
-        border = AppTheme.STATUS_ERROR;
-    }
-    if (event.isLossWarning) {
-      border = AppTheme.STATUS_WARN;
-    }
+    final isCollected =
+        event.connectionStatus == ConnectionStatus.connected;
+    final color = isCollected ? AppTheme.STATUS_OK : AppTheme.STATUS_WARN;
     return TimelineStatusStyle(
-      fill: fill,
-      border: border,
-      isDashed: event.isDesynced,
+      fill: color.withValues(alpha: 0.38),
+      border: color,
+      isDashed: false,
     );
   }
 

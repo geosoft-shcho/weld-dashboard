@@ -134,18 +134,21 @@ class _PipelineTraceListState extends State<PipelineTraceList>
                           ),
                         ),
                         const SizedBox(width: 6),
-                        SizedBox(
-                          width: 36,
+                        Flexible(
+                          flex: 0,
                           child: Text(
                             _statusTag(trace.status),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             style: _mono.copyWith(
                               color: statusColor,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
                         ),
-                        SizedBox(
-                          width: 52,
+                        const SizedBox(width: 4),
+                        Flexible(
+                          flex: 2,
                           child: Text(
                             '#${trace.traceId}',
                             maxLines: 1,
@@ -155,6 +158,7 @@ class _PipelineTraceListState extends State<PipelineTraceList>
                             ),
                           ),
                         ),
+                        const SizedBox(width: 4),
                         Expanded(
                           flex: 3,
                           child: Text(
@@ -168,11 +172,13 @@ class _PipelineTraceListState extends State<PipelineTraceList>
                             ),
                           ),
                         ),
-                        SizedBox(
-                          width: 40,
+                        const SizedBox(width: 4),
+                        Flexible(
+                          flex: 0,
                           child: Text(
                             progressLabel,
                             maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                             textAlign: TextAlign.right,
                             style: _mono.copyWith(
                               color: progressLabel == '—'
@@ -184,7 +190,7 @@ class _PipelineTraceListState extends State<PipelineTraceList>
                             ),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 4),
                         Expanded(
                           flex: 2,
                           child: Text(

@@ -114,10 +114,11 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
 
   CollectionStatus _statusFrom(CollectedNode node, DateTime snapshotAt) {
     final assetCount = node.assetCount ?? 0;
+    final isConnected = assetCount > 0 || node.isAssetNode;
     return CollectionStatus(
       equipmentId: node.nodeKey,
       snapshotAt: snapshotAt,
-      connectionStatus: assetCount > 0
+      connectionStatus: isConnected
           ? ConnectionStatus.connected
           : ConnectionStatus.disconnected,
       receivedCount: assetCount,
@@ -146,6 +147,11 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
             ),
           ];
     final events = <CollectionEvent>[];
+    final assetCount = node.assetCount ?? 0;
+    final isConnected = assetCount > 0 || node.isAssetNode;
+    final connectionStatus = isConnected
+        ? ConnectionStatus.connected
+        : ConnectionStatus.disconnected;
     for (var index = 0; index < ranges.length; index++) {
       final startedAt = ranges[index].startedAt;
       final endedAt = ranges[index].endedAt;
@@ -153,15 +159,35 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
         continue;
       }
       final isPoint = !endedAt.isAfter(startedAt);
-      final visibleStart = startedAt.isBefore(dayStart) ? dayStart : startedAt;
-      final visibleEnd = isPoint
-          ? visibleStart
-          : (endedAt.isAfter(dayEnd) ? dayEnd : endedAt);
-      if (!isPoint && !visibleStart.isBefore(visibleEnd)) {
+      if (isPoint) {
+        if (startedAt.isBefore(dayStart) || !startedAt.isBefore(dayEnd)) {
+          continue;
+        }
+        events.add(
+          CollectionEvent(
+            eventId: '${node.nodeKey}/${startedAt.toIso8601String()}/$index',
+            equipmentId: node.nodeKey,
+            equipmentName: node.label.isNotEmpty ? node.label : node.nodeKey,
+            lineName: '',
+            eventAt: startedAt,
+            durationSec: 0,
+            connectionStatus: connectionStatus,
+            receivedCount: assetCount,
+            windowLabel: _segmentWindowLabel(
+              startedAt: startedAt,
+              endedAt: endedAt,
+              isPoint: true,
+            ),
+            lossRatePercent: null,
+            timeSyncStatus: TimeSyncStatus.synced,
+            clockOffsetMs: null,
+          ),
+        );
         continue;
       }
-      if (isPoint &&
-          (visibleStart.isBefore(dayStart) || !visibleStart.isBefore(dayEnd))) {
+      final visibleStart = startedAt.isBefore(dayStart) ? dayStart : startedAt;
+      final visibleEnd = endedAt.isAfter(dayEnd) ? dayEnd : endedAt;
+      if (!visibleStart.isBefore(visibleEnd)) {
         continue;
       }
       events.add(
@@ -171,14 +197,14 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
           equipmentName: node.label.isNotEmpty ? node.label : node.nodeKey,
           lineName: '',
           eventAt: visibleStart,
-          durationSec: isPoint
-              ? 0
-              : visibleEnd.difference(visibleStart).inSeconds,
-          connectionStatus: (node.assetCount ?? 0) > 0
-              ? ConnectionStatus.connected
-              : ConnectionStatus.disconnected,
-          receivedCount: node.assetCount ?? 0,
-          windowLabel: _windowLabel(node),
+          durationSec: visibleEnd.difference(visibleStart).inSeconds,
+          connectionStatus: connectionStatus,
+          receivedCount: assetCount,
+          windowLabel: _segmentWindowLabel(
+            startedAt: startedAt,
+            endedAt: endedAt,
+            isPoint: false,
+          ),
           lossRatePercent: null,
           timeSyncStatus: TimeSyncStatus.synced,
           clockOffsetMs: null,
@@ -193,6 +219,21 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
     final endedAt = node.lastRecordedAt ?? node.endedAt;
     if (startedAt == null || endedAt == null) {
       return node.label;
+    }
+    return _segmentWindowLabel(
+      startedAt: startedAt,
+      endedAt: endedAt,
+      isPoint: !endedAt.isAfter(startedAt),
+    );
+  }
+
+  String _segmentWindowLabel({
+    required DateTime startedAt,
+    required DateTime endedAt,
+    required bool isPoint,
+  }) {
+    if (isPoint) {
+      return _dateClock(startedAt);
     }
     final doesSpanDays =
         startedAt.year != endedAt.year ||
@@ -431,8 +472,10 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
       asset_pb.AssetKind.ASSET_KIND_DOCUMENT => CollectionAssetKind.document,
       asset_pb.AssetKind.ASSET_KIND_POSE => CollectionAssetKind.pose,
       asset_pb.AssetKind.ASSET_KIND_SUBTITLE => CollectionAssetKind.subtitle,
-      asset_pb.AssetKind.ASSET_KIND_TIMESERIES => CollectionAssetKind.timeseries,
-      asset_pb.AssetKind.ASSET_KIND_POINTCLOUD => CollectionAssetKind.pointcloud,
+      asset_pb.AssetKind.ASSET_KIND_TIMESERIES =>
+        CollectionAssetKind.timeseries,
+      asset_pb.AssetKind.ASSET_KIND_POINTCLOUD =>
+        CollectionAssetKind.pointcloud,
       asset_pb.AssetKind.ASSET_KIND_OCR_JSON => CollectionAssetKind.ocrJson,
       asset_pb.AssetKind.ASSET_KIND_REGION => CollectionAssetKind.region,
       _ => CollectionAssetKind.unspecified,

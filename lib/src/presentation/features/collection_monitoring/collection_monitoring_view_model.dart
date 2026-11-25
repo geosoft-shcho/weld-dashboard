@@ -75,6 +75,40 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     return _nodeByKey(nodeKey);
   }
 
+  /// 작업 하위에 파일이 없고(선택일 필터 포함) 선택된 행이 없을 때 조상 작업을 인스펙터에 쓴다.
+  CollectedNode? get inspectorNode {
+    final selected = selectedNode;
+    if (selected != null) {
+      return selected;
+    }
+    final hint = jobDayEmptyHint;
+    if (hint == null || _ancestors.isEmpty) {
+      return null;
+    }
+    return _ancestors.last;
+  }
+
+  /// 작업 드릴인 후 `_nodes`가 비었을 때만. 아니면 null.
+  JobDayEmptyHint? get jobDayEmptyHint {
+    if (_ancestors.isEmpty || _nodes.isNotEmpty) {
+      return null;
+    }
+    final job = _ancestors.last;
+    if (job.path.level != CollectedNodeLevel.job) {
+      return null;
+    }
+    final assetCount = job.assetCount ?? 0;
+    final doesHaveFiles = assetCount > 0 || job.hasChildren;
+    final recordAt = job.firstRecordedAt ?? job.startedAt;
+    return JobDayEmptyHint(
+      doesLackDayOverlap: doesHaveFiles,
+      label: job.label.isEmpty ? '미지정' : job.label,
+      assetCount: assetCount,
+      selectedDate: _query.selectedDate,
+      canJumpToRecordDate: doesHaveFiles && recordAt != null,
+    );
+  }
+
   CollectedNode? _nodeByKey(String nodeKey) {
     if (nodeKey.isEmpty) {
       return null;
@@ -327,6 +361,19 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     _applyDateWindow();
   }
 
+  void didTapJumpToJobRecordDate() {
+    final hint = jobDayEmptyHint;
+    if (hint == null || !hint.canJumpToRecordDate || _ancestors.isEmpty) {
+      return;
+    }
+    final job = _ancestors.last;
+    final recordAt = job.firstRecordedAt ?? job.startedAt;
+    if (recordAt == null) {
+      return;
+    }
+    didSelectDate(recordAt);
+  }
+
   void didSelectStartTime(DateTime time) {
     _query = _query.copyWith(startMinutes: time.hour * 60 + time.minute);
     _applyDateWindow();
@@ -551,4 +598,22 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       (_) => loadBoard(doesReloadSummary: true),
     );
   }
+}
+
+/// 작업 드릴인 후 자식 목록이 비었을 때의 빈 상태 표시값.
+class JobDayEmptyHint {
+  const JobDayEmptyHint({
+    required this.doesLackDayOverlap,
+    required this.label,
+    required this.assetCount,
+    required this.selectedDate,
+    required this.canJumpToRecordDate,
+  });
+
+  /// true: 파일은 있으나 선택일 기록 없음(B). false: 첨부 파일 없음(A).
+  final bool doesLackDayOverlap;
+  final String label;
+  final int assetCount;
+  final DateTime selectedDate;
+  final bool canJumpToRecordDate;
 }
