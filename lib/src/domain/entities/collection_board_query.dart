@@ -1,6 +1,5 @@
 import 'connection_status.dart';
 import 'kpi_card_kind.dart';
-import 'timeline_view_kind.dart';
 
 class CollectionBoardQuery {
   const CollectionBoardQuery({
@@ -17,7 +16,6 @@ class CollectionBoardQuery {
     required this.selectedKpiCard,
     required this.refreshIntervalSeconds,
     required this.selectedEquipmentId,
-    required this.viewKind,
     required this.zoomHours,
     required this.selectedEventId,
   });
@@ -40,7 +38,6 @@ class CollectionBoardQuery {
       selectedKpiCard: KpiCardKind.none,
       refreshIntervalSeconds: 0,
       selectedEquipmentId: '',
-      viewKind: TimelineViewKind.auto,
       zoomHours: 24,
       selectedEventId: '',
     );
@@ -59,7 +56,6 @@ class CollectionBoardQuery {
   final KpiCardKind selectedKpiCard;
   final int refreshIntervalSeconds;
   final String selectedEquipmentId;
-  final TimelineViewKind viewKind;
   final double zoomHours;
   final String selectedEventId;
 
@@ -79,7 +75,6 @@ class CollectionBoardQuery {
     KpiCardKind? selectedKpiCard,
     int? refreshIntervalSeconds,
     String? selectedEquipmentId,
-    TimelineViewKind? viewKind,
     double? zoomHours,
     String? selectedEventId,
   }) {
@@ -98,7 +93,6 @@ class CollectionBoardQuery {
       refreshIntervalSeconds:
           refreshIntervalSeconds ?? this.refreshIntervalSeconds,
       selectedEquipmentId: selectedEquipmentId ?? this.selectedEquipmentId,
-      viewKind: viewKind ?? this.viewKind,
       zoomHours: zoomHours ?? this.zoomHours,
       selectedEventId: selectedEventId ?? this.selectedEventId,
     );

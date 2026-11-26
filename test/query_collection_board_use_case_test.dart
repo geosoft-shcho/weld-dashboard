@@ -10,7 +10,6 @@ import 'package:weld_dashboard/src/domain/entities/project.dart';
 import 'package:weld_dashboard/src/domain/entities/time_sync_status.dart';
 import 'package:weld_dashboard/src/domain/entities/collection_resource_depth.dart';
 import 'package:weld_dashboard/src/domain/entities/collection_timeline_resource.dart';
-import 'package:weld_dashboard/src/domain/entities/timeline_view_kind.dart';
 import 'package:weld_dashboard/src/domain/entities/worker.dart';
 import 'package:weld_dashboard/src/domain/use_cases/query_collection_board_use_case.dart';
 
@@ -24,7 +23,6 @@ void main() {
     expect(board.kpi.summary.assetCount, 0);
     expect(board.kpi.runningTraceCount, 0);
     expect(board.rows.length, 8);
-    expect(board.timeline.viewKind, TimelineViewKind.resource);
     expect(board.timeline.depth, CollectionResourceDepth.project);
     expect(board.timeline.resourceHeaderLabel, '프로젝트');
     expect(board.timeline.resources.map((row) => row.label).toList(), [
@@ -58,15 +56,16 @@ void main() {
   });
 
   test(
-    'one equipment filter resolves to day view and keeps empty-row resource when forced',
+    'one equipment filter stays timeline view and keeps empty-row resource when forced',
     () {
-      final dayBoard = QueryCollectionBoardUseCase().execute(
+      final oneEquipmentBoard = QueryCollectionBoardUseCase().execute(
         catalog: _catalogWithEvents(),
         query: _onCollectionDay().copyWith(equipmentIds: ['EQ-01']),
       );
-      expect(dayBoard.timeline.viewKind, TimelineViewKind.day);
       expect(
-        dayBoard.timeline.events.every((event) => event.equipmentId == 'EQ-01'),
+        oneEquipmentBoard.timeline.events.every(
+          (event) => event.equipmentId == 'EQ-01',
+        ),
         isTrue,
       );
 
@@ -74,10 +73,8 @@ void main() {
         catalog: _catalogWithEvents(),
         query: _onCollectionDay().copyWith(
           equipmentIds: ['EQ-01'],
-          viewKind: TimelineViewKind.resource,
         ),
       );
-      expect(resourceBoard.timeline.viewKind, TimelineViewKind.resource);
       expect(resourceBoard.timeline.depth, CollectionResourceDepth.equipment);
       expect(resourceBoard.timeline.resourceHeaderLabel, '장비');
       expect(resourceBoard.timeline.resources.length, 1);
@@ -85,15 +82,7 @@ void main() {
         resourceBoard.timeline.resources.single.resourceId,
         CollectionTimelineResource.equipmentResourceId('EQ-01'),
       );
-
-      final roadmapBoard = QueryCollectionBoardUseCase().execute(
-        catalog: _catalogWithEvents(),
-        query: _onCollectionDay().copyWith(
-          viewKind: TimelineViewKind.roadmap,
-        ),
-      );
-      expect(roadmapBoard.timeline.viewKind, TimelineViewKind.roadmap);
-      expect(roadmapBoard.timeline.eventCount, greaterThan(0));
+      expect(resourceBoard.timeline.eventCount, greaterThan(0));
     },
   );
 
@@ -179,12 +168,13 @@ void main() {
     );
   });
 
-  test('one equipment opens the day view', () {
+  test('one equipment stays on the timeline view', () {
     final board = QueryCollectionBoardUseCase().execute(
       catalog: _catalogWithEvents(),
       query: _onCollectionDay().copyWith(equipmentIds: ['EQ-01']),
     );
-    expect(board.timeline.viewKind, TimelineViewKind.day);
+    expect(board.timeline.depth, CollectionResourceDepth.equipment);
+    expect(board.timeline.resources.length, 1);
   });
 
   test('selected day keeps projects after the assignment window closes', () {

@@ -2,11 +2,9 @@ import 'collection_board_row.dart';
 import 'collection_event.dart';
 import 'collection_resource_depth.dart';
 import 'collection_timeline_resource.dart';
-import 'timeline_view_kind.dart';
 
 class CollectionTimeline {
   const CollectionTimeline({
-    required this.viewKind,
     required this.events,
     required this.eventCount,
     required this.depth,
@@ -16,12 +14,10 @@ class CollectionTimeline {
     required this.equipmentRows,
     required this.selectedEventId,
     required this.focusedEquipmentId,
-    required this.canShowDayView,
     required this.selectedProjectName,
     required this.selectedWorkerName,
   });
 
-  final TimelineViewKind viewKind;
   final List<CollectionEvent> events;
   final int eventCount;
   final CollectionResourceDepth depth;
@@ -31,7 +27,6 @@ class CollectionTimeline {
   final List<CollectionBoardRow> equipmentRows;
   final String selectedEventId;
   final String focusedEquipmentId;
-  final bool canShowDayView;
   final String selectedProjectName;
   final String selectedWorkerName;
 

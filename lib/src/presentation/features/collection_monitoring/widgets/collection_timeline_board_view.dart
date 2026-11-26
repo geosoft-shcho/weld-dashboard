@@ -11,8 +11,8 @@ import '../collection_monitoring_view_model.dart';
 import 'collection_event_timeline_mapper.dart';
 import 'neon_timeline_material_scope.dart';
 
-class CollectionResourceTimelineView extends StatefulWidget {
-  const CollectionResourceTimelineView({
+class CollectionTimelineBoardView extends StatefulWidget {
+  const CollectionTimelineBoardView({
     super.key,
     required this.viewModel,
     required this.board,
@@ -22,12 +22,12 @@ class CollectionResourceTimelineView extends StatefulWidget {
   final CollectionBoard board;
 
   @override
-  State<CollectionResourceTimelineView> createState() =>
-      _CollectionResourceTimelineViewState();
+  State<CollectionTimelineBoardView> createState() =>
+      _CollectionTimelineBoardViewState();
 }
 
-class _CollectionResourceTimelineViewState
-    extends State<CollectionResourceTimelineView> {
+class _CollectionTimelineBoardViewState
+    extends State<CollectionTimelineBoardView> {
   static const double _rowHeight = 64;
   static const double _timeHeaderHeight = 48;
 
@@ -53,7 +53,7 @@ class _CollectionResourceTimelineViewState
   }
 
   @override
-  void didUpdateWidget(CollectionResourceTimelineView oldWidget) {
+  void didUpdateWidget(CollectionTimelineBoardView oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.board.timeline.selectedEventId !=
         widget.board.timeline.selectedEventId) {

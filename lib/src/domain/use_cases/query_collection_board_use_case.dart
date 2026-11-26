@@ -10,8 +10,6 @@ import '../entities/collection_timeline_resource.dart';
 import '../entities/connection_status.dart';
 import '../entities/equipment.dart';
 import '../entities/kpi_card_kind.dart';
-import '../entities/timeline_view_kind.dart';
-
 class QueryCollectionBoardUseCase {
   static const int LOSS_WARNING_PERCENT = 10;
 
@@ -514,17 +512,12 @@ class QueryCollectionBoardUseCase {
     } else {
       events = _eventsOverlap(events, query.startMinutes, query.endMinutes);
     }
-    final viewKind = _resolveViewKind(query);
     final focusedEquipmentId = _focusedEquipmentId(
       query: query,
       tableRows: tableRows,
       selectedEquipmentId: selectedEquipmentId,
     );
-    final canvasEvents = viewKind == TimelineViewKind.day
-        ? events
-              .where((event) => event.equipmentId == focusedEquipmentId)
-              .toList()
-        : events;
+    final canvasEvents = events;
     final selectedEvent = _pickedEvent(
       events: canvasEvents.isEmpty ? events : canvasEvents,
       selectedEventId: query.selectedEventId,
@@ -551,7 +544,6 @@ class QueryCollectionBoardUseCase {
       depth: depth,
     );
     return CollectionTimeline(
-      viewKind: viewKind,
       events: canvasEvents,
       eventCount: canvasEvents.length,
       depth: depth,
@@ -568,7 +560,6 @@ class QueryCollectionBoardUseCase {
       equipmentRows: scopeRows,
       selectedEventId: selectedEvent?.eventId ?? '',
       focusedEquipmentId: focusedEquipmentId,
-      canShowDayView: query.equipmentIds.length == 1 || tableRows.length == 1,
       selectedProjectName: assignment == null
           ? ''
           : catalog.projectById(assignment.projectId)?.projectName ?? '',
@@ -736,20 +727,6 @@ class QueryCollectionBoardUseCase {
             CollectionTimelineResource.UNASSIGNED_PROJECT_ID;
         return CollectionTimelineResource.projectResourceId(projectId);
     }
-  }
-
-  TimelineViewKind _resolveViewKind(CollectionBoardQuery query) {
-    if (query.viewKind == TimelineViewKind.roadmap) {
-      return TimelineViewKind.roadmap;
-    }
-    if (query.viewKind == TimelineViewKind.resource) {
-      return TimelineViewKind.resource;
-    }
-    if (query.viewKind == TimelineViewKind.day ||
-        query.equipmentIds.length == 1) {
-      return TimelineViewKind.day;
-    }
-    return TimelineViewKind.resource;
   }
 
   String _focusedEquipmentId({

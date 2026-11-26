@@ -7,7 +7,6 @@ import '../../../domain/entities/collection_board.dart';
 import '../../../domain/entities/collection_board_query.dart';
 import '../../../domain/entities/collection_summary.dart';
 import '../../../domain/entities/kpi_card_kind.dart';
-import '../../../domain/entities/timeline_view_kind.dart';
 import '../../../domain/entities/worker.dart';
 import '../../../domain/use_cases/get_collection_summary_use_case.dart';
 import '../../../domain/use_cases/list_asset_counts_use_case.dart';
@@ -428,12 +427,6 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  void didSelectTimelineView(TimelineViewKind viewKind) {
-    _query = _query.copyWith(viewKind: viewKind);
-    _present();
-    notifyListeners();
-  }
-
   void didSelectZoom(double zoomHours) {
     _query = _query.copyWith(zoomHours: zoomHours);
     _present();
@@ -471,15 +464,6 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
 
   void didTapLineCrumb() {
     didTapAncestor(_ancestors.isEmpty ? 0 : _ancestors.length - 1);
-  }
-
-  void didTapOpenDayView() {
-    if (_query.selectedEquipmentId.isEmpty) {
-      return;
-    }
-    _query = _query.copyWith(viewKind: TimelineViewKind.day);
-    _present();
-    notifyListeners();
   }
 
   @override

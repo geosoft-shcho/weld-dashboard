@@ -7,7 +7,6 @@ import '../entities/collection_timeline.dart';
 import '../entities/collection_timeline_resource.dart';
 import '../entities/connection_status.dart';
 import '../entities/time_sync_status.dart';
-import '../entities/timeline_view_kind.dart';
 
 class PresentCollectionNodesUseCase {
   CollectionBoard execute({
@@ -20,10 +19,7 @@ class PresentCollectionNodesUseCase {
         ? const <CollectionEvent>[]
         : [for (final node in nodes) ..._eventsFrom(node, query)];
     final focused = _focused(query.selectedEquipmentId, rows);
-    final viewKind = _viewKind(query.viewKind);
-    final canvasEvents = viewKind == TimelineViewKind.day && focused.isNotEmpty
-        ? events.where((event) => event.equipmentId == focused).toList()
-        : events;
+    final canvasEvents = events;
     return CollectionBoard(
       query: query.copyWith(selectedEquipmentId: focused),
       kpi: kpi,
@@ -36,7 +32,6 @@ class PresentCollectionNodesUseCase {
       ),
       selectedEquipmentId: focused,
       timeline: CollectionTimeline(
-        viewKind: viewKind,
         events: canvasEvents,
         eventCount: canvasEvents.length,
         depth: CollectionResourceDepth.equipment,
@@ -67,7 +62,6 @@ class PresentCollectionNodesUseCase {
         equipmentRows: rows,
         selectedEventId: query.selectedEventId,
         focusedEquipmentId: focused,
-        canShowDayView: focused.isNotEmpty,
         selectedProjectName: '',
         selectedWorkerName: '',
       ),
@@ -199,18 +193,6 @@ class PresentCollectionNodesUseCase {
       return selectedId;
     }
     return '';
-  }
-
-  TimelineViewKind _viewKind(TimelineViewKind viewKind) {
-    switch (viewKind) {
-      case TimelineViewKind.roadmap:
-        return TimelineViewKind.roadmap;
-      case TimelineViewKind.day:
-        return TimelineViewKind.day;
-      case TimelineViewKind.resource:
-      case TimelineViewKind.auto:
-        return TimelineViewKind.resource;
-    }
   }
 
   String _header(List<CollectedNode> nodes) {

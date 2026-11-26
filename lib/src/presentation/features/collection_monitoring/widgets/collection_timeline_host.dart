@@ -3,15 +3,24 @@ import 'package:fluent_ui/fluent_ui.dart';
 import '../../../../domain/entities/collected_node.dart';
 import '../../../../domain/entities/collection_board.dart';
 import '../../../../domain/entities/collection_timeline.dart';
-import '../../../../domain/entities/timeline_view_kind.dart';
 import '../../../core/formatters/dashboard_formatters.dart';
 import '../../../core/themes/app_theme.dart';
 import '../collection_monitoring_view_model.dart';
-import 'collection_day_timeline_view.dart';
-import 'collection_resource_timeline_view.dart';
-import 'collection_roadmap_view.dart';
+import 'collection_timeline_board_view.dart';
 import 'collection_timeline_inspector.dart';
 import 'timeline_status_style.dart';
+
+const _kViewRootLabel = '공사별';
+const _kInspectorMinWidth = 720.0;
+const _kInspectorWidth = 280.0;
+const _kPanelBorderColor = Color(0xFF3E424A);
+
+const _zoomHoursOptions = <(double, String)>[
+  (0.25, '15m'),
+  (1.0, '1h'),
+  (4.0, '4h'),
+  (24.0, '24h'),
+];
 
 class CollectionTimelineHost extends StatelessWidget {
   const CollectionTimelineHost({
@@ -27,63 +36,16 @@ class CollectionTimelineHost extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final inspectorWidth = constraints.maxWidth < 720 ? 0.0 : 280.0;
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 8),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Expanded(
-                    child: _Toolbar(viewModel: viewModel, board: board),
-                  ),
-                  const SizedBox(width: 8),
-                  const _Legend(),
-                  const SizedBox(width: 4),
-                ],
-              ),
-            ),
-            if (_doesShowDrillCrumbs) ...[
-              const SizedBox(height: 8),
-              _DrillCrumbs(viewModel: viewModel, board: board),
-            ],
+            _ChromeBar(viewModel: viewModel, board: board),
             const SizedBox(height: 8),
             Expanded(
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Expanded(
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        color: AppTheme.SURFACE_RAISED,
-                        borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: const Color(0xFF3E424A)),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: _BoardView(viewModel: viewModel, board: board),
-                      ),
-                    ),
-                  ),
-                  if (inspectorWidth > 0) ...[
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: inspectorWidth,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          color: AppTheme.SURFACE_RAISED,
-                          borderRadius: BorderRadius.circular(6),
-                          border: Border.all(color: const Color(0xFF3E424A)),
-                        ),
-                        child: CollectionTimelineInspector(
-                          viewModel: viewModel,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+              child: _BoardBody(
+                viewModel: viewModel,
+                board: board,
+                maxWidth: constraints.maxWidth,
               ),
             ),
           ],
@@ -91,39 +53,94 @@ class CollectionTimelineHost extends StatelessWidget {
       },
     );
   }
-
-  bool get _doesShowDrillCrumbs {
-    switch (board.timeline.viewKind) {
-      case TimelineViewKind.resource:
-      case TimelineViewKind.auto:
-      case TimelineViewKind.day:
-        return true;
-      case TimelineViewKind.roadmap:
-        return false;
-    }
-  }
 }
 
-class _BoardView extends StatelessWidget {
-  const _BoardView({required this.viewModel, required this.board});
+class _ChromeBar extends StatelessWidget {
+  const _ChromeBar({required this.viewModel, required this.board});
 
   final CollectionMonitoringViewModel viewModel;
   final CollectionBoard board;
 
   @override
   Widget build(BuildContext context) {
-    switch (board.timeline.viewKind) {
-      case TimelineViewKind.day:
-        return CollectionDayTimelineView(viewModel: viewModel, board: board);
-      case TimelineViewKind.roadmap:
-        return CollectionRoadmapView(viewModel: viewModel, board: board);
-      case TimelineViewKind.resource:
-      case TimelineViewKind.auto:
-        return CollectionResourceTimelineView(
-          viewModel: viewModel,
-          board: board,
-        );
-    }
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Expanded(
+            child: _DrillCrumbs(viewModel: viewModel, board: board),
+          ),
+          const SizedBox(width: 8),
+          const _Legend(),
+          const SizedBox(width: 12),
+          _ZoomControl(
+            zoomHours: board.query.zoomHours,
+            onChanged: viewModel.didSelectZoom,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BoardBody extends StatelessWidget {
+  const _BoardBody({
+    required this.viewModel,
+    required this.board,
+    required this.maxWidth,
+  });
+
+  final CollectionMonitoringViewModel viewModel;
+  final CollectionBoard board;
+  final double maxWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    final doesShowInspector = maxWidth >= _kInspectorMinWidth;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Expanded(
+          child: _SurfacePanel(
+            padding: const EdgeInsets.all(8),
+            child: CollectionTimelineBoardView(
+              viewModel: viewModel,
+              board: board,
+            ),
+          ),
+        ),
+        if (doesShowInspector) ...[
+          const SizedBox(width: 8),
+          SizedBox(
+            width: _kInspectorWidth,
+            child: _SurfacePanel(
+              child: CollectionTimelineInspector(viewModel: viewModel),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _SurfacePanel extends StatelessWidget {
+  const _SurfacePanel({required this.child, this.padding});
+
+  final Widget child;
+  final EdgeInsetsGeometry? padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final content = padding == null ? child : Padding(padding: padding!, child: child);
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppTheme.SURFACE_RAISED,
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: _kPanelBorderColor),
+      ),
+      child: content,
+    );
   }
 }
 
@@ -139,22 +156,19 @@ class _DrillCrumbs extends StatelessWidget {
     final rootPath = CollectedNodePath.root(viewModel.collectedView);
     final currentParent = ancestors.isEmpty ? rootPath : ancestors.last.path;
     final crumbs = <Widget>[
-      Button(
+      _CrumbButton(
         onPressed: () => viewModel.didTapAncestor(0),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(_viewRootLabelOf(viewModel.collectedView)),
-            const SizedBox(width: 6),
-            Text(
-              _pathCountLabel(
-                children: viewModel.cachedChildrenOf(rootPath),
-                timeline: board.timeline,
-                doesShowEventCount: currentParent == rootPath,
-              ),
+        children: [
+          const Text(_kViewRootLabel),
+          const SizedBox(width: 6),
+          Text(
+            _pathCountLabel(
+              children: viewModel.cachedChildrenOf(rootPath),
+              timeline: board.timeline,
+              doesShowEventCount: currentParent == rootPath,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     ];
     for (var index = 0; index < ancestors.length; index++) {
@@ -162,28 +176,25 @@ class _DrillCrumbs extends StatelessWidget {
       final label = node.label.isEmpty ? '미지정' : node.label;
       crumbs.add(const Text('›'));
       crumbs.add(
-        Button(
+        _CrumbButton(
           onPressed: () => viewModel.didTapAncestor(index + 1),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _LevelBadge(label: _levelLabelOf(node.path.level)),
-              const SizedBox(width: 6),
-              Text(label),
-              const SizedBox(width: 6),
-              Text(
-                _pathCountLabel(
-                  children: viewModel.cachedChildrenOf(node.path),
-                  timeline: board.timeline,
-                  doesShowEventCount: currentParent == node.path,
-                ),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  color: AppTheme.ACCENT_STEEL,
-                ),
+          children: [
+            _LevelBadge(label: _levelLabelOf(node.path.level)),
+            const SizedBox(width: 6),
+            Text(label),
+            const SizedBox(width: 6),
+            Text(
+              _pathCountLabel(
+                children: viewModel.cachedChildrenOf(node.path),
+                timeline: board.timeline,
+                doesShowEventCount: currentParent == node.path,
               ),
-            ],
-          ),
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppTheme.ACCENT_STEEL,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -192,6 +203,24 @@ class _DrillCrumbs extends StatelessWidget {
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: crumbs,
+    );
+  }
+}
+
+class _CrumbButton extends StatelessWidget {
+  const _CrumbButton({required this.onPressed, required this.children});
+
+  final VoidCallback onPressed;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Button(
+      onPressed: onPressed,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: children,
+      ),
     );
   }
 }
@@ -207,7 +236,7 @@ class _LevelBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppTheme.ACCENT_STEEL.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(3),
-        border: Border.all(color: const Color(0xFF3E424A)),
+        border: Border.all(color: _kPanelBorderColor),
       ),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
@@ -224,122 +253,43 @@ class _LevelBadge extends StatelessWidget {
   }
 }
 
-String _levelLabelOf(CollectedNodeLevel level) {
-  return switch (level) {
-    CollectedNodeLevel.project => '공사',
-    CollectedNodeLevel.item => '품목',
-    CollectedNodeLevel.job => '작업',
-    CollectedNodeLevel.unspecified => '전체',
-  };
-}
+class _ZoomControl extends StatelessWidget {
+  const _ZoomControl({
+    required this.zoomHours,
+    required this.onChanged,
+  });
 
-String _viewRootLabelOf(CollectedNodeView view) {
-  return '공사별';
-}
-
-class _Toolbar extends StatelessWidget {
-  const _Toolbar({required this.viewModel, required this.board});
-
-  final CollectionMonitoringViewModel viewModel;
-  final CollectionBoard board;
+  final double zoomHours;
+  final ValueChanged<double> onChanged;
 
   @override
   Widget build(BuildContext context) {
-    final query = board.query;
-    final timeline = board.timeline;
+    final selected = _zoomHoursOptions.any((option) => option.$1 == zoomHours)
+        ? zoomHours
+        : null;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        _ViewButton(
-          label: '리소스',
-          isSelected:
-              timeline.viewKind == TimelineViewKind.resource ||
-              timeline.viewKind == TimelineViewKind.auto,
-          onPressed: () =>
-              viewModel.didSelectTimelineView(TimelineViewKind.resource),
-        ),
-        if (timeline.canShowDayView)
-          _ViewButton(
-            label: '하루 타임라인',
-            isSelected: timeline.viewKind == TimelineViewKind.day,
-            onPressed: () =>
-                viewModel.didSelectTimelineView(TimelineViewKind.day),
-          ),
-        _ViewButton(
-          label: '로드맵',
-          isSelected: timeline.viewKind == TimelineViewKind.roadmap,
-          onPressed: () =>
-              viewModel.didSelectTimelineView(TimelineViewKind.roadmap),
-        ),
         const Text('줌'),
-        for (final option in const [
-          (0.25, '15m'),
-          (1.0, '1h'),
-          (4.0, '4h'),
-          (24.0, '24h'),
-        ])
-          _ViewButton(
-            label: option.$2,
-            isSelected: query.zoomHours == option.$1,
-            onPressed: () => viewModel.didSelectZoom(option.$1),
-          ),
+        ComboBox<double>(
+          value: selected,
+          items: [
+            for (final option in _zoomHoursOptions)
+              ComboBoxItem<double>(
+                value: option.$1,
+                child: Text(option.$2),
+              ),
+          ],
+          onChanged: (value) {
+            if (value != null) {
+              onChanged(value);
+            }
+          },
+        ),
       ],
     );
-  }
-}
-
-String _pathCountLabel({
-  required List<CollectedNode> children,
-  required CollectionTimeline timeline,
-  required bool doesShowEventCount,
-}) {
-  final nodeCount = children.length;
-  final unit = _childCountUnitOf(children);
-  final nodeLabel = '${DashboardFormatters.count(nodeCount)}$unit';
-  if (!doesShowEventCount || nodeCount == 0) {
-    return nodeLabel;
-  }
-  final eventCount = timeline.eventCount;
-  if (eventCount == 0 || eventCount == nodeCount) {
-    return nodeLabel;
-  }
-  return '$nodeLabel · ${DashboardFormatters.count(eventCount)}구간';
-}
-
-String _childCountUnitOf(List<CollectedNode> children) {
-  if (children.isEmpty) {
-    return '건';
-  }
-  if (children.every((node) => node.contentUrl.isNotEmpty)) {
-    return '개';
-  }
-  return switch (children.first.path.level) {
-    CollectedNodeLevel.project ||
-    CollectedNodeLevel.item ||
-    CollectedNodeLevel.job ||
-    CollectedNodeLevel.unspecified => '건',
-  };
-}
-
-class _ViewButton extends StatelessWidget {
-  const _ViewButton({
-    required this.label,
-    required this.isSelected,
-    required this.onPressed,
-  });
-
-  final String label;
-  final bool isSelected;
-  final VoidCallback onPressed;
-
-  @override
-  Widget build(BuildContext context) {
-    if (isSelected) {
-      return FilledButton(onPressed: onPressed, child: Text(label));
-    }
-    return Button(onPressed: onPressed, child: Text(label));
   }
 }
 
@@ -379,4 +329,46 @@ class _LegendItem extends StatelessWidget {
       ],
     );
   }
+}
+
+String _levelLabelOf(CollectedNodeLevel level) {
+  return switch (level) {
+    CollectedNodeLevel.project => '공사',
+    CollectedNodeLevel.item => '품목',
+    CollectedNodeLevel.job => '작업',
+    CollectedNodeLevel.unspecified => '전체',
+  };
+}
+
+String _pathCountLabel({
+  required List<CollectedNode> children,
+  required CollectionTimeline timeline,
+  required bool doesShowEventCount,
+}) {
+  final nodeCount = children.length;
+  final unit = _childCountUnitOf(children);
+  final nodeLabel = '${DashboardFormatters.count(nodeCount)}$unit';
+  if (!doesShowEventCount || nodeCount == 0) {
+    return nodeLabel;
+  }
+  final eventCount = timeline.eventCount;
+  if (eventCount == 0 || eventCount == nodeCount) {
+    return nodeLabel;
+  }
+  return '$nodeLabel · ${DashboardFormatters.count(eventCount)}구간';
+}
+
+String _childCountUnitOf(List<CollectedNode> children) {
+  if (children.isEmpty) {
+    return '건';
+  }
+  if (children.every((node) => node.contentUrl.isNotEmpty)) {
+    return '개';
+  }
+  return switch (children.first.path.level) {
+    CollectedNodeLevel.project ||
+    CollectedNodeLevel.item ||
+    CollectedNodeLevel.job ||
+    CollectedNodeLevel.unspecified => '건',
+  };
 }
