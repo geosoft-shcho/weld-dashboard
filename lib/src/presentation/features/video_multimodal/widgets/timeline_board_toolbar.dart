@@ -68,11 +68,6 @@ class TimelineBoardToolbar extends StatelessWidget {
               selected: viewModel.isTrackMenuOpen,
               onPressed: viewModel.didTapToggleTrackMenu,
             ),
-            TimelineBoardToolButton(
-              'Marker',
-              icon: Icons.flag,
-              onPressed: viewModel.didTapAddMarker,
-            ),
           ], isLast: true),
         ],
       ),

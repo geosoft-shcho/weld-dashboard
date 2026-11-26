@@ -142,7 +142,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   int? _vectorSaveTrackCount;
   bool _hasError = false;
   String _errorMessage = '';
-  final List<double> _markerSeconds = [];
   String _noticeText = '';
   List<WorkAttachment> _attachments = const [];
   List<TemporaryAttachmentBar> _bars = const [];
@@ -248,7 +247,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   bool get isLoadingAttachments => _isLoadingAttachments;
   bool get hasError => _hasError;
   String get errorMessage => _errorMessage;
-  List<double> get markerSeconds => List.unmodifiable(_markerSeconds);
   String get noticeText => _noticeText;
   bool get hasNotice => _noticeText.isNotEmpty;
   List<WorkAttachment> get attachments => List.unmodifiable(_attachments);
@@ -4231,16 +4229,6 @@ class VideoMultimodalViewModel extends ChangeNotifier {
   void didTapToggleTrackMenu() {
     _isTrackMenuOpen = !_isTrackMenuOpen;
     notifyListeners();
-  }
-
-  void didTapAddMarker() {
-    _markerSeconds.add(playheadSeconds);
-    _noticeText = '';
-    notifyListeners();
-  }
-
-  void didTapMarker(double seconds) {
-    didSeekToSeconds(seconds);
   }
 
   void didDismissNotice() {

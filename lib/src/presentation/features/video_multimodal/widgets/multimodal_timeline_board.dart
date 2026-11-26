@@ -450,19 +450,6 @@ class _MultimodalTimelineBoardState extends State<MultimodalTimelineBoard> {
                     width: 12,
                     child: const IgnorePointer(child: _PlayheadMarker()),
                   ),
-                  for (final marker in viewModel.markerSeconds)
-                    Positioned(
-                      left: marker * viewModel.pixelsPerSecond,
-                      top: 0,
-                      child: GestureDetector(
-                        onTap: () => viewModel.didTapMarker(marker),
-                        child: const Icon(
-                          Icons.bookmark,
-                          size: 16,
-                          color: MultimodalStudioPalette.CANTELOUPE_400,
-                        ),
-                      ),
-                    ),
                 ],
               ),
             ),
