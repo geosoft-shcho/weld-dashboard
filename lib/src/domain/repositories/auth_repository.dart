@@ -5,6 +5,9 @@ abstract class AuthRepository {
   /// 저장된 세션이 있으면 사용자, 없으면 null.
   Future<AuthUser?> restoreSession();
 
+  /// GetCurrentAccount로 세션 계정을 다시 읽는다. 토큰 없거나 401이면 null.
+  Future<AuthUser?> refreshCurrentAccount();
+
   /// AuthService.Login. 세션 토큰은 로컬에 두고 비밀번호는 저장하지 않는다.
   Future<SignInResult> signIn({
     required String userId,

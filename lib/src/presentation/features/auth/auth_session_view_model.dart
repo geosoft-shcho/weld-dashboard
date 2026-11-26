@@ -58,6 +58,17 @@ class AuthSessionViewModel extends ChangeNotifier {
     }
   }
 
+  /// UpdateAccount 등으로 계정 정보가 바뀐 뒤 GetCurrentAccount로만 다시 읽는다.
+  /// `_isRestoring`을 켜지 않아 앱 게이트 ProgressRing을 띄우지 않는다.
+  Future<void> refreshCurrentAccount() async {
+    try {
+      _user = await _restoreAuthSessionUseCase.execute();
+    } catch (_) {
+      _user = null;
+    }
+    notifyListeners();
+  }
+
   Future<bool> signIn({
     required String userId,
     required String password,

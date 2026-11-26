@@ -6,6 +6,7 @@ import '../../core/di/locator.dart';
 import '../../core/widgets/catalog_lookup_table.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../core/widgets/query_failure_pane.dart';
+import '../auth/auth_session_view_model.dart';
 import 'accounts_admin_view_model.dart';
 
 class AccountsAdminScreen extends StatelessWidget {
@@ -183,6 +184,15 @@ class _AccountEditDialogState extends State<_AccountEditDialog> {
         _error = errorText;
         _isSaving = false;
       });
+      return;
+    }
+    if (!_isCreate) {
+      final auth = context.read<AuthSessionViewModel>();
+      if (widget.account!.accountId == auth.accountId) {
+        await auth.refreshCurrentAccount();
+      }
+    }
+    if (!mounted) {
       return;
     }
     Navigator.of(context).pop();

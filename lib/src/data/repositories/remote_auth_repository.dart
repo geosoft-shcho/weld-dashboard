@@ -40,6 +40,9 @@ class RemoteAuthRepository implements AuthRepository {
   }
 
   @override
+  Future<AuthUser?> refreshCurrentAccount() => restoreSession();
+
+  @override
   Future<SignInResult> signIn({
     required String userId,
     required String password,
