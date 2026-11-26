@@ -558,13 +558,11 @@ class _MyAccountInfoDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = FluentTheme.of(context);
     final user = context.watch<AuthSessionViewModel>().user;
 
     final loginName = user?.loginName.trim() ?? '';
     final displayName = user?.displayName.trim() ?? '';
     final roleName = user?.roleName.trim() ?? '';
-    final roleId = user?.roleId ?? 0;
     final permissions = user?.permissions ?? const <String>[];
 
     return ContentDialog(
@@ -668,12 +666,10 @@ class _MyAccountInfoRow extends StatelessWidget {
   const _MyAccountInfoRow({
     required this.label,
     required this.value,
-    this.trailing,
   });
 
   final String label;
   final String value;
-  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
@@ -683,14 +679,7 @@ class _MyAccountInfoRow extends StatelessWidget {
       children: [
         Text(label, style: TextStyle(fontSize: 12, color: secondary)),
         const SizedBox(height: 4),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.baseline,
-          textBaseline: TextBaseline.alphabetic,
-          children: [
-            Expanded(child: SelectableText(value)),
-            if (trailing != null) ...[const SizedBox(width: 8), trailing!],
-          ],
-        ),
+        SelectableText(value),
       ],
     );
   }
