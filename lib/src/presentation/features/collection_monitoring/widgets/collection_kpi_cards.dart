@@ -164,12 +164,13 @@ class CollectionKpiCards extends StatelessWidget {
     return '${percent.toStringAsFixed(1)}%';
   }
 
+  /// 한 줄이 길어지지 않게 건수와 단위를 나눈다. `_EmbeddingSection` detail은 maxLines 2.
   String _ratioSubtitle(
     int numerator,
     int denominator, {
     required String unit,
   }) {
-    return '${DashboardFormatters.count(numerator)} / ${DashboardFormatters.count(denominator)} $unit';
+    return '${DashboardFormatters.count(numerator)} / ${DashboardFormatters.count(denominator)}\n$unit';
   }
 }
 
@@ -414,9 +415,8 @@ class _EmbeddingKpiCard extends StatelessWidget {
                           margin: const EdgeInsets.symmetric(horizontal: 8),
                           color: accent.withValues(alpha: 0.28),
                         ),
-                      // 기록(클립)만 1.5배 — flex 3 : 2 : 2
                       Expanded(
-                        flex: i == 0 ? 3 : 2,
+                        flex: 2,
                         child: i < sections.length
                             ? _EmbeddingSection(
                                 label: sections[i].label,
