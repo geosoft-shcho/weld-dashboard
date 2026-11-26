@@ -539,45 +539,32 @@ class _EmptyBoardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     final hint = viewModel.jobDayEmptyHint;
     if (hint == null) {
-      return Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(_fallbackLabel()),
+      return _EmptyMessage(
+        title: _fallbackLabel(),
+        subtitle: '조회 구간에 표시할 행이 없습니다.',
       );
     }
     if (!hint.doesLackDayOverlap) {
-      return const Padding(
-        padding: EdgeInsets.all(16),
-        child: Text('이 작업에 첨부된 파일이 없습니다'),
+      return const _EmptyMessage(
+        title: '이 작업에 첨부된 파일이 없습니다',
+        subtitle: '조회 구간에 표시할 행이 없습니다.',
       );
     }
     final dateLabel = DashboardFormatters.date(hint.selectedDate);
     final countLabel = DashboardFormatters.count(hint.assetCount);
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Text(
-            '이 날짜에 기록된 파일이 없습니다',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
-          ),
-          const SizedBox(height: 8),
-          Text('${hint.label} 파일 $countLabel개 · $dateLabel에는 기록 없음'),
-          const SizedBox(height: 4),
-          const Text(
-            '파일 목록은 선택일 기준으로 서버가 걸러 줍니다.',
-            style: TextStyle(fontSize: 12, color: AppTheme.STATUS_OFF),
-          ),
-          if (hint.canJumpToRecordDate) ...[
-            const SizedBox(height: 12),
-            TextButton(
+    return _EmptyMessage(
+      title: '이 날짜에 기록된 파일이 없습니다',
+      subtitle: '${hint.label} 파일 $countLabel개 · $dateLabel에는 기록 없음',
+      footer: const Text(
+        '파일 목록은 선택일 기준으로 서버가 걸러 줍니다.',
+        style: TextStyle(fontSize: 12, color: AppTheme.STATUS_OFF),
+      ),
+      action: hint.canJumpToRecordDate
+          ? TextButton(
               onPressed: viewModel.didTapJumpToJobRecordDate,
               child: const Text('기록이 있는 날 보기'),
-            ),
-          ],
-        ],
-      ),
+            )
+          : null,
     );
   }
 
@@ -592,5 +579,64 @@ class _EmptyBoardBody extends StatelessWidget {
             ? '이 날짜의 수집 이벤트가 없습니다'
             : '조건에 맞는 장비가 없습니다';
     }
+  }
+}
+
+class _EmptyMessage extends StatelessWidget {
+  const _EmptyMessage({
+    required this.title,
+    required this.subtitle,
+    this.footer,
+    this.action,
+  });
+
+  final String title;
+  final String subtitle;
+  final Widget? footer;
+  final Widget? action;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                subtitle,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.STATUS_OFF,
+                ),
+              ),
+              if (footer != null) ...[
+                const SizedBox(height: 4),
+                DefaultTextStyle.merge(
+                  textAlign: TextAlign.center,
+                  child: footer!,
+                ),
+              ],
+              if (action != null) ...[
+                const SizedBox(height: 12),
+                action!,
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
