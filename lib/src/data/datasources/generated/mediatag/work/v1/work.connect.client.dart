@@ -243,6 +243,77 @@ extension type WorkServiceClient (connect.Transport _transport) {
     );
   }
 
+  /// 데이터 유형 — 공사가 "잘 모였나" 확인하는 단위(앞 깊이 영상 · 액션캠 영상 · 용접 성적서). 공사 필수 구성(Project.required_data_type_ids)과
+  /// 커버리지가 이 단위다. 장비와 묶지 않는다(카메라를 바꿔도 같은 유형). 지우지 않고 UpdateDataType inactive로 숨긴다.
+  Future<mediatagworkv1work.ListDataTypesResponse> listDataTypes(
+    mediatagworkv1work.ListDataTypesRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.WorkService.listDataTypes,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
+  Future<mediatagworkv1work.CreateDataTypeResponse> createDataType(
+    mediatagworkv1work.CreateDataTypeRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.WorkService.createDataType,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
+  Future<mediatagworkv1work.UpdateDataTypeResponse> updateDataType(
+    mediatagworkv1work.UpdateDataTypeRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.WorkService.updateDataType,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
+  /// 파일 유형을 맞춤 조건으로 다시 붙인다 — 유형을 늘리거나 조건을 고친 뒤. overwrite가 아니면 미지정 파일만(사람이 고른 것은 그대로).
+  Future<mediatagworkv1work.RematchDataTypesResponse> rematchDataTypes(
+    mediatagworkv1work.RematchDataTypesRequest input, {
+    connect.Headers? headers,
+    connect.AbortSignal? signal,
+    Function(connect.Headers)? onHeader,
+    Function(connect.Headers)? onTrailer,
+  }) {
+    return connect.Client(_transport).unary(
+      specs.WorkService.rematchDataTypes,
+      input,
+      signal: signal,
+      headers: headers,
+      onHeader: onHeader,
+      onTrailer: onTrailer,
+    );
+  }
+
   /// 공사의 호기에 품목을 배정한다(묶음). 작업을 만들기 전에 품목을 미리 등록할 때 쓴다. 이미 있는 배정은 그대로 두고
   /// (이름도 안 바꾼다) 그 줄을 돌려준다. project_id·unit_no·item_code·item_name 필수, 없는 공사면 InvalidArgument.
   Future<mediatagworkv1work.CreateProjectItemsResponse> createProjectItems(
@@ -580,7 +651,8 @@ extension type WorkServiceClient (connect.Transport _transport) {
   }
 
   /// 날짜(한국 시각) × 자료 종류별 Asset 수 · 용량 — "언제 얼마나 들어왔나(수집 시각) / 기록됐나(기록 시각)" 그래프.
-  /// 범위 · 세는 규칙은 ListCollectionNodes와 같다(parent · worker_id 같은 값, 날짜별 합 = GetCollectionSummary의 asset_count · total_size_bytes).
+  /// 범위는 ListCollectionNodes와 같은 parent · worker_id. from · to는 파일 시각(basis)으로 거른다 — 구간 없이 부르면 날짜별 합 =
+  /// GetCollectionSummary의 asset_count · total_size_bytes, 구간을 주면 다를 수 있다(KPI는 겹치는 작업의 파일 전부).
   Future<mediatagworkv1work.ListAssetCountsResponse> listAssetCounts(
     mediatagworkv1work.ListAssetCountsRequest input, {
     connect.Headers? headers,

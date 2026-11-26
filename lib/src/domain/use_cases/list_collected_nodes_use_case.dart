@@ -8,16 +8,16 @@ class ListCollectedNodesUseCase {
 
   Future<List<CollectedNode>> execute(
     CollectedNodePath parent, {
-    int? startOffsetNs,
-    int? endOffsetNs,
+    DateTime? from,
+    DateTime? to,
     CollectedTimeBasis basis = CollectedTimeBasis.work,
     CollectedSegmentUnit segmentUnit = CollectedSegmentUnit.job,
     String workerId = '',
   }) {
     return _repository.listCollectedNodes(
       parent,
-      startOffsetNs: startOffsetNs,
-      endOffsetNs: endOffsetNs,
+      from: from,
+      to: to,
       basis: basis,
       segmentUnit: segmentUnit,
       workerId: workerId,

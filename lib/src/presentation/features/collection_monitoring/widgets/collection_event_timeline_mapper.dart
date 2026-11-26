@@ -33,9 +33,10 @@ class CollectionEventPlannerAdapter
 
   @override
   NeonPlannerEntryPresentation presentationOf(CollectionEvent entry) {
-    final title = entry.isPoint
+    final baseTitle = entry.isPoint
         ? _pointTitle(entry)
         : '${entry.connectionStatus.label} · ${entry.windowLabel}';
+    final title = entry.isEstimated ? '추정 · $baseTitle' : baseTitle;
     return NeonPlannerEntryPresentation(
       title: title,
       subtitle: entry.equipmentName,
@@ -79,7 +80,11 @@ class CollectionEventTimelineMapper {
   static const double HOUR_PX = 48;
 
   /// API summary.asset_count / asset 유무로만 정한 수집·기록 없음 색.
+  /// estimated 막대는 액센트만 다르게 둔다(점선 패턴 미지원).
   static Color colorOf(CollectionEvent event) {
+    if (event.isEstimated) {
+      return AppTheme.ACCENT_STEEL.withValues(alpha: 0.72);
+    }
     switch (event.connectionStatus) {
       case ConnectionStatus.connected:
         return AppTheme.STATUS_OK;

@@ -58,6 +58,15 @@ class CollectionTimelineInspector extends StatelessWidget {
                 ),
             ],
           ),
+          if (node.doesHaveTimeWarning) ...[
+            const SizedBox(height: 8),
+            InfoBar(
+              title: const Text('시각 확인'),
+              content: Text(_timeWarningLabel(node.warnings)),
+              severity: InfoBarSeverity.warning,
+              isLong: true,
+            ),
+          ],
           const SizedBox(height: 8),
           for (final field in fields) ...[
             _NodeField(label: field.$1, value: field.$2),
@@ -154,6 +163,26 @@ class CollectionTimelineInspector extends StatelessWidget {
       CollectedNodeLevel.job => '작업',
       CollectedNodeLevel.unspecified => '미지정',
     };
+  }
+
+  String _timeWarningLabel(List<CollectedTimeWarning> warnings) {
+    final parts = <String>[];
+    for (final warning in warnings) {
+      final code = switch (warning.code) {
+        CollectedTimeWarningCode.passNotOverlapped => '패스·자료 구간 불일치',
+        CollectedTimeWarningCode.recordedOutsideJob => '작업 밖 기록',
+        CollectedTimeWarningCode.unspecified => '시각 이상',
+      };
+      final detail = <String>[];
+      if (warning.passId.isNotEmpty) {
+        detail.add('패스 ${warning.passId}');
+      }
+      if (warning.assetId.isNotEmpty) {
+        detail.add('파일 ${warning.assetId}');
+      }
+      parts.add(detail.isEmpty ? code : '$code (${detail.join(', ')})');
+    }
+    return parts.join(' · ');
   }
 
   String _sizeLabel(int bytes) {

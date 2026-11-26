@@ -1,8 +1,7 @@
 enum KpiCardKind {
   none,
-  files,
-  jobs,
-  weld,
-  traces,
+  collection,
+  work,
+  coverage,
   embedding,
 }

@@ -14,6 +14,15 @@
 // 최초 작성: 2026-09-29
 //
 // 수정 이력:
+//   2026-11-25  geosoft-Server: 시각 경고 TimeWarning — CollectionNode.warnings(작업 노드) · PassWaveform.warnings(그 패스)
+//   2026-11-25  geosoft-Server: 날짜 조회 — ListCollectionNodes from · to(7 · 8), GetCollectionSummary from · to(3 · 4), TimeRange job_id · pass_id · estimated. 날짜 조회 KPI 수집량은 겹치는 작업의 파일. 옛 start_offset_ns · end_offset_ns는 FE가 옮긴 뒤 지운다
+//   2026-11-26  geosoft-Server: CollectionSummary.estimated_weld_seconds(18) 지움 — 어느 작업이 추정인지는 막대 estimated로
+//   2026-11-26  geosoft-Server: 옛 선택 구간 ListCollectionNodesRequest.start_offset_ns · end_offset_ns(2 · 3)를 지움(깨지는 변경) — from · to로
+//   2026-11-26  geosoft-Server: 옛 커버리지 칸을 지움(깨지는 변경) — CollectionSummary.coverage(12) · KindCoverage,
+//                GetCollectionSummaryResponse.coverage_by_equipment(4) · KindEquipmentCoverage. 커버리지는 data_type_coverage 하나
+//   2026-11-25  geosoft-Server: 데이터 유형 — DataType · ListDataTypes · CreateDataType · UpdateDataType · RematchDataTypes, Project.required_data_type_ids(필수 구성),
+//                GetCollectionSummaryResponse.data_type_coverage(유형별 커버리지). 배포 전 칸 Project.requirement · KindCoverage.report_doc_type은 지움
+//   2026-11-25  geosoft-Server: CollectionSummary.estimated_weld_seconds(중단은 용접 시간에서 빼기만, 칸은 없음)
 //   2026-11-19  geosoft-Server: CollectionSummary.comment_count · embedded_comment_count — 코멘트 임베딩(16 · 17)
 //   2026-11-19  geosoft-Server: 범위 전체 집계(KPI 카드)를 GetCollectionSummary로 뗌 — ListCollectionNodesResponse.summary(2) 삭제(배포 전 칸).
 //                화면은 전체 현황을 한 번 부르고, 노드를 열 때마다 범위 전체를 다시 세지 않는다
@@ -22,6 +31,10 @@
 //   2026-11-18  geosoft-Server: 수집 현황을 공사 보기 하나로 — COLLECTION_VIEW_PROJECT(작업에서 시작, 파일 없는 작업도),
 //                EQUIPMENT · WORKER 보기 삭제(깨지는 변경), 작업자 필터 worker_id, 응답 summary(요청 범위 전체),
 //                CollectionSummary에 파일 없는 작업 · 임베딩 · 시각 확인 필요 · 용접시간(패스) · 기록 커버리지(용접시간 기준), ListAssetCounts(날짜 × 종류)
+//   2026-11-23  geosoft-Server: KindCoverage 손실은 합집합 기준으로 되돌림(장비 정리 전까지), expected_seconds = 용접시간
+//   2026-11-23  geosoft-Server: KindCoverage 손실을 장비-시간 기준으로(lost_seconds 뜻 바뀜, expected_seconds) — 일부 장비만 빠져도 손실
+//   2026-11-23  geosoft-Server: 커버리지를 파일 기록 구간 기준으로(깊이도 셈), GetCollectionSummaryResponse.coverage_by_equipment(종류 × 장비)
+//   2026-11-23  geosoft-Server: KindCoverage.lost_seconds(용접시간 중 기록 없는 초), coverage는 다섯 종류를 늘 담음
 //   2026-11-23  geosoft-Server: GetCollectionSummaryResponse.trace_running_count · trace_failed_count — 적재 진행 · 실패 수(늘 전체)
 //   2026-11-17  geosoft-Server: 응답에 created_by · updated_by(mediatag.auth.v1.Author) — 만든 · 고친 사람
 //   2026-11-16  geosoft-Server: GetPassWaveformResponse.compare_summary — DTW 비교의 채널별 평균 차이(mediatag 계산)·유사도(DTW 서버 scores)
@@ -118,6 +131,13 @@ service WorkService {
   rpc UpdateEquipment(UpdateEquipmentRequest) returns (UpdateEquipmentResponse);
   // 행을 실제로 지운다(되돌릴 수 없음). 그 장비로 기록한 Asset이 있으면 FailedPrecondition.
   rpc DeleteEquipment(DeleteEquipmentRequest) returns (DeleteEquipmentResponse);
+  // 데이터 유형 — 공사가 "잘 모였나" 확인하는 단위(앞 깊이 영상 · 액션캠 영상 · 용접 성적서). 공사 필수 구성(Project.required_data_type_ids)과
+  // 커버리지가 이 단위다. 장비와 묶지 않는다(카메라를 바꿔도 같은 유형). 지우지 않고 UpdateDataType inactive로 숨긴다.
+  rpc ListDataTypes(ListDataTypesRequest) returns (ListDataTypesResponse);
+  rpc CreateDataType(CreateDataTypeRequest) returns (CreateDataTypeResponse);
+  rpc UpdateDataType(UpdateDataTypeRequest) returns (UpdateDataTypeResponse);
+  // 파일 유형을 맞춤 조건으로 다시 붙인다 — 유형을 늘리거나 조건을 고친 뒤. overwrite가 아니면 미지정 파일만(사람이 고른 것은 그대로).
+  rpc RematchDataTypes(RematchDataTypesRequest) returns (RematchDataTypesResponse);
   // 공사의 호기에 품목을 배정한다(묶음). 작업을 만들기 전에 품목을 미리 등록할 때 쓴다. 이미 있는 배정은 그대로 두고
   // (이름도 안 바꾼다) 그 줄을 돌려준다. project_id·unit_no·item_code·item_name 필수, 없는 공사면 InvalidArgument.
   rpc CreateProjectItems(CreateProjectItemsRequest) returns (CreateProjectItemsResponse);
@@ -168,7 +188,8 @@ service WorkService {
   // parent를 비우면 전체 현황. 노드마다의 집계는 ListCollectionNodes의 CollectionNode.summary.
   rpc GetCollectionSummary(GetCollectionSummaryRequest) returns (GetCollectionSummaryResponse);
   // 날짜(한국 시각) × 자료 종류별 Asset 수 · 용량 — "언제 얼마나 들어왔나(수집 시각) / 기록됐나(기록 시각)" 그래프.
-  // 범위 · 세는 규칙은 ListCollectionNodes와 같다(parent · worker_id 같은 값, 날짜별 합 = GetCollectionSummary의 asset_count · total_size_bytes).
+  // 범위는 ListCollectionNodes와 같은 parent · worker_id. from · to는 파일 시각(basis)으로 거른다 — 구간 없이 부르면 날짜별 합 =
+  // GetCollectionSummary의 asset_count · total_size_bytes, 구간을 주면 다를 수 있다(KPI는 겹치는 작업의 파일 전부).
   rpc ListAssetCounts(ListAssetCountsRequest) returns (ListAssetCountsResponse);
 }
 
@@ -181,6 +202,9 @@ message Project {
   int64 project_id = 5;    // 시스템이 매기는 번호
   mediatag.auth.v1.Author created_by = 6; // 응답 전용 — 만든 사람(비면 사람이 아닌 일). 보내도 무시한다
   mediatag.auth.v1.Author updated_by = 7; // 응답 전용 — 마지막으로 고친 사람
+  // 필수 데이터 유형(ListDataTypes의 data_type_id) — 커버리지(GetCollectionSummaryResponse.data_type_coverage)는 이 유형만 센다.
+  // 비면 필수 없음. 조회 때 계산하므로 고치면 과거도 다시 계산된다. 고칠 때는 UpdateProject mask required_data_type_ids(목록 통째로 바꿈).
+  repeated int64 required_data_type_ids = 8;
 }
 
 // 작업자 종류. 명장/일반 구분은 비교·학습 데이터의 핵심이고, 로봇 용접도 작업자로 둔다.
@@ -433,7 +457,7 @@ message DeleteEquipmentResponse {}
 
 message UpdateProjectRequest {
   Project project = 1;                     // project.project_id 또는 project_no 필수
-  google.protobuf.FieldMask update_mask = 2; // project_name, site_name, customer
+  google.protobuf.FieldMask update_mask = 2; // project_name, site_name, customer, required_data_type_ids
 }
 
 message UpdateProjectResponse {
@@ -555,6 +579,53 @@ message ListWorkersResponse {
   map<int64, int32> job_counts = 4; // 이 페이지의 worker_id → 맡은 작업 수. 0인 것은 빠진다(ListJobFilters.worker_job_counts와 같은 값)
 }
 
+enum DataTypeJudge {
+  DATA_TYPE_JUDGE_UNSPECIFIED = 0; // = TIME
+  DATA_TYPE_JUDGE_TIME = 1;        // 용접 시간 중 그 유형 파일이 기록한 시간
+  DATA_TYPE_JUDGE_REPORT = 2;      // 작업 성적서 세트에 doc_type 문서가 있나(파일에 붙이지 않음)
+}
+
+message DataType {
+  int64 data_type_id = 1;
+  string data_type_name = 2; // '앞 깊이 영상'. 겹치면 안 됨
+  DataTypeJudge judge = 3;
+  string doc_type = 4;       // REPORT일 때만 · 꼭: fitup · welding · dimensional · pressure · ndt · surface_treatment · paint
+  // 맞춤 조건(데이터만 본다, 둘 다 선택 · 준 것은 다 맞아야) — 업로드 때 유형을 안 고르면 조건이 맞는 활성 유형이 하나뿐일 때 붙인다.
+  // 맞는 유형이 없거나 여럿이면 미지정(Asset.data_type_id = 0). 유형을 늘린 뒤 RematchDataTypes로 미지정을 채운다. 장비는 조건이 아니다.
+  mediatag.asset.v1.AssetKind match_kind = 5;
+  string match_file_name = 6; // 파일 이름 glob, 대소문자 무시('depth_front_raw*', 'actioncam_*')
+  string description = 7;
+  bool inactive = 8;
+  mediatag.auth.v1.Author created_by = 9;  // 응답 전용
+  mediatag.auth.v1.Author updated_by = 10; // 응답 전용
+}
+
+message ListDataTypesRequest {
+  bool include_inactive = 1;
+}
+message ListDataTypesResponse {
+  repeated DataType data_types = 1; // 번호 순
+}
+message CreateDataTypeRequest {
+  DataType data_type = 1;
+}
+message CreateDataTypeResponse {
+  DataType data_type = 1;
+}
+message UpdateDataTypeRequest {
+  DataType data_type = 1;                    // data_type.data_type_id 필수
+  google.protobuf.FieldMask update_mask = 2; // data_type_name, judge, doc_type, match_kind, match_file_name, description, inactive
+}
+message UpdateDataTypeResponse {
+  DataType data_type = 1;
+}
+message RematchDataTypesRequest {
+  bool overwrite = 1; // 이미 유형이 있는 파일도(사람이 고른 것도 바뀐다)
+}
+message RematchDataTypesResponse {
+  int32 changed_count = 1; // 유형이 바뀐 파일 수
+}
+
 // equipment_id 오름차순.
 message ListEquipmentRequest {
   bool include_inactive = 1; // 숨긴 장비도
@@ -653,10 +724,8 @@ message CollectionPath {
 
 message ListCollectionNodesRequest {
   CollectionPath parent = 1;
-  // 선택 구간. parent에 job_id가 있을 때만 쓴다. job.started_at 기준 나노초 오프셋이고
-  // asset.recorded_at이 [start, end) 안에 드는 Asset만 센다.
-  optional int64 start_offset_ns = 2;
-  optional int64 end_offset_ns = 3;
+  reserved 2, 3; // 옛 start_offset_ns · end_offset_ns(작업 시작 기준 오프셋) — 2026-11-26 지움, from · to로
+  reserved "start_offset_ns", "end_offset_ns";
   // 노드 started_at·ended_at의 기준. 비우면 WORK.
   TimeBasis basis = 4;
   // segments를 자르는 단위(작업 구간 기준일 때). 비우면 JOB. 트리를 열지 않고 어느 단계에서든 작업/패스 단위 막대를 본다.
@@ -664,6 +733,12 @@ message ListCollectionNodesRequest {
   // 그 작업자의 작업만(0이면 전체). 노드 · 막대 · summary 모두에 걸린다. 주면 작업에 첨부 안 된 Asset(미지정)은 빠진다.
   // basis · segment_unit · worker_id를 바꾸면 열린 노드를 모두 다시 불러야 위아래 막대가 맞는다.
   int64 worker_id = 6;
+  // 조회 구간(절대 시각, [from, to)). 둘 다 비우면 구간 조건 없음, 하나만 주면 그쪽만 막힌다. 하루 단위는 화면이 KST 자정으로 보낸다.
+  // 주면: 작업은 용접 구간(패스, 없으면 작업 구간, 끝도 없으면 시작 + 기본 용접 시간)이 일부라도 겹치는 것만 나오고, 위 단계는 그런
+  // 작업이 있을 때만 나온다. 작업 미지정 파일 행은 나오지 않는다(ListAssetCounts로 본다). 작업 아래 파일은 그 작업의 파일 전부.
+  // 노드 summary는 GetCollectionSummary(같은 from · to)와 같은 규칙이다.
+  google.protobuf.Timestamp from = 7;
+  google.protobuf.Timestamp to = 8;
 }
 
 enum SegmentUnit {
@@ -689,6 +764,11 @@ message ListCollectionNodesResponse {
 message GetCollectionSummaryRequest {
   CollectionPath parent = 1; // ListCollectionNodes와 같은 값. 비면 전체(작업 미지정 포함)
   int64 worker_id = 2;       // ListCollectionNodes와 같음. 0이면 전체(주면 작업 미지정은 빠짐)
+  // ListCollectionNodes와 같은 조회 구간. 주면 용접 구간이 겹치는 작업만 센다(트리와 같은 집합). 작업량(작업 시간 · 용접 시간 ·
+  // 커버리지)은 이 구간으로 잘라 센다(자정에 걸친 패스는 날짜마다 나뉜다). 수집량(파일 수 · 용량 · 클립 · 메타 임베딩)과 코멘트는
+  // 그 작업들의 것 전부(파일 기록 시각은 보지 않음, 작업 미지정 파일은 빠짐) — 그래서 ListAssetCounts(같은 from · to)의 합과 다를 수 있다.
+  google.protobuf.Timestamp from = 3;
+  google.protobuf.Timestamp to = 4;
 }
 
 message GetCollectionSummaryResponse {
@@ -698,6 +778,19 @@ message GetCollectionSummaryResponse {
   // 등록 전에 실패한 업로드는 Asset이 없어 공사 · 작업에 이어지지 않는다. 기간 없이 누적(2026-11-23 결정).
   int64 trace_running_count = 2; // 진행 중(업로드 ~ 임베딩 대기)
   int64 trace_failed_count = 3;  // 실패(다시 올리지 않으면 줄지 않음 — 목록은 ListTraces(status=FAILED))
+  reserved 4; // 옛 coverage_by_equipment(종류 × 장비) — 2026-11-26 지움, 커버리지는 data_type_coverage
+  reserved "coverage_by_equipment";
+  // 필수 데이터 유형별 커버리지 — 범위 안 공사들의 필수 유형만, 유형 번호 순. 종합 = covered 합 / expected 합, 손실률 = 1 − 종합.
+  // 트리 노드 summary에는 없다(행을 고르면 그 행을 parent로 이 RPC를 부른다).
+  repeated DataTypeCoverage data_type_coverage = 5;
+}
+
+message DataTypeCoverage {
+  int64 data_type_id = 1;
+  string data_type_name = 2;
+  DataTypeJudge judge = 3;
+  int64 covered_seconds = 4;  // TIME: 용접 시간 중 그 유형 파일이 기록한 시간. REPORT: 성적서 세트에 그 문서가 있는 작업의 용접 시간
+  int64 expected_seconds = 5; // 그 유형이 필수인 작업들의 용접 시간(손실 = expected − covered)
 }
 
 message CollectionNode {
@@ -708,16 +801,36 @@ message CollectionNode {
   mediatag.asset.v1.Asset asset = 5;      // Asset 노드일 때만
   google.protobuf.Timestamp started_at = 6; // 요청 basis 기준 구간(모든 노드). 알 수 없으면 비어 있음
   google.protobuf.Timestamp ended_at = 7;
-  // 막대로 그릴 구간(시작 순, 겹치거나 맞닿으면 합침) — started_at~ended_at은 전체 범위라 사이의 빈 날이 안 보인다.
-  // 작업 구간 기준: 그 아래 작업들의 구간(segment_unit JOB — 작업 노드는 자기 구간 하나) 또는 패스들의 구간(PASS), 파일은 속한 패스(없으면 작업)의 구간.
-  // 수집 구간 기준: 그 아래 파일들의 기록 구간, 파일은 자기 구간. 알 수 없으면 비어 있음
+  // 막대로 그릴 구간(시작 순) — started_at~ended_at은 전체 범위라 사이의 빈 날이 안 보인다.
+  // 작업 구간 기준: 그 아래 작업마다 용접 구간 하나(segment_unit JOB, job_id) 또는 패스마다 하나(PASS, job_id · pass_id — 패스 시각이
+  // 비면 signals 구간, 패스가 없는 작업은 pass_id 0으로 작업 구간). 합치지 않는다 — 동시 작업은 겹친다. 조회 구간으로 자르지 않는다.
+  // 끝 시각이 없는 작업은 시작 + 기본 용접 시간이고 estimated. 파일 노드는 속한 패스(없으면 작업)의 구간.
+  // 수집 구간 기준: 그 아래 파일들의 기록 구간(겹치거나 맞닿으면 합침, 번호 없음), 파일은 자기 구간. 알 수 없으면 비어 있음
   repeated TimeRange segments = 8;
+  repeated TimeWarning warnings = 9; // 작업 노드만 — 시각이 틀렸을 가능성이 큰 패스 · 파일
+}
+
+// 시각 경고(설계 §2.1). 작업 · 패스 구간은 시작 ~ 종료, 종료가 없으면 시작 + 기본 용접 시간. 시간 자료는 영상 · 시계열 · 포즈 · 포인트클라우드에서
+// 기록 시각과 길이가 있는 것(코멘트 녹음 · 녹화는 뺌).
+message TimeWarning {
+  TimeWarningCode code = 1;
+  int64 pass_id = 2;  // PASS_NOT_OVERLAPPED면 그 패스, RECORDED_OUTSIDE_JOB면 파일이 붙은 패스(0 = 작업 공용)
+  int64 asset_id = 3; // RECORDED_OUTSIDE_JOB일 때 그 파일
+}
+
+enum TimeWarningCode {
+  TIME_WARNING_CODE_UNSPECIFIED = 0;
+  TIME_WARNING_CODE_PASS_NOT_OVERLAPPED = 1;  // 패스 구간이 그 패스 · 작업 공용에 붙은 시간 자료 어느 것과도 겹치지 않는다
+  TIME_WARNING_CODE_RECORDED_OUTSIDE_JOB = 2; // 파일 기록 구간이 작업 구간과 전혀 겹치지 않는다(일부만 벗어난 것은 경고 안 함 — 녹화를 먼저 켜는 일이 흔하다)
 }
 
 // asset_id를 먼저 중복 제거한 뒤 집계한다(Asset 하나가 여러 작업에 첨부될 수 있음).
 message TimeRange {
   google.protobuf.Timestamp started_at = 1;
   google.protobuf.Timestamp ended_at = 2;
+  int64 job_id = 3;   // 작업 구간 기준 막대일 때 그 작업
+  int64 pass_id = 4;  // segment_unit PASS일 때 그 패스(패스가 없는 작업의 작업 구간이면 0)
+  bool estimated = 5; // 끝 시각이 없어 기본 용접 시간으로 만든 막대 — 실제 시각처럼 보이지 않게 그린다
 }
 
 message CollectionSummary {
@@ -736,10 +849,11 @@ message CollectionSummary {
   // 기록 시각이 기기 시계 · 파일 메타 · 파일 수정 시각 · 받은 시각에서 온 Asset(properties.upload.time_source가
   // creation_time · exif · pdf_created · file_modified · collected) — 타임라인 위치를 사람이 확인할 것
   int64 time_unverified_asset_count = 11;
-  // 기록 커버리지: 자료 종류별로 용접시간 중 클립이 덮은 초(작업마다 클립 구간을 합쳐 용접 구간과 겹친 길이 — 패스 사이 쉬는 시간의
-  // 기록은 세지 않음). 비율 = covered_seconds / weld_duration_seconds. 클립이 없는 종류는 빠진다
-  repeated KindCoverage coverage = 12;
-  // 용접시간: 패스 구간 합(시각이 있는 패스), 패스가 없는 작업은 작업 구간(끝이 없으면 0). 작업시간(7)은 작업이 열려 있던 시간
+  reserved 12; // 옛 coverage(종류별) — 2026-11-26 지움, 커버리지는 GetCollectionSummaryResponse.data_type_coverage
+  reserved "coverage";
+  // 용접시간: 패스 구간 합 — 패스 시각이 비면 그 패스에 붙은 signals_30fps.csv 구간 [처음 시작, 마지막 끝]으로 추정하고,
+  // 같은 패스의 이웃한 signals 사이(중단)는 뺀다. 패스가 없는 작업은 작업 구간, 끝 시각도 없으면 시작 + 기본 용접 시간(추정 —
+  // 그 작업 막대의 TimeRange.estimated). DB의 시각은 바꾸지 않는다. 작업시간(7)은 작업이 열려 있던 시간
   int64 weld_duration_seconds = 13;
   // 메타 임베딩: AI 서버는 작업 × 파일 쌍마다 메타 문서(파일명 · 종류 · 설비 · 작업 정보)를 만든다. 아래 작업에 붙은 쌍 수와
   // 그중 지금 내용까지 임베딩된 것(파일 · 첨부를 고친 뒤는 빠짐). 파일 하나가 두 작업에 붙으면 2 — asset_count(1)와 다르다
@@ -749,11 +863,6 @@ message CollectionSummary {
   // 다시 임베딩될 때까지 빠진다. 작업 없이 남긴 코멘트는 어느 범위에도 들지 않는다
   int64 comment_count = 16;
   int64 embedded_comment_count = 17;
-}
-
-message KindCoverage {
-  mediatag.asset.v1.AssetKind kind = 1; // VIDEO · AUDIO · TIMESERIES · POSE · POINTCLOUD
-  int64 covered_seconds = 2;
 }
 
 message GetPassWaveformRequest {
@@ -807,6 +916,7 @@ message PassWaveform {
   reserved 5; // 옛 is_master
   WorkerType worker_type = 7;
   repeated WaveformSeries series = 6; // 파일(장비)마다 하나 — 샘플 시각이 파일마다 다르다
+  repeated TimeWarning warnings = 8;  // 이 패스의 경고와, 이 패스 · 작업 공용 파일의 RECORDED_OUTSIDE_JOB
 }
 
 // 표준화 CSV 한 파일에서 자른 구간. 두 작업을 겹쳐 보도록 시각은 패스 시작 기준 오프셋이다.

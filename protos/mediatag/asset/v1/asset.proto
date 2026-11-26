@@ -160,6 +160,9 @@ message Asset {
   mediatag.run.v1.Run postprocess = 19;
   mediatag.auth.v1.Author created_by = 20; // 응답 전용 — 만든 사람(비면 사람이 아닌 일). 보내도 무시한다
   mediatag.auth.v1.Author updated_by = 21; // 응답 전용 — 마지막으로 고친 사람
+  // 데이터 유형(WorkService.ListDataTypes) — 공사가 확인하는 단위(앞 깊이 영상 …). 0 = 미지정(커버리지에 들지 않음). 업로드 때
+  // metadata dataTypeId로 고르거나, 안 고르면 종류 · 파일 이름 조건이 맞는 유형이 하나뿐일 때 서버가 붙인다. 표준화 파생은 원본 유형을 물려받는다.
+  int64 data_type_id = 22;
 }
 
 message DisplayField {
@@ -233,7 +236,7 @@ message GetAssetResponse {
 
 message UpdateAssetRequest {
   Asset asset = 1;                           // asset.asset_id 필수
-  google.protobuf.FieldMask update_mask = 2; // subject, situation, recorded_at
+  google.protobuf.FieldMask update_mask = 2; // subject, situation, recorded_at, data_type_id
 }
 
 message UpdateAssetResponse {

@@ -159,6 +159,7 @@ const Asset$json = {
       '6': '.mediatag.auth.v1.Author',
       '10': 'updatedBy'
     },
+    {'1': 'data_type_id', '3': 22, '4': 1, '5': 3, '10': 'dataTypeId'},
   ],
   '8': [
     {'1': '_duration_ns'},
@@ -183,7 +184,8 @@ final $typed_data.Uint8List assetDescriptor = $convert.base64Decode(
     'R1YXRpb24SNgoLcG9zdHByb2Nlc3MYEyABKAsyFC5tZWRpYXRhZy5ydW4udjEuUnVuUgtwb3N0'
     'cHJvY2VzcxI3CgpjcmVhdGVkX2J5GBQgASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCW'
     'NyZWF0ZWRCeRI3Cgp1cGRhdGVkX2J5GBUgASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JS'
-    'CXVwZGF0ZWRCeUIOCgxfZHVyYXRpb25fbnM=');
+    'CXVwZGF0ZWRCeRIgCgxkYXRhX3R5cGVfaWQYFiABKANSCmRhdGFUeXBlSWRCDgoMX2R1cmF0aW'
+    '9uX25z');
 
 @$core.Deprecated('Use displayFieldDescriptor instead')
 const DisplayField$json = {

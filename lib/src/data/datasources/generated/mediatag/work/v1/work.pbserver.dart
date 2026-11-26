@@ -47,6 +47,14 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
       $pb.ServerContext ctx, $6.UpdateEquipmentRequest request);
   $async.Future<$6.DeleteEquipmentResponse> deleteEquipment(
       $pb.ServerContext ctx, $6.DeleteEquipmentRequest request);
+  $async.Future<$6.ListDataTypesResponse> listDataTypes(
+      $pb.ServerContext ctx, $6.ListDataTypesRequest request);
+  $async.Future<$6.CreateDataTypeResponse> createDataType(
+      $pb.ServerContext ctx, $6.CreateDataTypeRequest request);
+  $async.Future<$6.UpdateDataTypeResponse> updateDataType(
+      $pb.ServerContext ctx, $6.UpdateDataTypeRequest request);
+  $async.Future<$6.RematchDataTypesResponse> rematchDataTypes(
+      $pb.ServerContext ctx, $6.RematchDataTypesRequest request);
   $async.Future<$6.CreateProjectItemsResponse> createProjectItems(
       $pb.ServerContext ctx, $6.CreateProjectItemsRequest request);
   $async.Future<$6.UpdateProjectItemResponse> updateProjectItem(
@@ -114,6 +122,14 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
         return $6.UpdateEquipmentRequest();
       case 'DeleteEquipment':
         return $6.DeleteEquipmentRequest();
+      case 'ListDataTypes':
+        return $6.ListDataTypesRequest();
+      case 'CreateDataType':
+        return $6.CreateDataTypeRequest();
+      case 'UpdateDataType':
+        return $6.UpdateDataTypeRequest();
+      case 'RematchDataTypes':
+        return $6.RematchDataTypesRequest();
       case 'CreateProjectItems':
         return $6.CreateProjectItemsRequest();
       case 'UpdateProjectItem':
@@ -186,6 +202,14 @@ abstract class WorkServiceBase extends $pb.GeneratedService {
         return updateEquipment(ctx, request as $6.UpdateEquipmentRequest);
       case 'DeleteEquipment':
         return deleteEquipment(ctx, request as $6.DeleteEquipmentRequest);
+      case 'ListDataTypes':
+        return listDataTypes(ctx, request as $6.ListDataTypesRequest);
+      case 'CreateDataType':
+        return createDataType(ctx, request as $6.CreateDataTypeRequest);
+      case 'UpdateDataType':
+        return updateDataType(ctx, request as $6.UpdateDataTypeRequest);
+      case 'RematchDataTypes':
+        return rematchDataTypes(ctx, request as $6.RematchDataTypesRequest);
       case 'CreateProjectItems':
         return createProjectItems(ctx, request as $6.CreateProjectItemsRequest);
       case 'UpdateProjectItem':

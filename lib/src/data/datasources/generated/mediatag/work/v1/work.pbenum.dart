@@ -69,6 +69,28 @@ class PassType extends $pb.ProtobufEnum {
   const PassType._(super.value, super.name);
 }
 
+class DataTypeJudge extends $pb.ProtobufEnum {
+  static const DataTypeJudge DATA_TYPE_JUDGE_UNSPECIFIED =
+      DataTypeJudge._(0, _omitEnumNames ? '' : 'DATA_TYPE_JUDGE_UNSPECIFIED');
+  static const DataTypeJudge DATA_TYPE_JUDGE_TIME =
+      DataTypeJudge._(1, _omitEnumNames ? '' : 'DATA_TYPE_JUDGE_TIME');
+  static const DataTypeJudge DATA_TYPE_JUDGE_REPORT =
+      DataTypeJudge._(2, _omitEnumNames ? '' : 'DATA_TYPE_JUDGE_REPORT');
+
+  static const $core.List<DataTypeJudge> values = <DataTypeJudge>[
+    DATA_TYPE_JUDGE_UNSPECIFIED,
+    DATA_TYPE_JUDGE_TIME,
+    DATA_TYPE_JUDGE_REPORT,
+  ];
+
+  static final $core.List<DataTypeJudge?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static DataTypeJudge? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const DataTypeJudge._(super.value, super.name);
+}
+
 class CollectionView extends $pb.ProtobufEnum {
   static const CollectionView COLLECTION_VIEW_UNSPECIFIED =
       CollectionView._(0, _omitEnumNames ? '' : 'COLLECTION_VIEW_UNSPECIFIED');
@@ -171,6 +193,31 @@ class TimeBasis extends $pb.ProtobufEnum {
       value < 0 || value >= _byValue.length ? null : _byValue[value];
 
   const TimeBasis._(super.value, super.name);
+}
+
+class TimeWarningCode extends $pb.ProtobufEnum {
+  static const TimeWarningCode TIME_WARNING_CODE_UNSPECIFIED =
+      TimeWarningCode._(
+          0, _omitEnumNames ? '' : 'TIME_WARNING_CODE_UNSPECIFIED');
+  static const TimeWarningCode TIME_WARNING_CODE_PASS_NOT_OVERLAPPED =
+      TimeWarningCode._(
+          1, _omitEnumNames ? '' : 'TIME_WARNING_CODE_PASS_NOT_OVERLAPPED');
+  static const TimeWarningCode TIME_WARNING_CODE_RECORDED_OUTSIDE_JOB =
+      TimeWarningCode._(
+          2, _omitEnumNames ? '' : 'TIME_WARNING_CODE_RECORDED_OUTSIDE_JOB');
+
+  static const $core.List<TimeWarningCode> values = <TimeWarningCode>[
+    TIME_WARNING_CODE_UNSPECIFIED,
+    TIME_WARNING_CODE_PASS_NOT_OVERLAPPED,
+    TIME_WARNING_CODE_RECORDED_OUTSIDE_JOB,
+  ];
+
+  static final $core.List<TimeWarningCode?> _byValue =
+      $pb.ProtobufEnum.$_initByValueList(values, 2);
+  static TimeWarningCode? valueOf($core.int value) =>
+      value < 0 || value >= _byValue.length ? null : _byValue[value];
+
+  const TimeWarningCode._(super.value, super.name);
 }
 
 class WaveformNormalize extends $pb.ProtobufEnum {

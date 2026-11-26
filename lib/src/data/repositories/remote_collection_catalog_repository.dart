@@ -1,5 +1,3 @@
-import 'package:fixnum/fixnum.dart';
-
 import '../../domain/entities/collected_node.dart';
 import '../../domain/entities/collection_assignment.dart';
 import '../../domain/entities/collection_catalog.dart';
@@ -260,34 +258,32 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
   @override
   Future<List<CollectedNode>> listCollectedNodes(
     CollectedNodePath parent, {
-    int? startOffsetNs,
-    int? endOffsetNs,
+    DateTime? from,
+    DateTime? to,
     CollectedTimeBasis basis = CollectedTimeBasis.work,
     CollectedSegmentUnit segmentUnit = CollectedSegmentUnit.job,
     String workerId = '',
   }) async {
-    final doesHaveJob = parent.jobId.isNotEmpty;
     final worker = protoIdOrNull(workerId);
-    final response = await _source.workService.listCollectionNodes(
-      pb.ListCollectionNodesRequest(
-        parent: _pathToProto(parent),
-        segmentUnit: switch (segmentUnit) {
-          CollectedSegmentUnit.job => pb.SegmentUnit.SEGMENT_UNIT_JOB,
-          CollectedSegmentUnit.pass => pb.SegmentUnit.SEGMENT_UNIT_PASS,
-        },
-        basis: switch (basis) {
-          CollectedTimeBasis.work => pb.TimeBasis.TIME_BASIS_WORK,
-          CollectedTimeBasis.collection => pb.TimeBasis.TIME_BASIS_COLLECTION,
-        },
-        startOffsetNs: doesHaveJob && startOffsetNs != null
-            ? Int64(startOffsetNs)
-            : null,
-        endOffsetNs: doesHaveJob && endOffsetNs != null
-            ? Int64(endOffsetNs)
-            : null,
-        workerId: worker,
-      ),
+    final request = pb.ListCollectionNodesRequest(
+      parent: _pathToProto(parent),
+      segmentUnit: switch (segmentUnit) {
+        CollectedSegmentUnit.job => pb.SegmentUnit.SEGMENT_UNIT_JOB,
+        CollectedSegmentUnit.pass => pb.SegmentUnit.SEGMENT_UNIT_PASS,
+      },
+      basis: switch (basis) {
+        CollectedTimeBasis.work => pb.TimeBasis.TIME_BASIS_WORK,
+        CollectedTimeBasis.collection => pb.TimeBasis.TIME_BASIS_COLLECTION,
+      },
+      workerId: worker,
     );
+    if (from != null) {
+      request.from = ts.Timestamp.fromDateTime(from.toUtc());
+    }
+    if (to != null) {
+      request.to = ts.Timestamp.fromDateTime(to.toUtc());
+    }
+    final response = await _source.workService.listCollectionNodes(request);
     return [for (final node in response.nodes) _nodeFromProto(node)];
   }
 
@@ -295,15 +291,38 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
   Future<CollectionSummaryLoad> getCollectionSummary({
     CollectedNodePath? parent,
     String workerId = '',
+    DateTime? from,
+    DateTime? to,
   }) async {
     final worker = protoIdOrNull(workerId);
     final request = pb.GetCollectionSummaryRequest(workerId: worker);
     if (parent != null) {
       request.parent = _pathToProto(parent);
     }
+    if (from != null) {
+      request.from = ts.Timestamp.fromDateTime(from.toUtc());
+    }
+    if (to != null) {
+      request.to = ts.Timestamp.fromDateTime(to.toUtc());
+    }
     final response = await _source.workService.getCollectionSummary(request);
     return CollectionSummaryLoad(
       summary: _summaryFromProto(response.summary),
+      dataTypeCoverage: [
+        for (final item in response.dataTypeCoverage)
+          DataTypeCoverageRow(
+            dataTypeId: idText(item.dataTypeId),
+            dataTypeName: item.dataTypeName,
+            judge: switch (item.judge) {
+              pb.DataTypeJudge.DATA_TYPE_JUDGE_TIME => DataTypeJudgeKind.time,
+              pb.DataTypeJudge.DATA_TYPE_JUDGE_REPORT =>
+                DataTypeJudgeKind.report,
+              _ => DataTypeJudgeKind.unspecified,
+            },
+            coveredSeconds: item.coveredSeconds.toInt(),
+            expectedSeconds: item.expectedSeconds.toInt(),
+          ),
+      ],
       runningTraceCount: response.traceRunningCount.toInt(),
       failedTraceCount: response.traceFailedCount.toInt(),
     );
@@ -425,6 +444,23 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
             endedAt: segment.hasEndedAt()
                 ? segment.endedAt.toDateTime().toLocal()
                 : null,
+            jobId: idText(segment.jobId),
+            passId: idText(segment.passId),
+            isEstimated: segment.estimated,
+          ),
+      ],
+      warnings: [
+        for (final warning in node.warnings)
+          CollectedTimeWarning(
+            code: switch (warning.code) {
+              pb.TimeWarningCode.TIME_WARNING_CODE_PASS_NOT_OVERLAPPED =>
+                CollectedTimeWarningCode.passNotOverlapped,
+              pb.TimeWarningCode.TIME_WARNING_CODE_RECORDED_OUTSIDE_JOB =>
+                CollectedTimeWarningCode.recordedOutsideJob,
+              _ => CollectedTimeWarningCode.unspecified,
+            },
+            passId: idText(warning.passId),
+            assetId: idText(warning.assetId),
           ),
       ],
     );
@@ -449,13 +485,6 @@ class RemoteCollectionCatalogRepository implements CollectionCatalogRepository {
       clipCount: summary.clipCount.toInt(),
       embeddedClipCount: summary.embeddedClipCount.toInt(),
       timeUnverifiedAssetCount: summary.timeUnverifiedAssetCount.toInt(),
-      coverage: [
-        for (final item in summary.coverage)
-          KindCoverage(
-            kind: _assetKindFromProto(item.kind),
-            coveredSeconds: item.coveredSeconds.toInt(),
-          ),
-      ],
       weldDurationSeconds: summary.weldDurationSeconds.toInt(),
       attachedAssetCount: summary.attachedAssetCount.toInt(),
       embeddedAttachedAssetCount: summary.embeddedAttachedAssetCount.toInt(),

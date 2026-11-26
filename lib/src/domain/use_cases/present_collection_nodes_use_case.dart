@@ -122,8 +122,9 @@ class PresentCollectionNodesUseCase {
         ? ConnectionStatus.connected
         : ConnectionStatus.disconnected;
     for (var index = 0; index < ranges.length; index++) {
-      final startedAt = ranges[index].startedAt;
-      final endedAt = ranges[index].endedAt;
+      final range = ranges[index];
+      final startedAt = range.startedAt;
+      final endedAt = range.endedAt;
       if (startedAt == null || endedAt == null) {
         continue;
       }
@@ -152,14 +153,16 @@ class PresentCollectionNodesUseCase {
             lossRatePercent: null,
             timeSyncStatus: TimeSyncStatus.synced,
             clockOffsetMs: null,
+            isEstimated: range.isEstimated,
           ),
         );
         continue;
       }
-      final visibleStart = startedAt.isBefore(windowStart)
-          ? windowStart
-          : startedAt;
-      final visibleEnd = endedAt.isAfter(windowEnd) ? windowEnd : endedAt;
+      final continuesBeforeStart = startedAt.isBefore(windowStart);
+      final continuesAfterEnd = endedAt.isAfter(windowEnd);
+      final visibleStart =
+          continuesBeforeStart ? windowStart : startedAt;
+      final visibleEnd = continuesAfterEnd ? windowEnd : endedAt;
       if (!visibleStart.isBefore(visibleEnd)) {
         continue;
       }
@@ -177,10 +180,15 @@ class PresentCollectionNodesUseCase {
             startedAt: startedAt,
             endedAt: endedAt,
             isPoint: false,
+            continuesBeforeStart: continuesBeforeStart,
+            continuesAfterEnd: continuesAfterEnd,
           ),
           lossRatePercent: null,
           timeSyncStatus: TimeSyncStatus.synced,
           clockOffsetMs: null,
+          isEstimated: range.isEstimated,
+          continuesBeforeStart: continuesBeforeStart,
+          continuesAfterEnd: continuesAfterEnd,
         ),
       );
     }
@@ -248,6 +256,8 @@ class PresentCollectionNodesUseCase {
     required DateTime startedAt,
     required DateTime endedAt,
     required bool isPoint,
+    bool continuesBeforeStart = false,
+    bool continuesAfterEnd = false,
   }) {
     if (isPoint) {
       return _dateClock(startedAt);
@@ -256,10 +266,12 @@ class PresentCollectionNodesUseCase {
         startedAt.year != endedAt.year ||
         startedAt.month != endedAt.month ||
         startedAt.day != endedAt.day;
-    if (!doesSpanDays) {
-      return '${_clock(startedAt)}–${_clock(endedAt)}';
-    }
-    return '${_dateClock(startedAt)}–${_dateClock(endedAt)}';
+    final core = doesSpanDays
+        ? '${_dateClock(startedAt)}–${_dateClock(endedAt)}'
+        : '${_clock(startedAt)}–${_clock(endedAt)}';
+    final left = continuesBeforeStart ? '→' : '';
+    final right = continuesAfterEnd ? '→' : '';
+    return '$left$core$right';
   }
 
   String _dateClock(DateTime value) {

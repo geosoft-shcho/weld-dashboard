@@ -15,6 +15,9 @@ class CollectionEvent {
     required this.lossRatePercent,
     required this.timeSyncStatus,
     required this.clockOffsetMs,
+    this.isEstimated = false,
+    this.continuesBeforeStart = false,
+    this.continuesAfterEnd = false,
   });
 
   final String eventId;
@@ -29,6 +32,9 @@ class CollectionEvent {
   final double? lossRatePercent;
   final TimeSyncStatus timeSyncStatus;
   final int? clockOffsetMs;
+  final bool isEstimated;
+  final bool continuesBeforeStart;
+  final bool continuesAfterEnd;
 
   DateTime get endedAt => eventAt.add(Duration(seconds: durationSec));
 

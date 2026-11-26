@@ -9,17 +9,20 @@ export 'collection_board_row.dart';
 class CollectionKpi {
   const CollectionKpi({
     required this.summary,
+    required this.dataTypeCoverage,
     required this.runningTraceCount,
     required this.failedTraceCount,
   });
 
   static const empty = CollectionKpi(
     summary: CollectionSummary.empty,
+    dataTypeCoverage: [],
     runningTraceCount: 0,
     failedTraceCount: 0,
   );
 
   final CollectionSummary summary;
+  final List<DataTypeCoverageRow> dataTypeCoverage;
 
   /// GetCollectionSummaryResponse.trace_running_count
   final int runningTraceCount;

@@ -60,8 +60,8 @@ class CollectionCatalogRepositoryImpl implements CollectionCatalogRepository {
   @override
   Future<List<CollectedNode>> listCollectedNodes(
     CollectedNodePath parent, {
-    int? startOffsetNs,
-    int? endOffsetNs,
+    DateTime? from,
+    DateTime? to,
     CollectedTimeBasis basis = CollectedTimeBasis.work,
     CollectedSegmentUnit segmentUnit = CollectedSegmentUnit.job,
     String workerId = '',
@@ -73,6 +73,8 @@ class CollectionCatalogRepositoryImpl implements CollectionCatalogRepository {
   Future<CollectionSummaryLoad> getCollectionSummary({
     CollectedNodePath? parent,
     String workerId = '',
+    DateTime? from,
+    DateTime? to,
   }) async {
     return CollectionSummaryLoad.empty;
   }

@@ -148,17 +148,21 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
         }
         _workerOptions = page.items;
       }
-      final offsets = _offsetsOf(parent);
+      final range = _queryRange();
       final nodesFuture = _listCollectedNodesUseCase.execute(
         parent,
-        startOffsetNs: offsets.$1,
-        endOffsetNs: offsets.$2,
+        from: range.$1,
+        to: range.$2,
         basis: _basis,
         segmentUnit: _segmentUnit,
         workerId: _workerId,
       );
       final summaryFuture = doesReloadSummary
-          ? _getCollectionSummaryUseCase.execute(workerId: _workerId)
+          ? _getCollectionSummaryUseCase.execute(
+              workerId: _workerId,
+              from: range.$1,
+              to: range.$2,
+            )
           : Future<CollectionSummaryLoad?>.value(null);
       final countsFuture = _listAssetCountsUseCase.execute(
         parent: parent.level == CollectedNodeLevel.unspecified ? null : parent,
@@ -177,6 +181,7 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
       if (summaryLoad != null) {
         _kpi = CollectionKpi(
           summary: summaryLoad.summary,
+          dataTypeCoverage: summaryLoad.dataTypeCoverage,
           runningTraceCount: summaryLoad.runningTraceCount,
           failedTraceCount: summaryLoad.failedTraceCount,
         );
@@ -506,32 +511,24 @@ class CollectionMonitoringViewModel extends ChangeNotifier {
         : CollectedSegmentUnit.job;
   }
 
-  (int?, int?) _offsetsOf(CollectedNodePath parent) {
-    if (parent.jobId.isEmpty ||
-        _ancestors.isEmpty ||
-        _query.doesHaveInvalidTimeRange) {
-      return (null, null);
-    }
-    final startedAt = _ancestors.last.startedAt;
-    if (startedAt == null || _ancestors.last.path != parent) {
+  /// 화면 일자·시작·종료(로컬) → List/Summary에 같이 보낼 [from, to).
+  (DateTime?, DateTime?) _queryRange() {
+    if (_query.doesHaveInvalidTimeRange) {
       return (null, null);
     }
     final day = _query.selectedDate;
-    final start = DateTime(
+    final from = DateTime(
       day.year,
       day.month,
       day.day,
     ).add(Duration(minutes: _query.startMinutes));
     final endMinutes = _query.endMinutes >= 1440 ? 1440 : _query.endMinutes;
-    final end = DateTime(
+    final to = DateTime(
       day.year,
       day.month,
       day.day,
     ).add(Duration(minutes: endMinutes));
-    return (
-      start.difference(startedAt).inMicroseconds * 1000,
-      end.difference(startedAt).inMicroseconds * 1000,
-    );
+    return (from, to);
   }
 
   CollectedNodePath? _parentListing(CollectedNodeLevel level) {

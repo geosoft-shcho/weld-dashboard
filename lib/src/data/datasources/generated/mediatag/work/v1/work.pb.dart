@@ -36,6 +36,7 @@ class Project extends $pb.GeneratedMessage {
     $fixnum.Int64? projectId,
     $0.Author? createdBy,
     $0.Author? updatedBy,
+    $core.Iterable<$fixnum.Int64>? requiredDataTypeIds,
   }) {
     final result = create();
     if (projectNo != null) result.projectNo = projectNo;
@@ -45,6 +46,8 @@ class Project extends $pb.GeneratedMessage {
     if (projectId != null) result.projectId = projectId;
     if (createdBy != null) result.createdBy = createdBy;
     if (updatedBy != null) result.updatedBy = updatedBy;
+    if (requiredDataTypeIds != null)
+      result.requiredDataTypeIds.addAll(requiredDataTypeIds);
     return result;
   }
 
@@ -71,6 +74,8 @@ class Project extends $pb.GeneratedMessage {
         subBuilder: $0.Author.create)
     ..aOM<$0.Author>(7, _omitFieldNames ? '' : 'updatedBy',
         subBuilder: $0.Author.create)
+    ..p<$fixnum.Int64>(
+        8, _omitFieldNames ? '' : 'requiredDataTypeIds', $pb.PbFieldType.K6)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -158,6 +163,11 @@ class Project extends $pb.GeneratedMessage {
   void clearUpdatedBy() => $_clearField(7);
   @$pb.TagNumber(7)
   $0.Author ensureUpdatedBy() => $_ensure(6);
+
+  /// 필수 데이터 유형(ListDataTypes의 data_type_id) — 커버리지(GetCollectionSummaryResponse.data_type_coverage)는 이 유형만 센다.
+  /// 비면 필수 없음. 조회 때 계산하므로 고치면 과거도 다시 계산된다. 고칠 때는 UpdateProject mask required_data_type_ids(목록 통째로 바꿈).
+  @$pb.TagNumber(8)
+  $pb.PbList<$fixnum.Int64> get requiredDataTypeIds => $_getList(7);
 }
 
 /// 작업자.
@@ -4719,6 +4729,676 @@ class ListWorkersResponse extends $pb.GeneratedMessage {
   $pb.PbMap<$fixnum.Int64, $core.int> get jobCounts => $_getMap(3);
 }
 
+class DataType extends $pb.GeneratedMessage {
+  factory DataType({
+    $fixnum.Int64? dataTypeId,
+    $core.String? dataTypeName,
+    DataTypeJudge? judge,
+    $core.String? docType,
+    $3.AssetKind? matchKind,
+    $core.String? matchFileName,
+    $core.String? description,
+    $core.bool? inactive,
+    $0.Author? createdBy,
+    $0.Author? updatedBy,
+  }) {
+    final result = create();
+    if (dataTypeId != null) result.dataTypeId = dataTypeId;
+    if (dataTypeName != null) result.dataTypeName = dataTypeName;
+    if (judge != null) result.judge = judge;
+    if (docType != null) result.docType = docType;
+    if (matchKind != null) result.matchKind = matchKind;
+    if (matchFileName != null) result.matchFileName = matchFileName;
+    if (description != null) result.description = description;
+    if (inactive != null) result.inactive = inactive;
+    if (createdBy != null) result.createdBy = createdBy;
+    if (updatedBy != null) result.updatedBy = updatedBy;
+    return result;
+  }
+
+  DataType._();
+
+  factory DataType.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DataType.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DataType',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'dataTypeId')
+    ..aOS(2, _omitFieldNames ? '' : 'dataTypeName')
+    ..e<DataTypeJudge>(3, _omitFieldNames ? '' : 'judge', $pb.PbFieldType.OE,
+        defaultOrMaker: DataTypeJudge.DATA_TYPE_JUDGE_UNSPECIFIED,
+        valueOf: DataTypeJudge.valueOf,
+        enumValues: DataTypeJudge.values)
+    ..aOS(4, _omitFieldNames ? '' : 'docType')
+    ..e<$3.AssetKind>(5, _omitFieldNames ? '' : 'matchKind', $pb.PbFieldType.OE,
+        defaultOrMaker: $3.AssetKind.ASSET_KIND_UNSPECIFIED,
+        valueOf: $3.AssetKind.valueOf,
+        enumValues: $3.AssetKind.values)
+    ..aOS(6, _omitFieldNames ? '' : 'matchFileName')
+    ..aOS(7, _omitFieldNames ? '' : 'description')
+    ..aOB(8, _omitFieldNames ? '' : 'inactive')
+    ..aOM<$0.Author>(9, _omitFieldNames ? '' : 'createdBy',
+        subBuilder: $0.Author.create)
+    ..aOM<$0.Author>(10, _omitFieldNames ? '' : 'updatedBy',
+        subBuilder: $0.Author.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DataType clone() => DataType()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DataType copyWith(void Function(DataType) updates) =>
+      super.copyWith((message) => updates(message as DataType)) as DataType;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DataType create() => DataType._();
+  @$core.override
+  DataType createEmptyInstance() => create();
+  static $pb.PbList<DataType> createRepeated() => $pb.PbList<DataType>();
+  @$core.pragma('dart2js:noInline')
+  static DataType getDefault() =>
+      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DataType>(create);
+  static DataType? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get dataTypeId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set dataTypeId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDataTypeId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDataTypeId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get dataTypeName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set dataTypeName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDataTypeName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDataTypeName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  DataTypeJudge get judge => $_getN(2);
+  @$pb.TagNumber(3)
+  set judge(DataTypeJudge value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasJudge() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearJudge() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get docType => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set docType($core.String value) => $_setString(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasDocType() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearDocType() => $_clearField(4);
+
+  /// 맞춤 조건(데이터만 본다, 둘 다 선택 · 준 것은 다 맞아야) — 업로드 때 유형을 안 고르면 조건이 맞는 활성 유형이 하나뿐일 때 붙인다.
+  /// 맞는 유형이 없거나 여럿이면 미지정(Asset.data_type_id = 0). 유형을 늘린 뒤 RematchDataTypes로 미지정을 채운다. 장비는 조건이 아니다.
+  @$pb.TagNumber(5)
+  $3.AssetKind get matchKind => $_getN(4);
+  @$pb.TagNumber(5)
+  set matchKind($3.AssetKind value) => $_setField(5, value);
+  @$pb.TagNumber(5)
+  $core.bool hasMatchKind() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearMatchKind() => $_clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.String get matchFileName => $_getSZ(5);
+  @$pb.TagNumber(6)
+  set matchFileName($core.String value) => $_setString(5, value);
+  @$pb.TagNumber(6)
+  $core.bool hasMatchFileName() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearMatchFileName() => $_clearField(6);
+
+  @$pb.TagNumber(7)
+  $core.String get description => $_getSZ(6);
+  @$pb.TagNumber(7)
+  set description($core.String value) => $_setString(6, value);
+  @$pb.TagNumber(7)
+  $core.bool hasDescription() => $_has(6);
+  @$pb.TagNumber(7)
+  void clearDescription() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $core.bool get inactive => $_getBF(7);
+  @$pb.TagNumber(8)
+  set inactive($core.bool value) => $_setBool(7, value);
+  @$pb.TagNumber(8)
+  $core.bool hasInactive() => $_has(7);
+  @$pb.TagNumber(8)
+  void clearInactive() => $_clearField(8);
+
+  @$pb.TagNumber(9)
+  $0.Author get createdBy => $_getN(8);
+  @$pb.TagNumber(9)
+  set createdBy($0.Author value) => $_setField(9, value);
+  @$pb.TagNumber(9)
+  $core.bool hasCreatedBy() => $_has(8);
+  @$pb.TagNumber(9)
+  void clearCreatedBy() => $_clearField(9);
+  @$pb.TagNumber(9)
+  $0.Author ensureCreatedBy() => $_ensure(8);
+
+  @$pb.TagNumber(10)
+  $0.Author get updatedBy => $_getN(9);
+  @$pb.TagNumber(10)
+  set updatedBy($0.Author value) => $_setField(10, value);
+  @$pb.TagNumber(10)
+  $core.bool hasUpdatedBy() => $_has(9);
+  @$pb.TagNumber(10)
+  void clearUpdatedBy() => $_clearField(10);
+  @$pb.TagNumber(10)
+  $0.Author ensureUpdatedBy() => $_ensure(9);
+}
+
+class ListDataTypesRequest extends $pb.GeneratedMessage {
+  factory ListDataTypesRequest({
+    $core.bool? includeInactive,
+  }) {
+    final result = create();
+    if (includeInactive != null) result.includeInactive = includeInactive;
+    return result;
+  }
+
+  ListDataTypesRequest._();
+
+  factory ListDataTypesRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListDataTypesRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListDataTypesRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOB(1, _omitFieldNames ? '' : 'includeInactive')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListDataTypesRequest clone() =>
+      ListDataTypesRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListDataTypesRequest copyWith(void Function(ListDataTypesRequest) updates) =>
+      super.copyWith((message) => updates(message as ListDataTypesRequest))
+          as ListDataTypesRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListDataTypesRequest create() => ListDataTypesRequest._();
+  @$core.override
+  ListDataTypesRequest createEmptyInstance() => create();
+  static $pb.PbList<ListDataTypesRequest> createRepeated() =>
+      $pb.PbList<ListDataTypesRequest>();
+  @$core.pragma('dart2js:noInline')
+  static ListDataTypesRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListDataTypesRequest>(create);
+  static ListDataTypesRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.bool get includeInactive => $_getBF(0);
+  @$pb.TagNumber(1)
+  set includeInactive($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasIncludeInactive() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearIncludeInactive() => $_clearField(1);
+}
+
+class ListDataTypesResponse extends $pb.GeneratedMessage {
+  factory ListDataTypesResponse({
+    $core.Iterable<DataType>? dataTypes,
+  }) {
+    final result = create();
+    if (dataTypes != null) result.dataTypes.addAll(dataTypes);
+    return result;
+  }
+
+  ListDataTypesResponse._();
+
+  factory ListDataTypesResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory ListDataTypesResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'ListDataTypesResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..pc<DataType>(1, _omitFieldNames ? '' : 'dataTypes', $pb.PbFieldType.PM,
+        subBuilder: DataType.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListDataTypesResponse clone() =>
+      ListDataTypesResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  ListDataTypesResponse copyWith(
+          void Function(ListDataTypesResponse) updates) =>
+      super.copyWith((message) => updates(message as ListDataTypesResponse))
+          as ListDataTypesResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static ListDataTypesResponse create() => ListDataTypesResponse._();
+  @$core.override
+  ListDataTypesResponse createEmptyInstance() => create();
+  static $pb.PbList<ListDataTypesResponse> createRepeated() =>
+      $pb.PbList<ListDataTypesResponse>();
+  @$core.pragma('dart2js:noInline')
+  static ListDataTypesResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<ListDataTypesResponse>(create);
+  static ListDataTypesResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $pb.PbList<DataType> get dataTypes => $_getList(0);
+}
+
+class CreateDataTypeRequest extends $pb.GeneratedMessage {
+  factory CreateDataTypeRequest({
+    DataType? dataType,
+  }) {
+    final result = create();
+    if (dataType != null) result.dataType = dataType;
+    return result;
+  }
+
+  CreateDataTypeRequest._();
+
+  factory CreateDataTypeRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory CreateDataTypeRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'CreateDataTypeRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<DataType>(1, _omitFieldNames ? '' : 'dataType',
+        subBuilder: DataType.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateDataTypeRequest clone() =>
+      CreateDataTypeRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateDataTypeRequest copyWith(
+          void Function(CreateDataTypeRequest) updates) =>
+      super.copyWith((message) => updates(message as CreateDataTypeRequest))
+          as CreateDataTypeRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static CreateDataTypeRequest create() => CreateDataTypeRequest._();
+  @$core.override
+  CreateDataTypeRequest createEmptyInstance() => create();
+  static $pb.PbList<CreateDataTypeRequest> createRepeated() =>
+      $pb.PbList<CreateDataTypeRequest>();
+  @$core.pragma('dart2js:noInline')
+  static CreateDataTypeRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<CreateDataTypeRequest>(create);
+  static CreateDataTypeRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  DataType get dataType => $_getN(0);
+  @$pb.TagNumber(1)
+  set dataType(DataType value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDataType() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDataType() => $_clearField(1);
+  @$pb.TagNumber(1)
+  DataType ensureDataType() => $_ensure(0);
+}
+
+class CreateDataTypeResponse extends $pb.GeneratedMessage {
+  factory CreateDataTypeResponse({
+    DataType? dataType,
+  }) {
+    final result = create();
+    if (dataType != null) result.dataType = dataType;
+    return result;
+  }
+
+  CreateDataTypeResponse._();
+
+  factory CreateDataTypeResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory CreateDataTypeResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'CreateDataTypeResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<DataType>(1, _omitFieldNames ? '' : 'dataType',
+        subBuilder: DataType.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateDataTypeResponse clone() =>
+      CreateDataTypeResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  CreateDataTypeResponse copyWith(
+          void Function(CreateDataTypeResponse) updates) =>
+      super.copyWith((message) => updates(message as CreateDataTypeResponse))
+          as CreateDataTypeResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static CreateDataTypeResponse create() => CreateDataTypeResponse._();
+  @$core.override
+  CreateDataTypeResponse createEmptyInstance() => create();
+  static $pb.PbList<CreateDataTypeResponse> createRepeated() =>
+      $pb.PbList<CreateDataTypeResponse>();
+  @$core.pragma('dart2js:noInline')
+  static CreateDataTypeResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<CreateDataTypeResponse>(create);
+  static CreateDataTypeResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  DataType get dataType => $_getN(0);
+  @$pb.TagNumber(1)
+  set dataType(DataType value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDataType() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDataType() => $_clearField(1);
+  @$pb.TagNumber(1)
+  DataType ensureDataType() => $_ensure(0);
+}
+
+class UpdateDataTypeRequest extends $pb.GeneratedMessage {
+  factory UpdateDataTypeRequest({
+    DataType? dataType,
+    $2.FieldMask? updateMask,
+  }) {
+    final result = create();
+    if (dataType != null) result.dataType = dataType;
+    if (updateMask != null) result.updateMask = updateMask;
+    return result;
+  }
+
+  UpdateDataTypeRequest._();
+
+  factory UpdateDataTypeRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory UpdateDataTypeRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'UpdateDataTypeRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<DataType>(1, _omitFieldNames ? '' : 'dataType',
+        subBuilder: DataType.create)
+    ..aOM<$2.FieldMask>(2, _omitFieldNames ? '' : 'updateMask',
+        subBuilder: $2.FieldMask.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateDataTypeRequest clone() =>
+      UpdateDataTypeRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateDataTypeRequest copyWith(
+          void Function(UpdateDataTypeRequest) updates) =>
+      super.copyWith((message) => updates(message as UpdateDataTypeRequest))
+          as UpdateDataTypeRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UpdateDataTypeRequest create() => UpdateDataTypeRequest._();
+  @$core.override
+  UpdateDataTypeRequest createEmptyInstance() => create();
+  static $pb.PbList<UpdateDataTypeRequest> createRepeated() =>
+      $pb.PbList<UpdateDataTypeRequest>();
+  @$core.pragma('dart2js:noInline')
+  static UpdateDataTypeRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UpdateDataTypeRequest>(create);
+  static UpdateDataTypeRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  DataType get dataType => $_getN(0);
+  @$pb.TagNumber(1)
+  set dataType(DataType value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDataType() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDataType() => $_clearField(1);
+  @$pb.TagNumber(1)
+  DataType ensureDataType() => $_ensure(0);
+
+  @$pb.TagNumber(2)
+  $2.FieldMask get updateMask => $_getN(1);
+  @$pb.TagNumber(2)
+  set updateMask($2.FieldMask value) => $_setField(2, value);
+  @$pb.TagNumber(2)
+  $core.bool hasUpdateMask() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearUpdateMask() => $_clearField(2);
+  @$pb.TagNumber(2)
+  $2.FieldMask ensureUpdateMask() => $_ensure(1);
+}
+
+class UpdateDataTypeResponse extends $pb.GeneratedMessage {
+  factory UpdateDataTypeResponse({
+    DataType? dataType,
+  }) {
+    final result = create();
+    if (dataType != null) result.dataType = dataType;
+    return result;
+  }
+
+  UpdateDataTypeResponse._();
+
+  factory UpdateDataTypeResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory UpdateDataTypeResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'UpdateDataTypeResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOM<DataType>(1, _omitFieldNames ? '' : 'dataType',
+        subBuilder: DataType.create)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateDataTypeResponse clone() =>
+      UpdateDataTypeResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  UpdateDataTypeResponse copyWith(
+          void Function(UpdateDataTypeResponse) updates) =>
+      super.copyWith((message) => updates(message as UpdateDataTypeResponse))
+          as UpdateDataTypeResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static UpdateDataTypeResponse create() => UpdateDataTypeResponse._();
+  @$core.override
+  UpdateDataTypeResponse createEmptyInstance() => create();
+  static $pb.PbList<UpdateDataTypeResponse> createRepeated() =>
+      $pb.PbList<UpdateDataTypeResponse>();
+  @$core.pragma('dart2js:noInline')
+  static UpdateDataTypeResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<UpdateDataTypeResponse>(create);
+  static UpdateDataTypeResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  DataType get dataType => $_getN(0);
+  @$pb.TagNumber(1)
+  set dataType(DataType value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDataType() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDataType() => $_clearField(1);
+  @$pb.TagNumber(1)
+  DataType ensureDataType() => $_ensure(0);
+}
+
+class RematchDataTypesRequest extends $pb.GeneratedMessage {
+  factory RematchDataTypesRequest({
+    $core.bool? overwrite,
+  }) {
+    final result = create();
+    if (overwrite != null) result.overwrite = overwrite;
+    return result;
+  }
+
+  RematchDataTypesRequest._();
+
+  factory RematchDataTypesRequest.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory RematchDataTypesRequest.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RematchDataTypesRequest',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aOB(1, _omitFieldNames ? '' : 'overwrite')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RematchDataTypesRequest clone() =>
+      RematchDataTypesRequest()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RematchDataTypesRequest copyWith(
+          void Function(RematchDataTypesRequest) updates) =>
+      super.copyWith((message) => updates(message as RematchDataTypesRequest))
+          as RematchDataTypesRequest;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static RematchDataTypesRequest create() => RematchDataTypesRequest._();
+  @$core.override
+  RematchDataTypesRequest createEmptyInstance() => create();
+  static $pb.PbList<RematchDataTypesRequest> createRepeated() =>
+      $pb.PbList<RematchDataTypesRequest>();
+  @$core.pragma('dart2js:noInline')
+  static RematchDataTypesRequest getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RematchDataTypesRequest>(create);
+  static RematchDataTypesRequest? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.bool get overwrite => $_getBF(0);
+  @$pb.TagNumber(1)
+  set overwrite($core.bool value) => $_setBool(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasOverwrite() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearOverwrite() => $_clearField(1);
+}
+
+class RematchDataTypesResponse extends $pb.GeneratedMessage {
+  factory RematchDataTypesResponse({
+    $core.int? changedCount,
+  }) {
+    final result = create();
+    if (changedCount != null) result.changedCount = changedCount;
+    return result;
+  }
+
+  RematchDataTypesResponse._();
+
+  factory RematchDataTypesResponse.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory RematchDataTypesResponse.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'RematchDataTypesResponse',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..a<$core.int>(1, _omitFieldNames ? '' : 'changedCount', $pb.PbFieldType.O3)
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RematchDataTypesResponse clone() =>
+      RematchDataTypesResponse()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  RematchDataTypesResponse copyWith(
+          void Function(RematchDataTypesResponse) updates) =>
+      super.copyWith((message) => updates(message as RematchDataTypesResponse))
+          as RematchDataTypesResponse;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static RematchDataTypesResponse create() => RematchDataTypesResponse._();
+  @$core.override
+  RematchDataTypesResponse createEmptyInstance() => create();
+  static $pb.PbList<RematchDataTypesResponse> createRepeated() =>
+      $pb.PbList<RematchDataTypesResponse>();
+  @$core.pragma('dart2js:noInline')
+  static RematchDataTypesResponse getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<RematchDataTypesResponse>(create);
+  static RematchDataTypesResponse? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $core.int get changedCount => $_getIZ(0);
+  @$pb.TagNumber(1)
+  set changedCount($core.int value) => $_setSignedInt32(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasChangedCount() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearChangedCount() => $_clearField(1);
+}
+
 /// equipment_id 오름차순.
 class ListEquipmentRequest extends $pb.GeneratedMessage {
   factory ListEquipmentRequest({
@@ -5513,19 +6193,19 @@ class CollectionPath extends $pb.GeneratedMessage {
 class ListCollectionNodesRequest extends $pb.GeneratedMessage {
   factory ListCollectionNodesRequest({
     CollectionPath? parent,
-    $fixnum.Int64? startOffsetNs,
-    $fixnum.Int64? endOffsetNs,
     TimeBasis? basis,
     SegmentUnit? segmentUnit,
     $fixnum.Int64? workerId,
+    $1.Timestamp? from,
+    $1.Timestamp? to,
   }) {
     final result = create();
     if (parent != null) result.parent = parent;
-    if (startOffsetNs != null) result.startOffsetNs = startOffsetNs;
-    if (endOffsetNs != null) result.endOffsetNs = endOffsetNs;
     if (basis != null) result.basis = basis;
     if (segmentUnit != null) result.segmentUnit = segmentUnit;
     if (workerId != null) result.workerId = workerId;
+    if (from != null) result.from = from;
+    if (to != null) result.to = to;
     return result;
   }
 
@@ -5545,8 +6225,6 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
       createEmptyInstance: create)
     ..aOM<CollectionPath>(1, _omitFieldNames ? '' : 'parent',
         subBuilder: CollectionPath.create)
-    ..aInt64(2, _omitFieldNames ? '' : 'startOffsetNs')
-    ..aInt64(3, _omitFieldNames ? '' : 'endOffsetNs')
     ..e<TimeBasis>(4, _omitFieldNames ? '' : 'basis', $pb.PbFieldType.OE,
         defaultOrMaker: TimeBasis.TIME_BASIS_UNSPECIFIED,
         valueOf: TimeBasis.valueOf,
@@ -5557,6 +6235,10 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
         valueOf: SegmentUnit.valueOf,
         enumValues: SegmentUnit.values)
     ..aInt64(6, _omitFieldNames ? '' : 'workerId')
+    ..aOM<$1.Timestamp>(7, _omitFieldNames ? '' : 'from',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(8, _omitFieldNames ? '' : 'to',
+        subBuilder: $1.Timestamp.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -5594,56 +6276,62 @@ class ListCollectionNodesRequest extends $pb.GeneratedMessage {
   @$pb.TagNumber(1)
   CollectionPath ensureParent() => $_ensure(0);
 
-  /// 선택 구간. parent에 job_id가 있을 때만 쓴다. job.started_at 기준 나노초 오프셋이고
-  /// asset.recorded_at이 [start, end) 안에 드는 Asset만 센다.
-  @$pb.TagNumber(2)
-  $fixnum.Int64 get startOffsetNs => $_getI64(1);
-  @$pb.TagNumber(2)
-  set startOffsetNs($fixnum.Int64 value) => $_setInt64(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasStartOffsetNs() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearStartOffsetNs() => $_clearField(2);
-
-  @$pb.TagNumber(3)
-  $fixnum.Int64 get endOffsetNs => $_getI64(2);
-  @$pb.TagNumber(3)
-  set endOffsetNs($fixnum.Int64 value) => $_setInt64(2, value);
-  @$pb.TagNumber(3)
-  $core.bool hasEndOffsetNs() => $_has(2);
-  @$pb.TagNumber(3)
-  void clearEndOffsetNs() => $_clearField(3);
-
   /// 노드 started_at·ended_at의 기준. 비우면 WORK.
   @$pb.TagNumber(4)
-  TimeBasis get basis => $_getN(3);
+  TimeBasis get basis => $_getN(1);
   @$pb.TagNumber(4)
   set basis(TimeBasis value) => $_setField(4, value);
   @$pb.TagNumber(4)
-  $core.bool hasBasis() => $_has(3);
+  $core.bool hasBasis() => $_has(1);
   @$pb.TagNumber(4)
   void clearBasis() => $_clearField(4);
 
   /// segments를 자르는 단위(작업 구간 기준일 때). 비우면 JOB. 트리를 열지 않고 어느 단계에서든 작업/패스 단위 막대를 본다.
   @$pb.TagNumber(5)
-  SegmentUnit get segmentUnit => $_getN(4);
+  SegmentUnit get segmentUnit => $_getN(2);
   @$pb.TagNumber(5)
   set segmentUnit(SegmentUnit value) => $_setField(5, value);
   @$pb.TagNumber(5)
-  $core.bool hasSegmentUnit() => $_has(4);
+  $core.bool hasSegmentUnit() => $_has(2);
   @$pb.TagNumber(5)
   void clearSegmentUnit() => $_clearField(5);
 
   /// 그 작업자의 작업만(0이면 전체). 노드 · 막대 · summary 모두에 걸린다. 주면 작업에 첨부 안 된 Asset(미지정)은 빠진다.
   /// basis · segment_unit · worker_id를 바꾸면 열린 노드를 모두 다시 불러야 위아래 막대가 맞는다.
   @$pb.TagNumber(6)
-  $fixnum.Int64 get workerId => $_getI64(5);
+  $fixnum.Int64 get workerId => $_getI64(3);
   @$pb.TagNumber(6)
-  set workerId($fixnum.Int64 value) => $_setInt64(5, value);
+  set workerId($fixnum.Int64 value) => $_setInt64(3, value);
   @$pb.TagNumber(6)
-  $core.bool hasWorkerId() => $_has(5);
+  $core.bool hasWorkerId() => $_has(3);
   @$pb.TagNumber(6)
   void clearWorkerId() => $_clearField(6);
+
+  /// 조회 구간(절대 시각, [from, to)). 둘 다 비우면 구간 조건 없음, 하나만 주면 그쪽만 막힌다. 하루 단위는 화면이 KST 자정으로 보낸다.
+  /// 주면: 작업은 용접 구간(패스, 없으면 작업 구간, 끝도 없으면 시작 + 기본 용접 시간)이 일부라도 겹치는 것만 나오고, 위 단계는 그런
+  /// 작업이 있을 때만 나온다. 작업 미지정 파일 행은 나오지 않는다(ListAssetCounts로 본다). 작업 아래 파일은 그 작업의 파일 전부.
+  /// 노드 summary는 GetCollectionSummary(같은 from · to)와 같은 규칙이다.
+  @$pb.TagNumber(7)
+  $1.Timestamp get from => $_getN(4);
+  @$pb.TagNumber(7)
+  set from($1.Timestamp value) => $_setField(7, value);
+  @$pb.TagNumber(7)
+  $core.bool hasFrom() => $_has(4);
+  @$pb.TagNumber(7)
+  void clearFrom() => $_clearField(7);
+  @$pb.TagNumber(7)
+  $1.Timestamp ensureFrom() => $_ensure(4);
+
+  @$pb.TagNumber(8)
+  $1.Timestamp get to => $_getN(5);
+  @$pb.TagNumber(8)
+  set to($1.Timestamp value) => $_setField(8, value);
+  @$pb.TagNumber(8)
+  $core.bool hasTo() => $_has(5);
+  @$pb.TagNumber(8)
+  void clearTo() => $_clearField(8);
+  @$pb.TagNumber(8)
+  $1.Timestamp ensureTo() => $_ensure(5);
 }
 
 class ListCollectionNodesResponse extends $pb.GeneratedMessage {
@@ -5706,10 +6394,14 @@ class GetCollectionSummaryRequest extends $pb.GeneratedMessage {
   factory GetCollectionSummaryRequest({
     CollectionPath? parent,
     $fixnum.Int64? workerId,
+    $1.Timestamp? from,
+    $1.Timestamp? to,
   }) {
     final result = create();
     if (parent != null) result.parent = parent;
     if (workerId != null) result.workerId = workerId;
+    if (from != null) result.from = from;
+    if (to != null) result.to = to;
     return result;
   }
 
@@ -5730,6 +6422,10 @@ class GetCollectionSummaryRequest extends $pb.GeneratedMessage {
     ..aOM<CollectionPath>(1, _omitFieldNames ? '' : 'parent',
         subBuilder: CollectionPath.create)
     ..aInt64(2, _omitFieldNames ? '' : 'workerId')
+    ..aOM<$1.Timestamp>(3, _omitFieldNames ? '' : 'from',
+        subBuilder: $1.Timestamp.create)
+    ..aOM<$1.Timestamp>(4, _omitFieldNames ? '' : 'to',
+        subBuilder: $1.Timestamp.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -5776,6 +6472,31 @@ class GetCollectionSummaryRequest extends $pb.GeneratedMessage {
   $core.bool hasWorkerId() => $_has(1);
   @$pb.TagNumber(2)
   void clearWorkerId() => $_clearField(2);
+
+  /// ListCollectionNodes와 같은 조회 구간. 주면 용접 구간이 겹치는 작업만 센다(트리와 같은 집합). 작업량(작업 시간 · 용접 시간 ·
+  /// 커버리지)은 이 구간으로 잘라 센다(자정에 걸친 패스는 날짜마다 나뉜다). 수집량(파일 수 · 용량 · 클립 · 메타 임베딩)과 코멘트는
+  /// 그 작업들의 것 전부(파일 기록 시각은 보지 않음, 작업 미지정 파일은 빠짐) — 그래서 ListAssetCounts(같은 from · to)의 합과 다를 수 있다.
+  @$pb.TagNumber(3)
+  $1.Timestamp get from => $_getN(2);
+  @$pb.TagNumber(3)
+  set from($1.Timestamp value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasFrom() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearFrom() => $_clearField(3);
+  @$pb.TagNumber(3)
+  $1.Timestamp ensureFrom() => $_ensure(2);
+
+  @$pb.TagNumber(4)
+  $1.Timestamp get to => $_getN(3);
+  @$pb.TagNumber(4)
+  set to($1.Timestamp value) => $_setField(4, value);
+  @$pb.TagNumber(4)
+  $core.bool hasTo() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearTo() => $_clearField(4);
+  @$pb.TagNumber(4)
+  $1.Timestamp ensureTo() => $_ensure(3);
 }
 
 class GetCollectionSummaryResponse extends $pb.GeneratedMessage {
@@ -5783,11 +6504,14 @@ class GetCollectionSummaryResponse extends $pb.GeneratedMessage {
     CollectionSummary? summary,
     $fixnum.Int64? traceRunningCount,
     $fixnum.Int64? traceFailedCount,
+    $core.Iterable<DataTypeCoverage>? dataTypeCoverage,
   }) {
     final result = create();
     if (summary != null) result.summary = summary;
     if (traceRunningCount != null) result.traceRunningCount = traceRunningCount;
     if (traceFailedCount != null) result.traceFailedCount = traceFailedCount;
+    if (dataTypeCoverage != null)
+      result.dataTypeCoverage.addAll(dataTypeCoverage);
     return result;
   }
 
@@ -5809,6 +6533,9 @@ class GetCollectionSummaryResponse extends $pb.GeneratedMessage {
         subBuilder: CollectionSummary.create)
     ..aInt64(2, _omitFieldNames ? '' : 'traceRunningCount')
     ..aInt64(3, _omitFieldNames ? '' : 'traceFailedCount')
+    ..pc<DataTypeCoverage>(
+        5, _omitFieldNames ? '' : 'dataTypeCoverage', $pb.PbFieldType.PM,
+        subBuilder: DataTypeCoverage.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -5867,6 +6594,119 @@ class GetCollectionSummaryResponse extends $pb.GeneratedMessage {
   $core.bool hasTraceFailedCount() => $_has(2);
   @$pb.TagNumber(3)
   void clearTraceFailedCount() => $_clearField(3);
+
+  /// 필수 데이터 유형별 커버리지 — 범위 안 공사들의 필수 유형만, 유형 번호 순. 종합 = covered 합 / expected 합, 손실률 = 1 − 종합.
+  /// 트리 노드 summary에는 없다(행을 고르면 그 행을 parent로 이 RPC를 부른다).
+  @$pb.TagNumber(5)
+  $pb.PbList<DataTypeCoverage> get dataTypeCoverage => $_getList(3);
+}
+
+class DataTypeCoverage extends $pb.GeneratedMessage {
+  factory DataTypeCoverage({
+    $fixnum.Int64? dataTypeId,
+    $core.String? dataTypeName,
+    DataTypeJudge? judge,
+    $fixnum.Int64? coveredSeconds,
+    $fixnum.Int64? expectedSeconds,
+  }) {
+    final result = create();
+    if (dataTypeId != null) result.dataTypeId = dataTypeId;
+    if (dataTypeName != null) result.dataTypeName = dataTypeName;
+    if (judge != null) result.judge = judge;
+    if (coveredSeconds != null) result.coveredSeconds = coveredSeconds;
+    if (expectedSeconds != null) result.expectedSeconds = expectedSeconds;
+    return result;
+  }
+
+  DataTypeCoverage._();
+
+  factory DataTypeCoverage.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory DataTypeCoverage.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'DataTypeCoverage',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..aInt64(1, _omitFieldNames ? '' : 'dataTypeId')
+    ..aOS(2, _omitFieldNames ? '' : 'dataTypeName')
+    ..e<DataTypeJudge>(3, _omitFieldNames ? '' : 'judge', $pb.PbFieldType.OE,
+        defaultOrMaker: DataTypeJudge.DATA_TYPE_JUDGE_UNSPECIFIED,
+        valueOf: DataTypeJudge.valueOf,
+        enumValues: DataTypeJudge.values)
+    ..aInt64(4, _omitFieldNames ? '' : 'coveredSeconds')
+    ..aInt64(5, _omitFieldNames ? '' : 'expectedSeconds')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DataTypeCoverage clone() => DataTypeCoverage()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  DataTypeCoverage copyWith(void Function(DataTypeCoverage) updates) =>
+      super.copyWith((message) => updates(message as DataTypeCoverage))
+          as DataTypeCoverage;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static DataTypeCoverage create() => DataTypeCoverage._();
+  @$core.override
+  DataTypeCoverage createEmptyInstance() => create();
+  static $pb.PbList<DataTypeCoverage> createRepeated() =>
+      $pb.PbList<DataTypeCoverage>();
+  @$core.pragma('dart2js:noInline')
+  static DataTypeCoverage getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<DataTypeCoverage>(create);
+  static DataTypeCoverage? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  $fixnum.Int64 get dataTypeId => $_getI64(0);
+  @$pb.TagNumber(1)
+  set dataTypeId($fixnum.Int64 value) => $_setInt64(0, value);
+  @$pb.TagNumber(1)
+  $core.bool hasDataTypeId() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearDataTypeId() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $core.String get dataTypeName => $_getSZ(1);
+  @$pb.TagNumber(2)
+  set dataTypeName($core.String value) => $_setString(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasDataTypeName() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearDataTypeName() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  DataTypeJudge get judge => $_getN(2);
+  @$pb.TagNumber(3)
+  set judge(DataTypeJudge value) => $_setField(3, value);
+  @$pb.TagNumber(3)
+  $core.bool hasJudge() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearJudge() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get coveredSeconds => $_getI64(3);
+  @$pb.TagNumber(4)
+  set coveredSeconds($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasCoveredSeconds() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearCoveredSeconds() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $fixnum.Int64 get expectedSeconds => $_getI64(4);
+  @$pb.TagNumber(5)
+  set expectedSeconds($fixnum.Int64 value) => $_setInt64(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasExpectedSeconds() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearExpectedSeconds() => $_clearField(5);
 }
 
 class CollectionNode extends $pb.GeneratedMessage {
@@ -5879,6 +6719,7 @@ class CollectionNode extends $pb.GeneratedMessage {
     $1.Timestamp? startedAt,
     $1.Timestamp? endedAt,
     $core.Iterable<TimeRange>? segments,
+    $core.Iterable<TimeWarning>? warnings,
   }) {
     final result = create();
     if (path != null) result.path = path;
@@ -5889,6 +6730,7 @@ class CollectionNode extends $pb.GeneratedMessage {
     if (startedAt != null) result.startedAt = startedAt;
     if (endedAt != null) result.endedAt = endedAt;
     if (segments != null) result.segments.addAll(segments);
+    if (warnings != null) result.warnings.addAll(warnings);
     return result;
   }
 
@@ -5920,6 +6762,8 @@ class CollectionNode extends $pb.GeneratedMessage {
         subBuilder: $1.Timestamp.create)
     ..pc<TimeRange>(8, _omitFieldNames ? '' : 'segments', $pb.PbFieldType.PM,
         subBuilder: TimeRange.create)
+    ..pc<TimeWarning>(9, _omitFieldNames ? '' : 'warnings', $pb.PbFieldType.PM,
+        subBuilder: TimeWarning.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -6016,11 +6860,101 @@ class CollectionNode extends $pb.GeneratedMessage {
   @$pb.TagNumber(7)
   $1.Timestamp ensureEndedAt() => $_ensure(6);
 
-  /// 막대로 그릴 구간(시작 순, 겹치거나 맞닿으면 합침) — started_at~ended_at은 전체 범위라 사이의 빈 날이 안 보인다.
-  /// 작업 구간 기준: 그 아래 작업들의 구간(segment_unit JOB — 작업 노드는 자기 구간 하나) 또는 패스들의 구간(PASS), 파일은 속한 패스(없으면 작업)의 구간.
-  /// 수집 구간 기준: 그 아래 파일들의 기록 구간, 파일은 자기 구간. 알 수 없으면 비어 있음
+  /// 막대로 그릴 구간(시작 순) — started_at~ended_at은 전체 범위라 사이의 빈 날이 안 보인다.
+  /// 작업 구간 기준: 그 아래 작업마다 용접 구간 하나(segment_unit JOB, job_id) 또는 패스마다 하나(PASS, job_id · pass_id — 패스 시각이
+  /// 비면 signals 구간, 패스가 없는 작업은 pass_id 0으로 작업 구간). 합치지 않는다 — 동시 작업은 겹친다. 조회 구간으로 자르지 않는다.
+  /// 끝 시각이 없는 작업은 시작 + 기본 용접 시간이고 estimated. 파일 노드는 속한 패스(없으면 작업)의 구간.
+  /// 수집 구간 기준: 그 아래 파일들의 기록 구간(겹치거나 맞닿으면 합침, 번호 없음), 파일은 자기 구간. 알 수 없으면 비어 있음
   @$pb.TagNumber(8)
   $pb.PbList<TimeRange> get segments => $_getList(7);
+
+  @$pb.TagNumber(9)
+  $pb.PbList<TimeWarning> get warnings => $_getList(8);
+}
+
+/// 시각 경고(설계 §2.1). 작업 · 패스 구간은 시작 ~ 종료, 종료가 없으면 시작 + 기본 용접 시간. 시간 자료는 영상 · 시계열 · 포즈 · 포인트클라우드에서
+/// 기록 시각과 길이가 있는 것(코멘트 녹음 · 녹화는 뺌).
+class TimeWarning extends $pb.GeneratedMessage {
+  factory TimeWarning({
+    TimeWarningCode? code,
+    $fixnum.Int64? passId,
+    $fixnum.Int64? assetId,
+  }) {
+    final result = create();
+    if (code != null) result.code = code;
+    if (passId != null) result.passId = passId;
+    if (assetId != null) result.assetId = assetId;
+    return result;
+  }
+
+  TimeWarning._();
+
+  factory TimeWarning.fromBuffer($core.List<$core.int> data,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromBuffer(data, registry);
+  factory TimeWarning.fromJson($core.String json,
+          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
+      create()..mergeFromJson(json, registry);
+
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
+      _omitMessageNames ? '' : 'TimeWarning',
+      package:
+          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
+      createEmptyInstance: create)
+    ..e<TimeWarningCode>(1, _omitFieldNames ? '' : 'code', $pb.PbFieldType.OE,
+        defaultOrMaker: TimeWarningCode.TIME_WARNING_CODE_UNSPECIFIED,
+        valueOf: TimeWarningCode.valueOf,
+        enumValues: TimeWarningCode.values)
+    ..aInt64(2, _omitFieldNames ? '' : 'passId')
+    ..aInt64(3, _omitFieldNames ? '' : 'assetId')
+    ..hasRequiredFields = false;
+
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TimeWarning clone() => TimeWarning()..mergeFromMessage(this);
+  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
+  TimeWarning copyWith(void Function(TimeWarning) updates) =>
+      super.copyWith((message) => updates(message as TimeWarning))
+          as TimeWarning;
+
+  @$core.override
+  $pb.BuilderInfo get info_ => _i;
+
+  @$core.pragma('dart2js:noInline')
+  static TimeWarning create() => TimeWarning._();
+  @$core.override
+  TimeWarning createEmptyInstance() => create();
+  static $pb.PbList<TimeWarning> createRepeated() => $pb.PbList<TimeWarning>();
+  @$core.pragma('dart2js:noInline')
+  static TimeWarning getDefault() => _defaultInstance ??=
+      $pb.GeneratedMessage.$_defaultFor<TimeWarning>(create);
+  static TimeWarning? _defaultInstance;
+
+  @$pb.TagNumber(1)
+  TimeWarningCode get code => $_getN(0);
+  @$pb.TagNumber(1)
+  set code(TimeWarningCode value) => $_setField(1, value);
+  @$pb.TagNumber(1)
+  $core.bool hasCode() => $_has(0);
+  @$pb.TagNumber(1)
+  void clearCode() => $_clearField(1);
+
+  @$pb.TagNumber(2)
+  $fixnum.Int64 get passId => $_getI64(1);
+  @$pb.TagNumber(2)
+  set passId($fixnum.Int64 value) => $_setInt64(1, value);
+  @$pb.TagNumber(2)
+  $core.bool hasPassId() => $_has(1);
+  @$pb.TagNumber(2)
+  void clearPassId() => $_clearField(2);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get assetId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set assetId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasAssetId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearAssetId() => $_clearField(3);
 }
 
 /// asset_id를 먼저 중복 제거한 뒤 집계한다(Asset 하나가 여러 작업에 첨부될 수 있음).
@@ -6028,10 +6962,16 @@ class TimeRange extends $pb.GeneratedMessage {
   factory TimeRange({
     $1.Timestamp? startedAt,
     $1.Timestamp? endedAt,
+    $fixnum.Int64? jobId,
+    $fixnum.Int64? passId,
+    $core.bool? estimated,
   }) {
     final result = create();
     if (startedAt != null) result.startedAt = startedAt;
     if (endedAt != null) result.endedAt = endedAt;
+    if (jobId != null) result.jobId = jobId;
+    if (passId != null) result.passId = passId;
+    if (estimated != null) result.estimated = estimated;
     return result;
   }
 
@@ -6053,6 +6993,9 @@ class TimeRange extends $pb.GeneratedMessage {
         subBuilder: $1.Timestamp.create)
     ..aOM<$1.Timestamp>(2, _omitFieldNames ? '' : 'endedAt',
         subBuilder: $1.Timestamp.create)
+    ..aInt64(3, _omitFieldNames ? '' : 'jobId')
+    ..aInt64(4, _omitFieldNames ? '' : 'passId')
+    ..aOB(5, _omitFieldNames ? '' : 'estimated')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -6095,6 +7038,33 @@ class TimeRange extends $pb.GeneratedMessage {
   void clearEndedAt() => $_clearField(2);
   @$pb.TagNumber(2)
   $1.Timestamp ensureEndedAt() => $_ensure(1);
+
+  @$pb.TagNumber(3)
+  $fixnum.Int64 get jobId => $_getI64(2);
+  @$pb.TagNumber(3)
+  set jobId($fixnum.Int64 value) => $_setInt64(2, value);
+  @$pb.TagNumber(3)
+  $core.bool hasJobId() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearJobId() => $_clearField(3);
+
+  @$pb.TagNumber(4)
+  $fixnum.Int64 get passId => $_getI64(3);
+  @$pb.TagNumber(4)
+  set passId($fixnum.Int64 value) => $_setInt64(3, value);
+  @$pb.TagNumber(4)
+  $core.bool hasPassId() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearPassId() => $_clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.bool get estimated => $_getBF(4);
+  @$pb.TagNumber(5)
+  set estimated($core.bool value) => $_setBool(4, value);
+  @$pb.TagNumber(5)
+  $core.bool hasEstimated() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearEstimated() => $_clearField(5);
 }
 
 class CollectionSummary extends $pb.GeneratedMessage {
@@ -6110,7 +7080,6 @@ class CollectionSummary extends $pb.GeneratedMessage {
     $fixnum.Int64? clipCount,
     $fixnum.Int64? embeddedClipCount,
     $fixnum.Int64? timeUnverifiedAssetCount,
-    $core.Iterable<KindCoverage>? coverage,
     $fixnum.Int64? weldDurationSeconds,
     $fixnum.Int64? attachedAssetCount,
     $fixnum.Int64? embeddedAttachedAssetCount,
@@ -6132,7 +7101,6 @@ class CollectionSummary extends $pb.GeneratedMessage {
     if (embeddedClipCount != null) result.embeddedClipCount = embeddedClipCount;
     if (timeUnverifiedAssetCount != null)
       result.timeUnverifiedAssetCount = timeUnverifiedAssetCount;
-    if (coverage != null) result.coverage.addAll(coverage);
     if (weldDurationSeconds != null)
       result.weldDurationSeconds = weldDurationSeconds;
     if (attachedAssetCount != null)
@@ -6173,9 +7141,6 @@ class CollectionSummary extends $pb.GeneratedMessage {
     ..aInt64(9, _omitFieldNames ? '' : 'clipCount')
     ..aInt64(10, _omitFieldNames ? '' : 'embeddedClipCount')
     ..aInt64(11, _omitFieldNames ? '' : 'timeUnverifiedAssetCount')
-    ..pc<KindCoverage>(
-        12, _omitFieldNames ? '' : 'coverage', $pb.PbFieldType.PM,
-        subBuilder: KindCoverage.create)
     ..aInt64(13, _omitFieldNames ? '' : 'weldDurationSeconds')
     ..aInt64(14, _omitFieldNames ? '' : 'attachedAssetCount')
     ..aInt64(15, _omitFieldNames ? '' : 'embeddedAttachedAssetCount')
@@ -6313,132 +7278,57 @@ class CollectionSummary extends $pb.GeneratedMessage {
   @$pb.TagNumber(11)
   void clearTimeUnverifiedAssetCount() => $_clearField(11);
 
-  /// 기록 커버리지: 자료 종류별로 용접시간 중 클립이 덮은 초(작업마다 클립 구간을 합쳐 용접 구간과 겹친 길이 — 패스 사이 쉬는 시간의
-  /// 기록은 세지 않음). 비율 = covered_seconds / weld_duration_seconds. 클립이 없는 종류는 빠진다
-  @$pb.TagNumber(12)
-  $pb.PbList<KindCoverage> get coverage => $_getList(11);
-
-  /// 용접시간: 패스 구간 합(시각이 있는 패스), 패스가 없는 작업은 작업 구간(끝이 없으면 0). 작업시간(7)은 작업이 열려 있던 시간
+  /// 용접시간: 패스 구간 합 — 패스 시각이 비면 그 패스에 붙은 signals_30fps.csv 구간 [처음 시작, 마지막 끝]으로 추정하고,
+  /// 같은 패스의 이웃한 signals 사이(중단)는 뺀다. 패스가 없는 작업은 작업 구간, 끝 시각도 없으면 시작 + 기본 용접 시간(추정 —
+  /// 그 작업 막대의 TimeRange.estimated). DB의 시각은 바꾸지 않는다. 작업시간(7)은 작업이 열려 있던 시간
   @$pb.TagNumber(13)
-  $fixnum.Int64 get weldDurationSeconds => $_getI64(12);
+  $fixnum.Int64 get weldDurationSeconds => $_getI64(11);
   @$pb.TagNumber(13)
-  set weldDurationSeconds($fixnum.Int64 value) => $_setInt64(12, value);
+  set weldDurationSeconds($fixnum.Int64 value) => $_setInt64(11, value);
   @$pb.TagNumber(13)
-  $core.bool hasWeldDurationSeconds() => $_has(12);
+  $core.bool hasWeldDurationSeconds() => $_has(11);
   @$pb.TagNumber(13)
   void clearWeldDurationSeconds() => $_clearField(13);
 
   /// 메타 임베딩: AI 서버는 작업 × 파일 쌍마다 메타 문서(파일명 · 종류 · 설비 · 작업 정보)를 만든다. 아래 작업에 붙은 쌍 수와
   /// 그중 지금 내용까지 임베딩된 것(파일 · 첨부를 고친 뒤는 빠짐). 파일 하나가 두 작업에 붙으면 2 — asset_count(1)와 다르다
   @$pb.TagNumber(14)
-  $fixnum.Int64 get attachedAssetCount => $_getI64(13);
+  $fixnum.Int64 get attachedAssetCount => $_getI64(12);
   @$pb.TagNumber(14)
-  set attachedAssetCount($fixnum.Int64 value) => $_setInt64(13, value);
+  set attachedAssetCount($fixnum.Int64 value) => $_setInt64(12, value);
   @$pb.TagNumber(14)
-  $core.bool hasAttachedAssetCount() => $_has(13);
+  $core.bool hasAttachedAssetCount() => $_has(12);
   @$pb.TagNumber(14)
   void clearAttachedAssetCount() => $_clearField(14);
 
   @$pb.TagNumber(15)
-  $fixnum.Int64 get embeddedAttachedAssetCount => $_getI64(14);
+  $fixnum.Int64 get embeddedAttachedAssetCount => $_getI64(13);
   @$pb.TagNumber(15)
-  set embeddedAttachedAssetCount($fixnum.Int64 value) => $_setInt64(14, value);
+  set embeddedAttachedAssetCount($fixnum.Int64 value) => $_setInt64(13, value);
   @$pb.TagNumber(15)
-  $core.bool hasEmbeddedAttachedAssetCount() => $_has(14);
+  $core.bool hasEmbeddedAttachedAssetCount() => $_has(13);
   @$pb.TagNumber(15)
   void clearEmbeddedAttachedAssetCount() => $_clearField(15);
 
   /// 코멘트 임베딩: 아래 작업에 달린 코멘트 수와 그중 지금 내용(본문 + STT 자막)까지 임베딩된 것. STT 자막이 나중에 생기면
   /// 다시 임베딩될 때까지 빠진다. 작업 없이 남긴 코멘트는 어느 범위에도 들지 않는다
   @$pb.TagNumber(16)
-  $fixnum.Int64 get commentCount => $_getI64(15);
+  $fixnum.Int64 get commentCount => $_getI64(14);
   @$pb.TagNumber(16)
-  set commentCount($fixnum.Int64 value) => $_setInt64(15, value);
+  set commentCount($fixnum.Int64 value) => $_setInt64(14, value);
   @$pb.TagNumber(16)
-  $core.bool hasCommentCount() => $_has(15);
+  $core.bool hasCommentCount() => $_has(14);
   @$pb.TagNumber(16)
   void clearCommentCount() => $_clearField(16);
 
   @$pb.TagNumber(17)
-  $fixnum.Int64 get embeddedCommentCount => $_getI64(16);
+  $fixnum.Int64 get embeddedCommentCount => $_getI64(15);
   @$pb.TagNumber(17)
-  set embeddedCommentCount($fixnum.Int64 value) => $_setInt64(16, value);
+  set embeddedCommentCount($fixnum.Int64 value) => $_setInt64(15, value);
   @$pb.TagNumber(17)
-  $core.bool hasEmbeddedCommentCount() => $_has(16);
+  $core.bool hasEmbeddedCommentCount() => $_has(15);
   @$pb.TagNumber(17)
   void clearEmbeddedCommentCount() => $_clearField(17);
-}
-
-class KindCoverage extends $pb.GeneratedMessage {
-  factory KindCoverage({
-    $3.AssetKind? kind,
-    $fixnum.Int64? coveredSeconds,
-  }) {
-    final result = create();
-    if (kind != null) result.kind = kind;
-    if (coveredSeconds != null) result.coveredSeconds = coveredSeconds;
-    return result;
-  }
-
-  KindCoverage._();
-
-  factory KindCoverage.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromBuffer(data, registry);
-  factory KindCoverage.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      create()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'KindCoverage',
-      package:
-          const $pb.PackageName(_omitMessageNames ? '' : 'mediatag.work.v1'),
-      createEmptyInstance: create)
-    ..e<$3.AssetKind>(1, _omitFieldNames ? '' : 'kind', $pb.PbFieldType.OE,
-        defaultOrMaker: $3.AssetKind.ASSET_KIND_UNSPECIFIED,
-        valueOf: $3.AssetKind.valueOf,
-        enumValues: $3.AssetKind.values)
-    ..aInt64(2, _omitFieldNames ? '' : 'coveredSeconds')
-    ..hasRequiredFields = false;
-
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  KindCoverage clone() => KindCoverage()..mergeFromMessage(this);
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  KindCoverage copyWith(void Function(KindCoverage) updates) =>
-      super.copyWith((message) => updates(message as KindCoverage))
-          as KindCoverage;
-
-  @$core.override
-  $pb.BuilderInfo get info_ => _i;
-
-  @$core.pragma('dart2js:noInline')
-  static KindCoverage create() => KindCoverage._();
-  @$core.override
-  KindCoverage createEmptyInstance() => create();
-  static $pb.PbList<KindCoverage> createRepeated() =>
-      $pb.PbList<KindCoverage>();
-  @$core.pragma('dart2js:noInline')
-  static KindCoverage getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<KindCoverage>(create);
-  static KindCoverage? _defaultInstance;
-
-  @$pb.TagNumber(1)
-  $3.AssetKind get kind => $_getN(0);
-  @$pb.TagNumber(1)
-  set kind($3.AssetKind value) => $_setField(1, value);
-  @$pb.TagNumber(1)
-  $core.bool hasKind() => $_has(0);
-  @$pb.TagNumber(1)
-  void clearKind() => $_clearField(1);
-
-  @$pb.TagNumber(2)
-  $fixnum.Int64 get coveredSeconds => $_getI64(1);
-  @$pb.TagNumber(2)
-  set coveredSeconds($fixnum.Int64 value) => $_setInt64(1, value);
-  @$pb.TagNumber(2)
-  $core.bool hasCoveredSeconds() => $_has(1);
-  @$pb.TagNumber(2)
-  void clearCoveredSeconds() => $_clearField(2);
 }
 
 class GetPassWaveformRequest extends $pb.GeneratedMessage {
@@ -6744,6 +7634,7 @@ class PassWaveform extends $pb.GeneratedMessage {
     $core.String? workerName,
     $core.Iterable<WaveformSeries>? series,
     WorkerType? workerType,
+    $core.Iterable<TimeWarning>? warnings,
   }) {
     final result = create();
     if (jobId != null) result.jobId = jobId;
@@ -6752,6 +7643,7 @@ class PassWaveform extends $pb.GeneratedMessage {
     if (workerName != null) result.workerName = workerName;
     if (series != null) result.series.addAll(series);
     if (workerType != null) result.workerType = workerType;
+    if (warnings != null) result.warnings.addAll(warnings);
     return result;
   }
 
@@ -6779,6 +7671,8 @@ class PassWaveform extends $pb.GeneratedMessage {
         defaultOrMaker: WorkerType.WORKER_TYPE_UNSPECIFIED,
         valueOf: WorkerType.valueOf,
         enumValues: WorkerType.values)
+    ..pc<TimeWarning>(8, _omitFieldNames ? '' : 'warnings', $pb.PbFieldType.PM,
+        subBuilder: TimeWarning.create)
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -6849,6 +7743,9 @@ class PassWaveform extends $pb.GeneratedMessage {
   $core.bool hasWorkerType() => $_has(5);
   @$pb.TagNumber(7)
   void clearWorkerType() => $_clearField(7);
+
+  @$pb.TagNumber(8)
+  $pb.PbList<TimeWarning> get warnings => $_getList(6);
 }
 
 /// 표준화 CSV 한 파일에서 자른 구간. 두 작업을 겹쳐 보도록 시각은 패스 시작 기준 오프셋이다.
@@ -7362,6 +8259,27 @@ class WorkServiceApi {
       _client.invoke<DeleteEquipmentResponse>(ctx, 'WorkService',
           'DeleteEquipment', request, DeleteEquipmentResponse());
 
+  /// 데이터 유형 — 공사가 "잘 모였나" 확인하는 단위(앞 깊이 영상 · 액션캠 영상 · 용접 성적서). 공사 필수 구성(Project.required_data_type_ids)과
+  /// 커버리지가 이 단위다. 장비와 묶지 않는다(카메라를 바꿔도 같은 유형). 지우지 않고 UpdateDataType inactive로 숨긴다.
+  $async.Future<ListDataTypesResponse> listDataTypes(
+          $pb.ClientContext? ctx, ListDataTypesRequest request) =>
+      _client.invoke<ListDataTypesResponse>(ctx, 'WorkService', 'ListDataTypes',
+          request, ListDataTypesResponse());
+  $async.Future<CreateDataTypeResponse> createDataType(
+          $pb.ClientContext? ctx, CreateDataTypeRequest request) =>
+      _client.invoke<CreateDataTypeResponse>(ctx, 'WorkService',
+          'CreateDataType', request, CreateDataTypeResponse());
+  $async.Future<UpdateDataTypeResponse> updateDataType(
+          $pb.ClientContext? ctx, UpdateDataTypeRequest request) =>
+      _client.invoke<UpdateDataTypeResponse>(ctx, 'WorkService',
+          'UpdateDataType', request, UpdateDataTypeResponse());
+
+  /// 파일 유형을 맞춤 조건으로 다시 붙인다 — 유형을 늘리거나 조건을 고친 뒤. overwrite가 아니면 미지정 파일만(사람이 고른 것은 그대로).
+  $async.Future<RematchDataTypesResponse> rematchDataTypes(
+          $pb.ClientContext? ctx, RematchDataTypesRequest request) =>
+      _client.invoke<RematchDataTypesResponse>(ctx, 'WorkService',
+          'RematchDataTypes', request, RematchDataTypesResponse());
+
   /// 공사의 호기에 품목을 배정한다(묶음). 작업을 만들기 전에 품목을 미리 등록할 때 쓴다. 이미 있는 배정은 그대로 두고
   /// (이름도 안 바꾼다) 그 줄을 돌려준다. project_id·unit_no·item_code·item_name 필수, 없는 공사면 InvalidArgument.
   $async.Future<CreateProjectItemsResponse> createProjectItems(
@@ -7483,7 +8401,8 @@ class WorkServiceApi {
           'GetCollectionSummary', request, GetCollectionSummaryResponse());
 
   /// 날짜(한국 시각) × 자료 종류별 Asset 수 · 용량 — "언제 얼마나 들어왔나(수집 시각) / 기록됐나(기록 시각)" 그래프.
-  /// 범위 · 세는 규칙은 ListCollectionNodes와 같다(parent · worker_id 같은 값, 날짜별 합 = GetCollectionSummary의 asset_count · total_size_bytes).
+  /// 범위는 ListCollectionNodes와 같은 parent · worker_id. from · to는 파일 시각(basis)으로 거른다 — 구간 없이 부르면 날짜별 합 =
+  /// GetCollectionSummary의 asset_count · total_size_bytes, 구간을 주면 다를 수 있다(KPI는 겹치는 작업의 파일 전부).
   $async.Future<ListAssetCountsResponse> listAssetCounts(
           $pb.ClientContext? ctx, ListAssetCountsRequest request) =>
       _client.invoke<ListAssetCountsResponse>(ctx, 'WorkService',

@@ -56,6 +56,21 @@ final $typed_data.Uint8List passTypeDescriptor = $convert.base64Decode(
     'ABEhEKDVBBU1NfVFlQRV9IT1QQAhISCg5QQVNTX1RZUEVfRklMTBADEhEKDVBBU1NfVFlQRV9D'
     'QVAQBA==');
 
+@$core.Deprecated('Use dataTypeJudgeDescriptor instead')
+const DataTypeJudge$json = {
+  '1': 'DataTypeJudge',
+  '2': [
+    {'1': 'DATA_TYPE_JUDGE_UNSPECIFIED', '2': 0},
+    {'1': 'DATA_TYPE_JUDGE_TIME', '2': 1},
+    {'1': 'DATA_TYPE_JUDGE_REPORT', '2': 2},
+  ],
+};
+
+/// Descriptor for `DataTypeJudge`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List dataTypeJudgeDescriptor = $convert.base64Decode(
+    'Cg1EYXRhVHlwZUp1ZGdlEh8KG0RBVEFfVFlQRV9KVURHRV9VTlNQRUNJRklFRBAAEhgKFERBVE'
+    'FfVFlQRV9KVURHRV9USU1FEAESGgoWREFUQV9UWVBFX0pVREdFX1JFUE9SVBAC');
+
 @$core.Deprecated('Use collectionViewDescriptor instead')
 const CollectionView$json = {
   '1': 'CollectionView',
@@ -140,6 +155,22 @@ final $typed_data.Uint8List timeBasisDescriptor = $convert.base64Decode(
     'CglUaW1lQmFzaXMSGgoWVElNRV9CQVNJU19VTlNQRUNJRklFRBAAEhMKD1RJTUVfQkFTSVNfV0'
     '9SSxABEhkKFVRJTUVfQkFTSVNfQ09MTEVDVElPThAC');
 
+@$core.Deprecated('Use timeWarningCodeDescriptor instead')
+const TimeWarningCode$json = {
+  '1': 'TimeWarningCode',
+  '2': [
+    {'1': 'TIME_WARNING_CODE_UNSPECIFIED', '2': 0},
+    {'1': 'TIME_WARNING_CODE_PASS_NOT_OVERLAPPED', '2': 1},
+    {'1': 'TIME_WARNING_CODE_RECORDED_OUTSIDE_JOB', '2': 2},
+  ],
+};
+
+/// Descriptor for `TimeWarningCode`. Decode as a `google.protobuf.EnumDescriptorProto`.
+final $typed_data.Uint8List timeWarningCodeDescriptor = $convert.base64Decode(
+    'Cg9UaW1lV2FybmluZ0NvZGUSIQodVElNRV9XQVJOSU5HX0NPREVfVU5TUEVDSUZJRUQQABIpCi'
+    'VUSU1FX1dBUk5JTkdfQ09ERV9QQVNTX05PVF9PVkVSTEFQUEVEEAESKgomVElNRV9XQVJOSU5H'
+    'X0NPREVfUkVDT1JERURfT1VUU0lERV9KT0IQAg==');
+
 @$core.Deprecated('Use waveformNormalizeDescriptor instead')
 const WaveformNormalize$json = {
   '1': 'WaveformNormalize',
@@ -195,6 +226,13 @@ const Project$json = {
       '6': '.mediatag.auth.v1.Author',
       '10': 'updatedBy'
     },
+    {
+      '1': 'required_data_type_ids',
+      '3': 8,
+      '4': 3,
+      '5': 3,
+      '10': 'requiredDataTypeIds'
+    },
   ],
 };
 
@@ -204,8 +242,8 @@ final $typed_data.Uint8List projectDescriptor = $convert.base64Decode(
     'UYAiABKAlSC3Byb2plY3ROYW1lEhsKCXNpdGVfbmFtZRgDIAEoCVIIc2l0ZU5hbWUSGgoIY3Vz'
     'dG9tZXIYBCABKAlSCGN1c3RvbWVyEh0KCnByb2plY3RfaWQYBSABKANSCXByb2plY3RJZBI3Cg'
     'pjcmVhdGVkX2J5GAYgASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCWNyZWF0ZWRCeRI3'
-    'Cgp1cGRhdGVkX2J5GAcgASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCXVwZGF0ZWRCeQ'
-    '==');
+    'Cgp1cGRhdGVkX2J5GAcgASgLMhgubWVkaWF0YWcuYXV0aC52MS5BdXRob3JSCXVwZGF0ZWRCeR'
+    'IzChZyZXF1aXJlZF9kYXRhX3R5cGVfaWRzGAggAygDUhNyZXF1aXJlZERhdGFUeXBlSWRz');
 
 @$core.Deprecated('Use workerDescriptor instead')
 const Worker$json = {
@@ -1693,6 +1731,214 @@ final $typed_data.Uint8List listWorkersResponseDescriptor = $convert.base64Decod
     'am9iQ291bnRzGjwKDkpvYkNvdW50c0VudHJ5EhAKA2tleRgBIAEoA1IDa2V5EhQKBXZhbHVlGA'
     'IgASgFUgV2YWx1ZToCOAE=');
 
+@$core.Deprecated('Use dataTypeDescriptor instead')
+const DataType$json = {
+  '1': 'DataType',
+  '2': [
+    {'1': 'data_type_id', '3': 1, '4': 1, '5': 3, '10': 'dataTypeId'},
+    {'1': 'data_type_name', '3': 2, '4': 1, '5': 9, '10': 'dataTypeName'},
+    {
+      '1': 'judge',
+      '3': 3,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.work.v1.DataTypeJudge',
+      '10': 'judge'
+    },
+    {'1': 'doc_type', '3': 4, '4': 1, '5': 9, '10': 'docType'},
+    {
+      '1': 'match_kind',
+      '3': 5,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.asset.v1.AssetKind',
+      '10': 'matchKind'
+    },
+    {'1': 'match_file_name', '3': 6, '4': 1, '5': 9, '10': 'matchFileName'},
+    {'1': 'description', '3': 7, '4': 1, '5': 9, '10': 'description'},
+    {'1': 'inactive', '3': 8, '4': 1, '5': 8, '10': 'inactive'},
+    {
+      '1': 'created_by',
+      '3': 9,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'createdBy'
+    },
+    {
+      '1': 'updated_by',
+      '3': 10,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.auth.v1.Author',
+      '10': 'updatedBy'
+    },
+  ],
+};
+
+/// Descriptor for `DataType`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List dataTypeDescriptor = $convert.base64Decode(
+    'CghEYXRhVHlwZRIgCgxkYXRhX3R5cGVfaWQYASABKANSCmRhdGFUeXBlSWQSJAoOZGF0YV90eX'
+    'BlX25hbWUYAiABKAlSDGRhdGFUeXBlTmFtZRI1CgVqdWRnZRgDIAEoDjIfLm1lZGlhdGFnLndv'
+    'cmsudjEuRGF0YVR5cGVKdWRnZVIFanVkZ2USGQoIZG9jX3R5cGUYBCABKAlSB2RvY1R5cGUSOw'
+    'oKbWF0Y2hfa2luZBgFIAEoDjIcLm1lZGlhdGFnLmFzc2V0LnYxLkFzc2V0S2luZFIJbWF0Y2hL'
+    'aW5kEiYKD21hdGNoX2ZpbGVfbmFtZRgGIAEoCVINbWF0Y2hGaWxlTmFtZRIgCgtkZXNjcmlwdG'
+    'lvbhgHIAEoCVILZGVzY3JpcHRpb24SGgoIaW5hY3RpdmUYCCABKAhSCGluYWN0aXZlEjcKCmNy'
+    'ZWF0ZWRfYnkYCSABKAsyGC5tZWRpYXRhZy5hdXRoLnYxLkF1dGhvclIJY3JlYXRlZEJ5EjcKCn'
+    'VwZGF0ZWRfYnkYCiABKAsyGC5tZWRpYXRhZy5hdXRoLnYxLkF1dGhvclIJdXBkYXRlZEJ5');
+
+@$core.Deprecated('Use listDataTypesRequestDescriptor instead')
+const ListDataTypesRequest$json = {
+  '1': 'ListDataTypesRequest',
+  '2': [
+    {'1': 'include_inactive', '3': 1, '4': 1, '5': 8, '10': 'includeInactive'},
+  ],
+};
+
+/// Descriptor for `ListDataTypesRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listDataTypesRequestDescriptor = $convert.base64Decode(
+    'ChRMaXN0RGF0YVR5cGVzUmVxdWVzdBIpChBpbmNsdWRlX2luYWN0aXZlGAEgASgIUg9pbmNsdW'
+    'RlSW5hY3RpdmU=');
+
+@$core.Deprecated('Use listDataTypesResponseDescriptor instead')
+const ListDataTypesResponse$json = {
+  '1': 'ListDataTypesResponse',
+  '2': [
+    {
+      '1': 'data_types',
+      '3': 1,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.DataType',
+      '10': 'dataTypes'
+    },
+  ],
+};
+
+/// Descriptor for `ListDataTypesResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List listDataTypesResponseDescriptor = $convert.base64Decode(
+    'ChVMaXN0RGF0YVR5cGVzUmVzcG9uc2USOQoKZGF0YV90eXBlcxgBIAMoCzIaLm1lZGlhdGFnLn'
+    'dvcmsudjEuRGF0YVR5cGVSCWRhdGFUeXBlcw==');
+
+@$core.Deprecated('Use createDataTypeRequestDescriptor instead')
+const CreateDataTypeRequest$json = {
+  '1': 'CreateDataTypeRequest',
+  '2': [
+    {
+      '1': 'data_type',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.work.v1.DataType',
+      '10': 'dataType'
+    },
+  ],
+};
+
+/// Descriptor for `CreateDataTypeRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List createDataTypeRequestDescriptor = $convert.base64Decode(
+    'ChVDcmVhdGVEYXRhVHlwZVJlcXVlc3QSNwoJZGF0YV90eXBlGAEgASgLMhoubWVkaWF0YWcud2'
+    '9yay52MS5EYXRhVHlwZVIIZGF0YVR5cGU=');
+
+@$core.Deprecated('Use createDataTypeResponseDescriptor instead')
+const CreateDataTypeResponse$json = {
+  '1': 'CreateDataTypeResponse',
+  '2': [
+    {
+      '1': 'data_type',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.work.v1.DataType',
+      '10': 'dataType'
+    },
+  ],
+};
+
+/// Descriptor for `CreateDataTypeResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List createDataTypeResponseDescriptor =
+    $convert.base64Decode(
+        'ChZDcmVhdGVEYXRhVHlwZVJlc3BvbnNlEjcKCWRhdGFfdHlwZRgBIAEoCzIaLm1lZGlhdGFnLn'
+        'dvcmsudjEuRGF0YVR5cGVSCGRhdGFUeXBl');
+
+@$core.Deprecated('Use updateDataTypeRequestDescriptor instead')
+const UpdateDataTypeRequest$json = {
+  '1': 'UpdateDataTypeRequest',
+  '2': [
+    {
+      '1': 'data_type',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.work.v1.DataType',
+      '10': 'dataType'
+    },
+    {
+      '1': 'update_mask',
+      '3': 2,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.FieldMask',
+      '10': 'updateMask'
+    },
+  ],
+};
+
+/// Descriptor for `UpdateDataTypeRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List updateDataTypeRequestDescriptor = $convert.base64Decode(
+    'ChVVcGRhdGVEYXRhVHlwZVJlcXVlc3QSNwoJZGF0YV90eXBlGAEgASgLMhoubWVkaWF0YWcud2'
+    '9yay52MS5EYXRhVHlwZVIIZGF0YVR5cGUSOwoLdXBkYXRlX21hc2sYAiABKAsyGi5nb29nbGUu'
+    'cHJvdG9idWYuRmllbGRNYXNrUgp1cGRhdGVNYXNr');
+
+@$core.Deprecated('Use updateDataTypeResponseDescriptor instead')
+const UpdateDataTypeResponse$json = {
+  '1': 'UpdateDataTypeResponse',
+  '2': [
+    {
+      '1': 'data_type',
+      '3': 1,
+      '4': 1,
+      '5': 11,
+      '6': '.mediatag.work.v1.DataType',
+      '10': 'dataType'
+    },
+  ],
+};
+
+/// Descriptor for `UpdateDataTypeResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List updateDataTypeResponseDescriptor =
+    $convert.base64Decode(
+        'ChZVcGRhdGVEYXRhVHlwZVJlc3BvbnNlEjcKCWRhdGFfdHlwZRgBIAEoCzIaLm1lZGlhdGFnLn'
+        'dvcmsudjEuRGF0YVR5cGVSCGRhdGFUeXBl');
+
+@$core.Deprecated('Use rematchDataTypesRequestDescriptor instead')
+const RematchDataTypesRequest$json = {
+  '1': 'RematchDataTypesRequest',
+  '2': [
+    {'1': 'overwrite', '3': 1, '4': 1, '5': 8, '10': 'overwrite'},
+  ],
+};
+
+/// Descriptor for `RematchDataTypesRequest`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List rematchDataTypesRequestDescriptor =
+    $convert.base64Decode(
+        'ChdSZW1hdGNoRGF0YVR5cGVzUmVxdWVzdBIcCglvdmVyd3JpdGUYASABKAhSCW92ZXJ3cml0ZQ'
+        '==');
+
+@$core.Deprecated('Use rematchDataTypesResponseDescriptor instead')
+const RematchDataTypesResponse$json = {
+  '1': 'RematchDataTypesResponse',
+  '2': [
+    {'1': 'changed_count', '3': 1, '4': 1, '5': 5, '10': 'changedCount'},
+  ],
+};
+
+/// Descriptor for `RematchDataTypesResponse`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List rematchDataTypesResponseDescriptor =
+    $convert.base64Decode(
+        'ChhSZW1hdGNoRGF0YVR5cGVzUmVzcG9uc2USIwoNY2hhbmdlZF9jb3VudBgBIAEoBVIMY2hhbm'
+        'dlZENvdW50');
+
 @$core.Deprecated('Use listEquipmentRequestDescriptor instead')
 const ListEquipmentRequest$json = {
   '1': 'ListEquipmentRequest',
@@ -1974,24 +2220,6 @@ const ListCollectionNodesRequest$json = {
       '10': 'parent'
     },
     {
-      '1': 'start_offset_ns',
-      '3': 2,
-      '4': 1,
-      '5': 3,
-      '9': 0,
-      '10': 'startOffsetNs',
-      '17': true
-    },
-    {
-      '1': 'end_offset_ns',
-      '3': 3,
-      '4': 1,
-      '5': 3,
-      '9': 1,
-      '10': 'endOffsetNs',
-      '17': true
-    },
-    {
       '1': 'basis',
       '3': 4,
       '4': 1,
@@ -2008,22 +2236,39 @@ const ListCollectionNodesRequest$json = {
       '10': 'segmentUnit'
     },
     {'1': 'worker_id', '3': 6, '4': 1, '5': 3, '10': 'workerId'},
+    {
+      '1': 'from',
+      '3': 7,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'from'
+    },
+    {
+      '1': 'to',
+      '3': 8,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'to'
+    },
   ],
-  '8': [
-    {'1': '_start_offset_ns'},
-    {'1': '_end_offset_ns'},
+  '9': [
+    {'1': 2, '2': 3},
+    {'1': 3, '2': 4},
   ],
+  '10': ['start_offset_ns', 'end_offset_ns'],
 };
 
 /// Descriptor for `ListCollectionNodesRequest`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List listCollectionNodesRequestDescriptor = $convert.base64Decode(
     'ChpMaXN0Q29sbGVjdGlvbk5vZGVzUmVxdWVzdBI4CgZwYXJlbnQYASABKAsyIC5tZWRpYXRhZy'
-    '53b3JrLnYxLkNvbGxlY3Rpb25QYXRoUgZwYXJlbnQSKwoPc3RhcnRfb2Zmc2V0X25zGAIgASgD'
-    'SABSDXN0YXJ0T2Zmc2V0TnOIAQESJwoNZW5kX29mZnNldF9ucxgDIAEoA0gBUgtlbmRPZmZzZX'
-    'ROc4gBARIxCgViYXNpcxgEIAEoDjIbLm1lZGlhdGFnLndvcmsudjEuVGltZUJhc2lzUgViYXNp'
-    'cxJACgxzZWdtZW50X3VuaXQYBSABKA4yHS5tZWRpYXRhZy53b3JrLnYxLlNlZ21lbnRVbml0Ug'
-    'tzZWdtZW50VW5pdBIbCgl3b3JrZXJfaWQYBiABKANSCHdvcmtlcklkQhIKEF9zdGFydF9vZmZz'
-    'ZXRfbnNCEAoOX2VuZF9vZmZzZXRfbnM=');
+    '53b3JrLnYxLkNvbGxlY3Rpb25QYXRoUgZwYXJlbnQSMQoFYmFzaXMYBCABKA4yGy5tZWRpYXRh'
+    'Zy53b3JrLnYxLlRpbWVCYXNpc1IFYmFzaXMSQAoMc2VnbWVudF91bml0GAUgASgOMh0ubWVkaW'
+    'F0YWcud29yay52MS5TZWdtZW50VW5pdFILc2VnbWVudFVuaXQSGwoJd29ya2VyX2lkGAYgASgD'
+    'Ugh3b3JrZXJJZBIuCgRmcm9tGAcgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcFIEZn'
+    'JvbRIqCgJ0bxgIIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBSAnRvSgQIAhADSgQI'
+    'AxAEUg9zdGFydF9vZmZzZXRfbnNSDWVuZF9vZmZzZXRfbnM=');
 
 @$core.Deprecated('Use listCollectionNodesResponseDescriptor instead')
 const ListCollectionNodesResponse$json = {
@@ -2062,15 +2307,31 @@ const GetCollectionSummaryRequest$json = {
       '10': 'parent'
     },
     {'1': 'worker_id', '3': 2, '4': 1, '5': 3, '10': 'workerId'},
+    {
+      '1': 'from',
+      '3': 3,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'from'
+    },
+    {
+      '1': 'to',
+      '3': 4,
+      '4': 1,
+      '5': 11,
+      '6': '.google.protobuf.Timestamp',
+      '10': 'to'
+    },
   ],
 };
 
 /// Descriptor for `GetCollectionSummaryRequest`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List getCollectionSummaryRequestDescriptor =
-    $convert.base64Decode(
-        'ChtHZXRDb2xsZWN0aW9uU3VtbWFyeVJlcXVlc3QSOAoGcGFyZW50GAEgASgLMiAubWVkaWF0YW'
-        'cud29yay52MS5Db2xsZWN0aW9uUGF0aFIGcGFyZW50EhsKCXdvcmtlcl9pZBgCIAEoA1IId29y'
-        'a2VySWQ=');
+final $typed_data.Uint8List getCollectionSummaryRequestDescriptor = $convert.base64Decode(
+    'ChtHZXRDb2xsZWN0aW9uU3VtbWFyeVJlcXVlc3QSOAoGcGFyZW50GAEgASgLMiAubWVkaWF0YW'
+    'cud29yay52MS5Db2xsZWN0aW9uUGF0aFIGcGFyZW50EhsKCXdvcmtlcl9pZBgCIAEoA1IId29y'
+    'a2VySWQSLgoEZnJvbRgDIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXBSBGZyb20SKg'
+    'oCdG8YBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wUgJ0bw==');
 
 @$core.Deprecated('Use getCollectionSummaryResponseDescriptor instead')
 const GetCollectionSummaryResponse$json = {
@@ -2098,7 +2359,19 @@ const GetCollectionSummaryResponse$json = {
       '5': 3,
       '10': 'traceFailedCount'
     },
+    {
+      '1': 'data_type_coverage',
+      '3': 5,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.DataTypeCoverage',
+      '10': 'dataTypeCoverage'
+    },
   ],
+  '9': [
+    {'1': 4, '2': 5},
+  ],
+  '10': ['coverage_by_equipment'],
 };
 
 /// Descriptor for `GetCollectionSummaryResponse`. Decode as a `google.protobuf.DescriptorProto`.
@@ -2106,7 +2379,36 @@ final $typed_data.Uint8List getCollectionSummaryResponseDescriptor = $convert.ba
     'ChxHZXRDb2xsZWN0aW9uU3VtbWFyeVJlc3BvbnNlEj0KB3N1bW1hcnkYASABKAsyIy5tZWRpYX'
     'RhZy53b3JrLnYxLkNvbGxlY3Rpb25TdW1tYXJ5UgdzdW1tYXJ5Ei4KE3RyYWNlX3J1bm5pbmdf'
     'Y291bnQYAiABKANSEXRyYWNlUnVubmluZ0NvdW50EiwKEnRyYWNlX2ZhaWxlZF9jb3VudBgDIA'
-    'EoA1IQdHJhY2VGYWlsZWRDb3VudA==');
+    'EoA1IQdHJhY2VGYWlsZWRDb3VudBJQChJkYXRhX3R5cGVfY292ZXJhZ2UYBSADKAsyIi5tZWRp'
+    'YXRhZy53b3JrLnYxLkRhdGFUeXBlQ292ZXJhZ2VSEGRhdGFUeXBlQ292ZXJhZ2VKBAgEEAVSFW'
+    'NvdmVyYWdlX2J5X2VxdWlwbWVudA==');
+
+@$core.Deprecated('Use dataTypeCoverageDescriptor instead')
+const DataTypeCoverage$json = {
+  '1': 'DataTypeCoverage',
+  '2': [
+    {'1': 'data_type_id', '3': 1, '4': 1, '5': 3, '10': 'dataTypeId'},
+    {'1': 'data_type_name', '3': 2, '4': 1, '5': 9, '10': 'dataTypeName'},
+    {
+      '1': 'judge',
+      '3': 3,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.work.v1.DataTypeJudge',
+      '10': 'judge'
+    },
+    {'1': 'covered_seconds', '3': 4, '4': 1, '5': 3, '10': 'coveredSeconds'},
+    {'1': 'expected_seconds', '3': 5, '4': 1, '5': 3, '10': 'expectedSeconds'},
+  ],
+};
+
+/// Descriptor for `DataTypeCoverage`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List dataTypeCoverageDescriptor = $convert.base64Decode(
+    'ChBEYXRhVHlwZUNvdmVyYWdlEiAKDGRhdGFfdHlwZV9pZBgBIAEoA1IKZGF0YVR5cGVJZBIkCg'
+    '5kYXRhX3R5cGVfbmFtZRgCIAEoCVIMZGF0YVR5cGVOYW1lEjUKBWp1ZGdlGAMgASgOMh8ubWVk'
+    'aWF0YWcud29yay52MS5EYXRhVHlwZUp1ZGdlUgVqdWRnZRInCg9jb3ZlcmVkX3NlY29uZHMYBC'
+    'ABKANSDmNvdmVyZWRTZWNvbmRzEikKEGV4cGVjdGVkX3NlY29uZHMYBSABKANSD2V4cGVjdGVk'
+    'U2Vjb25kcw==');
 
 @$core.Deprecated('Use collectionNodeDescriptor instead')
 const CollectionNode$json = {
@@ -2162,6 +2464,14 @@ const CollectionNode$json = {
       '6': '.mediatag.work.v1.TimeRange',
       '10': 'segments'
     },
+    {
+      '1': 'warnings',
+      '3': 9,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.TimeWarning',
+      '10': 'warnings'
+    },
   ],
 };
 
@@ -2174,7 +2484,31 @@ final $typed_data.Uint8List collectionNodeDescriptor = $convert.base64Decode(
     'LnYxLkFzc2V0UgVhc3NldBI5CgpzdGFydGVkX2F0GAYgASgLMhouZ29vZ2xlLnByb3RvYnVmLl'
     'RpbWVzdGFtcFIJc3RhcnRlZEF0EjUKCGVuZGVkX2F0GAcgASgLMhouZ29vZ2xlLnByb3RvYnVm'
     'LlRpbWVzdGFtcFIHZW5kZWRBdBI3CghzZWdtZW50cxgIIAMoCzIbLm1lZGlhdGFnLndvcmsudj'
-    'EuVGltZVJhbmdlUghzZWdtZW50cw==');
+    'EuVGltZVJhbmdlUghzZWdtZW50cxI5Cgh3YXJuaW5ncxgJIAMoCzIdLm1lZGlhdGFnLndvcmsu'
+    'djEuVGltZVdhcm5pbmdSCHdhcm5pbmdz');
+
+@$core.Deprecated('Use timeWarningDescriptor instead')
+const TimeWarning$json = {
+  '1': 'TimeWarning',
+  '2': [
+    {
+      '1': 'code',
+      '3': 1,
+      '4': 1,
+      '5': 14,
+      '6': '.mediatag.work.v1.TimeWarningCode',
+      '10': 'code'
+    },
+    {'1': 'pass_id', '3': 2, '4': 1, '5': 3, '10': 'passId'},
+    {'1': 'asset_id', '3': 3, '4': 1, '5': 3, '10': 'assetId'},
+  ],
+};
+
+/// Descriptor for `TimeWarning`. Decode as a `google.protobuf.DescriptorProto`.
+final $typed_data.Uint8List timeWarningDescriptor = $convert.base64Decode(
+    'CgtUaW1lV2FybmluZxI1CgRjb2RlGAEgASgOMiEubWVkaWF0YWcud29yay52MS5UaW1lV2Fybm'
+    'luZ0NvZGVSBGNvZGUSFwoHcGFzc19pZBgCIAEoA1IGcGFzc0lkEhkKCGFzc2V0X2lkGAMgASgD'
+    'Ugdhc3NldElk');
 
 @$core.Deprecated('Use timeRangeDescriptor instead')
 const TimeRange$json = {
@@ -2196,6 +2530,9 @@ const TimeRange$json = {
       '6': '.google.protobuf.Timestamp',
       '10': 'endedAt'
     },
+    {'1': 'job_id', '3': 3, '4': 1, '5': 3, '10': 'jobId'},
+    {'1': 'pass_id', '3': 4, '4': 1, '5': 3, '10': 'passId'},
+    {'1': 'estimated', '3': 5, '4': 1, '5': 8, '10': 'estimated'},
   ],
 };
 
@@ -2203,7 +2540,8 @@ const TimeRange$json = {
 final $typed_data.Uint8List timeRangeDescriptor = $convert.base64Decode(
     'CglUaW1lUmFuZ2USOQoKc3RhcnRlZF9hdBgBIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3'
     'RhbXBSCXN0YXJ0ZWRBdBI1CghlbmRlZF9hdBgCIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1l'
-    'c3RhbXBSB2VuZGVkQXQ=');
+    'c3RhbXBSB2VuZGVkQXQSFQoGam9iX2lkGAMgASgDUgVqb2JJZBIXCgdwYXNzX2lkGAQgASgDUg'
+    'ZwYXNzSWQSHAoJZXN0aW1hdGVkGAUgASgIUgllc3RpbWF0ZWQ=');
 
 @$core.Deprecated('Use collectionSummaryDescriptor instead')
 const CollectionSummary$json = {
@@ -2266,14 +2604,6 @@ const CollectionSummary$json = {
       '10': 'timeUnverifiedAssetCount'
     },
     {
-      '1': 'coverage',
-      '3': 12,
-      '4': 3,
-      '5': 11,
-      '6': '.mediatag.work.v1.KindCoverage',
-      '10': 'coverage'
-    },
-    {
       '1': 'weld_duration_seconds',
       '3': 13,
       '4': 1,
@@ -2303,6 +2633,10 @@ const CollectionSummary$json = {
       '10': 'embeddedCommentCount'
     },
   ],
+  '9': [
+    {'1': 12, '2': 13},
+  ],
+  '10': ['coverage'],
 };
 
 /// Descriptor for `CollectionSummary`. Decode as a `google.protobuf.DescriptorProto`.
@@ -2317,34 +2651,12 @@ final $typed_data.Uint8List collectionSummaryDescriptor = $convert.base64Decode(
     'MSNQoXam9iX3dpdGhvdXRfYXNzZXRfY291bnQYCCABKANSFGpvYldpdGhvdXRBc3NldENvdW50'
     'Eh0KCmNsaXBfY291bnQYCSABKANSCWNsaXBDb3VudBIuChNlbWJlZGRlZF9jbGlwX2NvdW50GA'
     'ogASgDUhFlbWJlZGRlZENsaXBDb3VudBI9Cht0aW1lX3VudmVyaWZpZWRfYXNzZXRfY291bnQY'
-    'CyABKANSGHRpbWVVbnZlcmlmaWVkQXNzZXRDb3VudBI6Cghjb3ZlcmFnZRgMIAMoCzIeLm1lZG'
-    'lhdGFnLndvcmsudjEuS2luZENvdmVyYWdlUghjb3ZlcmFnZRIyChV3ZWxkX2R1cmF0aW9uX3Nl'
-    'Y29uZHMYDSABKANSE3dlbGREdXJhdGlvblNlY29uZHMSMAoUYXR0YWNoZWRfYXNzZXRfY291bn'
-    'QYDiABKANSEmF0dGFjaGVkQXNzZXRDb3VudBJBCh1lbWJlZGRlZF9hdHRhY2hlZF9hc3NldF9j'
-    'b3VudBgPIAEoA1IaZW1iZWRkZWRBdHRhY2hlZEFzc2V0Q291bnQSIwoNY29tbWVudF9jb3VudB'
-    'gQIAEoA1IMY29tbWVudENvdW50EjQKFmVtYmVkZGVkX2NvbW1lbnRfY291bnQYESABKANSFGVt'
-    'YmVkZGVkQ29tbWVudENvdW50');
-
-@$core.Deprecated('Use kindCoverageDescriptor instead')
-const KindCoverage$json = {
-  '1': 'KindCoverage',
-  '2': [
-    {
-      '1': 'kind',
-      '3': 1,
-      '4': 1,
-      '5': 14,
-      '6': '.mediatag.asset.v1.AssetKind',
-      '10': 'kind'
-    },
-    {'1': 'covered_seconds', '3': 2, '4': 1, '5': 3, '10': 'coveredSeconds'},
-  ],
-};
-
-/// Descriptor for `KindCoverage`. Decode as a `google.protobuf.DescriptorProto`.
-final $typed_data.Uint8List kindCoverageDescriptor = $convert.base64Decode(
-    'CgxLaW5kQ292ZXJhZ2USMAoEa2luZBgBIAEoDjIcLm1lZGlhdGFnLmFzc2V0LnYxLkFzc2V0S2'
-    'luZFIEa2luZBInCg9jb3ZlcmVkX3NlY29uZHMYAiABKANSDmNvdmVyZWRTZWNvbmRz');
+    'CyABKANSGHRpbWVVbnZlcmlmaWVkQXNzZXRDb3VudBIyChV3ZWxkX2R1cmF0aW9uX3NlY29uZH'
+    'MYDSABKANSE3dlbGREdXJhdGlvblNlY29uZHMSMAoUYXR0YWNoZWRfYXNzZXRfY291bnQYDiAB'
+    'KANSEmF0dGFjaGVkQXNzZXRDb3VudBJBCh1lbWJlZGRlZF9hdHRhY2hlZF9hc3NldF9jb3VudB'
+    'gPIAEoA1IaZW1iZWRkZWRBdHRhY2hlZEFzc2V0Q291bnQSIwoNY29tbWVudF9jb3VudBgQIAEo'
+    'A1IMY29tbWVudENvdW50EjQKFmVtYmVkZGVkX2NvbW1lbnRfY291bnQYESABKANSFGVtYmVkZG'
+    'VkQ29tbWVudENvdW50SgQIDBANUghjb3ZlcmFnZQ==');
 
 @$core.Deprecated('Use getPassWaveformRequestDescriptor instead')
 const GetPassWaveformRequest$json = {
@@ -2469,6 +2781,14 @@ const PassWaveform$json = {
       '6': '.mediatag.work.v1.WaveformSeries',
       '10': 'series'
     },
+    {
+      '1': 'warnings',
+      '3': 8,
+      '4': 3,
+      '5': 11,
+      '6': '.mediatag.work.v1.TimeWarning',
+      '10': 'warnings'
+    },
   ],
   '9': [
     {'1': 5, '2': 6},
@@ -2481,7 +2801,8 @@ final $typed_data.Uint8List passWaveformDescriptor = $convert.base64Decode(
     'ZwYXNzSWQSFwoHcGFzc19ubxgDIAEoBVIGcGFzc05vEh8KC3dvcmtlcl9uYW1lGAQgASgJUgp3'
     'b3JrZXJOYW1lEj0KC3dvcmtlcl90eXBlGAcgASgOMhwubWVkaWF0YWcud29yay52MS5Xb3JrZX'
     'JUeXBlUgp3b3JrZXJUeXBlEjgKBnNlcmllcxgGIAMoCzIgLm1lZGlhdGFnLndvcmsudjEuV2F2'
-    'ZWZvcm1TZXJpZXNSBnNlcmllc0oECAUQBg==');
+    'ZWZvcm1TZXJpZXNSBnNlcmllcxI5Cgh3YXJuaW5ncxgIIAMoCzIdLm1lZGlhdGFnLndvcmsudj'
+    'EuVGltZVdhcm5pbmdSCHdhcm5pbmdzSgQIBRAG');
 
 @$core.Deprecated('Use waveformSeriesDescriptor instead')
 const WaveformSeries$json = {
@@ -2685,6 +3006,26 @@ const $core.Map<$core.String, $core.dynamic> WorkServiceBase$json = {
       '3': '.mediatag.work.v1.DeleteEquipmentResponse'
     },
     {
+      '1': 'ListDataTypes',
+      '2': '.mediatag.work.v1.ListDataTypesRequest',
+      '3': '.mediatag.work.v1.ListDataTypesResponse'
+    },
+    {
+      '1': 'CreateDataType',
+      '2': '.mediatag.work.v1.CreateDataTypeRequest',
+      '3': '.mediatag.work.v1.CreateDataTypeResponse'
+    },
+    {
+      '1': 'UpdateDataType',
+      '2': '.mediatag.work.v1.UpdateDataTypeRequest',
+      '3': '.mediatag.work.v1.UpdateDataTypeResponse'
+    },
+    {
+      '1': 'RematchDataTypes',
+      '2': '.mediatag.work.v1.RematchDataTypesRequest',
+      '3': '.mediatag.work.v1.RematchDataTypesResponse'
+    },
+    {
       '1': 'CreateProjectItems',
       '2': '.mediatag.work.v1.CreateProjectItemsRequest',
       '3': '.mediatag.work.v1.CreateProjectItemsResponse'
@@ -2826,6 +3167,15 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.work.v1.UpdateEquipmentResponse': UpdateEquipmentResponse$json,
   '.mediatag.work.v1.DeleteEquipmentRequest': DeleteEquipmentRequest$json,
   '.mediatag.work.v1.DeleteEquipmentResponse': DeleteEquipmentResponse$json,
+  '.mediatag.work.v1.ListDataTypesRequest': ListDataTypesRequest$json,
+  '.mediatag.work.v1.ListDataTypesResponse': ListDataTypesResponse$json,
+  '.mediatag.work.v1.DataType': DataType$json,
+  '.mediatag.work.v1.CreateDataTypeRequest': CreateDataTypeRequest$json,
+  '.mediatag.work.v1.CreateDataTypeResponse': CreateDataTypeResponse$json,
+  '.mediatag.work.v1.UpdateDataTypeRequest': UpdateDataTypeRequest$json,
+  '.mediatag.work.v1.UpdateDataTypeResponse': UpdateDataTypeResponse$json,
+  '.mediatag.work.v1.RematchDataTypesRequest': RematchDataTypesRequest$json,
+  '.mediatag.work.v1.RematchDataTypesResponse': RematchDataTypesResponse$json,
   '.mediatag.work.v1.CreateProjectItemsRequest': CreateProjectItemsRequest$json,
   '.mediatag.work.v1.ItemAssignment': ItemAssignment$json,
   '.mediatag.work.v1.CreateProjectItemsResponse':
@@ -2876,7 +3226,6 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
       ListCollectionNodesResponse$json,
   '.mediatag.work.v1.CollectionNode': CollectionNode$json,
   '.mediatag.work.v1.CollectionSummary': CollectionSummary$json,
-  '.mediatag.work.v1.KindCoverage': KindCoverage$json,
   '.mediatag.asset.v1.Asset': $3.Asset$json,
   '.google.protobuf.Struct': $4.Struct$json,
   '.google.protobuf.Struct.FieldsEntry': $4.Struct_FieldsEntry$json,
@@ -2888,6 +3237,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
   '.mediatag.run.v1.RunTarget': $5.RunTarget$json,
   '.mediatag.run.v1.RunWait': $5.RunWait$json,
   '.mediatag.work.v1.TimeRange': TimeRange$json,
+  '.mediatag.work.v1.TimeWarning': TimeWarning$json,
   '.mediatag.work.v1.GetPassWaveformRequest': GetPassWaveformRequest$json,
   '.mediatag.work.v1.GetPassWaveformResponse': GetPassWaveformResponse$json,
   '.mediatag.work.v1.PassWaveform': PassWaveform$json,
@@ -2898,6 +3248,7 @@ const $core.Map<$core.String, $core.Map<$core.String, $core.dynamic>>
       GetCollectionSummaryRequest$json,
   '.mediatag.work.v1.GetCollectionSummaryResponse':
       GetCollectionSummaryResponse$json,
+  '.mediatag.work.v1.DataTypeCoverage': DataTypeCoverage$json,
   '.mediatag.work.v1.ListAssetCountsRequest': ListAssetCountsRequest$json,
   '.mediatag.work.v1.ListAssetCountsResponse': ListAssetCountsResponse$json,
   '.mediatag.work.v1.AssetCount': AssetCount$json,
@@ -2927,37 +3278,45 @@ final $typed_data.Uint8List workServiceDescriptor = $convert.base64Decode(
     'USZgoPVXBkYXRlRXF1aXBtZW50EigubWVkaWF0YWcud29yay52MS5VcGRhdGVFcXVpcG1lbnRS'
     'ZXF1ZXN0GikubWVkaWF0YWcud29yay52MS5VcGRhdGVFcXVpcG1lbnRSZXNwb25zZRJmCg9EZW'
     'xldGVFcXVpcG1lbnQSKC5tZWRpYXRhZy53b3JrLnYxLkRlbGV0ZUVxdWlwbWVudFJlcXVlc3Qa'
-    'KS5tZWRpYXRhZy53b3JrLnYxLkRlbGV0ZUVxdWlwbWVudFJlc3BvbnNlEm8KEkNyZWF0ZVByb2'
-    'plY3RJdGVtcxIrLm1lZGlhdGFnLndvcmsudjEuQ3JlYXRlUHJvamVjdEl0ZW1zUmVxdWVzdBos'
-    'Lm1lZGlhdGFnLndvcmsudjEuQ3JlYXRlUHJvamVjdEl0ZW1zUmVzcG9uc2USbAoRVXBkYXRlUH'
-    'JvamVjdEl0ZW0SKi5tZWRpYXRhZy53b3JrLnYxLlVwZGF0ZVByb2plY3RJdGVtUmVxdWVzdBor'
-    'Lm1lZGlhdGFnLndvcmsudjEuVXBkYXRlUHJvamVjdEl0ZW1SZXNwb25zZRJsChFEZWxldGVQcm'
-    '9qZWN0SXRlbRIqLm1lZGlhdGFnLndvcmsudjEuRGVsZXRlUHJvamVjdEl0ZW1SZXF1ZXN0Gisu'
-    'bWVkaWF0YWcud29yay52MS5EZWxldGVQcm9qZWN0SXRlbVJlc3BvbnNlElQKCUxpc3RJdGVtcx'
-    'IiLm1lZGlhdGFnLndvcmsudjEuTGlzdEl0ZW1zUmVxdWVzdBojLm1lZGlhdGFnLndvcmsudjEu'
-    'TGlzdEl0ZW1zUmVzcG9uc2USYwoOTGlzdEpvYkZpbHRlcnMSJy5tZWRpYXRhZy53b3JrLnYxLk'
-    'xpc3RKb2JGaWx0ZXJzUmVxdWVzdBooLm1lZGlhdGFnLndvcmsudjEuTGlzdEpvYkZpbHRlcnNS'
-    'ZXNwb25zZRJRCghMaXN0Sm9icxIhLm1lZGlhdGFnLndvcmsudjEuTGlzdEpvYnNSZXF1ZXN0Gi'
-    'IubWVkaWF0YWcud29yay52MS5MaXN0Sm9ic1Jlc3BvbnNlEmAKDVVwZGF0ZVByb2plY3QSJi5t'
-    'ZWRpYXRhZy53b3JrLnYxLlVwZGF0ZVByb2plY3RSZXF1ZXN0GicubWVkaWF0YWcud29yay52MS'
-    '5VcGRhdGVQcm9qZWN0UmVzcG9uc2USYAoNRGVsZXRlUHJvamVjdBImLm1lZGlhdGFnLndvcmsu'
-    'djEuRGVsZXRlUHJvamVjdFJlcXVlc3QaJy5tZWRpYXRhZy53b3JrLnYxLkRlbGV0ZVByb2plY3'
-    'RSZXNwb25zZRJUCglDcmVhdGVKb2ISIi5tZWRpYXRhZy53b3JrLnYxLkNyZWF0ZUpvYlJlcXVl'
-    'c3QaIy5tZWRpYXRhZy53b3JrLnYxLkNyZWF0ZUpvYlJlc3BvbnNlElQKCVVwZGF0ZUpvYhIiLm'
-    '1lZGlhdGFnLndvcmsudjEuVXBkYXRlSm9iUmVxdWVzdBojLm1lZGlhdGFnLndvcmsudjEuVXBk'
-    'YXRlSm9iUmVzcG9uc2USVAoJRGVsZXRlSm9iEiIubWVkaWF0YWcud29yay52MS5EZWxldGVKb2'
-    'JSZXF1ZXN0GiMubWVkaWF0YWcud29yay52MS5EZWxldGVKb2JSZXNwb25zZRJXCgpDcmVhdGVQ'
-    'YXNzEiMubWVkaWF0YWcud29yay52MS5DcmVhdGVQYXNzUmVxdWVzdBokLm1lZGlhdGFnLndvcm'
-    'sudjEuQ3JlYXRlUGFzc1Jlc3BvbnNlElcKClVwZGF0ZVBhc3MSIy5tZWRpYXRhZy53b3JrLnYx'
-    'LlVwZGF0ZVBhc3NSZXF1ZXN0GiQubWVkaWF0YWcud29yay52MS5VcGRhdGVQYXNzUmVzcG9uc2'
-    'USVwoKRGVsZXRlUGFzcxIjLm1lZGlhdGFnLndvcmsudjEuRGVsZXRlUGFzc1JlcXVlc3QaJC5t'
-    'ZWRpYXRhZy53b3JrLnYxLkRlbGV0ZVBhc3NSZXNwb25zZRJLCgZHZXRKb2ISHy5tZWRpYXRhZy'
-    '53b3JrLnYxLkdldEpvYlJlcXVlc3QaIC5tZWRpYXRhZy53b3JrLnYxLkdldEpvYlJlc3BvbnNl'
-    'EnIKE0xpc3RDb2xsZWN0aW9uTm9kZXMSLC5tZWRpYXRhZy53b3JrLnYxLkxpc3RDb2xsZWN0aW'
-    '9uTm9kZXNSZXF1ZXN0Gi0ubWVkaWF0YWcud29yay52MS5MaXN0Q29sbGVjdGlvbk5vZGVzUmVz'
-    'cG9uc2USZgoPR2V0UGFzc1dhdmVmb3JtEigubWVkaWF0YWcud29yay52MS5HZXRQYXNzV2F2ZW'
-    'Zvcm1SZXF1ZXN0GikubWVkaWF0YWcud29yay52MS5HZXRQYXNzV2F2ZWZvcm1SZXNwb25zZRJ1'
-    'ChRHZXRDb2xsZWN0aW9uU3VtbWFyeRItLm1lZGlhdGFnLndvcmsudjEuR2V0Q29sbGVjdGlvbl'
-    'N1bW1hcnlSZXF1ZXN0Gi4ubWVkaWF0YWcud29yay52MS5HZXRDb2xsZWN0aW9uU3VtbWFyeVJl'
-    'c3BvbnNlEmYKD0xpc3RBc3NldENvdW50cxIoLm1lZGlhdGFnLndvcmsudjEuTGlzdEFzc2V0Q2'
-    '91bnRzUmVxdWVzdBopLm1lZGlhdGFnLndvcmsudjEuTGlzdEFzc2V0Q291bnRzUmVzcG9uc2U=');
+    'KS5tZWRpYXRhZy53b3JrLnYxLkRlbGV0ZUVxdWlwbWVudFJlc3BvbnNlEmAKDUxpc3REYXRhVH'
+    'lwZXMSJi5tZWRpYXRhZy53b3JrLnYxLkxpc3REYXRhVHlwZXNSZXF1ZXN0GicubWVkaWF0YWcu'
+    'd29yay52MS5MaXN0RGF0YVR5cGVzUmVzcG9uc2USYwoOQ3JlYXRlRGF0YVR5cGUSJy5tZWRpYX'
+    'RhZy53b3JrLnYxLkNyZWF0ZURhdGFUeXBlUmVxdWVzdBooLm1lZGlhdGFnLndvcmsudjEuQ3Jl'
+    'YXRlRGF0YVR5cGVSZXNwb25zZRJjCg5VcGRhdGVEYXRhVHlwZRInLm1lZGlhdGFnLndvcmsudj'
+    'EuVXBkYXRlRGF0YVR5cGVSZXF1ZXN0GigubWVkaWF0YWcud29yay52MS5VcGRhdGVEYXRhVHlw'
+    'ZVJlc3BvbnNlEmkKEFJlbWF0Y2hEYXRhVHlwZXMSKS5tZWRpYXRhZy53b3JrLnYxLlJlbWF0Y2'
+    'hEYXRhVHlwZXNSZXF1ZXN0GioubWVkaWF0YWcud29yay52MS5SZW1hdGNoRGF0YVR5cGVzUmVz'
+    'cG9uc2USbwoSQ3JlYXRlUHJvamVjdEl0ZW1zEisubWVkaWF0YWcud29yay52MS5DcmVhdGVQcm'
+    '9qZWN0SXRlbXNSZXF1ZXN0GiwubWVkaWF0YWcud29yay52MS5DcmVhdGVQcm9qZWN0SXRlbXNS'
+    'ZXNwb25zZRJsChFVcGRhdGVQcm9qZWN0SXRlbRIqLm1lZGlhdGFnLndvcmsudjEuVXBkYXRlUH'
+    'JvamVjdEl0ZW1SZXF1ZXN0GisubWVkaWF0YWcud29yay52MS5VcGRhdGVQcm9qZWN0SXRlbVJl'
+    'c3BvbnNlEmwKEURlbGV0ZVByb2plY3RJdGVtEioubWVkaWF0YWcud29yay52MS5EZWxldGVQcm'
+    '9qZWN0SXRlbVJlcXVlc3QaKy5tZWRpYXRhZy53b3JrLnYxLkRlbGV0ZVByb2plY3RJdGVtUmVz'
+    'cG9uc2USVAoJTGlzdEl0ZW1zEiIubWVkaWF0YWcud29yay52MS5MaXN0SXRlbXNSZXF1ZXN0Gi'
+    'MubWVkaWF0YWcud29yay52MS5MaXN0SXRlbXNSZXNwb25zZRJjCg5MaXN0Sm9iRmlsdGVycxIn'
+    'Lm1lZGlhdGFnLndvcmsudjEuTGlzdEpvYkZpbHRlcnNSZXF1ZXN0GigubWVkaWF0YWcud29yay'
+    '52MS5MaXN0Sm9iRmlsdGVyc1Jlc3BvbnNlElEKCExpc3RKb2JzEiEubWVkaWF0YWcud29yay52'
+    'MS5MaXN0Sm9ic1JlcXVlc3QaIi5tZWRpYXRhZy53b3JrLnYxLkxpc3RKb2JzUmVzcG9uc2USYA'
+    'oNVXBkYXRlUHJvamVjdBImLm1lZGlhdGFnLndvcmsudjEuVXBkYXRlUHJvamVjdFJlcXVlc3Qa'
+    'Jy5tZWRpYXRhZy53b3JrLnYxLlVwZGF0ZVByb2plY3RSZXNwb25zZRJgCg1EZWxldGVQcm9qZW'
+    'N0EiYubWVkaWF0YWcud29yay52MS5EZWxldGVQcm9qZWN0UmVxdWVzdBonLm1lZGlhdGFnLndv'
+    'cmsudjEuRGVsZXRlUHJvamVjdFJlc3BvbnNlElQKCUNyZWF0ZUpvYhIiLm1lZGlhdGFnLndvcm'
+    'sudjEuQ3JlYXRlSm9iUmVxdWVzdBojLm1lZGlhdGFnLndvcmsudjEuQ3JlYXRlSm9iUmVzcG9u'
+    'c2USVAoJVXBkYXRlSm9iEiIubWVkaWF0YWcud29yay52MS5VcGRhdGVKb2JSZXF1ZXN0GiMubW'
+    'VkaWF0YWcud29yay52MS5VcGRhdGVKb2JSZXNwb25zZRJUCglEZWxldGVKb2ISIi5tZWRpYXRh'
+    'Zy53b3JrLnYxLkRlbGV0ZUpvYlJlcXVlc3QaIy5tZWRpYXRhZy53b3JrLnYxLkRlbGV0ZUpvYl'
+    'Jlc3BvbnNlElcKCkNyZWF0ZVBhc3MSIy5tZWRpYXRhZy53b3JrLnYxLkNyZWF0ZVBhc3NSZXF1'
+    'ZXN0GiQubWVkaWF0YWcud29yay52MS5DcmVhdGVQYXNzUmVzcG9uc2USVwoKVXBkYXRlUGFzcx'
+    'IjLm1lZGlhdGFnLndvcmsudjEuVXBkYXRlUGFzc1JlcXVlc3QaJC5tZWRpYXRhZy53b3JrLnYx'
+    'LlVwZGF0ZVBhc3NSZXNwb25zZRJXCgpEZWxldGVQYXNzEiMubWVkaWF0YWcud29yay52MS5EZW'
+    'xldGVQYXNzUmVxdWVzdBokLm1lZGlhdGFnLndvcmsudjEuRGVsZXRlUGFzc1Jlc3BvbnNlEksK'
+    'BkdldEpvYhIfLm1lZGlhdGFnLndvcmsudjEuR2V0Sm9iUmVxdWVzdBogLm1lZGlhdGFnLndvcm'
+    'sudjEuR2V0Sm9iUmVzcG9uc2UScgoTTGlzdENvbGxlY3Rpb25Ob2RlcxIsLm1lZGlhdGFnLndv'
+    'cmsudjEuTGlzdENvbGxlY3Rpb25Ob2Rlc1JlcXVlc3QaLS5tZWRpYXRhZy53b3JrLnYxLkxpc3'
+    'RDb2xsZWN0aW9uTm9kZXNSZXNwb25zZRJmCg9HZXRQYXNzV2F2ZWZvcm0SKC5tZWRpYXRhZy53'
+    'b3JrLnYxLkdldFBhc3NXYXZlZm9ybVJlcXVlc3QaKS5tZWRpYXRhZy53b3JrLnYxLkdldFBhc3'
+    'NXYXZlZm9ybVJlc3BvbnNlEnUKFEdldENvbGxlY3Rpb25TdW1tYXJ5Ei0ubWVkaWF0YWcud29y'
+    'ay52MS5HZXRDb2xsZWN0aW9uU3VtbWFyeVJlcXVlc3QaLi5tZWRpYXRhZy53b3JrLnYxLkdldE'
+    'NvbGxlY3Rpb25TdW1tYXJ5UmVzcG9uc2USZgoPTGlzdEFzc2V0Q291bnRzEigubWVkaWF0YWcu'
+    'd29yay52MS5MaXN0QXNzZXRDb3VudHNSZXF1ZXN0GikubWVkaWF0YWcud29yay52MS5MaXN0QX'
+    'NzZXRDb3VudHNSZXNwb25zZQ==');

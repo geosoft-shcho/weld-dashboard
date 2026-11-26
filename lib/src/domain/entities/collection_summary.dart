@@ -12,11 +12,29 @@ enum CollectionAssetKind {
   region,
 }
 
-class KindCoverage {
-  const KindCoverage({required this.kind, required this.coveredSeconds});
+enum DataTypeJudgeKind { unspecified, time, report }
 
-  final CollectionAssetKind kind;
+class DataTypeCoverageRow {
+  const DataTypeCoverageRow({
+    required this.dataTypeId,
+    required this.dataTypeName,
+    required this.judge,
+    required this.coveredSeconds,
+    required this.expectedSeconds,
+  });
+
+  final String dataTypeId;
+  final String dataTypeName;
+  final DataTypeJudgeKind judge;
   final int coveredSeconds;
+  final int expectedSeconds;
+
+  double? get coverageRatio {
+    if (expectedSeconds <= 0) {
+      return null;
+    }
+    return coveredSeconds / expectedSeconds;
+  }
 }
 
 class CollectionSummary {
@@ -32,7 +50,6 @@ class CollectionSummary {
     required this.clipCount,
     required this.embeddedClipCount,
     required this.timeUnverifiedAssetCount,
-    required this.coverage,
     required this.weldDurationSeconds,
     required this.attachedAssetCount,
     required this.embeddedAttachedAssetCount,
@@ -49,7 +66,6 @@ class CollectionSummary {
     clipCount: 0,
     embeddedClipCount: 0,
     timeUnverifiedAssetCount: 0,
-    coverage: [],
     weldDurationSeconds: 0,
     attachedAssetCount: 0,
     embeddedAttachedAssetCount: 0,
@@ -68,7 +84,6 @@ class CollectionSummary {
   final int clipCount;
   final int embeddedClipCount;
   final int timeUnverifiedAssetCount;
-  final List<KindCoverage> coverage;
   final int weldDurationSeconds;
   final int attachedAssetCount;
   final int embeddedAttachedAssetCount;
@@ -80,17 +95,20 @@ class CollectionSummary {
 class CollectionSummaryLoad {
   const CollectionSummaryLoad({
     required this.summary,
+    required this.dataTypeCoverage,
     required this.runningTraceCount,
     required this.failedTraceCount,
   });
 
   static const empty = CollectionSummaryLoad(
     summary: CollectionSummary.empty,
+    dataTypeCoverage: [],
     runningTraceCount: 0,
     failedTraceCount: 0,
   );
 
   final CollectionSummary summary;
+  final List<DataTypeCoverageRow> dataTypeCoverage;
 
   /// trace_running_count — 진행 중(업로드 ~ 임베딩 대기)
   final int runningTraceCount;

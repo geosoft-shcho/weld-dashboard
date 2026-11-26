@@ -10,10 +10,14 @@ class GetCollectionSummaryUseCase {
   Future<CollectionSummaryLoad> execute({
     CollectedNodePath? parent,
     String workerId = '',
+    DateTime? from,
+    DateTime? to,
   }) {
     return _repository.getCollectionSummary(
       parent: parent,
       workerId: workerId,
+      from: from,
+      to: to,
     );
   }
 }

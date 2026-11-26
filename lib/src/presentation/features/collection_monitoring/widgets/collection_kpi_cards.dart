@@ -23,64 +23,56 @@ class CollectionKpiCards extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final summary = kpi.summary;
+    final coverage = kpi.dataTypeCoverage;
+    final embeddingDone = summary.embeddedClipCount +
+        summary.embeddedAttachedAssetCount +
+        summary.embeddedCommentCount;
+    final embeddingTotal =
+        summary.clipCount + summary.attachedAssetCount + summary.commentCount;
     final cards = <Widget>[
       _KpiCard(
-        title: '파일',
-        primaryLabel: '개수',
+        title: '수집량',
+        primaryLabel: '파일',
         primaryValue: DashboardFormatters.count(summary.assetCount),
         secondaryLabel: const Text('용량', style: _secondaryLabelStyle),
         secondary: Text(
           DashboardFormatters.byteSize(summary.totalSizeBytes),
           style: _secondaryValueStyle,
         ),
-        isSelected: viewModel.query.selectedKpiCard == KpiCardKind.files,
+        isSelected: viewModel.query.selectedKpiCard == KpiCardKind.collection,
         accent: AppTheme.ACCENT_STEEL,
-        onPressed: () => viewModel.didTapKpiCard(KpiCardKind.files),
+        onPressed: () => viewModel.didTapKpiCard(KpiCardKind.collection),
       ),
       _KpiCard(
-        title: '작업',
-        primaryLabel: '개수',
-        primaryValue: DashboardFormatters.count(summary.jobCount),
-        secondaryLabel: const Text('작업시간', style: _secondaryLabelStyle),
-        secondary: Text(
-          '${DashboardFormatters.durationParts(summary.workDurationSeconds)} · 자료 없는 작업 ${DashboardFormatters.count(summary.jobWithoutAssetCount)}건',
-          style: _secondaryValueStyle,
-        ),
-        isSelected: viewModel.query.selectedKpiCard == KpiCardKind.jobs,
-        accent: AppTheme.STATUS_OK,
-        onPressed: () => viewModel.didTapKpiCard(KpiCardKind.jobs),
-      ),
-      _KpiCard(
-        title: '용접',
-        primaryLabel: '시간',
+        title: '작업량',
+        primaryLabel: '용접 시간',
         primaryValue: DashboardFormatters.durationParts(
           summary.weldDurationSeconds,
         ),
-        secondaryLabel: const _CoverageLossLegend(),
-        secondary: _CoverageLossRichText(summary: summary),
-        isSelected: viewModel.query.selectedKpiCard == KpiCardKind.weld,
-        accent: AppTheme.STATUS_WARN,
-        onPressed: () => viewModel.didTapKpiCard(KpiCardKind.weld),
-      ),
-      _KpiCard(
-        title: '적재',
-        primaryLabel: '진행',
-        primaryValue: DashboardFormatters.count(kpi.runningTraceCount),
-        secondaryLabel: const Text('실패', style: _secondaryLabelStyle),
+        secondaryLabel: const Text('작업', style: _secondaryLabelStyle),
         secondary: Text(
-          DashboardFormatters.count(kpi.failedTraceCount),
+          '${DashboardFormatters.count(summary.jobCount)}건 · 작업시간 ${DashboardFormatters.durationParts(summary.workDurationSeconds)} · 자료 없음 ${DashboardFormatters.count(summary.jobWithoutAssetCount)}건',
           style: _secondaryValueStyle,
         ),
-        isSelected: viewModel.query.selectedKpiCard == KpiCardKind.traces,
-        accent: kpi.failedTraceCount > 0
-            ? AppTheme.STATUS_ERROR
-            : AppTheme.STATUS_OK,
-        onPressed: () => viewModel.didTapKpiCard(KpiCardKind.traces),
+        isSelected: viewModel.query.selectedKpiCard == KpiCardKind.work,
+        accent: AppTheme.STATUS_OK,
+        onPressed: () => viewModel.didTapKpiCard(KpiCardKind.work),
+      ),
+      _KpiCard(
+        title: '커버리지',
+        primaryLabel: '종합',
+        primaryValue: _coverageOverallLabel(coverage),
+        secondaryLabel: const Text('유형별 손실', style: _secondaryLabelStyle),
+        secondary: _DataTypeCoverageLossText(coverage: coverage),
+        isSelected: viewModel.query.selectedKpiCard == KpiCardKind.coverage,
+        accent: AppTheme.STATUS_WARN,
+        onPressed: () => viewModel.didTapKpiCard(KpiCardKind.coverage),
       ),
       _EmbeddingKpiCard(
+        primaryRatio: _ratioLabel(embeddingDone, embeddingTotal),
         sections: [
           (
-            label: '기록 (클립)',
+            label: '클립',
             ratio: _ratioLabel(summary.embeddedClipCount, summary.clipCount),
             detail: _ratioSubtitle(
               summary.embeddedClipCount,
@@ -89,7 +81,7 @@ class CollectionKpiCards extends StatelessWidget {
             ),
           ),
           (
-            label: '파일·작업 (메타)',
+            label: '파일',
             ratio: _ratioLabel(
               summary.embeddedAttachedAssetCount,
               summary.attachedAssetCount,
@@ -181,110 +173,43 @@ const TextStyle _secondaryValueStyle = TextStyle(
   fontWeight: FontWeight.w500,
 );
 
-String _kindLabel(CollectionAssetKind kind) {
-  return switch (kind) {
-    CollectionAssetKind.video => '영상',
-    CollectionAssetKind.audio => '음성',
-    CollectionAssetKind.timeseries => '센서',
-    CollectionAssetKind.pose => '포즈',
-    CollectionAssetKind.pointcloud => '깊이',
-    CollectionAssetKind.image => '이미지',
-    CollectionAssetKind.document => '문서',
-    CollectionAssetKind.subtitle => '자막',
-    CollectionAssetKind.ocrJson => 'OCR',
-    CollectionAssetKind.region => '영역',
-    CollectionAssetKind.unspecified => '기타',
-  };
-}
-
-/// 커버리지(초록) · 손실률(빨강) 점 아이콘 + 레이블.
-class _CoverageLossLegend extends StatelessWidget {
-  const _CoverageLossLegend();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Row(
-      children: [
-        _LegendSwatch(color: AppTheme.STATUS_OK, label: '커버리지'),
-        Text(' / ', style: _secondaryLabelStyle),
-        _LegendSwatch(color: AppTheme.STATUS_ERROR, label: '손실률'),
-      ],
-    );
+String _coverageOverallLabel(List<DataTypeCoverageRow> coverage) {
+  if (coverage.isEmpty) {
+    return '—';
   }
-}
-
-class _LegendSwatch extends StatelessWidget {
-  const _LegendSwatch({required this.color, required this.label});
-
-  final Color color;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(label, style: _secondaryLabelStyle),
-        const SizedBox(width: 4),
-        Icon(FluentIcons.circle_fill, size: 8, color: color),
-      ],
-    );
+  var covered = 0;
+  var expected = 0;
+  for (final row in coverage) {
+    covered += row.coveredSeconds;
+    expected += row.expectedSeconds;
   }
+  if (expected <= 0) {
+    return '—';
+  }
+  final percent = (covered * 100 / expected).clamp(0.0, 100.0);
+  final loss = (100.0 - percent).clamp(0.0, 100.0);
+  return '${percent.toStringAsFixed(1)}% (손실 ${loss.toStringAsFixed(1)}%)';
 }
 
-/// 한 줄 나열. 커버리지=초록, 손실률=빨강으로 구분.
-class _CoverageLossRichText extends StatelessWidget {
-  const _CoverageLossRichText({required this.summary});
+class _DataTypeCoverageLossText extends StatelessWidget {
+  const _DataTypeCoverageLossText({required this.coverage});
 
-  final CollectionSummary summary;
+  final List<DataTypeCoverageRow> coverage;
 
   @override
   Widget build(BuildContext context) {
-    final weld = summary.weldDurationSeconds;
-    if (summary.coverage.isEmpty || weld <= 0) {
+    if (coverage.isEmpty) {
       return const Text('—', style: _secondaryValueStyle);
     }
-    final spans = <InlineSpan>[];
-    for (var i = 0; i < summary.coverage.length; i++) {
-      if (i > 0) {
-        spans.add(
-          const TextSpan(
-            text: ' · ',
-            style: TextStyle(color: AppTheme.STATUS_OFF),
-          ),
-        );
-      }
-      final item = summary.coverage[i];
-      final coverageRatio = item.coveredSeconds / weld;
-      final coveragePercent = (coverageRatio * 100).clamp(0.0, 100.0);
-      // 손실률 UI 임시 비활성
-      // final lossPercent = ((1 - coverageRatio) * 100).clamp(0.0, 100.0);
-      spans.addAll([
-        TextSpan(
-          text: '${_kindLabel(item.kind)} ',
-          style: const TextStyle(color: AppTheme.INK),
-        ),
-        TextSpan(
-          text: '${coveragePercent.toStringAsFixed(1)}%',
-          style: const TextStyle(
-            color: AppTheme.STATUS_OK,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-        // const TextSpan(
-        //   text: ' / ',
-        //   style: TextStyle(color: AppTheme.STATUS_OFF),
-        // ),
-        // TextSpan(
-        //   text: '${lossPercent.toStringAsFixed(1)}%',
-        //   style: const TextStyle(
-        //     color: AppTheme.STATUS_ERROR,
-        //     fontWeight: FontWeight.w600,
-        //   ),
-        // ),
-      ]);
+    final parts = <String>[];
+    for (final item in coverage) {
+      final ratio = item.coverageRatio;
+      final lossLabel = ratio == null
+          ? '—'
+          : '${((1.0 - ratio) * 100).clamp(0.0, 100.0).toStringAsFixed(1)}%';
+      parts.add('${item.dataTypeName} $lossLabel');
     }
-    return Text.rich(TextSpan(style: _secondaryValueStyle, children: spans));
+    return Text(parts.join(' · '), style: _secondaryValueStyle);
   }
 }
 
@@ -367,14 +292,16 @@ class _KpiCard extends StatelessWidget {
   }
 }
 
-/// 검색 준비(기록·파일·작업·코멘트) 진행률을 한 카드에 구역으로 표시.
+/// 임베딩 종합 % + 클립·파일·코멘트 구역.
 class _EmbeddingKpiCard extends StatelessWidget {
   const _EmbeddingKpiCard({
+    required this.primaryRatio,
     required this.sections,
     required this.isSelected,
     required this.onPressed,
   });
 
+  final String primaryRatio;
   final List<({String label, String ratio, String detail})> sections;
   final bool isSelected;
   final VoidCallback onPressed;
@@ -394,7 +321,7 @@ class _EmbeddingKpiCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '검색 준비',
+                '임베딩',
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
@@ -403,7 +330,18 @@ class _EmbeddingKpiCard extends StatelessWidget {
                   color: muted,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 4),
+              Text(
+                primaryRatio,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: accent,
+                ),
+              ),
+              const SizedBox(height: 6),
               Expanded(
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,

@@ -50,6 +50,7 @@ class Asset extends $pb.GeneratedMessage {
     $2.Run? postprocess,
     $3.Author? createdBy,
     $3.Author? updatedBy,
+    $fixnum.Int64? dataTypeId,
   }) {
     final result = create();
     if (assetId != null) result.assetId = assetId;
@@ -73,6 +74,7 @@ class Asset extends $pb.GeneratedMessage {
     if (postprocess != null) result.postprocess = postprocess;
     if (createdBy != null) result.createdBy = createdBy;
     if (updatedBy != null) result.updatedBy = updatedBy;
+    if (dataTypeId != null) result.dataTypeId = dataTypeId;
     return result;
   }
 
@@ -122,6 +124,7 @@ class Asset extends $pb.GeneratedMessage {
         subBuilder: $3.Author.create)
     ..aOM<$3.Author>(21, _omitFieldNames ? '' : 'updatedBy',
         subBuilder: $3.Author.create)
+    ..aInt64(22, _omitFieldNames ? '' : 'dataTypeId')
     ..hasRequiredFields = false;
 
   @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
@@ -347,6 +350,17 @@ class Asset extends $pb.GeneratedMessage {
   void clearUpdatedBy() => $_clearField(21);
   @$pb.TagNumber(21)
   $3.Author ensureUpdatedBy() => $_ensure(20);
+
+  /// 데이터 유형(WorkService.ListDataTypes) — 공사가 확인하는 단위(앞 깊이 영상 …). 0 = 미지정(커버리지에 들지 않음). 업로드 때
+  /// metadata dataTypeId로 고르거나, 안 고르면 종류 · 파일 이름 조건이 맞는 유형이 하나뿐일 때 서버가 붙인다. 표준화 파생은 원본 유형을 물려받는다.
+  @$pb.TagNumber(22)
+  $fixnum.Int64 get dataTypeId => $_getI64(21);
+  @$pb.TagNumber(22)
+  set dataTypeId($fixnum.Int64 value) => $_setInt64(21, value);
+  @$pb.TagNumber(22)
+  $core.bool hasDataTypeId() => $_has(21);
+  @$pb.TagNumber(22)
+  void clearDataTypeId() => $_clearField(22);
 }
 
 class DisplayField extends $pb.GeneratedMessage {
