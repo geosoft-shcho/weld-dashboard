@@ -20,6 +20,7 @@ import '../../features/video_multimodal/video_multimodal_screen.dart';
 import '../../features/work_history/work_history_screen.dart';
 import '../../features/worker_lookup/worker_lookup_detail_screen.dart';
 import '../../features/worker_lookup/worker_lookup_screen.dart';
+import '../../core/themes/app_theme.dart';
 import '../../core/widgets/lookup_search_field.dart';
 import '../../navigation/app_coordinator.dart';
 import 'shell_view_model.dart';
@@ -167,11 +168,73 @@ class _ShellScreenState extends State<ShellScreen> {
                   body: const ServiceTokensAdminScreen(),
                 ),
               ],
+              _buildPaneGroupLabel('설정'),
+              _navPaneAction(
+                iconData: FluentIcons.contact,
+                label: '내정보',
+                onTap: () => _didTapMyAccountInfo(context),
+              ),
+              _navPaneAction(
+                iconData: FluentIcons.password_field,
+                label: '비밀번호 변경',
+                onTap: () => _didTapChangePassword(context),
+              ),
+              _navPaneAction(
+                iconData: FluentIcons.sign_out,
+                label: '로그아웃',
+                onTap: () => _didTapSignOut(context),
+              ),
             ],
           ),
         ),
       ],
     );
+  }
+
+  Future<void> _didTapMyAccountInfo(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => const _MyAccountInfoDialog(),
+    );
+  }
+
+  Future<void> _didTapChangePassword(BuildContext context) async {
+    await showDialog<void>(
+      context: context,
+      builder: (_) => const _ChangePasswordDialog(),
+    );
+  }
+
+  Future<void> _didTapSignOut(BuildContext context) async {
+    final auth = context.read<AuthSessionViewModel>();
+    if (auth.isBusy) {
+      return;
+    }
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => ContentDialog(
+        title: const Text('로그아웃'),
+        content: const Text('로그아웃할까요?'),
+        actions: [
+          Button(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('로그아웃'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) {
+      return;
+    }
+    final session = context.read<AuthSessionViewModel>();
+    if (session.isBusy) {
+      return;
+    }
+    await session.signOut();
   }
 
   /// 펼친 창에는 묶음 이름을 보이고, 아이콘만 보이는 창에는 구분선을 둔다.
@@ -204,6 +267,25 @@ class _ShellScreenState extends State<ShellScreen> {
       title: Builder(builder: (_) => Text(label)),
       enabled: enabled,
       body: body,
+    );
+  }
+
+  /// 선택 인덱스에 들어가지 않는 액션(설정·로그아웃 등).
+  PaneItemAction _navPaneAction({
+    required IconData iconData,
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return PaneItemAction(
+      icon: Tooltip(
+        message: label,
+        displayHorizontally: true,
+        useMousePosition: false,
+        style: const TooltipThemeData(verticalOffset: 12, preferBelow: false),
+        child: Icon(iconData),
+      ),
+      title: Builder(builder: (_) => Text(label)),
+      onTap: onTap,
     );
   }
 
@@ -459,41 +541,157 @@ class _AuthSessionActions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = context.select<AuthSessionViewModel, String>(
-      (auth) => auth.shellDisplayName,
-    );
-    final isBusy = context.select<AuthSessionViewModel, bool>(
-      (auth) => auth.isBusy,
-    );
-    if (displayName.isEmpty) {
+    final user = context.watch<AuthSessionViewModel>().user;
+    final loginName = user?.loginName.trim() ?? '';
+    if (loginName.isEmpty) {
       return const SizedBox.shrink();
     }
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(displayName, style: const TextStyle(fontSize: 12)),
-        const SizedBox(width: 8),
-        Button(
-          onPressed: isBusy
-              ? null
-              : () => _didTapChangePassword(context),
-          child: const Text('비밀번호 변경'),
-        ),
-        const SizedBox(width: 8),
-        Button(
-          onPressed: isBusy
-              ? null
-              : () => context.read<AuthSessionViewModel>().signOut(),
-          child: const Text('로그아웃'),
+    return Text(
+      loginName,
+      style: const TextStyle(fontSize: 12, color: AppTheme.ACCENT_STEEL),
+    );
+  }
+}
+
+class _MyAccountInfoDialog extends StatelessWidget {
+  const _MyAccountInfoDialog();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = FluentTheme.of(context);
+    final user = context.watch<AuthSessionViewModel>().user;
+
+    final loginName = user?.loginName.trim() ?? '';
+    final displayName = user?.displayName.trim() ?? '';
+    final roleName = user?.roleName.trim() ?? '';
+    final roleId = user?.roleId ?? 0;
+    final permissions = user?.permissions ?? const <String>[];
+
+    return ContentDialog(
+      title: const Text('내정보'),
+      constraints: const BoxConstraints(maxWidth: 440),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(FluentIcons.contact, size: 28, color: AppTheme.WHITE),
+              const SizedBox(width: 12),
+              Flexible(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      loginName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    if (displayName.isNotEmpty) ...[
+                      Text(
+                        displayName,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppTheme.ACCENT_STEEL,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _MyAccountInfoRow(
+            label: '권한',
+            value: roleName.isEmpty ? '없음' : roleName,
+          ),
+          const SizedBox(height: 12),
+          Text('권한', style: TextStyle(fontSize: 12, color: AppTheme.WHITE)),
+          const SizedBox(height: 6),
+          if (permissions.isEmpty)
+            const Text('없음')
+          else
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (final permission in permissions)
+                  _MyAccountPermissionBadge(label: permission),
+              ],
+            ),
+        ],
+      ),
+      actions: [
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('확인'),
         ),
       ],
     );
   }
+}
 
-  Future<void> _didTapChangePassword(BuildContext context) async {
-    await showDialog<void>(
-      context: context,
-      builder: (_) => const _ChangePasswordDialog(),
+/// 권한 관리 `_PermissionKeyBadge`와 같은 뱃지.
+class _MyAccountPermissionBadge extends StatelessWidget {
+  const _MyAccountPermissionBadge({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: AppTheme.ACCENT_STEEL.withValues(alpha: 0.22),
+        borderRadius: BorderRadius.circular(3),
+        border: Border.all(color: const Color(0xFF3E424A)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+        child: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w600,
+            color: AppTheme.ACCENT_STEEL,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MyAccountInfoRow extends StatelessWidget {
+  const _MyAccountInfoRow({
+    required this.label,
+    required this.value,
+    this.trailing,
+  });
+
+  final String label;
+  final String value;
+  final Widget? trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final secondary = FluentTheme.of(context).resources.textFillColorSecondary;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(label, style: TextStyle(fontSize: 12, color: secondary)),
+        const SizedBox(height: 4),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Expanded(child: SelectableText(value)),
+            if (trailing != null) ...[const SizedBox(width: 8), trailing!],
+          ],
+        ),
+      ],
     );
   }
 }

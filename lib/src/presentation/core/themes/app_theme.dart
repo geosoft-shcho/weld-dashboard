@@ -1,8 +1,10 @@
 import 'package:fluent_ui/fluent_ui.dart';
 
 class AppTheme {
+  static const Color WHITE = Color(0xFFFFFFFF);
   static const Color SURFACE = Color(0xFF1C1F24);
   static const Color SURFACE_RAISED = Color(0xFF2A2D32);
+
   /// 조회 테이블 짝수 행(1-based) 배경.
   static const Color ROW_STRIPE = Color(0xFF24282E);
   static const Color INK = Color(0xFFE8EAED);
