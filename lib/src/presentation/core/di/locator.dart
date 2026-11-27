@@ -1,6 +1,6 @@
 import 'package:get_it/get_it.dart';
 
-import '../../../data/repositories/browser_camera_recording_repository.dart';
+import '../../../data/repositories/camera_recording_repository_impl.dart';
 import '../../../data/repositories/remote_asset_lookup_repository.dart';
 import '../../../data/repositories/remote_equipment_lookup_repository.dart';
 import '../../../data/repositories/remote_project_lookup_repository.dart';
@@ -423,7 +423,7 @@ void setupLocator({required bool pdfrxReady}) {
     void
   >((args, _) {
     final CameraRecordingRepository repository =
-        BrowserCameraRecordingRepository();
+        CameraRecordingRepositoryImpl();
     return CameraRecordingViewModel(
       prepareCameraRecordingUseCase: PrepareCameraRecordingUseCase(repository),
       startCameraRecordingUseCase: StartCameraRecordingUseCase(repository),
